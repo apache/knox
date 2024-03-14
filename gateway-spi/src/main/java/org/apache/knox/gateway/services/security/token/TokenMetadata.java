@@ -37,9 +37,9 @@ public class TokenMetadata {
   public static final String ENABLED = "enabled";
   public static final String PASSCODE = "passcode";
   public static final String CREATED_BY = "createdBy";
-  public static final String KNOX_SSO_COOKIE = "knoxSSOCookie";
   public static final String LAST_USED_AT = "lastUsedAt";
-  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, KNOX_SSO_COOKIE, LAST_USED_AT);
+  public static final String TYPE = "type";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, LAST_USED_AT, TYPE);
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -59,6 +59,7 @@ public class TokenMetadata {
     saveMetadata(USER_NAME, userName);
     saveMetadata(COMMENT, comment);
     setEnabled(enabled);
+    setType(TokenMetadataType.JWT);
   }
 
   private void saveMetadata(String key, String value) {
@@ -125,14 +126,6 @@ public class TokenMetadata {
     return getMetadata(CREATED_BY);
   }
 
-  public void setKnoxSsoCookie(boolean knoxSsoCookie) {
-    saveMetadata(KNOX_SSO_COOKIE, String.valueOf(knoxSsoCookie));
-  }
-
-  public boolean isKnoxSsoCookie() {
-    return Boolean.parseBoolean(getMetadata(KNOX_SSO_COOKIE));
-  }
-
   public void useTokenNow() {
     saveMetadata(LAST_USED_AT, Instant.now().toString());
   }
@@ -140,6 +133,28 @@ public class TokenMetadata {
   public Instant getLastUsedAt() {
     final String lastUsedAt = getMetadata(LAST_USED_AT);
     return lastUsedAt == null ? null : Instant.parse(lastUsedAt);
+  }
+
+  public void setType(TokenMetadataType type) {
+    saveMetadata(TYPE, type.name());
+  }
+
+  public void markKnoxSsoCookie() {
+    setType(TokenMetadataType.KNOXSSO_COOKIE);
+  }
+
+  @JsonIgnore
+  public boolean isKnoxSsoCookie() {
+    return getType() == null ? false : TokenMetadataType.KNOXSSO_COOKIE == TokenMetadataType.valueOf(getType());
+  }
+
+  @JsonIgnore
+  public boolean isClientId() {
+    return getType() == null ? false : TokenMetadataType.CLIENT_ID == TokenMetadataType.valueOf(getType());
+  }
+
+  public String getType() {
+    return getMetadata(TYPE);
   }
 
   public String toJSON() {

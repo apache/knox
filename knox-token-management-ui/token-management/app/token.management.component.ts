@@ -43,7 +43,7 @@ export class TokenManagementComponent implements OnInit {
     selection = new SelectionModel<KnoxToken>(true, []);
     allKnoxTokens: KnoxToken[];
 
-    displayedColumns = ['select', 'tokenId', 'issued', 'expires', 'userName', 'impersonated', 'knoxSso', 'comment', 'metadata', 'actions'];
+    displayedColumns = ['select', 'tokenId', 'issued', 'expires', 'userName', 'impersonated', 'type', 'comment', 'metadata', 'actions'];
     @ViewChild('knoxTokensPaginator') paginator: MatPaginator;
     @ViewChild('knoxTokensSort') sort: MatSort = new MatSort();
 
@@ -130,7 +130,7 @@ export class TokenManagementComponent implements OnInit {
     }
 
     private isDisabledKnoxSsoCookie(token: KnoxToken): boolean {
-        return token.metadata.knoxSsoCookie && !token.metadata.enabled;
+        return this.isKnoxSsoCookie(token) && !token.metadata.enabled;
     }
 
     private updateTokens(tokens: KnoxToken[]): void {
@@ -217,7 +217,7 @@ export class TokenManagementComponent implements OnInit {
     }
 
     isKnoxSsoCookie(knoxToken: KnoxToken): boolean {
-      return knoxToken.metadata.knoxSsoCookie;
+      return 'KNOXSSO_COOKIE' === knoxToken.metadata.type;
     }
 
     isDisabledKnoxSSoCookie(knoxToken: KnoxToken): boolean {
@@ -269,7 +269,7 @@ export class TokenManagementComponent implements OnInit {
     }
 
     private selectionHasZeroKnoxSsoCookie(): boolean {
-        return this.selection.selected.every(token => !token.metadata.knoxSsoCookie);
+        return this.selection.selected.every(token => !this.isKnoxSsoCookie(token));
     }
 
     private selectionHasZeroExpiredToken(): boolean {
