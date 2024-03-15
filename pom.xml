@@ -288,7 +288,7 @@
         <xmltool.version>3.3</xmltool.version>
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
-        <zookeeper.version>3.8.1</zookeeper.version>
+        <zookeeper.version>3.8.4</zookeeper.version>
         <docker-maven-plugin.version>0.43.4</docker-maven-plugin.version>
         <docker.platforms>linux/amd64,linux/arm64</docker.platforms>
     </properties>
