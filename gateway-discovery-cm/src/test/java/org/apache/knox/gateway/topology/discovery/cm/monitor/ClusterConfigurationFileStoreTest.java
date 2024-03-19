@@ -18,6 +18,11 @@ package org.apache.knox.gateway.topology.discovery.cm.monitor;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -105,6 +110,32 @@ public class ClusterConfigurationFileStoreTest extends AbstractConfigurationStor
     assertEquals("Expected no files in the data directory.", 0, listFiles(DATA_DIR).size());
   }
 
+  @Test
+  public void testLoadingEmptyFile() throws IOException {
+    final ClusterConfigurationFileStore configStore = new ClusterConfigurationFileStore(createGatewayConfig());
+    final String address = "http://cmhost:1234/";
+    final String cluster = "Cluster XY";
+
+    final Map<String, ServiceConfigurationModel> configModels = new HashMap<>();
+    ServiceConfigurationModel model = new ServiceConfigurationModel();
+    model.addServiceProperty("s_prop_1", "s_prop_1-value");
+    model.addRoleProperty("ROLE_1", "r_prop_1", "r_prop_1-value");
+    configModels.put("MY_SERVICE", model);
+
+    try {
+      configStore.store(address, cluster, configModels);
+      final File persistenceFile = configStore.getPersistenceFile(address, cluster);
+      assertTrue(persistenceFile.length() > 0);
+      //truncate file content
+      FileChannel.open(Paths.get(persistenceFile.getAbsolutePath()), StandardOpenOption.WRITE).truncate(0).close();
+      assertEquals(0, persistenceFile.length());
+      final Set<ServiceConfigurationRecord> persistedConfigs = configStore.getAll();
+      assertTrue(persistedConfigs.isEmpty());
+    } finally {
+      configStore.remove(address, cluster);
+      assertEquals(0, listFiles(DATA_DIR).size());
+    }
+  }
 
   private void validateModel(final ServiceConfigurationModel original, final ServiceConfigurationModel candidate) {
     assertNotNull(candidate);
