@@ -184,6 +184,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void failedToLoadClusterMonitorServiceConfigurations(String monitor,
                                                        @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.WARN, text = "Previously saved cluster configuration file {0} is empty.")
+  void emptyClusterConfiguration(String clusterConfigurationFile);
+
   @Message(level = MessageLevel.ERROR,
       text = "Failed to remove persisted data for cluster configuration monitor {0} {1}")
   void failedToRemovPersistedClusterMonitorData(String monitor, String filename);

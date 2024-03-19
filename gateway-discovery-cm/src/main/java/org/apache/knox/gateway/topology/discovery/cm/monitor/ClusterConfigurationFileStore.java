@@ -79,7 +79,10 @@ public class ClusterConfigurationFileStore extends AbstractConfigurationStore
     if (persistenceDir != null && Files.exists(persistenceDir)) {
       Collection<File> persistedConfigs = FileUtils.listFiles(persistenceDir.toFile(), new String[]{"ver"}, false);
       for (File persisted : persistedConfigs) {
-        result.add(get(persisted));
+        ServiceConfigurationRecord serviceConfiguration = get(persisted);
+        if (serviceConfiguration != null) {
+          result.add(serviceConfiguration);
+        }
       }
     }
 
@@ -100,10 +103,14 @@ public class ClusterConfigurationFileStore extends AbstractConfigurationStore
     ServiceConfigurationRecord result = null;
 
     if (persisted != null && persisted.exists()) {
-      try (InputStream in = Files.newInputStream(persisted.toPath())) {
-        result = mapper.readValue(in, ServiceConfigurationRecord.class);
-      } catch (Exception e) {
-        log.failedToLoadClusterMonitorServiceConfigurations(getMonitorType(), e);
+      if (persisted.length() == 0) {
+        log.emptyClusterConfiguration(persisted.getAbsolutePath());
+      } else {
+        try (InputStream in = Files.newInputStream(persisted.toPath())) {
+          result = mapper.readValue(in, ServiceConfigurationRecord.class);
+        } catch (Exception e) {
+          log.failedToLoadClusterMonitorServiceConfigurations(getMonitorType(), e);
+        }
       }
     }
 
