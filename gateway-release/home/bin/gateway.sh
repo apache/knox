@@ -26,9 +26,11 @@ APP_NAME=gateway
 # Start/stop script location
 APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# shellcheck disable=SC1091
 # Setup the common environment
 . "$APP_BIN_DIR"/knox-env.sh
 
+# shellcheck disable=SC1091
 # Source common functions
 . "$APP_BIN_DIR"/knox-functions.sh
 
@@ -103,6 +105,7 @@ function startGateway() {
 }
 
 function main {
+   setVerbose "$@"
    checkJava
 
    case "$1" in
