@@ -26,9 +26,11 @@ APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # The app's jar name
 APP_JAR="$APP_BIN_DIR/knoxcli.jar"
 
+# shellcheck disable=SC1091
 # Setup the common environment
 . "$APP_BIN_DIR"/knox-env.sh
 
+# shellcheck disable=SC1091
 # Source common functions
 . "$APP_BIN_DIR"/knox-functions.sh
 
@@ -72,6 +74,7 @@ function buildAppJavaOpts {
 }
 
 function main {
+   setVerbose "$@"
    checkJava
    buildAppJavaOpts
    $JAVA "${APP_JAVA_OPTS[@]}" -jar "$APP_JAR" "$@" || exit 1
