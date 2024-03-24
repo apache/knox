@@ -23,7 +23,7 @@ function getQueryParam(name) {
 }
 
 function isSameOrigin(a, b = window.location.href) {
-  return new URL(a).origin === new URL(b).origin;
+  return new URL(a, b).origin === new URL(b).origin;
 }
 
 function redirect(redirectUrl) {
