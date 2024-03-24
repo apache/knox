@@ -15,84 +15,74 @@
  * limitations under the License.
  */
 
-var loginPageSuffix = "/knoxauth/login.html";
-var webssoURL = "/api/v1/websso?originalUrl=";
-var userAgent = navigator.userAgent.toLowerCase();
+const loginPageSuffix = "/knoxauth/login.html";
+const webssoURL = "/api/v1/websso?originalUrl=";
 
-function get(name) {
-	//KNOX-820 changing the regex so that multiple query params get included with the 'originalUrl'
-	if ((name = (new RegExp('[?&]' + encodeURIComponent(name) + '=([^]*)')).exec(location.search))) {
-		return decodeURIComponent(name[1]);
-	}
+function getQueryParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
 }
 
-function testSameOrigin(url) {
-	var loc = window.location,
-		a = document.createElement('a');
-	a.href = url;
-	return a.hostname == loc.hostname &&
-		a.port == loc.port &&
-		a.protocol == loc.protocol;
+function isSameOrigin(a, b = window.location.href) {
+  return new URL(a).origin === new URL(b).origin;
 }
 
 function redirect(redirectUrl) {
-	try {
-		window.location.replace(redirectUrl);
-	} catch (e) {
-		window.location = redirectUrl;
-	}
+  window.location.replace(redirectUrl);
 }
 
-// btoa skips some of the special characters such as ë
-// https://developer.mozilla.org/en-US/docs/Web/API/btoa
 function unicodeBase64Encode(str) {
-    return btoa(unescape(encodeURIComponent(str)));
+  return btoa(unescape(encodeURIComponent(str)));
 }
 
-var keypressed = function(event) {
-	if (event.keyCode == 13) {
-		login();
-	}
-};
+function handleKeyPress(event) {
+  if (event.keyCode === 13) {
+    login();
+  }
+}
 
-var login = function() {
-	var pathname = window.location.pathname;
-	var topologyContext = pathname.replace(loginPageSuffix, "");
-	var loginURL = topologyContext + webssoURL;
-	var form = document.forms[0];
-	var username = form.username.value;
-	var password = form.password.value;
-	var _login = function() {
-		var originalUrl = get("originalUrl");
-		var idpUrl = loginURL + originalUrl;
-		var redirectUrl = originalUrl;
-		//Instantiate HTTP Request
-		var request = ((window.XMLHttpRequest) ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));
-		request.open("POST", idpUrl, true);
-		request.setRequestHeader("Authorization", "Basic " + unicodeBase64Encode(username + ":" + password));
-		request.send(null);
+function login() {
+  const pathname = window.location.pathname;
+  const topologyContext = pathname.replace(loginPageSuffix, "");
+  const loginURL = topologyContext + webssoURL;
+  const form = document.forms[0];
+  const username = form.username.value;
+  const password = form.password.value;
 
-		//Process Response
-		request.onreadystatechange = function() {
-			if (request.readyState == 4) {
-				if (request.status == 0 || request.status == 200 || request.status == 204 || request.status == 307 || request.status == 303) {
-					if (testSameOrigin(originalUrl) == false) {
-						redirectUrl = "redirecting.html?originalUrl=" + originalUrl;
-					}
-					redirect(redirectUrl);
-				} else {
-					$('#errorBox').show();
-					$('#signInLoading').hide();
-					$('#signIn').removeAttr('disabled');
-					if (request.status == 401) {
-						$('#errorBox .errorMsg').text("The username or password you entered is incorrect.");
-					} else {
-						$('#errorBox .errorMsg').text("Response from " + request.responseURL + " - " + request.status + ": " + request.statusText);
-					}
-				}
-			}
-		};
-	};
+  function doLogin() {
+    const originalUrl = getQueryParam("originalUrl");
+    const idpUrl = loginURL + originalUrl;
 
-	_login();
-};
+    const request = new XMLHttpRequest();
+    request.open("POST", idpUrl, true);
+    request.setRequestHeader("Authorization", "Basic " + unicodeBase64Encode(username + ":" + password));
+    request.send(null);
+
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        if ([0, 200, 204, 307, 303].includes(request.status)) {
+          const redirectUrl = isSameOrigin(originalUrl) ? originalUrl : "redirecting.html?originalUrl=" + originalUrl;
+          redirect(redirectUrl);
+        } else {
+          handleError(request);
+        }
+      }
+    };
+  }
+
+  doLogin();
+}
+
+function handleError(request) {
+  const errorBox = document.getElementById('errorBox');
+  const signInLoading = document.getElementById('signInLoading');
+  const signInButton = document.getElementById('signIn');
+  errorBox.style.display = 'block';
+  signInLoading.style.display = 'none';
+  signInButton.removeAttribute('disabled');
+  
+  if (request.status === 401) {
+    errorBox.querySelector('.errorMsg').textContent = "The username or password you entered is incorrect.";
+  } else {
+    errorBox.querySelector('.errorMsg').textContent = "Response from " + request.responseURL + " - " + request.status + ": " + request.statusText;
+  }
+}
