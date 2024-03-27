@@ -64,6 +64,7 @@ import org.junit.Test;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -402,7 +403,26 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
-  public void testWebHCatDiscovery() {
+  public void testIncludeHiveServiceIncludeWebHCatDiscovery() {
+    testWebHCatDiscovery(true, true);
+  }
+
+  @Test
+  public void testExcludeHiveServiceIncludeWebHCatDiscovery() {
+    testWebHCatDiscovery(false, true);
+  }
+
+  @Test
+  public void testIncludeHiveServiceExcludeWebHCatDiscovery() {
+    testWebHCatDiscovery(true, false);
+  }
+
+  @Test
+  public void testExcludeHiveServiceExcludeWebHCatDiscovery() {
+    testWebHCatDiscovery(false, false);
+  }
+
+  private void testWebHCatDiscovery(boolean excludeHiveService, boolean excludeWebHCatRole) {
     final String hostName = "webhcat-host";
     final String port     = "22222";
     final String expectedURL = "http://" + hostName + ":" + port + "/templeton";
@@ -417,12 +437,18 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                        "HIVE-1-WEBHCAT-1",
                                                        WebHCatServiceModelGenerator.ROLE_TYPE,
                                                        Collections.emptyMap(),
-                                                       roleProperties);
+                                                       roleProperties,
+                                                       false,
+                                                       excludeHiveService ? WebHCatServiceModelGenerator.SERVICE_TYPE : null,
+                                                       excludeWebHCatRole ?  WebHCatServiceModelGenerator.ROLE_TYPE : null);
 
     List<String> urls = cluster.getServiceURLs("WEBHCAT");
     assertNotNull(urls);
-    assertEquals(1, urls.size());
-    assertEquals(expectedURL, urls.get(0));
+    final boolean expectExclusion = excludeHiveService || excludeWebHCatRole;
+    assertEquals(expectExclusion ? 0 : 1, urls.size());
+    if (!expectExclusion) {
+      assertEquals(expectedURL, urls.get(0));
+    }
   }
 
   @Test
@@ -1169,13 +1195,26 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   private ServiceDiscovery.Cluster doTestDiscovery(final String hostName,
+      final String serviceName,
+      final String serviceType,
+      final String roleName,
+      final String roleType,
+      final Map<String, String> serviceProperties,
+      final Map<String, String> roleProperties,
+      boolean testRetry) {
+    return doTestDiscovery(hostName, serviceName, serviceType, roleName, roleType, serviceProperties, roleProperties, testRetry, null, null);
+  }
+
+  private ServiceDiscovery.Cluster doTestDiscovery(final String hostName,
                                                    final String serviceName,
                                                    final String serviceType,
                                                    final String roleName,
                                                    final String roleType,
                                                    final Map<String, String> serviceProperties,
                                                    final Map<String, String> roleProperties,
-                                                   boolean testRetry) {
+                                                   boolean testRetry,
+                                                   String excludedServiceType,
+                                                   String excludedRoleType) {
     final String clusterName = "cluster-1";
 
     GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
@@ -1185,6 +1224,16 @@ public class ClouderaManagerServiceDiscoveryTest {
     }
     EasyMock.expect(gwConf.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gwConf.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    if (excludedServiceType == null) {
+      EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Collections.emptySet()).anyTimes();
+    } else {
+      EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Arrays.asList(excludedServiceType)).anyTimes();
+    }
+    if (excludedRoleType == null) {
+      EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedRoleTypes()).andReturn(Collections.emptySet()).anyTimes();
+    } else {
+      EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedRoleTypes()).andReturn(Arrays.asList(excludedRoleType)).anyTimes();
+    }
     EasyMock.replay(gwConf);
 
     ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(clusterName);
