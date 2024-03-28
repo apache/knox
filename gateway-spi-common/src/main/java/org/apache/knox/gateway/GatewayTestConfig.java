@@ -872,6 +872,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Collection<String> getClouderaManagerServiceDiscoveryExcludedServiceTypes() {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public Collection<String> getClouderaManagerServiceDiscoveryExcludedRoleTypes() {
+    return Collections.emptySet();
+  }
+
+  @Override
   public boolean isServerManagedTokenStateEnabled() {
     return false;
   }
