@@ -784,15 +784,15 @@ public class TokenResource {
 
   protected Response getAuthenticationToken() {
     Response response = enforceClientCertIfRequired();
-    if (response != null) return response;
+    if (response != null) { return response; }
 
     response = onlyAllowGroupsToBeAddedWhenEnabled();
-    if (response != null) return response;
+    if (response != null) { return response; }
 
     UserContext context = buildUserContext(request);
 
     response = enforceTokenLimitsAsRequired(context.userName);
-    if (response != null) return response;
+    if (response != null) { return response; }
 
     TokenResponse resp = getTokenResponse(context);
     return resp.build();
@@ -825,9 +825,9 @@ public class TokenResource {
   }
 
   protected static class TokenResponse {
-    public ResponseMap responseMap = null;
-    public String responseStr = null;
-    public Response.ResponseBuilder responseBuilder = null;
+    public ResponseMap responseMap;
+    public String responseStr;
+    public Response.ResponseBuilder responseBuilder;
 
     public TokenResponse(ResponseMap respMap, String resp, Response.ResponseBuilder builder) {
       responseMap = respMap;
@@ -1024,10 +1024,10 @@ public class TokenResource {
   protected static class ResponseMap {
     public final String accessToken;
     public final String tokenId;
-    public final HashMap<String, Object> map;
+    public final Map<String, Object> map;
     public final String passcode;
 
-    public ResponseMap(String accessToken, String tokenId, HashMap<String, Object> map, String passcode) {
+    public ResponseMap(String accessToken, String tokenId, Map<String, Object> map, String passcode) {
       this.accessToken = accessToken;
       this.tokenId = tokenId;
       this.map = map;

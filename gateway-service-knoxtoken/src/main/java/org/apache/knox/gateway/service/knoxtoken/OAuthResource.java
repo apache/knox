@@ -59,16 +59,17 @@ public class OAuthResource extends TokenResource {
 
     @Override
     public Response getAuthenticationToken() {
+
         Response response = enforceClientCertIfRequired();
-        if (response != null) return response;
+        if (response != null) { return response; }
 
         response = onlyAllowGroupsToBeAddedWhenEnabled();
-        if (response != null) return response;
+        if (response != null) { return response; }
 
         UserContext context = buildUserContext(request);
 
         response = enforceTokenLimitsAsRequired(context.userName);
-        if (response != null) return response;
+        if (response != null) { return response; }
 
         TokenResponse resp = getTokenResponse(context);
         // if the responseMap isn't null then the knoxtoken request was successful
@@ -77,16 +78,14 @@ public class OAuthResource extends TokenResource {
         if (resp.responseMap != null) {
             // let's get the subset of the KnoxToken Response needed for OAuth
             String accessToken = resp.responseMap.accessToken;
-            String tokenId = resp.responseMap.tokenId;
             String passcode = resp.responseMap.passcode;
             long expires = (long) resp.responseMap.map.get(EXPIRES_IN);
             String tokenType = (String) resp.responseMap.map.get(TOKEN_TYPE);
-            final boolean managedToken = super.tokenStateService != null;
 
             // build and return the expected OAuth response
             final HashMap<String, Object> map = new HashMap<>();
             map.put(ACCESS_TOKEN, accessToken);
-            map.put(TOKEN_TYPE, BEARER);
+            map.put(TOKEN_TYPE, tokenType);
             map.put(EXPIRES_IN, expires);
             map.put(ISSUED_TOKEN_TYPE, ISSUED_TOKEN_TYPE_ACCESS_TOKEN_VALUE);
             // let's use the passcode as the refresh token
