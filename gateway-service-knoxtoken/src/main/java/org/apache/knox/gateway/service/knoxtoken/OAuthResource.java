@@ -71,7 +71,7 @@ public class OAuthResource extends TokenResource {
         response = enforceTokenLimitsAsRequired(context.userName);
         if (response != null) { return response; }
 
-        TokenResponse resp = getTokenResponse(context);
+        TokenResponseContext resp = getTokenResponse(context);
         // if the responseMap isn't null then the knoxtoken request was successful
         // if not then there may have been an error and the underlying response
         // builder will communicate those details

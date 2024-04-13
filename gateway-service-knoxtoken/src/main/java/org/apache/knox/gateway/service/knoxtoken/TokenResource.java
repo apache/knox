@@ -184,9 +184,8 @@ public class TokenResource {
   private boolean includeGroupsInTokenAllowed;
   private String tokenIssuer;
 
-  enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR}
+  enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
 
-  ;
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
 
   private List<String> allowedRenewers;
@@ -794,12 +793,12 @@ public class TokenResource {
     response = enforceTokenLimitsAsRequired(context.userName);
     if (response != null) { return response; }
 
-    TokenResponse resp = getTokenResponse(context);
+    TokenResponseContext resp = getTokenResponse(context);
     return resp.build();
   }
 
-  protected TokenResponse getTokenResponse(UserContext context) {
-    TokenResponse response = null;
+  protected TokenResponseContext getTokenResponse(UserContext context) {
+    TokenResponseContext response = null;
     long expires = getExpiry();
     setupPublicCertPEM();
     String jku = getJku();
@@ -811,25 +810,25 @@ public class TokenResource {
         String jsonResponse = JsonUtils.renderAsJsonString(result.map);
         persistTokenDetails(result, expires, context.userName, context.createdBy);
 
-        response = new TokenResponse(result, jsonResponse, Response.ok());
+        response = new TokenResponseContext(result, jsonResponse, Response.ok());
       } else {
-        response = new TokenResponse(null, null, Response.serverError());
+        response = new TokenResponseContext(null, null, Response.serverError());
       }
     } catch (TokenServiceException e) {
       log.unableToIssueToken(e);
-      response = new TokenResponse(null
+      response = new TokenResponseContext(null
               , "{ \"Unable to acquire token.\" }"
               , Response.serverError());
     }
     return response;
   }
 
-  protected static class TokenResponse {
+  protected static class TokenResponseContext {
     public ResponseMap responseMap;
     public String responseStr;
     public Response.ResponseBuilder responseBuilder;
 
-    public TokenResponse(ResponseMap respMap, String resp, Response.ResponseBuilder builder) {
+    public TokenResponseContext(ResponseMap respMap, String resp, Response.ResponseBuilder builder) {
       responseMap = respMap;
       responseStr = resp;
       responseBuilder = builder;
@@ -839,8 +838,7 @@ public class TokenResource {
       Response response = null;
       if (responseStr != null) {
         response = responseBuilder.entity(responseStr).build();
-      }
-      else {
+      } else {
         response = responseBuilder.build();
       }
       return response;
@@ -998,7 +996,7 @@ public class TokenResource {
 
     log.issuedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
 
-    final HashMap<String, Object> map = new HashMap<>();
+    final Map<String, Object> map = new HashMap<>();
     map.put(ACCESS_TOKEN, accessToken);
     map.put(TOKEN_ID, tokenId);
     map.put(MANAGED_TOKEN, String.valueOf(managedToken));
@@ -1111,8 +1109,7 @@ public class TokenResource {
       if (tokenTTL == -1) {
         return -1;
       }
-    }
-    else {
+    } else {
       try {
         long lifetime = Duration.parse(lifetimeStr).toMillis();
         if (tokenTTL == -1) {
