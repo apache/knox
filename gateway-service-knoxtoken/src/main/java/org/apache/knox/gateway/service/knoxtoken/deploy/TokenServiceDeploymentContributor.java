@@ -40,6 +40,6 @@ public class TokenServiceDeploymentContributor extends JerseyServiceDeploymentCo
 
   @Override
   protected String[] getPatterns() {
-    return new String[]{ "knoxtoken/api/**?**" };
+    return new String[]{ "knoxtoken/api/**?**", "/oauth/v1/token/", "/**/v1/oauth/tokens/" };
   }
 }

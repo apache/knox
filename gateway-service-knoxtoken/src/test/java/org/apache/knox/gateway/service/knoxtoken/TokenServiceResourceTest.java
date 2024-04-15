@@ -1346,6 +1346,45 @@ public class TokenServiceResourceTest {
     }
   }
 
+  @Test
+  public void testOAuthTokenResponse() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    OAuthResource or = new OAuthResource();
+    or.request = request;
+    or.context = context;
+    or.init();
+
+    Response response = or.doPost();
+    assertEquals(200, response.getStatus());
+
+    String accessToken = getTagValue(response.getEntity().toString(), TokenResource.ACCESS_TOKEN);
+    assertNotNull(accessToken);
+    String expiresIn = getTagValue(response.getEntity().toString(), TokenResource.EXPIRES_IN);
+    // default value for TTL for KNOXTOKEN is 30 secs - OAuth response has this in secs
+    assertEquals("30", expiresIn);
+    // there is no passcode or token_id in OAuth responses
+    String passcode = getTagValue(response.getEntity().toString(), TokenResource.PASSCODE);
+    assertNull(passcode);
+    String tokenId = getTagValue(response.getEntity().toString(), TokenResource.TOKEN_ID);
+    assertNull(tokenId);
+    String tokenType = getTagValue(response.getEntity().toString(), TokenResource.TOKEN_TYPE);
+    assertEquals(TokenResource.BEARER, tokenType);
+    // oauth requires issued token type so we are hardcoding this
+    String issuedTokenType = getTagValue(response.getEntity().toString(), OAuthResource.ISSUED_TOKEN_TYPE);
+    assertEquals(OAuthResource.ISSUED_TOKEN_TYPE_ACCESS_TOKEN_VALUE, issuedTokenType);
+    // oauth credentials flow sometimes requires a refresh token even though they can just get a
+    // new access_token with the client_id and client_secret. Since this token service can't actually
+    // assume the credentials flow is being used even though it is most likely, we will include the
+    // passcode as the refresh token
+    String refreshToken = getTagValue(response.getEntity().toString(), OAuthResource.REFRESH_TOKEN);
+    assertNotNull(refreshToken);
+
+    Map<String, Object> payload = parseJSONResponse(JWTToken.parseToken(accessToken).getPayload());
+    assertFalse(payload.containsKey(KNOX_GROUPS_CLAIM));
+  }
+
   /**
    *
    * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
@@ -1621,7 +1660,7 @@ public class TokenServiceResourceTest {
     if (!token.contains(tagName)) {
       return null;
     }
-    String searchString = tagName + "\":";
+    String searchString = "\"" + tagName + "\":";
     String value = token.substring(token.indexOf(searchString) + searchString.length());
     if (value.startsWith("\"")) {
       value = value.substring(1);
