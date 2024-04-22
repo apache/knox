@@ -70,6 +70,10 @@ public interface SimpleDescriptorMessages {
     void errorComparingGeneratedTopology(String topologyName,
                                          @StackTrace( level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR,
+        text = "Faulty generated content: {0}" )
+    void faultyGeneratedContent(String generatedContent);
+
     @Message(level = MessageLevel.INFO,
             text = "Persisting the generated {0} topology because it either does not exist or it has changed." )
     void persistingGeneratedTopology(String topologyName);
