@@ -24,12 +24,18 @@ import static org.junit.Assert.assertEquals;
 import java.util.Date;
 import java.util.Properties;
 
+import javax.servlet.FilterConfig;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.easymock.EasyMock;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -96,6 +102,61 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   @Test
   public void testCookieAuthSupportCustomCookieName() throws Exception {
     testCookieAuthSupport(true, "customCookie");
+  }
+
+  @Test
+  public void testVerifyPasscodeTokens() throws Exception {
+    testVerifyPasscodeTokens(true);
+  }
+
+  @Test
+  public void testVerifyPasscodeTokensTssDisabled() throws Exception {
+    testVerifyPasscodeTokens(false);
+  }
+
+  private void testVerifyPasscodeTokens(boolean tssEnabled) throws Exception {
+    final String topologyName = "jwt-topology";
+    final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650a";
+    final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f95";
+    final String passcodeToken = "UGFzc2NvZGU6VGtkVmQxbDZWVEJQUjBsMFRtcFZNazlETURCTlJGbDRURmRGZWxwSFRYUk9ha2sxVFVSbmQwOUVZekpPVkVKb09qcE5SRVY2VDBkR2FGcFhVWFJaTWtWNVdWTXdNRTR5V1hoTVZHaHNXa1JuZEZwVVFtcE5lbXN6VGxSck1scHFhekU9";
+
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tokenStateService.getTokenExpiration(tokenId)).andReturn(Long.MAX_VALUE).anyTimes();
+
+    final TokenMetadata tokenMetadata = EasyMock.createNiceMock(TokenMetadata.class);
+    EasyMock.expect(tokenMetadata.isEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(tokenMetadata.getPasscode()).andReturn(passcodeToken).anyTimes();
+    EasyMock.expect(tokenStateService.getTokenMetadata(EasyMock.anyString())).andReturn(tokenMetadata).anyTimes();
+
+    final Properties filterConfigProps = getProperties();
+    filterConfigProps.put(TokenStateService.CONFIG_SERVER_MANAGED, Boolean.toString(tssEnabled));
+    filterConfigProps.put(TestFilterConfig.TOPOLOGY_NAME_PROP, topologyName);
+    final FilterConfig filterConfig = new TestFilterConfig(filterConfigProps, tokenStateService);
+    handler.init(filterConfig);
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getHeader("Authorization")).andReturn("Basic " + passcodeToken);
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    if (!tssEnabled) {
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, AbstractJWTFilter.TOKEN_STATE_SERVICE_DISABLED_ERROR);
+      EasyMock.expectLastCall().once();
+    }
+    EasyMock.replay(tokenStateService, tokenMetadata, request, response);
+
+    SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    EasyMock.verify(response);
+    if (tssEnabled) {
+      Assert.assertTrue(chain.doFilterCalled);
+      Assert.assertNotNull(chain.subject);
+    } else {
+      Assert.assertFalse(chain.doFilterCalled);
+    }
   }
 
   private void testCookieAuthSupport(boolean validCookie) throws Exception {

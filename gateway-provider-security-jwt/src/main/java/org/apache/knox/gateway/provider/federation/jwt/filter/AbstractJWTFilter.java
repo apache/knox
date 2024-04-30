@@ -79,6 +79,9 @@ import com.nimbusds.jose.JWSHeader;
 import org.apache.knox.gateway.util.Tokens;
 
 public abstract class AbstractJWTFilter implements Filter {
+
+  public static final String TOKEN_STATE_SERVICE_DISABLED_ERROR = "Error in token provider config: passcode use with knox.token.exp.server-managed set to false.";
+
   /**
    * If specified, this configuration property refers to a value which the issuer of a received
    * token must match. Otherwise, the default value "KNOXSSO" is used
@@ -433,10 +436,10 @@ public abstract class AbstractJWTFilter implements Filter {
                                   final String passcode)
           throws IOException, ServletException {
 
+    final String displayableTokenId = tokenId == null ? "N/A" : Tokens.getTokenIDDisplayText(tokenId);
     if (tokenStateService != null) {
       try {
         if (tokenId != null) {
-          final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
           if (tokenIsStillValid(tokenId)) {
             final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
             if (isTokenEnabled(tokenMetadata)) {
@@ -473,6 +476,9 @@ public abstract class AbstractJWTFilter implements Filter {
         log.unableToVerifyExpiration(e);
         handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
       }
+    } else {
+      log.unableToVerifyPasscodeToken(displayableTokenId);
+      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, TOKEN_STATE_SERVICE_DISABLED_ERROR);
     }
 
     return false;

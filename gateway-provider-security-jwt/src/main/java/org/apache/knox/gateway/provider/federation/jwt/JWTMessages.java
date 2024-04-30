@@ -55,6 +55,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Unable to verify token expiration: {0}" )
   void unableToVerifyExpiration(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
+  @Message( level = MessageLevel.WARN, text = "Unable to verify passcode token ({0}) due to missing or incorrect token state service configuration.")
+  void unableToVerifyPasscodeToken(String tokenId);
+
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token: {0}" )
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
