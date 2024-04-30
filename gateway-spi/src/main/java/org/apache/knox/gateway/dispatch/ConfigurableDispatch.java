@@ -22,20 +22,29 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.util.StringUtils;
 
+import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.HashMap;
+import java.util.Optional;
+import java.util.List;
+import java.util.Collection;
+import java.util.Locale;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +58,21 @@ public class ConfigurableDispatch extends DefaultDispatch {
   private Map<String, String> requestAppendHeaders = Collections.emptyMap();
   private Set<String> responseExcludeSetCookieHeaderDirectives = super.getOutboundResponseExcludedSetCookieHeaderDirectives();
   private Boolean removeUrlEncoding = false;
+
+  private boolean shouldIncludePrincipalAndGroups;
+  private String actorIdHeaderName = DEFAULT_AUTH_ACTOR_ID_HEADER_NAME;
+  private String actorGroupsHeaderPrefix = DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX;
+  private String groupFilterPattern = DEFAULT_GROUP_FILTER_PATTERN;
+
+  static final String DEFAULT_AUTH_ACTOR_ID_HEADER_NAME = "X-Knox-Actor-ID";
+  static final String DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX = "X-Knox-Actor-Groups";
+  static final String DEFAULT_GROUP_FILTER_PATTERN = ".*";
+  static final String DEFAULT_ARE_USERS_GROUPS_HEADER_INCLUDED = "false";
+
+  protected static final int MAX_HEADER_LENGTH = 1000;
+  protected static final String ACTOR_GROUPS_HEADER_FORMAT = "%s-%d";
+  protected Pattern groupPattern = Pattern.compile(DEFAULT_GROUP_FILTER_PATTERN);
+
 
   private Set<String> convertCommaDelimitedHeadersToSet(String headers) {
     return headers == null ?  Collections.emptySet(): new HashSet<>(Arrays.asList(headers.split("\\s*,\\s*")));
@@ -123,6 +147,27 @@ public class ConfigurableDispatch extends DefaultDispatch {
     this.removeUrlEncoding = Boolean.parseBoolean(removeUrlEncoding);
   }
 
+  @Configure
+  public void setShouldIncludePrincipalAndGroups(@Default(DEFAULT_ARE_USERS_GROUPS_HEADER_INCLUDED) boolean shouldIncludePrincipalAndGroups) {
+    this.shouldIncludePrincipalAndGroups = shouldIncludePrincipalAndGroups;
+  }
+
+  @Configure
+  public void setActorIdHeaderName(@Default(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME) String actorIdHeaderName) {
+    this.actorIdHeaderName = actorIdHeaderName;
+  }
+
+  @Configure
+  public void setActorGroupsHeaderPrefix(@Default(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX) String actorGroupsHeaderPrefix) {
+    this.actorGroupsHeaderPrefix = actorGroupsHeaderPrefix;
+  }
+
+  @Configure
+  public void setGroupFilterPattern(@Default(DEFAULT_GROUP_FILTER_PATTERN) String groupFilterPattern) {
+    this.groupFilterPattern = groupFilterPattern;
+    groupPattern = Pattern.compile(this.groupFilterPattern);
+  }
+
   @Override
   public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
                                       HttpServletRequest inboundRequest) {
@@ -133,6 +178,61 @@ public class ConfigurableDispatch extends DefaultDispatch {
     if(MapUtils.isNotEmpty(extraHeaders)){
       extraHeaders.forEach(outboundRequest::addHeader);
     }
+
+    /* If we need to add user and groups to outbound request */
+    if(shouldIncludePrincipalAndGroups) {
+      Map<String, String> groups = addPrincipalAndGroups();
+      if(MapUtils.isNotEmpty(groups)){
+        groups.forEach(outboundRequest::addHeader);
+      }
+    }
+  }
+
+  private Map<String, String> addPrincipalAndGroups() {
+    final Map<String, String> headers = new ConcurrentHashMap();
+    final Subject subject = SubjectUtils.getCurrentSubject();
+
+    final String primaryPrincipalName = subject == null ? null : SubjectUtils.getPrimaryPrincipalName(subject);
+    if (primaryPrincipalName == null) {
+      LOG.noPrincipalFound();
+      headers.put(actorIdHeaderName, "");
+    } else {
+      headers.put(actorIdHeaderName, primaryPrincipalName);
+    }
+
+    // Populate actor groups headers
+    final Set<String> matchingGroupNames = subject == null ? Collections.emptySet()
+            : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupPattern.matcher(group.getName()).matches()).map(group -> group.getName())
+            .collect(Collectors.toSet());
+    if (!matchingGroupNames.isEmpty()) {
+      final List<String> groupStrings = getGroupStrings(matchingGroupNames);
+      for (int i = 0; i < groupStrings.size(); i++) {
+        headers.put(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, actorGroupsHeaderPrefix, i + 1), groupStrings.get(i));
+      }
+    }
+    return headers;
+  }
+
+  private List<String> getGroupStrings(final Collection<String> groupNames) {
+    if (groupNames.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<String> groupStrings = new ArrayList<>();
+    StringBuilder sb = new StringBuilder();
+    for (String groupName : groupNames) {
+      if (sb.length() + groupName.length() > MAX_HEADER_LENGTH) {
+        groupStrings.add(sb.toString());
+        sb = new StringBuilder();
+      }
+      if (sb.length() > 0) {
+        sb.append(',');
+      }
+      sb.append(groupName);
+    }
+    if (sb.length() > 0) {
+      groupStrings.add(sb.toString());
+    }
+    return groupStrings;
   }
 
   @Override
@@ -180,4 +280,5 @@ public class ConfigurableDispatch extends DefaultDispatch {
 
     return super.getDispatchUrl(request);
   }
+
 }
