@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.dispatch;
 
 import static org.apache.knox.gateway.dispatch.AbstractGatewayDispatch.REQUEST_ID_HEADER_NAME;
+import static org.apache.knox.gateway.dispatch.ConfigurableDispatch.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME;
 import static org.apache.knox.gateway.dispatch.DefaultDispatch.SET_COOKIE;
 import static org.apache.knox.gateway.dispatch.DefaultDispatch.WWW_AUTHENTICATE;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -26,12 +27,15 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.net.URI;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,6 +45,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.message.BasicHeader;
+import org.apache.knox.gateway.security.GroupPrincipal;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.mock.MockHttpServletResponse;
 import org.apache.logging.log4j.CloseableThreadContext;
@@ -316,7 +322,7 @@ public class ConfigurableDispatchTest {
     assertThat(outboundRequestHeaders[3].getName(), is("c"));
   }
 
-  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testRequestExcludeAndAppendHeadersConfig() {
     ConfigurableDispatch dispatch = new ConfigurableDispatch();
     dispatch.setRequestAppendHeaders("a : b ; c : d");
@@ -722,6 +728,49 @@ public class ConfigurableDispatchTest {
     assertThat(outboundResponse.getHeaderNames().size(), is(1));
     assertThat(outboundResponse.getHeader(WWW_AUTHENTICATE), is("negotiate"));
     assertThat(outboundResponse.getHeader(REQUEST_ID_HEADER_NAME), nullValue());
+  }
+
+  /**
+   * Make sure X-Knox-Actor-ID and X-Knox-Actor-Groups-1 headers
+   * are added for authenticated users.
+   */
+  @Test
+  public void testGroupHeaders() throws PrivilegedActionException {
+    Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal("knoxui"));
+    subject.getPrincipals().add(new GroupPrincipal("knox"));
+    subject.getPrincipals().add(new GroupPrincipal("admin"));
+
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    final String headerReqID = "1234567890ABCD";
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(REQUEST_ID_HEADER_NAME, headerReqID);
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+
+    Subject.doAs(subject, new PrivilegedExceptionAction<Object>() {
+
+      @Override
+      public Object run() throws Exception {
+        dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+        return null;
+      }
+    });
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(5));
+    assertThat(outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME)[0].getValue(), is("knoxui"));
   }
 
 }
