@@ -48,7 +48,7 @@ public class VirtualGroupMapper {
         for (Map.Entry<String, AbstractSyntaxTree> each : virtualGroupToPredicateMap.entrySet()) {
             String virtualGroupName = each.getKey();
             // check for logical virtual groups - names to be dynamically created
-            virtualGroupName = resolveLogicalGroupName(username, groups, virtualGroupName);
+            virtualGroupName = resolveLogicalGroupName(username, virtualGroupName);
 
             AbstractSyntaxTree predicate = each.getValue();
             if (evalPredicate(virtualGroupName, username, groups, predicate, request)) {
@@ -60,7 +60,7 @@ public class VirtualGroupMapper {
         return virtualGroups;
     }
 
-    private String resolveLogicalGroupName(String username, Set<String> groups, String virtualGroupName) {
+    private String resolveLogicalGroupName(String username, String virtualGroupName) {
         if (PRIMARY_GROUP.equalsIgnoreCase(virtualGroupName)) {
             virtualGroupName = username;
         }
