@@ -268,6 +268,17 @@ public class InterpreterTest {
         assertFalse((boolean)eval("(empty groups)"));
     }
 
+    /**
+     * Adding the ability to create a primary group
+     * (group with same name as username) when it is missing
+     */
+    @Test
+    public void testPrimaryGroup() {
+        interpreter.addConstant("username", "user1");
+        interpreter.addConstant("groups", singletonList("grp1"));
+        assertTrue((boolean)eval("(not (member username))"));
+    }
+
     @Test
     public void testLowerUpper() {
         assertEquals("apple", eval("(lowercase 'APPLE')"));
