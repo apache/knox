@@ -17,19 +17,68 @@
 package org.apache.knox.gateway.provider.federation;
 
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.TokenType;
+import org.apache.knox.test.mock.MockServletInputStream;
 import org.easymock.EasyMock;
 import org.junit.Test;
-
-import javax.servlet.http.HttpServletRequest;
 
 
 public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBasicCredsFederationFilterTest {
     @Override
     protected void setTokenOnRequest(HttpServletRequest request, String authUsername, String authPassword) {
         EasyMock.expect((Object)request.getHeader("Authorization")).andReturn("");
-        EasyMock.expect((Object)request.getParameter("grant_type")).andReturn("client_credentials");
-        EasyMock.expect((Object)request.getParameter("client_id")).andReturn(authUsername);
-        EasyMock.expect((Object)request.getParameter("client_secret")).andReturn(authPassword);
+        try {
+          EasyMock.expect(request.getInputStream()).andAnswer(() -> produceServletInputStream(authPassword)).atLeastOnce();
+        } catch (IOException e) {
+          throw new RuntimeException("Error while setting up expectation for getting client credentials from request body", e);
+        }
+    }
+
+    private ServletInputStream produceServletInputStream(String clientSecret) {
+      final String requestBody = JWTFederationFilter.GRANT_TYPE + "=" + JWTFederationFilter.CLIENT_CREDENTIALS + "&" + JWTFederationFilter.CLIENT_SECRET + "="
+          + clientSecret;
+      final InputStream inputStream = IOUtils.toInputStream(requestBody, StandardCharsets.UTF_8);
+      return new MockServletInputStream(inputStream);
+    }
+
+    @Test
+    public void testGetWireTokenUsingClientCredentialsFlow() throws Exception {
+      final String clientSecret = "sup3r5ecreT!";
+      final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getInputStream()).andAnswer(() -> produceServletInputStream(clientSecret)).atLeastOnce();
+      EasyMock.replay(request);
+
+      handler.init(new TestFilterConfig(getProperties()));
+      final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+      EasyMock.verify(request);
+
+      assertNotNull(wireToken);
+      assertEquals(TokenType.Passcode, wireToken.getLeft());
+      assertEquals(clientSecret, wireToken.getRight());
+    }
+
+    @Test(expected = SecurityException.class)
+    public void shouldFailIfClientSecretIsPassedInQueryParams() throws Exception {
+      final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect((Object)request.getParameter("client_secret")).andReturn("sup3r5ecreT!");
+      EasyMock.replay(request);
+
+      handler.init(new TestFilterConfig(getProperties()));
+      ((TestJWTFederationFilter) handler).getWireToken(request);
     }
 
     @Override

@@ -20,7 +20,11 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
@@ -50,6 +54,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
+import org.apache.knox.gateway.util.RequestBodyUtils;
 
 import com.nimbusds.jose.JOSEObjectType;
 
@@ -173,7 +178,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
     }
 
-    final Pair<TokenType, String> wireToken = getWireToken(request);
+    Pair<TokenType, String> wireToken = null;
+    try {
+      wireToken = getWireToken(request);
+    } catch (SecurityException e) {
+      handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_BAD_REQUEST, null);
+      throw e;
+    }
 
     if (wireToken != null && wireToken.getLeft() != null && wireToken.getRight() != null) {
       TokenType tokenType  = wireToken.getLeft();
@@ -224,7 +235,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     return new String(Base64.getDecoder().decode(toBeDecoded.getBytes(UTF_8)), UTF_8);
   }
 
-  public Pair<TokenType, String> getWireToken(final ServletRequest request) {
+  public Pair<TokenType, String> getWireToken(final ServletRequest request) throws IOException {
       Pair<TokenType, String> parsed = null;
       String token = null;
       final String header = ((HttpServletRequest)request).getHeader("Authorization");
@@ -253,12 +264,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
 
       return parsed;
-  }
+    }
 
-    private Pair<TokenType, String> parseFromClientCredentialsFlow(ServletRequest request) {
-      Pair<TokenType, String> parsed = null;
-      String token = null;
-
+    private Pair<TokenType, String> parseFromClientCredentialsFlow(ServletRequest request) throws IOException {
       /*
         POST /{tenant}/oauth2/v2.0/token HTTP/1.1
         Host: login.microsoftonline.com:443
@@ -270,15 +278,41 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         &grant_type=client_credentials
        */
 
-      String grantType = request.getParameter(GRANT_TYPE);
-      if (CLIENT_CREDENTIALS.equals(grantType)) {
-        // this is indeed a client credentials flow client_id and
-        // client_secret are expected now the client_id will be in
-        // the token as the token_id so we will get that later
-        token = request.getParameter(CLIENT_SECRET);
-        parsed = Pair.of(TokenType.Passcode, token);
+      if (request.getParameter(CLIENT_SECRET) != null) {
+        throw new SecurityException();
       }
-      return parsed;
+      return getClientCredentialsFromRequestBody(request);
+    }
+
+    private Pair<TokenType, String> getClientCredentialsFromRequestBody(ServletRequest request) throws IOException {
+      try {
+        final String requestBodyString = getRequestBodyString(request);
+        final String grantType = RequestBodyUtils.getRequestBodyParameter(requestBodyString, GRANT_TYPE);
+        if (CLIENT_CREDENTIALS.equals(grantType)) {
+          // this is indeed a client credentials flow client_id and
+          // client_secret are expected now the client_id will be in
+          // the token as the token_id so we will get that later
+          final String clientSecret = RequestBodyUtils.getRequestBodyParameter(requestBodyString, CLIENT_SECRET);
+          return Pair.of(TokenType.Passcode, clientSecret);
+        }
+      } catch (IOException e) {
+        log.errorFetchingClientSecret(e.getMessage(), e);
+        throw e;
+      }
+      return null;
+    }
+
+    private String getRequestBodyString(ServletRequest request) throws IOException {
+      if (request.getInputStream() != null) {
+        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8));
+        final StringBuilder requestBodyBuilder = new StringBuilder();
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+          requestBodyBuilder.append(line);
+        }
+        return URLDecoder.decode(requestBodyBuilder.toString(), StandardCharsets.UTF_8.name());
+      }
+      return null;
     }
 
     private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header) {
