@@ -82,12 +82,10 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Unable to derive authentication provider URL: {0}" )
   void failedToDeriveAuthenticationProviderUrl(@StackTrace( level = MessageLevel.ERROR) Exception e);
 
-  @Message( level = MessageLevel.ERROR,
-            text = "The configuration value ({0}) for maximum token verification cache is invalid; Using the default value." )
+  @Message( level = MessageLevel.ERROR, text = "The configuration value ({0}) for maximum token verification cache is invalid; Using the default value." )
   void invalidVerificationCacheMaxConfiguration(String value);
 
-  @Message( level = MessageLevel.ERROR,
-            text = "Missing token passcode." )
+  @Message( level = MessageLevel.ERROR, text = "Missing token passcode." )
   void missingTokenPasscode();
 
   @Message( level = MessageLevel.INFO, text = "Initialized token signature verification cache for the {0} topology." )
@@ -113,5 +111,8 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Idle timeout has been configured to {0} seconds in {1}" )
   void configuredIdleTimeout(long idleTimeout, String topology);
+
+  @Message(level = MessageLevel.ERROR, text = "Error while fetching grant type and client secret from the request: {0}")
+  void errorFetchingClientSecret(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 }
