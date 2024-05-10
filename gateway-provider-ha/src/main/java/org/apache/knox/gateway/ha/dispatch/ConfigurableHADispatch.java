@@ -78,6 +78,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
   private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
   protected boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
   private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
+  private boolean useRoutesForStickyCookiePath = HaServiceConfigConstants.DEFAULT_USE_ROUTES_FOR_STICKY_COOKIE_PATH;
   private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
 
   /**
@@ -109,6 +110,7 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       if(stickySessionsEnabled) {
         stickySessionCookieName = serviceConfig.getStickySessionCookieName();
       }
+      useRoutesForStickyCookiePath = serviceConfig.isUseRoutesForStickyCookiePath();
 
       if(StringUtils.isNotBlank(serviceConfig.getStickySessionDisabledUserAgents())) {
         disableLoadBalancingForUserAgents = Arrays.asList(serviceConfig.getStickySessionDisabledUserAgents()
@@ -121,9 +123,16 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
     /* setup the active URL for non-LB case */
     activeURL.set(haProvider.getActiveURL(getServiceRole()));
 
-    // Suffix the cookie name by the service to make it unique
-    // The cookie path is NOT unique since Knox is stripping the service name.
-    stickySessionCookieName = stickySessionCookieName + '-' + getServiceRole();
+    // TODO I'm not sure that appending the role to the cookie name (or the alternative of setting the correct cookie path)
+    // is really necessary.
+    // Knox sets a single session cookie for a topology, and I don't see how that would be used for multiple services.
+    // I think only a seriously broken client would mix up the sticky cookies, and even then
+    // Knox would drop any sticky cookie that does not point to a proper backend.
+    if (!useRoutesForStickyCookiePath) {
+      // Suffix the cookie name by the service to make it unique
+      // The cookie path is NOT unique since Knox is stripping the service name.
+      stickySessionCookieName = stickySessionCookieName + '-' + getServiceRole();
+    }
   }
 
   private void setupUrlHashLookup() {
@@ -239,6 +248,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
       if (loadBalancingEnabled && stickySessionsEnabled && inboundRequest.getCookies() != null) {
           for (Cookie cookie : inboundRequest.getCookies()) {
               if (stickySessionCookieName.equals(cookie.getName())) {
+                  // We don't have to check for the cookie Path, because the check below already
+                  // filters out any cookies for other services
                   String backendURLHash = cookie.getValue();
                   String backendURL = hashToUrlLookup.get(backendURLHash);
                   // Make sure that the url provided is actually a valid backend url
@@ -286,7 +297,11 @@ public class ConfigurableHADispatch extends ConfigurableDispatch {
               final String cookieValue = urlToHashLookup.get(urls.get(0));
 
               Cookie stickySessionCookie = new Cookie(stickySessionCookieName, cookieValue);
-              stickySessionCookie.setPath(inboundRequest.getContextPath());
+              if (useRoutesForStickyCookiePath) {
+                stickySessionCookie.setPath(inboundRequest.getContextPath() + getStickyCookiePath());
+              } else {
+                stickySessionCookie.setPath(inboundRequest.getContextPath());
+              }
               stickySessionCookie.setMaxAge(-1);
               stickySessionCookie.setHttpOnly(true);
               GatewayConfig config = (GatewayConfig) inboundRequest

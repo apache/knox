@@ -48,6 +48,7 @@
         </provider>
     </gateway>
     <service>
+        <name>webhdfs</name>
         <role>WEBHDFS</role>
         <url>$WEBHDFS_URL</url>
     </service>

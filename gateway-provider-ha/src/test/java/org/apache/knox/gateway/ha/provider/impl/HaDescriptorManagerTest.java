@@ -105,14 +105,16 @@ public class HaDescriptorManagerTest {
   @Test
   public void testDescriptorStoringLoadBalancerConfig() throws IOException {
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", "true", "false", null, null,null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, "true", null, null, null,null));
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("abc", "true", "3", "5000", null, null, null, "true", "abc", null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("foo", "false", "42", "1000", "foo:2181,bar:2181", "hiveserver2", "true", "false", null, null,null, null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("bar", "true", "3", "5000", null, null, "true", null, null, null,null, null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("abc", "true", "3", "5000", null, null, null, "true", "abc", null,null, null, null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig("def", "true", "3", "5000", null, null, null, "true", "abc", null,null, null, "true"));
     StringWriter writer = new StringWriter();
     HaDescriptorManager.store(descriptor, writer);
     String xml = writer.toString();
     assertThat( the( xml ), hasXPath( "/ha//service[@enabled='false' and @failoverSleep='1000' and @maxFailoverAttempts='42' and @name='foo' and @zookeeperEnsemble='foo:2181,bar:2181' and @zookeeperNamespace='hiveserver2' and @enableLoadBalancing='true' and @enableStickySession='false']" ) );
     assertThat( the( xml ), hasXPath( "/ha//service[@enabled='true' and @failoverSleep='5000' and @maxFailoverAttempts='3' and @name='bar' and @enableLoadBalancing='true' and @enableStickySession='false']" ) );
     assertThat( the( xml ), hasXPath( "/ha//service[@enabled='true' and @failoverSleep='5000' and @maxFailoverAttempts='3' and @name='abc' and @enableLoadBalancing='false' and @enableStickySession='true' and @stickySessionCookieName='abc']" ) );
+    assertThat( the( xml ), hasXPath( "/ha//service[@enabled='true' and @failoverSleep='5000' and @maxFailoverAttempts='3' and @name='def' and @enableLoadBalancing='false' and @enableStickySession='true' and @stickySessionCookieName='abc' and @useRoutesForStickyCookiePath='true']" ) );
   }
 }

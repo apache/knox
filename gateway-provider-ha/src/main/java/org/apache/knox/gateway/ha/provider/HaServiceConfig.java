@@ -67,4 +67,8 @@ public interface HaServiceConfig {
 
   void setFailoverNonIdempotentRequestEnabled(boolean failoverNonIdempotentRequestEnabled);
 
+  boolean isUseRoutesForStickyCookiePath();
+
+  void setUseRoutesForStickyCookiePath(boolean useRoutesForStickyCookiePath);
+
 }

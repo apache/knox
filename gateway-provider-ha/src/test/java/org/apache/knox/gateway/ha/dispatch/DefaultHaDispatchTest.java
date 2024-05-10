@@ -460,7 +460,104 @@ public class DefaultHaDispatchTest {
   public void testLoadbalancingOnStickyOn() throws Exception {
     String serviceName = "OOZIE";
     HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null));
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null, null, null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://host1.valid" );
+    URI uri2 = new URI( "http://host2.valid" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+    FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+    ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+
+    EasyMock.expect(filterConfig.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(servletContext.getAttribute(HaServletContextListener.PROVIDER_ATTRIBUTE_NAME)).andReturn(provider).anyTimes();
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1  ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    /* backend request */
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri2.toString()) ).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
+
+    /* backend response */
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    final StatusLine statusLine = EasyMock.createNiceMock(StatusLine.class);
+    final HttpEntity entity = EasyMock.createNiceMock(HttpEntity.class);
+    final Header header = EasyMock.createNiceMock(Header.class);
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    final ByteArrayInputStream backendResponse = new ByteArrayInputStream("knox-backend".getBytes(
+        StandardCharsets.UTF_8));
+
+
+    EasyMock.expect(inboundResponse.getStatusLine()).andReturn(statusLine).anyTimes();
+    EasyMock.expect(statusLine.getStatusCode()).andReturn(HttpStatus.SC_OK).anyTimes();
+    EasyMock.expect(inboundResponse.getEntity()).andReturn(entity).anyTimes();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(new Header[0]).anyTimes();
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(entity.getContent()).andReturn(backendResponse).anyTimes();
+    EasyMock.expect(entity.getContentType()).andReturn(header).anyTimes();
+    EasyMock.expect(header.getElements()).andReturn(new HeaderElement[]{}).anyTimes();
+    EasyMock.expect(entity.getContentLength()).andReturn(4L).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            /* do nothing */
+          }
+        };
+      }
+    }).once();
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+
+    EasyMock.replay(filterConfig, servletContext, outboundRequest, inboundRequest,
+        outboundResponse, mockHttpClient, inboundResponse,
+        statusLine, entity, header, context, config);
+
+
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+    } catch (IOException e) {
+      //this is expected after the failover limit is reached
+    }
+    /* make sure the url is loadbalanced */
+    Assert.assertEquals(uri2.toString(), provider.getActiveURL(serviceName));
+  }
+
+  /**
+   * Test the case where loadbalancing is on and sticky session is on
+   * and we calculate the sticky path from the services routes
+   * Expected behavior: When loadbalancing is on and sticky session
+   * is on = urls should loadbalance with sticky session
+   * @throws Exception
+   */
+  @Test
+  public void testLoadbalancingOnStickyOnPathFromRoute() throws Exception {
+    String serviceName = "OOZIE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null,null, null, "true"));
     HaProvider provider = new DefaultHaProvider(descriptor);
     URI uri1 = new URI( "http://host1.valid" );
     URI uri2 = new URI( "http://host2.valid" );
@@ -557,7 +654,12 @@ public class DefaultHaDispatchTest {
    */
   @Test
   public void testFailoverStickyOnFallbackOff() throws Exception {
-    doTestFailoverStickyOnFallbackOff(false);
+    doTestFailoverStickyOnFallbackOff(false, false);
+  }
+
+  @Test
+  public void testFailoverStickyOnFallbackOffUseRoutesForStickyPath() throws Exception {
+    doTestFailoverStickyOnFallbackOff(false, true);
   }
 
   /**
@@ -571,7 +673,12 @@ public class DefaultHaDispatchTest {
    */
   @Test
   public void testFailoverStickyOnFallbackOff_SessionEstablished() throws Exception {
-    doTestFailoverStickyOnFallbackOff(true);
+    doTestFailoverStickyOnFallbackOff(true, false);
+  }
+
+  @Test
+  public void testFailoverStickyOnFallbackOffUseRoutesForStickyPath_SessionEstablished() throws Exception {
+    doTestFailoverStickyOnFallbackOff(true, true);
   }
 
   /**
@@ -599,9 +706,9 @@ public class DefaultHaDispatchTest {
     sessionCookieLast[0] = new Cookie("Test2", "Test2");
 
     /* Test when session cookie is first */
-    doTestFailoverStickyOnFallbackOff(true, sessionCookieFirst);
+    doTestFailoverStickyOnFallbackOff(true, sessionCookieFirst, false);
     /* Test when session cookie is last */
-    doTestFailoverStickyOnFallbackOff(true, sessionCookieLast);
+    doTestFailoverStickyOnFallbackOff(true, sessionCookieLast, false);
   }
 
   /**
@@ -621,6 +728,7 @@ public class DefaultHaDispatchTest {
     final boolean enableStickySession = true;
     final boolean noFallback          = false;
     final boolean failoverNonIdempotentRequestEnabled = false;
+    final boolean useRoutesForStickyCookiePath = false;
 
     final String serviceName = "OOZIE";
 
@@ -636,7 +744,8 @@ public class DefaultHaDispatchTest {
         null,
         noFallback,
         null,
-        failoverNonIdempotentRequestEnabled));
+        failoverNonIdempotentRequestEnabled,
+        useRoutesForStickyCookiePath));
 
     final HaProvider provider = new DefaultHaProvider(descriptor);
     final URI uri1 = new URI( "http://host1.valid" );
@@ -754,6 +863,7 @@ public class DefaultHaDispatchTest {
     final boolean enableStickySession = true;
     final boolean noFallback          = false;
     final boolean failoverNonIdempotentRequestEnabled = true;
+    final boolean useRoutesForStickyCookiePath = false;
 
     final String serviceName = "OOZIE";
 
@@ -769,7 +879,8 @@ public class DefaultHaDispatchTest {
         null,
         noFallback,
         null,
-        failoverNonIdempotentRequestEnabled));
+        failoverNonIdempotentRequestEnabled,
+        useRoutesForStickyCookiePath));
 
     final HaProvider provider = new DefaultHaProvider(descriptor);
     final URI uri1 = new URI( "http://host1.valid" );
@@ -884,6 +995,7 @@ public class DefaultHaDispatchTest {
     final boolean enableStickySession = true;
     final boolean noFallback          = false;
     final boolean failoverNonIdempotentRequestEnabled = false;
+    final boolean useRoutesForStickyCookiePath = false;
 
     final String serviceName = "OOZIE";
 
@@ -899,7 +1011,8 @@ public class DefaultHaDispatchTest {
         null,
         noFallback,
         null,
-        failoverNonIdempotentRequestEnabled));
+        failoverNonIdempotentRequestEnabled,
+        useRoutesForStickyCookiePath));
 
     final HaProvider provider = new DefaultHaProvider(descriptor);
     final URI uri1 = new URI( "http://host1.valid" );
@@ -997,15 +1110,16 @@ public class DefaultHaDispatchTest {
 
   }
 
-  private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie)
+  private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie, final Boolean withUseRoutesForStickyCookiePath)
       throws Exception {
-    doTestFailoverStickyOnFallbackOff(withCookie, null);
+    doTestFailoverStickyOnFallbackOff(withCookie, null, withUseRoutesForStickyCookiePath);
   }
 
-  private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie, final Cookie[] cookies)
+  private void doTestFailoverStickyOnFallbackOff(final Boolean withCookie, final Cookie[] cookies, final Boolean withUseRoutesForStickyCookiePath)
           throws Exception {
     final String enableLoadBalancing = "true"; // load-balancing is required for sticky sessions to be enabled
     final String enableStickySession = "true";
+    final String useRoutesForStickyCookiePath = withUseRoutesForStickyCookiePath.toString();
     final String noFallback          = "true";
 
     final String serviceName = "OOZIE";
@@ -1021,7 +1135,9 @@ public class DefaultHaDispatchTest {
                                                                         enableStickySession,
                                                                         null,
                                                                         noFallback,
-                                                                        null));
+                                                                        null,
+                                                                        null,
+                                                                        useRoutesForStickyCookiePath));
     final HaProvider provider = new DefaultHaProvider(descriptor);
     final URI uri1 = new URI( "http://host1.valid" );
     final URI uri2 = new URI( "http://host2.valid" );
@@ -1053,8 +1169,16 @@ public class DefaultHaDispatchTest {
     EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(1)).once();
     if (withCookie) {
       Cookie[] responseCookies;
-      Cookie sessionCookie = new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + serviceName,
+      Cookie sessionCookie;
+      if (withUseRoutesForStickyCookiePath) {
+        sessionCookie = new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME,
+                  "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745");
+        // Knox doesn't actually care about the path
+        sessionCookie.setPath("/oozie/");
+      } else {
+        sessionCookie = new Cookie(HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME + "-" + serviceName,
           "59973e253ae20de796c6ef413608ec1c80fca24310a4cbdecc0ff97aeea55745");
+      }
       if(cookies != null && cookies.length > 0) {
         /* Add provided cookies */
         responseCookies = cookies;

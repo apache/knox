@@ -42,10 +42,11 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
     final boolean loadBalancingEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_LOAD_BALANCING_ENABLED, Boolean.toString(DEFAULT_LOAD_BALANCING_ENABLED)));
     final boolean noFallbackEnabled = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_NO_FALLBACK_ENABLED, Boolean.toString(DEFAULT_NO_FALLBACK_ENABLED)));
     final String stickySessionCookieName = configMap.getOrDefault(STICKY_SESSION_COOKIE_NAME, DEFAULT_STICKY_SESSION_COOKIE_NAME);
+    final boolean useRoutesForStickyCookiePath = Boolean.parseBoolean(configMap.getOrDefault(CONFIG_USE_ROUTES_FOR_STICKY_COOKIE_PATH, Boolean.toString(DEFAULT_USE_ROUTES_FOR_STICKY_COOKIE_PATH)));
     final boolean failoverNonIdempotentRequestEnabled = Boolean.parseBoolean(configMap.getOrDefault(FAILOVER_NON_IDEMPOTENT, Boolean.toString(DEFAULT_FAILOVER_NON_IDEMPOTENT)));
     final String disableLoadBalancingForUserAgentsConfig = configMap.getOrDefault(DISABLE_LB_USER_AGENTS, DEFAULT_DISABLE_LB_USER_AGENTS);
     return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
-            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig, failoverNonIdempotentRequestEnabled);
+            stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig, failoverNonIdempotentRequestEnabled, useRoutesForStickyCookiePath);
   }
 
   public static HaServiceConfig createServiceConfig(String serviceName, String enabledValue,
@@ -53,7 +54,8 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       String zookeeperEnsemble, String zookeeperNamespace,
       String loadBalancingEnabledValue, String stickySessionsEnabledValue,
       String stickySessionCookieNameValue, String noFallbackEnabledValue,
-      String disableLoadBalancingForUserAgentsValue, String failoverNonIdempotentRequestEnabledValue) {
+      String disableLoadBalancingForUserAgentsValue, String failoverNonIdempotentRequestEnabledValue,
+      String useRoutesForStickyCookiePathValue) {
 
     boolean enabled = DEFAULT_ENABLED;
     int maxFailoverAttempts = DEFAULT_MAX_FAILOVER_ATTEMPTS;
@@ -64,6 +66,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
     String stickySessionCookieName = DEFAULT_STICKY_SESSION_COOKIE_NAME;
     String disableLoadBalancingForUserAgentsConfig = DEFAULT_DISABLE_LB_USER_AGENTS;
     boolean failoverNonIdempotentRequestEnabled = DEFAULT_FAILOVER_NON_IDEMPOTENT;
+    boolean useRoutesForStickyCookiePath = DEFAULT_USE_ROUTES_FOR_STICKY_COOKIE_PATH;
 
     if (enabledValue != null && !enabledValue.trim().isEmpty()) {
       enabled = Boolean.parseBoolean(enabledValue);
@@ -94,8 +97,12 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
       failoverNonIdempotentRequestEnabled = Boolean.parseBoolean(failoverNonIdempotentRequestEnabledValue);
     }
 
+    if (useRoutesForStickyCookiePathValue != null && !useRoutesForStickyCookiePathValue.trim().isEmpty()) {
+      useRoutesForStickyCookiePath = Boolean.parseBoolean(useRoutesForStickyCookiePathValue);
+    }
+
     return createServiceConfig(serviceName, enabled, maxFailoverAttempts, failoverSleep, zookeeperEnsemble, zookeeperNamespace, stickySessionsEnabled, loadBalancingEnabled,
-        stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig, failoverNonIdempotentRequestEnabled);
+        stickySessionCookieName, noFallbackEnabled, disableLoadBalancingForUserAgentsConfig, failoverNonIdempotentRequestEnabled, useRoutesForStickyCookiePath);
 
 
   }
@@ -124,7 +131,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
                                                      String disableLoadBalancingForUserAgentsValue) {
 
      return createServiceConfig(serviceName, enabledValue, maxFailoverAttemptsValue, failoverSleepValue, zookeeperEnsemble, zookeeperNamespace, loadBalancingEnabledValue, stickySessionsEnabledValue,
-         stickySessionCookieNameValue, noFallbackEnabledValue, disableLoadBalancingForUserAgentsValue, Boolean.toString(DEFAULT_FAILOVER_NON_IDEMPOTENT));
+         stickySessionCookieNameValue, noFallbackEnabledValue, disableLoadBalancingForUserAgentsValue, Boolean.toString(DEFAULT_FAILOVER_NON_IDEMPOTENT), Boolean.toString(DEFAULT_USE_ROUTES_FOR_STICKY_COOKIE_PATH));
    }
 
   public static DefaultHaServiceConfig createServiceConfig(final String serviceName, final boolean enabled,
@@ -133,7 +140,8 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
           final boolean stickySessionsEnabled, final boolean loadBalancingEnabled,
           final String stickySessionCookieName,
           final boolean noFallbackEnabled, final String disableStickySessionForUserAgents,
-          final boolean failoverNonIdempotentRequestEnabled) {
+          final boolean failoverNonIdempotentRequestEnabled,
+          final boolean useRoutesForStickyCookiePath) {
     DefaultHaServiceConfig serviceConfig = new DefaultHaServiceConfig(serviceName);
     serviceConfig.setEnabled(enabled);
     serviceConfig.setMaxFailoverAttempts(maxFailoverAttempts);
@@ -146,6 +154,7 @@ public abstract class HaDescriptorFactory implements HaServiceConfigConstants {
     serviceConfig.setNoFallbackEnabled(noFallbackEnabled);
     serviceConfig.setDisableStickySessionForUserAgents(disableStickySessionForUserAgents);
     serviceConfig.setFailoverNonIdempotentRequestEnabled(failoverNonIdempotentRequestEnabled);
+    serviceConfig.setUseRoutesForStickyCookiePath(useRoutesForStickyCookiePath);
     return serviceConfig;
   }
 

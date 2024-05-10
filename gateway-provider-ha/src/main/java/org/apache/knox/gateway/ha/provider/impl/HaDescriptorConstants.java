@@ -61,4 +61,6 @@ public interface HaDescriptorConstants {
     * default is false (no).
     */
    String FAILOVER_NON_IDEMPOTENT = "failoverNonIdempotentRequestEnabled";
+
+   String USE_ROUTES_FOR_STICKY_COOKIE_PATH = "useRoutesForStickyCookiePath";
 }

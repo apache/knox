@@ -40,6 +40,8 @@ public interface HaServiceConfigConstants {
 
    String STICKY_SESSION_COOKIE_NAME = "stickySessionCookieName";
 
+   String CONFIG_USE_ROUTES_FOR_STICKY_COOKIE_PATH = "useRoutesForStickyCookiePath";
+
    /**
     * For non-idempotent requests such as
     * POST, PATCH, CONNECT
@@ -71,4 +73,7 @@ public interface HaServiceConfigConstants {
    String DEFAULT_STICKY_SESSION_COOKIE_NAME = "KNOX_BACKEND";
 
    String DEFAULT_DISABLE_LB_USER_AGENTS = "ClouderaODBCDriverforApacheHive";
+
+   boolean DEFAULT_USE_ROUTES_FOR_STICKY_COOKIE_PATH = false;
+
 }
