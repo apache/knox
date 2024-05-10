@@ -79,14 +79,13 @@ public class OAuthResource extends TokenResource {
             // let's get the subset of the KnoxToken Response needed for OAuth
             String accessToken = resp.responseMap.accessToken;
             String passcode = resp.responseMap.passcode;
-            long expires = (long) resp.responseMap.map.get(EXPIRES_IN);
             String tokenType = (String) resp.responseMap.map.get(TOKEN_TYPE);
 
             // build and return the expected OAuth response
             final HashMap<String, Object> map = new HashMap<>();
             map.put(ACCESS_TOKEN, accessToken);
             map.put(TOKEN_TYPE, tokenType);
-            map.put(EXPIRES_IN, expires);
+            map.put(EXPIRES_IN, getTokenLifetimeInSeconds());
             map.put(ISSUED_TOKEN_TYPE, ISSUED_TOKEN_TYPE_ACCESS_TOKEN_VALUE);
             // let's use the passcode as the refresh token
             map.put(REFRESH_TOKEN, passcode);
@@ -103,8 +102,7 @@ public class OAuthResource extends TokenResource {
         }
     }
 
-    @Override
-    protected long getExpiry() {
+    private long getTokenLifetimeInSeconds() {
         long secs = tokenTTL/1000;
 
         String lifetimeStr = request.getParameter(LIFESPAN);

@@ -1657,21 +1657,8 @@ public class TokenServiceResourceTest {
 
 
   private String getTagValue(String token, String tagName) {
-    if (!token.contains(tagName)) {
-      return null;
-    }
-    String searchString = "\"" + tagName + "\":";
-    String value = token.substring(token.indexOf(searchString) + searchString.length());
-    if (value.startsWith("\"")) {
-      value = value.substring(1);
-    }
-    if (value.contains("\"")) {
-      return value.substring(0, value.indexOf('\"'));
-    } else if (value.contains(",")) {
-      return value.substring(0, value.indexOf(','));
-    } else {
-      return value.substring(0, value.length() - 1);
-    }
+    final Map<String, String> tokenMap = JsonUtils.getMapFromJsonString(token);
+    return tokenMap == null ? null : tokenMap.get(tagName);
   }
 
   /**
