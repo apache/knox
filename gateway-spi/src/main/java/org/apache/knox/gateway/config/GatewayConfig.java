@@ -902,6 +902,11 @@ public interface GatewayConfig {
   boolean isAsyncSupported();
 
   /**
+   * @return true if error message sanitization is enabled; false otherwise (defaults to true)
+   */
+  boolean isErrorMessageSanitizationEnabled();
+
+  /**
    * @return <code>true</code> if the supplied user is allowed to see all tokens
    *         (i.e. not only tokens where userName or createdBy equals to the
    *         userName) on the Token Management page; <code>false</code> otherwise

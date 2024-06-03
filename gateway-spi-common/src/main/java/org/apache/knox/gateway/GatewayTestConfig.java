@@ -620,6 +620,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isErrorMessageSanitizationEnabled() {
+    return true;
+  }
+
+  @Override
   public boolean isMetricsEnabled() {
     return false;
   }

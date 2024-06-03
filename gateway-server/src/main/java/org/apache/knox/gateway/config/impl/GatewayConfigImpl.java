@@ -176,6 +176,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String CLUSTER_CONFIG_MONITOR_INTERVAL_SUFFIX = ".interval";
   public static final String CLUSTER_CONFIG_MONITOR_ENABLED_SUFFIX = ".enabled";
 
+  private static final String ERROR_MESSAGE_SANITIZATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".error.sanitization.enabled";
+  private static final boolean DEFAULT_ERROR_MESSAGE_SANITIZATION_ENABLED = true;
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
@@ -931,6 +933,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       return Arrays.asList( value.trim().split("\\s*,\\s*") );
     }
     return DEFAULT_GLOBAL_RULES_SERVICES;
+  }
+
+  @Override
+  public boolean isErrorMessageSanitizationEnabled() {
+    return getBoolean(ERROR_MESSAGE_SANITIZATION_ENABLED, DEFAULT_ERROR_MESSAGE_SANITIZATION_ENABLED);
   }
 
   @Override
