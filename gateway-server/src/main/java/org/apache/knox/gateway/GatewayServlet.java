@@ -304,8 +304,7 @@ public class GatewayServlet implements Servlet, Filter {
   }
 
   private <T extends Exception> T sanitizeAndRethrow(Exception e) throws T {
-    Exception sanitizedException = sanitizeException(e);
-    LOG.failedToExecuteFilter(sanitizedException);
-    throw (T) sanitizedException;
+    LOG.failedToExecuteFilter(e);
+    throw (T) sanitizeException(e);
   }
 }
