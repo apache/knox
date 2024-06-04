@@ -287,10 +287,10 @@ public class GatewayServlet implements Servlet, Filter {
       return e;
     }
     String sanitizedMessage = e.getMessage().replaceAll("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "[hidden]");
-    return createNewException(e, sanitizedMessage);
+    return createSanitizedException(e, sanitizedMessage);
   }
 
-  private <T extends Exception> T createNewException(T e, String sanitizedMessage) {
+  private <T extends Exception> T createSanitizedException(T e, String sanitizedMessage) {
     try {
       Constructor<? extends Exception> constructor = e.getClass().getConstructor(String.class, Throwable.class);
       T sanitizedException = (T) constructor.newInstance(sanitizedMessage, e.getCause());
