@@ -97,7 +97,7 @@ public class GatewayServlet implements Servlet, Filter {
         filter.init( filterConfig );
       }
     } catch( ServletException | RuntimeException e ) {
-      throw sanitizeAndRethrow(e);
+      throw sanitizeAndLogException(e);
     }
   }
 
@@ -113,7 +113,7 @@ public class GatewayServlet implements Servlet, Filter {
         filter.init( filterConfig );
       }
     } catch( ServletException | RuntimeException e ) {
-      throw sanitizeAndRethrow(e);
+      throw sanitizeAndLogException(e);
     }
   }
 
@@ -131,7 +131,7 @@ public class GatewayServlet implements Servlet, Filter {
         try {
           f.doFilter( servletRequest, servletResponse, null );
         } catch( IOException | RuntimeException | ServletException e ) {
-          throw sanitizeAndRethrow(e);
+          throw sanitizeAndLogException(e);
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
@@ -158,7 +158,7 @@ public class GatewayServlet implements Servlet, Filter {
             chain.doFilter( servletRequest, servletResponse );
           }
         } catch (Exception e) {
-          throw sanitizeAndRethrow(e);
+          throw sanitizeAndLogException(e);
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
@@ -303,8 +303,8 @@ public class GatewayServlet implements Servlet, Filter {
     }
   }
 
-  private <T extends Exception> T sanitizeAndRethrow(Exception e) throws T {
+  private <T extends Exception> T sanitizeAndLogException(Exception e) throws T {
     LOG.failedToExecuteFilter(e);
-    throw (T) sanitizeException(e);
+    return (T) sanitizeException(e);
   }
 }
