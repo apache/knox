@@ -509,10 +509,17 @@ public abstract class AbstractJWTFilter implements Filter {
       try {
         if (publicKey != null) {
           verified = authority.verifyToken(token, publicKey);
-        } else if (expectedJWKSUrl != null) {
+          log.publicKeyVerification(verified);
+        }
+
+        if (!verified && expectedJWKSUrl != null) {
           verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg, allowedJwsTypes);
-        } else {
+          log.jwksVerification(verified);
+        }
+
+        if(!verified) {
           verified = authority.verifyToken(token);
+          log.signingKeyVerification(verified);
         }
       } catch (TokenServiceException e) {
         log.unableToVerifyToken(e);
