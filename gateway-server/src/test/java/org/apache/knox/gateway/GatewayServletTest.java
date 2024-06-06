@@ -41,28 +41,36 @@ import static org.junit.Assert.assertNull;
 @RunWith(Parameterized.class)
 public class GatewayServletTest {
 
-    @Parameterized.Parameters(name = "{index}: SanitizationEnabled={2}, Exception={0}, ExpectedMessage={1}")
+    private static final String IP_ADDRESS_PATTERN = "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b";
+    private static final String EMAIL_ADDRESS_PATTERN = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b";
+    private static final String CREDIT_CARD_PATTERN = "\\b\\d{4}-\\d{4}-\\d{4}-\\d{4}\\b";
+
+    @Parameterized.Parameters(name = "{index}: SanitizationEnabled={2}, Pattern={3}, Exception={0}, ExpectedMessage={1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { new IOException("Connection to 192.168.1.1 failed"), "Connection to [hidden] failed", true },
-                { new RuntimeException("Connection to 192.168.1.1 failed"), "Connection to [hidden] failed", true },
-                { new NullPointerException(), null, true },
-                { new IOException("General failure"), "General failure", true },
-                { new IOException("Connection to 192.168.1.1 failed"), "Connection to 192.168.1.1 failed", false },
-                { new RuntimeException("Connection to 192.168.1.1 failed"), "Connection to 192.168.1.1 failed", false },
-                { new NullPointerException(), null, false },
-                { new IOException("General failure"), "General failure", false }
+                { new IOException("Connection to 192.168.1.1 failed"), "Connection to [hidden] failed", true, IP_ADDRESS_PATTERN },
+                { new RuntimeException("Connection to 192.168.1.1 failed"), "Connection to [hidden] failed", true, IP_ADDRESS_PATTERN },
+                { new NullPointerException(), null, true, IP_ADDRESS_PATTERN },
+                { new IOException("General failure"), "General failure", true, IP_ADDRESS_PATTERN },
+                { new IOException("Connection to 192.168.1.1 failed"), "Connection to 192.168.1.1 failed", false, IP_ADDRESS_PATTERN },
+                { new RuntimeException("Connection to 192.168.1.1 failed"), "Connection to 192.168.1.1 failed", false, IP_ADDRESS_PATTERN },
+                { new NullPointerException(), null, false, IP_ADDRESS_PATTERN },
+                { new IOException("General failure"), "General failure", false, IP_ADDRESS_PATTERN },
+                { new IOException("User email: user@example.com"), "User email: [hidden]", true, EMAIL_ADDRESS_PATTERN },
+                { new RuntimeException("Credit card number: 1234-5678-9101-1121"), "Credit card number: [hidden]", true, CREDIT_CARD_PATTERN },
         });
     }
 
     private final Exception exception;
     private final String expectedMessage;
     private final boolean isSanitizationEnabled;
+    private final String sanitizationPattern;
 
-    public GatewayServletTest(Exception exception, String expectedMessage, boolean isSanitizationEnabled) {
+    public GatewayServletTest(Exception exception, String expectedMessage, boolean isSanitizationEnabled, String sanitizationPattern) {
         this.exception = exception;
         this.expectedMessage = expectedMessage;
         this.isSanitizationEnabled = isSanitizationEnabled;
+        this.sanitizationPattern = sanitizationPattern;
     }
 
     private IMocksControl mockControl;
@@ -90,7 +98,7 @@ public class GatewayServletTest {
 
     @Test
     public void testExceptionSanitization() throws ServletException, IOException {
-        GatewayServlet servlet = initializeServletWithSanitization(isSanitizationEnabled);
+        GatewayServlet servlet = initializeServletWithSanitization(isSanitizationEnabled, sanitizationPattern);
 
         try {
             servlet.service(request, response);
@@ -105,8 +113,9 @@ public class GatewayServletTest {
         mockControl.verify();
     }
 
-    private GatewayServlet initializeServletWithSanitization(boolean isErrorMessageSanitizationEnabled) throws ServletException, IOException {
+    private GatewayServlet initializeServletWithSanitization(boolean isErrorMessageSanitizationEnabled, String sanitizationPattern) throws ServletException, IOException {
         EasyMock.expect(gatewayConfig.isErrorMessageSanitizationEnabled()).andStubReturn(isErrorMessageSanitizationEnabled);
+        EasyMock.expect(gatewayConfig.getErrorMessageSanitizationPattern()).andStubReturn(sanitizationPattern);
 
         filter.init(EasyMock.anyObject(FilterConfig.class));
         EasyMock.expectLastCall().once();

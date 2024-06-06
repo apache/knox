@@ -178,6 +178,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String ERROR_MESSAGE_SANITIZATION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".error.sanitization.enabled";
   private static final boolean ERROR_MESSAGE_SANITIZATION_ENABLED_DEFAULT = true;
+  private static final String ERROR_MESSAGE_SANITIZATION_PATTERN = GATEWAY_CONFIG_FILE_PREFIX + ".error.sanitization.pattern";
+  private static final String ERROR_MESSAGE_SANITIZATION_PATTERN_DEFAULT = "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b";
 
   // These config property names are not inline with the convention of using the
   // GATEWAY_CONFIG_FILE_PREFIX as is done by those above. These are left for
@@ -938,6 +940,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isErrorMessageSanitizationEnabled() {
     return getBoolean(ERROR_MESSAGE_SANITIZATION_ENABLED, ERROR_MESSAGE_SANITIZATION_ENABLED_DEFAULT);
+  }
+
+  @Override
+  public String getErrorMessageSanitizationPattern() {
+    return get(ERROR_MESSAGE_SANITIZATION_PATTERN, ERROR_MESSAGE_SANITIZATION_PATTERN_DEFAULT);
   }
 
   @Override

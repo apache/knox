@@ -52,6 +52,7 @@ public class GatewayServlet implements Servlet, Filter {
   public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
 
   private static boolean isErrorMessageSanitizationEnabled = true;
+  private static String errorMessageSanitizationPattern = "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b";
 
   private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
@@ -88,6 +89,7 @@ public class GatewayServlet implements Servlet, Filter {
   public synchronized void init( ServletConfig servletConfig ) throws ServletException {
     GatewayConfig gatewayConfig = (GatewayConfig) servletConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     isErrorMessageSanitizationEnabled = gatewayConfig.isErrorMessageSanitizationEnabled();
+    errorMessageSanitizationPattern = gatewayConfig.getErrorMessageSanitizationPattern();
     try {
       if( filter == null ) {
         filter = createFilter( servletConfig );
@@ -97,7 +99,7 @@ public class GatewayServlet implements Servlet, Filter {
         filter.init( filterConfig );
       }
     } catch( ServletException | RuntimeException e ) {
-      throw sanitizeAndLogException(e);
+      throw logAndSanitizeException(e);
     }
   }
 
@@ -107,13 +109,14 @@ public class GatewayServlet implements Servlet, Filter {
       if( filter == null ) {
         GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
         isErrorMessageSanitizationEnabled = gatewayConfig.isErrorMessageSanitizationEnabled();
+        errorMessageSanitizationPattern = gatewayConfig.getErrorMessageSanitizationPattern();
         filter = createFilter( filterConfig );
       }
       if( filter != null ) {
         filter.init( filterConfig );
       }
     } catch( ServletException | RuntimeException e ) {
-      throw sanitizeAndLogException(e);
+      throw logAndSanitizeException(e);
     }
   }
 
@@ -131,7 +134,7 @@ public class GatewayServlet implements Servlet, Filter {
         try {
           f.doFilter( servletRequest, servletResponse, null );
         } catch( IOException | RuntimeException | ServletException e ) {
-          throw sanitizeAndLogException(e);
+          throw logAndSanitizeException(e);
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
@@ -158,7 +161,7 @@ public class GatewayServlet implements Servlet, Filter {
             chain.doFilter( servletRequest, servletResponse );
           }
         } catch (Exception e) {
-          throw sanitizeAndLogException(e);
+          throw logAndSanitizeException(e);
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
@@ -286,7 +289,8 @@ public class GatewayServlet implements Servlet, Filter {
     if (!isErrorMessageSanitizationEnabled || e.getMessage() == null) {
       return e;
     }
-    String sanitizedMessage = e.getMessage().replaceAll("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "[hidden]");
+    String sanitizedMessage = e.getMessage().replaceAll(errorMessageSanitizationPattern, "[hidden]");
+
     return createSanitizedException(e, sanitizedMessage);
   }
 
@@ -303,8 +307,8 @@ public class GatewayServlet implements Servlet, Filter {
     }
   }
 
-  private <T extends Exception> T sanitizeAndLogException(Exception e) throws T {
+  private <T extends Exception> T logAndSanitizeException(Exception e) throws T {
     LOG.failedToExecuteFilter(e);
-    return (T) sanitizeException(e);
+    throw (T) sanitizeException(e);
   }
 }
