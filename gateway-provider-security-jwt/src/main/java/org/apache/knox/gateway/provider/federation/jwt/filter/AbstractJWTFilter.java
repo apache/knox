@@ -45,6 +45,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditContext;
@@ -165,6 +166,9 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     expectedSigAlg = filterConfig.getInitParameter(JWT_EXPECTED_SIGALG);
+    if(StringUtils.isBlank(expectedSigAlg)) {
+      expectedSigAlg = JWT_DEFAULT_SIGALG;
+    }
   }
 
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
