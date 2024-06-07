@@ -115,4 +115,12 @@ public interface JWTMessages {
   @Message(level = MessageLevel.ERROR, text = "Error while fetching grant type and client secret from the request: {0}")
   void errorFetchingClientSecret(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message( level = MessageLevel.INFO, text = "Token verification using provided PEM, verified: {0}" )
+  void publicKeyVerification(boolean verified);
+
+  @Message( level = MessageLevel.INFO, text = "Token verification using provided JWKS Url, verified: {0}" )
+  void jwksVerification(boolean verified);
+
+  @Message( level = MessageLevel.INFO, text = "Token verification using knox signing cert, verified: {0}" )
+  void signingKeyVerification(boolean verified);
 }
