@@ -42,7 +42,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
@@ -282,33 +281,15 @@ public class GatewayServlet implements Servlet, Filter {
     }
   }
 
-  private Exception sanitizeException(Exception e) {
+  private SanitizedException logAndSanitizeException(Exception e) {
+    LOG.failedToExecuteFilter(e);
     if (e == null || e.getMessage() == null) {
-      return e;
+      return new SanitizedException(e.getMessage());
     }
     if (!isErrorMessageSanitizationEnabled || e.getMessage() == null) {
-      return e;
+      return new SanitizedException(e.getMessage());
     }
     String sanitizedMessage = e.getMessage().replaceAll(errorMessageSanitizationPattern, "[hidden]");
-
-    return createSanitizedException(e, sanitizedMessage);
-  }
-
-  private <T extends Exception> T createSanitizedException(T e, String sanitizedMessage) {
-    try {
-      Constructor<? extends Exception> constructor = e.getClass().getConstructor(String.class, Throwable.class);
-      T sanitizedException = (T) constructor.newInstance(sanitizedMessage, e.getCause());
-      sanitizedException.setStackTrace(e.getStackTrace());
-      return sanitizedException;
-    } catch (Exception ex) {
-      Exception genericException = new Exception(sanitizedMessage, e.getCause());
-      genericException.setStackTrace(e.getStackTrace());
-      return (T) genericException;
-    }
-  }
-
-  private <T extends Exception> T logAndSanitizeException(Exception e) throws T {
-    LOG.failedToExecuteFilter(e);
-    throw (T) sanitizeException(e);
+    return new SanitizedException(sanitizedMessage);
   }
 }
