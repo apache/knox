@@ -622,10 +622,10 @@ public abstract class AbstractJWTFilterTest  {
       String failingPem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
 
       props.put(getAudienceProperty(), "bar");
-      /* Add a failing PEN */
+      /* Add a failing PEM */
       props.put(getVerificationPemProperty(), failingPem);
 
-      /* This handler is setup with a publicKey, corresponding privateKey is used to sign tje JWT below */
+      /* This handler is setup with a publicKey, corresponding privateKey is used to sign the JWT below */
       handler.init(new TestFilterConfig(props));
 
       SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
@@ -649,6 +649,59 @@ public abstract class AbstractJWTFilterTest  {
       Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
       Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
       Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+  }
+
+  /**
+   * This will test the signature verification chain.
+   * Specifically the flow when provided PEM is not invalid and
+   * knox signing key is valid.
+   *
+   * NOTE: here valid means can validate JWT.
+   * @throws Exception
+   */
+  @Test
+  public void testSignatureVerificationChainWithPEMandSignature() throws Exception {
+    try {
+      Properties props = getProperties();
+      KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+      kpg.initialize(2048);
+
+      KeyPair KPair = kpg.generateKeyPair();
+      String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
+      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
+      byte[] data = cert.getEncoded();
+      Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
+      String failingPem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
+
+      props.put(getAudienceProperty(), "bar");
+      props.put(getVerificationPemProperty(), failingPem);
+
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+              new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)), privateKey);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
+      EasyMock.replay(request, response);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+
+      Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+      Assert.assertFalse("No PrimaryPrincipal", principals.isEmpty());
+      Assert.assertEquals("Not the expected principal", "alice", ((Principal)principals.toArray()[0]).getName());
+
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
