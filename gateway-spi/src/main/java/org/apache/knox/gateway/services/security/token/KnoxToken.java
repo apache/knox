@@ -20,10 +20,15 @@ package org.apache.knox.gateway.services.security.token;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
-public class KnoxToken implements Comparable<KnoxToken>{
+public class KnoxToken implements Comparable<KnoxToken> {
+  private static final Comparator<KnoxToken> COMPARATOR = Comparator
+          .comparingLong((KnoxToken kt) -> kt.issueTime)
+          .thenComparing(kt -> kt.tokenId);
+
   public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   // SimpleDateFormat is not thread safe must use as a ThreadLocal
   private static final ThreadLocal<DateFormat> KNOX_TOKEN_TS_FORMAT = ThreadLocal
@@ -93,7 +98,7 @@ public class KnoxToken implements Comparable<KnoxToken>{
 
   @Override
   public int compareTo(KnoxToken other) {
-    return Long.compare(this.issueTime, other.issueTime);
+    return COMPARATOR.compare(this, other);
   }
 
   public void addMetadata(String name, String value) {
