@@ -2570,10 +2570,16 @@ public class KnoxCLI extends Configured implements Tool {
 
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
-    try(InputStream inputStream = KnoxCLI.class.getClassLoader().getResourceAsStream( "build.properties" )) {
-      properties.load(inputStream);
+    String BUILD_PROPERTY = "build.properties";
+    PrintStream out = System.out;
+    try(InputStream inputStream = KnoxCLI.class.getClassLoader().getResourceAsStream( BUILD_PROPERTY )) {
+      if (inputStream != null) {
+        properties.load(inputStream);
+      } else {
+        out.println("Failed to find configuration file " + BUILD_PROPERTY);
+      }
     } catch( IOException e ) {
-      // Ignore.
+      out.println("Failed to find configuration file " + BUILD_PROPERTY + e.getMessage());
     }
     return properties;
   }

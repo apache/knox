@@ -304,10 +304,15 @@ public class GatewayServer {
 
   private static Properties loadBuildProperties() {
     Properties properties = new Properties();
-    try(InputStream inputStream = GatewayServer.class.getClassLoader().getResourceAsStream( "build.properties" )) {
-      properties.load( inputStream );
+    String BUILD_PROPERTY = "build.properties";
+    try(InputStream inputStream = GatewayServer.class.getClassLoader().getResourceAsStream( BUILD_PROPERTY )) {
+      if (inputStream != null) {
+        properties.load(inputStream);
+      } else {
+        log.failedToFindConfig( BUILD_PROPERTY);
+      }
     } catch( IOException e ) {
-      // Ignore.
+      log.failedToFindConfig( BUILD_PROPERTY, e );
     }
     return properties;
   }
