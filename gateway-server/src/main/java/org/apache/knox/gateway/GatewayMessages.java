@@ -46,7 +46,7 @@ public interface GatewayMessages {
   void failedToStartGateway( @StackTrace( level = MessageLevel.FATAL ) Exception e );
 
   @Message( level = MessageLevel.INFO, text = "Started gateway on port {0}." )
-  void startedGateway( int port );
+  void startedGateway( String port );
 
   @Message( level = MessageLevel.INFO, text = "Stopping gateway..." )
   void stoppingGateway();
@@ -472,7 +472,7 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR,
            text = "No topology mapped to port: {0}")
-  void noTopologyMappedToPort(int port);
+  void noTopologyMappedToPort(String port);
 
   @Message(level = MessageLevel.ERROR,
            text = "Could not find topology {0} specified in port mapping config")
@@ -480,7 +480,7 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a connector for topology {0} listening on port {1}.")
-  void createJettyConnector(String topology, int port);
+  void createJettyConnector(String topology, String port);
 
   @Message(level = MessageLevel.DEBUG,
            text = "Creating a handler for topology {0}.")
@@ -498,26 +498,26 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR,
            text = "Port {0} configured for Topology - {1} is already in use.")
-  void portAlreadyInUse(int port, String topology);
+  void portAlreadyInUse(String port, String topology);
 
   @Message(level = MessageLevel.ERROR,
            text = "Port {0} is already in use.")
-  void portAlreadyInUse(int port);
+  void portAlreadyInUse(String port);
 
   @Message(level = MessageLevel.INFO,
            text = "Started gateway, topology \"{0}\" listening on port \"{1}\".")
-  void startedGateway(String topology, int port);
+  void startedGateway(String topology, String port);
 
   @Message(level = MessageLevel.ERROR,
            text = "Topology \"{0}\" failed to start listening on port \"{1}\".")
-  void startedGatewayPortConflict(String topology, int port);
+  void startedGatewayPortConflict(String topology, String port);
 
   @Message(level = MessageLevel.ERROR,
            text =
                " Could not find topology \"{0}\" mapped to port \"{1}\" configured in gateway-config.xml. "
                    + "This invalid topology mapping will be ignored by the gateway. "
                    + "Gateway restart will be required if in the future \"{0}\" topology is added.")
-  void topologyPortMappingCannotFindTopology(String topology, int port);
+  void topologyPortMappingCannotFindTopology(String topology, String port);
 
   @Message(level = MessageLevel.ERROR,
            text = "Port mapped topology {0} cannot be configured as default topology")
