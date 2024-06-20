@@ -1,0 +1,52 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <rule dir="IN" name="RANGER/ranger/inbound/public" pattern="*://*:*/**/ranger/service/public/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/public/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/plugins" pattern="*://*:*/**/ranger/service/plugins/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/plugins/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/xusers/path" pattern="*://*:*/**/ranger/service/xusers/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/xusers/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/assets/path" pattern="*://*:*/**/ranger/service/assets/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/assets/{path=**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/healthcheck" pattern="*://*:*/**/ranger">
+        <rewrite template="{$serviceUrl[RANGER]}"/>
+    </rule>
+    <!-- Ranger Admin metrics -->
+    <rule dir="IN" name="RANGER/ranger/inbound/metrics" pattern="*://*:*/**/ranger/service/metrics/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/metrics/{path=**}?{**}"/>
+    </rule>
+
+    <!-- Ranger Admin Tags -->
+    <rule dir="IN" name="RANGER/ranger/inbound/tags/path" pattern="*://*:*/**/ranger/service/tags/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/tags/{path=**}?{**}"/>
+    </rule>
+
+    <!-- Ranger Admin Audits -->
+    <rule dir="IN" name="RANGER/ranger/inbound/xaudit/path" pattern="*://*:*/**/ranger/service/xaudit/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/xaudit/{path=**}?{**}"/>
+    </rule>
+
+    <!-- Ranger Admin Roles -->
+    <rule dir="IN" name="RANGER/ranger/inbound/roles/path" pattern="*://*:*/**/ranger/service/roles/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/roles/{path=**}?{**}"/>
+    </rule>
+</rules>
