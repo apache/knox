@@ -23,8 +23,8 @@
      e.g. http://host.com:8088
 -->
 
-<rule dir="IN" name="YARNUI/yarn/inbound/ws" pattern="*://*:*/**/yarn/ws/v1/{**}">
-    <rewrite template="{$serviceUrl[YARNUI]}/ws/v1/{**}"/>
+<rule dir="IN" name="YARNUI/yarn/inbound/ws" pattern="*://*:*/**/yarn/ws/v1/{**}?{**}">
+    <rewrite template="{$serviceUrl[YARNUI]}/ws/v1/{**}?{**}"/>
 </rule>
 <rule dir="IN" name="YARNUI/yarn/inbound/root" pattern="*://*:*/**/yarn/">
     <rewrite template="{$serviceUrl[YARNUI]}/cluster"/>
