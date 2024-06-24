@@ -67,9 +67,10 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                  serviceElement.setAttribute(STICKY_SESSION_COOKIE_NAME, config.getStickySessionCookieName());
                }
                if(config.getStickySessionDisabledUserAgents() != null && !config.getStickySessionDisabledUserAgents().isEmpty()) {
-                  serviceElement.setAttribute(DISABLE_LB_USER_AGENTS, config.getStickySessionDisabledUserAgents());
+                 serviceElement.setAttribute(DISABLE_LB_USER_AGENTS, config.getStickySessionDisabledUserAgents());
                }
                serviceElement.setAttribute(FAILOVER_NON_IDEMPOTENT, Boolean.toString(config.isFailoverNonIdempotentRequestEnabled()));
+               serviceElement.setAttribute(USE_ROUTES_FOR_STICKY_COOKIE_PATH, Boolean.toString(config.isUseRoutesForStickyCookiePath()));
                root.appendChild(serviceElement);
             }
          }
@@ -101,7 +102,8 @@ public class HaDescriptorManager implements HaDescriptorConstants {
                      element.getAttribute(STICKY_SESSION_COOKIE_NAME),
                      element.getAttribute(ENABLE_NO_FALLBACK),
                      element.getAttribute(DISABLE_LB_USER_AGENTS),
-                     element.getAttribute(FAILOVER_NON_IDEMPOTENT));
+                     element.getAttribute(FAILOVER_NON_IDEMPOTENT),
+                     element.getAttribute(USE_ROUTES_FOR_STICKY_COOKIE_PATH));
                descriptor.addServiceConfig(config);
             }
          }

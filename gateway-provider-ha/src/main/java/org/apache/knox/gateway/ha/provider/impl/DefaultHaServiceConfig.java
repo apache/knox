@@ -45,6 +45,8 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
 
   private String disableStickySessionForUserAgents;
 
+  private boolean useRoutesForStickyCookiePath = DEFAULT_USE_ROUTES_FOR_STICKY_COOKIE_PATH;
+
   public DefaultHaServiceConfig(String name) {
     this.name = name;
   }
@@ -168,5 +170,15 @@ public class DefaultHaServiceConfig implements HaServiceConfig, HaServiceConfigC
   public void setFailoverNonIdempotentRequestEnabled(
       boolean failoverNonIdempotentRequestEnabled) {
     this.failoverNonIdempotentRequestEnabled = failoverNonIdempotentRequestEnabled;
+  }
+
+  @Override
+  public boolean isUseRoutesForStickyCookiePath() {
+    return this.useRoutesForStickyCookiePath;
+  }
+
+  @Override
+  public void setUseRoutesForStickyCookiePath(boolean useRoutesForStickyCookiePath) {
+    this.useRoutesForStickyCookiePath = useRoutesForStickyCookiePath;
   }
 }

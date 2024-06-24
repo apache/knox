@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.deploy.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.deploy.ServiceDeploymentContributorBase;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentContributorBase {
   private static final String DISPATCH_ROLE = "dispatch";
@@ -52,6 +54,8 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   private static final String HTTP_CLIENT_FACTORY_PARAM = "httpClientFactory";
 
   private static final String SERVICE_ROLE_PARAM = "serviceRole";
+
+  private static final String STICKY_COOKIE_PATH_PARAM = "stickyCookiePath";
 
   private static final String XFORWARDED_FILTER_NAME = "XForwardedHeaderFilter";
 
@@ -317,6 +321,18 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
 
     // Ensure that serviceRole is set in case of HA
     filter.param().name(SERVICE_ROLE_PARAM).value(service.getRole());
+
+    // Set the context to be used for sticky cookies
+    // Try to get the longest common prefix of all path patterns
+    String commonPrefix = StringUtils.getCommonPrefix(Optional.ofNullable(serviceDefinition.getRoutes())
+        .orElseGet(Collections::emptyList).stream().map(s -> (s.getPath() == null) ? null : s.getPath()
+        .split("[*?{}]")[0]).toArray(String[]::new));
+    if (commonPrefix != null && commonPrefix.length() > 0) {
+      filter.param().name(STICKY_COOKIE_PATH_PARAM).value(commonPrefix);
+    } else {
+      //This is unlikely, all current services have a common prefix in their routes
+      filter.param().name(STICKY_COOKIE_PATH_PARAM).value(service.getName().toLowerCase(Locale.ROOT));
+    }
   }
 
   private void addDispatchFilterForClass(DeploymentContext context, Service service,

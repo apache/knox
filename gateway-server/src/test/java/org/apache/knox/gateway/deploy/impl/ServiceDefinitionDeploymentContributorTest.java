@@ -36,6 +36,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -69,6 +70,7 @@ public class ServiceDefinitionDeploymentContributorTest {
   public void testServiceAttributeUseTwoWaySSLParamOverride() throws Exception {
 
     final String TEST_SERVICE_ROLE     = "Test";
+    final String TEST_SERVICE_NAME     = "Test";
     final String USE_TWO_WAY_SSL_PARAM = "useTwoWaySsl";
 
     UrlRewriteRulesDescriptor clusterRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
@@ -133,6 +135,7 @@ public class ServiceDefinitionDeploymentContributorTest {
     Map<String, String> svcParams = new HashMap<>();
     svcParams.put(USE_TWO_WAY_SSL_PARAM, "true");
     EasyMock.expect(service.getParams()).andReturn(svcParams).anyTimes();
+    EasyMock.expect(service.getName()).andReturn(TEST_SERVICE_NAME).anyTimes();
     EasyMock.replay(service);
 
     sddc.contributeService(context, service);
@@ -172,6 +175,7 @@ public class ServiceDefinitionDeploymentContributorTest {
   public void testTopologyDispatch() throws Exception {
 
     final String TEST_SERVICE_ROLE     = "Test";
+    final String TEST_SERVICE_NAME     = "Test";
     final String DISPATCH = "dispatch-impl";
     final String EXPECTED_DISPATCH_CLASS = "org.apache.knox.gateway.hdfs.dispatch.HdfsHttpClientDispatch";
     final String EXPECTED_HA_DISPATCH_CLASS = "org.apache.knox.gateway.hdfs.dispatch.HdfsUIHaDispatch";
@@ -247,6 +251,7 @@ public class ServiceDefinitionDeploymentContributorTest {
     Map<String, String> svcParams = new HashMap<>();
     EasyMock.expect(service.getParams()).andReturn(svcParams).anyTimes();
     EasyMock.expect(service.getRole()).andReturn(TEST_SERVICE_ROLE).anyTimes();
+    EasyMock.expect(service.getName()).andReturn(TEST_SERVICE_NAME).anyTimes();
     EasyMock.expect(service.getUrl()).andReturn("http://localhost:8081").anyTimes();
     EasyMock.expect(service.getDispatch()).andReturn(topologyDispatch).anyTimes();
     EasyMock.replay(service);
@@ -279,8 +284,114 @@ public class ServiceDefinitionDeploymentContributorTest {
   }
 
   @Test
+  public void testServiceAttributeStickyCookiePath() throws Exception {
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"foo"}), "foo");
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"foobar", "foobaz"}), "fooba");
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"foo/**/bar", "foo/**/bar"}), "foo/");
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"/foo/{**}?{**}"}), "/foo/");
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"/hbase/webui/prof-output/{**}?{**}", "/hbase/webui/static/**", "/hbase/webui?"}), "/hbase/webui");
+
+    // There is currently no service definition like this
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"foo", "bar"}), "test");
+
+    // These can not happen in a real service definition
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {}), "test");
+    checkServiceAttributeStickyCookiePath(Arrays.asList(new String[] {"foo", null}), "test");
+  }
+
+  private void checkServiceAttributeStickyCookiePath(List<String> paths, String stickyCookiePath) throws Exception {
+    final String TEST_SERVICE_ROLE     = "Test";
+    final String TEST_SERVICE_NAME     = "Test";
+
+    UrlRewriteRulesDescriptor clusterRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
+    EasyMock.replay(clusterRules);
+
+    UrlRewriteRulesDescriptor svcRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
+    EasyMock.replay(svcRules);
+
+    ServiceDefinition svcDef = EasyMock.createNiceMock(ServiceDefinition.class);
+    EasyMock.expect(svcDef.getRole()).andReturn(TEST_SERVICE_ROLE).anyTimes();
+    List<Route> svcRoutes = new ArrayList<>();
+
+    for (String path : paths) {
+      Route route = EasyMock.createNiceMock(Route.class);
+      List<Rewrite> filters = new ArrayList<>();
+      EasyMock.expect(route.getRewrites()).andReturn(filters).anyTimes();
+      EasyMock.expect(route.getPath()).andReturn(path).anyTimes();
+      svcRoutes.add(route);
+      EasyMock.replay(route);
+    }
+    EasyMock.expect(svcDef.getRoutes()).andReturn(svcRoutes).anyTimes();
+    CustomDispatch cd = EasyMock.createNiceMock(CustomDispatch.class);
+    EasyMock.expect(cd.getClassName()).andReturn("TestDispatch").anyTimes();
+    EasyMock.expect(cd.getHaClassName()).andReturn("TestHADispatch").anyTimes();
+    EasyMock.expect(cd.getHaContributorName()).andReturn(null).anyTimes();
+
+    EasyMock.replay(cd);
+    EasyMock.expect(svcDef.getDispatch()).andReturn(cd).anyTimes();
+    EasyMock.replay(svcDef);
+
+    ServiceDefinitionDeploymentContributor sddc = new ServiceDefinitionDeploymentContributor(svcDef, svcRules);
+
+    DeploymentContext context = EasyMock.createNiceMock(DeploymentContext.class);
+    EasyMock.expect(context.getDescriptor("rewrite")).andReturn(clusterRules).anyTimes();
+    GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gc.isXForwardedEnabled()).andReturn(false).anyTimes();
+    EasyMock.expect(gc.isCookieScopingToPathEnabled()).andReturn(false).anyTimes();
+    EasyMock.replay(gc);
+    EasyMock.expect(context.getGatewayConfig()).andReturn(gc).anyTimes();
+
+    // Configure the HaProvider
+    Topology topology = EasyMock.createNiceMock(Topology.class);
+    List<Provider> providers = new ArrayList<>();
+    Provider haProvider = EasyMock.createNiceMock(Provider.class);
+    EasyMock.expect(haProvider.getRole()).andReturn("ha").anyTimes();
+    EasyMock.expect(haProvider.isEnabled()).andReturn(true).anyTimes();
+    Map<String, String> providerParams = new HashMap<>();
+    providerParams.put(TEST_SERVICE_ROLE, "whatever");
+    EasyMock.expect(haProvider.getParams()).andReturn(providerParams).anyTimes();
+
+    EasyMock.replay(haProvider);
+    providers.add(haProvider);
+    EasyMock.expect(topology.getProviders()).andReturn(providers).anyTimes();
+    EasyMock.replay(topology);
+    EasyMock.expect(context.getTopology()).andReturn(topology).anyTimes();
+
+    TestGatewayDescriptor gd = new TestGatewayDescriptor();
+    EasyMock.expect(context.getGatewayDescriptor()).andReturn(gd).anyTimes();
+    EasyMock.replay(context);
+
+    Service service = EasyMock.createNiceMock(Service.class);
+    Map<String, String> svcParams = new HashMap<>();
+    EasyMock.expect(service.getParams()).andReturn(svcParams).anyTimes();
+    EasyMock.expect(service.getName()).andReturn(TEST_SERVICE_NAME).anyTimes();
+    EasyMock.replay(service);
+
+    sddc.contributeService(context, service);
+
+    assertEquals(paths.size(), gd.resources().size());
+    for (ResourceDescriptor res : gd.resources()) {
+      assertNotNull(res);
+      List<FilterDescriptor> filterList = res.filters();
+      assertEquals(1, filterList.size());
+      FilterDescriptor f = filterList.get(0);
+      assertNotNull(f);
+      assertEquals("dispatch", f.role());
+      List<FilterParamDescriptor> fParams = f.params();
+      assertNotNull(fParams);
+
+      Map<String, String> fparamKeyVal = new HashMap<>();
+      for(FilterParamDescriptor fparam : fParams) {
+        fparamKeyVal.put(fparam.name(), fparam.value());
+        }
+      assertEquals(stickyCookiePath, fparamKeyVal.get("stickyCookiePath"));
+    }
+  }
+
+  @Test
   public void testServiceAttributeParameters() throws Exception {
     final String TEST_SERVICE_ROLE     = "Test";
+    final String TEST_SERVICE_NAME     = "Test";
 
     UrlRewriteRulesDescriptor clusterRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
     EasyMock.replay(clusterRules);
@@ -342,6 +453,7 @@ public class ServiceDefinitionDeploymentContributorTest {
     svcParams.put("test1", "test1abc");
     svcParams.put("test2", "test2def");
     EasyMock.expect(service.getParams()).andReturn(svcParams).anyTimes();
+    EasyMock.expect(service.getName()).andReturn(TEST_SERVICE_NAME).anyTimes();
     EasyMock.replay(service);
 
     sddc.contributeService(context, service);
