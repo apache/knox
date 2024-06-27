@@ -1,0 +1,47 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service role="RANGER" name="ranger" version="2.3.0">
+    <metadata>
+        <type>API</type>
+        <context>/ranger</context>
+        <shortDesc>Ranger Admin REST API</shortDesc>
+        <description>Apache Ranger is a framework to enable, monitor and manage comprehensive data security across the Hadoop platform.
+            Apache Ranger currently provides a centralized security adminstration, fine grain access control and detailed auditing for user access within Apache Hadoop, Apache Hive, Apache HBase and other Apache components</description>
+    </metadata>
+    <routes>
+        <route path="/ranger/service/public/**"/>
+        <route path="/ranger/service/plugins/**"/>
+        <route path="/ranger/service/xusers/**"/>
+        <route path="/ranger/service/assets/**"/>
+        <route path="/ranger/service/metrics/**"/>
+        <route path="/ranger/service/tags/**"/>
+        <route path="/ranger/service/xaudit/**"/>
+        <route path="/ranger/service/roles/**"/>
+        <route path="/ranger"/>
+    </routes>
+    <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch"
+              ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch">
+        <param>
+            <name>responseExcludeHeaders</name>
+            <value>WWW-AUTHENTICATE</value>
+        </param>
+        <param>
+            <name>addExpect100Continue</name>
+            <value>true</value>
+        </param>
+    </dispatch>
+</service>
