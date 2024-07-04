@@ -69,7 +69,6 @@ import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,19 +148,17 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   }
 
   @Override
-  public Topology parse(final InputStream content) throws IOException, SAXException {
+  public Topology parse(final String content) throws IOException, SAXException {
     return TopologyUtils.parse(content);
   }
 
   private Topology loadTopologyAttempt(File file) throws IOException, SAXException {
-    Topology topology;
-    try (InputStream in = FileUtils.openInputStream(file)) {
-      topology = parse(in);
-      if (topology != null) {
-        topology.setUri(file.toURI());
-        topology.setName(FilenameUtils.removeExtension(file.getName()));
-        topology.setTimestamp(file.lastModified());
-      }
+    final String topologyContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+    final Topology topology = parse(topologyContent);
+    if (topology != null) {
+      topology.setUri(file.toURI());
+      topology.setName(FilenameUtils.removeExtension(file.getName()));
+      topology.setTimestamp(file.lastModified());
     }
     return topology;
   }

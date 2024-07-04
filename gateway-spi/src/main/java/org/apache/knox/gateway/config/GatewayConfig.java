@@ -751,6 +751,18 @@ public interface GatewayConfig {
   int getClouderaManagerServiceDiscoveryMaximumRetryAttempts();
 
   /**
+   * @return a collection of comma separated service types that should be excluded
+   *         from CM service discovery (e.g. HDFS, KNOX, RANGER, HIVE, etc...)
+   */
+  Collection<String> getClouderaManagerServiceDiscoveryExcludedServiceTypes();
+
+  /**
+   * @return a collection of comma separated role types that should be excluded
+   *         from CM service discovery (e.g. KNOX_GATEWAY, IDBROKER, DATANODE, HIVEMETASTORE, etc...)
+   */
+  Collection<String> getClouderaManagerServiceDiscoveryExcludedRoleTypes();
+
+  /**
    * @return true, if state for tokens issued by the Knox Token service should be managed by Knox.
    */
   boolean isServerManagedTokenStateEnabled();

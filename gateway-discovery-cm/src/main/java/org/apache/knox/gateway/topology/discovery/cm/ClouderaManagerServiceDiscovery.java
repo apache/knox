@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 
 /**
@@ -92,6 +93,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   private final AtomicInteger retryAttempts = new AtomicInteger(0);
   private final int retrySleepSeconds = 3;  // It's been agreed that we not expose this config
   private int maxRetryAttempts = -1;
+  private Collection<String> excludedServiceTypes = Collections.emptySet();
+  private Collection<String> excludedRoleTypes = Collections.emptySet();
 
   ClouderaManagerServiceDiscovery(GatewayConfig gatewayConfig) {
     this(false, gatewayConfig);
@@ -116,7 +119,13 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     if (gatewayConfig != null) {
       repository.setCacheEntryTTL(gatewayConfig.getClouderaManagerServiceDiscoveryRepositoryEntryTTL());
       configureRetryParams(gatewayConfig);
+      excludedServiceTypes = getLowercaseStringCollection(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes());
+      excludedRoleTypes = getLowercaseStringCollection(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes());
     }
+  }
+
+  private Collection<String> getLowercaseStringCollection(Collection<String> original) {
+    return original == null ? Collections.emptySet() : original.stream().map(serviceType -> serviceType.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
   }
 
   private void configureRetryParams(GatewayConfig gatewayConfig) {
@@ -356,6 +365,14 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
         final ApiServiceList serviceList = servicesResourceApi.readServices(serviceDiscoveryConfig.getCluster(), VIEW_SUMMARY);
         services = serviceList == null ? new ArrayList<>() : serviceList.getItems();
 
+        services = services.stream().filter(service -> {
+          if (excludedServiceTypes.contains(service.getType().toLowerCase(Locale.ROOT))) {
+            log.skipServiceDiscovery(service.getName(), service.getType());
+            return false;
+          }
+          return true;
+        }).collect(Collectors.toList());
+
         // make sure that services are populated in the repository
         services.forEach(service -> repository.addService(serviceDiscoveryConfig, service));
       } catch (ApiException e) {
@@ -409,6 +426,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
           log.noRoles();
         }
 
+        roles = excludeRoles(roles);
+
         // make sure that role is populated in the service discovery repository to avoid subsequent CM calls
         if (roles != null && roles.getItems() != null) {
           repository.addRoles(serviceDiscoveryConfig, service, roles);
@@ -420,6 +439,21 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     }
 
     return roles;
+  }
+
+  private ApiRoleList excludeRoles(ApiRoleList roles) {
+    if (roles == null || roles.getItems() == null) {
+      return roles;
+    }
+    final ApiRoleList filteredRoles = new ApiRoleList();
+    roles.getItems().forEach(role -> {
+      if (excludedRoleTypes.contains(role.getType().toLowerCase(Locale.ROOT))) {
+        log.skipRoleDiscovery(role.getName(), role.getType());
+      } else {
+        filteredRoles.addItemsItem(role);
+      }
+    });
+    return filteredRoles;
   }
 
   private ApiConfigList getRoleConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, ApiService service, ApiRole role) throws ApiException {

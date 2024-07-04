@@ -108,15 +108,15 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 public class TokenResource {
   static final String LIFESPAN = "lifespan";
   static final String COMMENT = "comment";
-  private static final String EXPIRES_IN = "expires_in";
-  private static final String TOKEN_TYPE = "token_type";
-  private static final String ACCESS_TOKEN = "access_token";
-  private static final String TOKEN_ID = "token_id";
+  protected static final String EXPIRES_IN = "expires_in";
+  protected static final String TOKEN_TYPE = "token_type";
+  protected static final String ACCESS_TOKEN = "access_token";
+  protected static final String TOKEN_ID = "token_id";
   static final String PASSCODE = "passcode";
-  private static final String MANAGED_TOKEN = "managed";
+  protected static final String MANAGED_TOKEN = "managed";
   private static final String TARGET_URL = "target_url";
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
-  private static final String BEARER = "Bearer";
+  protected static final String BEARER = "Bearer";
   private static final String TOKEN_PARAM_PREFIX = "knox.token.";
   private static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
@@ -160,7 +160,7 @@ public class TokenResource {
   public static final String KNOX_TOKEN_ISSUER = TOKEN_PARAM_PREFIX + "issuer";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private static final Gson GSON = new Gson();
-  private long tokenTTL = TOKEN_TTL_DEFAULT;
+  protected long tokenTTL = TOKEN_TTL_DEFAULT;
   private String tokenType;
   private String tokenTTLAsText;
   private List<String> targetAudiences = new ArrayList<>();
@@ -172,7 +172,7 @@ public class TokenResource {
   private String endpointPublicCert;
 
   // Optional token store service
-  private TokenStateService tokenStateService;
+  protected TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
   private final Map<String, String> tokenStateServiceStatusMap = new HashMap<>();
 
@@ -185,6 +185,7 @@ public class TokenResource {
   private String tokenIssuer;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
+
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
 
   private List<String> allowedRenewers;
@@ -362,7 +363,7 @@ public class TokenResource {
       final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       final String configuredTokenStateServiceImpl = config.getServiceParameter(ServiceType.TOKEN_STATE_SERVICE.getShortName(), "impl");
       final String configuredTokenServiceName = StringUtils.isBlank(configuredTokenStateServiceImpl) ? ""
-          : configuredTokenStateServiceImpl.substring(configuredTokenStateServiceImpl.lastIndexOf('.') + 1);
+              : configuredTokenStateServiceImpl.substring(configuredTokenStateServiceImpl.lastIndexOf('.') + 1);
       final String actualTokenStateServiceImpl = tokenStateService.getClass().getCanonicalName();
       final String actualTokenServiceName = actualTokenStateServiceImpl.substring(actualTokenStateServiceImpl.lastIndexOf('.') + 1);
       tokenStateServiceStatusMap.put(TSS_STATUS_CONFIFURED_BACKEND, configuredTokenServiceName);
@@ -483,7 +484,7 @@ public class TokenResource {
         tokens.addAll(userTokens);
       } else {
         userTokens.forEach(knoxToken -> {
-          for (Map.Entry<String,  List<String>> entry : metadataMap.entrySet()) {
+          for (Map.Entry<String, List<String>> entry : metadataMap.entrySet()) {
             if (entry.getValue().contains("*")) {
               // we should only filter tokens by metadata name
               if (knoxToken.hasMetadata(entry.getKey())) {
@@ -504,15 +505,15 @@ public class TokenResource {
 
   @GET
   @Path(GET_TSS_STATUS_PATH)
-  @Produces({ APPLICATION_JSON })
+  @Produces({APPLICATION_JSON})
   public Response getTokenStateServiceStatus() {
     return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(tokenStateServiceStatusMap)).build();
   }
 
   /**
    * @deprecated This method is no longer acceptable for token renewal. Please
-   *             use the '/knoxtoken/v2/api/token/renew' path; instead which is a
-   *             PUT HTTP request.
+   * use the '/knoxtoken/v2/api/token/renew' path; instead which is a
+   * PUT HTTP request.
    */
   @POST
   @Path(RENEW_PATH)
@@ -523,8 +524,8 @@ public class TokenResource {
 
     long expiration = 0;
 
-    String          error       = "";
-    ErrorCode       errorCode   = ErrorCode.UNKNOWN;
+    String error = "";
+    ErrorCode errorCode = ErrorCode.UNKNOWN;
     Response.Status errorStatus = Response.Status.BAD_REQUEST;
 
     if (tokenStateService == null) {
@@ -532,8 +533,8 @@ public class TokenResource {
       try {
         JWTToken jwt = new JWTToken(token);
         log.renewalDisabled(getTopologyName(),
-                            Tokens.getTokenDisplayText(token),
-                            Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(jwt)));
+                Tokens.getTokenDisplayText(token),
+                Tokens.getTokenIDDisplayText(TokenUtils.getTokenId(jwt)));
         expiration = Long.parseLong(jwt.getExpires());
       } catch (ParseException e) {
         log.invalidToken(getTopologyName(), Tokens.getTokenDisplayText(token), e);
@@ -571,15 +572,15 @@ public class TokenResource {
       }
     }
 
-    if(error.isEmpty()) {
-      resp =  Response.status(Response.Status.OK)
-                      .entity("{\n  \"renewed\": \"true\",\n  \"expires\": \"" + expiration + "\"\n}\n")
-                      .build();
+    if (error.isEmpty()) {
+      resp = Response.status(Response.Status.OK)
+              .entity("{\n  \"renewed\": \"true\",\n  \"expires\": \"" + expiration + "\"\n}\n")
+              .build();
     } else {
       log.badRenewalRequest(getTopologyName(), Tokens.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
-                     .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n")
-                     .build();
+              .entity("{\n  \"renewed\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n")
+              .build();
     }
 
     return resp;
@@ -603,8 +604,8 @@ public class TokenResource {
 
   /**
    * @deprecated This method is no longer acceptable for token revocation. Please
-   *             use the '/knoxtoken/v2/api/token/revoke' path; instead which is a
-   *             DELETE HTTP request.
+   * use the '/knoxtoken/v2/api/token/revoke' path; instead which is a
+   * DELETE HTTP request.
    */
   @POST
   @Path(REVOKE_PATH)
@@ -613,8 +614,8 @@ public class TokenResource {
   public Response revoke(String token) {
     Response resp;
 
-    String          error       = "";
-    ErrorCode       errorCode   = ErrorCode.UNKNOWN;
+    String error = "";
+    ErrorCode errorCode = ErrorCode.UNKNOWN;
     Response.Status errorStatus = Response.Status.BAD_REQUEST;
 
     if (tokenStateService == null) {
@@ -626,14 +627,14 @@ public class TokenResource {
         final String tokenId = getTokenId(token);
         if (isKnoxSsoCookie(tokenId)) {
           errorStatus = Response.Status.FORBIDDEN;
-          error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked." ;
+          error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked.";
           errorCode = ErrorCode.UNAUTHORIZED;
         } else if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
           tokenStateService.revokeToken(tokenId);
           log.revokedToken(getTopologyName(),
-              Tokens.getTokenDisplayText(token),
-              Tokens.getTokenIDDisplayText(tokenId),
-              revoker);
+                  Tokens.getTokenDisplayText(token),
+                  Tokens.getTokenIDDisplayText(tokenId),
+                  revoker);
         } else {
           errorStatus = Response.Status.FORBIDDEN;
           error = "Caller (" + revoker + ") not authorized to revoke tokens.";
@@ -650,14 +651,14 @@ public class TokenResource {
     }
 
     if (error.isEmpty()) {
-      resp =  Response.status(Response.Status.OK)
-                      .entity("{\n  \"revoked\": \"true\"\n}\n")
-                      .build();
+      resp = Response.status(Response.Status.OK)
+              .entity("{\n  \"revoked\": \"true\"\n}\n")
+              .build();
     } else {
       log.badRevocationRequest(getTopologyName(), Tokens.getTokenDisplayText(token), error);
       resp = Response.status(errorStatus)
-                     .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n")
-                     .build();
+              .entity("{\n  \"revoked\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n")
+              .build();
     }
 
     return resp;
@@ -671,7 +672,7 @@ public class TokenResource {
   private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
     final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
-    final String tokenCreatedBy =  metadata == null ? "" : metadata.getCreatedBy();
+    final String tokenCreatedBy = metadata == null ? "" : metadata.getCreatedBy();
     return StringUtils.isNotBlank(revoker) && (revoker.equals(tokenUserName) || revoker.equals(tokenCreatedBy));
   }
 
@@ -693,30 +694,30 @@ public class TokenResource {
 
   @PUT
   @Path(ENABLE_PATH)
-  @Produces({ APPLICATION_JSON })
+  @Produces({APPLICATION_JSON})
   public Response enable(String tokenId) {
     return setTokenEnabledFlag(tokenId, true, false);
   }
 
   @PUT
   @Path(BATCH_ENABLE_PATH)
-  @Consumes({ APPLICATION_JSON })
-  @Produces({ APPLICATION_JSON })
+  @Consumes({APPLICATION_JSON})
+  @Produces({APPLICATION_JSON})
   public Response enableTokens(String tokenIds) {
     return setTokenEnabledFlags(tokenIds, true);
   }
 
   @PUT
   @Path(DISABLE_PATH)
-  @Produces({ APPLICATION_JSON })
+  @Produces({APPLICATION_JSON})
   public Response disable(String tokenId) {
     return setTokenEnabledFlag(tokenId, false, false);
   }
 
   @PUT
   @Path(BATCH_DISABLE_PATH)
-  @Consumes({ APPLICATION_JSON })
-  @Produces({ APPLICATION_JSON })
+  @Consumes({APPLICATION_JSON})
+  @Produces({APPLICATION_JSON})
   public Response disableTokens(String tokenIds) {
     return setTokenEnabledFlags(tokenIds, false);
   }
@@ -780,26 +781,97 @@ public class TokenResource {
     return null;
   }
 
-  private Response getAuthenticationToken() {
-    if (clientCertRequired) {
-      X509Certificate cert = extractCertificate(request);
-      if (cert != null) {
-        if (!allowedDNs.contains(cert.getSubjectDN().getName().replaceAll("\\s+", ""))) {
-          return Response.status(Response.Status.FORBIDDEN)
-                         .entity("{ \"Unable to get token - untrusted client cert.\" }")
-                         .build();
-        }
+  protected Response getAuthenticationToken() {
+    Response response = enforceClientCertIfRequired();
+    if (response != null) { return response; }
+
+    response = onlyAllowGroupsToBeAddedWhenEnabled();
+    if (response != null) { return response; }
+
+    UserContext context = buildUserContext(request);
+
+    response = enforceTokenLimitsAsRequired(context.userName);
+    if (response != null) { return response; }
+
+    TokenResponseContext resp = getTokenResponse(context);
+    return resp.build();
+  }
+
+  protected TokenResponseContext getTokenResponse(UserContext context) {
+    TokenResponseContext response = null;
+    long expires = getExpiry();
+    setupPublicCertPEM();
+    String jku = getJku();
+    try
+    {
+      JWT token = getJWT(context.userName, expires, jku);
+      if (token != null) {
+        ResponseMap result = buildResponseMap(token, expires);
+        String jsonResponse = JsonUtils.renderAsJsonString(result.map);
+        persistTokenDetails(result, expires, context.userName, context.createdBy);
+
+        response = new TokenResponseContext(result, jsonResponse, Response.ok());
       } else {
-        return Response.status(Response.Status.FORBIDDEN)
-                       .entity("{ \"Unable to get token - client cert required.\" }")
-                       .build();
+        response = new TokenResponseContext(null, null, Response.serverError());
       }
+    } catch (TokenServiceException e) {
+      log.unableToIssueToken(e);
+      response = new TokenResponseContext(null
+              , "{ \"Unable to acquire token.\" }"
+              , Response.serverError());
     }
-    GatewayServices services = (GatewayServices) request.getServletContext()
+    return response;
+  }
+
+  protected static class TokenResponseContext {
+    public ResponseMap responseMap;
+    public String responseStr;
+    public Response.ResponseBuilder responseBuilder;
+
+    public TokenResponseContext(ResponseMap respMap, String resp, Response.ResponseBuilder builder) {
+      responseMap = respMap;
+      responseStr = resp;
+      responseBuilder = builder;
+    }
+
+    public Response build() {
+      Response response = null;
+      if (responseStr != null) {
+        response = responseBuilder.entity(responseStr).build();
+      } else {
+        response = responseBuilder.build();
+      }
+      return response;
+    }
+  }
+
+  protected GatewayServices getGatewayServices() {
+      return (GatewayServices) request.getServletContext()
         .getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+  }
 
-    JWTokenAuthority ts = services.getService(ServiceType.TOKEN_SERVICE);
+  protected String getJku() {
+    String jku = null;
+    /* remove .../token and replace it with ..../jwks.json */
+    final int idx = request.getRequestURL().lastIndexOf("/");
+    if(idx > 1) {
+      jku = request.getRequestURL().substring(0, idx) + JWKSResource.JWKS_PATH;
+    }
+    return jku;
+  }
 
+  protected Response onlyAllowGroupsToBeAddedWhenEnabled() {
+    Response response = null;
+    if (shouldIncludeGroups() && !includeGroupsInTokenAllowed) {
+      response = Response
+              .status(Response.Status.BAD_REQUEST)
+              .entity("{\n  \"error\": \"Including group information in tokens is disabled\"\n}\n")
+              .build();
+    }
+    return response;
+  }
+
+  protected UserContext buildUserContext(HttpServletRequest request) {
     String userName = request.getUserPrincipal().getName();
     String createdBy = null;
     // checking the doAs user only makes sense if tokens are managed (this is where we store the userName/createdBy information)
@@ -816,9 +888,52 @@ public class TokenResource {
         }
       }
     }
+    return new UserContext(userName, createdBy);
+  }
 
-    long expires = getExpiry();
+  protected static class UserContext {
+    public final String userName;
+    public final String createdBy;
 
+    public UserContext(String userName, String createdBy) {
+      this.userName = userName;
+      this.createdBy = createdBy;
+    }
+  }
+
+  protected Response enforceTokenLimitsAsRequired(String userName) {
+    Response response = null;
+    if (tokenStateService != null) {
+      if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
+        final Collection<KnoxToken> allUserTokens = tokenStateService.getTokens(userName);
+        final Collection<KnoxToken> userTokens = new LinkedList<>();
+        allUserTokens.stream().forEach(token -> {
+          if(!token.getMetadata().isKnoxSsoCookie()) {
+            userTokens.add(token);
+          }
+        });
+        if (userTokens.size() >= tokenLimitPerUser) {
+          log.tokenLimitExceeded(userName);
+          if (UserLimitExceededAction.RETURN_ERROR == userLimitExceededAction) {
+            response = Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
+          } else {
+            // userTokens is an ordered collection (by issue time) -> the first element is the oldest one
+            final String oldestTokenId = userTokens.iterator().next().getTokenId();
+            log.generalInfoMessage(String.format(Locale.getDefault(), "Revoking %s's oldest token %s ...", userName, Tokens.getTokenIDDisplayText(oldestTokenId)));
+            final Response revocationResponse = revoke(oldestTokenId);
+            if (Response.Status.OK.getStatusCode() != revocationResponse.getStatus()) {
+              response = Response.status(Response.Status.fromStatusCode(revocationResponse.getStatus()))
+                  .entity("{\n  \"error\": \"An error occurred during the oldest token revocation of " + userName + " \"\n}\n").build();
+            }
+           }
+        }
+      }
+    }
+    return response;
+  }
+
+  protected void setupPublicCertPEM() {
+    GatewayServices services = getGatewayServices();
     if (endpointPublicCert == null) {
       // acquire PEM for gateway identity of this gateway instance
       KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
@@ -833,125 +948,115 @@ public class TokenResource {
         }
       }
     }
+  }
 
-    String jku = null;
-    /* remove .../token and replace it with ..../jwks.json */
-    final int idx = request.getRequestURL().lastIndexOf("/");
-    if(idx > 1) {
-      jku = request.getRequestURL().substring(0, idx) + JWKSResource.JWKS_PATH;
-    }
-
-    if (tokenStateService != null) {
-      if (tokenLimitPerUser != -1) { // if -1 => unlimited tokens for all users
-        final Collection<KnoxToken> allUserTokens = tokenStateService.getTokens(userName);
-        final Collection<KnoxToken> userTokens = new LinkedList<>();
-        allUserTokens.stream().forEach(token -> {
-          if(!token.getMetadata().isKnoxSsoCookie()) {
-            userTokens.add(token);
-          }
-        });
-        if (userTokens.size() >= tokenLimitPerUser) {
-          log.tokenLimitExceeded(userName);
-          if (UserLimitExceededAction.RETURN_ERROR == userLimitExceededAction) {
-            return Response.status(Response.Status.FORBIDDEN).entity("{ \"Unable to get token - token limit exceeded.\" }").build();
-          } else {
-            // userTokens is an ordered collection (by issue time) -> the first element is the oldest one
-            final String oldestTokenId = userTokens.iterator().next().getTokenId();
-            log.generalInfoMessage(String.format(Locale.getDefault(), "Revoking %s's oldest token %s ...", userName, Tokens.getTokenIDDisplayText(oldestTokenId)));
-            final Response revocationResponse = revoke(oldestTokenId);
-            if (Response.Status.OK.getStatusCode() != revocationResponse.getStatus()) {
-              return Response.status(Response.Status.fromStatusCode(revocationResponse.getStatus()))
-                  .entity("{\n  \"error\": \"An error occurred during the oldest token revocation of " + userName + " \"\n}\n").build();
-            }
-           }
+  protected Response enforceClientCertIfRequired() {
+    Response response = null;
+    if (clientCertRequired) {
+      X509Certificate cert = extractCertificate(request);
+      if (cert != null) {
+        if (!allowedDNs.contains(cert.getSubjectDN().getName().replaceAll("\\s+", ""))) {
+          response = Response.status(Response.Status.FORBIDDEN)
+                         .entity("{ \"Unable to get token - untrusted client cert.\" }")
+                         .build();
         }
-      }
-    }
-
-    try {
-      final boolean managedToken = tokenStateService != null;
-      JWT token;
-      JWTokenAttributes jwtAttributes;
-      final JWTokenAttributesBuilder jwtAttributesBuilder = new JWTokenAttributesBuilder();
-      jwtAttributesBuilder
-          .setIssuer(tokenIssuer)
-          .setUserName(userName)
-          .setAlgorithm(signatureAlgorithm)
-          .setExpires(expires)
-          .setManaged(managedToken)
-          .setJku(jku)
-          .setType(tokenType);
-      if (!targetAudiences.isEmpty()) {
-        jwtAttributesBuilder.setAudiences(targetAudiences);
-      }
-      if (shouldIncludeGroups()) {
-        if (includeGroupsInTokenAllowed) {
-          jwtAttributesBuilder.setGroups(groups());
-        } else {
-          return Response
-                  .status(Response.Status.BAD_REQUEST)
-                  .entity("{\n  \"error\": \"Including group information in tokens is disabled\"\n}\n")
-                  .build();
-        }
-      }
-
-      jwtAttributes = jwtAttributesBuilder.build();
-      token = ts.issueToken(jwtAttributes);
-
-      if (token != null) {
-        String accessToken = token.toString();
-        String tokenId = TokenUtils.getTokenId(token);
-        log.issuedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
-
-        final HashMap<String, Object> map = new HashMap<>();
-        map.put(ACCESS_TOKEN, accessToken);
-        map.put(TOKEN_ID, tokenId);
-        map.put(MANAGED_TOKEN, String.valueOf(managedToken));
-        map.put(TOKEN_TYPE, BEARER);
-        map.put(EXPIRES_IN, expires);
-        if (tokenTargetUrl != null) {
-          map.put(TARGET_URL, tokenTargetUrl);
-        }
-        if (tokenClientDataMap != null) {
-          map.putAll(tokenClientDataMap);
-        }
-        if (endpointPublicCert != null) {
-          map.put(ENDPOINT_PUBLIC_CERT, endpointPublicCert);
-        }
-
-        final String passcode = UUID.randomUUID().toString();
-        if (tokenStateService != null && tokenStateService instanceof PersistentTokenStateService) {
-          map.put(PASSCODE, generatePasscodeField(tokenId, passcode));
-        }
-
-        String jsonResponse = JsonUtils.renderAsJsonString(map);
-
-        // Optional token store service persistence
-        if (tokenStateService != null) {
-          final long issueTime = System.currentTimeMillis();
-          tokenStateService.addToken(tokenId,
-                                     issueTime,
-                                     expires,
-                                     maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
-          final String comment = request.getParameter(COMMENT);
-          final TokenMetadata tokenMetadata = new TokenMetadata(userName, StringUtils.isBlank(comment) ? null : comment);
-          tokenMetadata.setPasscode(tokenMAC.hash(tokenId, issueTime, userName, passcode));
-          addArbitraryTokenMetadata(tokenMetadata);
-          if (createdBy != null) {
-            tokenMetadata.setCreatedBy(createdBy);
-          }
-          tokenStateService.addMetadata(tokenId, tokenMetadata);
-          log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
-        }
-
-        return Response.ok().entity(jsonResponse).build();
       } else {
-        return Response.serverError().build();
+        response = Response.status(Response.Status.FORBIDDEN)
+                       .entity("{ \"Unable to get token - client cert required.\" }")
+                       .build();
       }
-    } catch (TokenServiceException e) {
-      log.unableToIssueToken(e);
     }
-    return Response.ok().entity("{ \"Unable to acquire token.\" }").build();
+    return response;
+  }
+
+  protected void persistTokenDetails(ResponseMap result, long expires, String userName, String createdBy) {
+    // Optional token store service persistence
+    if (tokenStateService != null) {
+      final long issueTime = System.currentTimeMillis();
+      tokenStateService.addToken(result.tokenId,
+                                 issueTime,
+              expires,
+                                 maxTokenLifetime.orElse(tokenStateService.getDefaultMaxLifetimeDuration()));
+      final String comment = request.getParameter(COMMENT);
+      final TokenMetadata tokenMetadata = new TokenMetadata(userName, StringUtils.isBlank(comment) ? null : comment);
+      tokenMetadata.setPasscode(tokenMAC.hash(result.tokenId, issueTime, userName, result.passcode));
+      addArbitraryTokenMetadata(tokenMetadata);
+      if (createdBy != null) {
+        tokenMetadata.setCreatedBy(createdBy);
+      }
+      tokenStateService.addMetadata(result.tokenId, tokenMetadata);
+      log.storedToken(getTopologyName(), Tokens.getTokenDisplayText(result.accessToken), Tokens.getTokenIDDisplayText(result.tokenId));
+    }
+  }
+
+  protected ResponseMap buildResponseMap(JWT token, long expires) {
+    String accessToken = token.toString();
+    String tokenId = TokenUtils.getTokenId(token);
+    final boolean managedToken = tokenStateService != null;
+
+    log.issuedToken(getTopologyName(), Tokens.getTokenDisplayText(accessToken), Tokens.getTokenIDDisplayText(tokenId));
+
+    final Map<String, Object> map = new HashMap<>();
+    map.put(ACCESS_TOKEN, accessToken);
+    map.put(TOKEN_ID, tokenId);
+    map.put(MANAGED_TOKEN, String.valueOf(managedToken));
+    map.put(TOKEN_TYPE, BEARER);
+    map.put(EXPIRES_IN, expires);
+    if (tokenTargetUrl != null) {
+      map.put(TARGET_URL, tokenTargetUrl);
+    }
+    if (tokenClientDataMap != null) {
+      map.putAll(tokenClientDataMap);
+    }
+    if (endpointPublicCert != null) {
+      map.put(ENDPOINT_PUBLIC_CERT, endpointPublicCert);
+    }
+
+    final String passcode = UUID.randomUUID().toString();
+    if (tokenStateService != null && tokenStateService instanceof PersistentTokenStateService) {
+      map.put(PASSCODE, generatePasscodeField(tokenId, passcode));
+    }
+    return new ResponseMap(accessToken, tokenId, map, passcode);
+  }
+
+  protected static class ResponseMap {
+    public final String accessToken;
+    public final String tokenId;
+    public final Map<String, Object> map;
+    public final String passcode;
+
+    public ResponseMap(String accessToken, String tokenId, Map<String, Object> map, String passcode) {
+      this.accessToken = accessToken;
+      this.tokenId = tokenId;
+      this.map = map;
+      this.passcode = passcode;
+    }
+  }
+
+  protected JWT getJWT(String userName, long expires, String jku) throws TokenServiceException {
+    JWTokenAttributes jwtAttributes;
+    JWT token;
+    JWTokenAuthority ts = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
+    final boolean managedToken = tokenStateService != null;
+    final JWTokenAttributesBuilder jwtAttributesBuilder = new JWTokenAttributesBuilder();
+    jwtAttributesBuilder
+        .setIssuer(tokenIssuer)
+        .setUserName(userName)
+        .setAlgorithm(signatureAlgorithm)
+        .setExpires(expires)
+        .setManaged(managedToken)
+        .setJku(jku)
+        .setType(tokenType);
+    if (!targetAudiences.isEmpty()) {
+      jwtAttributesBuilder.setAudiences(targetAudiences);
+    }
+    if (shouldIncludeGroups()) {
+      jwtAttributesBuilder.setGroups(groups());
+    }
+
+    jwtAttributes = jwtAttributesBuilder.build();
+    token = ts.issueToken(jwtAttributes);
+    return token;
   }
 
   private boolean shouldIncludeGroups() {
@@ -995,7 +1100,7 @@ public class TokenResource {
     }
   }
 
-  private long getExpiry() {
+  protected long getExpiry() {
     long expiry = 0L;
     long millis = tokenTTL;
 
@@ -1004,8 +1109,7 @@ public class TokenResource {
       if (tokenTTL == -1) {
         return -1;
       }
-    }
-    else {
+    } else {
       try {
         long lifetime = Duration.parse(lifetimeStr).toMillis();
         if (tokenTTL == -1) {

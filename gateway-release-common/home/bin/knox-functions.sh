@@ -50,6 +50,17 @@ DEFAULT_APP_STATUS_TEST_RETRY_SLEEP=2
 ##### common functions #####
 ############################
 
+function setVerbose() {
+  export VERBOSE=false
+  for arg in "$@"; do
+    # Check if the argument contains the search string
+    if [[ $arg == *"--verbose"* ]]; then
+      export VERBOSE=true
+      break
+    fi
+  done
+}
+
 JAVA_VERSION_PATTERNS=( "1.6.0_31/bin/java$" "1.6.0_.*/bin/java$" "1.6.0.*/bin/java$" "1.6\..*/bin/java$" "/bin/java$" )
 
 function findJava() {
@@ -72,7 +83,7 @@ function findJava() {
 
   # Try to find java on PATH.
   if [ "$JAVA" == "" ]; then
-    JAVA=$(command -v java 2>/dev/null)
+    JAVA=$(which java 2>/dev/null)
     if [ ! -x "$JAVA" ]; then
       JAVA=""
     fi
@@ -82,9 +93,8 @@ function findJava() {
   if [ "$JAVA" == "" ]; then
     for pattern in "${JAVA_VERSION_PATTERNS[@]}"; do
       # shellcheck disable=SC2207
-      JAVAS=( $(find /usr -executable -name java -print 2> /dev/null | grep "$pattern" | head -n 1 ) )
+      JAVA=$(find /usr -executable -name java -print 2> /dev/null | grep "$pattern" | head -n 1 )
       if [ -x "$JAVA" ]; then
-        JAVA=${JAVAS[1]}
         break
       else
         JAVA=""
@@ -98,6 +108,8 @@ function checkJava() {
 
   if [[ -z $JAVA ]]; then
     echo "Warning: JAVA is not set and could not be found." 1>&2
+  elif [[ "$VERBOSE" = "true" ]]; then
+    echo "Found Java at $JAVA"
   fi
 }
 
@@ -165,7 +177,7 @@ function buildAppJavaOpts {
     fi
 
     # Add properties to enable Knox to run on JDK 17
-    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    JAVA_VERSION=$("$JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
     CHECK_VERSION_17="17"
     if [[ "$JAVA_VERSION" == *"$CHECK_VERSION_17"* ]]; then
         echo "Java version is $CHECK_VERSION_17. Adding properties to enable Knox to run on JDK 17"

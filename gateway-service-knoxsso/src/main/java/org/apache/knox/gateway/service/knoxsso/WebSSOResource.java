@@ -449,7 +449,7 @@ public class WebSSOResource {
       final long issueTime = System.currentTimeMillis();
       tokenStateService.addToken(tokenId, issueTime, token.getExpiresDate().getTime(), tokenStateService.getDefaultMaxLifetimeDuration());
       final TokenMetadata tokenMetadata = new TokenMetadata(token.getSubject());
-      tokenMetadata.setKnoxSsoCookie(true);
+      tokenMetadata.markKnoxSsoCookie();
       tokenMetadata.useTokenNow();
       tokenStateService.addMetadata(tokenId, tokenMetadata);
       LOGGER.storedToken(getTopologyName(), Tokens.getTokenDisplayText(token.toString()), Tokens.getTokenIDDisplayText(tokenId));

@@ -120,4 +120,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Malformed dispatch URL: {0}" )
   void malformedDispatchUrl(String url);
+
+  @Message( level = MessageLevel.ERROR, text = "No valid principal found" )
+  void noPrincipalFound();
 }

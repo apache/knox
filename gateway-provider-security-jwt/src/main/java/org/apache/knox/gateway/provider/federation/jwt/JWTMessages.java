@@ -55,6 +55,9 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Unable to verify token expiration: {0}" )
   void unableToVerifyExpiration(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
+  @Message( level = MessageLevel.WARN, text = "Unable to verify passcode token ({0}) due to missing or incorrect token state service configuration.")
+  void unableToVerifyPasscodeToken(String tokenId);
+
   @Message( level = MessageLevel.ERROR, text = "Unable to issue token: {0}" )
   void unableToIssueToken(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
@@ -79,12 +82,10 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Unable to derive authentication provider URL: {0}" )
   void failedToDeriveAuthenticationProviderUrl(@StackTrace( level = MessageLevel.ERROR) Exception e);
 
-  @Message( level = MessageLevel.ERROR,
-            text = "The configuration value ({0}) for maximum token verification cache is invalid; Using the default value." )
+  @Message( level = MessageLevel.ERROR, text = "The configuration value ({0}) for maximum token verification cache is invalid; Using the default value." )
   void invalidVerificationCacheMaxConfiguration(String value);
 
-  @Message( level = MessageLevel.ERROR,
-            text = "Missing token passcode." )
+  @Message( level = MessageLevel.ERROR, text = "Missing token passcode." )
   void missingTokenPasscode();
 
   @Message( level = MessageLevel.INFO, text = "Initialized token signature verification cache for the {0} topology." )
@@ -111,4 +112,15 @@ public interface JWTMessages {
   @Message( level = MessageLevel.INFO, text = "Idle timeout has been configured to {0} seconds in {1}" )
   void configuredIdleTimeout(long idleTimeout, String topology);
 
+  @Message(level = MessageLevel.ERROR, text = "Error while fetching grant type and client secret from the request: {0}")
+  void errorFetchingClientSecret(String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message( level = MessageLevel.INFO, text = "Token verification result using provided PEM, verified: {0}" )
+  void pemVerificationResultMessage(boolean verified);
+
+  @Message( level = MessageLevel.INFO, text = "Token verification result using provided JWKS Url, verified: {0}" )
+  void jwksVerificationResultMessage(boolean verified);
+
+  @Message( level = MessageLevel.INFO, text = "Token verification result using knox signing cert, verified: {0}" )
+  void signingKeyVerificationResultMessage(boolean verified);
 }

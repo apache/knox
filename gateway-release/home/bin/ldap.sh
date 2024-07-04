@@ -29,9 +29,11 @@ APP_BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # The app's JAR name
 export APP_JAR="$APP_BIN_DIR/ldap.jar"
 
+# shellcheck disable=SC1091
 # Setup the common environment
 . "$APP_BIN_DIR"/knox-env.sh
 
+# shellcheck disable=SC1091
 # Source common functions
 . "${APP_BIN_DIR}"/knox-functions.sh
 
@@ -65,6 +67,7 @@ DEFAULT_APP_RUNNING_IN_FOREGROUND="$LDAP_SERVER_RUN_IN_FOREGROUND"
 export APP_RUNNING_IN_FOREGROUND=${KNOX_LDAP_RUNNING_IN_FOREGROUND:-$DEFAULT_APP_RUNNING_IN_FOREGROUND}
 
 function main {
+   setVerbose "$@"
    checkJava
 
    case "$1" in

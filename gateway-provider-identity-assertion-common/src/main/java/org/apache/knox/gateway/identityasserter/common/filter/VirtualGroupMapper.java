@@ -32,6 +32,7 @@ import org.apache.knox.gateway.plang.AbstractSyntaxTree;
 import org.apache.knox.gateway.plang.Interpreter;
 
 public class VirtualGroupMapper {
+    public static final String PRIMARY_GROUP = "$PRIMARY_GROUP";
     private final IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
     private final Map<String, AbstractSyntaxTree> virtualGroupToPredicateMap;
 
@@ -46,6 +47,9 @@ public class VirtualGroupMapper {
         Set<String> virtualGroups = new HashSet<>();
         for (Map.Entry<String, AbstractSyntaxTree> each : virtualGroupToPredicateMap.entrySet()) {
             String virtualGroupName = each.getKey();
+            // check for logical virtual groups - names to be dynamically created
+            virtualGroupName = resolveLogicalGroupName(username, virtualGroupName);
+
             AbstractSyntaxTree predicate = each.getValue();
             if (evalPredicate(virtualGroupName, username, groups, predicate, request)) {
                 virtualGroups.add(virtualGroupName);
@@ -54,6 +58,13 @@ public class VirtualGroupMapper {
         }
         LOG.virtualGroups(username, groups, virtualGroups);
         return virtualGroups;
+    }
+
+    private String resolveLogicalGroupName(String username, String virtualGroupName) {
+        if (PRIMARY_GROUP.equalsIgnoreCase(virtualGroupName)) {
+            virtualGroupName = username;
+        }
+        return virtualGroupName;
     }
 
     /**

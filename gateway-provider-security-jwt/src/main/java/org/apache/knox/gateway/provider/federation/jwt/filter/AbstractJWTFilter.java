@@ -45,6 +45,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditContext;
@@ -79,6 +80,9 @@ import com.nimbusds.jose.JWSHeader;
 import org.apache.knox.gateway.util.Tokens;
 
 public abstract class AbstractJWTFilter implements Filter {
+
+  public static final String TOKEN_STATE_SERVICE_DISABLED_ERROR = "Error in token provider config: passcode use with knox.token.exp.server-managed set to false.";
+
   /**
    * If specified, this configuration property refers to a value which the issuer of a received
    * token must match. Otherwise, the default value "KNOXSSO" is used
@@ -96,8 +100,6 @@ public abstract class AbstractJWTFilter implements Filter {
    */
   public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
   public static final String JWT_DEFAULT_SIGALG = "RS256";
-  public static final String TYPE = "type";
-  public static final String CLIENT_ID = "CLIENT_ID";
 
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
 
@@ -164,6 +166,9 @@ public abstract class AbstractJWTFilter implements Filter {
     }
 
     expectedSigAlg = filterConfig.getInitParameter(JWT_EXPECTED_SIGALG);
+    if(StringUtils.isBlank(expectedSigAlg)) {
+      expectedSigAlg = JWT_DEFAULT_SIGALG;
+    }
   }
 
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
@@ -302,9 +307,7 @@ public abstract class AbstractJWTFilter implements Filter {
 
   public Subject createSubjectFromTokenIdentifier(final String tokenId) throws UnknownTokenException {
     TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
-    String username = null;
     if (metadata != null) {
-      String type =  metadata.getMetadata(TYPE);
       // using tokenID and passcode as CLIENT_ID and CLIENT_SECRET will
       // result in a metadata item called "type". If the value is set
       // to CLIENT_ID then it will be assumed to be a CLIENT_ID and we
@@ -312,12 +315,8 @@ public abstract class AbstractJWTFilter implements Filter {
       // token id until it is created, the username is always the same
       // in the record. Using the token id makes it a unique username for
       // audit and the like.
-      if (CLIENT_ID.equalsIgnoreCase(type)) {
-        username = tokenId;
-      }
-      else {
-        username = metadata.getUserName();
-      }
+      final String username = metadata.isClientId() ? tokenId : metadata.getUserName();
+
       return createSubjectFromTokenData(username, null);
     }
     return null;
@@ -441,10 +440,10 @@ public abstract class AbstractJWTFilter implements Filter {
                                   final String passcode)
           throws IOException, ServletException {
 
+    final String displayableTokenId = tokenId == null ? "N/A" : Tokens.getTokenIDDisplayText(tokenId);
     if (tokenStateService != null) {
       try {
         if (tokenId != null) {
-          final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
           if (tokenIsStillValid(tokenId)) {
             final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
             if (isTokenEnabled(tokenMetadata)) {
@@ -481,6 +480,9 @@ public abstract class AbstractJWTFilter implements Filter {
         log.unableToVerifyExpiration(e);
         handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
       }
+    } else {
+      log.unableToVerifyPasscodeToken(displayableTokenId);
+      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, TOKEN_STATE_SERVICE_DISABLED_ERROR);
     }
 
     return false;
@@ -511,10 +513,17 @@ public abstract class AbstractJWTFilter implements Filter {
       try {
         if (publicKey != null) {
           verified = authority.verifyToken(token, publicKey);
-        } else if (expectedJWKSUrl != null) {
+          log.pemVerificationResultMessage(verified);
+        }
+
+        if (!verified && expectedJWKSUrl != null) {
           verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg, allowedJwsTypes);
-        } else {
+          log.jwksVerificationResultMessage(verified);
+        }
+
+        if(!verified) {
           verified = authority.verifyToken(token);
+          log.signingKeyVerificationResultMessage(verified);
         }
       } catch (TokenServiceException e) {
         log.unableToVerifyToken(e);

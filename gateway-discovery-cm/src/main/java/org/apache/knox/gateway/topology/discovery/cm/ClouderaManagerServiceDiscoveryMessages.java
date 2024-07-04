@@ -48,6 +48,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Discovering service role: {0} ({1}) ...")
   void discoveringServiceRole(String roleName, String roleType);
 
+  @Message(level = MessageLevel.INFO, text = "Skipping role discovery: {0} ({1})")
+  void skipRoleDiscovery(String roleName, String roleType);
+
   @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
 
@@ -183,6 +186,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "Failed to load persisted service configuration data for cluster monitor {0} : {1}")
   void failedToLoadClusterMonitorServiceConfigurations(String monitor,
                                                        @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.WARN, text = "Previously saved cluster configuration file {0} is empty.")
+  void emptyClusterConfiguration(String clusterConfigurationFile);
 
   @Message(level = MessageLevel.ERROR,
       text = "Failed to remove persisted data for cluster configuration monitor {0} {1}")

@@ -297,6 +297,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.connect.timeout.ms";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.read.timeout.ms";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.write.timeout.ms";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_SERVICE_TYPES = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.excluded.service.types";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_ROLE_TYPES = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.excluded.role.types";
 
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT = 10000;
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 10000;
@@ -1299,6 +1301,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getClouderaManagerServiceDiscoveryMaximumRetryAttempts() {
     return getInt(CLOUDERA_MANAGER_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPS, DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS);
+  }
+
+  @Override
+  public Collection<String> getClouderaManagerServiceDiscoveryExcludedServiceTypes() {
+    return getTrimmedStringCollection(CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_SERVICE_TYPES);
+  }
+
+  @Override
+  public Collection<String> getClouderaManagerServiceDiscoveryExcludedRoleTypes() {
+    return getTrimmedStringCollection(CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_ROLE_TYPES);
   }
 
   @Override

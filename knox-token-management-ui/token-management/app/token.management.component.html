@@ -91,11 +91,10 @@
                 </mat-cell>
             </ng-container>
 
-            <ng-container matColumnDef="knoxSso">
-                <mat-header-cell *matHeaderCellDef mat-sort-header="knoxSso" style="text-align: center; justify-content: center;">KnoxSSO</mat-header-cell>
+            <ng-container matColumnDef="type">
+                <mat-header-cell *matHeaderCellDef mat-sort-header="type" style="text-align: center; justify-content: center;">Type</mat-header-cell>
                 <mat-cell *matCellDef="let knoxToken" style="text-align: center; justify-content: center;">
-                  <img *ngIf="isKnoxSsoCookie(knoxToken)" src="assets/green_checkmark.svg" style="height:20px; width:auto" />
-                  <img *ngIf="!isKnoxSsoCookie(knoxToken)" src="assets/red_cross_circle.svg" style="height:20px; width:auto" />
+                  <img src="assets/{{knoxToken.metadata.type}}.png" style="height:30px; width:auto" />
                 </mat-cell>
             </ng-container>
 

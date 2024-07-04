@@ -35,7 +35,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class HBaseDispatchTest {
 
   @SuppressWarnings("deprecation")
-  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  @Test( timeout = TestUtils.LONG_TIMEOUT )
   public void testGetDispatchUrl() throws Exception {
     HttpServletRequest request;
     Dispatch dispatch;

@@ -63,6 +63,12 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Loading configuration file {0}" )
   void loadingConfigurationFile( String file );
 
+  @Message( level = MessageLevel.INFO, text = "Failed to find configuration file {0}" )
+  void failedToFindConfig( String path );
+
+  @Message( level = MessageLevel.INFO, text = "Failed to find configuration file {0}: {1}" )
+  void failedToFindConfig( String path, @StackTrace( level = MessageLevel.INFO ) Exception e );
+
   @Message( level = MessageLevel.WARN, text = "Failed to load configuration file {0}: {1}" )
   void failedToLoadConfig( String path, @StackTrace( level = MessageLevel.DEBUG ) Exception e );
 
