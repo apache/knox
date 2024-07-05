@@ -436,7 +436,7 @@ public class GatewayServer {
         SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
         connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
       } else {
-        connector = new ServerConnector( server );
+        connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
       }
       connector.setHost( address.getHostName() );
       connector.setPort( connectorPort );
@@ -605,20 +605,8 @@ public class GatewayServer {
      // A map to keep track of current deployments by cluster name.
     deployments = new ConcurrentHashMap<>();
 
-    // Start Jetty.
-    jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
-
-    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
-    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
-    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
-    log.setMaxFormKeys(config.getJettyMaxFormKeys());
-
-    /* topologyName is null because all topology listen on this port */
-    List<Connector> connectors = createConnector( jetty, config, config.getGatewayPort(), null);
-    for (Connector connector : connectors) {
-      jetty.addConnector(connector);
-    }
-
+    // Create Jetty.
+    createJetty();
 
     // Add Annotations processing into the Jetty server to support JSPs
     Configuration.ClassList classlist = Configuration.ClassList.setServerDefault( jetty );
@@ -675,7 +663,7 @@ public class GatewayServer {
         if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue() != config.getGatewayPort()) ) {
           log.createJettyConnector(entry.getKey().toLowerCase(Locale.ROOT), convertPortToString(entry.getValue()));
           try {
-            connectors = createConnector(jetty, config, entry.getValue(), entry.getKey().toLowerCase(Locale.ROOT));
+            List<Connector> connectors = createConnector(jetty, config, entry.getValue(), entry.getKey().toLowerCase(Locale.ROOT));
             for (Connector connector : connectors) {
               jetty.addConnector(connector);
             }
@@ -694,6 +682,7 @@ public class GatewayServer {
     jetty.setHandler(handlers);
     jetty.addLifeCycleListener(new GatewayServerLifecycleListener(config));
 
+    // Start Jetty.
     try {
       jetty.start();
     }
@@ -718,6 +707,21 @@ public class GatewayServer {
         }
       }
     });
+  }
+
+  void createJetty() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, AliasServiceException {
+    jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
+
+    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
+    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
+    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
+    log.setMaxFormKeys(config.getJettyMaxFormKeys());
+
+    /* topologyName is null because all topology listen on this port */
+    List<Connector> connectors = createConnector( jetty, config, config.getGatewayPort(), null);
+    for (Connector connector : connectors) {
+      jetty.addConnector(connector);
+    }
   }
 
   private void handleHadoopXmlResources() {
