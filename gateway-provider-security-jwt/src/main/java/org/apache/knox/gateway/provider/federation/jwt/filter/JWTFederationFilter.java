@@ -23,14 +23,18 @@ import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHEN
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.security.auth.Subject;
@@ -110,7 +114,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     //  JWKSUrl
     String oidcjwksurl = filterConfig.getInitParameter(JWKS_URL);
     if (oidcjwksurl != null) {
-      expectedJWKSUrl = oidcjwksurl;
+      expectedJWKSUrl = getJwksUrlsFromConfig(oidcjwksurl);
     }
 
     allowedJwsTypes = new HashSet<>();
@@ -147,6 +151,30 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     AuthFilterUtils.addUnauthPaths(unAuthenticatedPaths, unAuthPathString, DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM);
 
     configureExpectedParameters(filterConfig);
+  }
+
+  /**
+   * Helper function to extract URLs from given string
+   * in the form of https://url:port/contxt/.wellknown, https://url2:port/contxt/.wellknown
+   * into expectedJWKSUrl URL set.
+   * @param oidcjwksurl
+   */
+  private Set<URI> getJwksUrlsFromConfig(final String oidcjwksurl) {
+    final Set<URI> jwksUrlSet = new HashSet<>();
+    final Set<String> jwksurls = Arrays.stream(
+            oidcjwksurl.split(","))
+            .map(String::trim)
+            .collect(Collectors.toSet());
+
+    for (final String jwksurl : jwksurls) {
+        try {
+          jwksUrlSet.add(new URI(jwksurl));
+        } catch (URISyntaxException e) {
+          /* Not valid JWKS url, log and move on */
+          log.notValidJwksUrl(jwksurl);
+        }
+    }
+    return jwksUrlSet;
   }
 
   @Override

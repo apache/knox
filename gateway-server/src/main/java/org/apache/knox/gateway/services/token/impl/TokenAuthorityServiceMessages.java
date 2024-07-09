@@ -25,4 +25,7 @@ import org.apache.knox.gateway.i18n.messages.Messages;
 public interface TokenAuthorityServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "There was an error getting kid, cause: {0}")
   void errorGettingKid(String message);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to verify token using JWKS endpoint {0}, reason: {1}")
+  void jwksVerificationFailed(String jwksUrl, String reason);
 }

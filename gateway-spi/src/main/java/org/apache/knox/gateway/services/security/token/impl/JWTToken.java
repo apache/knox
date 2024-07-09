@@ -63,26 +63,26 @@ public class JWTToken implements JWT {
     try {
       header = new JWSHeader(new JWSAlgorithm(jwtAttributes.getAlgorithm()),
               jwtAttributes.getType() == null ? null : new JOSEObjectType(jwtAttributes.getType()),
-      null,
-      null,
-      jwtAttributes.getJkuUri(),
-      null,
-      null,
-      null,
-      null,
-      null,
-      jwtAttributes.getKid(),
-      null,
-      null);
+              null,
+              null,
+              jwtAttributes.getJkuUri(),
+              null,
+              null,
+              null,
+              null,
+              null,
+              jwtAttributes.getKid(),
+              null,
+              null);
     } catch (URISyntaxException e) {
       /* in event of bad URI exception fall back to using just algo in header */
       header = new JWSHeader(new JWSAlgorithm(jwtAttributes.getAlgorithm()));
     }
     JWTClaimsSet claims;
     JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
-      .issuer(jwtAttributes.getIssuer())
-      .subject(jwtAttributes.getUserName())
-      .audience(jwtAttributes.getAudiences());
+            .issuer(jwtAttributes.getIssuer())
+            .subject(jwtAttributes.getUserName())
+            .audience(jwtAttributes.getAudiences());
     if(jwtAttributes.getExpiresDate() != null) {
       builder = builder.expirationTime(jwtAttributes.getExpiresDate());
     }
@@ -127,7 +127,7 @@ public class JWTToken implements JWT {
     JWTClaimsSet claims;
     try {
       claims = jwt.getJWTClaimsSet();
-      c = claims.toJSONObject().toJSONString();
+      c = claims.toJSONObject().toString();
     } catch (ParseException e) {
       log.unableToParseToken(e);
     }
@@ -195,7 +195,7 @@ public class JWTToken implements JWT {
     String c = null;
 
     claim = getAudienceClaims();
-    if (claim != null) {
+    if (claim != null && claim.length > 0) {
       c = claim[0];
     }
 
@@ -217,7 +217,7 @@ public class JWTToken implements JWT {
 
   @Override
   public String getExpires() {
-      Date expires = getExpiresDate();
+    Date expires = getExpiresDate();
     if (expires != null) {
       return String.valueOf(expires.getTime());
     }
