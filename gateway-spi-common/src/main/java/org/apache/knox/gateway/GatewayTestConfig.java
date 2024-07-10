@@ -32,6 +32,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -1125,5 +1126,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public String getBannerText() {
     return null;
   }
+
+  @Override
+  public long getJwksOutageCacheTTL() {
+    return TimeUnit.HOURS.toMillis(2);
+  }
+
 
 }

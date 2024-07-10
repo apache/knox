@@ -125,5 +125,5 @@ public interface JWTMessages {
   void signingKeyVerificationResultMessage(boolean verified);
 
   @Message(level = MessageLevel.ERROR, text = "Invalid URL ignored. Not a valid JWKS url {0}")
-  void notValidJwksUrl(String jwksUrl);
+  void invalidJwksUrl(String jwksUrl);
 }

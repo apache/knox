@@ -116,7 +116,7 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedIssuer;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
-  protected Set<URI> expectedJWKSUrl = new HashSet();
+  protected Set<URI> expectedJWKSUrls = new HashSet();
   protected Set<JOSEObjectType> allowedJwsTypes;
 
   private TokenStateService tokenStateService;
@@ -517,8 +517,8 @@ public abstract class AbstractJWTFilter implements Filter {
           log.pemVerificationResultMessage(verified);
         }
 
-        if (!verified && expectedJWKSUrl != null && !expectedJWKSUrl.isEmpty()) {
-          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg, allowedJwsTypes);
+        if (!verified && expectedJWKSUrls != null && !expectedJWKSUrls.isEmpty()) {
+          verified = authority.verifyToken(token, expectedJWKSUrls, expectedSigAlg, allowedJwsTypes);
           log.jwksVerificationResultMessage(verified);
         }
 

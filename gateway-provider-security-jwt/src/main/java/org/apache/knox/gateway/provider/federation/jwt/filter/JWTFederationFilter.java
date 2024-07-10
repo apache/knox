@@ -80,6 +80,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String KNOX_TOKEN_QUERY_PARAM_NAME = "knox.token.query.param.name";
   public static final String TOKEN_PRINCIPAL_CLAIM = "knox.token.principal.claim";
   public static final String JWKS_URL = "knox.token.jwks.url";
+  public static final String JWKS_URLS = "knox.token.jwks.urls";
   public static final String ALLOWED_JWS_TYPES = "knox.token.allowed.jws.types";
   public static final String BEARER   = "Bearer ";
   public static final String BASIC    = "Basic";
@@ -114,7 +115,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     //  JWKSUrl
     String oidcjwksurl = filterConfig.getInitParameter(JWKS_URL);
     if (oidcjwksurl != null) {
-      expectedJWKSUrl = getJwksUrlsFromConfig(oidcjwksurl);
+      expectedJWKSUrls = parseJwksUrlsFromConfig(oidcjwksurl);
+    }
+
+    /* in case knox.token.jwks.urls property is defined use it */
+    final String oidcjwksurls = filterConfig.getInitParameter(JWKS_URLS);
+    if (oidcjwksurls != null) {
+      expectedJWKSUrls.addAll(parseJwksUrlsFromConfig(oidcjwksurls));
     }
 
     allowedJwsTypes = new HashSet<>();
@@ -157,12 +164,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
    * Helper function to extract URLs from given string
    * in the form of https://url:port/contxt/.wellknown, https://url2:port/contxt/.wellknown
    * into expectedJWKSUrl URL set.
-   * @param oidcjwksurl
+   * @param oidcjwksurls
    */
-  private Set<URI> getJwksUrlsFromConfig(final String oidcjwksurl) {
+  private Set<URI> parseJwksUrlsFromConfig(final String oidcjwksurls) {
     final Set<URI> jwksUrlSet = new HashSet<>();
     final Set<String> jwksurls = Arrays.stream(
-            oidcjwksurl.split(","))
+            oidcjwksurls.split(","))
             .map(String::trim)
             .collect(Collectors.toSet());
 
@@ -171,7 +178,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           jwksUrlSet.add(new URI(jwksurl));
         } catch (URISyntaxException e) {
           /* Not valid JWKS url, log and move on */
-          log.notValidJwksUrl(jwksurl);
+          log.invalidJwksUrl(jwksurl);
         }
     }
     return jwksUrlSet;

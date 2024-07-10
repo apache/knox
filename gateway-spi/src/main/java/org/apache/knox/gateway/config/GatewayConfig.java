@@ -956,4 +956,9 @@ public interface GatewayConfig {
    */
   String getBannerText();
 
+  /**
+   * The time to live of the cached JWK set to cover outages, in milliseconds.
+   * @return jwks outage cache TTL
+   */
+  long getJwksOutageCacheTTL();
 }

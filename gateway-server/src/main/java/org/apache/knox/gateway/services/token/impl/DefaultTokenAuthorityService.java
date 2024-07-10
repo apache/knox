@@ -84,8 +84,6 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   // https://tools.ietf.org/html/rfc7518
   private static final Set<String> SUPPORTED_PKI_SIG_ALGS = new HashSet<>(Arrays.asList("RS256", "RS384", "RS512", "PS256", "PS384", "PS512"));
   private static final Set<String> SUPPORTED_HMAC_SIG_ALGS = new HashSet<>(Arrays.asList("HS256", "HS384", "HS512"));
-  /* cache JWKS endpoint for 2 hrs in case of outage */
-  private static final long OUTAGE_TTL = 2*60*60*1000;
   private AliasService aliasService;
   private KeystoreService keystoreService;
   private GatewayConfig config;
@@ -230,9 +228,10 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       if (algorithm != null && jwksurl != null) {
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(algorithm);
         /* Retry one time in case of failure and cache JWKS in case there is outage, TTL is OUTAGE_TTL */
+        long outageTTL = config.getJwksOutageCacheTTL();
         JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(new URL(jwksurl))
                 .retrying(true)
-                .outageTolerant(OUTAGE_TTL)
+                .outageTolerant(outageTTL)
                 .build();
         JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
 

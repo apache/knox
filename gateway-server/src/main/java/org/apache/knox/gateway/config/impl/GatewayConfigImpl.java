@@ -166,7 +166,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSHELL_READ_BUFFER_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.read.buffer.size";
 
   /**
-   * Properties for for gateway port mapping feature
+   * Properties for gateway port mapping feature
    */
   public static final String GATEWAY_PORT_MAPPING_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".port.mapping.";
   public static final String GATEWAY_PORT_MAPPING_REGEX = GATEWAY_CONFIG_FILE_PREFIX + "\\.port\\.mapping\\..*";
@@ -353,6 +353,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final boolean GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT = false;
 
   private static final String GATEWAY_HEALTH_CHECK_TOPOLOGIES = GATEWAY_CONFIG_FILE_PREFIX + ".health.check.topologies";
+
+  private static final String JWKS_OUTAGE_CACHE_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".jwks.outage.cache.ttl";;
+  private static final long JWKS_OUTAGE_CACHE_TTL_DEFAULT = TimeUnit.HOURS.toMillis(2);
 
   public GatewayConfigImpl() {
     init();
@@ -1588,6 +1591,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getBannerText() {
     return get(UI_BANNER_TEXT, "");
+  }
+
+  @Override
+  public long getJwksOutageCacheTTL() {
+    return getLong(JWKS_OUTAGE_CACHE_TTL, JWKS_OUTAGE_CACHE_TTL_DEFAULT);
   }
 
 }
