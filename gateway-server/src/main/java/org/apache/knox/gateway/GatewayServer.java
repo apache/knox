@@ -380,9 +380,9 @@ public class GatewayServer {
             }
           }
           if (networkConnector.getName() == null) {
-            log.startedGateway(networkConnector.getLocalPort());
+            log.startedGateway(convertPortToString(networkConnector.getLocalPort()));
           } else {
-            log.startedGateway(networkConnector.getName(), networkConnector.getLocalPort());
+            log.startedGateway(networkConnector.getName(), convertPortToString(networkConnector.getLocalPort()));
           }
         }
       }
@@ -436,7 +436,7 @@ public class GatewayServer {
         SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
         connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
       } else {
-        connector = new ServerConnector( server );
+        connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
       }
       connector.setHost( address.getHostName() );
       connector.setPort( connectorPort );
@@ -548,9 +548,9 @@ public class GatewayServer {
     // Throw an exception if port in use
     if (isPortInUse(port)) {
       if (topologyName == null) {
-        log.portAlreadyInUse(port);
+        log.portAlreadyInUse(convertPortToString(port));
       } else {
-        log.portAlreadyInUse(port, topologyName);
+        log.portAlreadyInUse(convertPortToString(port), topologyName);
       }
       throw new IOException(String.format(Locale.ROOT, "Port %d already in use.", port));
     }
@@ -560,7 +560,7 @@ public class GatewayServer {
       // If we have Default Topology old and new configuration (Port Mapping) throw error.
       if (config.getGatewayPortMappings().containsValue(port)
           && !StringUtils.isBlank(config.getDefaultTopologyName())) {
-        log.portAlreadyInUse(port);
+        log.portAlreadyInUse(convertPortToString(port));
         throw new IOException(String.format(Locale.ROOT,
             " Please map port %d using either \"gateway.port.mapping.sandbox\" or "
                 + "\"default.app.topology.name\" property, "
@@ -573,7 +573,7 @@ public class GatewayServer {
       for (Connector connector : connectors) {
         if (connector instanceof ServerConnector
                 && ((ServerConnector) connector).getPort() == port) {
-          log.portAlreadyInUse(port, topologyName);
+          log.portAlreadyInUse(convertPortToString(port), topologyName);
           throw new IOException(String.format(Locale.ROOT,
               " Port %d used by topology %s is used by other topology, ports for topologies (if defined) have to be unique. ",
               port, topologyName));
@@ -605,20 +605,8 @@ public class GatewayServer {
      // A map to keep track of current deployments by cluster name.
     deployments = new ConcurrentHashMap<>();
 
-    // Start Jetty.
-    jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
-
-    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
-    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
-    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
-    log.setMaxFormKeys(config.getJettyMaxFormKeys());
-
-    /* topologyName is null because all topology listen on this port */
-    List<Connector> connectors = createConnector( jetty, config, config.getGatewayPort(), null);
-    for (Connector connector : connectors) {
-      jetty.addConnector(connector);
-    }
-
+    // Create Jetty.
+    createJetty();
 
     // Add Annotations processing into the Jetty server to support JSPs
     Configuration.ClassList classlist = Configuration.ClassList.setServerDefault( jetty );
@@ -673,16 +661,16 @@ public class GatewayServer {
         // Add connector for only valid topologies, i.e. deployed topologies.
         // and NOT for Default Topology listening on standard gateway port.
         if(deployedTopologyList.contains(entry.getKey()) && (entry.getValue() != config.getGatewayPort()) ) {
-          log.createJettyConnector(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
+          log.createJettyConnector(entry.getKey().toLowerCase(Locale.ROOT), convertPortToString(entry.getValue()));
           try {
-            connectors = createConnector(jetty, config, entry.getValue(), entry.getKey().toLowerCase(Locale.ROOT));
+            List<Connector> connectors = createConnector(jetty, config, entry.getValue(), entry.getKey().toLowerCase(Locale.ROOT));
             for (Connector connector : connectors) {
               jetty.addConnector(connector);
             }
           } catch(final IOException e) {
             /* in case of port conflict we log error and move on */
             if( e.toString().contains("ports for topologies (if defined) have to be unique.") ) {
-              log.startedGatewayPortConflict(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
+              log.startedGatewayPortConflict(entry.getKey().toLowerCase(Locale.ROOT), convertPortToString(entry.getValue()));
             } else {
               throw e;
             }
@@ -694,6 +682,7 @@ public class GatewayServer {
     jetty.setHandler(handlers);
     jetty.addLifeCycleListener(new GatewayServerLifecycleListener(config));
 
+    // Start Jetty.
     try {
       jetty.start();
     }
@@ -718,6 +707,21 @@ public class GatewayServer {
         }
       }
     });
+  }
+
+  void createJetty() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, AliasServiceException {
+    jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
+
+    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
+    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
+    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
+    log.setMaxFormKeys(config.getJettyMaxFormKeys());
+
+    /* topologyName is null because all topology listen on this port */
+    List<Connector> connectors = createConnector( jetty, config, config.getGatewayPort(), null);
+    for (Connector connector : connectors) {
+      jetty.addConnector(connector);
+    }
   }
 
   private void handleHadoopXmlResources() {
@@ -757,6 +761,16 @@ public class GatewayServer {
   }
 
   /**
+   * Check whether a port is free
+   *
+   * @param port port to convert
+   * @return value of port in String
+   */
+  private static String convertPortToString(int port) {
+    return String.valueOf(port);
+  }
+
+  /**
    * Checks whether the topologies defined in gateway-xml as part of Topology
    * Port mapping feature exists. If it does not Log a message and move on.
    */
@@ -766,7 +780,7 @@ public class GatewayServer {
     for(final Map.Entry<String, Integer> entry : configTopologies.entrySet()) {
       // If the topologies defined in gateway-config.xml are not found in gateway
       if (!topologies.contains(entry.getKey())) {
-        log.topologyPortMappingCannotFindTopology(entry.getKey(), entry.getValue());
+        log.topologyPortMappingCannotFindTopology(entry.getKey(), convertPortToString(entry.getValue()));
       }
     }
   }
