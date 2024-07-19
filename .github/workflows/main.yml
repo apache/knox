@@ -39,5 +39,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: maven
       - name: 'Build and Test'
         run: mvn -T.75C clean verify -U -Dsurefire.useFile=false -Dshellcheck=true -Djavax.net.ssl.trustStorePassword=changeit -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.http.retryHandler.class=default -Dmaven.wagon.http.retryHandler.nonRetryableClasses=java.io.InterruptedIOException -Dhttp.keepAlive=false -B -V
