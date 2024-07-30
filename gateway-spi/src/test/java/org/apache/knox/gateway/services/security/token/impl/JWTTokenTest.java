@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.security.token.impl;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -143,7 +142,7 @@ public class JWTTokenTest {
     assertEquals("KNOXSSO", token.getIssuer());
     assertEquals("john.doe@example.com", token.getSubject());
     assertNull(token.getAudience());
-    assertArrayEquals(null, token.getAudienceClaims());
+    assertEquals(0, token.getAudienceClaims().length);
   }
 
   @Test
@@ -205,15 +204,14 @@ public class JWTTokenTest {
   @Test
   public void testUnsignedToken() throws Exception {
     String unsignedToken = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSIsImp0aSI6ImY2YmNj"
-                               + "MDVjLWI4MTktNGM0Mi1iMGMyLWJlYmY1MDE4YWFiZiJ9.";
+            + "MDVjLWI4MTktNGM0Mi1iMGMyLWJlYmY1MDE4YWFiZiJ9.";
 
     try {
       new JWTToken(unsignedToken);
       fail("Failure expected on an unsigned token");
     } catch (ParseException ex) {
       // expected
-      assertEquals("Invalid JWS header: The algorithm \"alg\" header parameter must be for signatures",
-          ex.getMessage());
+      assertEquals("Invalid JWS header: Not a JWS header", ex.getMessage());
     }
   }
 

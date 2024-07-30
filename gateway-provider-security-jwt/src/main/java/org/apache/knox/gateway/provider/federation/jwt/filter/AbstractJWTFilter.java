@@ -20,6 +20,7 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -115,7 +116,7 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedIssuer;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
-  protected String expectedJWKSUrl;
+  protected Set<URI> expectedJWKSUrls = new HashSet();
   protected Set<JOSEObjectType> allowedJwsTypes;
 
   private TokenStateService tokenStateService;
@@ -516,8 +517,8 @@ public abstract class AbstractJWTFilter implements Filter {
           log.pemVerificationResultMessage(verified);
         }
 
-        if (!verified && expectedJWKSUrl != null) {
-          verified = authority.verifyToken(token, expectedJWKSUrl, expectedSigAlg, allowedJwsTypes);
+        if (!verified && expectedJWKSUrls != null && !expectedJWKSUrls.isEmpty()) {
+          verified = authority.verifyToken(token, expectedJWKSUrls, expectedSigAlg, allowedJwsTypes);
           log.jwksVerificationResultMessage(verified);
         }
 

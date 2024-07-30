@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Field;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -1004,6 +1005,11 @@ public class WebSSOResourceTest {
     @Override
     public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
      return false;
+    }
+
+    @Override
+    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+      return false;
     }
   }
 }

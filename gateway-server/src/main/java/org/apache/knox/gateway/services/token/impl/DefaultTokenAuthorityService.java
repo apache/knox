@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -47,7 +48,7 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
@@ -226,7 +227,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     try {
       if (algorithm != null && jwksurl != null) {
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(algorithm);
-        JWKSource<SecurityContext> keySource = new RemoteJWKSet<>(new URL(jwksurl));
+        /* Retry one time in case of failure and cache JWKS in case there is outage, TTL is OUTAGE_TTL */
+        long outageTTL = config.getJwksOutageCacheTTL();
+        JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(new URL(jwksurl))
+                .retrying(true)
+                .outageTolerant(outageTTL)
+                .build();
         JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
 
         // Create a JWT processor for the access tokens
@@ -247,6 +253,25 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     }
     return verified;
   }
+
+  @Override
+  public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+    boolean verified = false;
+    for(final URI url : jwksurls) {
+      try {
+        verified = this.verifyToken(token, url.toString(), algorithm, allowedJwsTypes);
+        /* if token is verified no need to check further return result */
+        if(verified) {
+          return verified;
+        }
+      } catch (TokenServiceException e) {
+        /* failed to verify token, log and move on */
+        LOG.jwksVerificationFailed(url.toString(), e.toString());
+      }
+    }
+    return verified;
+  }
+
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)

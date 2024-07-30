@@ -123,4 +123,7 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.INFO, text = "Token verification result using knox signing cert, verified: {0}" )
   void signingKeyVerificationResultMessage(boolean verified);
+
+  @Message(level = MessageLevel.ERROR, text = "Invalid URL ignored. Not a valid JWKS url {0}")
+  void invalidJwksUrl(String jwksUrl);
 }
