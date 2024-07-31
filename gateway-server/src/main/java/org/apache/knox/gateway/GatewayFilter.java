@@ -208,7 +208,9 @@ public class GatewayFilter implements Filter {
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
     }
 
-    if("/".equals(requestPath)) this.addCacheHeaders(httpResponse);
+    if("/".equals(requestPath)) {
+      this.addCacheHeaders(httpResponse);
+    }
 
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
