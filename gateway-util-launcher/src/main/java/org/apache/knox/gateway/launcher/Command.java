@@ -115,7 +115,7 @@ class Command {
     StringTokenizer parser = new StringTokenizer( classPath, CLASS_PATH_DELIM, false );
     while( parser.hasMoreTokens() ) {
       String libPath = parser.nextToken().trim();
-      File libFile = new File( base, libPath );
+      File libFile = loadFileByPath( base, libPath );
       if( libFile.canRead() && ( libFile.isFile() || libFile.isDirectory() ) ) {
         urls.add( libFile.toURI().toURL() );
       } else if( libPath.endsWith( "*" ) || libPath.endsWith( "*.jar" ) ) {
@@ -129,6 +129,17 @@ class Command {
       }
     }
     return urls;
+  }
+
+  /* KNOX-3047 */
+  private static File loadFileByPath( File base, String libPath ) {
+    File file;
+    if( libPath.startsWith( "/" ) ) {
+      file = new File( libPath );
+    } else {
+      file = new File( base, libPath );
+    }
+    return file;
   }
 
   private static class WildcardFilenameFilter implements FilenameFilter {
