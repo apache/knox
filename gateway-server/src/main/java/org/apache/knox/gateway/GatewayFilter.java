@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpHeaders;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditContext;
@@ -77,6 +78,10 @@ public class GatewayFilter implements Filter {
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
+
+  private static final String CACHE_CONTROL_HEADER_VALUE = "no-cache, no-store, must-revalidate";
+  private static final String PRAGMA_HEADER_VALUE = "no-cache";
+  private static final String EXPIRES_HEADER_VALUE = "0";
 
   private Set<Holder> holders;
   private Matcher<Chain> chains;
@@ -203,6 +208,10 @@ public class GatewayFilter implements Filter {
       httpResponse.setStatus( HttpServletResponse.SC_NOT_FOUND );
     }
 
+    if("/".equals(requestPath)) {
+      this.addCacheHeaders(httpResponse);
+    }
+
     //KAM[ Don't do this or the Jetty default servlet will overwrite any response setup by the filter.
     // filterChain.doFilter( servletRequest, servletResponse );
     //]
@@ -269,6 +278,12 @@ public class GatewayFilter implements Filter {
       actionOutcome = ActionOutcome.SUCCESS;
     }
     auditor.audit(Action.ACCESS, requestUri, ResourceType.URI, actionOutcome, RES.responseStatus(status));
+  }
+
+  private void addCacheHeaders(HttpServletResponse httpResponse) {
+    httpResponse.addHeader(HttpHeaders.CACHE_CONTROL, GatewayFilter.CACHE_CONTROL_HEADER_VALUE);
+    httpResponse.addHeader(HttpHeaders.PRAGMA, GatewayFilter.PRAGMA_HEADER_VALUE);
+    httpResponse.addHeader(HttpHeaders.EXPIRES, GatewayFilter.EXPIRES_HEADER_VALUE);
   }
 
   private class Chain implements FilterChain {

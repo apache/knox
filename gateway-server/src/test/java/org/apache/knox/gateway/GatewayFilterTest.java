@@ -291,4 +291,72 @@ public class GatewayFilterTest {
     assertThat(filter.url, is("http://host:8443/gateway/sandbox/test-role/test-path/test-resource"));
 
   }
+
+  @Test
+  public void testCacheHeaders() throws ServletException, IOException {
+    FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    EasyMock.replay(config);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(request.getPathInfo()).andReturn(null).anyTimes();
+    EasyMock.expect(request.getServletPath()).andReturn("/").anyTimes();
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(context.getAttribute(
+            GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+            "Custom-Forwarded-For").anyTimes();
+    EasyMock.replay(request);
+    EasyMock.replay(context);
+    EasyMock.replay(gatewayConfig);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    response.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.addHeader("Pragma", "no-cache");
+    response.addHeader("Expires", "0");
+    EasyMock.replay(response);
+
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+    EasyMock.replay(chain);
+
+    GatewayFilter gateway = new GatewayFilter();
+    gateway.init(config);
+    gateway.doFilter(request, response, chain);
+    gateway.destroy();
+
+    EasyMock.verify(response);
+  }
+
+  @Test
+  public void testCacheHeadersNotCalled() throws ServletException, IOException {
+    FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    EasyMock.replay(config);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(request.getPathInfo()).andReturn("/test/path").anyTimes();
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(context.getAttribute(
+            GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.getHeaderNameForRemoteAddress()).andReturn(
+            "Custom-Forwarded-For").anyTimes();
+    EasyMock.replay(request);
+    EasyMock.replay(context);
+    EasyMock.replay(gatewayConfig);
+
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    response.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    EasyMock.expectLastCall().andThrow(new AssertionError("Cache-Control add header was called"));
+    EasyMock.replay(response);
+
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+    EasyMock.replay(chain);
+
+    GatewayFilter gateway = new GatewayFilter();
+    gateway.init(config);
+    gateway.doFilter(request, response, chain);
+    gateway.destroy();
+  }
 }
