@@ -266,7 +266,7 @@
         <!-- After JDK 11 we can use 0.12.4 from maven central -->
         <pty4j.version>0.11.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
-        <shiro.version>1.10.0</shiro.version>
+        <shiro.version>1.13.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.30</slf4j.version>
