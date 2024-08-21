@@ -62,11 +62,13 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.NetworkConnector;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -84,6 +86,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.servlet.SessionCookieConfig;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
@@ -147,6 +151,8 @@ public class GatewayServer {
   private Map<String, WebAppContext> deployments;
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private GatewayStatusService gatewayStatusService;
+
+  private final Set<String> inactiveTopologies = new HashSet<>();
 
   public static void main( String[] args ) {
     try {
@@ -717,6 +723,9 @@ public class GatewayServer {
     jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
     log.setMaxFormKeys(config.getJettyMaxFormKeys());
 
+    // Add a handler for the 404 responses when a topology is being redeployed (i.e., is inactive)
+    jetty.setErrorHandler(new Http404ErrorHandler(this, config.getGatewayPath()));
+
     /* topologyName is null because all topology listen on this port */
     List<Connector> connectors = createConnector( jetty, config, config.getGatewayPort(), null);
     for (Connector connector : connectors) {
@@ -915,13 +924,21 @@ public class GatewayServer {
   }
 
   private synchronized void internalActivateTopology( Topology topology, File topoDir ) {
-    log.activatingTopology( topology.getName() );
+    final String name = topology.getName();
+
+    // Add the topology to the inactive set until it has been activated
+    addInactiveTopology(name);
+
+    log.activatingTopology(name);
     File[] files = topoDir.listFiles( new RegexFilenameFilter( "%.*" ) );
     if( files != null ) {
       for( File file : files ) {
         internalActivateArchive( topology, file );
       }
     }
+
+    // Remove the topology from the inactive set
+    removeInactiveTopology(name);
   }
 
   private synchronized void internalActivateArchive( Topology topology, File warDir ) {
@@ -962,9 +979,31 @@ public class GatewayServer {
     });
   }
 
+  private void addInactiveTopology(final String topologyName) {
+    synchronized (inactiveTopologies) {
+      inactiveTopologies.add(topologyName);
+    }
+  }
+
+  private void removeInactiveTopology(final String topologyName) {
+    synchronized (inactiveTopologies) {
+      inactiveTopologies.remove(topologyName);
+    }
+  }
+
+  private boolean isInactiveTopology(final String topologyName) {
+    boolean result = false;
+    synchronized (inactiveTopologies) {
+      result = inactiveTopologies.contains(topologyName);
+    }
+    return result;
+  }
+
   private synchronized void internalDeactivateTopology( Topology topology ) {
 
     log.deactivatingTopology( topology.getName() );
+
+    addInactiveTopology(topology.getName());
 
     String topoName = topology.getName();
     String topoPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName );
@@ -1026,6 +1065,10 @@ public class GatewayServer {
         auditor.audit(Action.UNDEPLOY, topology.getName(), ResourceType.TOPOLOGY,
           ActionOutcome.UNAVAILABLE);
         internalDeactivateTopology( topology );
+
+        // Since it is being deleted, then no longer consider it as only inactive
+        removeInactiveTopology(topology.getName());
+
         for( File file : files ) {
           log.deletingDeployment( file.getAbsolutePath() );
           FileUtils.deleteQuietly( file );
@@ -1164,4 +1207,30 @@ public class GatewayServer {
       return Long.compare(rightTime, leftTime);
     }
   }
+
+  /**
+   * Jetty ErrorHandler extension for handling 404 responses when topologies are inactive.
+   */
+  private static class Http404ErrorHandler extends ErrorHandler {
+    private final GatewayServer gs;
+    private final String gatewayPath;
+
+    Http404ErrorHandler(final GatewayServer gs, final String gatewayPath) {
+      this.gs = gs;
+      this.gatewayPath = gatewayPath;
+    }
+
+    @Override
+    public void doError(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+      final int gatewayPrefixLength = ("/" + gatewayPath + "/").length();
+      String pathInfo = baseRequest.getPathInfo();
+      String topologyName = pathInfo.substring(gatewayPrefixLength, pathInfo.indexOf('/', gatewayPrefixLength));
+      if (gs.isInactiveTopology(topologyName) && (response.getStatus() == HttpServletResponse.SC_NOT_FOUND)) {
+        request.setAttribute("javax.servlet.error.message", "Service Unavailable"); // The default ErrorHandler references this attribute
+        response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+      }
+      super.doError(target, baseRequest, request, response);
+    }
+  }
+
 }
