@@ -2240,6 +2240,7 @@
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.mariadb.jdbc</groupId>
