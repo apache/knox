@@ -179,7 +179,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-compress.version>1.26.0</commons-compress.version>
-        <commons-configuration.version>1.10</commons-configuration.version>
+        <commons-configuration2.version>2.10.1</commons-configuration2.version>
         <commons-digester3.version>3.2</commons-digester3.version>
         <commons-io.version>2.8.0</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
@@ -1857,9 +1857,9 @@
                 <version>${commons-compress.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-configuration</groupId>
-                <artifactId>commons-configuration</artifactId>
-                <version>${commons-configuration.version}</version>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-configuration2</artifactId>
+                <version>${commons-configuration2.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
