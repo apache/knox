@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
@@ -37,7 +38,7 @@ public class JsonUtils {
 
   public static String renderAsJsonString(Map<String, Object> map) {
     String json = null;
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     try {
       // write JSON to a file
