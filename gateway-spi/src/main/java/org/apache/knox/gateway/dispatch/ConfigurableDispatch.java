@@ -168,17 +168,24 @@ public class ConfigurableDispatch extends DefaultDispatch {
     groupPattern = Pattern.compile(this.groupFilterPattern);
   }
 
+  public void copyRequestHeaderFields(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, boolean shouldAddExpect100Header) {
+    super.copyRequestHeaderFields(outboundRequest, inboundRequest, shouldAddExpect100Header);
+    addPrincipalAndGroups(outboundRequest);
+  }
+
   @Override
   public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
                                       HttpServletRequest inboundRequest) {
     super.copyRequestHeaderFields(outboundRequest, inboundRequest);
+    addPrincipalAndGroups(outboundRequest);
+  }
 
+  private void addPrincipalAndGroups(final HttpUriRequest outboundRequest) {
     //If there are some headers to be appended, append them
     Map<String, String> extraHeaders = getOutboundRequestAppendHeaders();
     if(MapUtils.isNotEmpty(extraHeaders)){
       extraHeaders.forEach(outboundRequest::addHeader);
     }
-
     /* If we need to add user and groups to outbound request */
     if(shouldIncludePrincipalAndGroups) {
       Map<String, String> groups = addPrincipalAndGroups();
