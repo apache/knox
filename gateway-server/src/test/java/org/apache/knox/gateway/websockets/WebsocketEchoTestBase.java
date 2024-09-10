@@ -20,6 +20,7 @@ package org.apache.knox.gateway.websockets;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
 import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
@@ -41,6 +42,7 @@ import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -216,7 +218,7 @@ public class WebsocketEchoTestBase {
    * @param backend topology to use
    * @throws IOException exception on setting up the gateway
    */
-  public static void setupGatewayConfig(final String backend) throws IOException {
+  public static void setupGatewayConfig(final String backend) throws Exception {
     services = new DefaultGatewayServices();
 
     URL serviceUrl = ClassLoader.getSystemResource("websocket-services");
@@ -347,6 +349,8 @@ public class WebsocketEchoTestBase {
 
     EasyMock.replay(gatewayConfig);
 
+    setGatewayServices(services);
+
     try {
       services.init(gatewayConfig, options);
     } catch (ServiceLifecycleException e) {
@@ -358,6 +362,17 @@ public class WebsocketEchoTestBase {
         .getService(ServiceType.TOPOLOGY_SERVICE);
     monitor.addTopologyChangeListener(topoListener);
     monitor.reloadTopologies();
+  }
+
+  /**
+   * Set the static GatewayServices field to the specified value.
+   *
+   * @param gws A GatewayServices object, or null.
+   */
+  private static void setGatewayServices(final GatewayServices gws) throws Exception {
+    Field gwsField = GatewayServer.class.getDeclaredField("services");
+    gwsField.setAccessible(true);
+    gwsField.set(null, gws);
   }
 
   private static File createDir() throws IOException {
