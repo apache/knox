@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<Configuration>
+<Configuration monitorInterval="15">
     <Properties>
         <Property name="app.log.dir">${sys:launcher.dir}/../logs</Property>
         <Property name="app.log.file">${sys:launcher.name}.log</Property>
