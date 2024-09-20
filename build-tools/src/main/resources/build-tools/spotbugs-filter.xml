@@ -90,4 +90,14 @@ limitations under the License.
     <Class name="org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService" />
     <Bug pattern="OBJECT_DESERIALIZATION" />
   </Match>
+
+  <Match>
+    <Class name="org.apache.knox.gateway.services.security.impl.ConfigurableEncryptor" />
+    <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE" />
+  </Match>
+
+  <Match>
+    <Class name="org.apache.knox.gateway.services.registry.impl.DefaultServiceRegistryService" />
+    <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE" />
+  </Match>
 </FindBugsFilter>
