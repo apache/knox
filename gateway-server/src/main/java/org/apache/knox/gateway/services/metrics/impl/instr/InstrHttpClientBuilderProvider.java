@@ -57,7 +57,7 @@ public class InstrHttpClientBuilderProvider implements
         }
         RequestLine requestLine = request.getRequestLine();
         URIBuilder uriBuilder = new URIBuilder(requestLine.getUri());
-        String resourcePath = InstrUtils.getResourcePath(uriBuilder.removeQuery().build().toString());
+        String resourcePath = InstrUtils.getServiceResourcePath(uriBuilder.removeQuery().build().toString());
         return MetricRegistry.name("service", name, context + resourcePath, methodNameString(request));
       } catch (URISyntaxException e) {
         throw new IllegalArgumentException(e);
