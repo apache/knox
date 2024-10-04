@@ -20,12 +20,28 @@ package org.apache.knox.gateway;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger="org.apache.knox.gateway")
 public interface ShiroMessages {
-  @Message(level = MessageLevel.INFO, text = "Request {0} matches unauthenticated path configured in topology, letting it through" )
+  @Message( level = MessageLevel.INFO, text = "Request {0} matches unauthenticated path configured in topology, letting it through" )
   void unauthenticatedPathBypass(String uri);
 
   @Message( level = MessageLevel.WARN, text = "Invalid URL pattern for rule: {0}" )
   void invalidURLPattern(String rule);
+
+  @Message( level = MessageLevel.TRACE, text = "Acquiring EhcacheShiro instance named {0}" )
+  void acquireEhcacheShiro(String name);
+
+  @Message( level = MessageLevel.INFO, text = "Cache with name {0} does not yet exist.  Creating now." )
+  void noCacheFound(String name);
+
+  @Message( level = MessageLevel.INFO, text = "Added EhcacheShiro named {0}" )
+  void ehcacheShiroAdded(String name);
+
+  @Message( level = MessageLevel.INFO, text = "Using existing EhcacheShiro named {0}" )
+  void usingExistingEhcacheShiro(String name);
+
+  @Message( level = MessageLevel.WARN, text = "The Shiro managed CacheManager threw an Exception while closing: {0}" )
+  void errorClosingManagedCacheManager(@StackTrace(level=MessageLevel.WARN) Exception e);
 }
