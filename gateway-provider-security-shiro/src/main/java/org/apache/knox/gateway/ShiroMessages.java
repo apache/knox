@@ -33,7 +33,7 @@ public interface ShiroMessages {
   @Message( level = MessageLevel.TRACE, text = "Acquiring EhcacheShiro instance named {0}" )
   void acquireEhcacheShiro(String name);
 
-  @Message( level = MessageLevel.INFO, text = "Cache with name {0} does not yet exist.  Creating now." )
+  @Message( level = MessageLevel.INFO, text = "Cache with name {0} does not exist yet.  Creating now." )
   void noCacheFound(String name);
 
   @Message( level = MessageLevel.INFO, text = "Added EhcacheShiro named {0}" )
@@ -42,6 +42,6 @@ public interface ShiroMessages {
   @Message( level = MessageLevel.INFO, text = "Using existing EhcacheShiro named {0}" )
   void usingExistingEhcacheShiro(String name);
 
-  @Message( level = MessageLevel.WARN, text = "The Shiro managed CacheManager threw an Exception while closing: {0}" )
+  @Message( level = MessageLevel.WARN, text = "There was an error closing the CacheManager, reason: {0}" )
   void errorClosingManagedCacheManager(@StackTrace(level=MessageLevel.WARN) Exception e);
 }
