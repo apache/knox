@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service role="ICEBERG-REST" name="iceberg-rest" version="0.0.1">
+    <metadata>
+        <type>API</type>
+        <context>/iceberg-rest</context>
+        <shortDesc>ICEBERG-REST</shortDesc>
+        <description>Apache Iceberg REST Catalog API</description>
+    </metadata>
+
+    <routes>
+        <route path="/iceberg-rest/**"/>
+    </routes>
+    <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch">
+        <param>
+            <name>shouldIncludePrincipalAndGroups</name>
+            <value>true</value>
+        </param>
+        <param>
+            <name>actorIdHeaderName</name>
+            <value>x-actor-username</value>
+        </param>
+    </dispatch>
+</service>
