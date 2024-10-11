@@ -80,6 +80,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private ConcurrentMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
   private long backupAgeLimit = -1;
+  private String sanitizationPattern = "sanitizationPattern";
 
   public GatewayTestConfig(Properties props) {
    super.getProps().putAll(props);
@@ -618,6 +619,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketMaxWaitBufferCount() {
     return DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
+  }
+
+  @Override
+  public boolean isErrorMessageSanitizationEnabled() {
+    return true;
+  }
+
+  @Override
+  public String getErrorMessageSanitizationPattern() {
+    return sanitizationPattern;
   }
 
   @Override
