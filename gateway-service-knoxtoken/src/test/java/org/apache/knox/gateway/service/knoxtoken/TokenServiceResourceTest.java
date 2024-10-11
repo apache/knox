@@ -1136,8 +1136,13 @@ public class TokenServiceResourceTest {
       tss.addMetadata(tokenId, tokenMetadata);
     }
 
+    ArrayList<String> tokenIDs = new ArrayList<>();
     for (int i = 0; i < numberOfTokens; i++) {
-      acquireToken(tr);
+      final Response tokenResponse = acquireToken(tr);
+      final String tokenId = getTagValue(tokenResponse.getEntity().toString(), "token_id");
+      assertNotNull("TokenID should not be null", tokenId);
+      assertFalse("TokenID must be unique", tokenIDs.contains(tokenId));
+      tokenIDs.add(tokenId);
     }
     final Response getKnoxTokensResponse = getUserTokensResponse(tr);
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
