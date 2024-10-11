@@ -1143,6 +1143,8 @@ public class TokenServiceResourceTest {
       assertNotNull("TokenID should not be null", tokenId);
       assertFalse("TokenID must be unique", tokenIDs.contains(tokenId));
       tokenIDs.add(tokenId);
+
+      Thread.sleep(5);
     }
     final Response getKnoxTokensResponse = getUserTokensResponse(tr);
     final Collection<String> tokens = ((Map<String, Collection<String>>) JsonUtils.getObjectFromJsonString(getKnoxTokensResponse.getEntity().toString()))
