@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -113,7 +114,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected JWTokenAuthority authority;
   protected RSAPublicKey publicKey;
   protected SignatureVerificationCache signatureVerificationCache;
-  private String expectedIssuer;
+  private List<String> expectedIssuers;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
   protected Set<URI> expectedJWKSUrls = new HashSet();
@@ -161,15 +162,28 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected void configureExpectedParameters(FilterConfig filterConfig) {
-    expectedIssuer = filterConfig.getInitParameter(JWT_EXPECTED_ISSUER);
-    if (expectedIssuer == null) {
-      expectedIssuer = JWT_DEFAULT_ISSUER;
+    String expectedIssuersParam = filterConfig.getInitParameter(JWT_EXPECTED_ISSUER);
+    if (expectedIssuersParam == null) {
+      expectedIssuersParam = JWT_DEFAULT_ISSUER;
     }
+    expectedIssuers = parseToListOfStrings(expectedIssuersParam);
 
     expectedSigAlg = filterConfig.getInitParameter(JWT_EXPECTED_SIGALG);
     if(StringUtils.isBlank(expectedSigAlg)) {
       expectedSigAlg = JWT_DEFAULT_SIGALG;
     }
+  }
+
+  /**
+   * Helper function to extract a List<String> from a comma separated
+   * String param.
+   * @param commaSeparatedList string to parse into a List<String>
+   */
+  protected List<String> parseToListOfStrings(final String commaSeparatedList) {
+      return Arrays.stream(
+                    commaSeparatedList.split(","))
+            .map(String::trim)
+            .collect(Collectors.toList());
   }
 
   protected List<String> parseExpectedAudiences(String expectedAudiences) {
@@ -241,6 +255,9 @@ public abstract class AbstractJWTFilter implements Filter {
             break;
           }
         }
+      } else if (audiences.contains("NONE")) {
+        log.jwtAudienceValidated();
+        valid = true;
       }
     }
     return valid;
@@ -351,7 +368,7 @@ public abstract class AbstractJWTFilter implements Filter {
     final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
     // confirm that issuer matches the intended target
-    if (expectedIssuer.equals(token.getIssuer())) {
+    if (expectedIssuers.contains(token.getIssuer())) {
       // if there is no expiration data then the lifecycle is tied entirely to
       // the cookie validity - otherwise ensure that the current time is before
       // the designated expiration time
