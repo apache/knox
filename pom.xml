@@ -192,7 +192,7 @@
         <cryptacular.version>1.2.4</cryptacular.version>
         <curator.version>5.4.0</curator.version>
         <dependency-check-maven.version>6.0.3</dependency-check-maven.version>
-        <derby.db.version>10.14.2.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
+        <derby.db.version>10.17.1.0</derby.db.version> <!-- 10.15.1.3 requires Java 9 -->
         <hsql.db.version>2.7.1</hsql.db.version>
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
         <dom4j.version>2.1.3</dom4j.version>
