@@ -1332,7 +1332,7 @@ public class KnoxCLITest {
             "created."));
 
     outContent.reset();
-    String[] args3 = { "list-alias", "--cluster", "cluster1:test", "--master", "master" };
+    String[] args3 = { "list-alias", "--cluster", "cluster1,test", "--master", "master" };
     rc = cli.run(args3);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
@@ -1341,7 +1341,7 @@ public class KnoxCLITest {
             outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias2"));
 
     outContent.reset();
-    String[] args4 = { "list-alias", "--cluster", "cluster1:test:invalidcluster", "--master", "master" };
+    String[] args4 = { "list-alias", "--cluster", "cluster1,test,invalidcluster", "--master", "master" };
     rc = cli.run(args4);
     assertEquals(0, rc);
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),

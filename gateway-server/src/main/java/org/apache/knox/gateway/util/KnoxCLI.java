@@ -138,6 +138,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + GenerateDescriptorCommand.USAGE + "]\n" +
       "   [" + TokenMigration.USAGE  + "]\n" +
       "   [" + CreateListAliasesCreateCommand.USAGE + "]\n";
+  private static final String CLUSTER_STRING_SEPARATOR = ",";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -717,7 +718,7 @@ public class KnoxCLI extends Configured implements Tool {
 
  private class AliasListCommand extends Command {
 
-  public static final String USAGE = "list-alias [--cluster cluster1:clusterN]";
+  public static final String USAGE = "list-alias [--cluster cluster1,clusterN]";
   public static final String DESC = "The list-alias command lists all of the aliases\n" +
                                     "for the given hadoop --cluster(s). The default\n" +
                                     "--cluster being the gateway itself.";
@@ -730,7 +731,7 @@ public class KnoxCLI extends Configured implements Tool {
      if (cluster == null) {
        cluster = "__gateway";
      }
-     String[] clusters = cluster.split(":");
+     String[] clusters = cluster.split(CLUSTER_STRING_SEPARATOR);
      for (String currentCluster : clusters) {
        boolean credentialStoreForClusterAvailable =
                keystoreService.isCredentialStoreForClusterAvailable(currentCluster);
