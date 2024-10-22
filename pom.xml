@@ -167,6 +167,7 @@
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
         <asm.version>9.0</asm.version>
         <aspectj.version>1.9.6</aspectj.version>
+        <asynchttpclient.version>4.1.5</asynchttpclient.version>
         <bcprov-jdk15on.version>1.67</bcprov-jdk15on.version>
         <ben-manes.caffeine.version>2.8.8</ben-manes.caffeine.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
@@ -1547,6 +1548,16 @@
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
+                <version>${httpcore.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpasyncclient</artifactId>
+                <version>${asynchttpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore-nio</artifactId>
                 <version>${httpcore.version}</version>
             </dependency>
 

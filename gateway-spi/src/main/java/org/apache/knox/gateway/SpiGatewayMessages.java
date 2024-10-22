@@ -123,4 +123,19 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "No valid principal found" )
   void noPrincipalFound();
+
+  @Message( level = MessageLevel.INFO, text = "Every event was read from the SSE stream" )
+  void sseConnectionDone();
+
+  @Message( level = MessageLevel.ERROR, text = "Error during SSE connection: {0}" )
+  void sseConnectionError(String error);
+
+  @Message( level = MessageLevel.ERROR, text = "Error writing into the SSE output stream : {0}" )
+  void errorWritingOutputStream(@StackTrace(level=MessageLevel.ERROR) Exception e);
+
+  @Message( level = MessageLevel.WARN, text = "SSE connection cancelled" )
+  void sseConnectionCancelled();
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to close SSE producer" )
+  void sseProducerCloseError(@StackTrace(level=MessageLevel.ERROR) Exception e);
 }
