@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -102,6 +103,9 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String JWT_EXPECTED_SIGALG = "jwt.expected.sigalg";
   public static final String JWT_DEFAULT_SIGALG = "RS256";
 
+  public static final String JWT_INSTANCE_KEY_FALLBACK = "jwt.instance.key.fallback";
+  public static final boolean JWT_INSTANCE_KEY_FALLBACK_DEFAULT = false;
+
   static JWTMessages log = MessagesFactory.get( JWTMessages.class );
 
   private static AuditService auditService = AuditServiceFactory.getAuditService();
@@ -116,13 +120,14 @@ public abstract class AbstractJWTFilter implements Filter {
   private String expectedIssuer;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
-  protected Set<URI> expectedJWKSUrls = new HashSet();
+  protected Set<URI> expectedJWKSUrls = new LinkedHashSet();
   protected Set<JOSEObjectType> allowedJwsTypes;
 
   private TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
   protected long idleTimeoutSeconds = -1;
   protected String topologyName;
+  protected boolean isJwtInstanceKeyFallback = JWT_INSTANCE_KEY_FALLBACK_DEFAULT;
 
   @Override
   public abstract void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -158,6 +163,9 @@ public abstract class AbstractJWTFilter implements Filter {
     // Setup the verified tokens cache
     topologyName = context != null ? (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE) : null;
     signatureVerificationCache = SignatureVerificationCache.getInstance(topologyName, filterConfig);
+
+    String fallbackConfig = filterConfig.getInitParameter(JWT_INSTANCE_KEY_FALLBACK);
+    isJwtInstanceKeyFallback = fallbackConfig != null ? Boolean.parseBoolean(fallbackConfig) : JWT_INSTANCE_KEY_FALLBACK_DEFAULT;
   }
 
   protected void configureExpectedParameters(FilterConfig filterConfig) {
@@ -512,17 +520,22 @@ public abstract class AbstractJWTFilter implements Filter {
     // If it has not yet been verified, then perform the verification now
     if (!verified) {
       try {
+        boolean attemptedPEMVerification  = false;
+        boolean attemptedJWKSVerification = false;
+
         if (publicKey != null) {
+          attemptedPEMVerification = true;
           verified = authority.verifyToken(token, publicKey);
           log.pemVerificationResultMessage(verified);
         }
 
         if (!verified && expectedJWKSUrls != null && !expectedJWKSUrls.isEmpty()) {
+          attemptedJWKSVerification = true;
           verified = authority.verifyToken(token, expectedJWKSUrls, expectedSigAlg, allowedJwsTypes);
           log.jwksVerificationResultMessage(verified);
         }
 
-        if(!verified) {
+        if(!verified && ((!attemptedPEMVerification && !attemptedJWKSVerification) || isJwtInstanceKeyFallback)) {
           verified = authority.verifyToken(token);
           log.signingKeyVerificationResultMessage(verified);
         }

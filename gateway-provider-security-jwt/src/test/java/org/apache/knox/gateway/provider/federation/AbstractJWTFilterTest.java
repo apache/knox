@@ -75,6 +75,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter.JWT_INSTANCE_KEY_FALLBACK;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.JWKS_URL;
 import static org.junit.Assert.fail;
 
 public abstract class AbstractJWTFilterTest  {
@@ -627,6 +629,9 @@ public abstract class AbstractJWTFilterTest  {
       /* Add a failing PEM */
       props.put(getVerificationPemProperty(), failingPem);
 
+      /* Turn fallback to signing key on  */
+      props.put(JWT_INSTANCE_KEY_FALLBACK, "true");
+
       /* This handler is setup with a publicKey, corresponding privateKey is used to sign the JWT below */
       handler.init(new TestFilterConfig(props));
 
@@ -660,7 +665,7 @@ public abstract class AbstractJWTFilterTest  {
    * This will test the signature verification chain.
    * Specifically the flow when provided PEM is not invalid and
    * knox signing key is valid.
-   *
+   * AND JWT_INSTANCE_KEY_FALLBACK is true
    * NOTE: here valid means can validate JWT.
    * @throws Exception
    */
@@ -668,6 +673,7 @@ public abstract class AbstractJWTFilterTest  {
   public void testSignatureVerificationChainWithPEMandSignature() throws Exception {
     try {
       Properties props = getProperties();
+      props.put(JWT_INSTANCE_KEY_FALLBACK, "true");
       KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
       kpg.initialize(2048);
 
@@ -707,6 +713,128 @@ public abstract class AbstractJWTFilterTest  {
     } catch (ServletException se) {
       fail("Should NOT have thrown a ServletException.");
     }
+  }
+
+  @Test
+  public void testNoPEMOrJwksWithoutFallback() throws Exception {
+    // Test fallback disabled, but not PEM configured.
+    // You can't disable key fallback without specifying an explicit verification method.
+    boolean verified = doTestSignatureVerificationChain(null, null, false);
+    Assert.assertTrue("Token should have been verified.", verified);
+  }
+
+  @Test
+  public void testNoPEMOrJwksWithFallback() throws Exception {
+    boolean verified = doTestSignatureVerificationChain(null, null, true);
+    Assert.assertTrue("Token should have been verified by falling back to keys.", verified);
+  }
+
+  @Test
+  public void testInvalidPEMNoJwksWithFallback() throws Exception {
+    boolean verified = doTestSignatureVerificationChain(pem, null, true);
+    Assert.assertTrue("Token should have been verified by falling back to keys.", verified);
+  }
+
+  @Test
+  public void testInvalidPEMNoJwksWithoutFallback() throws Exception {
+    String invalidPEM = generateInvalidPEM();
+    boolean verified = doTestSignatureVerificationChain(invalidPEM, null, false);
+    Assert.assertFalse("Token should NOT have been verified.", verified);
+  }
+
+  @Test
+  public void testNoPEMInvalidJwksWithoutFallback() throws Exception {
+    boolean verified = doTestSignatureVerificationChain(null, "https://localhost/nonesense", false);
+    Assert.assertFalse("Token should have NOT been verified.", verified);
+  }
+
+  @Test
+  public void testNoPEMInvalidJwksWithFallback() throws Exception {
+    boolean verified = doTestSignatureVerificationChain(null, "https://localhost/nonesense", true);
+    Assert.assertTrue("Token should have been verified by falling back to keys.", verified);
+  }
+
+  @Test
+  public void testInvalidPEMInvalidJwksWithoutFallback() throws Exception {
+    String invalidPEM = generateInvalidPEM();
+    boolean verified = doTestSignatureVerificationChain(invalidPEM, "https://localhost/nonesense", false);
+    Assert.assertFalse("Token should NOT have been verified.", verified);
+  }
+
+  @Test
+  public void testInvalidPEMInvalidJwksWithFallback() throws Exception {
+    String invalidPEM = generateInvalidPEM();
+    boolean verified = doTestSignatureVerificationChain(invalidPEM, "https://localhost/nonesense", true);
+    Assert.assertTrue("Token should have been verified by falling back to keys.", verified);
+  }
+
+  protected String generateInvalidPEM() throws Exception {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+
+    KeyPair KPair = kpg.generateKeyPair();
+    String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
+    Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
+    byte[] data = cert.getEncoded();
+    Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
+    return new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
+  }
+
+  /**
+   * This will test the signature verification chain in the following order
+   * 1. PEM - check if PEM is configured and signature is validated
+   * 2. JWKS - check if endpoint id configured if not skip
+   * 3. Knox signing key - if the above two fail try to validate using knox signing cert
+   * @throws Exception
+   */
+  public boolean doTestSignatureVerificationChain(final String testPEM,
+                                                  final String testJwks,
+                                                  final boolean fallbackToKeys) throws Exception {
+    boolean isVerified = false;
+
+    try {
+      Properties props = getProperties();
+      props.put(getAudienceProperty(), "bar");
+
+      if (testPEM != null) {
+        // Add a test PEM
+        props.put(getVerificationPemProperty(), testPEM);
+      }
+
+      if (testJwks != null) {
+        // Add the test JWKS URL
+        props.put(JWKS_URL, testJwks);
+      }
+
+      // Configure fallback to signing key on
+      props.put(JWT_INSTANCE_KEY_FALLBACK, String.valueOf(fallbackToKeys));
+
+      // This handler is setup with a publicKey, corresponding privateKey is used to sign the JWT below
+      handler.init(new TestFilterConfig(props));
+
+      SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+              new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)), privateKey);
+
+      HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      setTokenOnRequest(request, jwt);
+
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null);
+      HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+      EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
+      EasyMock.replay(request, response);
+
+      TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+      isVerified = chain.doFilterCalled;
+
+    } catch (ServletException se) {
+      fail("Should NOT have thrown a ServletException.");
+    }
+
+    return isVerified;
   }
 
   @Test

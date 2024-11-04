@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.hadoopauth.filter;
 
+import static org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter.JWT_INSTANCE_KEY_FALLBACK;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.captureInt;
@@ -577,6 +578,7 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn(supportJwt).anyTimes();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(JWT_INSTANCE_KEY_FALLBACK)).andReturn("false").anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();

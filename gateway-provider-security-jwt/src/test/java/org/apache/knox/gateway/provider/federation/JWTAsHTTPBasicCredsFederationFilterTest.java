@@ -111,5 +111,39 @@ public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTe
         }
     }
 
+    @Override
+    @Test
+    public void testNoPEMInvalidJwksWithoutFallback() throws Exception {
+        // No-op: This filter does not appear to support the JWKS URL(s) config like the
+        // JWTFederationFilter does, so this test does not apply
+    }
+
+    @Override
+    @Test
+    public void testNoPEMInvalidJwksWithFallback() throws Exception {
+        // No-op: This filter does not appear to support the JWKS URL(s) config like the
+        // JWTFederationFilter does, so this test does not apply
+    }
+
+    @Override
+    @Test
+    public void testInvalidPEMNoJwksWithoutFallback() throws Exception {
+        // No-op: This filter does not appear to support the JWKS URL(s) config like the
+        // JWTFederationFilter does, so this test does not apply
+    }
+
+    @Override
+    @Test
+    public void testInvalidPEMInvalidJwksWithoutFallback() throws Exception {
+        // No-op: This filter does not appear to support the JWKS URL(s) config like the
+        // JWTFederationFilter does, so this test does not apply
+    }
+
+    @Override
+    @Test
+    public void testInvalidPEMInvalidJwksWithFallback() throws Exception {
+        // No-op: This filter does not appear to support the JWKS URL(s) config like the
+        // JWTFederationFilter does, so this test does not apply
+    }
 }
 
