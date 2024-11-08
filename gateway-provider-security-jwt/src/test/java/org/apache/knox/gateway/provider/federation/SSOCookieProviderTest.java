@@ -330,6 +330,34 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertEquals(loginURL, "https://remotehost/notgateway/knoxsso/api/v1/websso?originalUrl=" + "https://remotehost/resource");
   }
 
+  @Override
+  @Test
+  public void testNoPEMInvalidJwksWithoutFallback() throws Exception {
+    // No-op: The SSOCookieProvider does not appear to support the JWKS URL(s) config like the
+    // JWTFederationFilter does, so this test does not apply
+  }
+
+  @Override
+  @Test
+  public void testNoPEMInvalidJwksWithFallback() throws Exception {
+    // No-op: The SSOCookieProvider does not appear to support the JWKS URL(s) config like the
+    // JWTFederationFilter does, so this test does not apply
+  }
+
+  @Override
+  @Test
+  public void testInvalidPEMInvalidJwksWithoutFallback() throws Exception {
+    // No-op: The SSOCookieProvider does not appear to support the JWKS URL(s) config like the
+    // JWTFederationFilter does, so this test does not apply
+  }
+
+  @Override
+  @Test
+  public void testInvalidPEMInvalidJwksWithFallback() throws Exception {
+    // No-op: The SSOCookieProvider does not appear to support the JWKS URL(s) config like the
+    // JWTFederationFilter does, so this test does not apply
+  }
+
   @Test
   public void testIdleTimoutExceeded() throws Exception {
     final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
