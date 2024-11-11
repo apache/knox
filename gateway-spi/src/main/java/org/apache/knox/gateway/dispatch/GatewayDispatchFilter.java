@@ -32,6 +32,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -71,13 +72,13 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     synchronized(lock) {
       if (dispatch == null) {
         String dispatchImpl = filterConfig.getInitParameter("dispatch-impl");
-        dispatch = newInstanceFromName(dispatchImpl);
+        dispatch = newInstanceFromName(dispatchImpl, filterConfig);
       }
       ConfigurationInjectorBuilder.configuration().target(dispatch).source(filterConfig).inject();
       HttpClientFactory httpClientFactory;
       String httpClientFactoryClass = filterConfig.getInitParameter("httpClientFactory");
       if (httpClientFactoryClass != null) {
-        httpClientFactory = newInstanceFromName(httpClientFactoryClass);
+        httpClientFactory = newInstanceFromName(httpClientFactoryClass, filterConfig);
       } else {
         httpClientFactory = new DefaultHttpClientFactory();
       }
@@ -217,13 +218,26 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
     }
   }
 
-  private <T> T newInstanceFromName(String dispatchImpl) throws ServletException {
+  private <T> T newInstanceFromName(String dispatchImpl, FilterConfig filterConfig) throws ServletException {
     try {
       Class<T> clazz = loadClass(dispatchImpl);
+      Constructor<?> constructor = this.getConstructorWithType(clazz, FilterConfig.class);
+      if(constructor != null) {
+        return (T) constructor.newInstance(filterConfig);
+      }
       return clazz.newInstance();
     } catch ( Exception e ) {
       throw new ServletException(e);
     }
+  }
+
+  private <T> Constructor<?> getConstructorWithType(Class<T> clazz, Class<?> type) {
+    for (Constructor<?> constructor : clazz.getConstructors()) {
+      if (constructor.getParameterCount() == 1 && constructor.getParameterTypes()[0] == type) {
+        return constructor;
+      }
+    }
+    return null;
   }
 
   private <T> Class<T> loadClass(String className) throws ClassNotFoundException {
