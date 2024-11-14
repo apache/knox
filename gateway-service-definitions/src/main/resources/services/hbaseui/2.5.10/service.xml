@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service name="hbaseui" role="HBASEUI" version="2.5.10">
+    <metadata>
+        <type>UI</type>
+        <context>/hbase/webui/master</context>
+        <shortDesc>HBase UI</shortDesc>
+        <description>The HBase Master web UI is a simple but useful tool, to get an overview of the current status of the cluster. From its page, you can get the version of the running HBase, its basic configuration, including the root HDFS path and ZooKeeper quorum, load average of the cluster, and a table, region, and region server list.</description>
+    </metadata>
+    <routes>
+        <!-- Fixes the stylesheet on the logs servlet -->
+        <route path="/hbase/webui/logs/jetty-dir.css">
+            <rewrite apply="HBASEUI/hbase/inbound/logs/css" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/logs/css" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/current-master-status**">
+            <rewrite apply="HBASEUI/hbase/inbound/current-master-status" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/">
+            <rewrite apply="HBASEUI/hbase/inbound/master/root" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/javascript/filter" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/**">
+            <rewrite apply="HBASEUI/hbase/inbound/master/path" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/headers" to="response.headers"/>
+            <rewrite apply="HBASEUI/hbase/outbound/javascript/filter" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/static/**">
+            <rewrite apply="HBASEUI/hbase/inbound/static" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/javascript/filter" to="response.body"/>
+        </route>
+
+        <!-- Define explicit routes for endpoints shared across master/regionserver -->
+        <route path="/hbase/webui/logs?">
+            <rewrite apply="HBASEUI/hbase/inbound/logs" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/logs" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/logs/**">
+            <rewrite apply="HBASEUI/hbase/outbound/logs" to="response.body"/>
+            <rewrite apply="HBASEUI/hbase/inbound/logs/files" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/logs/headers" to="response.headers"/>
+        </route>
+        <route path="/hbase/webui/logLevel?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/loglevel" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/loglevel" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/conf?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/conf" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/conf" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/dump?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/dump" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/dump" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/jmx?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/jmx" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/prometheus?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/prometheus" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/prometheus" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/prof?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/profiler" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/prof-output/{**}?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/prof_output" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/webui/outbound/headers/prof-output" to="response.headers"/>
+        </route>
+
+        <!-- Region info -->
+        <route path="/hbase/webui/regionserver/region.jsp?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/regions" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/regions" to="response.body"/>
+        </route>
+
+        <!-- Storefile info -->
+        <route path="/hbase/webui/regionserver/storeFile.jsp?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/storefile" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/storefile" to="response.body"/>
+            <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch">
+                <param>
+                    <name>removeUrlEncoding</name>
+                    <value>true</value>
+                </param>
+            </dispatch>
+        </route>
+
+        <!-- Enables loading the master without /master-status -->
+        <route path="/hbase/webui/master?**">
+            <rewrite apply="HBASEUI/hbase/inbound/master/home" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/live_servers" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/master/{**}?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/master/all_children" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/master/children" to="response.body"/>
+        </route>
+
+        <!-- Enables loading the RS without /rs-status -->
+        <route path="/hbase/webui/regionserver?**">
+            <rewrite apply="HBASEUI/hbase/inbound/regionserver/home" to="request.url"/>
+        </route>
+        <route path="/hbase/webui/regionserver/{**}?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/regionserver/all_children" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/regionserver/children" to="response.body"/>
+        </route>
+
+        <!-- Specific Routes for HBase 2.5.10 -->
+        <!-- User snapshots -->
+        <route path="/hbase/webui/userSnapshots.jsp?**">
+            <rewrite apply="HBASEUI/hbase/inbound/userSnapshots" to="request.url"/>
+        </route>
+
+        <!-- Live servers cluster metrics -->
+        <route path="/hbase/webui/api/v1/admin/cluster_metrics/live_servers">
+            <rewrite apply="HBASEUI/hbase/inbound/live_servers" to="request.url"/>
+        </route>
+
+        <!-- Table info -->
+        <route path="/hbase/webui/master/table.jsp?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/master/table" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/master/table" to="response.body"/>
+            <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch">
+                <param>
+                    <name>removeUrlEncoding</name>
+                    <value>true</value>
+                </param>
+            </dispatch>
+        </route>
+
+        <route path="/hbase/webui/table.jsp?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/table" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/master/table" to="response.body"/>
+            <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch">
+                <param>
+                    <name>removeUrlEncoding</name>
+                    <value>true</value>
+                </param>
+            </dispatch>
+        </route>
+
+        <!-- Snapshot info -->
+        <route path="/hbase/webui/snapshot.jsp?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/snapshot" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/snapshot" to="response.body"/>
+        </route>
+        <route path="/hbase/webui/master/snapshot.jsp?{**}">
+            <rewrite apply="HBASEUI/hbase/inbound/master/snapshot" to="request.url"/>
+            <rewrite apply="HBASEUI/hbase/outbound/master/snapshot" to="response.body"/>
+        </route>
+    </routes>
+</service>
