@@ -1,0 +1,109 @@
+<!--
+        Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound" pattern="*://*:*/**/kafka/">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound1" pattern="*://*:*/**/kafka/?{**}">
+        <rewrite template="{$serviceUrl[KAFKAUI]}"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound/root" pattern="*://*:*/**/kafka/{**}">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/{**}"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound/root1" pattern="*://*:*/**/kafka/{**}?{**}">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/{**}?{**}"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound/updateClusters" pattern="*://*:*/**/kafka/updataCluster?c={**}">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/updateCluster?c={**}"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound/clusters" pattern="*://*:*/**/kafka/clusters/{**}?t={**}">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/clusters/{**}?t={**}"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound/clusters0" pattern="*://*:*/**/kafka/clusters">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/clusters"/>
+    </rule>
+    <rule dir="IN" name="KAFKAUI/kafkaui/inbound/kafka/assets" pattern="*://*:*/**/kafka/assets/{**}">
+        <rewrite template="{$serviceUrl[KAFKAUI]}/assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/assets" pattern="/assets/{**}">
+        <rewrite template="{$frontend[path]}/kafka/assets/{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href" pattern="/clusters/{**}">
+        <rewrite template="{$frontend[path]}/kafka/clusters/{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href" pattern="/clusters?{**}">
+        <rewrite template="{$frontend[path]}/kafka/clusters?{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/clusters" pattern="/clusters/{**}?t={**}">
+        <rewrite template="{$frontend[path]}/kafka/clusters/{**}?t={**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/addCluster" pattern="/addCluster">
+        <rewrite template="{$frontend[path]}/kafka/addCluster"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/addCluster1" pattern="/addCluster/{**}">
+        <rewrite template="{$frontend[path]}/kafka/addCluster/{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/updateCluster3" pattern="/updateCluster?c={**}">
+        <rewrite template="{$frontend[path]}/kafka/updateCluster?c={**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/updateCluster" pattern="/updateCluster/{**}">
+        <rewrite template="{$frontend[path]}/kafka/updateCluster/{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/updateCluster1" pattern="/updateCluster/{**}?{**}">
+        <rewrite template="{$frontend[path]}/kafka/updateCluster/{**}?{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/updateCluster2" pattern="updateCluster/{**}?{**}">
+        <rewrite template="{$frontend[path]}/kafka/updateCluster/{**}?{**}"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/index" pattern="/">
+        <rewrite template="{$frontend[path]}/kafka"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/href/index2" pattern="/?user.name={*}">
+        <rewrite template="{$frontend[path]}/kafka/?user.name={*}"/>
+    </rule>
+    <filter name="KAFKAUI/kafkaui/outbound/headers2">
+        <content type="application/x-http-headers">
+            <apply path="Location" rule="KAFKAUI/kafkaui/outbound/headers/location"/>
+        </content>
+    </filter>
+    <rule flow="OR" dir="OUT" name="KAFKAUI/kafkaui/outbound/headers/location">
+        <match pattern="*://*:*/**/clusters/{**}">
+            <rewrite template="{$frontend[url]}/clusters/{**}"/>
+        </match>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/extrapath">
+        <rewrite template="{$frontend[path]}/kafka/assets"/>
+    </rule>
+    <rule dir="OUT" name="KAFKAUI/kafkaui/outbound/lib/jquery">
+        <rewrite template="{$frontend[url]}/kafka/assets/lib/jquery/jquery.js"/>
+    </rule>
+    <filter name="KAFKAUI/kafkaui/outbound/links">
+        <content type="application/javascript">
+            <apply path="/assets/lib/jquery/jquery.js" rule="KAFKAUI/kafkaui/outbound/lib/jquery"/>
+            <apply path="/" rule="KAFKAUI/kafkaui/outbound/clusters"/>
+        </content>
+        <content type="text/css">
+            <apply path="/assets" rule="KAFKAUI/kafkaui/outbound/assets"/>
+            <apply path="/" rule="KAFKAUI/kafkaui/outbound/clusters"/>
+        </content>
+        <content type="text/html">
+            <apply path="/assets/lib/jquery/jquery.js" rule="KAFKAUI/kafkaui/outbound/lib/jquery"/>
+        </content>
+        <content type="*/html">
+        </content>
+    </filter>
+</rules>
