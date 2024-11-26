@@ -99,11 +99,11 @@ public class TokenStateDatabase {
     }
   }
 
-  long getTokenExpiration(String tokenId) throws SQLException {
+  Long getTokenExpiration(String tokenId) throws SQLException {
     try (Connection connection = dataSource.getConnection(); PreparedStatement getTokenExpirationStatement = connection.prepareStatement(GET_TOKEN_EXPIRATION_SQL)) {
       getTokenExpirationStatement.setString(1, tokenId);
       try (ResultSet rs = getTokenExpirationStatement.executeQuery()) {
-        return rs.next() ? rs.getLong(1) : -1;
+        return rs.next() ? rs.getLong(1) : null;
       }
     }
   }

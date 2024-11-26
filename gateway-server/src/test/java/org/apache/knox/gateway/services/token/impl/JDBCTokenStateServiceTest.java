@@ -127,6 +127,7 @@ public class JDBCTokenStateServiceTest {
     String id1 = "token1";
     String id2 = "token2";
     String id3 = "token3";
+    String id4 = "token4";
     String createdBy3 = "createdBy3";
 
     long issueTime1 = 1;
@@ -141,16 +142,22 @@ public class JDBCTokenStateServiceTest {
     long expiration3 = 3;
     String comment3 = "comment3";
 
+    long issueTime4 = 4;
+    long expiration4 = -1;
+    String comment4 = "comment4";
+
     truncateDatabase();
 
     saveToken(user1, id1, issueTime1, expiration1, comment1);
     saveToken(user1, id2, issueTime2, expiration2, comment2);
     saveToken(user2, id3, issueTime3, expiration3, comment3);
+    saveToken(user1, id4, issueTime4, expiration4, comment4);
 
     List<KnoxToken> user1Tokens = new ArrayList<>(jdbcTokenStateService.getTokens(user1));
-    assertEquals(2, user1Tokens.size());
+    assertEquals(3, user1Tokens.size());
     assertToken(user1Tokens.get(0), id1, expiration1, comment1, issueTime1);
     assertToken(user1Tokens.get(1), id2, expiration2, comment2, issueTime2);
+    assertToken(user1Tokens.get(2), id4, expiration4, comment4, issueTime4);
 
     List<KnoxToken> user2Tokens = new ArrayList<>(jdbcTokenStateService.getTokens(user2));
     assertEquals(1, user2Tokens.size());
@@ -168,10 +175,27 @@ public class JDBCTokenStateServiceTest {
 
     // check all tokens
     List<KnoxToken> allTokens = new ArrayList<>(jdbcTokenStateService.getAllTokens());
-    assertEquals(3, allTokens.size());
+    assertEquals(4, allTokens.size());
     assertToken(allTokens.get(0), id1, expiration1, comment1, issueTime1);
     assertToken(allTokens.get(1), id2, expiration2, comment2, issueTime2);
     assertToken(allTokens.get(2), id3, expiration3, comment3, issueTime3, createdBy3);
+    assertToken(allTokens.get(3), id4, expiration4, comment4, issueTime4);
+  }
+
+  @Test
+  public void testGetTokenExpiration() throws UnknownTokenException {
+    saveToken("tokenExpirationUser1", "token100", 123, 456, "comment");
+    long expiration = jdbcTokenStateService.getTokenExpiration("token100");
+    assertEquals(456, expiration);
+
+    saveToken("tokenExpirationUser1", "token101", 789, -1, "comment");
+    expiration = jdbcTokenStateService.getTokenExpiration("token101");
+    assertEquals(-1L, expiration);
+  }
+
+  @Test(expected = UnknownTokenException.class)
+  public void testGetUnknownTokenExpiration() throws UnknownTokenException {
+    jdbcTokenStateService.getTokenExpiration("unknownToken1");
   }
 
   private void assertToken(KnoxToken knoxToken, String tokenId, long expiration, String comment, long issueTime) {
@@ -182,7 +206,7 @@ public class JDBCTokenStateServiceTest {
     SimpleDateFormat df = new SimpleDateFormat(KnoxToken.DATE_FORMAT, Locale.getDefault());
     assertEquals(tokenId, knoxToken.getTokenId());
     assertEquals(df.format(new Date(issueTime)), knoxToken.getIssueTime());
-    assertEquals(df.format(new Date(expiration)), knoxToken.getExpiration());
+    assertEquals(expiration < 0 ? "Never" : df.format(new Date(expiration)), knoxToken.getExpiration());
     assertEquals(comment, knoxToken.getMetadata().getComment());
     if (createdBy != null) {
       assertEquals(createdBy, knoxToken.getMetadata().getCreatedBy());

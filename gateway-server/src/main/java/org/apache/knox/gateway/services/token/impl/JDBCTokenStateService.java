@@ -158,21 +158,21 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService i
       validateToken(tokenId);
     }
 
-    long expiration = 0;
     try {
-      expiration = tokenDatabase.getTokenExpiration(tokenId);
-      if (expiration > 0) {
+      final Long expiration = tokenDatabase.getTokenExpiration(tokenId);
+      if (expiration != null) {
         log.fetchedExpirationFromDatabase(Tokens.getTokenIDDisplayText(tokenId), expiration);
 
         // Update the in-memory cache to avoid subsequent DB look-ups for the same state
         super.updateExpiration(tokenId, expiration);
+        return expiration;
       } else {
         throw new UnknownTokenException(tokenId);
       }
     } catch (SQLException e) {
       log.errorFetchingExpirationFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      throw new TokenStateServiceException("An error occurred while fetching expiration for " + Tokens.getTokenIDDisplayText(tokenId) + " from the database", e);
     }
-    return expiration;
   }
 
   @Override
