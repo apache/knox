@@ -19,6 +19,7 @@ package org.apache.knox.gateway.launcher;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,14 +54,17 @@ class Command {
   Boolean fork = Boolean.FALSE;
   Boolean redirect = Boolean.FALSE; // Controls redirecting stderr to stdout if forking.
   Boolean restream = Boolean.TRUE; // Controls creation of threads to read/write stdin, stdout, stderr of child if forking.
+  Extender extender;
 
-  Command( File base, Properties config, String[] args ) throws MalformedURLException {
+  Command( File base, Properties config, String[] args ) throws IOException {
     this.base = base;
     this.mainArgs = args ;
+    this.extender = new Extender( base, config );
     consumeConfig( config );
   }
 
-  void consumeConfig( Properties config ) throws MalformedURLException {
+  void consumeConfig( Properties config ) throws IOException {
+    extender.extendClassPathProperty();
     mainClass = config.getProperty( MAIN_CLASS );
     config.remove( MAIN_CLASS );
     mainMethod = config.getProperty( MAIN_METHOD, mainMethod );
