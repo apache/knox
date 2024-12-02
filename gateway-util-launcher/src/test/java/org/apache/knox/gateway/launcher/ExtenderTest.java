@@ -18,8 +18,11 @@
 package org.apache.knox.gateway.launcher;
 
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,9 +37,22 @@ public class ExtenderTest {
     private Path confDir;
     private Path configFilePath;
 
+    @Before
+    public void setupDirs() throws IOException {
+        tempDir = Files.createTempDirectory("cp_extender_test");
+        confDir = Files.createDirectory(tempDir.resolve("conf"));
+        configFilePath = confDir.resolve("gateway-site.xml");
+    }
+
+    @After
+    public void cleanUpDirs() throws IOException {
+        Files.deleteIfExists(configFilePath);
+        Files.deleteIfExists(confDir);
+        Files.deleteIfExists(tempDir);
+    }
+
     @Test
     public void extendClassPathPropertyTest() throws IOException {
-        this.setupDirs();
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
         properties.setProperty("main.class", "org.apache.knox.gateway.GatewayServer");
@@ -47,12 +63,10 @@ public class ExtenderTest {
         extender.extendClassPathProperty();
 
         assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
-        this.cleanUpDirs();
     }
 
     @Test
     public void extendClassPathPropertyDifferentMainClassTest() throws IOException {
-        this.setupDirs();
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
         properties.setProperty("main.class", "org.apache.knox.gateway.KnoxCLI");
@@ -63,7 +77,6 @@ public class ExtenderTest {
         extender.extendClassPathProperty();
 
         assertEquals("classpath", properties.getProperty("class.path"));
-        this.cleanUpDirs();
     }
 
     @Test
@@ -139,35 +152,15 @@ public class ExtenderTest {
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyNoConfigTest() {
+    public void extractExtensionPathIntoPropertyNoConfigTest() throws IOException {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
         Extender extender = new Extender(null, properties);
 
-        String configContent =
-                "<configuration>\n" +
-                        "    <property>\n" +
-                        "        <name>gateway.webshell.read.buffer.size</name>\n" +
-                        "        <value>1024</value>\n" +
-                        "        <description>Web Shell buffer size for reading</description>\n" +
-                        "    </property>\n" +
-                        "\n" +
-                        "    <!-- @since 2.0.0 websocket JWT validation configs -->\n" +
-                        "    <property>\n" +
-                        "        <name>gateway.websocket.JWT.validation.feature.enabled</name>\n" +
-                        "        <value>true</value>\n" +
-                        "        <description>Enable/Disable websocket JWT validation at websocket layer.</description>\n" +
-                        "    </property>\n" +
-                        "\n" +
-                        "    <!-- @since 1.5.0 homepage logout -->\n" +
-                        "    <property>\n" +
-                        "        <name>knox.homepage.logout.enabled</name>\n" +
-                        "        <value>true</value>\n" +
-                        "        <description>Enable/disable logout from the Knox Homepage.</description>\n" +
-                        "    </property>\n" +
-                        "</configuration>";
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("gateway-site-test.xml").getFile());
 
-        extender.extractExtensionPathIntoProperty(configContent);
+        extender.extractExtensionPathIntoProperty(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
 
         assertEquals("classpath", properties.getProperty("class.path"));
     }
@@ -179,17 +172,5 @@ public class ExtenderTest {
                 "        <value>" + extensionValue + "</value>\n" +
                 "    </property>\n" +
                 "</configuration>";
-    }
-
-    private void setupDirs() throws IOException {
-        tempDir = Files.createTempDirectory("cp_extender_test");
-        confDir = Files.createDirectory(tempDir.resolve("conf"));
-        configFilePath = confDir.resolve("gateway-site.xml");
-    }
-
-    private void cleanUpDirs() throws IOException {
-        Files.deleteIfExists(configFilePath);
-        Files.deleteIfExists(confDir);
-        Files.deleteIfExists(tempDir);
     }
 }

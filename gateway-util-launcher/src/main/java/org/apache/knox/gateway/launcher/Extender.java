@@ -41,6 +41,7 @@ public class Extender {
 
     private final File base;
     private final Properties properties;
+    private final Pattern pattern = Pattern.compile(CLASSPATH_PROPERTY_PATTERN, Pattern.DOTALL);
 
     public Extender(File base, Properties properties) {
         this.base = base;
@@ -56,8 +57,7 @@ public class Extender {
     }
 
     protected void extractExtensionPathIntoProperty(String configContent) {
-        Pattern pattern = Pattern.compile(CLASSPATH_PROPERTY_PATTERN, Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(configContent);
+        final Matcher matcher = pattern.matcher(configContent);
 
         if (matcher.find()) {
             StringBuilder newClassPath = new StringBuilder(matcher.group(1).trim());
