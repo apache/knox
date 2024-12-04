@@ -31,7 +31,7 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-public class ExtenderTest {
+public class GatewayServerClasspathExtenderTest {
 
     private Path tempDir;
     private Path confDir;
@@ -56,11 +56,11 @@ public class ExtenderTest {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
         properties.setProperty("main.class", "org.apache.knox.gateway.GatewayServer");
-        Extender extender = new Extender(confDir.toFile(), properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
         String configContent = this.getConfigContent("/new/classp/*");
         Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
-        extender.extendClassPathProperty();
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
         assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
     }
@@ -70,11 +70,11 @@ public class ExtenderTest {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
         properties.setProperty("main.class", "org.apache.knox.gateway.KnoxCLI");
-        Extender extender = new Extender(confDir.toFile(), properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
         String configContent = this.getConfigContent("/new/classp/*");
         Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
-        extender.extendClassPathProperty();
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
         assertEquals("classpath", properties.getProperty("class.path"));
     }
@@ -83,10 +83,10 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyNoDelimTest() {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         String configContent = this.getConfigContent("/new/classp/*");
-        extender.extractExtensionPathIntoProperty(configContent);
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
 
         assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
     }
@@ -95,10 +95,10 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyXMLFormatTest() {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         String configContent = this.getConfigContent("/new/classp/*;");
-        extender.extractExtensionPathIntoProperty(configContent);
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
 
         assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
     }
@@ -107,10 +107,10 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyWhitespaceTest() {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         String configContent = this.getConfigContent(" /new/classp/*; ");
-        extender.extractExtensionPathIntoProperty(configContent);
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
 
         assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
     }
@@ -119,10 +119,10 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyMultipleTest() {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         String configContent = this.getConfigContent("/new/classp/*,../classp");
-        extender.extractExtensionPathIntoProperty(configContent);
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
 
         assertEquals("/new/classp/*,../classp;classpath", properties.getProperty("class.path"));
     }
@@ -131,10 +131,10 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyEmptyTest() {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         String configContent = this.getConfigContent("");
-        extender.extractExtensionPathIntoProperty(configContent);
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
 
         assertEquals("classpath", properties.getProperty("class.path"));
     }
@@ -143,10 +143,10 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyEmptyWhitespaceTest() {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         String configContent = this.getConfigContent(" ");
-        extender.extractExtensionPathIntoProperty(configContent);
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
 
         assertEquals("classpath", properties.getProperty("class.path"));
     }
@@ -155,12 +155,12 @@ public class ExtenderTest {
     public void extractExtensionPathIntoPropertyNoConfigTest() throws IOException {
         Properties properties = new Properties();
         properties.setProperty("class.path", "classpath");
-        Extender extender = new Extender(null, properties);
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
 
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("gateway-site-test.xml").getFile());
 
-        extender.extractExtensionPathIntoProperty(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8), properties);
 
         assertEquals("classpath", properties.getProperty("class.path"));
     }

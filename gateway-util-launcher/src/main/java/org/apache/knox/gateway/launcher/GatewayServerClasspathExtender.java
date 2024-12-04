@@ -28,7 +28,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Extender {
+public class GatewayServerClasspathExtender {
 
     private static final String CLASSPATH_EXTENSION_PROPERTY = "gateway.server.classpath.extension";
     private static final String CLASSPATH_PROPERTY_PATTERN = "<property>\\s*<name>" + CLASSPATH_EXTENSION_PROPERTY + "</name>\\s*<value>(.*?)</value>\\s*</property>";
@@ -40,23 +40,21 @@ public class Extender {
     private static final String[] CLASS_PATH_DELIMITERS = new String[]{",", ";"};
 
     private final File base;
-    private final Properties properties;
     private final Pattern pattern = Pattern.compile(CLASSPATH_PROPERTY_PATTERN, Pattern.DOTALL);
 
-    public Extender(File base, Properties properties) {
+    public GatewayServerClasspathExtender(File base) {
         this.base = base;
-        this.properties = properties;
     }
 
-    public void extendClassPathProperty() throws IOException {
+    public void extendClassPathProperty(Properties properties) throws IOException {
         Path configFilePath = Paths.get(base.getPath(), CONFIG_PATH);
         if (GATEWAY_SERVER_MAIN_CLASS.equals(properties.getProperty(MAIN_CLASS_PROPERTY)) && Files.isReadable(configFilePath)) {
             String configContent = new String(Files.readAllBytes(configFilePath), StandardCharsets.UTF_8);
-            extractExtensionPathIntoProperty(configContent);
+            extractExtensionPathIntoProperty(configContent, properties);
         }
     }
 
-    protected void extractExtensionPathIntoProperty(String configContent) {
+    protected void extractExtensionPathIntoProperty(String configContent, Properties properties) {
         final Matcher matcher = pattern.matcher(configContent);
 
         if (matcher.find()) {

@@ -54,17 +54,17 @@ class Command {
   Boolean fork = Boolean.FALSE;
   Boolean redirect = Boolean.FALSE; // Controls redirecting stderr to stdout if forking.
   Boolean restream = Boolean.TRUE; // Controls creation of threads to read/write stdin, stdout, stderr of child if forking.
-  Extender extender;
+  GatewayServerClasspathExtender gatewayServerClasspathExtender;
 
   Command( File base, Properties config, String[] args ) throws IOException {
     this.base = base;
     this.mainArgs = args ;
-    this.extender = new Extender( base, config );
+    this.gatewayServerClasspathExtender = new GatewayServerClasspathExtender( base );
     consumeConfig( config );
   }
 
   void consumeConfig( Properties config ) throws IOException {
-    extender.extendClassPathProperty();
+    gatewayServerClasspathExtender.extendClassPathProperty(config);
     mainClass = config.getProperty( MAIN_CLASS );
     config.remove( MAIN_CLASS );
     mainMethod = config.getProperty( MAIN_METHOD, mainMethod );
