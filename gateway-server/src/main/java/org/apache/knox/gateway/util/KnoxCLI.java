@@ -137,6 +137,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + JWKGenerator.USAGE  + "]\n" +
       "   [" + GenerateDescriptorCommand.USAGE + "]\n" +
       "   [" + TokenMigration.USAGE  + "]\n";
+  private static final String CLUSTER_STRING_SEPARATOR = ",";
 
   /** allows stdout to be captured if necessary */
   public PrintStream out = System.out;
@@ -162,6 +163,7 @@ public class KnoxCLI extends Configured implements Tool {
   private boolean migrateExpiredTokens;
   private boolean verbose;
   private String alias;
+  private boolean listAliases;
 
   private String remoteRegistryClient;
   private String remoteRegistryEntryName;
@@ -337,12 +339,15 @@ public class KnoxCLI extends Configured implements Tool {
         }
       } else if( args[i].equals("list-topologies") ){
         command = new ListTopologiesCommand();
-      }else if ( args[i].equals("--cluster") || args[i].equals("--topology") ) {
+      } else if ( args[i].equals("--cluster") || args[i].equals("--topology") ) {
         if( i+1 >= args.length || args[i+1].startsWith( "-" ) ) {
           printKnoxShellUsage();
           return -1;
         }
         this.cluster = args[++i];
+        if(command instanceof BatchAliasCreateCommand) {
+          ((BatchAliasCreateCommand) command).toMap(this.cluster);
+        }
       } else if (args[i].equals("service-test")) {
         if( i + 1 >= args.length) {
           printKnoxShellUsage();
@@ -451,6 +456,8 @@ public class KnoxCLI extends Configured implements Tool {
         this.master = args[++i];
       } else if (args[i].equals("--force")) {
         this.force = true;
+      } else if (args[i].equals("--list")) {
+        this.listAliases = true;
       } else if (args[i].equals("--help")) {
         printKnoxShellUsage();
         return -1;
@@ -663,6 +670,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println(JWKGenerator.USAGE + "\n\n" + JWKGenerator.DESC);
       out.println();
       out.println( div );
+      out.println(BatchAliasCreateCommand.USAGE + "\n\n" + BatchAliasCreateCommand.DESC);
+      out.println();
+      out.println( div );
     }
   }
 
@@ -701,31 +711,34 @@ public class KnoxCLI extends Configured implements Tool {
 
  private class AliasListCommand extends Command {
 
-  public static final String USAGE = "list-alias [--cluster clustername]";
+  public static final String USAGE = "list-alias [--cluster cluster1,clusterN]";
   public static final String DESC = "The list-alias command lists all of the aliases\n" +
-                                    "for the given hadoop --cluster. The default\n" +
+                                    "for the given hadoop --cluster(s). The default\n" +
                                     "--cluster being the gateway itself.";
 
    @Override
    public void execute() throws Exception {
      AliasService as = getAliasService();
-      KeystoreService keystoreService = getKeystoreService();
+     KeystoreService keystoreService = getKeystoreService();
 
      if (cluster == null) {
        cluster = "__gateway";
      }
-      boolean credentialStoreForClusterAvailable =
-          keystoreService.isCredentialStoreForClusterAvailable(cluster);
-      if (credentialStoreForClusterAvailable) {
-        out.println("Listing aliases for: " + cluster);
-        List<String> aliases = as.getAliasesForCluster(cluster);
-        for (String alias : aliases) {
-          out.println(alias);
-        }
-        out.println("\n" + aliases.size() + " items.");
-      } else {
-        out.println("Invalid cluster name provided: " + cluster);
-      }
+     String[] clusters = cluster.split(CLUSTER_STRING_SEPARATOR);
+     for (String currentCluster : clusters) {
+       boolean credentialStoreForClusterAvailable =
+               keystoreService.isCredentialStoreForClusterAvailable(currentCluster);
+       if (credentialStoreForClusterAvailable) {
+         out.println("Listing aliases for: " + currentCluster);
+         List<String> aliases = as.getAliasesForCluster(currentCluster);
+         for (String alias : aliases) {
+           out.println(alias);
+         }
+         out.println("\n" + aliases.size() + " items.");
+       } else {
+         out.println("Invalid cluster name provided: " + currentCluster);
+       }
+     }
    }
 
    @Override
@@ -1028,17 +1041,22 @@ public class KnoxCLI extends Configured implements Tool {
             "--alias alias1 [--value value1] " +
             "--alias alias2 [--value value2] " +
             "--alias aliasN [--value valueN] ... " +
-            "[--cluster clustername] " +
-            "[--generate]";
+            "--cluster cluster1 " +
+            "--alias aliasN [--value valueN] ..." +
+            "--cluster clusterN " +
+            "[--generate] " +
+            "[--list]";
     public static final String DESC = "The create-aliases command will create multiple aliases\n"
             + "and secret pairs within the same credential store for the\n"
-            + "indicated --cluster otherwise within the gateway\n"
+            + "indicated --cluster(s) otherwise within the gateway\n"
             + "credential store. The actual secret may be specified via\n"
             + "the --value option or --generate (will create a random secret\n"
-            + "for you) or user will be prompt to provide password.";
+            + "for you) or user will be prompt to provide password.\n"
+            + "Optionally the aliases for the clusters can be listed with --list.";
 
-    private List<String> names = new ArrayList<>();
-    private List<String> values = new ArrayList<>();
+    private final List<String> names = new ArrayList<>();
+    private final List<String> values = new ArrayList<>();
+    private final Map<String, Map<String, String>> aliasMap = new LinkedHashMap<>();
 
     public void addName(String alias) {
       if (names.contains(alias)) {
@@ -1055,23 +1073,25 @@ public class KnoxCLI extends Configured implements Tool {
 
     @Override
     public void execute() throws Exception {
-      Map<String, String> aliases = toMap();
-      List<String> generated = new ArrayList<>();
-      AliasService as = getAliasService();
-      if (cluster == null) {
+      if (cluster == null || !names.isEmpty()) {
         cluster = "__gateway";
+        this.toMap(cluster);
       }
-      for (Map.Entry<String, String> entry : aliases.entrySet()) {
-        if (entry.getValue() == null) {
-          if (Boolean.parseBoolean(generate)) {
-            entry.setValue(PasswordUtils.generatePassword(16));
-            generated.add(entry.getKey());
-          } else {
-            entry.setValue(new String(promptUserForPassword()));
-          }
+
+      AliasService aliasService = getAliasService();
+
+      for (Map.Entry<String, Map<String, String>> aliasesMapEntry : aliasMap.entrySet()) {
+        List<String> generated = new ArrayList<>();
+        fillMissingValues(aliasesMapEntry.getValue(), generated);
+        aliasService.addAliasesForCluster(aliasesMapEntry.getKey(), aliasesMapEntry.getValue());
+        printResults(generated, aliasesMapEntry.getValue());
+        if(listAliases) {
+          listAliasesForCluster(aliasesMapEntry.getKey(), aliasService);
         }
       }
-      as.addAliasesForCluster(cluster, aliases);
+    }
+
+    private void printResults(List<String> generated, Map<String, String> aliases) {
       if (!generated.isEmpty()) {
         out.println(generated.size() + " alias(es) have been successfully generated: " + generated);
       }
@@ -1082,12 +1102,37 @@ public class KnoxCLI extends Configured implements Tool {
       }
     }
 
-    private Map<String, String> toMap() {
-      Map<String,String> aliases = new LinkedHashMap<>();
-      for (int i = 0; i < names.size(); i++) {
-        aliases.put(names.get(i), values.get(i));
+    private void fillMissingValues(Map<String, String> aliases, List<String> generated) {
+      for (Map.Entry<String, String> entry : aliases.entrySet()) {
+        if (entry.getValue() == null) {
+          if (Boolean.parseBoolean(generate)) {
+            entry.setValue(PasswordUtils.generatePassword(16));
+            generated.add(entry.getKey());
+          } else {
+            entry.setValue(new String(promptUserForPassword()));
+          }
+        }
       }
-      return aliases;
+    }
+
+    private void listAliasesForCluster(String cluster, AliasService aliasService) throws AliasServiceException {
+      out.println("Listing aliases for: " + cluster);
+      List<String> aliases = aliasService.getAliasesForCluster(cluster);
+      for (String alias : aliases) {
+        out.println(alias);
+      }
+      out.println("\n" + aliases.size() + " items.");
+    }
+
+    private void toMap(String cluster) {
+      Map<String, String> parsedAliases = new LinkedHashMap<>();
+      for (int i = 0; i < values.size(); i++) {
+        parsedAliases.put(names.get(i), values.get(i));
+      }
+
+      names.clear();
+      values.clear();
+      aliasMap.put(cluster, parsedAliases);
     }
 
     @Override
