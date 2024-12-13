@@ -56,6 +56,7 @@ import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_S
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_ROLES;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT;
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE;
 
 /**
  * Specific session store where data are saved into cookies (and not in memory).
@@ -200,6 +201,11 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
             cookie.setPath(parts[0]);
 
+        }
+
+        /* Set cookie max age */
+        if(sessionStoreConfigs != null && sessionStoreConfigs.containsKey(PAC4J_COOKIE_MAX_AGE)) {
+            cookie.setMaxAge(Integer.parseInt(sessionStoreConfigs.get(PAC4J_COOKIE_MAX_AGE)));
         }
         context.addResponseCookie(cookie);
     }
