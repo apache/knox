@@ -126,7 +126,7 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
   public static final String PAC4J_COOKIE_MAX_AGE = "pac4j.cookie.max.age";
 
   /* default value is same is KNOXSSO token ttl default */
-  public static final int PAC4J_COOKIE_MAX_AGE_DEFAULT = -1;
+  private static final String PAC4J_COOKIE_MAX_AGE_DEFAULT = "-1";
 
   private CallbackFilter callbackFilter;
 
@@ -223,7 +223,7 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
       /* do we need to exclude custom attributes? */
       setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT);
       /* add cookie expiry */
-      setSessionStoreConfig(filterConfig, PAC4J_COOKIE_MAX_AGE, Long.toString(PAC4J_COOKIE_MAX_AGE_DEFAULT));
+      setSessionStoreConfig(filterConfig, PAC4J_COOKIE_MAX_AGE, PAC4J_COOKIE_MAX_AGE_DEFAULT);
       //decorating client configuration (if needed)
       PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }
