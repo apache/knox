@@ -262,7 +262,7 @@
         <postgresql.version>42.4.4</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
         <mariadb.connector.version>3.3.0</mariadb.connector.version>
-        <protobuf.version>3.16.3</protobuf.version>
+        <protobuf.version>3.25.5</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
         <!-- After JDK 11 we can use 0.12.4 from maven central -->
