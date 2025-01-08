@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -41,6 +42,7 @@ import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.model.DescriptorConfiguration;
 import org.apache.knox.gateway.model.ProviderConfiguration;
@@ -71,6 +73,7 @@ public class KnoxCLITest {
   public void setUp() throws Exception {
     System.setOut(new PrintStream(outContent, false, StandardCharsets.UTF_8.name()));
     System.setErr(new PrintStream(errContent, false, StandardCharsets.UTF_8.name()));
+    this.setGatewayServicesToNull();
   }
 
   @Test
@@ -1335,6 +1338,12 @@ public class KnoxCLITest {
   private File createDir() throws IOException {
     return TestUtils
         .createTempDir(this.getClass().getSimpleName() + "-");
+  }
+
+  private void setGatewayServicesToNull() throws Exception {
+    Field gwsField = GatewayServer.class.getDeclaredField("services");
+    gwsField.setAccessible(true);
+    gwsField.set(null, null);
   }
 
   private static final String testDescriptorContentJSON = "{\n" +

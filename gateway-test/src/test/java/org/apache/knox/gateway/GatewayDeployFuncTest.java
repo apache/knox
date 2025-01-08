@@ -17,16 +17,16 @@
  */
 package org.apache.knox.gateway;
 
-import io.restassured.response.Response;
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import io.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.test.TestUtils;
 import org.apache.knox.test.category.ReleaseTest;
-import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -283,7 +283,7 @@ public class GatewayDeployFuncTest {
       Response response = given()
           .auth().preemptive().basic( username, password )
           .when().get( url ).andReturn();
-      if( response.getStatusCode() == HttpStatus.SC_NOT_FOUND ) {
+      if( response.getStatusCode() == HttpStatus.SC_NOT_FOUND || response.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE ) {
         Thread.sleep( sleep );
         continue;
       }

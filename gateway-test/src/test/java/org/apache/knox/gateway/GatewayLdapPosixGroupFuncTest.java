@@ -19,6 +19,7 @@ package org.apache.knox.gateway;
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import io.restassured.response.Response;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -36,7 +37,10 @@ import java.net.URL;
 import static io.restassured.RestAssured.given;
 import static org.apache.knox.test.TestUtils.LOG_ENTER;
 import static org.apache.knox.test.TestUtils.LOG_EXIT;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Functional test to verify : looking up ldap groups from directory
@@ -47,6 +51,7 @@ import static org.hamcrest.CoreMatchers.is;
 public class GatewayLdapPosixGroupFuncTest {
   private static final GatewayTestDriver driver = new GatewayTestDriver();
   private static final String cluster = "test-cluster";
+  private static final long sleep = 200;
 
   @BeforeClass
   public static void setupSuite() throws Exception {
@@ -65,7 +70,6 @@ public class GatewayLdapPosixGroupFuncTest {
   }
 
   public static void setupGateway() throws Exception {
-    String cluster = "test-cluster";
     GatewayTestConfig config = new GatewayTestConfig();
     XMLTag topology = createTopology();
     driver.setupGateway(config, cluster, topology, true);
@@ -169,37 +173,40 @@ public class GatewayLdapPosixGroupFuncTest {
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testGroupMember() {
+  public void testGroupMember() throws InterruptedException {
     LOG_ENTER();
     String username = "sam";
     String password = "sam-password";
     String serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .then()
-        //.log().all()
-        .statusCode( HttpStatus.SC_OK )
-        .contentType( "text/plain" )
-        .body( is( "test-service-response" ) )
-        .when().get( serviceUrl );
+    Response response = waitForActiveTopology(serviceUrl, username, password);
+    assertEquals( HttpStatus.SC_OK, response.getStatusCode() );
+    assertThat( response.getContentType(), containsString( "text/plain" ) );
+    assertThat( response.getBody().asString(), is( "test-service-response" ) );
     LOG_EXIT();
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
-  public void testNonGroupMember() {
+  public void testNonGroupMember() throws InterruptedException {
     LOG_ENTER();
     String username = "guest";
     String password = "guest-password";
     String serviceUrl = driver.getClusterUrl() + "/test-service-path/test-service-resource";
-    given()
-        //.log().all()
-        .auth().preemptive().basic( username, password )
-        .then()
-        //.log().all()
-        .statusCode( HttpStatus.SC_FORBIDDEN )
-        .when().get( serviceUrl );
+    Response response = waitForActiveTopology(serviceUrl, username, password);
+    assertEquals( HttpStatus.SC_FORBIDDEN, response.getStatusCode() );
     LOG_EXIT();
+  }
+
+  private Response waitForActiveTopology( String url, String username, String password ) throws InterruptedException {
+    while( true ) {
+      Response response = given()
+              .auth().preemptive().basic( username, password )
+              .when().get( url ).andReturn();
+      if( response.getStatusCode() == HttpStatus.SC_NOT_FOUND || response.getStatusCode() == HttpStatus.SC_SERVICE_UNAVAILABLE ) {
+        Thread.sleep( sleep );
+        continue;
+      }
+      return response;
+    }
   }
 
 }
