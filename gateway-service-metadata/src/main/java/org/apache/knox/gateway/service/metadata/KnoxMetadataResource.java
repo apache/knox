@@ -63,8 +63,6 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
@@ -138,20 +136,17 @@ public class KnoxMetadataResource {
   @Produces(APPLICATION_OCTET_STREAM)
   @Path("publicCert")
   public Response getPublicCertification(@QueryParam("type") @DefaultValue("pem") String certType) {
-    final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    if (gatewayServices != null) {
-      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-      final Certificate certificate = getPublicCertificate(gatewayServices, config);
-      if (certificate != null) {
-        if ("pem".equals(certType)) {
-          generateCertificatePem(certificate, config);
-          return generateSuccessFileDownloadResponse(pemFilePath);
-        } else if ("jks".equals(certType)) {
-          generateCertificateJks(certificate, config);
-          return generateSuccessFileDownloadResponse(jksFilePath);
-        } else {
-          return generateFailureFileDownloadResponse(Status.BAD_REQUEST, "Invalid certification type provided!");
-        }
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final Certificate[] certificateChain = getPublicCertificates();
+    if (certificateChain != null) {
+      if ("pem".equals(certType)) {
+        generateCertificatePem(certificateChain, config);
+        return generateSuccessFileDownloadResponse(pemFilePath);
+      } else if ("jks".equals(certType)) {
+        generateCertificateJks(certificateChain, config);
+        return generateSuccessFileDownloadResponse(jksFilePath);
+      } else {
+        return generateFailureFileDownloadResponse(Status.BAD_REQUEST, "Invalid certification type provided!");
       }
     }
     return generateFailureFileDownloadResponse(Status.SERVICE_UNAVAILABLE, "Could not generate public certificate");
@@ -169,32 +164,31 @@ public class KnoxMetadataResource {
     return responseBuilder.build();
   }
 
-  private Certificate getPublicCertificate(GatewayServices gatewayServices, GatewayConfig config) {
+  private Certificate[] getPublicCertificates() {
     try {
-      final KeystoreService keystoreService = gatewayServices.getService(ServiceType.KEYSTORE_SERVICE);
-      return keystoreService.getKeystoreForGateway().getCertificate(config.getIdentityKeyAlias());
-    } catch (KeyStoreException | KeystoreServiceException e) {
+      return X509CertificateUtil.fetchPublicCertsFromServer(request.getRequestURL().toString(), true, null);
+    } catch (Exception e) {
       LOG.failedToFetchPublicCert(e.getMessage(), e);
       return null;
     }
   }
 
-  private void generateCertificatePem(Certificate certificate, GatewayConfig gatewayConfig) {
+  private void generateCertificatePem(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
     try {
       if (pemFilePath == null || !pemFilePath.toFile().exists()) {
         pemFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.pem");
-        X509CertificateUtil.writeCertificateToFile(certificate, pemFilePath.toFile());
+        X509CertificateUtil.writeCertificatesToFile(certificateChain, pemFilePath.toFile());
       }
     } catch (CertificateEncodingException | IOException e) {
       LOG.failedToGeneratePublicCert("PEM", e.getMessage(), e);
     }
   }
 
-  private void generateCertificateJks(Certificate certificate, GatewayConfig gatewayConfig) {
+  private void generateCertificateJks(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
     try {
       if (jksFilePath == null || !jksFilePath.toFile().exists()) {
         jksFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.jks");
-        X509CertificateUtil.writeCertificateToJks(certificate, jksFilePath.toFile());
+        X509CertificateUtil.writeCertificatesToJks(certificateChain, jksFilePath.toFile(), null);
       }
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
       LOG.failedToGeneratePublicCert("JKS", e.getMessage(), e);
