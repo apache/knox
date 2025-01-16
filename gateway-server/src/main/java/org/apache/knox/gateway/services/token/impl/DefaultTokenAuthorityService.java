@@ -241,7 +241,13 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
         jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
         final JOSEObjectTypeVerifier<SecurityContext> objectTypeVerifier = new DefaultJOSEObjectTypeVerifier<>(allowedJwsTypes);
-        jwtProcessor.setJWSTypeVerifier(objectTypeVerifier);
+        /* See if we have a issuer for which we want to ignore type validation */
+        if(!config.getIssuersWithIgnoredTypeHeader().contains(token.getIssuer())) {
+          jwtProcessor.setJWSTypeVerifier(objectTypeVerifier);
+        } else {
+          /* no typ claim found in token, log and move on */
+          LOG.ignoreTypeHeaderVerification();
+        }
 
         // Process the token
         SecurityContext ctx = null; // optional context parameter, not required here

@@ -354,8 +354,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String GATEWAY_HEALTH_CHECK_TOPOLOGIES = GATEWAY_CONFIG_FILE_PREFIX + ".health.check.topologies";
 
-  private static final String JWKS_OUTAGE_CACHE_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".jwks.outage.cache.ttl";;
+  private static final String JWKS_OUTAGE_CACHE_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".jwks.outage.cache.ttl";
   private static final long JWKS_OUTAGE_CACHE_TTL_DEFAULT = TimeUnit.HOURS.toMillis(2);
+  private static final String ISSUER_IGNORE_TYPE_VALIDATION = GATEWAY_CONFIG_FILE_PREFIX + ".token.issuers.ignore.type.validation";
 
   public GatewayConfigImpl() {
     init();
@@ -1545,6 +1546,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getServiceDiscoveryWriteTimeoutMillis() {
     return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT, CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT_DEFAULT);
+  }
+
+  @Override
+  public Set<String> getIssuersWithIgnoredTypeHeader() {
+    final Collection<String> issuers = getTrimmedStringCollection(ISSUER_IGNORE_TYPE_VALIDATION);
+    return issuers == null ? Collections.emptySet() : new HashSet<>(issuers);
   }
 
   private Map<String, Collection<String>> getPathAliases(String qualifier) {

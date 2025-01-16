@@ -961,4 +961,12 @@ public interface GatewayConfig {
    * @return jwks outage cache TTL
    */
   long getJwksOutageCacheTTL();
+
+  /**
+   * Some JWT tokens could be missing typ header.
+   * This config skips typ validation for tokens issued by
+   * configured Issuers.
+   * @return
+  */
+  Set<String> getIssuersWithIgnoredTypeHeader();
 }
