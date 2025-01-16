@@ -190,7 +190,15 @@ fi
   -storepass "${ALIAS_PASSPHRASE}" \
   -noprompt || true
 
-export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS}"
+# Add letsencrypt staging root CA
+/usr/bin/keytool -importcert \
+  -keystore ${KEYSTORE_DIR}/truststore.jks \
+  -alias letsencrypt-stg-root \
+  -file /home/knox/cacrts/letsencrypt-stg-root-x1.pem \
+  -storepass "${ALIAS_PASSPHRASE}" \
+  -noprompt || true
+
+export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS} -Djavax.net.ssl.trustStore=${KEYSTORE_DIR}/truststore.jks -Djavax.net.ssl.trustStorePassword=${ALIAS_PASSPHRASE}"
 
 echo "Starting Knox gateway ..."
 /home/knox/knox/bin/gateway.sh start

@@ -292,7 +292,7 @@
         <xml-jaxb.version>2.3.0</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.8.4</zookeeper.version>
-        <docker-maven-plugin.version>0.43.4</docker-maven-plugin.version>
+        <docker-maven-plugin.version>0.45.0</docker-maven-plugin.version>
         <docker.platforms>linux/amd64,linux/arm64</docker.platforms>
     </properties>
     <repositories>

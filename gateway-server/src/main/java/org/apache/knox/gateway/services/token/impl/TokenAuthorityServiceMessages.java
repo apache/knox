@@ -28,4 +28,7 @@ public interface TokenAuthorityServiceMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Failed to verify token using JWKS endpoint {0}, reason: {1}")
   void jwksVerificationFailed(String jwksUrl, String reason);
+
+  @Message(level = MessageLevel.WARN, text = "Ignoring typ header verification for token")
+  void ignoreTypeHeaderVerification();
 }

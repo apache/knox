@@ -43,7 +43,8 @@ ADD --chown=knox:knox \
     http://www.awstrust.com/repository/AmazonRootCA1.cer \
     http://www.awstrust.com/repository/AmazonRootCA2.cer \
     http://www.awstrust.com/repository/AmazonRootCA3.cer \
-    http://www.awstrust.com/repository/AmazonRootCA4.cer /home/knox/cacrts/
+    http://www.awstrust.com/repository/AmazonRootCA4.cer \
+    http://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem /home/knox/cacrts/
 
 WORKDIR /home/knox/knox
 

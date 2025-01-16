@@ -1133,4 +1133,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
 
+  @Override
+  public Set<String> getIssuersWithIgnoredTypeHeader() {
+    return Collections.emptySet();
+  }
+
 }
