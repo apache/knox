@@ -82,7 +82,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.glassfish.main.libpam4j</groupId>
+            <groupId>org.kohsuke</groupId>
             <artifactId>libpam4j</artifactId>
         </dependency>
 
