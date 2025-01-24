@@ -16,10 +16,11 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.auth;
 
-import com.squareup.okhttp.Authenticator;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import okhttp3.Authenticator;
+import okhttp3.Interceptor;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
 
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSCredential;
@@ -32,7 +33,6 @@ import javax.security.auth.login.LoginException;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.Proxy;
 import java.net.UnknownHostException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
@@ -102,7 +102,7 @@ public class SpnegoAuthInterceptor implements Interceptor, Authenticator {
   }
 
   @Override
-  public Request authenticate(Proxy proxy, Response response) throws IOException {
+  public Request authenticate(Route route, Response response) throws IOException {
     // If already attempted or not challenged for Kerberos, then skip this attempt
     if (response.request().headers(AUTHORIZATION).stream().anyMatch(SpnegoAuthInterceptor::isNegotiate) ||
         response.headers(WWW_AUTHENTICATE).stream().noneMatch(SpnegoAuthInterceptor::isNegotiate)) {
@@ -112,13 +112,8 @@ public class SpnegoAuthInterceptor implements Interceptor, Authenticator {
     return authenticate(response.request());
   }
 
-  @Override
-  public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
-    return null; // Not needed
-  }
-
   private Request authenticate(Request request) {
-    String principal = defineServicePrincipal(remoteServiceName, request.url().getHost(), useCanonicalHostname);
+    String principal = defineServicePrincipal(remoteServiceName, request.url().host(), useCanonicalHostname);
     byte[] token = generateToken(principal);
 
     String credential = format(Locale.getDefault(), "%s %s", NEGOTIATE, Base64.getEncoder().encodeToString(token));

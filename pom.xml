@@ -174,7 +174,7 @@
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.38</checkstyle.version>
-        <cloudera-manager.version>7.8.1</cloudera-manager.version>
+        <cloudera-manager.version>7.13.1</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
@@ -242,6 +242,7 @@
         <json-path.version>2.9.0</json-path.version>
         <json-smart.version>2.4.9</json-smart.version>
         <junit.version>4.13.2</junit.version>
+        <kotlin-stdlib.version>1.9.10</kotlin-stdlib.version>
         <lang-tag.version>1.5</lang-tag.version>
         <libpam4j.version>1.11</libpam4j.version>
         <log4j2.version>2.17.1</log4j2.version>
@@ -256,7 +257,7 @@
         <netty.version>4.1.77.Final</netty.version>
         <nimbus-jose-jwt.version>9.37.3</nimbus-jose-jwt.version>
         <nodejs.version>v14.15.0</nodejs.version>
-        <okhttp.version>2.7.5</okhttp.version>
+        <okhttp.version>4.12.0</okhttp.version>
         <opensaml.version>3.4.5</opensaml.version>
         <pac4j.version>4.5.6</pac4j.version>
         <postgresql.version>42.4.4</postgresql.version>
@@ -1570,11 +1571,10 @@
             </dependency>
 
             <dependency>
-                <groupId>com.squareup.okhttp</groupId>
+                <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>

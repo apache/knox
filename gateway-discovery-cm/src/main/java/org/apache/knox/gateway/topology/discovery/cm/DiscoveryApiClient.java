@@ -26,14 +26,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 import javax.security.auth.Subject;
 
 import com.cloudera.api.swagger.client.ApiClient;
-import com.cloudera.api.swagger.client.Pair;
-import com.cloudera.api.swagger.client.auth.Authentication;
-import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
-import com.squareup.okhttp.ConnectionSpec;
-import com.squareup.okhttp.OkHttpClient;
+import okhttp3.ConnectionSpec;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
 import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -41,6 +40,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.auth.AuthUtils;
+import org.apache.knox.gateway.topology.discovery.cm.auth.DoAsQueryParameterInterceptor;
 import org.apache.knox.gateway.topology.discovery.cm.auth.SpnegoAuthInterceptor;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
@@ -126,55 +126,39 @@ public class DiscoveryApiClient extends ApiClient {
     setUsername(username);
     setPassword(password);
 
-    if (isKerberos) {
+    if (isKerberos()) {
       // If there is a Kerberos subject, then add the SPNEGO auth interceptor
       Subject subject = AuthUtils.getKerberosSubject();
       if (subject != null) {
-        SpnegoAuthInterceptor spnegoInterceptor = new SpnegoAuthInterceptor(subject);
-        getHttpClient().interceptors().add(spnegoInterceptor);
+        addInterceptor(new SpnegoAuthInterceptor(subject));
       }
+      addInterceptor(new DoAsQueryParameterInterceptor(username));
     }
     configureTimeouts(gatewayConfig);
 
     configureSsl(gatewayConfig, trustStore);
   }
 
+  private void addInterceptor(Interceptor interceptor) {
+    OkHttpClient newClient = getHttpClient().newBuilder().addInterceptor(interceptor).build();
+    setHttpClient(newClient);
+  }
+
   private void configureTimeouts(GatewayConfig config) {
-    OkHttpClient client = getHttpClient();
-    client.setConnectTimeout(config.getServiceDiscoveryConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
-    client.setReadTimeout(config.getServiceDiscoveryReadTimeoutMillis(), TimeUnit.MILLISECONDS);
-    client.setWriteTimeout(config.getServiceDiscoveryWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
-    log.discoveryClientTimeout(client.getConnectTimeout(), client.getReadTimeout(), client.getWriteTimeout());
-  }
-
-  @Override
-  public String buildUrl(String path, List<Pair> queryParams) {
-    // If kerberos is enabled, then for every request, we're going to include a doAs query param
-    if (isKerberos()) {
-      String user = getUsername();
-      if (user != null) {
-        queryParams.add(new Pair("doAs", user));
-      }
-    }
-    return super.buildUrl(path, queryParams);
-  }
-
-  /**
-   * @return The username set from the discovery configuration when this instance was initialized.
-   */
-  private String getUsername() {
-    String username = null;
-    Authentication basicAuth = getAuthentication("basic");
-    if (basicAuth instanceof HttpBasicAuth) {
-      username = ((HttpBasicAuth) basicAuth).getUsername();
-    }
-    return username;
+    OkHttpClient.Builder builder = getHttpClient().newBuilder();
+    builder.connectTimeout(config.getServiceDiscoveryConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
+    builder.readTimeout(config.getServiceDiscoveryReadTimeoutMillis(), TimeUnit.MILLISECONDS);
+    builder.writeTimeout(config.getServiceDiscoveryWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    OkHttpClient client = builder.build();
+    setHttpClient(client);
+    log.discoveryClientTimeout(client.connectTimeoutMillis(), client.readTimeoutMillis(), client.writeTimeoutMillis());
   }
 
   private void configureSsl(GatewayConfig gatewayConfig, KeyStore trustStore) {
     final SSLContext truststoreSSLContext = TruststoreSSLContextUtils.getTruststoreSSLContext(trustStore);
+    final X509TrustManager trustManager = TruststoreSSLContextUtils.getTrustManager(trustStore);
 
-    if (truststoreSSLContext != null) {
+    if (truststoreSSLContext != null && trustManager != null) {
       final ConnectionSpec.Builder connectionSpecBuilder = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS);
       final List<String> includedSslCiphers = gatewayConfig.getIncludedSSLCiphers();
       if (includedSslCiphers == null || includedSslCiphers.isEmpty()) {
@@ -188,8 +172,10 @@ public class DiscoveryApiClient extends ApiClient {
       } else {
         connectionSpecBuilder.tlsVersions(includedSslProtocols.toArray(new String[0]));
       }
-      getHttpClient().setConnectionSpecs(Arrays.asList(connectionSpecBuilder.build()));
-      getHttpClient().setSslSocketFactory(truststoreSSLContext.getSocketFactory());
+      OkHttpClient.Builder builder = getHttpClient().newBuilder();
+      builder.connectionSpecs(Arrays.asList(connectionSpecBuilder.build()));
+      builder.sslSocketFactory(truststoreSSLContext.getSocketFactory(), trustManager);
+      setHttpClient(builder.build());
     } else {
       log.failedToConfigureTruststore();
     }

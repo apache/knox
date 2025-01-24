@@ -20,8 +20,12 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
@@ -46,6 +50,27 @@ public class TruststoreSSLContextUtils {
       LOGGER.failedToLoadTruststore(e.getMessage(), e);
     }
     return sslContext;
+  }
+
+  public static X509TrustManager getTrustManager(KeyStore truststore) {
+    try {
+      if (truststore != null) {
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init(truststore);
+        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+        if (trustManagers != null) {
+          for (TrustManager tm : trustManagers) {
+            if (tm instanceof X509TrustManager) {
+              return (X509TrustManager) tm;
+            }
+          }
+        }
+        throw new IllegalStateException("Unexpected default trust managers:" + Arrays.toString(trustManagers));
+      }
+    } catch (KeyStoreException | NoSuchAlgorithmException | IllegalStateException e) {
+      LOGGER.failedToLoadTruststore(e.getMessage(), e);
+    }
+    return null;
   }
 
 }
