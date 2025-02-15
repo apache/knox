@@ -208,7 +208,8 @@
         <frontend-maven-plugin.version>1.11.0</frontend-maven-plugin.version>
         <gethostname4j.version>1.0.0</gethostname4j.version>  <!-- See here: https://github.com/mattsheppard/gethostname4j -->
         <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
-        <gson.version>2.8.9</gson.version>
+        <gson.version>2.10.1</gson.version>
+        <gsonfire.version>1.9.0</gsonfire.version>
         <groovy.version>3.0.7</groovy.version>
         <guava.version>28.2-jre</guava.version>
         <hadoop.version>3.2.4</hadoop.version>
@@ -263,6 +264,7 @@
         <postgresql.version>42.4.4</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
         <mariadb.connector.version>3.3.0</mariadb.connector.version>
+        <okio.version>3.6.0</okio.version>
         <protobuf.version>3.16.3</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
@@ -1574,6 +1576,32 @@
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio</artifactId>
+                <version>${okio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-jdk8</artifactId>
+                <version>${kotlin-stdlib.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.jetbrains</groupId>
+                        <artifactId>annotations</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.gsonfire</groupId>
+                <artifactId>gson-fire</artifactId>
+                <version>${gsonfire.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.gson</groupId>
