@@ -172,9 +172,19 @@ public class WebSSOResourceTest {
                     "https://google.com/https://KNOX_GW_DOMAIN"));
   }
 
+  @Test
+  public void testMaliciousOriginalUrl() throws Exception {
+    String whitelist = "^(?!.*([<>\"'`{}|\\\\^]|<script|%3cscript|javascript:|data:|alert\\(|onclick=))(^https?://.*example.com/.*)$";
+
+    // make sure it is malicious and therefore does NOT match
+    assertFalse(RegExUtils.checkWhitelist(whitelist, "https://example.com/path?param=%3e%3cscript%3e"));
+    // make sure it matches because it is not malicious
+    assertTrue(RegExUtils.checkWhitelist(whitelist, "https://example.com/path"));
+  }
+
   @Test(expected = MalformedURLException.class)
   public void testMalformedOriginalUrl() throws MalformedURLException {
-            RegExUtils.checkBaseUrlAgainstWhitelist(".*", "https://localhost:5003gateway/homepage/home/");
+    RegExUtils.checkBaseUrlAgainstWhitelist(".*", "https://localhost:5003gateway/homepage/home/");
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
