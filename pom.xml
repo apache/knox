@@ -94,7 +94,6 @@
         <module>gateway-provider-security-authz-acls</module>
         <module>gateway-provider-security-authz-path-acls</module>
         <module>gateway-provider-security-authz-composite</module>
-        <module>gateway-provider-security-authc-remote</module>
         <module>gateway-provider-security-authc-anon</module>
         <module>gateway-provider-identity-assertion-common</module>
         <module>gateway-provider-identity-assertion-concat</module>
@@ -978,11 +977,6 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-authc-anon</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.knox</groupId>
-                <artifactId>gateway-provider-security-authc-remote</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
