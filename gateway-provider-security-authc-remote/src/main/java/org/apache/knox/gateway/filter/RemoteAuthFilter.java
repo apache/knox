@@ -24,7 +24,13 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 
 import javax.security.auth.Subject;
-import javax.servlet.*;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -38,15 +44,15 @@ import java.util.concurrent.TimeUnit;
 
 public class RemoteAuthFilter implements Filter {
 
-  private static final String CONFIG_REMOTE_AUTH_URL = "remoteauthurl";
-  private static final String CONFIG_INCLUDE_HEADERS = "includeheaders";
-  private static final String CONFIG_CACHE_KEY_HEADER = "cachekey";
-  private static final String CONFIG_EXPIRE_AFTER = "expireafter";
+  private static final String CONFIG_REMOTE_AUTH_URL = "remote.auth.url";
+  private static final String CONFIG_INCLUDE_HEADERS = "remote.auth.include.headers";
+  private static final String CONFIG_CACHE_KEY_HEADER = "remote.auth.cache.key";
+  private static final String CONFIG_EXPIRE_AFTER = "remote.auth.expire.after";
   private static final String DEFAULT_CACHE_KEY_HEADER = "Authorization";
-  private static final String CONFIG_USER_HEADER = "userheader";
-  private static final String CONFIG_GROUP_HEADER = "groupheader";
-  private static final String CONFIG_TRUSTSTORE_LOCATION = "truststorelocation";
-  private static final String CONFIG_TRUSTSTORE_PWD = "truststorepassword";
+  private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
+  private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
+  private static final String CONFIG_TRUSTSTORE_LOCATION = "remote.auth.truststore.location";
+  private static final String CONFIG_TRUSTSTORE_PWD = "remote.auth.truststore.password";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -106,7 +112,6 @@ public class RemoteAuthFilter implements Filter {
         String principalName = connection.getHeaderField(userHeader);
         String groupNames = connection.getHeaderField(groupHeader);
         Subject subject = new Subject();
-
         subject.getPrincipals().add(new PrimaryPrincipal(principalName));
         // Add groups to the principal if available
         if(groupNames != null && !groupNames.isEmpty()) {
@@ -114,6 +119,13 @@ public class RemoteAuthFilter implements Filter {
         }
 
         authenticationCache.put(cacheKey, subject);
+
+        AuditContext context = auditService.getContext();
+        context.setUsername( principalName );
+        auditService.attachContext(context);
+        String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+
         continueWithEstablishedSecurityContext(subject, httpRequest, httpResponse, filterChain);
       } else {
         httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
