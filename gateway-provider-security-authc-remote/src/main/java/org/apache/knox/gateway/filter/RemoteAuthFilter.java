@@ -57,14 +57,13 @@ public class RemoteAuthFilter implements Filter {
   private String remoteAuthUrl;
   private List<String> includeHeaders;
   private String cacheKeyHeader;
-  private int expireAfterMinutes;
-  private String userHeader;
+    private String userHeader;
   private String groupHeader;
 
   private Cache<String, Subject> authenticationCache;
 
-  private static AuditService auditService = AuditServiceFactory.getAuditService();
-  private static Auditor auditor = auditService.getAuditor(
+  private static final AuditService auditService = AuditServiceFactory.getAuditService();
+  private static final Auditor auditor = auditService.getAuditor(
           AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   @Override
@@ -72,7 +71,7 @@ public class RemoteAuthFilter implements Filter {
     remoteAuthUrl = filterConfig.getInitParameter(CONFIG_REMOTE_AUTH_URL);
     includeHeaders = Arrays.asList(filterConfig.getInitParameter(CONFIG_INCLUDE_HEADERS).split(","));
     cacheKeyHeader = filterConfig.getInitParameter(CONFIG_CACHE_KEY_HEADER) != null ? filterConfig.getInitParameter(CONFIG_CACHE_KEY_HEADER) : DEFAULT_CACHE_KEY_HEADER;
-    expireAfterMinutes = Integer.parseInt(filterConfig.getInitParameter(CONFIG_EXPIRE_AFTER));
+      int expireAfterMinutes = Integer.parseInt(filterConfig.getInitParameter(CONFIG_EXPIRE_AFTER));
     userHeader = filterConfig.getInitParameter(CONFIG_USER_HEADER);
     groupHeader = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
 
