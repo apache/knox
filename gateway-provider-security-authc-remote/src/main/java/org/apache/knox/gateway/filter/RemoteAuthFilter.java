@@ -21,6 +21,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.knox.gateway.audit.api.*;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 
 import javax.security.auth.Subject;
@@ -52,35 +53,53 @@ public class RemoteAuthFilter implements Filter {
   private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
   private static final String CONFIG_TRUSTSTORE_LOCATION = "remote.auth.truststore.location";
-  private static final String CONFIG_TRUSTSTORE_PWD = "remote.auth.truststore.password";
+  public static final String CONFIG_TRUSTSTORE_PWD = "remote.auth.truststore.password";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
   private String cacheKeyHeader;
-    private String userHeader;
+  private String userHeader;
   private String groupHeader;
+  /*
+  For Testing
+   */
+  HttpURLConnection httpURLConnection;
 
-  private Cache<String, Subject> authenticationCache;
+  Cache<String, Subject> authenticationCache;
 
   private static final AuditService auditService = AuditServiceFactory.getAuditService();
   private static final Auditor auditor = auditService.getAuditor(
           AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
 
   @Override
-  public void init(FilterConfig filterConfig) {
+  public void init(FilterConfig filterConfig) throws ServletException {
     remoteAuthUrl = filterConfig.getInitParameter(CONFIG_REMOTE_AUTH_URL);
+    if (remoteAuthUrl == null || remoteAuthUrl.isEmpty()) {
+      throw new ServletException(CONFIG_REMOTE_AUTH_URL + " is a missing required param.");
+    }
     includeHeaders = Arrays.asList(filterConfig.getInitParameter(CONFIG_INCLUDE_HEADERS).split(","));
-    cacheKeyHeader = filterConfig.getInitParameter(CONFIG_CACHE_KEY_HEADER) != null ? filterConfig.getInitParameter(CONFIG_CACHE_KEY_HEADER) : DEFAULT_CACHE_KEY_HEADER;
-      int expireAfterMinutes = Integer.parseInt(filterConfig.getInitParameter(CONFIG_EXPIRE_AFTER));
-    userHeader = filterConfig.getInitParameter(CONFIG_USER_HEADER);
-    groupHeader = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
+    cacheKeyHeader = filterConfig.getInitParameter(CONFIG_CACHE_KEY_HEADER) != null ? filterConfig
+            .getInitParameter(CONFIG_CACHE_KEY_HEADER) : DEFAULT_CACHE_KEY_HEADER;
+    String cachetime = filterConfig.getInitParameter(CONFIG_EXPIRE_AFTER);
+    if (cachetime != null) {
+      int expireAfterMinutes = Integer.parseInt(cachetime);
+      authenticationCache = CacheBuilder.newBuilder()
+              .expireAfterWrite(expireAfterMinutes, TimeUnit.MINUTES)
+              .build();
+    }
 
-    authenticationCache = CacheBuilder.newBuilder()
-            .expireAfterWrite(expireAfterMinutes, TimeUnit.MINUTES)
-            .build();
+    userHeader = filterConfig.getInitParameter(CONFIG_USER_HEADER);
+    if (userHeader == null || userHeader.isEmpty()) {
+      throw new ServletException(CONFIG_USER_HEADER + " is a missing required param.");
+    }
+
+    groupHeader = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
+    if (groupHeader == null || groupHeader.isEmpty()) {
+      throw new ServletException(CONFIG_GROUP_HEADER + " is a missing required param.");
+    }
+
     System.setProperty("javax.net.ssl.trustStore", filterConfig.getInitParameter(CONFIG_TRUSTSTORE_LOCATION));
     System.setProperty("javax.net.ssl.trustStorePassword", filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PWD));
-
   }
 
   @Override
@@ -97,8 +116,7 @@ public class RemoteAuthFilter implements Filter {
     }
 
     try {
-      URL url = new URL(remoteAuthUrl);
-      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      HttpURLConnection connection = getHttpURLConnection();
       for (String header : includeHeaders) {
         String headerValue = httpRequest.getHeader(header);
         if (headerValue != null) {
@@ -114,16 +132,19 @@ public class RemoteAuthFilter implements Filter {
         subject.getPrincipals().add(new PrimaryPrincipal(principalName));
         // Add groups to the principal if available
         if(groupNames != null && !groupNames.isEmpty()) {
-          Arrays.stream(groupNames.split(",")).forEach(groupName -> subject.getPrincipals().add(new PrimaryPrincipal(groupName)));
+          Arrays.stream(groupNames.split(",")).forEach(groupName -> subject.getPrincipals()
+                  .add(new GroupPrincipal(groupName)));
         }
 
         authenticationCache.put(cacheKey, subject);
 
         AuditContext context = auditService.getContext();
-        context.setUsername( principalName );
-        auditService.attachContext(context);
-        String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
-        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+        if (context != null) {
+          context.setUsername( principalName );
+          auditService.attachContext(context);
+          String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
+          auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+        }
 
         continueWithEstablishedSecurityContext(subject, httpRequest, httpResponse, filterChain);
       } else {
@@ -132,6 +153,17 @@ public class RemoteAuthFilter implements Filter {
     } catch (Exception e) {
       httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing authentication request");
     }
+  }
+
+  private HttpURLConnection getHttpURLConnection() throws IOException {
+    HttpURLConnection connection;
+    if (httpURLConnection == null) {
+      URL url = new URL(remoteAuthUrl);
+      connection = (HttpURLConnection) url.openConnection();
+    } else {
+      connection = httpURLConnection;
+    }
+    return connection;
   }
 
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
