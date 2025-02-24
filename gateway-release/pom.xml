@@ -352,7 +352,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-provider-security-authc-remote</artifactId>
+            <artifactId>gateway-provider-security-authc-anon</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>

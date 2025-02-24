@@ -19,8 +19,10 @@ package org.apache.knox.gateway.filter;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.knox.gateway.RemoteAuthMessages;
 import org.apache.knox.gateway.audit.api.*;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -71,11 +73,13 @@ public class RemoteAuthFilter implements Filter {
   private static final AuditService auditService = AuditServiceFactory.getAuditService();
   private static final Auditor auditor = auditService.getAuditor(
           AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
+  private final RemoteAuthMessages LOGGER = MessagesFactory.get( RemoteAuthMessages.class );
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     remoteAuthUrl = filterConfig.getInitParameter(CONFIG_REMOTE_AUTH_URL);
     if (remoteAuthUrl == null || remoteAuthUrl.isEmpty()) {
+      LOGGER.missingRequiredParameter(CONFIG_REMOTE_AUTH_URL);
       throw new ServletException(CONFIG_REMOTE_AUTH_URL + " is a missing required param.");
     }
     includeHeaders = Arrays.asList(filterConfig.getInitParameter(CONFIG_INCLUDE_HEADERS).split(","));
@@ -91,11 +95,13 @@ public class RemoteAuthFilter implements Filter {
 
     userHeader = filterConfig.getInitParameter(CONFIG_USER_HEADER);
     if (userHeader == null || userHeader.isEmpty()) {
+      LOGGER.missingRequiredParameter(CONFIG_USER_HEADER);
       throw new ServletException(CONFIG_USER_HEADER + " is a missing required param.");
     }
 
     groupHeader = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
     if (groupHeader == null || groupHeader.isEmpty()) {
+      LOGGER.missingRequiredParameter(CONFIG_GROUP_HEADER);
       throw new ServletException(CONFIG_GROUP_HEADER + " is a missing required param.");
     }
   }
@@ -156,9 +162,11 @@ public class RemoteAuthFilter implements Filter {
 
         continueWithEstablishedSecurityContext(subject, httpRequest, httpResponse, filterChain);
       } else {
+        LOGGER.failedToAuthenticateToRemoteAuthServer();
         httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
       }
     } catch (Exception e) {
+      LOGGER.errorReceivedWhileAuthenticatingRequest(e);
       httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing authentication request");
     }
   }
@@ -175,7 +183,7 @@ public class RemoteAuthFilter implements Filter {
             truststore = keystoreService.getKeystoreForGateway();
           }
         } catch (KeystoreServiceException e) {
-//          LOGGER.failedToLoadTruststore(e.getMessage(), e);
+          LOGGER.failedToLoadTruststore(e.getMessage(), e);
         }
       }
     }
