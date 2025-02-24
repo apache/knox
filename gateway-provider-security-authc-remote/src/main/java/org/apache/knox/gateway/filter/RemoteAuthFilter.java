@@ -23,22 +23,25 @@ import org.apache.knox.gateway.audit.api.*;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import javax.security.auth.Subject;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyStore;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +55,6 @@ public class RemoteAuthFilter implements Filter {
   private static final String DEFAULT_CACHE_KEY_HEADER = "Authorization";
   private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
-  private static final String CONFIG_TRUSTSTORE_LOCATION = "remote.auth.truststore.location";
-  public static final String CONFIG_TRUSTSTORE_PWD = "remote.auth.truststore.password";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -97,9 +98,16 @@ public class RemoteAuthFilter implements Filter {
     if (groupHeader == null || groupHeader.isEmpty()) {
       throw new ServletException(CONFIG_GROUP_HEADER + " is a missing required param.");
     }
+  }
 
-    System.setProperty("javax.net.ssl.trustStore", filterConfig.getInitParameter(CONFIG_TRUSTSTORE_LOCATION));
-    System.setProperty("javax.net.ssl.trustStorePassword", filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PWD));
+  public SSLSocketFactory createSSLSocketFactory(KeyStore trustStore) throws Exception {
+    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    tmf.init(trustStore);
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(null, tmf.getTrustManagers(), null);
+
+    return sslContext.getSocketFactory();
   }
 
   @Override
@@ -116,7 +124,7 @@ public class RemoteAuthFilter implements Filter {
     }
 
     try {
-      HttpURLConnection connection = getHttpURLConnection();
+      HttpURLConnection connection = getHttpURLConnection(request.getServletContext());
       for (String header : includeHeaders) {
         String headerValue = httpRequest.getHeader(header);
         if (headerValue != null) {
@@ -155,11 +163,33 @@ public class RemoteAuthFilter implements Filter {
     }
   }
 
-  private HttpURLConnection getHttpURLConnection() throws IOException {
+  private HttpURLConnection getHttpURLConnection(ServletContext servletContext) throws IOException {
+    KeyStore truststore = null;
+    GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (services != null) {
+      KeystoreService keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
+      if (keystoreService != null) {
+        try {
+          truststore = keystoreService.getTruststoreForHttpClient();
+          if (truststore == null) {
+            truststore = keystoreService.getKeystoreForGateway();
+          }
+        } catch (KeystoreServiceException e) {
+//          LOGGER.failedToLoadTruststore(e.getMessage(), e);
+        }
+      }
+    }
     HttpURLConnection connection;
     if (httpURLConnection == null) {
       URL url = new URL(remoteAuthUrl);
       connection = (HttpURLConnection) url.openConnection();
+      if (truststore != null) {
+          try {
+              ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(truststore));
+          } catch (Exception e) {
+              throw new RuntimeException(e);
+          }
+      }
     } else {
       connection = httpURLConnection;
     }

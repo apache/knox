@@ -19,24 +19,24 @@ package org.apache.knox.gateway.filter;
 
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.test.mock.MockServletContext;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.security.auth.Subject;
 import javax.servlet.*;
+import javax.servlet.descriptor.JspConfigDescriptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -65,8 +65,6 @@ public class RemoteAuthFilterTest {
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.expire.after")).andReturn("5").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.user.header")).andReturn(X_AUTHENTICATED_USER).anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.group.header")).andReturn(X_AUTHENTICATED_GROUP).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.location")).andReturn("/path/to/truststore").anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.password")).andReturn("changeit").anyTimes();
 
         EasyMock.replay(filterConfigMock);
 
@@ -88,6 +86,7 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void successfulAuthentication() throws Exception {
+        EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
         EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();
         responseMock.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
@@ -121,6 +120,7 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void authenticationFailsWithInvalidToken() throws Exception {
+        EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
         EasyMock.expect(responseMock.getStatus()).andReturn(401).anyTimes();
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_INVALID_TOKEN).anyTimes();
         responseMock.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
