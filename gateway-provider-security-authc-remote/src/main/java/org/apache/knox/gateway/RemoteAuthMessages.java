@@ -20,7 +20,6 @@ import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
 
 
 @Messages(logger="org.apache.knox.gateway.provider.federation.remote")
