@@ -119,14 +119,12 @@ public class Pac4jDispatcherFilterTest {
         setupCommonExpectations(mocks, additionalParams);
         EasyMock.expect(mocks.filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE)).andReturn(expectedCookieMaxAge).anyTimes();
 
-        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
-                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
 
         verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
 
         // Verify all mock interactions
-        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
-                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
     }
 
     /**
@@ -144,13 +142,11 @@ public class Pac4jDispatcherFilterTest {
         TestMocks mocks = createMocks();
         setupCommonExpectations(mocks, Collections.EMPTY_LIST);
 
-        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
-                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
 
         verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
 
         // Verify all mock interactions
-        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
-                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
     }
 }
