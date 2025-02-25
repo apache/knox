@@ -440,6 +440,7 @@ public class GatewayServer {
         httpsConfig.addCustomizer( new SecureRequestCustomizer() );
         SSLService ssl = services.getService(ServiceType.SSL_SERVICE);
         SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
+        ssl.excludeTopologyFromClientAuth(sslContextFactory, config, topologyName);
         connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
       } else {
         connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));

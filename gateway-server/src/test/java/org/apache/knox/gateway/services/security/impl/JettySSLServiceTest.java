@@ -34,6 +34,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.easymock.EasyMock;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.Test;
 
@@ -453,6 +454,63 @@ public class JettySSLServiceTest {
     fail("UnrecoverableKeyException should have been thrown");
   }
 
+  @Test
+  public void testExcludeTopologyFromClientAuth() {
+    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
+    sslContextFactory.setNeedClientAuth(false);
+    EasyMock.expectLastCall().once();
+    sslContextFactory.setWantClientAuth(true);
+    EasyMock.expectLastCall().once();
+    GatewayConfig config = createGatewayConfigForExclude(true, "health");
+    EasyMock.replay(sslContextFactory, config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
+
+    EasyMock.verify(sslContextFactory, config);
+  }
+
+  @Test
+  public void testExcludeTopologyFromClientAuthNoExclude() {
+    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
+    GatewayConfig config = createGatewayConfigForExclude(true, null);
+    EasyMock.replay(sslContextFactory, config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
+
+    EasyMock.verify(sslContextFactory, config);
+  }
+
+  @Test
+  public void testExcludeTopologyFromClientAuthDifferentTopology() {
+    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
+    GatewayConfig config = createGatewayConfigForExclude(true, "health");
+    EasyMock.replay(sslContextFactory, config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"different");
+
+    EasyMock.verify(sslContextFactory, config);
+  }
+
+  @Test
+  public void testExcludeTopologyFromClientAuthMultiple() {
+    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
+    sslContextFactory.setNeedClientAuth(false);
+    EasyMock.expectLastCall().once();
+    sslContextFactory.setWantClientAuth(true);
+    EasyMock.expectLastCall().once();
+    GatewayConfig config = createGatewayConfigForExclude(true, "health,different");
+    EasyMock.replay(sslContextFactory, config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
+
+    EasyMock.verify(sslContextFactory, config);
+  }
+
+
   private GatewayConfig createGatewayConfig(boolean isClientAuthNeeded, boolean isExplicitTruststore,
                                             Path identityKeystorePath, String identityKeystoreType,
                                             String identityKeyAlias, Path truststorePath,
@@ -483,6 +541,21 @@ public class JettySSLServiceTest {
     expect(config.getIncludedSSLProtocols()).andReturn(null).atLeastOnce();
     expect(config.getExcludedSSLProtocols()).andReturn(null).atLeastOnce();
     expect(config.isSSLRenegotiationAllowed()).andReturn(true).atLeastOnce();
+    return config;
+  }
+
+  private GatewayConfig createGatewayConfigForExclude(boolean isClientAuthNeeded, String exclude) {
+    GatewayConfig config = createMock(GatewayConfig.class);
+
+    if (isClientAuthNeeded) {
+      expect(config.isClientAuthNeeded()).andReturn(true).anyTimes();
+    }
+
+    if(exclude != null) {
+      expect(config.getClientAuthExclude()).andReturn(exclude).anyTimes();
+    } else {
+      expect(config.getClientAuthExclude()).andReturn(null).anyTimes();
+    }
     return config;
   }
 

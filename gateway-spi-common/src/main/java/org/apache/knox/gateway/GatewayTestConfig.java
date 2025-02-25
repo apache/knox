@@ -345,6 +345,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getClientAuthExclude() {
+    return null;
+  }
+
+  @Override
   public String getTruststorePath() {
     return null;
   }

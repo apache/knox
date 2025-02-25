@@ -56,6 +56,12 @@ limitations under the License.
     </property>
 
     <property>
+        <name>gateway.client.auth.exclude</name>
+        <value>health</value>
+        <description>topologies to be excluded from client auth needed policy</description>
+    </property>
+
+    <property>
         <name>gateway.truststore.path</name>
         <value>./gateway-trust.jks</value>
         <description>path to truststore</description>

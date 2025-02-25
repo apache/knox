@@ -207,6 +207,8 @@ public interface GatewayConfig {
 
   boolean isClientAuthNeeded();
 
+  String getClientAuthExclude();
+
   boolean isClientAuthWanted();
 
   String getTruststorePath();

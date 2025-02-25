@@ -48,6 +48,7 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
     assertThat( config.isClientAuthNeeded(), is( false ) );
+    assertNull( "gateway.client.auth.exclude should be null", config.getClientAuthExclude());
     assertNull("ssl.exclude.protocols should be null.", config.getExcludedSSLProtocols());
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
@@ -67,6 +68,7 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 5555 ) );
     assertThat( config.isClientAuthNeeded(), is( true ) );
+    assertThat( config.getClientAuthExclude(), is( "health" ) );
     assertThat( config.getTruststorePath(), is("./gateway-trust.jks"));
     assertThat( config.getTruststoreType(), is( "PKCS12" ) );
     assertThat( config.getKeystoreType(), is(KeyStore.getDefaultType()) );
