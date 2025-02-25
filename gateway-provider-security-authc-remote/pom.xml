@@ -44,6 +44,16 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-i18n</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
