@@ -44,14 +44,67 @@ public class Pac4jDispatcherFilterTest {
     private static final String TEST_CLUSTER_NAME = "test-cluster";
     private static final String TEST_CALLBACK_URL = "https://localhost:8443/gateway/knoxsso/api/v1/websso";
 
+    private static class TestMocks {
+        ServletContext context;
+        GatewayServices services;
+        CryptoService cryptoService;
+        AliasService aliasService;
+        KeystoreService keystoreService;
+        MasterService masterService;
+        FilterConfig filterConfig;
+        KeyStore ks;
+    }
+
+    private TestMocks createMocks() throws Exception {
+        TestMocks mocks = new TestMocks();
+        mocks.ks = KeyStore.getInstance("JKS");
+        mocks.context = EasyMock.createNiceMock(ServletContext.class);
+        mocks.services = EasyMock.createNiceMock(GatewayServices.class);
+        mocks.cryptoService = EasyMock.createNiceMock(CryptoService.class);
+        mocks.aliasService = EasyMock.createNiceMock(AliasService.class);
+        mocks.keystoreService = EasyMock.createNiceMock(KeystoreService.class);
+        mocks.masterService = EasyMock.createNiceMock(MasterService.class);
+        mocks.filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+        return mocks;
+    }
+
+    private void setupCommonExpectations(TestMocks mocks, List<String> params) throws Exception {
+        EasyMock.expect(mocks.keystoreService.getKeystoreForGateway()).andReturn(mocks.ks).anyTimes();
+        EasyMock.expect(mocks.masterService.getMasterSecret()).andReturn("apacheknox".toCharArray()).anyTimes();
+
+        EasyMock.expect(mocks.context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(mocks.services).anyTimes();
+        EasyMock.expect(mocks.context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(TEST_CLUSTER_NAME).anyTimes();
+        EasyMock.expect(mocks.services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(mocks.cryptoService).anyTimes();
+        EasyMock.expect(mocks.services.getService(ServiceType.ALIAS_SERVICE)).andReturn(mocks.aliasService).anyTimes();
+        EasyMock.expect(mocks.services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(mocks.keystoreService).anyTimes();
+        EasyMock.expect(mocks.services.getService(ServiceType.MASTER_SERVICE)).andReturn(mocks.masterService).anyTimes();
+        EasyMock.expect(mocks.filterConfig.getServletContext()).andReturn(mocks.context).anyTimes();
+        EasyMock.expect(mocks.filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(params)).anyTimes();
+        EasyMock.expect(mocks.filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).andReturn(TEST_CALLBACK_URL).anyTimes();
+        EasyMock.expect(mocks.filterConfig.getInitParameter(SAML_KEYSTORE_PATH)).andReturn("/var/keystore").anyTimes();
+        EasyMock.expect(mocks.filterConfig.getInitParameter(SAML_IDENTITY_PROVIDER_METADATA_PATH)).andReturn("/tmp/sp-metadata.xml").anyTimes();
+        EasyMock.expect(mocks.filterConfig.getInitParameter("clientName")).andReturn("SAML2Client").anyTimes();
+        EasyMock.expect(mocks.aliasService.getPasswordFromAliasForCluster(TEST_CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
+                .andReturn(KnoxSessionStore.PAC4J_PASSWORD.toCharArray()).anyTimes();
+    }
+
+    private void verifyCookiemaxAge(FilterConfig filterConfig, String expectedCookieMaxAge) throws Exception {
+        Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
+        filter.init(filterConfig);
+
+        java.lang.reflect.Field configField = filter.getClass().getDeclaredField("sessionStoreConfigs");
+        configField.setAccessible(true);
+        Map<String, String> sessionStoreConfigs = (Map<String, String>) configField.get(filter);
+        Assert.assertEquals(expectedCookieMaxAge, sessionStoreConfigs.get(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE));
+    }
+
 
     /**
      * Test that verifies a custom value for PAC4J_COOKIE_MAX_AGE is properly set when provided in the configuration
      */
     @Test
     public void testCustomCookieMaxAge() throws Exception {
-
-        String COOKIE_MAX_AGE = "1800";
+        final String expectedCookieMaxAge = "1800";
         List<String> params = new ArrayList<>();
         params.add(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL);
         params.add(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE);
@@ -59,49 +112,18 @@ public class Pac4jDispatcherFilterTest {
         params.add(SAML_KEYSTORE_PATH);
         params.add(SAML_IDENTITY_PROVIDER_METADATA_PATH);
 
-        KeyStore ks = KeyStore.getInstance("JKS");
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, params);
+        EasyMock.expect(mocks.filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE)).andReturn(expectedCookieMaxAge).anyTimes();
 
-        ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-        CryptoService cryptoService = EasyMock.createNiceMock(CryptoService.class);
-        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-        KeystoreService keystoreService = EasyMock.createNiceMock(KeystoreService.class);
-        MasterService masterService = EasyMock.createNiceMock(MasterService.class);
-        FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
+                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
 
-        EasyMock.expect(keystoreService.getKeystoreForGateway()).andReturn(ks).anyTimes();
-        EasyMock.expect(masterService.getMasterSecret()).andReturn("apacheknox".toCharArray()).anyTimes();
-
-        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
-        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(TEST_CLUSTER_NAME).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(cryptoService).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.MASTER_SERVICE)).andReturn(masterService).anyTimes();
-        EasyMock.expect(filterConfig.getServletContext()).andReturn(context).anyTimes();
-        EasyMock.expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(params)).anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).andReturn(TEST_CALLBACK_URL).anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(SAML_KEYSTORE_PATH)).andReturn("/var/keystore").anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(SAML_IDENTITY_PROVIDER_METADATA_PATH)).andReturn("/tmp/sp-metadata.xml").anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter("clientName")).andReturn("SAML2Client").anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE)).andReturn(COOKIE_MAX_AGE).anyTimes();
-        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(TEST_CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
-                .andReturn(KnoxSessionStore.PAC4J_PASSWORD.toCharArray()).anyTimes();
-
-
-        EasyMock.replay(context, services, cryptoService, aliasService, keystoreService, masterService, filterConfig);
-
-        Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
-        filter.init(filterConfig);
-
-
-        java.lang.reflect.Field configField = filter.getClass().getDeclaredField("sessionStoreConfigs");
-        configField.setAccessible(true);
-        Map<String, String> sessionStoreConfigs = (Map<String, String>) configField.get(filter);
-        Assert.assertEquals(COOKIE_MAX_AGE, sessionStoreConfigs.get(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE));
+        verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
 
         // Verify all mock interactions
-        EasyMock.verify(context, services, cryptoService, aliasService, keystoreService, masterService, filterConfig);
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
+                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
     }
 
     /**
@@ -109,53 +131,23 @@ public class Pac4jDispatcherFilterTest {
      */
     @Test
     public void testDefaultCookieMaxAge() throws Exception {
-        String COOKIE_MAX_AGE = "-1";
+        final String expectedCookieMaxAge = "-1";
         List<String> params = new ArrayList<>();
         params.add(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL);
         params.add("clientName");
         params.add(SAML_KEYSTORE_PATH);
         params.add(SAML_IDENTITY_PROVIDER_METADATA_PATH);
 
-        KeyStore ks = KeyStore.getInstance("JKS");
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, params);
 
-        ServletContext context = EasyMock.createNiceMock(ServletContext.class);
-        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
-        CryptoService cryptoService = EasyMock.createNiceMock(CryptoService.class);
-        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-        KeystoreService keystoreService = EasyMock.createNiceMock(KeystoreService.class);
-        MasterService masterService = EasyMock.createNiceMock(MasterService.class);
-        FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
+                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
 
-        EasyMock.expect(keystoreService.getKeystoreForGateway()).andReturn(ks).anyTimes();
-        EasyMock.expect(masterService.getMasterSecret()).andReturn("apacheknox".toCharArray()).anyTimes();
-
-        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
-        EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(TEST_CLUSTER_NAME).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.CRYPTO_SERVICE)).andReturn(cryptoService).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
-        EasyMock.expect(services.getService(ServiceType.MASTER_SERVICE)).andReturn(masterService).anyTimes();
-        EasyMock.expect(filterConfig.getServletContext()).andReturn(context).anyTimes();
-        EasyMock.expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(params)).anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL)).andReturn(TEST_CALLBACK_URL).anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(SAML_KEYSTORE_PATH)).andReturn("/var/keystore").anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter(SAML_IDENTITY_PROVIDER_METADATA_PATH)).andReturn("/tmp/sp-metadata.xml").anyTimes();
-        EasyMock.expect(filterConfig.getInitParameter("clientName")).andReturn("SAML2Client").anyTimes();
-        EasyMock.expect(aliasService.getPasswordFromAliasForCluster(TEST_CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
-                .andReturn(KnoxSessionStore.PAC4J_PASSWORD.toCharArray()).anyTimes();
-
-
-        EasyMock.replay(context, services, cryptoService, aliasService, keystoreService, masterService, filterConfig);
-
-        Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
-        filter.init(filterConfig);
-
-        java.lang.reflect.Field configField = filter.getClass().getDeclaredField("sessionStoreConfigs");
-        configField.setAccessible(true);
-        Map<String, String> sessionStoreConfigs = (Map<String, String>) configField.get(filter);
-        Assert.assertEquals(COOKIE_MAX_AGE, sessionStoreConfigs.get(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE));
+        verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
 
         // Verify all mock interactions
-        EasyMock.verify(context, services, cryptoService, aliasService, keystoreService, masterService, filterConfig);
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
+                       mocks.keystoreService, mocks.masterService, mocks.filterConfig);
     }
 }
