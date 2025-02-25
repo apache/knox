@@ -68,7 +68,15 @@ public class Pac4jDispatcherFilterTest {
         return mocks;
     }
 
-    private void setupCommonExpectations(TestMocks mocks, List<String> params) throws Exception {
+    private void setupCommonExpectations(TestMocks mocks, List<String> additionalParams) throws Exception {
+        List<String> params = new ArrayList<>();
+        params.add(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL);
+        params.add("clientName");
+        params.add(SAML_KEYSTORE_PATH);
+        params.add(SAML_IDENTITY_PROVIDER_METADATA_PATH);
+
+        params.addAll(additionalParams);
+
         EasyMock.expect(mocks.keystoreService.getKeystoreForGateway()).andReturn(mocks.ks).anyTimes();
         EasyMock.expect(mocks.masterService.getMasterSecret()).andReturn("apacheknox".toCharArray()).anyTimes();
 
@@ -105,15 +113,10 @@ public class Pac4jDispatcherFilterTest {
     @Test
     public void testCustomCookieMaxAge() throws Exception {
         final String expectedCookieMaxAge = "1800";
-        List<String> params = new ArrayList<>();
-        params.add(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL);
-        params.add(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE);
-        params.add("clientName");
-        params.add(SAML_KEYSTORE_PATH);
-        params.add(SAML_IDENTITY_PROVIDER_METADATA_PATH);
-
         TestMocks mocks = createMocks();
-        setupCommonExpectations(mocks, params);
+        List<String> additionalParams = new ArrayList<>();
+        additionalParams.add(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE);
+        setupCommonExpectations(mocks, additionalParams);
         EasyMock.expect(mocks.filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE)).andReturn(expectedCookieMaxAge).anyTimes();
 
         EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
@@ -139,7 +142,7 @@ public class Pac4jDispatcherFilterTest {
         params.add(SAML_IDENTITY_PROVIDER_METADATA_PATH);
 
         TestMocks mocks = createMocks();
-        setupCommonExpectations(mocks, params);
+        setupCommonExpectations(mocks, Collections.EMPTY_LIST);
 
         EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, 
                        mocks.keystoreService, mocks.masterService, mocks.filterConfig);
