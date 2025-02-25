@@ -69,6 +69,8 @@ public class RemoteAuthFilter implements Filter {
   private static final String DEFAULT_CACHE_KEY_HEADER = "Authorization";
   private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
+  private static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
+  private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-1";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -107,14 +109,13 @@ public class RemoteAuthFilter implements Filter {
 
     userHeader = filterConfig.getInitParameter(CONFIG_USER_HEADER);
     if (userHeader == null || userHeader.isEmpty()) {
-      LOGGER.missingRequiredParameter(CONFIG_USER_HEADER);
-      throw new ServletException(CONFIG_USER_HEADER + " is a missing required param.");
+      userHeader = DEFAULT_CONFIG_USER_HEADER;
     }
 
     groupHeader = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
     if (groupHeader == null || groupHeader.isEmpty()) {
-      LOGGER.missingRequiredParameter(CONFIG_GROUP_HEADER);
-      throw new ServletException(CONFIG_GROUP_HEADER + " is a missing required param.");
+      userHeader = DEFAULT_CONFIG_GROUP_HEADER;
+
     }
   }
 
