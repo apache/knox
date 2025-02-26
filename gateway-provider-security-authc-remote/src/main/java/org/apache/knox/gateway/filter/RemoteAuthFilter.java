@@ -82,7 +82,7 @@ public class RemoteAuthFilter implements Filter {
    */
   HttpURLConnection httpURLConnection;
 
-  Cache<String, Subject> authenticationCache;
+  private Cache<String, Subject> authenticationCache;
 
   private static final AuditService auditService = AuditServiceFactory.getAuditService();
   private static final Auditor auditor = auditService.getAuditor(
@@ -135,7 +135,7 @@ public class RemoteAuthFilter implements Filter {
     HttpServletResponse httpResponse = (HttpServletResponse) response;
 
     String cacheKey = httpRequest.getHeader(cacheKeyHeader);
-    Subject cachedSubject = authenticationCache.getIfPresent(cacheKey);
+    Subject cachedSubject = authenticationCache.getIfPresent(hashCacheKey(cacheKey));
 
     if (cachedSubject != null) {
       continueWithEstablishedSecurityContext(cachedSubject, httpRequest, httpResponse, filterChain);
@@ -163,7 +163,7 @@ public class RemoteAuthFilter implements Filter {
                   .add(new GroupPrincipal(groupName)));
         }
 
-        authenticationCache.put(cacheKey, subject);
+        authenticationCache.put(hashCacheKey(cacheKey), subject);
 
         AuditContext context = auditService.getContext();
         if (context != null) {
@@ -246,5 +246,15 @@ public class RemoteAuthFilter implements Filter {
 
   @Override
   public void destroy() {
+  }
+
+  // Add method to hash cache key
+  private String hashCacheKey(String key) {
+    return String.valueOf(key.hashCode());
+  }
+
+  // Change to package-private for testing
+  void setCachedSubject(String cacheKey, Subject subject) {
+    authenticationCache.put(hashCacheKey(cacheKey), subject);
   }
 }
