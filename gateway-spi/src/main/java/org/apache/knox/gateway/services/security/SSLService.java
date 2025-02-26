@@ -19,7 +19,10 @@ package org.apache.knox.gateway.services.security;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.Service;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 public interface SSLService extends Service {
   Object buildSslContextFactory(GatewayConfig config) throws AliasServiceException;
+
+  void excludeTopologyFromClientAuth(SslContextFactory sslContextFactory, GatewayConfig config, String topologyName);
 }
