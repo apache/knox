@@ -158,7 +158,7 @@ public class RemoteAuthFilter implements Filter {
         String principalName = connection.getHeaderField(userHeader);
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principalName));
-        
+
         addGroupPrincipals(subject, connection);
 
         authenticationCache.put(cacheKey, subject);
