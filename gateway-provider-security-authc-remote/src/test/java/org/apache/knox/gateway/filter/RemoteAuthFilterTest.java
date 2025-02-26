@@ -38,8 +38,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,6 +57,9 @@ public class RemoteAuthFilterTest {
     private static final String URL_FAIL = "http://example.com/authfail";
     public static final String X_AUTHENTICATED_USER = "X-Authenticated-User";
     public static final String X_AUTHENTICATED_GROUP = "X-Authenticated-Group";
+    public static final String X_AUTHENTICATED_GROUP_2 = "X-Authenticated-Group-2";
+    public static final String X_CUSTOM_GROUP_1 = "X-Custom-Group-1";
+    public static final String X_CUSTOM_GROUP_2 = "X-Custom-Group-2";
     private RemoteAuthFilter filter;
     private HttpServletRequest requestMock;
     private HttpServletResponse responseMock;
@@ -71,7 +76,8 @@ public class RemoteAuthFilterTest {
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.cache.key")).andReturn("Authorization").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.expire.after")).andReturn("5").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.user.header")).andReturn(X_AUTHENTICATED_USER).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.group.header")).andReturn(X_AUTHENTICATED_GROUP).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.group.header"))
+               .andReturn(X_AUTHENTICATED_GROUP + "," + X_AUTHENTICATED_GROUP_2 + ",X-Custom-Group-*").anyTimes();
 
         EasyMock.replay(filterConfigMock);
 
@@ -193,10 +199,49 @@ public class RemoteAuthFilterTest {
         }
     }
 
+    @Test
+    public void successfulAuthenticationWithMultipleGroups() throws Exception {
+        EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
+        EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
+        EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();
+        responseMock.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
+        EasyMock.expectLastCall().andThrow(new AssertionError("Authentication should be successful, but was not.")).anyTimes();
+
+        EasyMock.replay(requestMock, responseMock);
+
+        try {
+            MockHttpURLConnection mockConn = new MockHttpURLConnection(new URL(URL_SUCCESS));
+            // Add groups from multiple headers
+            mockConn.addHeader(X_AUTHENTICATED_GROUP, "admin,engineers");
+            mockConn.addHeader(X_AUTHENTICATED_GROUP_2, "developers");
+            mockConn.addHeader(X_CUSTOM_GROUP_1, "team-a");
+            mockConn.addHeader(X_CUSTOM_GROUP_2, "team-b,team-c");
+            filter.httpURLConnection = mockConn;
+
+            filter.doFilter(requestMock, responseMock, chainMock);
+            assertEquals(responseMock.getStatus(), HttpServletResponse.SC_OK);
+
+            assertTrue("Filter chain should have been called but wasn't", chainMock.doFilterCalled);
+
+            Set<GroupPrincipal> groupPrincipals = chainMock.subject.getPrincipals(GroupPrincipal.class);
+            assertEquals("Should have all groups from all headers", 6, groupPrincipals.size());
+
+            // Verify groups from different headers
+            assertTrue(groupPrincipals.stream().anyMatch(p -> p.getName().equals("admin")));
+            assertTrue(groupPrincipals.stream().anyMatch(p -> p.getName().equals("engineers")));
+            assertTrue(groupPrincipals.stream().anyMatch(p -> p.getName().equals("developers")));
+            assertTrue(groupPrincipals.stream().anyMatch(p -> p.getName().equals("team-a")));
+            assertTrue(groupPrincipals.stream().anyMatch(p -> p.getName().equals("team-b")));
+            assertTrue(groupPrincipals.stream().anyMatch(p -> p.getName().equals("team-c")));
+        } catch (AssertionError e) {
+            assert false : "Authentication failed unexpectedly";
+        }
+    }
+
     public static class MockHttpURLConnection extends HttpURLConnection {
         private final URL url;
         private int responseCode;
-        private final Map<String, String> headers;
+        private final Map<String, List<String>> headers;
 
         public MockHttpURLConnection(URL url) {
             super(url);
@@ -205,8 +250,8 @@ public class RemoteAuthFilterTest {
             this.headers = new HashMap<>();
 
             if (url.toString().equals(URL_SUCCESS)) {
-                headers.put(X_AUTHENTICATED_USER, "lmccay");
-                headers.put(X_AUTHENTICATED_GROUP, "admin,engineers");
+                addHeader(X_AUTHENTICATED_USER, "lmccay");
+                addHeader(X_AUTHENTICATED_GROUP, "admin,engineers");
             }
         }
 
@@ -236,15 +281,17 @@ public class RemoteAuthFilterTest {
 
         @Override
         public String getHeaderField(String name) {
-            return headers.get(name);
+            List<String> values = headers.get(name);
+            return values != null && !values.isEmpty() ? values.get(0) : null;
         }
 
-        public void setResponseCode(int code) {
-            this.responseCode = code;
+        @Override
+        public Map<String, List<String>> getHeaderFields() {
+            return headers;
         }
 
         public void addHeader(String name, String value) {
-            headers.put(name, value);
+            headers.computeIfAbsent(name, k -> new ArrayList<>()).add(value);
         }
     }
 

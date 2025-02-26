@@ -70,13 +70,14 @@ public class RemoteAuthFilter implements Filter {
   private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
   private static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
-  private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-1";
+  private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-*";
+  private static final String WILDCARD = "*";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
   private String cacheKeyHeader;
   private String userHeader;
-  private String groupHeader;
+  private List<String> groupHeaders;
   /*
   For Testing
    */
@@ -112,10 +113,11 @@ public class RemoteAuthFilter implements Filter {
       userHeader = DEFAULT_CONFIG_USER_HEADER;
     }
 
-    groupHeader = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
-    if (groupHeader == null || groupHeader.isEmpty()) {
-      userHeader = DEFAULT_CONFIG_GROUP_HEADER;
-
+    String groupHeaderParam = filterConfig.getInitParameter(CONFIG_GROUP_HEADER);
+    if (groupHeaderParam == null || groupHeaderParam.isEmpty()) {
+      groupHeaders = Arrays.asList(DEFAULT_CONFIG_GROUP_HEADER);
+    } else {
+      groupHeaders = Arrays.asList(groupHeaderParam.split("\\s*,\\s*"));
     }
   }
 
@@ -154,14 +156,10 @@ public class RemoteAuthFilter implements Filter {
       int responseCode = connection.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
         String principalName = connection.getHeaderField(userHeader);
-        String groupNames = connection.getHeaderField(groupHeader);
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principalName));
-        // Add groups to the principal if available
-        if(groupNames != null && !groupNames.isEmpty()) {
-          Arrays.stream(groupNames.split(",")).forEach(groupName -> subject.getPrincipals()
-                  .add(new GroupPrincipal(groupName)));
-        }
+
+        addGroupPrincipals(subject, connection);
 
         authenticationCache.put(hashCacheKey(cacheKey), subject);
 
@@ -242,6 +240,37 @@ public class RemoteAuthFilter implements Filter {
         throw new ServletException(t);
       }
     }
+  }
+
+  private void addGroupPrincipals(Subject subject, HttpURLConnection connection) {
+    for (String headerPattern : groupHeaders) {
+      if (headerPattern.endsWith(WILDCARD)) {
+        // Handle wildcard pattern
+        String prefix = headerPattern.substring(0, headerPattern.length() - 1);
+        connection.getHeaderFields().forEach((key, value) -> {
+          if (key != null && key.startsWith(prefix)) {
+            addGroupsFromHeaderValue(subject, value);
+          }
+        });
+      } else {
+        // Handle exact header match
+        String groupNames = connection.getHeaderField(headerPattern);
+        if (groupNames != null && !groupNames.isEmpty()) {
+          addGroupsFromHeaderValue(subject, Arrays.asList(groupNames));
+        }
+      }
+    }
+  }
+
+  private void addGroupsFromHeaderValue(Subject subject, List<String> headerValues) {
+    headerValues.forEach(headerValue -> {
+      if (headerValue != null && !headerValue.isEmpty()) {
+        Arrays.stream(headerValue.split(","))
+              .map(String::trim)
+              .filter(group -> !group.isEmpty())
+              .forEach(groupName -> subject.getPrincipals().add(new GroupPrincipal(groupName)));
+      }
+    });
   }
 
   @Override
