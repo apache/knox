@@ -238,8 +238,7 @@ public class JettySSLService implements SSLService {
 
   @Override
   public void excludeTopologyFromClientAuth(SslContextFactory sslContextFactory, GatewayConfig config, String topologyName) {
-    if(config.getClientAuthExclude() != null && topologyName != null
-            && config.isClientAuthNeeded() && config.getClientAuthExclude().contains(topologyName)) {
+    if(config.isClientAuthNeeded() && config.isTopologyExcludedFromClientAuth(topologyName)) {
       SslContextFactory.Server sslContextFactoryServer = (SslContextFactory.Server) sslContextFactory;
       sslContextFactoryServer.setNeedClientAuth(false);
       sslContextFactoryServer.setWantClientAuth(true);

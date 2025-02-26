@@ -692,8 +692,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getClientAuthExclude() {
-    return get( CLIENT_AUTH_EXCLUDE, null );
+  public boolean isTopologyExcludedFromClientAuth(String topologyName) {
+    String clientAuthExcludeConfig = get(CLIENT_AUTH_EXCLUDE, null);
+    if(clientAuthExcludeConfig == null || topologyName == null) {
+      return false;
+    }
+    return clientAuthExcludeConfig.contains(topologyName);
   }
 
   @Override

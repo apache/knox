@@ -30,6 +30,7 @@ import java.security.KeyStore;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -48,7 +49,7 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 7777 ) );
     assertThat( config.isClientAuthNeeded(), is( false ) );
-    assertNull( "gateway.client.auth.exclude should be null", config.getClientAuthExclude());
+    assertFalse( config.isTopologyExcludedFromClientAuth("health"));
     assertNull("ssl.exclude.protocols should be null.", config.getExcludedSSLProtocols());
     //assertThat( config.getShiroConfigFile(), is( "full-shiro.ini") );
   }
@@ -68,10 +69,18 @@ public class GatewayGlobalConfigTest {
     GatewayConfig config = new GatewayConfigImpl();
     assertThat( config.getGatewayPort(), is( 5555 ) );
     assertThat( config.isClientAuthNeeded(), is( true ) );
-    assertThat( config.getClientAuthExclude(), is( "health" ) );
+    assertTrue( config.isTopologyExcludedFromClientAuth("health"));
     assertThat( config.getTruststorePath(), is("./gateway-trust.jks"));
     assertThat( config.getTruststoreType(), is( "PKCS12" ) );
     assertThat( config.getKeystoreType(), is(KeyStore.getDefaultType()) );
+  }
+
+  @Test
+  public void testSiteConfigWithDifferentTopologyExcluded() {
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-site/conf/gateway-site.xml" ) );
+    GatewayConfig config = new GatewayConfigImpl();
+    assertThat( config.isClientAuthNeeded(), is( true ) );
+    assertFalse( config.isTopologyExcludedFromClientAuth("different"));
   }
 
   @Test

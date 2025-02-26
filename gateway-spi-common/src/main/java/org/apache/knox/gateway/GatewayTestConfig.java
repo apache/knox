@@ -345,8 +345,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getClientAuthExclude() {
-    return null;
+  public boolean isTopologyExcludedFromClientAuth(String topology) {
+    return false;
   }
 
   @Override

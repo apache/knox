@@ -207,7 +207,7 @@ public interface GatewayConfig {
 
   boolean isClientAuthNeeded();
 
-  String getClientAuthExclude();
+  boolean isTopologyExcludedFromClientAuth(String topologyName);
 
   boolean isClientAuthWanted();
 

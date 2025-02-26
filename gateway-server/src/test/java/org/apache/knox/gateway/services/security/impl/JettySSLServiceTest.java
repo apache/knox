@@ -34,7 +34,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
-import org.easymock.EasyMock;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.Test;
 
@@ -456,60 +455,48 @@ public class JettySSLServiceTest {
 
   @Test
   public void testExcludeTopologyFromClientAuth() {
-    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
-    sslContextFactory.setNeedClientAuth(false);
-    EasyMock.expectLastCall().once();
-    sslContextFactory.setWantClientAuth(true);
-    EasyMock.expectLastCall().once();
-    GatewayConfig config = createGatewayConfigForExclude(true, "health");
-    EasyMock.replay(sslContextFactory, config);
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+    sslContextFactory.setNeedClientAuth(true);
+    GatewayConfig config = createGatewayConfigForExcludeTopologyTest(true, true, "health");
+    replay(config);
 
     JettySSLService sslService = new JettySSLService();
     sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
 
-    EasyMock.verify(sslContextFactory, config);
+    verify(config);
+    assertFalse(sslContextFactory.getNeedClientAuth());
+    assertTrue(sslContextFactory.getWantClientAuth());
   }
 
   @Test
   public void testExcludeTopologyFromClientAuthNoExclude() {
-    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
-    GatewayConfig config = createGatewayConfigForExclude(true, null);
-    EasyMock.replay(sslContextFactory, config);
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+    sslContextFactory.setNeedClientAuth(true);
+    GatewayConfig config = createGatewayConfigForExcludeTopologyTest(true, false, "health");
+    replay(config);
 
     JettySSLService sslService = new JettySSLService();
     sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
 
-    EasyMock.verify(sslContextFactory, config);
+    verify(config);
+    assertTrue(sslContextFactory.getNeedClientAuth());
+    assertFalse(sslContextFactory.getWantClientAuth());
   }
 
   @Test
-  public void testExcludeTopologyFromClientAuthDifferentTopology() {
-    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
-    GatewayConfig config = createGatewayConfigForExclude(true, "health");
-    EasyMock.replay(sslContextFactory, config);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"different");
-
-    EasyMock.verify(sslContextFactory, config);
-  }
-
-  @Test
-  public void testExcludeTopologyFromClientAuthMultiple() {
-    SslContextFactory.Server sslContextFactory = EasyMock.mock(SslContextFactory.Server.class);
+  public void testExcludeTopologyFromClientAuthNoPolicy() {
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
     sslContextFactory.setNeedClientAuth(false);
-    EasyMock.expectLastCall().once();
-    sslContextFactory.setWantClientAuth(true);
-    EasyMock.expectLastCall().once();
-    GatewayConfig config = createGatewayConfigForExclude(true, "health,different");
-    EasyMock.replay(sslContextFactory, config);
+    GatewayConfig config = createGatewayConfigForExcludeTopologyTest(false, true, "health");
+    replay(config);
 
     JettySSLService sslService = new JettySSLService();
     sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
 
-    EasyMock.verify(sslContextFactory, config);
+    verify(config);
+    assertFalse(sslContextFactory.getNeedClientAuth());
+    assertFalse(sslContextFactory.getWantClientAuth());
   }
-
 
   private GatewayConfig createGatewayConfig(boolean isClientAuthNeeded, boolean isExplicitTruststore,
                                             Path identityKeystorePath, String identityKeystoreType,
@@ -544,18 +531,10 @@ public class JettySSLServiceTest {
     return config;
   }
 
-  private GatewayConfig createGatewayConfigForExclude(boolean isClientAuthNeeded, String exclude) {
+  private GatewayConfig createGatewayConfigForExcludeTopologyTest(boolean isClientAuthNeeded, boolean isTopologyExcluded, String topologyName) {
     GatewayConfig config = createMock(GatewayConfig.class);
-
-    if (isClientAuthNeeded) {
-      expect(config.isClientAuthNeeded()).andReturn(true).anyTimes();
-    }
-
-    if(exclude != null) {
-      expect(config.getClientAuthExclude()).andReturn(exclude).anyTimes();
-    } else {
-      expect(config.getClientAuthExclude()).andReturn(null).anyTimes();
-    }
+    expect(config.isClientAuthNeeded()).andReturn(isClientAuthNeeded).anyTimes();
+    expect(config.isTopologyExcludedFromClientAuth(topologyName)).andReturn(isTopologyExcluded).anyTimes();
     return config;
   }
 
