@@ -345,6 +345,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isTopologyExcludedFromClientAuth(String topology) {
+    return false;
+  }
+
+  @Override
   public String getTruststorePath() {
     return null;
   }

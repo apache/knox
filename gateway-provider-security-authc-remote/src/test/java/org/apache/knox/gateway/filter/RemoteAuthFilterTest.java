@@ -166,7 +166,7 @@ public class RemoteAuthFilterTest {
         // Add groups to the principal if available
         Arrays.stream(groupNames.split(",")).forEach(groupName -> subject.getPrincipals()
                 .add(new GroupPrincipal(groupName)));
-        filter.authenticationCache.put(BEARER_VALID_TOKEN, subject);
+        filter.setCachedSubject(BEARER_VALID_TOKEN, subject);
 
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
         EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();

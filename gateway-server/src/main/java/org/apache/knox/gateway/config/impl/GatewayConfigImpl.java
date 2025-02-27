@@ -117,6 +117,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String FRONTEND_URL = GATEWAY_CONFIG_FILE_PREFIX + ".frontend.url";
   private static final String TRUST_ALL_CERTS = GATEWAY_CONFIG_FILE_PREFIX + ".trust.all.certs";
   private static final String CLIENT_AUTH_NEEDED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.needed";
+  private static final String CLIENT_AUTH_EXCLUDE = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.exclude";
   private static final String CLIENT_AUTH_WANTED = GATEWAY_CONFIG_FILE_PREFIX + ".client.auth.wanted";
   private static final String KEYSTORE_TYPE = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.type";
   private static final String KEYSTORE_CACHE_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".keystore.cache.size.limit";
@@ -688,6 +689,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isClientAuthNeeded() {
     return Boolean.parseBoolean(get( CLIENT_AUTH_NEEDED, "false" ));
+  }
+
+  @Override
+  public boolean isTopologyExcludedFromClientAuth(String topologyName) {
+    String clientAuthExcludeConfig = get(CLIENT_AUTH_EXCLUDE, null);
+    if(clientAuthExcludeConfig == null || topologyName == null) {
+      return false;
+    }
+    return clientAuthExcludeConfig.contains(topologyName);
   }
 
   @Override

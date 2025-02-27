@@ -806,4 +806,7 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.INFO,
           text = "Starting gateway status service. Topologies to check: {0}")
   void startingStatusMonitor(Set<String> topologyNames);
+
+  @Message( level = MessageLevel.INFO, text = "Excluded \"{0}\" topology from client auth" )
+  void topologyExcludedFromClientAuth( String topologyName );
 }

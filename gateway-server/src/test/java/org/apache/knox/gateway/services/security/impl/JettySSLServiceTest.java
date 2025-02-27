@@ -453,6 +453,51 @@ public class JettySSLServiceTest {
     fail("UnrecoverableKeyException should have been thrown");
   }
 
+  @Test
+  public void testExcludeTopologyFromClientAuth() {
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+    sslContextFactory.setNeedClientAuth(true);
+    GatewayConfig config = createGatewayConfigForExcludeTopologyTest(true, true, "health");
+    replay(config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
+
+    verify(config);
+    assertFalse(sslContextFactory.getNeedClientAuth());
+    assertTrue(sslContextFactory.getWantClientAuth());
+  }
+
+  @Test
+  public void testExcludeTopologyFromClientAuthNoExclude() {
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+    sslContextFactory.setNeedClientAuth(true);
+    GatewayConfig config = createGatewayConfigForExcludeTopologyTest(true, false, "health");
+    replay(config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
+
+    verify(config);
+    assertTrue(sslContextFactory.getNeedClientAuth());
+    assertFalse(sslContextFactory.getWantClientAuth());
+  }
+
+  @Test
+  public void testExcludeTopologyFromClientAuthNoPolicy() {
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+    sslContextFactory.setNeedClientAuth(false);
+    GatewayConfig config = createGatewayConfigForExcludeTopologyTest(false, true, "health");
+    replay(config);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.excludeTopologyFromClientAuth(sslContextFactory, config,"health");
+
+    verify(config);
+    assertFalse(sslContextFactory.getNeedClientAuth());
+    assertFalse(sslContextFactory.getWantClientAuth());
+  }
+
   private GatewayConfig createGatewayConfig(boolean isClientAuthNeeded, boolean isExplicitTruststore,
                                             Path identityKeystorePath, String identityKeystoreType,
                                             String identityKeyAlias, Path truststorePath,
@@ -483,6 +528,13 @@ public class JettySSLServiceTest {
     expect(config.getIncludedSSLProtocols()).andReturn(null).atLeastOnce();
     expect(config.getExcludedSSLProtocols()).andReturn(null).atLeastOnce();
     expect(config.isSSLRenegotiationAllowed()).andReturn(true).atLeastOnce();
+    return config;
+  }
+
+  private GatewayConfig createGatewayConfigForExcludeTopologyTest(boolean isClientAuthNeeded, boolean isTopologyExcluded, String topologyName) {
+    GatewayConfig config = createMock(GatewayConfig.class);
+    expect(config.isClientAuthNeeded()).andReturn(isClientAuthNeeded).anyTimes();
+    expect(config.isTopologyExcludedFromClientAuth(topologyName)).andReturn(isTopologyExcluded).anyTimes();
     return config;
   }
 
