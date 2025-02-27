@@ -103,4 +103,4 @@ public class RegExUtilsTest {
   public void testMalformedOriginalUrl() throws MalformedURLException {
     RegExUtils.checkBaseUrlAgainstWhitelist(".*", "https://localhost:5003gateway/homepage/home/");
   }
-} 
+}

@@ -28,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
 import java.net.HttpCookie;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -67,7 +66,6 @@ import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
-import org.apache.knox.gateway.util.RegExUtils;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.BeforeClass;
