@@ -23,6 +23,7 @@ import org.apache.knox.test.mock.MockServletContext;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
+import org.apache.logging.log4j.ThreadContext;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -196,6 +197,54 @@ public class RemoteAuthFilterTest {
             }
         } catch (AssertionError e) {
             assert false : "Authentication failed unexpectedly";
+        }
+    }
+
+    @Test
+    public void testTraceIdPropagation() throws Exception {
+        String expectedTraceId = "test-trace-123";
+
+        // Set up mocks
+        EasyMock.expect(requestMock.getServletContext())
+            .andReturn(new MockServletContext())
+            .anyTimes();
+        EasyMock.expect(requestMock.getHeader("Authorization"))
+            .andReturn(BEARER_VALID_TOKEN)
+            .anyTimes();
+        EasyMock.expect(responseMock.getStatus())
+            .andReturn(200)
+            .anyTimes();
+
+        EasyMock.replay(requestMock, responseMock);
+
+        try {
+            // Set up the trace ID in ThreadContext
+            ThreadContext.put(RemoteAuthFilter.TRACE_ID, expectedTraceId);
+
+            MockHttpURLConnection mockConn = new MockHttpURLConnection(new URL(URL_SUCCESS)) {
+                private final Map<String, String> requestProperties = new HashMap<>();
+
+                @Override
+                public void addRequestProperty(String key, String value) {
+                    requestProperties.put(key, value);
+                }
+
+                @Override
+                public String getRequestProperty(String key) {
+                    return requestProperties.get(key);
+                }
+            };
+            filter.httpURLConnection = mockConn;
+
+            filter.doFilter(requestMock, responseMock, chainMock);
+
+            // Verify the trace ID was propagated with the correct header name
+            assertEquals("Trace ID should be propagated to outgoing request",
+                expectedTraceId,
+                mockConn.getRequestProperty(RemoteAuthFilter.REQUEST_ID_HEADER_NAME));
+        } finally {
+            // Clean up ThreadContext
+            ThreadContext.remove(RemoteAuthFilter.TRACE_ID);
         }
     }
 
