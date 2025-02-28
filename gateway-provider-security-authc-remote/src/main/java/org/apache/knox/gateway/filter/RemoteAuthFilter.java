@@ -35,6 +35,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
+import org.apache.logging.log4j.ThreadContext;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -71,6 +72,8 @@ public class RemoteAuthFilter implements Filter {
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
   private static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
   private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-1";
+  static final String TRACE_ID = "trace_id";
+  static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -149,6 +152,12 @@ public class RemoteAuthFilter implements Filter {
         if (headerValue != null) {
           connection.addRequestProperty(header, headerValue);
         }
+      }
+
+      // Add trace ID to the outgoing request if it exists to correlate logs
+      String traceId = ThreadContext.get(TRACE_ID);
+      if (traceId != null) {
+        connection.addRequestProperty(REQUEST_ID_HEADER_NAME, ThreadContext.get(TRACE_ID));
       }
 
       int responseCode = connection.getResponseCode();
