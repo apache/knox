@@ -254,6 +254,10 @@ public class RemoteAuthFilterTest {
         EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();
         responseMock.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
         EasyMock.expectLastCall().andThrow(new AssertionError("Authentication should be successful, but was not.")).anyTimes();
+
+        EasyMock.replay(requestMock, responseMock);
+
+        try {
             MockHttpURLConnection mockConn = new MockHttpURLConnection(new URL(URL_SUCCESS));
             // Add groups from multiple headers
             mockConn.addHeader(X_AUTHENTICATED_GROUP, "admin,engineers");
