@@ -71,7 +71,7 @@ public class RemoteAuthFilter implements Filter {
   private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
   private static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
-  private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-1";
+  private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-*";
   private static final String WILDCARD = "*";
   static final String TRACE_ID = "trace_id";
   static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
