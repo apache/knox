@@ -248,6 +248,7 @@ public class RemoteAuthFilterTest {
         }
     }
 
+    @Test
     public void successfulAuthenticationWithMultipleGroups() throws Exception {
         EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
