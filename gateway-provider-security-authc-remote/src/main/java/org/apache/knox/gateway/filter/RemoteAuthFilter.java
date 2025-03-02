@@ -178,7 +178,11 @@ public class RemoteAuthFilter implements Filter {
           context.setUsername( principalName );
           auditService.attachContext(context);
           String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
-          auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+          auditor.audit(Action.AUTHENTICATION, sourceUri, ResourceType.URI,
+                  ActionOutcome.SUCCESS, "Groups: " + Arrays.toString(subject.getPrincipals(GroupPrincipal.class)
+                          .stream()
+                          .map(GroupPrincipal::getName)
+                          .toArray(String[]::new)));
         }
 
         continueWithEstablishedSecurityContext(subject, httpRequest, httpResponse, filterChain);
