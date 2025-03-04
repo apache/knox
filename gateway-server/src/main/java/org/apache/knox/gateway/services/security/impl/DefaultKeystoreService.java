@@ -46,6 +46,7 @@ import java.net.InetAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -560,6 +561,26 @@ public class DefaultKeystoreService implements KeystoreService {
       LOG.failedToLoadKeystore(keyStoreFilePath.toString(), storeType, e);
       throw new KeystoreServiceException(e);
     }
+  }
+
+  @Override
+  public synchronized KeyStore loadKeyStore(String path, String keystoreType, String password)
+          throws KeystoreServiceException {
+      try {
+          return createKeyStore(FileSystems.getDefault().getPath(path), keystoreType, password.toCharArray());
+      } catch (Exception e) {
+          throw new KeystoreServiceException(e);
+      }
+  }
+
+  @Override
+  public synchronized KeyStore loadTruststore(String path,  String keystoreType, String password)
+          throws KeystoreServiceException {
+      try {
+          return loadKeyStore(FileSystems.getDefault().getPath(path), keystoreType, password.toCharArray());
+      } catch (Exception e) {
+          throw new KeystoreServiceException(e);
+      }
   }
 
   // Package private for unit test access

@@ -63,19 +63,23 @@ import java.util.concurrent.TimeUnit;
 
 public class RemoteAuthFilter implements Filter {
 
-  private static final String CONFIG_REMOTE_AUTH_URL = "remote.auth.url";
-  private static final String CONFIG_INCLUDE_HEADERS = "remote.auth.include.headers";
-  private static final String CONFIG_CACHE_KEY_HEADER = "remote.auth.cache.key";
-  private static final String CONFIG_EXPIRE_AFTER = "remote.auth.expire.after";
-  private static final String DEFAULT_CACHE_KEY_HEADER = "Authorization";
-  private static final String CONFIG_USER_HEADER = "remote.auth.user.header";
-  private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
-  private static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
-  private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-*";
-  private static final String WILDCARD = "*";
+  static final String REMOTE_AUTH = "remote.auth.";
+  static final String CONFIG_REMOTE_AUTH_URL = REMOTE_AUTH + "url";
+  static final String CONFIG_INCLUDE_HEADERS = REMOTE_AUTH + "include.headers";
+  static final String CONFIG_CACHE_KEY_HEADER = REMOTE_AUTH + "cache.key";
+  static final String CONFIG_EXPIRE_AFTER = REMOTE_AUTH + "expire.after";
+  static final String DEFAULT_CACHE_KEY_HEADER = "Authorization";
+  static final String CONFIG_USER_HEADER = REMOTE_AUTH + "user.header";
+  static final String CONFIG_GROUP_HEADER = REMOTE_AUTH + "group.header";
+  static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
+  static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-*";
+  static final String CONFIG_TRUSTSTORE_PATH = REMOTE_AUTH + "truststore.path";
+  static final String CONFIG_TRUSTSTORE_PASSWORD = REMOTE_AUTH + "truststore.password";
+  static final String CONFIG_TRUSTSTORE_TYPE = REMOTE_AUTH + "truststore.type";
+  static final String DEFAULT_TRUSTSTORE_TYPE = "JKS";
+  static final String WILDCARD = "*";
   static final String TRACE_ID = "trace_id";
   static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
-
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -93,6 +97,10 @@ public class RemoteAuthFilter implements Filter {
   private static final Auditor auditor = auditService.getAuditor(
           AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private final RemoteAuthMessages LOGGER = MessagesFactory.get( RemoteAuthMessages.class );
+
+  private String truststorePath;
+  private String truststorePassword;
+  private String truststoreType;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -122,6 +130,13 @@ public class RemoteAuthFilter implements Filter {
       groupHeaders = Arrays.asList(DEFAULT_CONFIG_GROUP_HEADER);
     } else {
       groupHeaders = Arrays.asList(groupHeaderParam.split("\\s*,\\s*"));
+    }
+
+    truststorePath = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PATH);
+    truststorePassword = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PASSWORD);
+    truststoreType = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_TYPE);
+    if (truststoreType == null || truststoreType.isEmpty()) {
+      truststoreType = DEFAULT_TRUSTSTORE_TYPE;
     }
   }
 
@@ -202,14 +217,7 @@ public class RemoteAuthFilter implements Filter {
     if (services != null) {
       KeystoreService keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
       if (keystoreService != null) {
-        try {
-          truststore = keystoreService.getTruststoreForHttpClient();
-          if (truststore == null) {
-            truststore = keystoreService.getKeystoreForGateway();
-          }
-        } catch (KeystoreServiceException e) {
-          LOGGER.failedToLoadTruststore(e.getMessage(), e);
-        }
+        truststore = getTrustStore(truststore, keystoreService);
       }
     }
     HttpURLConnection connection;
@@ -217,16 +225,36 @@ public class RemoteAuthFilter implements Filter {
       URL url = new URL(remoteAuthUrl);
       connection = (HttpURLConnection) url.openConnection();
       if (truststore != null) {
-          try {
-              ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(truststore));
-          } catch (Exception e) {
-              throw new RuntimeException(e);
-          }
+        try {
+          ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(truststore));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     } else {
       connection = httpURLConnection;
     }
     return connection;
+  }
+
+  private KeyStore getTrustStore(KeyStore truststore, KeystoreService keystoreService) throws IOException {
+    try {
+      // Try topology-specific truststore first if configured
+      if (truststorePath != null && !truststorePath.isEmpty()) {
+        truststore = keystoreService.loadTruststore(truststorePath, truststoreType, truststorePassword);
+      }
+      // Fall back to gateway-level truststore
+      if (truststore == null) {
+        truststore = keystoreService.getTruststoreForHttpClient();
+        if (truststore == null) {
+          truststore = keystoreService.getKeystoreForGateway();
+        }
+      }
+    } catch (KeystoreServiceException e) {
+      LOGGER.failedToLoadTruststore(e.getMessage(), e);
+      throw new IOException("Failed to load truststore: ", e);
+    }
+    return truststore;
   }
 
   private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
