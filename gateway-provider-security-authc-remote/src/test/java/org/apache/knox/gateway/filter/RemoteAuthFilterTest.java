@@ -56,6 +56,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("PMD.JUnit4TestShouldUseBeforeAnnotation")
 public class RemoteAuthFilterTest {
 
     public static final String BEARER_INVALID_TOKEN = "Bearer invalid-token";
