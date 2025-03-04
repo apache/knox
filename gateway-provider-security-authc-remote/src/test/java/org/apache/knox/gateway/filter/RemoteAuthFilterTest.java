@@ -19,6 +19,10 @@ package org.apache.knox.gateway.filter;
 
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.test.mock.MockServletContext;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -28,6 +32,7 @@ import org.apache.logging.log4j.ThreadContext;
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -45,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.security.KeyStore;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,8 +60,8 @@ public class RemoteAuthFilterTest {
 
     public static final String BEARER_INVALID_TOKEN = "Bearer invalid-token";
     public static final String BEARER_VALID_TOKEN = "Bearer valid-token";
-    public static final String URL_SUCCESS = "http://example.com/auth";
-    private static final String URL_FAIL = "http://example.com/authfail";
+    public static final String URL_SUCCESS = "https://example.com/auth";
+    private static final String URL_FAIL = "https://example.com/authfail";
     public static final String X_AUTHENTICATED_USER = "X-Authenticated-User";
     public static final String X_AUTHENTICATED_GROUP = "X-Authenticated-Group";
     public static final String X_AUTHENTICATED_GROUP_2 = "X-Authenticated-Group-2";
@@ -65,14 +71,38 @@ public class RemoteAuthFilterTest {
     private HttpServletRequest requestMock;
     private HttpServletResponse responseMock;
     private TestFilterChain chainMock;
+    private GatewayServices gatewayServicesMock;
+    private KeystoreService keystoreServiceMock;
+    private ServletContext servletContextMock;
+
     @Before
-    public void setUp() {
-        FilterConfig filterConfigMock = EasyMock.createNiceMock(FilterConfig.class);
+    public void createMocks() {
         requestMock = EasyMock.createMock(HttpServletRequest.class);
         responseMock = EasyMock.createMock(HttpServletResponse.class);
-        chainMock = new TestFilterChain();
+    }
 
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.url")).andReturn("http://example.com/auth").anyTimes();
+    private void setUp(String trustStorePath, String trustStorePass, String trustStoreType) {
+        // Reset existing mocks
+        EasyMock.reset(requestMock, responseMock);
+        
+        FilterConfig filterConfigMock = EasyMock.createNiceMock(FilterConfig.class);
+        chainMock = new TestFilterChain();
+        
+        // Create and configure Gateway Services mocks
+        gatewayServicesMock = EasyMock.createNiceMock(GatewayServices.class);
+        keystoreServiceMock = EasyMock.createNiceMock(KeystoreService.class);
+        servletContextMock = EasyMock.createNiceMock(ServletContext.class);
+
+        // Set up Gateway Services expectations
+        EasyMock.expect(gatewayServicesMock.getService(ServiceType.KEYSTORE_SERVICE))
+               .andReturn(keystoreServiceMock)
+               .anyTimes();
+        EasyMock.expect(servletContextMock.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE))
+               .andReturn(gatewayServicesMock)
+               .anyTimes();
+
+        // Basic config
+        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.url")).andReturn("https://example.com/auth").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.include.headers")).andReturn("Authorization").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.cache.key")).andReturn("Authorization").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.expire.after")).andReturn("5").anyTimes();
@@ -80,7 +110,13 @@ public class RemoteAuthFilterTest {
         EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.group.header"))
                .andReturn(X_AUTHENTICATED_GROUP + "," + X_AUTHENTICATED_GROUP_2 + ",X-Custom-Group-*").anyTimes();
 
-        EasyMock.replay(filterConfigMock);
+        // Trust store config
+        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.path")).andReturn(trustStorePath).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.password")).andReturn(trustStorePass).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.type")).andReturn(trustStoreType).anyTimes();
+
+        // Only replay the mocks that won't need additional expectations
+        EasyMock.replay(filterConfigMock, gatewayServicesMock, servletContextMock);
 
         filter = new RemoteAuthFilter();
         try {
@@ -88,6 +124,11 @@ public class RemoteAuthFilterTest {
         } catch (ServletException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // Default setup method for backward compatibility
+    private void setUp() {
+        setUp(null, null, null);
     }
 
     private void setupURLConnection(String url) {
@@ -100,6 +141,8 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void successfulAuthentication() throws Exception {
+        setUp();
+
         EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
         EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();
@@ -134,6 +177,8 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void authenticationFailsWithInvalidToken() throws Exception {
+        setUp();
+
         EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
         EasyMock.expect(responseMock.getStatus()).andReturn(401).anyTimes();
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_INVALID_TOKEN).anyTimes();
@@ -160,11 +205,12 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void testCacheBehavior() throws Exception {
+        setUp();
+
         String principalName = "lmccayiv";
         String groupNames = "admin2,scientists";
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principalName));
-        // Add groups to the principal if available
         Arrays.stream(groupNames.split(",")).forEach(groupName -> subject.getPrincipals()
                 .add(new GroupPrincipal(groupName)));
         filter.setCachedSubject(BEARER_VALID_TOKEN, subject);
@@ -202,9 +248,10 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void testTraceIdPropagation() throws Exception {
+        setUp();
+
         String expectedTraceId = "test-trace-123";
 
-        // Set up mocks
         EasyMock.expect(requestMock.getServletContext())
             .andReturn(new MockServletContext())
             .anyTimes();
@@ -250,6 +297,8 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void successfulAuthenticationWithMultipleGroups() throws Exception {
+        setUp();
+
         EasyMock.expect(requestMock.getServletContext()).andReturn(new MockServletContext()).anyTimes();
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
         EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();
@@ -285,6 +334,95 @@ public class RemoteAuthFilterTest {
         } catch (AssertionError e) {
             assert false : "Authentication failed unexpectedly";
         }
+    }
+
+    @Test
+    public void testSuccessfulHttpsRequestWithTrustStore() throws Exception {
+        // Setup with valid trust store configuration
+        setUp("/path/to/truststore.jks", "trustpass", "JKS");
+
+        KeyStore testTruststore = KeyStore.getInstance("JKS");
+        EasyMock.expect(keystoreServiceMock.loadTruststore("/path/to/truststore.jks", "JKS", "trustpass"))
+               .andReturn(testTruststore)
+               .anyTimes();
+
+        EasyMock.expect(requestMock.getServletContext())
+               .andReturn(servletContextMock)
+               .anyTimes();
+        EasyMock.expect(requestMock.getHeader("Authorization"))
+               .andReturn(BEARER_VALID_TOKEN)
+               .anyTimes();
+        EasyMock.expect(responseMock.getStatus())
+               .andReturn(200)
+               .anyTimes();
+        responseMock.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
+        EasyMock.expectLastCall().andThrow(new AssertionError("Authentication should be successful, but was not.")).anyTimes();
+
+        EasyMock.replay(requestMock, responseMock, keystoreServiceMock);
+
+        setupURLConnection("https://example.com/auth");
+        filter.doFilter(requestMock, responseMock, chainMock);
+
+        assertTrue("Filter chain should have been called", chainMock.doFilterCalled);
+    }
+
+    @Test
+    public void testHttpsRequestWithoutTrustStore() throws Exception {
+        // Setup without trust store configuration
+        setUp(null, null, null);
+
+        KeyStore defaultTruststore = KeyStore.getInstance("JKS");
+        EasyMock.expect(keystoreServiceMock.getTruststoreForHttpClient())
+               .andReturn(defaultTruststore)
+               .anyTimes();
+
+        EasyMock.expect(requestMock.getServletContext())
+               .andReturn(servletContextMock)
+               .anyTimes();
+        EasyMock.expect(requestMock.getHeader("Authorization"))
+               .andReturn(BEARER_VALID_TOKEN)
+               .anyTimes();
+        EasyMock.expect(responseMock.getStatus())
+               .andReturn(200)
+               .anyTimes();
+        responseMock.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
+        EasyMock.expectLastCall().andThrow(new AssertionError("Authentication should be successful, but was not.")).anyTimes();
+
+        EasyMock.replay(requestMock, responseMock, keystoreServiceMock);
+
+        setupURLConnection("https://example.com/auth");
+        filter.doFilter(requestMock, responseMock, chainMock);
+
+        assertTrue("Filter chain should have been called with default trust store", chainMock.doFilterCalled);
+    }
+
+    @Test
+    public void testHttpsRequestWithInvalidTrustStoreConfig() throws Exception {
+        // Setup with invalid trust store configuration
+        setUp("/nonexistent/path/truststore.jks", "password", "JKS");
+
+        EasyMock.expect(keystoreServiceMock.loadTruststore("/nonexistent/path/truststore.jks", "JKS", "password"))
+               .andThrow(new KeystoreServiceException("Failed to load truststore"))
+               .anyTimes();
+
+        EasyMock.expect(requestMock.getServletContext())
+               .andReturn(servletContextMock)
+               .anyTimes();
+        EasyMock.expect(requestMock.getHeader("Authorization"))
+               .andReturn(BEARER_VALID_TOKEN)
+               .anyTimes();
+        EasyMock.expect(responseMock.getStatus())
+               .andReturn(500)
+               .anyTimes();
+        responseMock.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing authentication request");
+        EasyMock.expectLastCall().once();
+
+        EasyMock.replay(requestMock, responseMock, keystoreServiceMock);
+
+        filter.doFilter(requestMock, responseMock, chainMock);
+
+        assertFalse("Filter chain should not have been called", chainMock.doFilterCalled);
+        EasyMock.verify(responseMock);
     }
 
     public static class MockHttpURLConnection extends HttpURLConnection {

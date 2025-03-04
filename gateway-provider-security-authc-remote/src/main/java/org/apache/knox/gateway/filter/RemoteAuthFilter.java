@@ -72,10 +72,13 @@ public class RemoteAuthFilter implements Filter {
   private static final String CONFIG_GROUP_HEADER = "remote.auth.group.header";
   private static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
   private static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-*";
+  private static final String CONFIG_TRUSTSTORE_PATH = "remote.auth.truststore.path";
+  private static final String CONFIG_TRUSTSTORE_PASSWORD = "remote.auth.truststore.password";
+  private static final String CONFIG_TRUSTSTORE_TYPE = "remote.auth.truststore.type";
+  private static final String DEFAULT_TRUSTSTORE_TYPE = "JKS";
   private static final String WILDCARD = "*";
   static final String TRACE_ID = "trace_id";
   static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
-
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -93,6 +96,10 @@ public class RemoteAuthFilter implements Filter {
   private static final Auditor auditor = auditService.getAuditor(
           AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private final RemoteAuthMessages LOGGER = MessagesFactory.get( RemoteAuthMessages.class );
+
+  private String truststorePath;
+  private String truststorePassword;
+  private String truststoreType;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -122,6 +129,13 @@ public class RemoteAuthFilter implements Filter {
       groupHeaders = Arrays.asList(DEFAULT_CONFIG_GROUP_HEADER);
     } else {
       groupHeaders = Arrays.asList(groupHeaderParam.split("\\s*,\\s*"));
+    }
+
+    truststorePath = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PATH);
+    truststorePassword = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PASSWORD);
+    truststoreType = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_TYPE);
+    if (truststoreType == null || truststoreType.isEmpty()) {
+      truststoreType = DEFAULT_TRUSTSTORE_TYPE;
     }
   }
 
@@ -203,12 +217,20 @@ public class RemoteAuthFilter implements Filter {
       KeystoreService keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
       if (keystoreService != null) {
         try {
-          truststore = keystoreService.getTruststoreForHttpClient();
+          // Try topology-specific truststore first if configured
+          if (truststorePath != null && !truststorePath.isEmpty()) {
+            truststore = keystoreService.loadTruststore(truststorePath, truststoreType, truststorePassword);
+          }
+          // Fall back to gateway-level truststore
           if (truststore == null) {
-            truststore = keystoreService.getKeystoreForGateway();
+            truststore = keystoreService.getTruststoreForHttpClient();
+            if (truststore == null) {
+              truststore = keystoreService.getKeystoreForGateway();
+            }
           }
         } catch (KeystoreServiceException e) {
           LOGGER.failedToLoadTruststore(e.getMessage(), e);
+          throw new IOException("Failed to load truststore: ", e);
         }
       }
     }
@@ -217,11 +239,11 @@ public class RemoteAuthFilter implements Filter {
       URL url = new URL(remoteAuthUrl);
       connection = (HttpURLConnection) url.openConnection();
       if (truststore != null) {
-          try {
-              ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(truststore));
-          } catch (Exception e) {
-              throw new RuntimeException(e);
-          }
+        try {
+          ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(truststore));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     } else {
       connection = httpURLConnection;

@@ -79,4 +79,26 @@ public interface KeystoreService extends Service {
   char[] getCredentialForCluster(String clusterName, String alias, KeyStore ks) throws KeystoreServiceException;
 
   String getKeystorePath();
+
+      /**
+     * Load a keystore from the specified path with the given password.
+     *
+     * @param path The path to the keystore file
+     * @param password The password for the keystore
+     * @return The loaded KeyStore instance
+     * @throws KeystoreServiceException if loading fails
+     */
+    KeyStore loadKeyStore(String path, String keystoreType, String password)
+        throws KeystoreServiceException;
+
+    /**
+     * Load a truststore from the specified path with the given password.
+     *
+     * @param path The path to the truststore file
+     * @param password The password for the truststore
+     * @return The loaded KeyStore instance
+     * @throws KeystoreServiceException if loading fails
+     */
+    KeyStore loadTruststore(String path, String keystoreType, String password)
+        throws KeystoreServiceException;
 }
