@@ -103,18 +103,18 @@ public class RemoteAuthFilterTest {
                .anyTimes();
 
         // Basic config
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.url")).andReturn("https://example.com/auth").anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.include.headers")).andReturn("Authorization").anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.cache.key")).andReturn("Authorization").anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.expire.after")).andReturn("5").anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.user.header")).andReturn(X_AUTHENTICATED_USER).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.group.header"))
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_REMOTE_AUTH_URL)).andReturn("https://example.com/auth").anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_INCLUDE_HEADERS)).andReturn("Authorization").anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.DEFAULT_CACHE_KEY_HEADER)).andReturn("Authorization").anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_EXPIRE_AFTER)).andReturn("5").anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_USER_HEADER)).andReturn(X_AUTHENTICATED_USER).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_GROUP_HEADER))
                .andReturn(X_AUTHENTICATED_GROUP + "," + X_AUTHENTICATED_GROUP_2 + ",X-Custom-Group-*").anyTimes();
 
         // Trust store config
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.path")).andReturn(trustStorePath).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.password")).andReturn(trustStorePass).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter("remote.auth.truststore.type")).andReturn(trustStoreType).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PATH)).andReturn(trustStorePath).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD)).andReturn(trustStorePass).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_TYPE)).andReturn(trustStoreType).anyTimes();
 
         // Only replay the mocks that won't need additional expectations
         EasyMock.replay(filterConfigMock, gatewayServicesMock, servletContextMock);
