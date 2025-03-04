@@ -84,10 +84,10 @@ public class RemoteAuthFilterTest {
     private void setUp(String trustStorePath, String trustStorePass, String trustStoreType) {
         // Reset existing mocks
         EasyMock.reset(requestMock, responseMock);
-        
+
         FilterConfig filterConfigMock = EasyMock.createNiceMock(FilterConfig.class);
         chainMock = new TestFilterChain();
-        
+
         // Create and configure Gateway Services mocks
         gatewayServicesMock = EasyMock.createNiceMock(GatewayServices.class);
         keystoreServiceMock = EasyMock.createNiceMock(KeystoreService.class);
