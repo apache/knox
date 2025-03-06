@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+        Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<rules>
+
+
+    <rule dir="IN" name="GRAFANAUI/grafana/inbound/root" pattern="*://*:*/**/grafanaui/">
+        <rewrite template="{$serviceUrl[GRAFANAUI]}/"/>
+    </rule>
+
+    <rule dir="IN" name="GRAFANAUI/grafana/inbound/login" pattern="*://*:*/**/grafanaui/{**}">
+        <rewrite template="{$serviceUrl[GRAFANAUI]}/{**}"/>
+    </rule>
+    <rule dir="OUT" name="GRAFANAUI/grafana/inbound/root" pattern="/grafanaui/{**}">
+        <rewrite template="grafanaui/{**}"/>
+    </rule>
+
+<!-- fileter in -->
+   <rule dir="IN" name="GRAFANAUI/grafanaui/inbound/public/img/filter" pattern="*://*:*/**/grafanaui/public/img/{**}">
+        <rewrite template="{$serviceUrl[GRAFANAUI]}/public/img/{**}"/>
+    </rule>
+
+
+<!-- all out  -->
+    <rule dir="OUT" name="GRAFANAUI/grafana/outbound/public/rule" pattern="/public/build/{**}">
+        <rewrite template="{$frontend[path]}/grafanaui/public/build/{**}" />
+    </rule>
+
+    <rule dir="OUT" name="GRAFANAUI/grafana/outbound/public/fonts" pattern="/public/fonts/roboto/{**}">
+        <rewrite template="{$frontend[path]}/grafanaui/public/fonts/roboto/{**}" />
+    </rule>
+
+
+  <rule dir="OUT" name="GRAFANAUI/grafanaui/outbound/build">
+    <rewrite template="{$frontend[path]}/grafanaui/public/build/" />
+  </rule>
+
+  <rule dir="OUT" name="GRAFANAUI/grafanaui/outbound/img">
+    <rewrite template="{$frontend[path]}/grafanaui/public/img/" />
+  </rule>
+
+  <rule dir="OUT" name="GRAFANAUI/grafanaui/outbound/api/dashboard">
+    <rewrite template="{$frontend[path]}/grafanaui/api/dashboards/home" />
+  </rule>
+
+  <filter name="GRAFANAUI/grafanaui/outbound/build/filter">
+    <content type="*/javascript">
+      <apply path="public/build/" rule="GRAFANAUI/grafanaui/outbound/build" />
+    </content>
+    <content type="text/html">
+      <apply path="public/img/" rule="GRAFANAUI/grafanaui/outbound/img" />
+    </content>
+  </filter>
+
+
+</rules>
+
