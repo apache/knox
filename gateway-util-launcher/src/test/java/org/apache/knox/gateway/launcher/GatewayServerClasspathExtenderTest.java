@@ -22,7 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,26 +52,22 @@ public class GatewayServerClasspathExtenderTest {
 
     @Test
     public void extendClassPathPropertyTest() throws IOException {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        properties.setProperty("main.class", "org.apache.knox.gateway.GatewayServer");
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent("/new/classp/*");
+        String configContent = this.getConfigContent("/new/classp/*", "/appendage/*");
         Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
         gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
-        assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
+        assertEquals("/new/classp/*;classpath;/appendage/*", properties.getProperty("class.path"));
     }
 
     @Test
     public void extendClassPathPropertyDifferentMainClassTest() throws IOException {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        properties.setProperty("main.class", "org.apache.knox.gateway.KnoxCLI");
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.KnoxCLI");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent("/new/classp/*");
+        String configContent = this.getConfigContent("/new/classp/*", "/appendage/*");
         Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
         gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
@@ -80,97 +75,124 @@ public class GatewayServerClasspathExtenderTest {
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyNoDelimTest() {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
+    public void extendClassPathPropertyWithDelimitersTest() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent("/new/classp/*");
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
+        String configContent = this.getConfigContent("/new/classp/*;", ";/appendage/*");
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
-        assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
+        assertEquals("/new/classp/*;classpath;/appendage/*", properties.getProperty("class.path"));
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyXMLFormatTest() {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
+    public void extendClassPathPropertyWhitespaceTest() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent("/new/classp/*;");
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
+        String configContent = this.getConfigContent(" /new/classp/*; ", " ;/appendage/* ");
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
-        assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
+        assertEquals("/new/classp/*;classpath;/appendage/*", properties.getProperty("class.path"));
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyWhitespaceTest() {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
+    public void extendClassPathPropertyMultipleTest() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent(" /new/classp/*; ");
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
+        String configContent = this.getConfigContent("/new/classp/*,../classp", "/appendage/*,/appendage2/*.jar");
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
-        assertEquals("/new/classp/*;classpath", properties.getProperty("class.path"));
+        assertEquals("/new/classp/*,../classp;classpath;/appendage/*,/appendage2/*.jar", properties.getProperty("class.path"));
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyMultipleTest() {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
+    public void extendClassPathPropertyEmptyTest() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent("/new/classp/*,../classp");
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
+        String configContent = this.getConfigContent("", "");
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
+
+        assertEquals("classpath", properties.getProperty("class.path"));
+    }
+
+    @Test
+    public void extendClassPathPropertyEmptyWhitespaceTest() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
+
+        String configContent = this.getConfigContent(" ", " ");
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
+
+        assertEquals("classpath", properties.getProperty("class.path"));
+    }
+
+    @Test
+    public void extendClassPathPropertyOnlyPrepend() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
+
+        String configContent = this.getConfigContent("/new/classp/*,../classp", null);
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
         assertEquals("/new/classp/*,../classp;classpath", properties.getProperty("class.path"));
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyEmptyTest() {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
+    public void extendClassPathPropertyOnlyAppend() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent("");
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
+        String configContent = this.getConfigContent(null, "/appendage/*,/appendage2/*.jar");
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
-        assertEquals("classpath", properties.getProperty("class.path"));
+        assertEquals("classpath;/appendage/*,/appendage2/*.jar", properties.getProperty("class.path"));
     }
 
     @Test
-    public void extractExtensionPathIntoPropertyEmptyWhitespaceTest() {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
+    public void extendClassPathPropertyNoExtension() throws IOException {
+        Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
+        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
-        String configContent = this.getConfigContent(" ");
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(configContent, properties);
-
-        assertEquals("classpath", properties.getProperty("class.path"));
-    }
-
-    @Test
-    public void extractExtensionPathIntoPropertyNoConfigTest() throws IOException {
-        Properties properties = new Properties();
-        properties.setProperty("class.path", "classpath");
-        GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(null);
-
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("gateway-site-test.xml").getFile());
-
-        gatewayServerClasspathExtender.extractExtensionPathIntoProperty(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8), properties);
+        String configContent = this.getConfigContent(null, null);
+        Files.write(configFilePath, configContent.getBytes(StandardCharsets.UTF_8));
+        gatewayServerClasspathExtender.extendClassPathProperty(properties);
 
         assertEquals("classpath", properties.getProperty("class.path"));
     }
 
-    private String getConfigContent(String extensionValue) {
-        return "<configuration>\n" +
-                "    <property>\n" +
-                "        <name>gateway.server.classpath.extension</name>\n" +
-                "        <value>" + extensionValue + "</value>\n" +
-                "    </property>\n" +
-                "</configuration>";
+    @SuppressWarnings("PMD.InsufficientStringBufferDeclaration")
+    private String getConfigContent(String prependValue, String appendValue) {
+        StringBuilder content = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration>");
+
+        if(prependValue != null) {
+            content.append("<configuration><property><name>gateway.server.prepend.classpath</name><value>");
+            content.append(prependValue);
+            content.append("</value></property></configuration>");
+        }
+
+        if(appendValue != null) {
+            content.append("<configuration><property><name>gateway.server.append.classpath</name><value>");
+            content.append(appendValue);
+            content.append("</value></property></configuration>");
+        }
+        content.append("</configuration>");
+        return content.toString();
+    }
+
+    private Properties getProperties(String classPath, String mainClass) {
+        Properties properties = new Properties();
+        properties.setProperty("class.path", classPath);
+        properties.setProperty("main.class", mainClass);
+        return properties;
     }
 }
