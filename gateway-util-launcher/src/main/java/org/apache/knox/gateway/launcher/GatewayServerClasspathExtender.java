@@ -30,8 +30,10 @@ import java.util.regex.Pattern;
 
 public class GatewayServerClasspathExtender {
 
-    private static final String CLASSPATH_EXTENSION_PROPERTY = "gateway.server.classpath.extension";
-    private static final String CLASSPATH_PROPERTY_PATTERN = "<property>\\s*<name>" + CLASSPATH_EXTENSION_PROPERTY + "</name>\\s*<value>(.*?)</value>\\s*</property>";
+    private static final String CLASSPATH_PREPEND_PROPERTY = "gateway.server.prepend.classpath";
+    private static final String CLASSPATH_APPEND_PROPERTY = "gateway.server.append.classpath";
+    private static final String CLASSPATH_PREPEND_PROPERTY_PATTERN = "<property>\\s*<name>" + CLASSPATH_PREPEND_PROPERTY + "</name>\\s*<value>(.*?)</value>\\s*</property>";
+    private static final String CLASSPATH_APPEND_PROPERTY_PATTERN = "<property>\\s*<name>" + CLASSPATH_APPEND_PROPERTY + "</name>\\s*<value>(.*?)</value>\\s*</property>";
     private static final String CONFIG_FILE = "gateway-site.xml";
     private static final String CONFIG_PATH = "../conf/" + CONFIG_FILE;
     private static final String CLASS_PATH_PROPERTY = "class.path";
@@ -40,7 +42,8 @@ public class GatewayServerClasspathExtender {
     private static final String[] CLASS_PATH_DELIMITERS = new String[]{",", ";"};
 
     private final File base;
-    private final Pattern pattern = Pattern.compile(CLASSPATH_PROPERTY_PATTERN, Pattern.DOTALL);
+    private final Pattern prependPattern = Pattern.compile(CLASSPATH_PREPEND_PROPERTY_PATTERN, Pattern.DOTALL);
+    private final Pattern appendPattern = Pattern.compile(CLASSPATH_APPEND_PROPERTY_PATTERN, Pattern.DOTALL);
 
     public GatewayServerClasspathExtender(File base) {
         this.base = base;
@@ -50,26 +53,50 @@ public class GatewayServerClasspathExtender {
         Path configFilePath = Paths.get(base.getPath(), CONFIG_PATH);
         if (GATEWAY_SERVER_MAIN_CLASS.equals(properties.getProperty(MAIN_CLASS_PROPERTY)) && Files.isReadable(configFilePath)) {
             String configContent = new String(Files.readAllBytes(configFilePath), StandardCharsets.UTF_8);
-            extractExtensionPathIntoProperty(configContent, properties);
+            prependClassPathProperty(configContent, properties);
+            appendClassPathProperty(configContent, properties);
         }
     }
 
-    protected void extractExtensionPathIntoProperty(String configContent, Properties properties) {
-        final Matcher matcher = pattern.matcher(configContent);
-
-        if (matcher.find()) {
-            StringBuilder newClassPath = new StringBuilder(matcher.group(1).trim());
-            if (newClassPath.length() > 0) {
-                if (!endsWithDelimiter(newClassPath.toString())) {
-                    newClassPath.append(CLASS_PATH_DELIMITERS[1]);
-                }
-                newClassPath.append(properties.getProperty(CLASS_PATH_PROPERTY));
-                properties.setProperty(CLASS_PATH_PROPERTY, newClassPath.toString());
+    private void prependClassPathProperty(String configContent, Properties properties) {
+        String prepend = getPropertyFromConfigFile(prependPattern, configContent);
+        if (prepend != null) {
+            StringBuilder newClassPath = new StringBuilder(prepend);
+            if (!endsWithDelimiter(newClassPath.toString())) {
+                newClassPath.append(CLASS_PATH_DELIMITERS[1]);
             }
+            newClassPath.append(properties.getProperty(CLASS_PATH_PROPERTY));
+            properties.setProperty(CLASS_PATH_PROPERTY, newClassPath.toString());
         }
+    }
+
+    private void appendClassPathProperty(String configContent, Properties properties) {
+        String appendage = getPropertyFromConfigFile(appendPattern, configContent);
+        if (appendage != null) {
+            StringBuilder newClassPath = new StringBuilder(properties.getProperty(CLASS_PATH_PROPERTY));
+            if (!startsWithDelimiter(appendage)) {
+                newClassPath.append(CLASS_PATH_DELIMITERS[1]);
+            }
+            newClassPath.append(appendage);
+            properties.setProperty(CLASS_PATH_PROPERTY, newClassPath.toString());
+        }
+    }
+
+    private String getPropertyFromConfigFile(Pattern pattern, String configContent) {
+        String property = null;
+        final Matcher matcher = pattern.matcher(configContent);
+        if (matcher.find() && !matcher.group(1).trim().isEmpty()) {
+            property = matcher.group(1).trim();
+        }
+        return property;
     }
 
     private boolean endsWithDelimiter(String path) {
         return Arrays.stream(CLASS_PATH_DELIMITERS).anyMatch(path::endsWith);
     }
+
+    private boolean startsWithDelimiter(String path) {
+        return Arrays.stream(CLASS_PATH_DELIMITERS).anyMatch(path::startsWith);
+    }
+
 }
