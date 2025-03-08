@@ -33,6 +33,8 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.logging.log4j.ThreadContext;
@@ -80,6 +82,7 @@ public class RemoteAuthFilter implements Filter {
   static final String WILDCARD = "*";
   static final String TRACE_ID = "trace_id";
   static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
+  static final String TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE = "Truststore configuration cannot be resolved into a valid truststore";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -98,9 +101,7 @@ public class RemoteAuthFilter implements Filter {
           AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME );
   private final RemoteAuthMessages LOGGER = MessagesFactory.get( RemoteAuthMessages.class );
 
-  private String truststorePath;
-  private String truststorePassword;
-  private String truststoreType;
+  private KeyStore trustStore;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -112,9 +113,9 @@ public class RemoteAuthFilter implements Filter {
     includeHeaders = Arrays.asList(filterConfig.getInitParameter(CONFIG_INCLUDE_HEADERS).split(","));
     cacheKeyHeader = filterConfig.getInitParameter(CONFIG_CACHE_KEY_HEADER) != null ? filterConfig
             .getInitParameter(CONFIG_CACHE_KEY_HEADER) : DEFAULT_CACHE_KEY_HEADER;
-    String cachetime = filterConfig.getInitParameter(CONFIG_EXPIRE_AFTER);
-    if (cachetime != null) {
-      int expireAfterMinutes = Integer.parseInt(cachetime);
+    String cacheTime = filterConfig.getInitParameter(CONFIG_EXPIRE_AFTER);
+    if (cacheTime != null) {
+      int expireAfterMinutes = Integer.parseInt(cacheTime);
       authenticationCache = CacheBuilder.newBuilder()
               .expireAfterWrite(expireAfterMinutes, TimeUnit.MINUTES)
               .build();
@@ -132,12 +133,74 @@ public class RemoteAuthFilter implements Filter {
       groupHeaders = Arrays.asList(groupHeaderParam.split("\\s*,\\s*"));
     }
 
-    truststorePath = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PATH);
-    truststorePassword = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PASSWORD);
-    truststoreType = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_TYPE);
+    buildTrustStore(filterConfig);
+  }
+
+  private void buildTrustStore(FilterConfig filterConfig) throws ServletException {
+    String truststorePath = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PATH);
+    String truststorePassword = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PASSWORD);
+    String truststoreType = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_TYPE);
     if (truststoreType == null || truststoreType.isEmpty()) {
       truststoreType = DEFAULT_TRUSTSTORE_TYPE;
     }
+
+    ServletContext context = filterConfig.getServletContext();
+    if (context != null) {
+      String topologyName = (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+      GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (services != null) {
+        try {
+          final AliasService aliasService =  services.getService(ServiceType.ALIAS_SERVICE);
+          if (truststorePath != null && !truststorePath.isEmpty()) {
+            if (truststorePassword == null || truststorePassword.isEmpty()) {
+              // let's check for an alias given the intent to specify a truststore path
+              char[] passChars = aliasService.getPasswordFromAliasForCluster(topologyName,
+                      CONFIG_TRUSTSTORE_PASSWORD, false);
+              if (passChars != null) {
+                truststorePassword = new String(passChars);
+              }
+              if (truststorePassword == null || truststorePassword.isEmpty()) {
+                truststorePassword = new String(aliasService.getPasswordFromAliasForGateway(CONFIG_TRUSTSTORE_PASSWORD));
+              }
+            }
+          }
+          KeystoreService keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
+          trustStore = getTrustStore(truststorePath, truststoreType, truststorePassword, keystoreService);
+        } catch (AliasServiceException | IOException e) {
+          throw new ServletException("Error while initializing RemoteAuthProvider", e);
+        }
+      }
+    }
+    if (trustStore == null) {
+      // truststore details were explicitly configured but there is no servlet context available for gateway services
+      throw new ServletException(TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE);
+    }
+  }
+
+  private KeyStore getTrustStore(String truststorePath, String truststoreType, String truststorePassword,
+                                 KeystoreService keystoreService) throws IOException {
+    KeyStore truststore = null;
+    try {
+      // Try topology-specific truststore first if configured
+      if (truststorePath != null && !truststorePath.isEmpty()) {
+        truststore = keystoreService.loadTruststore(truststorePath, truststoreType, truststorePassword);
+        if (truststore == null) {
+          // truststore details were explicitly configured but there is no truststore realized by that config
+          throw new IOException(TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE);
+        }
+      }
+      // Fall back to gateway-level truststore
+      if (truststore == null) {
+        truststore = keystoreService.getTruststoreForHttpClient();
+        if (truststore == null) {
+          truststore = keystoreService.getKeystoreForGateway();
+        }
+      }
+    } catch (KeystoreServiceException e) {
+      LOGGER.failedToLoadTruststore(e.getMessage(), e);
+      throw new IOException("Failed to load truststore: ", e);
+    }
+    return truststore;
   }
 
   public SSLSocketFactory createSSLSocketFactory(KeyStore trustStore) throws Exception {
@@ -164,7 +227,7 @@ public class RemoteAuthFilter implements Filter {
     }
 
     try {
-      HttpURLConnection connection = getHttpURLConnection(request.getServletContext());
+      HttpURLConnection connection = getHttpURLConnection();
       for (String header : includeHeaders) {
         String headerValue = httpRequest.getHeader(header);
         if (headerValue != null) {
@@ -211,22 +274,14 @@ public class RemoteAuthFilter implements Filter {
     }
   }
 
-  private HttpURLConnection getHttpURLConnection(ServletContext servletContext) throws IOException {
-    KeyStore truststore = null;
-    GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    if (services != null) {
-      KeystoreService keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
-      if (keystoreService != null) {
-        truststore = getTrustStore(truststore, keystoreService);
-      }
-    }
+  private HttpURLConnection getHttpURLConnection() throws IOException {
     HttpURLConnection connection;
     if (httpURLConnection == null) {
       URL url = new URL(remoteAuthUrl);
       connection = (HttpURLConnection) url.openConnection();
-      if (truststore != null) {
+      if (trustStore != null) {
         try {
-          ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(truststore));
+          ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(trustStore));
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -237,27 +292,9 @@ public class RemoteAuthFilter implements Filter {
     return connection;
   }
 
-  private KeyStore getTrustStore(KeyStore truststore, KeystoreService keystoreService) throws IOException {
-    try {
-      // Try topology-specific truststore first if configured
-      if (truststorePath != null && !truststorePath.isEmpty()) {
-        truststore = keystoreService.loadTruststore(truststorePath, truststoreType, truststorePassword);
-      }
-      // Fall back to gateway-level truststore
-      if (truststore == null) {
-        truststore = keystoreService.getTruststoreForHttpClient();
-        if (truststore == null) {
-          truststore = keystoreService.getKeystoreForGateway();
-        }
-      }
-    } catch (KeystoreServiceException e) {
-      LOGGER.failedToLoadTruststore(e.getMessage(), e);
-      throw new IOException("Failed to load truststore: ", e);
-    }
-    return truststore;
-  }
-
-  private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+  private void continueWithEstablishedSecurityContext(Subject subject, final HttpServletRequest request,
+                                                      final HttpServletResponse response, final FilterChain chain)
+          throws IOException, ServletException {
     try {
       Subject.doAs(
               subject,
