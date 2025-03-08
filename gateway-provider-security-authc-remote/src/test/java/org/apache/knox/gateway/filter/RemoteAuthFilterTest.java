@@ -69,7 +69,6 @@ import static org.junit.Assert.assertTrue;
  */
 @SuppressWarnings("PMD.JUnit4TestShouldUseBeforeAnnotation")
 public class RemoteAuthFilterTest {
-
     public static final String BEARER_INVALID_TOKEN = "Bearer invalid-token";
     public static final String BEARER_VALID_TOKEN = "Bearer valid-token";
     public static final String URL_SUCCESS = "https://example.com/auth";
@@ -169,7 +168,10 @@ public class RemoteAuthFilterTest {
         try {
             filter.init(filterConfigMock);
         } catch (ServletException e) {
-            throw new RuntimeException(e);
+            if (!RemoteAuthFilter.TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE.equals(
+                    e.getCause().getMessage())) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

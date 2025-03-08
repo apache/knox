@@ -82,6 +82,7 @@ public class RemoteAuthFilter implements Filter {
   static final String WILDCARD = "*";
   static final String TRACE_ID = "trace_id";
   static final String REQUEST_ID_HEADER_NAME = "X-Request-Id";
+  static final String TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE = "Truststore configuration cannot be resolved into a valid truststore";
 
   private String remoteAuthUrl;
   private List<String> includeHeaders;
@@ -152,7 +153,7 @@ public class RemoteAuthFilter implements Filter {
           final AliasService aliasService =  services.getService(ServiceType.ALIAS_SERVICE);
           if (truststorePath != null && !truststorePath.isEmpty()) {
             if (truststorePassword == null || truststorePassword.isEmpty()) {
-              // let's check the for an alias given the intent to specify a truststore path
+              // let's check for an alias given the intent to specify a truststore path
               char[] passChars = aliasService.getPasswordFromAliasForCluster(topologyName,
                       CONFIG_TRUSTSTORE_PASSWORD, false);
               if (passChars != null) {
@@ -169,9 +170,10 @@ public class RemoteAuthFilter implements Filter {
           throw new ServletException("Error while initializing RemoteAuthProvider", e);
         }
       }
-    } else if (truststorePath != null && !truststorePath.isEmpty()) {
+    }
+    if (trustStore == null) {
       // truststore details were explicitly configured but there is no servlet context available for gateway services
-      throw new ServletException("Truststore configuration cannot be resolved into a valid truststore");
+      throw new ServletException(TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE);
     }
   }
 
@@ -182,6 +184,10 @@ public class RemoteAuthFilter implements Filter {
       // Try topology-specific truststore first if configured
       if (truststorePath != null && !truststorePath.isEmpty()) {
         truststore = keystoreService.loadTruststore(truststorePath, truststoreType, truststorePassword);
+        if (truststore == null) {
+          // truststore details were explicitly configured but there is no truststore realized by that config
+          throw new IOException(TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE);
+        }
       }
       // Fall back to gateway-level truststore
       if (truststore == null) {
