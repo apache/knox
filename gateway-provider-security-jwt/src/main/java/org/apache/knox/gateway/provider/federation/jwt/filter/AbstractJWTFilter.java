@@ -47,6 +47,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -252,6 +253,32 @@ public abstract class AbstractJWTFilter implements Filter {
       }
     }
     return valid;
+  }
+
+  /**
+   * Determine whether a given string of characters, presumably a token from the
+   * wire in a request is a JWT token. This will allow us to distibguish between a
+   * JWT and a passcode token when provided as an Authorization Bearer token.
+   * @param token - string to determine whether it is a token
+   * @return - boolean indicating whether it is a JWT or not
+   */
+  public boolean isJWT(String token) {
+    // Check basic structure
+    String[] parts = token.split("\\.");
+    if (parts.length != 3) {
+      return false;
+    }
+
+    try {
+      // Attempt to decode the header
+      String header = new String(Base64.decodeBase64(parts[0]), UTF_8);
+
+      // Check for JWT-specific fields in the header - algorithm should be sufficient
+      return header.contains("\"alg\"");
+    } catch (IllegalArgumentException e) {
+      // Not Base64Url encoded
+      return false;
+    }
   }
 
   protected void continueWithEstablishedSecurityContext(final Subject subject,

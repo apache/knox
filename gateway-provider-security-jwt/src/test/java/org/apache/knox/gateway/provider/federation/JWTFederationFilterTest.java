@@ -43,6 +43,10 @@ import com.nimbusds.jwt.SignedJWT;
 
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
+
+  private static final String BASIC_ = "Basic ";
+  private static final String BEARER_ = "Bearer ";
+
   @Before
   public void setUp() {
     handler = new TestJWTFederationFilter();
@@ -106,19 +110,33 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
   @Test
   public void testVerifyPasscodeTokens() throws Exception {
-    testVerifyPasscodeTokens(true);
+    testVerifyPasscodeTokens(BASIC_, true);
   }
 
   @Test
   public void testVerifyPasscodeTokensTssDisabled() throws Exception {
-    testVerifyPasscodeTokens(false);
+    testVerifyPasscodeTokens(BASIC_, false);
   }
 
-  private void testVerifyPasscodeTokens(boolean tssEnabled) throws Exception {
+  @Test
+  public void testVerifyPasscodeBearerTokens() throws Exception {
+    testVerifyPasscodeTokens(BEARER_, true);
+  }
+
+  @Test
+  public void testVerifyPasscodeBearerTokensTssDisabled() throws Exception {
+    testVerifyPasscodeTokens(BEARER_, false);
+  }
+
+  private void testVerifyPasscodeTokens(String authTokenType, boolean tssEnabled) throws Exception {
     final String topologyName = "jwt-topology";
     final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650a";
     final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f95";
-    final String passcodeToken = "UGFzc2NvZGU6VGtkVmQxbDZWVEJQUjBsMFRtcFZNazlETURCTlJGbDRURmRGZWxwSFRYUk9ha2sxVFVSbmQwOUVZekpPVkVKb09qcE5SRVY2VDBkR2FGcFhVWFJaTWtWNVdWTXdNRTR5V1hoTVZHaHNXa1JuZEZwVVFtcE5lbXN6VGxSck1scHFhekU9";
+    final String passcodeBearerToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJoOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazE=";
+    String passcodeToken = "UGFzc2NvZGU6VGtkVmQxbDZWVEJQUjBsMFRtcFZNazlETURCTlJGbDRURmRGZWxwSFRYUk9ha2sxVFVSbmQwOUVZekpPVkVKb09qcE5SRVY2VDBkR2FGcFhVWFJaTWtWNVdWTXdNRTR5V1hoTVZHaHNXa1JuZEZwVVFtcE5lbXN6VGxSck1scHFhekU9";
+    if (authTokenType.equals(BEARER_)) {
+      passcodeToken = passcodeBearerToken;
+    }
 
     final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
     EasyMock.expect(tokenStateService.getTokenExpiration(tokenId)).andReturn(Long.MAX_VALUE).anyTimes();
@@ -136,7 +154,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
-    EasyMock.expect(request.getHeader("Authorization")).andReturn("Basic " + passcodeToken);
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(authTokenType + passcodeToken);
 
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     if (!tssEnabled) {
