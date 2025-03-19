@@ -44,9 +44,6 @@ import com.nimbusds.jwt.SignedJWT;
 @SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
-  private static final String BASIC_ = "Basic ";
-  private static final String BEARER_ = "Bearer ";
-
   @Before
   public void setUp() {
     handler = new TestJWTFederationFilter();
@@ -110,22 +107,22 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
   @Test
   public void testVerifyPasscodeTokens() throws Exception {
-    testVerifyPasscodeTokens(BASIC_, true);
+    testVerifyPasscodeTokens(JWTFederationFilter.BASIC, true);
   }
 
   @Test
   public void testVerifyPasscodeTokensTssDisabled() throws Exception {
-    testVerifyPasscodeTokens(BASIC_, false);
+    testVerifyPasscodeTokens(JWTFederationFilter.BASIC, false);
   }
 
   @Test
   public void testVerifyPasscodeBearerTokens() throws Exception {
-    testVerifyPasscodeTokens(BEARER_, true);
+    testVerifyPasscodeTokens(JWTFederationFilter.BEARER, true);
   }
 
   @Test
   public void testVerifyPasscodeBearerTokensTssDisabled() throws Exception {
-    testVerifyPasscodeTokens(BEARER_, false);
+    testVerifyPasscodeTokens(JWTFederationFilter.BEARER, false);
   }
 
   private void testVerifyPasscodeTokens(String authTokenType, boolean tssEnabled) throws Exception {
@@ -134,7 +131,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f95";
     final String passcodeBearerToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJoOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazE=";
     String passcodeToken = "UGFzc2NvZGU6VGtkVmQxbDZWVEJQUjBsMFRtcFZNazlETURCTlJGbDRURmRGZWxwSFRYUk9ha2sxVFVSbmQwOUVZekpPVkVKb09qcE5SRVY2VDBkR2FGcFhVWFJaTWtWNVdWTXdNRTR5V1hoTVZHaHNXa1JuZEZwVVFtcE5lbXN6VGxSck1scHFhekU9";
-    if (authTokenType.equals(BEARER_)) {
+    if (authTokenType.equals(JWTFederationFilter.BEARER)) {
       passcodeToken = passcodeBearerToken;
     }
 
