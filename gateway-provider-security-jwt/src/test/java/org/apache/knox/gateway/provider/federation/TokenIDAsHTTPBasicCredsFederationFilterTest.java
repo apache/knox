@@ -351,6 +351,16 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         // Override to disable N/A test
     }
 
+    @Override
+    public void testInvalidAudienceJWTWithNONENotAllowed() throws Exception {
+        // Override to disable N/A test
+    }
+
+    @Override
+    public void testInvalidIssuerViaConfigWithTwoIssuers() throws Exception {
+        // Override to disable N/A test
+    }
+
     /**
      * Very basic TokenStateService implementation for these tests only
      */
