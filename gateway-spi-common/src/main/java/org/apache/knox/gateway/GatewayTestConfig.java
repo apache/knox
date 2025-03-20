@@ -1145,7 +1145,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isStrictTransportEnabled() {
-    return false;
+    return true;
   }
 
   @Override
