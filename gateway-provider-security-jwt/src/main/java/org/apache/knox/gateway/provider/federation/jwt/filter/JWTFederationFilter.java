@@ -279,7 +279,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
               // what follows the bearer designator should be the JWT token being used
               // to request or as an access token
               token = header.substring(BEARER.length());
-              parsed = Pair.of(TokenType.JWT, token);
+
+              // if this appears to be a JWT token then attempt to use it as such
+              // otherwise assume it is a passcode token
+              if (isJWT(token)) {
+                parsed = Pair.of(TokenType.JWT, token);
+              } else {
+                parsed = Pair.of(TokenType.Passcode, token);
+              }
           } else if (header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT))) {
               // what follows the Basic designator should be the JWT token or the unique token ID being used
               // to request or as an access token
