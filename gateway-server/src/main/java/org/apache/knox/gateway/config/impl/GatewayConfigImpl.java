@@ -359,6 +359,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final long JWKS_OUTAGE_CACHE_TTL_DEFAULT = TimeUnit.HOURS.toMillis(2);
   private static final String ISSUER_IGNORE_TYPE_VALIDATION = GATEWAY_CONFIG_FILE_PREFIX + ".token.issuers.ignore.type.validation";
 
+  //Strict-Transport Option
+  public static final boolean DEFAULT_STRICT_TRANSPORT_ENABLED = false;
+  public static final String DEFAULT_STRICT_TRANSPORT_OPTION = "max-age=31536000";
+
+  public static final String STRICT_TRANSPORT_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".strict.transport.enabled";
+  public static final String STRICT_TRANSPORT_OPTION = GATEWAY_CONFIG_FILE_PREFIX + ".strict.transport.option";
+
   public GatewayConfigImpl() {
     init();
   }
@@ -1615,4 +1622,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return getLong(JWKS_OUTAGE_CACHE_TTL, JWKS_OUTAGE_CACHE_TTL_DEFAULT);
   }
 
+  @Override
+  public boolean isStrictTransportEnabled() {
+    return getBoolean(STRICT_TRANSPORT_ENABLED, DEFAULT_STRICT_TRANSPORT_ENABLED);
+  }
+
+  @Override
+  public String getStrictTransportOption() {
+    return get(STRICT_TRANSPORT_OPTION, DEFAULT_STRICT_TRANSPORT_OPTION);
+  }
 }

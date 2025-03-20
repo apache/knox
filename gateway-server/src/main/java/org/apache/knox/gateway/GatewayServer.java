@@ -33,6 +33,7 @@ import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentException;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.filter.CorrelationHandler;
+import org.apache.knox.gateway.filter.HSTSHandler;
 import org.apache.knox.gateway.filter.PortMappingHelperHandler;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
@@ -524,6 +525,12 @@ public class GatewayServer {
     }
 
     handlers.addHandler(logHandler);
+
+    if(config.isStrictTransportEnabled()) {
+      final String strictTransportOption = config.getStrictTransportOption();
+      handlers.addHandler(new HSTSHandler(strictTransportOption));
+      log.strictTransportHeaderEnabled(strictTransportOption);
+    }
 
     if (config.isWebsocketEnabled()) {
       final GatewayWebsocketHandler websocketHandler = new GatewayWebsocketHandler(

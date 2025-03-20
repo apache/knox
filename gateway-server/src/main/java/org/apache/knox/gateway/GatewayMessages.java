@@ -809,4 +809,7 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.INFO, text = "Excluded \"{0}\" topology from client auth" )
   void topologyExcludedFromClientAuth( String topologyName );
+
+  @Message( level = MessageLevel.DEBUG, text = "Strict-Transport-Security header enabled with \"{0}\" option" )
+  void strictTransportHeaderEnabled(String option);
 }

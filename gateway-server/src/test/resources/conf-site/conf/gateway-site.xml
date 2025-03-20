@@ -72,4 +72,14 @@ limitations under the License.
         <value>PKCS12</value>
         <description>type of truststore</description>
     </property>
+
+    <property>
+        <name>gateway.strict.transport.enabled</name>
+        <value>true</value>
+    </property>
+
+    <property>
+        <name>gateway.strict.transport.option</name>
+        <value>max-age=3000</value>
+    </property>
 </configuration>

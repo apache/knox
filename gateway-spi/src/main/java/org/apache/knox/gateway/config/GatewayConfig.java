@@ -971,4 +971,14 @@ public interface GatewayConfig {
    * @return
   */
   Set<String> getIssuersWithIgnoredTypeHeader();
+
+  /**
+   * @return true if the strict transport is enabled; otherwise false
+   */
+  boolean isStrictTransportEnabled();
+
+  /**
+   * @return the strict transport option if set; otherwise return the default value 'max-age=31536000'
+   */
+  String getStrictTransportOption();
 }
