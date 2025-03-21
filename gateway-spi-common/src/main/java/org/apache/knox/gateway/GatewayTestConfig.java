@@ -1143,4 +1143,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return Collections.emptySet();
   }
 
+  @Override
+  public boolean isStrictTransportEnabled() {
+    return true;
+  }
+
+  @Override
+  public String getStrictTransportOption() {
+    return "max-age=3001";
+  }
 }

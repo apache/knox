@@ -79,7 +79,7 @@ public class GatewayGlobalConfigTest {
   public void testSiteConfigWithDifferentTopologyExcluded() {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-site/conf/gateway-site.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
-    assertThat( config.isClientAuthNeeded(), is( true ) );
+    assertTrue( config.isClientAuthNeeded() );
     assertFalse( config.isTopologyExcludedFromClientAuth("different"));
   }
 
@@ -198,5 +198,21 @@ public class GatewayGlobalConfigTest {
     System.setProperty(GatewayConfigImpl.GATEWAY_HOME_VAR, homeDirName);
     config = new GatewayConfigImpl();
     assertEquals("target/test", config.getGatewayServicesDir());
+  }
+
+  @Test
+  public void testSiteConfigWithStrictTransportEnabled() {
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-site/conf/gateway-site.xml" ) );
+    GatewayConfig config = new GatewayConfigImpl();
+    assertTrue(config.isStrictTransportEnabled());
+    assertEquals("max-age=3000", config.getStrictTransportOption());
+  }
+
+  @Test
+  public void testSiteConfigWithStrictTransportDisabled() {
+    System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-demo/conf/gateway-site.xml" ) );
+    GatewayConfig config = new GatewayConfigImpl();
+    assertFalse(config.isStrictTransportEnabled());
+    assertEquals("max-age=31536000", config.getStrictTransportOption());
   }
 }
