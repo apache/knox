@@ -213,6 +213,6 @@ public class GatewayGlobalConfigTest {
     System.setProperty( GatewayConfigImpl.GATEWAY_HOME_VAR, getHomeDirName( "conf-demo/conf/gateway-site.xml" ) );
     GatewayConfig config = new GatewayConfigImpl();
     assertFalse(config.isStrictTransportEnabled());
-    assertEquals("max-age=31536000", config.getStrictTransportOption());
+    assertEquals("max-age=31536000; includeSubDomains", config.getStrictTransportOption());
   }
 }

@@ -361,7 +361,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   //Strict-Transport Option
   public static final boolean DEFAULT_STRICT_TRANSPORT_ENABLED = false;
-  public static final String DEFAULT_STRICT_TRANSPORT_OPTION = "max-age=31536000";
+  public static final String DEFAULT_STRICT_TRANSPORT_OPTION = "max-age=31536000; includeSubDomains";
 
   public static final String STRICT_TRANSPORT_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".strict.transport.enabled";
   public static final String STRICT_TRANSPORT_OPTION = GATEWAY_CONFIG_FILE_PREFIX + ".strict.transport.option";

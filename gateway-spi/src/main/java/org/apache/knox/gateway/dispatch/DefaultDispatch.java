@@ -68,6 +68,7 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
   /* list of cookies that should be blocked when set-cookie header is allowed */
   protected static final Set<String> EXCLUDE_SET_COOKIES_DEFAULT = new HashSet<>(Arrays.asList("hadoop.auth", "hive.server2.auth", "impala.auth"));
 
+  protected static final String STRICT_TRANSPORT_SECURITY = "Strict-Transport-Security";
 
   protected static final SpiGatewayMessages LOG = MessagesFactory.get(SpiGatewayMessages.class);
   protected static final SpiGatewayResources RES = ResourcesFactory.get(SpiGatewayResources.class);
@@ -359,6 +360,10 @@ public class DefaultDispatch extends AbstractGatewayDispatch {
     getOutboundResponseExcludeHeaders().stream().forEach(excludeHeader ->
         excludedHeaderDirectives.put(excludeHeader, Collections.singleton(EXCLUDE_ALL)));
     excludedHeaderDirectives.put(SET_COOKIE, getOutboundResponseExcludedSetCookieHeaderDirectives());
+    //If HSTS header is already present in the response we skip adding it to avoid any duplication
+    if(outboundResponse.containsHeader(STRICT_TRANSPORT_SECURITY)) {
+        excludedHeaderDirectives.put(STRICT_TRANSPORT_SECURITY, Collections.singleton(EXCLUDE_ALL));
+    }
 
     for (Header header : inboundResponse.getAllHeaders()) {
       boolean isBlockedAuthHeader = Arrays.stream(header.getElements()).anyMatch(h -> EXCLUDE_SET_COOKIES_DEFAULT.contains(h.getName()) && getOutboundResponseExcludedSetCookieHeaderDirectives().contains(h.getName()) );
