@@ -38,6 +38,9 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.message.BasicHeader;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.knox.test.TestUtils;
@@ -241,4 +244,47 @@ public class DefaultDispatchTest {
 
   }
 
+  @Test
+  public void testCopyResponseHeaderFieldsCopyHSTS() {
+    HttpServletResponse outboundResponse = EasyMock.createMock(HttpServletResponse.class);
+    HttpResponse inboundResponse = EasyMock.createMock(HttpResponse.class);
+    Header[] headers = {
+            new BasicHeader(DefaultDispatch.STRICT_TRANSPORT_SECURITY, "max-age=300"),
+            new BasicHeader("Test", "test")
+    };
+
+    EasyMock.expect(outboundResponse.containsHeader(DefaultDispatch.STRICT_TRANSPORT_SECURITY)).andReturn(false).once();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).once();
+    outboundResponse.addHeader(DefaultDispatch.STRICT_TRANSPORT_SECURITY, "max-age=300");
+    EasyMock.expectLastCall().once();
+    outboundResponse.addHeader("Test", "test");
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(outboundResponse, inboundResponse);
+
+    DefaultDispatch dispatch = new DefaultDispatch();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    EasyMock.verify(outboundResponse, inboundResponse);
+  }
+
+  @Test
+  public void testCopyResponseHeaderFieldsNoCopyHSTS() {
+    HttpServletResponse outboundResponse = EasyMock.createMock(HttpServletResponse.class);
+    HttpResponse inboundResponse = EasyMock.createMock(HttpResponse.class);
+    Header[] headers = {
+            new BasicHeader(DefaultDispatch.STRICT_TRANSPORT_SECURITY, "max-age=300"),
+            new BasicHeader("Test", "test")
+    };
+
+    EasyMock.expect(outboundResponse.containsHeader(DefaultDispatch.STRICT_TRANSPORT_SECURITY)).andReturn(true).once();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(headers).once();
+    outboundResponse.addHeader("Test", "test");
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(outboundResponse, inboundResponse);
+
+    DefaultDispatch dispatch = new DefaultDispatch();
+    dispatch.copyResponseHeaderFields(outboundResponse, inboundResponse);
+
+    EasyMock.verify(outboundResponse, inboundResponse);
+  }
 }
