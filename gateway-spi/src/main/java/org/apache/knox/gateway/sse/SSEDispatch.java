@@ -98,16 +98,17 @@ public class SSEDispatch extends ConfigurableDispatch {
     private void doHttpMethod(HttpUriRequest httpMethod, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
         this.addAcceptHeader(httpMethod);
         this.copyRequestHeaderFields(httpMethod, inboundRequest);
-        this.executeRequest(httpMethod, outboundResponse, inboundRequest);
+        this.executeRequestWrapper(httpMethod, inboundRequest, outboundResponse);
     }
 
-    private void executeRequest(HttpUriRequest outboundRequest, HttpServletResponse outboundResponse, HttpServletRequest inboundRequest) {
+    @Override
+    protected void executeRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
         AsyncContext asyncContext = inboundRequest.startAsync();
         //No timeout
         asyncContext.setTimeout(0L);
 
         HttpAsyncRequestProducer producer = HttpAsyncMethods.create(outboundRequest);
-        AsyncCharConsumer<SSEResponse> consumer = new SSECharConsumer(outboundResponse, outboundRequest.getURI(), asyncContext);
+        AsyncCharConsumer<SSEResponse> consumer = new SSECharConsumer(outboundResponse, outboundRequest.getURI(), asyncContext, inboundRequest, outboundRequest);
         this.executeAsyncRequest(producer, consumer, outboundRequest);
     }
 
@@ -174,11 +175,15 @@ public class SSEDispatch extends ConfigurableDispatch {
     private class SSECharConsumer extends AsyncCharConsumer<SSEResponse> {
         private SSEResponse sseResponse;
         private final HttpServletResponse outboundResponse;
+        private final HttpUriRequest outboundRequest;
+        private final HttpServletRequest inboundRequest;
         private final URI url;
         private final AsyncContext asyncContext;
 
-        SSECharConsumer(HttpServletResponse outboundResponse, URI url, AsyncContext asyncContext) {
+        SSECharConsumer(HttpServletResponse outboundResponse, URI url, AsyncContext asyncContext, HttpServletRequest inboundRequest, HttpUriRequest outboundRequest) {
             this.outboundResponse = outboundResponse;
+            this.outboundRequest = outboundRequest;
+            this.inboundRequest = inboundRequest;
             this.url = url;
             this.asyncContext = asyncContext;
         }
@@ -187,6 +192,7 @@ public class SSEDispatch extends ConfigurableDispatch {
         protected void onResponseReceived(final HttpResponse inboundResponse) {
             this.sseResponse = new SSEResponse(inboundResponse);
             if (isSuccessful(inboundResponse.getStatusLine().getStatusCode())) {
+                outboundResponseWrapper(outboundRequest, inboundRequest, outboundResponse);
                 handleSuccessResponse(outboundResponse, url, inboundResponse);
             } else {
                 handleErrorResponse(outboundResponse, url, inboundResponse);
