@@ -1071,7 +1071,7 @@ public class TokenResource {
     return groups;
   }
 
-  private void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
+  protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
     final Enumeration<String> paramNames = request.getParameterNames();
     while (paramNames.hasMoreElements()) {
       final String paramName = paramNames.nextElement();

@@ -1394,6 +1394,25 @@ public class TokenServiceResourceTest {
     assertFalse(payload.containsKey(KNOX_GROUPS_CLAIM));
   }
 
+  @Test
+  public void testClientCredentialsResponse() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    ClientCredentialsResource ccr = new ClientCredentialsResource();
+    ccr.request = request;
+    ccr.context = context;
+    ccr.init();
+
+    Response response = ccr.doPost();
+    assertEquals(200, response.getStatus());
+
+    String clientId = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_ID);
+    assertNotNull(clientId);
+    String clientSecret = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_SECRET);
+    assertNotNull(clientSecret);
+  }
+
   /**
    *
    * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
