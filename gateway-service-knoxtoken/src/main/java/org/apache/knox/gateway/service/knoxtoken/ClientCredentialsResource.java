@@ -75,7 +75,7 @@ public class ClientCredentialsResource extends TokenResource {
 
         TokenResponseContext resp = getTokenResponse(context);
         if (resp.responseMap != null) {
-            String passcode = resp.responseMap.passcode;
+            String passcode = (String) resp.responseMap.map.get(PASSCODE);
             String tokenId = resp.responseMap.tokenId;
 
             final HashMap<String, Object> map = new HashMap<>();
