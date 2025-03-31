@@ -134,6 +134,11 @@
             <artifactId>log4j-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+        </dependency>
+
         <!-- ********** ********** ********** ********** ********** ********** -->
         <!-- ********** Test Dependencies                           ********** -->
         <!-- ********** ********** ********** ********** ********** ********** -->
