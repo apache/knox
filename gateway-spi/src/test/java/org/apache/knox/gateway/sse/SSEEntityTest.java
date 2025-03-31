@@ -50,7 +50,7 @@ public class SSEEntityTest {
         assertEquals("event", actualSSEvent.getEvent());
         assertEquals("data", actualSSEvent.getData());
         assertEquals(1L, actualSSEvent.getRetry().longValue());
-        assertEquals(":testing", actualSSEvent.getComment());
+        assertEquals("testing", actualSSEvent.getComment());
     }
 
     @Test
@@ -83,7 +83,7 @@ public class SSEEntityTest {
         assertEquals("event3", actualSSEvent.getEvent());
         assertEquals("data3", actualSSEvent.getData());
         assertEquals(1045L, actualSSEvent.getRetry().longValue());
-        assertEquals(":TEST", actualSSEvent.getComment());
+        assertEquals("TEST", actualSSEvent.getComment());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class SSEEntityTest {
         assertNull(actualSSEvent.getEvent());
         assertEquals("data:{\"records\":[{\"col_str\":\"0e01eeef73f6833a98e1df6a5a00ea46f5b52dbee27ee89ebce894aaa555c90130b08fae8aaf600ef845b774ab0082fcaf8c\",\"col_int\":-580163093,\"col_ts\":\"2024-08-14T07:41:15.125\"}],\"job_status\":\"RUNNING\",\"end_of_samples\":false}", actualSSEvent.getData());
         assertEquals(33L, actualSSEvent.getRetry().longValue());
-        assertEquals("::::test", actualSSEvent.getComment());
+        assertEquals(":::test", actualSSEvent.getComment());
     }
 
     @Test
@@ -159,5 +159,24 @@ public class SSEEntityTest {
         assertEquals("4", actualSSEvent.getId());
         assertEquals("event4", actualSSEvent.getEvent());
         assertEquals("data4", actualSSEvent.getData());
+    }
+
+    @Test
+    public void testParseSingleEventTrim() {
+        SSEEntity sseEntity = new SSEEntity(entityMock);
+        BlockingQueue<SSEvent> eventQueue = sseEntity.getEventQueue();
+        String unprocessedEvent = " id : 1 \n event : event \n data : data \n retry : 1 \n : testing \n\n";
+        CharBuffer cb = CharBuffer.wrap(unprocessedEvent);
+
+        sseEntity.readCharBuffer(cb);
+
+        assertFalse(eventQueue.isEmpty());
+
+        SSEvent actualSSEvent = eventQueue.peek();
+        assertEquals("1", actualSSEvent.getId());
+        assertEquals("event", actualSSEvent.getEvent());
+        assertEquals("data", actualSSEvent.getData());
+        assertEquals(1L, actualSSEvent.getRetry().longValue());
+        assertEquals("testing", actualSSEvent.getComment());
     }
 }

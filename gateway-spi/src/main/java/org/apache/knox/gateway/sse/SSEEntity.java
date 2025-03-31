@@ -30,8 +30,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class SSEEntity extends AbstractHttpEntity {
 
-    private static final String SSE_DELIMITER = ":";
-
     private final BlockingQueue<SSEvent> eventQueue;
     private final StringBuilder eventBuilder = new StringBuilder();
     private final HttpEntity httpEntity;
@@ -68,43 +66,8 @@ public class SSEEntity extends AbstractHttpEntity {
 
     private void processEvent() {
         String unprocessedEvent = eventBuilder.toString();
-        SSEvent ssEvent = new SSEvent();
-
-        for (String line : unprocessedEvent.split("\\R")) {
-            String[] lineTokens =  this.parseLine(line);
-            switch (lineTokens[0]) {
-                case "id":
-                    ssEvent.setId(lineTokens[1].trim());
-                    break;
-                case "event":
-                    ssEvent.setEvent(lineTokens[1].trim());
-                    break;
-                case "data":
-                    ssEvent.setData(lineTokens[1].trim());
-                    break;
-                case "comment":
-                    ssEvent.setComment(lineTokens[1].trim());
-                    break;
-                case "retry":
-                    ssEvent.setRetry(Long.parseLong(lineTokens[1].trim()));
-                    break;
-                default:
-                    break;
-            }
-        }
+        SSEvent ssEvent = SSEvent.fromString(unprocessedEvent);
         eventQueue.add(ssEvent);
-    }
-
-    private String[] parseLine(String line) {
-        String[] lineTokens = new String[2];
-        if(line.startsWith(SSE_DELIMITER)) {
-            lineTokens[0] = "comment";
-            lineTokens[1] = line;
-        } else {
-            lineTokens = line.split(SSE_DELIMITER, 2);
-        }
-
-        return lineTokens;
     }
 
     public void sendEvent(AsyncContext asyncContext) throws IOException, InterruptedException {
