@@ -295,6 +295,7 @@
         <zookeeper.version>3.8.4</zookeeper.version>
         <docker-maven-plugin.version>0.45.0</docker-maven-plugin.version>
         <docker.platforms>linux/amd64,linux/arm64</docker.platforms>
+        <snakeyaml.version>2.4</snakeyaml.version>
     </properties>
     <repositories>
         <repository>
@@ -2277,6 +2278,11 @@
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
                 <version>${swagger-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>
