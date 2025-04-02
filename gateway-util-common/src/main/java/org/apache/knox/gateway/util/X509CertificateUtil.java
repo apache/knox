@@ -64,7 +64,7 @@ public class X509CertificateUtil {
    * @param dn the X.509 Distinguished Name, eg "CN=Test, L=London, C=GB"
    * @param pair the KeyPair
    * @param days how many days from now the Certificate is valid for
-   * @param algorithm the signing algorithm, eg "SHA1withRSA"
+   * @param algorithm the signing algorithm, eg "SHA256withRSA"
    * @return self-signed X.509 certificate
    */
   public static X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm) {

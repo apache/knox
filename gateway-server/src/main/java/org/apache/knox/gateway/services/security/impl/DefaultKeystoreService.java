@@ -196,11 +196,11 @@ public class DefaultKeystoreService implements KeystoreService {
       X509Certificate cert;
       if(hostname.equals(CERT_GEN_MODE_HOSTNAME)) {
         String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA256withRSA");
       }
       else {
         String dn = buildDistinguishedName(hostname);
-        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA1withRSA");
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA256withRSA");
       }
 
       KeyStore privateKS = getKeystoreForGateway();
