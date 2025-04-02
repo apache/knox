@@ -827,7 +827,7 @@ public class DefaultKeystoreServiceTest {
         String.format(Locale.ROOT, "CN=%s,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", this.getClass().getName()),
         keyPair,
         365,
-        "SHA1withRSA");
+        "SHA256withRSA");
 
     keystore.setKeyEntry(alias, keyPair.getPrivate(),
         password,
