@@ -46,6 +46,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -118,7 +119,7 @@ public class TokenResource {
   private static final String ENDPOINT_PUBLIC_CERT = "endpoint_public_cert";
   protected static final String BEARER = "Bearer";
   private static final String TOKEN_PARAM_PREFIX = "knox.token.";
-  private static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
+  protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
@@ -219,8 +220,13 @@ public class TokenResource {
     }
   }
 
+  protected ServletContext wrapContextForDefaultParams(ServletContext context) throws ServletException {
+    return context;
+  }
+
   @PostConstruct
-  public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException {
+  public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException, ServletException {
+    context = wrapContextForDefaultParams(this.context);
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
@@ -283,7 +289,7 @@ public class TokenResource {
     }
 
     // If server-managed token expiration is configured, set the token state service
-    if (isServerManagedTokenStateEnabled()) {
+    if (isServerManagedTokenStateEnabled(context)) {
       String topologyName = getTopologyName();
       log.serverManagedTokenStateEnabled(topologyName);
 
@@ -358,9 +364,9 @@ public class TokenResource {
   }
 
   private void setTokenStateServiceStatusMap() {
-    if (isServerManagedTokenStateEnabled()) {
+    if (isServerManagedTokenStateEnabled(context)) {
       tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "true");
-      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
       final String configuredTokenStateServiceImpl = config.getServiceParameter(ServiceType.TOKEN_STATE_SERVICE.getShortName(), "impl");
       final String configuredTokenServiceName = StringUtils.isBlank(configuredTokenStateServiceImpl) ? ""
               : configuredTokenStateServiceImpl.substring(configuredTokenStateServiceImpl.lastIndexOf('.') + 1);
@@ -417,7 +423,7 @@ public class TokenResource {
             .contains(JWSAlgorithm.parse(algName));
   }
 
-  private boolean isServerManagedTokenStateEnabled() {
+  private boolean isServerManagedTokenStateEnabled(ServletContext context) {
     boolean isServerManaged;
 
     // First, check for explicit service-level configuration

@@ -65,6 +65,7 @@ import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -1606,7 +1607,7 @@ public class TokenServiceResourceTest {
     return new AbstractMap.SimpleEntry<>(tss, response);
   }
 
-  private String getAccessToken(TokenResource tokenResource) throws KeyLengthException, AliasServiceException, ServiceLifecycleException {
+  private String getAccessToken(TokenResource tokenResource) throws KeyLengthException, AliasServiceException, ServiceLifecycleException, ServletException {
     tokenResource.request = request;
     tokenResource.context = context;
     tokenResource.init();
