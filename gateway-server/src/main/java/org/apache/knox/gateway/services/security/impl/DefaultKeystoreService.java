@@ -89,6 +89,7 @@ public class DefaultKeystoreService implements KeystoreService {
   private Path keyStoreDirPath;
 
   private String credentialStoreAlgorithm;
+  private String credentialSelfSigningAlgorithm;
   private String credentialStoreType;
   private String credentialsSuffix;
 
@@ -117,6 +118,7 @@ public class DefaultKeystoreService implements KeystoreService {
     }
 
     this.credentialStoreAlgorithm = config.getCredentialStoreAlgorithm();
+    this.credentialSelfSigningAlgorithm = config.getCredentialSelfSigningAlgorithm();
     this.credentialStoreType = config.getCredentialStoreType();
     this.credentialsSuffix = CREDENTIALS_SUFFIX + this.credentialStoreType.toLowerCase(Locale.ROOT);
   }
@@ -196,11 +198,11 @@ public class DefaultKeystoreService implements KeystoreService {
       X509Certificate cert;
       if(hostname.equals(CERT_GEN_MODE_HOSTNAME)) {
         String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA256withRSA");
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, this.credentialSelfSigningAlgorithm);
       }
       else {
         String dn = buildDistinguishedName(hostname);
-        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, "SHA256withRSA");
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, this.credentialSelfSigningAlgorithm);
       }
 
       KeyStore privateKS = getKeystoreForGateway();

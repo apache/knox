@@ -379,6 +379,7 @@ public class WebsocketMultipleConnectionTest {
 
     EasyMock.expect(gatewayConfig.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(gatewayConfig.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(gatewayConfig.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     EasyMock.replay(gatewayConfig);
 

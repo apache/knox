@@ -801,6 +801,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getCredentialSelfSigningAlgorithm() {
+    return get(CREDENTIAL_SELF_SIGNING_ALG, DEFAULT_CREDENTIAL_SELF_SIGNING_ALG);
+  }
+
+  @Override
   public String getCredentialStoreType() {
     return get(CREDENTIAL_STORE_TYPE, DEFAULT_CREDENTIAL_STORE_TYPE);
   }

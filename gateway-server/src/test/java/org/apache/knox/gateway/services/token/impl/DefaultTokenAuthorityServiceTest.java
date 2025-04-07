@@ -66,6 +66,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -115,6 +116,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -165,6 +167,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -213,6 +216,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -262,6 +266,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
@@ -316,6 +321,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
 
@@ -371,6 +377,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -414,6 +421,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -462,6 +470,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("invalid_password".toCharArray()).atLeastOnce();
@@ -510,6 +519,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -558,6 +568,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray()).atLeastOnce();
@@ -606,6 +617,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
+    EasyMock.expect(config.getCredentialSelfSigningAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG).anyTimes();
 
     MasterService ms = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(ms.getMasterSecret()).andReturn("horton".toCharArray());
