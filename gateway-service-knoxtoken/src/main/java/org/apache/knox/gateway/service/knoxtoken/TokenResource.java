@@ -226,7 +226,7 @@ public class TokenResource {
 
   @PostConstruct
   public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException, ServletException {
-    ServletContext context = wrapContextForDefaultParams(this.context);
+    context = wrapContextForDefaultParams(this.context);
 
     String audiences = context.getInitParameter(TOKEN_AUDIENCES_PARAM);
     if (audiences != null) {
@@ -334,7 +334,7 @@ public class TokenResource {
         log.noRenewersConfigured(topologyName);
       }
     }
-    setTokenStateServiceStatusMap(context);
+    setTokenStateServiceStatusMap();
   }
 
   private String getTokenTTLAsText() {
@@ -363,7 +363,7 @@ public class TokenResource {
     return sb.toString();
   }
 
-  private void setTokenStateServiceStatusMap(ServletContext context) {
+  private void setTokenStateServiceStatusMap() {
     if (isServerManagedTokenStateEnabled(context)) {
       tokenStateServiceStatusMap.put(TSS_STATUS_IS_MANAGEMENT_ENABLED, "true");
       final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);

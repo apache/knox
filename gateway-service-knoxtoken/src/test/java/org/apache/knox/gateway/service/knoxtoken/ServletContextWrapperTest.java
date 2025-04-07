@@ -96,6 +96,37 @@ public class ServletContextWrapperTest {
     }
 
     @Test
+    public void testGetInitParameterNamesWithDupes() {
+        wrapper.setInitParameter("testParam", "testValue");
+        EasyMock.expect(mockDelegate.getInitParameterNames()).andReturn(new Enumeration<String>() {
+            private final String[] elements = {"delegateParam", "testParam"};
+            private int index;
+
+            @Override
+            public boolean hasMoreElements() {
+                return index < elements.length;
+            }
+
+            @Override
+            public String nextElement() {
+                return elements[index++];
+            }
+        });
+        EasyMock.replay(mockDelegate);
+
+        Enumeration<String> paramNames = wrapper.getInitParameterNames();
+        Map<String, Boolean> paramMap = new HashMap<>();
+        while (paramNames.hasMoreElements()) {
+            paramMap.put(paramNames.nextElement(), true);
+        }
+
+        assertTrue(paramMap.containsKey("testParam"));
+        assertTrue(paramMap.containsKey("delegateParam"));
+        assertEquals(2, paramMap.size());
+        EasyMock.verify(mockDelegate);
+    }
+
+    @Test
     public void testSetInitParameter() {
         assertTrue(wrapper.setInitParameter("newParam", "newValue"));
         assertEquals("newValue", wrapper.getInitParameter("newParam"));
