@@ -74,7 +74,7 @@ public class SSEHaDispatchTest {
 
     @Test
     public void testHADispatchURL() throws Exception {
-        String serviceName = "HIVE";
+        String serviceName = "SSE";
         HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
         descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", null, null, null, null, "true", "true", null, null, null, null));
         HaProvider provider = new DefaultHaProvider(descriptor);
@@ -155,7 +155,7 @@ public class SSEHaDispatchTest {
         latch.await(1L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("KNOX_BACKEND-HIVE", capturedArgument.getValue().getName());
+        assertEquals("KNOX_BACKEND-SSE", capturedArgument.getValue().getName());
     }
 
     @Test
@@ -186,11 +186,74 @@ public class SSEHaDispatchTest {
         latch.await(1L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("COOKIE_NAME-HIVE", capturedArgument.getValue().getName());
+        assertEquals("COOKIE_NAME-SSE", capturedArgument.getValue().getName());
     }
 
     @Test
     public void testLoadBalancingWithoutStickySessionCookie() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        SSEHaDispatch sseHaDispatch = this.createDispatch(null);
+        PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
+        HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
+        AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
+        HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
+        Capture<Cookie> capturedArgument = Capture.newInstance();
+        expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
+        this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
+        replay(inboundRequest, asyncContext, outboundResponse, printWriter);
+
+        MOCK_SSE_SERVER.expect()
+                .method("GET")
+                .pathInfo("/sse")
+                .header("Accept", "text/event-stream")
+                .respond()
+                .status(HttpStatus.SC_OK)
+                .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
+                .header("response", "header")
+                .contentType("text/event-stream");
+
+        sseHaDispatch.doGet(URL, inboundRequest, outboundResponse);
+
+        latch.await(1L, TimeUnit.SECONDS);
+        EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
+        assertTrue(MOCK_SSE_SERVER.isEmpty());
+        assertEquals("http://host2:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+    }
+
+    @Test
+    public void testLoadBalancingDisabledWithUserAgent() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        SSEHaDispatch sseHaDispatch = this.createDispatch(null);
+        PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
+        HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
+        AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
+        HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
+        expect(inboundRequest.getHeader("User-Agent")).andReturn("user1").anyTimes();
+        Capture<Cookie> capturedArgument = Capture.newInstance();
+
+        this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
+        replay(inboundRequest, asyncContext, outboundResponse, printWriter);
+
+        MOCK_SSE_SERVER.expect()
+                .method("GET")
+                .pathInfo("/sse")
+                .header("Accept", "text/event-stream")
+                .respond()
+                .status(HttpStatus.SC_OK)
+                .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
+                .header("response", "header")
+                .contentType("text/event-stream");
+
+        sseHaDispatch.doGet(URL, inboundRequest, outboundResponse);
+
+        latch.await(1L, TimeUnit.SECONDS);
+        EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
+        assertTrue(MOCK_SSE_SERVER.isEmpty());
+        assertEquals("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+    }
+
+    @Test
+    public void testLoadBalancingDisabledWithStickySession() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         SSEHaDispatch sseHaDispatch = this.createDispatch(null);
         PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
@@ -213,11 +276,39 @@ public class SSEHaDispatchTest {
                 .contentType("text/event-stream");
 
         sseHaDispatch.doGet(URL, inboundRequest, outboundResponse);
-
         latch.await(1L, TimeUnit.SECONDS);
-        EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
+        assertEquals("http://host2:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+
+
+        //Second request, sticky session cookie included
+        CountDownLatch latch2 = new CountDownLatch(1);
+        Cookie[] cookies = new Cookie[1];
+        cookies[0] = new Cookie(capturedArgument.getValue().getName(), capturedArgument.getValue().getValue());
+        PrintWriter printWriter2 = EasyMock.createNiceMock(PrintWriter.class);
+        HttpServletResponse outboundResponse2 = this.getServletResponse(HttpStatus.SC_OK);
+        AsyncContext asyncContext2 = this.getAsyncContext(latch2, outboundResponse2);
+        Capture<Cookie> capturedArgument2 = Capture.newInstance();
+        this.expectResponseBodyAndHeader(printWriter2, outboundResponse2, capturedArgument2);
+        HttpServletRequest inboundRequest2 = this.getHttpServletRequest(asyncContext2);
+        expect(inboundRequest2.getCookies()).andReturn(cookies).anyTimes();
+        replay(inboundRequest2, asyncContext2, outboundResponse2, printWriter2);
+
+        MOCK_SSE_SERVER.expect()
+                .method("GET")
+                .pathInfo("/sse")
+                .header("Accept", "text/event-stream")
+                .respond()
+                .status(HttpStatus.SC_OK)
+                .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
+                .header("response", "header")
+                .contentType("text/event-stream");
+
+        sseHaDispatch.doGet(URL, inboundRequest2, outboundResponse2);
+        latch2.await(1L, TimeUnit.SECONDS);
+
+        EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter, inboundRequest2);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse2", sseHaDispatch.getHaProvider().getActiveURL("HIVE"));
+        assertEquals("http://host2:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
     }
 
     private SSEHaDispatch createDispatch(String cookieName) throws Exception {
@@ -254,7 +345,7 @@ public class SSEHaDispatchTest {
 
         SSEHaDispatch dispatch = new SSEHaDispatch(filterConfig);
         dispatch.setHaProvider(provider);
-        dispatch.setServiceRole("HIVE");
+        dispatch.setServiceRole("SSE");
         dispatch.init();
 
         return dispatch;
@@ -313,13 +404,13 @@ public class SSEHaDispatchTest {
     }
 
     private HaProvider createProvider(String cookieName) throws Exception {
-        String serviceName = "HIVE";
+        String serviceName = "SSE";
         HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
-        descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", null, null, null, null, "true", "true", cookieName, null, null, null));
+        descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", null, null, null, null, "true", "true", cookieName, null, "agentX,user1,agentY", null));
         HaProvider provider = new DefaultHaProvider(descriptor);
         URI uri1 = new URI("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse");
-        URI uri2 = new URI("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse2");
-        URI uri3 = new URI("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse3");
+        URI uri2 = new URI("http://host2:3333/sse");
+        URI uri3 = new URI("http://host3:3333/sse");
         ArrayList<String> urlList = new ArrayList<>();
         urlList.add(uri1.toString());
         urlList.add(uri2.toString());
