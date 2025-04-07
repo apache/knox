@@ -801,8 +801,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getCredentialSelfSigningAlgorithm() {
-    return get(CREDENTIAL_SELF_SIGNING_ALG, DEFAULT_CREDENTIAL_SELF_SIGNING_ALG);
+  public String getSelfSigningCertificateAlgorithm() {
+    return get(SELF_SIGNING_CERT_ALG, DEFAULT_SELF_SIGNING_CERT_ALG);
   }
 
   @Override

@@ -108,7 +108,7 @@ public abstract class AbstractJWTFilterTest  {
     kpg.initialize(2048);
     KeyPair KPair = kpg.generateKeyPair();
     String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-    Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG);
+    Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG);
     byte[] data = cert.getEncoded();
     Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
     pem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
@@ -656,7 +656,7 @@ public abstract class AbstractJWTFilterTest  {
 
       KeyPair KPair = kpg.generateKeyPair();
       String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG );
+      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG );
       byte[] data = cert.getEncoded();
       Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
       String failingPem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
@@ -712,7 +712,7 @@ public abstract class AbstractJWTFilterTest  {
 
       KeyPair KPair = kpg.generateKeyPair();
       String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG);
+      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG);
       byte[] data = cert.getEncoded();
       Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
       String failingPem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
@@ -771,7 +771,7 @@ public abstract class AbstractJWTFilterTest  {
 
       KeyPair KPair = kpg.generateKeyPair();
       String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG);
+      Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG);
       byte[] data = cert.getEncoded();
       Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
       String failingPem = new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
@@ -866,7 +866,7 @@ public abstract class AbstractJWTFilterTest  {
 
     KeyPair KPair = kpg.generateKeyPair();
     String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-    Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_CREDENTIAL_SELF_SIGNING_ALG);
+    Certificate cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG);
     byte[] data = cert.getEncoded();
     Base64 encoder = new Base64( 76, "\n".getBytes( StandardCharsets.US_ASCII ) );
     return new String(encoder.encodeToString( data ).getBytes( StandardCharsets.US_ASCII ), StandardCharsets.US_ASCII).trim();
