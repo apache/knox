@@ -32,13 +32,13 @@ import java.util.HashMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
-@Path(ClientCredentialsResource.RESOURCE_PATH)
+@Path(APIKeyResource.RESOURCE_PATH)
 @Singleton
-public class ClientCredentialsResource extends PasscodeTokenResourceBase {
+public class APIKeyResource extends PasscodeTokenResourceBase {
     private static final String TYPE = "type";
-    public static final String RESOURCE_PATH = "clientid/api/v1/oauth/credentials";
-    public static final String CLIENT_ID = "client_id";
-    public static final String CLIENT_SECRET = "client_secret";
+    public static final String RESOURCE_PATH = "apikey/api/v1/auth/key";
+    public static final String API_KEY = "api_key";
+    public static final String KEY_ID = "key_id";
 
     @Override
     @GET
@@ -56,7 +56,7 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
 
     @Override
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
-        tokenMetadata.add(TYPE, TokenMetadataType.CLIENT_ID.name());
+        tokenMetadata.add(TYPE, TokenMetadataType.API_KEY.name());
         super.addArbitraryTokenMetadata(tokenMetadata);
     }
 
@@ -67,14 +67,15 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
         if (response != null) {
             return response;
         }
-        TokenResponseContext resp = getTokenResponse(context);
+
+        TokenResponseContext resp = getTokenResponse (context);
         if (resp.responseMap != null) {
             String passcode = (String) resp.responseMap.map.get(PASSCODE);
             String tokenId = resp.responseMap.tokenId;
 
             final HashMap<String, Object> map = new HashMap<>();
-            map.put(CLIENT_ID, tokenId);
-            map.put(CLIENT_SECRET, passcode);
+            map.put(KEY_ID, tokenId);
+            map.put(API_KEY, passcode);
             String jsonResponse = JsonUtils.renderAsJsonString(map);
             return resp.responseBuilder.entity(jsonResponse).build();
         }

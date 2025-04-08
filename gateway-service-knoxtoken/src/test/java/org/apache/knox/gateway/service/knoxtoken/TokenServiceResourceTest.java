@@ -1320,6 +1320,30 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testClientCredentialsResponse() throws Exception {
+    Map<String, String> contextExpectations = new HashMap<>();
+    try {
+      tss = new PersistentTestTokenStateService();
+      configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+      ClientCredentialsResource ccr = new ClientCredentialsResource();
+      ccr.request = request;
+      ccr.context = context;
+      ccr.init();
+
+      Response response = ccr.doPost();
+      assertEquals(200, response.getStatus());
+
+      String clientId = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_ID);
+      assertNotNull(clientId);
+      String clientSecret = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_SECRET);
+      assertNotNull(clientSecret);
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
+  @Test
   public void passcodeShouldNotBeInResponseIfTokenStateServiceIsNotPersistent() throws Exception {
     testPasscodeToken(true, false, false);
   }
@@ -1396,13 +1420,13 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testClientCredentialsResponse() throws Exception {
+  public void testAPIKeyResponse() throws Exception {
     Map<String, String> contextExpectations = new HashMap<>();
     try {
       tss = new PersistentTestTokenStateService();
       configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
-      ClientCredentialsResource ccr = new ClientCredentialsResource();
+      APIKeyResource ccr = new APIKeyResource();
       ccr.request = request;
       ccr.context = context;
       ccr.init();
@@ -1410,10 +1434,10 @@ public class TokenServiceResourceTest {
       Response response = ccr.doPost();
       assertEquals(200, response.getStatus());
 
-      String clientId = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_ID);
-      assertNotNull(clientId);
-      String clientSecret = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_SECRET);
-      assertNotNull(clientSecret);
+      String keyId = getTagValue(response.getEntity().toString(), APIKeyResource.KEY_ID);
+      assertNotNull(keyId);
+      String apikey = getTagValue(response.getEntity().toString(), APIKeyResource.API_KEY);
+      assertNotNull(apikey);
     } finally {
       tss = new TestTokenStateService();
     }

@@ -18,3 +18,4 @@
 
 org.apache.knox.gateway.service.knoxtoken.deploy.TokenServiceDeploymentContributor
 org.apache.knox.gateway.service.knoxtoken.deploy.ClientCredentialsServiceDeploymentContributor
+org.apache.knox.gateway.service.knoxtoken.deploy.APIKeyServiceDeploymentContributor
