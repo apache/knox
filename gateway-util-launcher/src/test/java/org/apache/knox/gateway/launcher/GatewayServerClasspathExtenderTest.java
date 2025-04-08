@@ -36,6 +36,8 @@ public class GatewayServerClasspathExtenderTest {
     private Path confDir;
     private Path configFilePath;
 
+    private static final String KNOX_GATEWAY_CONF_DIR_VAR = "KNOX_GATEWAY_CONF_DIR";
+
     @Before
     public void setupDirs() throws IOException {
         tempDir = Files.createTempDirectory("cp_extender_test");
@@ -48,10 +50,12 @@ public class GatewayServerClasspathExtenderTest {
         Files.deleteIfExists(configFilePath);
         Files.deleteIfExists(confDir);
         Files.deleteIfExists(tempDir);
+        System.clearProperty(KNOX_GATEWAY_CONF_DIR_VAR);
     }
 
     @Test
     public void extendClassPathPropertyTest() throws IOException {
+        System.setProperty(KNOX_GATEWAY_CONF_DIR_VAR, confDir.toFile().getPath());
         Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
@@ -76,6 +80,7 @@ public class GatewayServerClasspathExtenderTest {
 
     @Test
     public void extendClassPathPropertyWithDelimitersTest() throws IOException {
+        System.setProperty(KNOX_GATEWAY_CONF_DIR_VAR, confDir.toFile().getPath());
         Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
@@ -88,6 +93,7 @@ public class GatewayServerClasspathExtenderTest {
 
     @Test
     public void extendClassPathPropertyWhitespaceTest() throws IOException {
+        System.setProperty(KNOX_GATEWAY_CONF_DIR_VAR, confDir.toFile().getPath());
         Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
@@ -100,6 +106,7 @@ public class GatewayServerClasspathExtenderTest {
 
     @Test
     public void extendClassPathPropertyMultipleTest() throws IOException {
+        System.setProperty(KNOX_GATEWAY_CONF_DIR_VAR, confDir.toFile().getPath());
         Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
@@ -136,6 +143,7 @@ public class GatewayServerClasspathExtenderTest {
 
     @Test
     public void extendClassPathPropertyOnlyPrepend() throws IOException {
+        System.setProperty(KNOX_GATEWAY_CONF_DIR_VAR, confDir.toFile().getPath());
         Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
@@ -148,6 +156,7 @@ public class GatewayServerClasspathExtenderTest {
 
     @Test
     public void extendClassPathPropertyOnlyAppend() throws IOException {
+        System.setProperty(KNOX_GATEWAY_CONF_DIR_VAR, confDir.toFile().getPath());
         Properties properties = this.getProperties("classpath", "org.apache.knox.gateway.GatewayServer");
         GatewayServerClasspathExtender gatewayServerClasspathExtender = new GatewayServerClasspathExtender(confDir.toFile());
 
@@ -174,13 +183,13 @@ public class GatewayServerClasspathExtenderTest {
     private String getConfigContent(String prependValue, String appendValue) {
         StringBuilder content = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration>");
 
-        if(prependValue != null) {
+        if (prependValue != null) {
             content.append("<configuration><property><name>gateway.server.prepend.classpath</name><value>");
             content.append(prependValue);
             content.append("</value></property></configuration>");
         }
 
-        if(appendValue != null) {
+        if (appendValue != null) {
             content.append("<configuration><property><name>gateway.server.append.classpath</name><value>");
             content.append(appendValue);
             content.append("</value></property></configuration>");

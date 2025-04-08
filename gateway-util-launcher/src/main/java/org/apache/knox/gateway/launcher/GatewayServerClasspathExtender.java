@@ -35,11 +35,12 @@ public class GatewayServerClasspathExtender {
     private static final String CLASSPATH_PREPEND_PROPERTY_PATTERN = "<property>\\s*<name>" + CLASSPATH_PREPEND_PROPERTY + "</name>\\s*<value>(.*?)</value>\\s*</property>";
     private static final String CLASSPATH_APPEND_PROPERTY_PATTERN = "<property>\\s*<name>" + CLASSPATH_APPEND_PROPERTY + "</name>\\s*<value>(.*?)</value>\\s*</property>";
     private static final String CONFIG_FILE = "gateway-site.xml";
-    private static final String CONFIG_PATH = "../conf/" + CONFIG_FILE;
+    private static final String CONFIG_PATH = "/../conf/";
     private static final String CLASS_PATH_PROPERTY = "class.path";
     private static final String MAIN_CLASS_PROPERTY = "main.class";
     private static final String GATEWAY_SERVER_MAIN_CLASS = "org.apache.knox.gateway.GatewayServer";
     private static final String[] CLASS_PATH_DELIMITERS = new String[]{",", ";"};
+    private static final String KNOX_GATEWAY_CONF_DIR_VAR = "KNOX_GATEWAY_CONF_DIR";
 
     private final File base;
     private final Pattern prependPattern = Pattern.compile(CLASSPATH_PREPEND_PROPERTY_PATTERN, Pattern.DOTALL);
@@ -50,7 +51,7 @@ public class GatewayServerClasspathExtender {
     }
 
     public void extendClassPathProperty(Properties properties) throws IOException {
-        Path configFilePath = Paths.get(base.getPath(), CONFIG_PATH);
+        Path configFilePath = this.getGatewayConfDir();
         if (GATEWAY_SERVER_MAIN_CLASS.equals(properties.getProperty(MAIN_CLASS_PROPERTY)) && Files.isReadable(configFilePath)) {
             String configContent = new String(Files.readAllBytes(configFilePath), StandardCharsets.UTF_8);
             prependClassPathProperty(configContent, properties);
@@ -99,4 +100,19 @@ public class GatewayServerClasspathExtender {
         return Arrays.stream(CLASS_PATH_DELIMITERS).anyMatch(path::startsWith);
     }
 
+    private Path getGatewayConfDir() {
+        String configDir = getVar(KNOX_GATEWAY_CONF_DIR_VAR, base.getPath() + CONFIG_PATH);
+        return Paths.get(configDir, CONFIG_FILE);
+    }
+
+    private String getVar(String variableName, String defaultValue) {
+        String value = System.getProperty(variableName);
+        if (value == null) {
+            value = System.getenv(variableName);
+        }
+        if (value == null) {
+            value = defaultValue;
+        }
+        return value;
+    }
 }
