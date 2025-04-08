@@ -17,42 +17,23 @@
  */
 package org.apache.knox.gateway.sse;
 
+import java.util.Arrays;
+
 public class SSEvent {
 
-    private String data;
-    private String event;
-    private String id;
-    private String comment;
-    private Long retry;
+    private static final String SSE_DELIMITER = ":";
 
-    public SSEvent() {
-    }
+    private final String data;
+    private final String event;
+    private final String id;
+    private final String comment;
+    private final Long retry;
 
     public SSEvent(String data, String event, String id, String comment, Long retry) {
         this.data = data;
         this.event = event;
         this.id = id;
         this.comment = comment;
-        this.retry = retry;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public void setEvent(String event) {
-        this.event = event;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    public void setRetry(Long retry) {
         this.retry = retry;
     }
 
@@ -76,14 +57,56 @@ public class SSEvent {
         return this.retry;
     }
 
+    public static SSEvent fromString(String unprocessedEvent) {
+        String id = null;
+        String event = null;
+        String data = null;
+        String comment = null;
+        Long retry = null;
+
+        for (String line : unprocessedEvent.split("\\R")) {
+            String[] lineTokens = parseLine(line);
+            switch (lineTokens[0]) {
+                case "id":
+                    id = lineTokens[1];
+                    break;
+                case "event":
+                    event = lineTokens[1];
+                    break;
+                case "data":
+                    data = lineTokens[1];
+                    break;
+                case "comment":
+                    comment = lineTokens[1];
+                    break;
+                case "retry":
+                    retry = Long.parseLong(lineTokens[1]);
+                    break;
+                default:
+                    break;
+            }
+        }
+        return new SSEvent(data, event, id, comment, retry);
+    }
+
+    private static String[] parseLine(String line) {
+        String[] lineTokens = Arrays.stream(line.split(SSE_DELIMITER, 2)).map(String::trim).toArray(String[]::new);
+
+        if (lineTokens[0].isEmpty()) {
+            lineTokens[0] = "comment";
+        }
+
+        return lineTokens;
+    }
+
     @Override
     public String toString() {
         StringBuilder eventString = new StringBuilder();
 
-        this.appendField(eventString, this.id, "id:");
-        this.appendField(eventString, this.event, "event:");
-        this.appendField(eventString, this.data, "data:");
-        this.appendField(eventString, this.retry, "retry:");
+        this.appendField(eventString, this.id, "id");
+        this.appendField(eventString, this.event, "event");
+        this.appendField(eventString, this.data, "data");
+        this.appendField(eventString, this.retry, "retry");
         this.appendField(eventString, this.comment, "");
 
         return eventString.toString();
@@ -95,6 +118,7 @@ public class SSEvent {
                 eventString.append('\n');
             }
             eventString.append(prefix);
+            eventString.append(SSE_DELIMITER);
             eventString.append(field);
         }
     }

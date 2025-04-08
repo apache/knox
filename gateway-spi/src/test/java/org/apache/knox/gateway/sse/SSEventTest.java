@@ -26,7 +26,7 @@ public class SSEventTest {
 
     @Test
     public void testToStringWithAll() {
-        SSEvent ssEvent = new SSEvent("data", "event", "id", ":comment", 5L);
+        SSEvent ssEvent = new SSEvent("data", "event", "id", "comment", 5L);
         String expected = "id:id\nevent:event\ndata:data\nretry:5\n:comment";
 
         assertEquals(expected, ssEvent.toString());
@@ -34,8 +34,8 @@ public class SSEventTest {
 
     @Test
     public void testToStringNoId() {
-        SSEvent ssEventNull = new SSEvent("data", "event", null, ":test", 2L);
-        SSEvent ssEventEmpty = new SSEvent("data", "event", "", ":new comment", 1L);
+        SSEvent ssEventNull = new SSEvent("data", "event", null, "test", 2L);
+        SSEvent ssEventEmpty = new SSEvent("data", "event", "", "new comment", 1L);
         String expectedForNull = "event:event\ndata:data\nretry:2\n:test";
         String expectedForEmpty = "id:\nevent:event\ndata:data\nretry:1\n:new comment";
 
@@ -45,8 +45,8 @@ public class SSEventTest {
 
     @Test
     public void testToStringNoEvent() {
-        SSEvent ssEventNull = new SSEvent("data", null, "id", ":comment", 11L);
-        SSEvent ssEventEmpty = new SSEvent("data", "", "id", ":test comment", 30L);
+        SSEvent ssEventNull = new SSEvent("data", null, "id", "comment", 11L);
+        SSEvent ssEventEmpty = new SSEvent("data", "", "id", "test comment", 30L);
         String expectedForNull = "id:id\ndata:data\nretry:11\n:comment";
         String expectedForEmpty = "id:id\nevent:\ndata:data\nretry:30\n:test comment";
 
@@ -56,8 +56,8 @@ public class SSEventTest {
 
     @Test
     public void testToStringNoData() {
-        SSEvent ssEventNull = new SSEvent(null, "event", "id", ":comment", 2L);
-        SSEvent ssEventEmpty = new SSEvent("", "event", "id", ":testing", 1L);
+        SSEvent ssEventNull = new SSEvent(null, "event", "id", "comment", 2L);
+        SSEvent ssEventEmpty = new SSEvent("", "event", "id", "testing", 1L);
         String expectedForNull = "id:id\nevent:event\nretry:2\n:comment";
         String expectedForEmpty = "id:id\nevent:event\ndata:\nretry:1\n:testing";
 
@@ -75,7 +75,7 @@ public class SSEventTest {
 
     @Test
     public void testToStringNoRetry() {
-        SSEvent ssEventNull = new SSEvent("data", "event", "id", ":TEST", null);
+        SSEvent ssEventNull = new SSEvent("data", "event", "id", "TEST", null);
         String expected = "id:id\nevent:event\ndata:data\n:TEST";
 
         assertEquals(expected, ssEventNull.toString());
