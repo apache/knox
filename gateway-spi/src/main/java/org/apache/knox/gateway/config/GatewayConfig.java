@@ -92,6 +92,8 @@ public interface GatewayConfig {
 
   String CREDENTIAL_STORE_ALG = "gateway.credential.store.alg";
   String DEFAULT_CREDENTIAL_STORE_ALG = "AES";
+  String SELF_SIGNING_CERT_ALG = "gateway.self.signing.cert.alg";
+  String DEFAULT_SELF_SIGNING_CERT_ALG = "SHA256withRSA";
   String CREDENTIAL_STORE_TYPE = "gateway.credential.store.type";
   String DEFAULT_CREDENTIAL_STORE_TYPE = "JCEKS";
 
@@ -265,6 +267,11 @@ public interface GatewayConfig {
    *         alias into a credential store
    */
   String getCredentialStoreAlgorithm();
+
+  /**
+   * @return the algorithm that is used when generating a self-signing certificate.
+   */
+  String getSelfSigningCertificateAlgorithm();
 
   /**
    * @return the type of the credential store used by AliasService

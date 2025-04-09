@@ -305,6 +305,10 @@ public class DefaultKeystoreServiceTest {
     Path defaultFile = baseDir.resolve("security").resolve("keystores").resolve("gateway.jks");
     String defaultAlias = "gateway-identity";
 
+    config.set(SIGNING_KEYSTORE_NAME, defaultFile.getFileName().toString());
+    config.set(IDENTITY_KEYSTORE_PATH, defaultFile.toAbsolutePath().toString());
+    config.set(IDENTITY_KEY_ALIAS, defaultAlias);
+
     DefaultKeystoreService keystoreService = new DefaultKeystoreService();
     keystoreService.setMasterService(masterService);
 
@@ -314,11 +318,11 @@ public class DefaultKeystoreServiceTest {
       fail("Not expecting ServiceLifecycleException due to missing signing keystore file since a custom one is not specified");
     }
 
-    createKeystore(keystoreService, defaultFile, defaultAlias, masterPassword);
+    createKeystore(keystoreService, masterPassword, config);
 
     keystoreService.init(config, Collections.emptyMap());
 
-    testSigningKeystore(keystoreService, defaultFile, defaultAlias, masterPassword);
+    testSigningKeystore(keystoreService, masterPassword, config);
 
     /* *******************
      * Test Custom Values
@@ -328,16 +332,17 @@ public class DefaultKeystoreServiceTest {
     String customKeyAlias = "custom_alias";
 
     config.set(SIGNING_KEYSTORE_NAME, customFileName);
+    config.set(IDENTITY_KEYSTORE_PATH, customFile.toAbsolutePath().toString());
     config.set(SIGNING_KEY_ALIAS, customKeyAlias);
 
     keystoreServiceAlt.setMasterService(masterService);
 
     // Ensure the signing keystore exists before init-ing the keystore service
-    createKeystore(keystoreService, customFile, customKeyAlias, masterPassword);
+    createKeystore(keystoreService, masterPassword, config);
 
     keystoreServiceAlt.init(config, Collections.emptyMap());
 
-    testSigningKeystore(keystoreServiceAlt, customFile, customKeyAlias, masterPassword);
+    testSigningKeystore(keystoreServiceAlt, masterPassword, config);
 
     /* *******************
      * Test Symlink Parent
@@ -365,17 +370,18 @@ public class DefaultKeystoreServiceTest {
     String symlinkKeyAlias = "symlink_alias";
 
     config.set(SIGNING_KEYSTORE_NAME, symlinkFileName);
+    config.set(IDENTITY_KEYSTORE_PATH, symlinkFile.toAbsolutePath().toString());
     config.set(SIGNING_KEY_ALIAS, symlinkKeyAlias);
     config.set(GatewayConfigImpl.SECURITY_DIR, symlinkSecurityDir.toString());
 
     keystoreServiceSymlink.setMasterService(masterService);
 
     // Ensure the signing keystore exists before init-ing the keystore service
-    createKeystore(keystoreService, symlinkFile, symlinkKeyAlias, masterPassword);
+    createKeystore(keystoreService, masterPassword, config);
 
     keystoreServiceSymlink.init(config, Collections.emptyMap());
 
-    testSigningKeystore(keystoreServiceSymlink, symlinkFile, symlinkKeyAlias, masterPassword);
+    testSigningKeystore(keystoreServiceSymlink, masterPassword, config);
 
 
     // Verify the keystore passwords are set properly...
@@ -531,7 +537,7 @@ public class DefaultKeystoreServiceTest {
     keystoreService.setMasterService(masterService);
     keystoreService.init(config, Collections.emptyMap());
 
-    createKeystore(keystoreService, Paths.get(config.getIdentityKeystorePath()), config.getIdentityKeyAlias(), masterPassword);
+    createKeystore(keystoreService, masterPassword, config);
 
     assertNull(keystoreService.getKeyForGateway("wrongpassword".toCharArray()));
     assertNotNull(keystoreService.getKeyForGateway(masterPassword));
@@ -798,12 +804,11 @@ public class DefaultKeystoreServiceTest {
   }
 
   private void testSigningKeystore(KeystoreService keystoreService,
-                                   Path expectedKeystoreFilePath,
-                                   String keyAlias,
-                                   char[] masterPassword) throws Exception {
-    assertTrue(Files.exists(expectedKeystoreFilePath));
+                                   char[] masterPassword,
+                                   GatewayConfig config) throws Exception {
+    assertTrue(Files.exists(Paths.get(config.getIdentityKeystorePath())));
     assertNotNull(keystoreService.getSigningKeystore());
-    assertNotNull(keystoreService.getSigningKey(keyAlias, masterPassword));
+    assertNotNull(keystoreService.getSigningKey(config.getIdentityKeyAlias(), masterPassword));
   }
 
   private GatewayConfigImpl createGatewayConfig(Path baseDir) {
@@ -814,8 +819,9 @@ public class DefaultKeystoreServiceTest {
 
   }
 
-  private void createKeystore(DefaultKeystoreService keystoreService, Path keystoreFilePath, String alias, char[] password)
+  private void createKeystore(DefaultKeystoreService keystoreService, char[] password, final GatewayConfig config)
       throws KeystoreServiceException, KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+    Path keystoreFilePath = Paths.get(config.getIdentityKeystorePath());
     KeyStore keystore = keystoreService.createKeyStore(keystoreFilePath, "JKS", password);
 
     KeyPairGenerator keyPairGenerator;
@@ -827,9 +833,9 @@ public class DefaultKeystoreServiceTest {
         String.format(Locale.ROOT, "CN=%s,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", this.getClass().getName()),
         keyPair,
         365,
-        "SHA1withRSA");
+        config.getSelfSigningCertificateAlgorithm());
 
-    keystore.setKeyEntry(alias, keyPair.getPrivate(),
+    keystore.setKeyEntry(config.getIdentityKeyAlias(), keyPair.getPrivate(),
         password,
         new java.security.cert.Certificate[]{cert});
 

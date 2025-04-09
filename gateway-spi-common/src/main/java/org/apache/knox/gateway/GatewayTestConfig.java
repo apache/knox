@@ -462,6 +462,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getSelfSigningCertificateAlgorithm() {
+    return DEFAULT_SELF_SIGNING_CERT_ALG;
+  }
+
+  @Override
   public String getCredentialStoreType() {
     return DEFAULT_CREDENTIAL_STORE_TYPE;
   }
