@@ -55,6 +55,10 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
   private static final String RATE_LIMITING_PREFIX = "rate.limiting";
   private static final String RATE_LIMITING_SUFFIX = "_RATE.LIMITING";
   private static final String RATE_LIMITING_ENABLED = RATE_LIMITING_PREFIX + ".enabled";
+  private static final String SECURITY_HEADER_PREFIX = "security.header";
+  private static final String SECURITY_HEADER_ENABLED = SECURITY_HEADER_PREFIX + ".enabled";
+  private static final String SECURITY_HEADER_SUFFIX = "_SECURITY.HEADER";
+  private static final String SECURITY_HEADER_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.SecurityHeaderFilter";
 
   @Override
   public String getRole() {
@@ -80,7 +84,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
 
     Provider webappsec = context.getTopology().getProvider(ROLE, NAME);
     if (webappsec != null && webappsec.isEnabled()) {
-      Map<String,String> map = provider.getParams();
+      Map<String, String> map = provider.getParams();
       if (params == null) {
         params = new ArrayList<>();
       }
@@ -103,9 +107,9 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       if (Boolean.parseBoolean(corsEnabled)) {
         provisionConfig(resource, providerParams, params, "cors.");
         resource.addFilter().name(getName() + CORS_SUFFIX)
-                            .role(getRole())
-                            .impl(CORS_FILTER_CLASSNAME)
-                            .params(params);
+                .role(getRole())
+                .impl(CORS_FILTER_CLASSNAME)
+                .params(params);
       }
 
       // CRSF
@@ -114,9 +118,9 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       if (Boolean.parseBoolean(csrfEnabled)) {
         provisionConfig(resource, providerParams, params, "csrf.");
         resource.addFilter().name(getName() + CSRF_SUFFIX)
-                            .role(getRole())
-                            .impl(CSRF_FILTER_CLASSNAME)
-                            .params(params);
+                .role(getRole())
+                .impl(CSRF_FILTER_CLASSNAME)
+                .params(params);
       }
 
       // X-Frame-Options - clickjacking protection
@@ -125,9 +129,9 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       if (Boolean.parseBoolean(xframeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xframe.");
         resource.addFilter().name(getName() + XFRAME_OPTIONS_SUFFIX)
-                            .role(getRole())
-                            .impl(XFRAME_OPTIONS_FILTER_CLASSNAME)
-                            .params(params);
+                .role(getRole())
+                .impl(XFRAME_OPTIONS_FILTER_CLASSNAME)
+                .params(params);
       }
 
       // X-Content-Type-Options - MIME type sniffing protection
@@ -136,9 +140,9 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       if (Boolean.parseBoolean(xContentTypeOptionsEnabled)) {
         provisionConfig(resource, providerParams, params, "xcontent-type.");
         resource.addFilter().name(getName() + XCONTENT_TYPE_OPTIONS_SUFFIX)
-                            .role(getRole())
-                            .impl(XCONTENT_TYPE_OPTIONS_FILTER_CLASSNAME)
-                            .params(params);
+                .role(getRole())
+                .impl(XCONTENT_TYPE_OPTIONS_FILTER_CLASSNAME)
+                .params(params);
       }
 
       // X-XSS-Protection - browser xss protection
@@ -147,9 +151,9 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       if (Boolean.parseBoolean(xssProtectionEnabled)) {
         provisionConfig(resource, providerParams, params, "xss.");
         resource.addFilter().name(getName() + XSS_PROTECTION_SUFFIX)
-                            .role(getRole())
-                            .impl(XSS_PROTECTION_FILTER_CLASSNAME)
-                            .params(params);
+                .role(getRole())
+                .impl(XSS_PROTECTION_FILTER_CLASSNAME)
+                .params(params);
       }
 
       // HTTP Strict-Transport-Security
@@ -158,9 +162,20 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       if (Boolean.parseBoolean(strictTranportEnabled)) {
         provisionConfig(resource, providerParams, params, "strict.");
         resource.addFilter().name(getName() + STRICT_TRANSPORT_SUFFIX)
-                            .role(getRole())
-                            .impl(STRICT_TRANSPORT_FILTER_CLASSNAME)
-                            .params(params);
+                .role(getRole())
+                .impl(STRICT_TRANSPORT_FILTER_CLASSNAME)
+                .params(params);
+      }
+
+      // HTTP Security Headers
+      params = new ArrayList<>();
+      String securityHeaderEnabled = map.get(SECURITY_HEADER_ENABLED);
+      if (Boolean.parseBoolean(securityHeaderEnabled)) {
+        provisionConfig(resource, providerParams, params, SECURITY_HEADER_PREFIX + ".", true, false);
+        resource.addFilter().name(getName() + SECURITY_HEADER_SUFFIX)
+                .role(getRole())
+                .impl(SECURITY_HEADER_FILTER_CLASSNAME)
+                .params(params);
       }
     }
   }
