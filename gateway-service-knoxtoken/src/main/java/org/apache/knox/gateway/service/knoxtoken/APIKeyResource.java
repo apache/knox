@@ -76,6 +76,7 @@ public class APIKeyResource extends PasscodeTokenResourceBase {
             final HashMap<String, Object> map = new HashMap<>();
             map.put(KEY_ID, tokenId);
             map.put(API_KEY, passcode);
+            addExpiryIfNotNever(map);
             String jsonResponse = JsonUtils.renderAsJsonString(map);
             return resp.responseBuilder.entity(jsonResponse).build();
         }

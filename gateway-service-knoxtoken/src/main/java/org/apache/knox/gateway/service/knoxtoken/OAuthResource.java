@@ -17,18 +17,16 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import javax.inject.Singleton;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-
-import java.time.Duration;
-import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -36,8 +34,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 @Singleton
 @Path(OAuthResource.RESOURCE_PATH)
-public class OAuthResource extends TokenResource {
-    private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
+public class OAuthResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = "/{serviceName:.*}/v1/{oauthSegment:(oauth|token)}{path:(/tokens)?}";
     public static final String ISSUED_TOKEN_TYPE = "issued_token_type";
     public static final String REFRESH_TOKEN = "refresh_token";
@@ -55,6 +52,13 @@ public class OAuthResource extends TokenResource {
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
     public Response doPost() {
         return super.doPost();
+    }
+
+    @Override
+    protected ServletContext wrapContextForDefaultParams(ServletContext context) throws ServletException {
+        ServletContext wrapperContext = new ServletContextWrapper(context);
+        setupTokenStateService(wrapperContext);
+        return wrapperContext;
     }
 
     @Override
@@ -100,32 +104,5 @@ public class OAuthResource extends TokenResource {
         else {
             return resp.responseBuilder.build();
         }
-    }
-
-    private long getTokenLifetimeInSeconds() {
-        long secs = tokenTTL/1000;
-
-        String lifetimeStr = request.getParameter(LIFESPAN);
-        if (lifetimeStr == null || lifetimeStr.isEmpty()) {
-            if (tokenTTL == -1) {
-                return -1;
-            }
-        }
-        else {
-            try {
-                long lifetime = Duration.parse(lifetimeStr).toMillis()/1000;
-                if (tokenTTL == -1) {
-                    // if TTL is set to -1 the topology owner grants unlimited lifetime therefore no additional check is needed on lifespan
-                    secs = lifetime;
-                } else if (lifetime <= tokenTTL/1000) {
-                    //this is expected due to security reasons: the configured TTL acts as an upper limit regardless of the supplied lifespan
-                    secs = lifetime;
-                }
-            }
-            catch (DateTimeParseException e) {
-                log.invalidLifetimeValue(lifetimeStr);
-            }
-        }
-        return secs;
     }
 }

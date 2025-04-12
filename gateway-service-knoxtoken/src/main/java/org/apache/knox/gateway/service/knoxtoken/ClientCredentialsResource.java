@@ -75,6 +75,7 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
             final HashMap<String, Object> map = new HashMap<>();
             map.put(CLIENT_ID, tokenId);
             map.put(CLIENT_SECRET, passcode);
+            addExpiryIfNotNever(map);
             String jsonResponse = JsonUtils.renderAsJsonString(map);
             return resp.responseBuilder.entity(jsonResponse).build();
         }
