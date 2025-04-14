@@ -1321,11 +1321,18 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testClientCredentialsResponse() throws Exception {
+    tryClientCredentialsResource(null);
+    tryClientCredentialsResource("30000");
+  }
+
+  public void tryClientCredentialsResource(String expiryInMs) throws Exception {
     Map<String, String> contextExpectations = new HashMap<>();
     try {
       tss = new PersistentTestTokenStateService();
+      if (expiryInMs != null) {
+        contextExpectations.put("knox.token.ttl", expiryInMs);
+      }
       configureCommonExpectations(contextExpectations, Boolean.TRUE);
-
       ClientCredentialsResource ccr = new ClientCredentialsResource();
       ccr.request = request;
       ccr.context = context;
@@ -1338,6 +1345,13 @@ public class TokenServiceResourceTest {
       assertNotNull(clientId);
       String clientSecret = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_SECRET);
       assertNotNull(clientSecret);
+      String expiresIn = getTagValue(response.getEntity().toString(), APIKeyResource.EXPIRES_IN);
+      if (expiryInMs == null) {
+        assertNull(expiresIn);
+      } else {
+        assertNotNull(expiresIn);
+        assertEquals(30, Integer.parseInt(expiresIn));
+      }
     } finally {
       tss = new TestTokenStateService();
     }
@@ -1421,9 +1435,18 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testAPIKeyResponse() throws Exception {
+    tryAPIKeyResponse(null);
+    tryAPIKeyResponse("30000");
+  }
+
+  public void tryAPIKeyResponse(String expiryInMs) throws Exception {
     Map<String, String> contextExpectations = new HashMap<>();
     try {
       tss = new PersistentTestTokenStateService();
+      // let the default built into
+      if (expiryInMs != null) {
+        contextExpectations.put("knox.token.ttl", expiryInMs);
+      }
       configureCommonExpectations(contextExpectations, Boolean.TRUE);
 
       APIKeyResource ccr = new APIKeyResource();
@@ -1438,6 +1461,13 @@ public class TokenServiceResourceTest {
       assertNotNull(keyId);
       String apikey = getTagValue(response.getEntity().toString(), APIKeyResource.API_KEY);
       assertNotNull(apikey);
+      String expiresIn = getTagValue(response.getEntity().toString(), APIKeyResource.EXPIRES_IN);
+      if (expiryInMs == null) {
+        assertNull(expiresIn);
+      } else {
+        assertNotNull(expiresIn);
+        assertEquals(30, Integer.parseInt(expiresIn));
+      }
     } finally {
       tss = new TestTokenStateService();
     }
