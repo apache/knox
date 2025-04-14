@@ -26,6 +26,14 @@ import org.junit.Test;
 
 public class UrlsTest {
 
+  private static final String INVALID_ORIGINAL_URL = "https://localhost:8443/gateway/homepage/homeisyr\">";
+  private static final String VALID_LOCAL_ORIGINAL_URL = "https://localhost:8443/gateway/homepage/home";
+  private static final String VALID_ORIGINAL_URL = "https://knoxhost.site:8443/gateway/homepage/home";
+  private static final String VALID_ORIGINAL_URL_SOLR = "https://knoxhost.site:8443/gateway/cdp-proxy/solr/";
+  private static final String LOGOUT_LOCAL_ORIGINAL_URL = "https://localhost:8443/gateway/homepage/home?profile=token";
+  private static final String LOGOUT_ORIGINAL_URL_WITH_PARAMETERS = "https://knoxhost.site:8443/gateway/homepage/session/api/v1/sessioninfo?logoutPageProfile=token&logoutPageTopologies=cdp-proxy-token";
+  private static final String LOGOUT_ORIGINAL_URL_WITH_PARAMETERS_ENCODED = "https://knoxhost.site:8443/gateway/homepage/session/api/v1/sessioninfo%3FlogoutPageProfile=token%26logoutPageTopologies=cdp-proxy-token";
+
   /*
    * Domain name creation follows the following algorithm:
    * 1. if the incoming request hostname endsWith a configured domain suffix return the suffix - with prefixed dot
@@ -101,4 +109,16 @@ public class UrlsTest {
     assertTrue(Urls.containsUserInfo( "https://www.local.com:8443aa@google.com"));
     assertFalse(Urls.containsUserInfo( "https://www.local.com:8443/google.com"));
   }
+
+  @Test
+  public void testValidUrl() throws Exception {
+    assertFalse(Urls.isValidURL(INVALID_ORIGINAL_URL));
+    assertTrue(Urls.isValidURL(VALID_LOCAL_ORIGINAL_URL));
+    assertTrue(Urls.isValidURL(VALID_ORIGINAL_URL));
+    assertTrue(Urls.isValidURL(VALID_ORIGINAL_URL_SOLR));
+    assertTrue(Urls.isValidURL(LOGOUT_LOCAL_ORIGINAL_URL));
+    assertTrue(Urls.isValidURL(LOGOUT_ORIGINAL_URL_WITH_PARAMETERS));
+    assertTrue(Urls.isValidURL(LOGOUT_ORIGINAL_URL_WITH_PARAMETERS_ENCODED));
+  }
+
 }

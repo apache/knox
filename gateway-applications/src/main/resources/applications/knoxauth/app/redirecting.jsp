@@ -20,6 +20,7 @@
 <%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
 <%@ page import="org.apache.knox.gateway.util.Urls" %>
 <%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
+<%@ page import="org.apache.commons.text.StringEscapeUtils" %>
 
 <!DOCTYPE html>
 <!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -58,6 +59,9 @@
           validRedirect = false;
         }
         if (validRedirect) {
+            validRedirect = Urls.isValidURL(originalUrl);
+        }
+        if (validRedirect) {
 	      Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
           String whitelist = null;
           Collection services = topology.getServices();
@@ -82,7 +86,7 @@
     document.addEventListener("load", redirectOnLoad());
 
     function redirectOnLoad() {
-      var originalUrl = "<%= originalUrl %>";
+      var originalUrl = "<%= StringEscapeUtils.escapeEcmaScript(originalUrl) %>";
       if (originalUrl != null) {
         redirect(originalUrl);
       }
@@ -103,7 +107,7 @@
           <div style="background: white;" class="l-logo">
                 <img src="images/loading.gif" alt="Knox logo" style="text-align:center;width: 2%; height: 2%">
             </div>
-              <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="<%= originalUrl %>">here</a></p>
+              <p style="color: white;display: block">Loading should complete in few a seconds. If not, click <a href="<%= StringEscapeUtils.escapeHtml4(originalUrl) %>">here</a></p>
         <%
         } else {
         %>
