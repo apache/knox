@@ -55,10 +55,11 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
   private static final String RATE_LIMITING_PREFIX = "rate.limiting";
   private static final String RATE_LIMITING_SUFFIX = "_RATE.LIMITING";
   private static final String RATE_LIMITING_ENABLED = RATE_LIMITING_PREFIX + ".enabled";
-  private static final String SECURITY_HEADER_PREFIX = "security.header";
+  private static final String SECURITY_HEADER_PREFIX = "security.header.";
   private static final String SECURITY_HEADER_ENABLED = SECURITY_HEADER_PREFIX + ".enabled";
   private static final String SECURITY_HEADER_SUFFIX = "_SECURITY.HEADER";
   private static final String SECURITY_HEADER_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.SecurityHeaderFilter";
+  public static final String ENABLED = "enabled";
 
   @Override
   public String getRole() {
@@ -171,7 +172,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
       params = new ArrayList<>();
       String securityHeaderEnabled = map.get(SECURITY_HEADER_ENABLED);
       if (Boolean.parseBoolean(securityHeaderEnabled)) {
-        provisionConfig(resource, providerParams, params, SECURITY_HEADER_PREFIX + ".", true, false);
+        provisionConfig(resource, providerParams, params, SECURITY_HEADER_PREFIX, true, false);
         resource.addFilter().name(getName() + SECURITY_HEADER_SUFFIX)
                 .role(getRole())
                 .impl(SECURITY_HEADER_FILTER_CLASSNAME)

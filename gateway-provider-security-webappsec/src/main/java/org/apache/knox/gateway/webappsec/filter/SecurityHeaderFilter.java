@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.webappsec.filter;
 
+import org.apache.knox.gateway.webappsec.deploy.WebAppSecContributor;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -35,7 +37,7 @@ import java.util.Set;
 
 public class SecurityHeaderFilter implements Filter {
 
-  private Map<String, String> map = new HashMap<>();
+  private Map<String, String> securityHeaders = new HashMap<>();
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -43,9 +45,9 @@ public class SecurityHeaderFilter implements Filter {
     Enumeration<String> initParamNames = filterConfig.getInitParameterNames();
     while (initParamNames.hasMoreElements()) {
       String headerName = initParamNames.nextElement();
-      if (!"enabled".equals(headerName)) {
+      if (!WebAppSecContributor.ENABLED.equals(headerName)) {
         String headerValue = filterConfig.getInitParameter(headerName);
-        map.put(headerName, headerValue);
+        securityHeaders.put(headerName, headerValue);
       }
     }
   }
@@ -57,7 +59,7 @@ public class SecurityHeaderFilter implements Filter {
     HttpServletResponse httpResponse = new SecurityHeaderResponseWrapper((HttpServletResponse) response);
 
     // Dynamically add headers based on init parameters
-    for (Map.Entry<String, String> entry : map.entrySet()) {
+    for (Map.Entry<String, String> entry : securityHeaders.entrySet()) {
       String headerName = entry.getKey();
       String headerValue = entry.getValue();
       httpResponse.setHeader(headerName, headerValue);
@@ -80,14 +82,14 @@ public class SecurityHeaderFilter implements Filter {
 
     @Override
     public void addHeader(String name, String value) {
-      if (!"enabled".equals(name)) {
+      if (!WebAppSecContributor.ENABLED.equals(name)) {
         super.addHeader(name, value);
       }
     }
 
     @Override
     public void setHeader(String name, String value) {
-      if (!"enabled".equals(name)) {
+      if (!WebAppSecContributor.ENABLED.equals(name)) {
         super.setHeader(name, value);
       }
     }
@@ -95,7 +97,7 @@ public class SecurityHeaderFilter implements Filter {
     @Override
     public String getHeader(String name) {
       String value;
-      value = map.get(name);
+      value = securityHeaders.get(name);
       if (value == null) {
         value = super.getHeader(name);
       }
@@ -104,7 +106,7 @@ public class SecurityHeaderFilter implements Filter {
 
     @Override
     public Collection<String> getHeaderNames() {
-      Set<String> names = new HashSet<>(map.keySet());
+      Set<String> names = new HashSet<>(securityHeaders.keySet());
       if (super.getHeaderNames() != null) {
         names.addAll(super.getHeaderNames());
       }
@@ -113,7 +115,7 @@ public class SecurityHeaderFilter implements Filter {
 
     @Override
     public Collection<String> getHeaders(String name) {
-      Set<String> values = new HashSet<>(map.values());
+      Set<String> values = new HashSet<>(securityHeaders.values());
       if (super.getHeaders(name) != null) {
         values.addAll(super.getHeaders(name));
       }
