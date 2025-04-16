@@ -15,8 +15,8 @@
    limitations under the License.
 -->
 
-<img src="../../static/images/knox-logo.gif" alt="Knox"/>
-<img src="../../static/images/apache-logo.gif" align="right" alt="Apache"/>
+<img src="../static/images/knox-logo.gif" alt="Knox"/>
+<img src="../static/images/apache-logo.gif" align="right" alt="Apache"/>
 
 # Apache Knox Gateway 2.1.x User's Guide #
 
