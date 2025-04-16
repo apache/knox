@@ -1,0 +1,55 @@
+@startuml
+title Service Deployment
+hide footbox
+autonumber
+
+participant "Gateway\nServer" as GW
+participant "Gateway\nConfig\n(gc)" as GC
+participant "Topology\n(td)" as TD
+participant "Deployment\nFactory" as DF
+participant "Deployment\nContext\n(dc)" as DC
+participant "Web\nArchive\n(wa)" as WA
+participant "Gateway\nDescriptor\n(gd)" as GD
+participant "Service\nDeployment\nContributor" as SDC
+
+create GC
+GW -> GC: load
+
+create TD
+GW -> TD: load
+
+GW -> DF: createDeployment( gc, td ): wa
+activate DF
+
+  create GD
+  DF -> GD: create
+  create WA
+  DF -> WA: create( gd )
+  create DC
+  DF -> DC: create( gc, td, wa )
+
+  loop Service s in Topology dc.td
+    DF -> SDC:initializeContribution( dc, s )
+    'activate SDC
+    'SDC -> WA: <i>setupDescriptors</i>
+    'deactivate SDC
+  end
+  loop Service s in Topology dc.td
+    DF -> SDC:contributeService( dc, s )
+    activate SDC
+    group each required provider
+      SDC -> DF: contributeFilter( s, <i>resource, role, name, params</i> )
+    end
+    deactivate SDC
+  end
+  loop Service s in Topology dc.td
+    DF -> SDC:finalizeContribution( dc, s )
+    'activate SDC
+    'SDC -> WA: <i>finalizeDescriptors</i>
+    'deactivate SDC
+  end
+
+GW <-- DF: WebArchive wa
+deactivate DF
+
+@enduml

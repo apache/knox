@@ -1,0 +1,68 @@
+@startuml
+title Provider Deployment
+hide footbox
+autonumber
+
+participant "Gateway\nServer" as GW
+participant "Gateway\nConfig\n(gc)" as GC
+participant "Topology\n(td)" as TD
+participant "Deployment\nFactory" as DF
+participant "Deployment\nContext\n(dc)" as DC
+participant "Web\nArchive\n(wa)" as WA
+participant "Gateway\nDescriptor\n(gd)" as GD
+participant "Provider\nDeployment\nContributor" as PDC
+participant "Service\nDeployment\nContributor" as SDC
+
+create GC
+GW -> GC: load
+
+create TD
+GW -> TD: load
+
+GW -> DF: createDeployment( gc, td ): wa
+activate DF
+
+  create GD
+  DF -> GD: create
+  create WA
+  DF -> WA: create( gd )
+  create DC
+  DF -> DC: create( gc, td, wa )
+
+  loop Provider p in Topology dc.td
+    DF -> PDC:initializeContribution( dc, p )
+    activate PDC
+    PDC -> WA: <i>createDescriptors</i>
+    deactivate PDC
+  end
+  loop Provider p in Topology dc.td
+    DF -> PDC:contributeProvider( dc, p )
+    activate PDC
+    PDC -> WA: <i>populateDescriptors</i>
+    deactivate PDC
+  end
+  loop Service s in Topology dc.td
+    DF -> SDC:contributeService( dc, s )
+    activate SDC
+      SDC -> DC: contributeFilter( s, <i>resource, role, name, params</i> )
+      activate DC
+      DC -> PDC: contributeFilter( s, <i>resource, role, name, params</i> )
+      activate PDC
+        PDC -> WA: <i>modifyDescriptors</i>
+      deactivate PDC
+      'DC --> SDC
+      deactivate DC
+    'DF <-- SDC
+    deactivate SDC
+  end
+  loop Provider p in Topology dc.td
+    DF -> PDC:finalizeContribution( dc, P )
+    activate PDC
+    PDC -> WA: <i>finalizeDescriptors</i>
+    deactivate PDC
+  end
+
+GW <-- DF: WebArchive wa
+deactivate DF
+
+@enduml

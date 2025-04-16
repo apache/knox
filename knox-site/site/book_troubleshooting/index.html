@@ -1,0 +1,3182 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/book_troubleshooting/">
+      
+      
+        <link rel="prev" href="../book_limitations/">
+      
+      
+        <link rel="next" href="../config/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Troubleshooting - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Troubleshooting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dev-guide/book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding Logs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#java-jar-bingatewayjar" class="md-nav__link">
+    <span class="md-ellipsis">
+      java -jar bin/gateway.jar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bingatewaysh-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      bin/gateway.sh start
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#increasing-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Increasing Logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ldap-server-connectivity-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      LDAP Server Connectivity Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hadoop-cluster-connectivity-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hadoop Cluster Connectivity Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-vs-https-protocol-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      HTTP vs HTTPS protocol issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-hadoop-cluster-access-via-curl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Hadoop Cluster Access via cURL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication Issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-ldapsearch-to-verify-ldap-connectivity-and-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using ldapsearch to verify LDAP connectivity and credentials
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hostname-resolution-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hostname Resolution Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-submission-issues-hdfs-home-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Job Submission Issues - HDFS Home Directories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Submission Issues - HDFS Home Directories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resolution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-submission-issues-os-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Job Submission Issues - OS Accounts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hbase-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      HBase Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssl-certificate-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      SSL Certificate Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spnego-authentication-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      SPNego Authentication Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filing-bugs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filing Bugs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_id_assertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knox_monitoring_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knoxsso_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knoxshell-guide/knoxshell_user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding Logs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Finding Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#java-jar-bingatewayjar" class="md-nav__link">
+    <span class="md-ellipsis">
+      java -jar bin/gateway.jar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bingatewaysh-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      bin/gateway.sh start
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#increasing-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Increasing Logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ldap-server-connectivity-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      LDAP Server Connectivity Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hadoop-cluster-connectivity-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hadoop Cluster Connectivity Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-vs-https-protocol-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      HTTP vs HTTPS protocol issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-hadoop-cluster-access-via-curl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Hadoop Cluster Access via cURL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication Issues
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentication Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-ldapsearch-to-verify-ldap-connectivity-and-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using ldapsearch to verify LDAP connectivity and credentials
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hostname-resolution-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hostname Resolution Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-submission-issues-hdfs-home-directories" class="md-nav__link">
+    <span class="md-ellipsis">
+      Job Submission Issues - HDFS Home Directories
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job Submission Issues - HDFS Home Directories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resolution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-submission-issues-os-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Job Submission Issues - OS Accounts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hbase-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      HBase Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssl-certificate-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      SSL Certificate Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spnego-authentication-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      SPNego Authentication Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filing-bugs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filing Bugs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>Troubleshooting</h1>
+
+<!---
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+--->
+
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="finding-logs">Finding Logs<a class="headerlink" href="#finding-logs" title="Permanent link">&para;</a></h3>
+<p>When things aren't working the first thing you need to do is examine the diagnostic logs.
+Depending upon how you are running the gateway these diagnostic logs will be output to different locations.</p>
+<h4 id="java-jar-bingatewayjar">java -jar bin/gateway.jar<a class="headerlink" href="#java-jar-bingatewayjar" title="Permanent link">&para;</a></h4>
+<p>When the gateway is run this way the diagnostic output is written directly to the console.
+If you want to capture that output you will need to redirect the console output to a file using OS specific techniques.</p>
+<div class="highlight"><pre><span></span><code>java -jar bin/gateway.jar &gt; gateway.log
+</code></pre></div>
+<h4 id="bingatewaysh-start">bin/gateway.sh start<a class="headerlink" href="#bingatewaysh-start" title="Permanent link">&para;</a></h4>
+<p>When the gateway is run this way the diagnostic output is written to <code>{GATEWAY_HOME}/log/knox.out</code> and <code>{GATEWAY_HOME}/log/knox.err</code>.
+Typically only knox.out will have content.</p>
+<h3 id="increasing-logging">Increasing Logging<a class="headerlink" href="#increasing-logging" title="Permanent link">&para;</a></h3>
+<p>The <code>log4j.properties</code> files <code>{GATEWAY_HOME}/conf</code> can be used to change the granularity of the logging done by Knox.
+The Knox server must be restarted in order for these changes to take effect.
+There are various useful loggers pre-populated but commented out.</p>
+<div class="highlight"><pre><span></span><code>log4j.logger.org.apache.knox.gateway=DEBUG # Use this logger to increase the debugging of Apache Knox itself.
+log4j.logger.org.apache.shiro=DEBUG          # Use this logger to increase the debugging of Apache Shiro.
+log4j.logger.org.apache.http=DEBUG           # Use this logger to increase the debugging of Apache HTTP components.
+log4j.logger.org.apache.http.client=DEBUG    # Use this logger to increase the debugging of Apache HTTP client component.
+log4j.logger.org.apache.http.headers=DEBUG   # Use this logger to increase the debugging of Apache HTTP header.
+log4j.logger.org.apache.http.wire=DEBUG      # Use this logger to increase the debugging of Apache HTTP wire traffic.
+</code></pre></div>
+<h3 id="ldap-server-connectivity-issues">LDAP Server Connectivity Issues<a class="headerlink" href="#ldap-server-connectivity-issues" title="Permanent link">&para;</a></h3>
+<p>If the gateway cannot contact the configured LDAP server you will see errors in the gateway diagnostic output.</p>
+<div class="highlight"><pre><span></span><code>13/11/15 16:30:17 DEBUG authc.BasicHttpAuthenticationFilter: Attempting to execute login with headers [Basic Z3Vlc3Q6Z3Vlc3QtcGFzc3dvcmQ=]
+13/11/15 16:30:17 DEBUG ldap.JndiLdapRealm: Authenticating user &#39;guest&#39; through LDAP
+13/11/15 16:30:17 DEBUG ldap.JndiLdapContextFactory: Initializing LDAP context using URL    [ldap://localhost:33389] and principal [uid=guest,ou=people,dc=hadoop,dc=apache,dc=org] with pooling disabled
+13/11/15 16:30:17 DEBUG servlet.SimpleCookie: Added HttpServletResponse Cookie [rememberMe=deleteMe; Path=/gateway/vaultservice; Max-Age=0; Expires=Thu, 14-Nov-2013 21:30:17 GMT]
+13/11/15 16:30:17 DEBUG authc.BasicHttpAuthenticationFilter: Authentication required: sending 401 Authentication challenge response.
+</code></pre></div>
+<p>The client should see something along the lines of:</p>
+<div class="highlight"><pre><span></span><code>HTTP/1.1 401 Unauthorized
+WWW-Authenticate: BASIC realm=&quot;application&quot;
+Content-Length: 0
+Server: Jetty(8.1.12.v20130726)
+</code></pre></div>
+<p>Resolving this will require ensuring that the LDAP server is running and that connection information is correct.
+The LDAP server connection information is configured in the cluster's topology file (e.g. {GATEWAY_HOME}/deployments/sandbox.xml).</p>
+<h3 id="hadoop-cluster-connectivity-issues">Hadoop Cluster Connectivity Issues<a class="headerlink" href="#hadoop-cluster-connectivity-issues" title="Permanent link">&para;</a></h3>
+<p>If the gateway cannot contact one of the services in the configured Hadoop cluster you will see errors in the gateway diagnostic output.</p>
+<div class="highlight"><pre><span></span><code>13/11/18 18:49:45 WARN knox.gateway: Connection exception dispatching request: http://localhost:50070/webhdfs/v1/?user.name=guest&amp;op=LISTSTATUS org.apache.http.conn.HttpHostConnectException: Connection to http://localhost:50070 refused
+org.apache.http.conn.HttpHostConnectException: Connection to http://localhost:50070 refused
+  at org.apache.http.impl.conn.DefaultClientConnectionOperator.openConnection(DefaultClientConnectionOperator.java:190)
+  at org.apache.http.impl.conn.ManagedClientConnectionImpl.open(ManagedClientConnectionImpl.java:294)
+  at org.apache.http.impl.client.DefaultRequestDirector.tryConnect(DefaultRequestDirector.java:645)
+  at org.apache.http.impl.client.DefaultRequestDirector.execute(DefaultRequestDirector.java:480)
+  at org.apache.http.impl.client.AbstractHttpClient.execute(AbstractHttpClient.java:906)
+  at org.apache.http.impl.client.AbstractHttpClient.execute(AbstractHttpClient.java:805)
+  at org.apache.http.impl.client.AbstractHttpClient.execute(AbstractHttpClient.java:784)
+  at org.apache.knox.gateway.dispatch.HttpClientDispatch.executeRequest(HttpClientDispatch.java:99)
+</code></pre></div>
+<p>The resulting behavior on the client will differ by client.
+For the client DSL executing the <code>{GATEWAY_HOME}/samples/ExampleWebHdfsLs.groovy</code> the output will look like this.</p>
+<div class="highlight"><pre><span></span><code>Caught: org.apache.knox.gateway.shell.HadoopException: org.apache.knox.gateway.shell.ErrorResponse: HTTP/1.1 500 Server Error
+org.apache.knox.gateway.shell.HadoopException: org.apache.knox.gateway.shell.ErrorResponse: HTTP/1.1 500 Server Error
+  at org.apache.knox.gateway.shell.AbstractRequest.now(AbstractRequest.java:72)
+  at org.apache.knox.gateway.shell.AbstractRequest$now.call(Unknown Source)
+  at ExampleWebHdfsLs.run(ExampleWebHdfsLs.groovy:28)
+</code></pre></div>
+<p>When executing commands requests via cURL the output might look similar to the following example.</p>
+<div class="highlight"><pre><span></span><code>Set-Cookie: JSESSIONID=16xwhpuxjr8251ufg22f8pqo85;Path=/gateway/sandbox;Secure
+Content-Type: text/html;charset=ISO-8859-1
+Cache-Control: must-revalidate,no-cache,no-store
+Content-Length: 21856
+Server: Jetty(8.1.12.v20130726)
+
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=ISO-8859-1&quot;/&gt;
+&lt;title&gt;Error 500 Server Error&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;&lt;h2&gt;HTTP ERROR 500&lt;/h2&gt;
+</code></pre></div>
+<p>Resolving this will require ensuring that the Hadoop services are running and that connection information is correct.
+Basic Hadoop connectivity can be evaluated using cURL as described elsewhere.
+Otherwise the Hadoop cluster connection information is configured in the cluster's topology file (e.g. <code>{GATEWAY_HOME}/deployments/sandbox.xml</code>).</p>
+<h3 id="http-vs-https-protocol-issues">HTTP vs HTTPS protocol issues<a class="headerlink" href="#http-vs-https-protocol-issues" title="Permanent link">&para;</a></h3>
+<p>When Knox is configured to accept requests over SSL and is presented with a request over plain HTTP, the client is presented with an error such as seen in the following:</p>
+<div class="highlight"><pre><span></span><code>curl -i -k -u guest:guest-password -X GET &#39;http://localhost:8443/gateway/sandbox/webhdfs/v1/?op=LISTSTATUS&#39;
+the following error is returned
+curl: (52) Empty reply from server
+</code></pre></div>
+<p>This is the default behavior for Jetty SSL listener. While the credentials to the default authentication provider continue to be username and password, we do not want to encourage sending these in clear text. Since preemptively sending BASIC credentials is a common pattern with REST APIs it would be unwise to redirect to a HTTPS listener thus allowing clear text passwords.</p>
+<p>To resolve this issue, we have two options:</p>
+<ol>
+<li>change the scheme in the URL to https and deal with any trust relationship issues with the presented server certificate</li>
+<li>Disabling SSL in gateway-site.xml - this is not encouraged due to the reasoning described above.</li>
+</ol>
+<h3 id="check-hadoop-cluster-access-via-curl">Check Hadoop Cluster Access via cURL<a class="headerlink" href="#check-hadoop-cluster-access-via-curl" title="Permanent link">&para;</a></h3>
+<p>When you are experiencing connectivity issue it can be helpful to "bypass" the gateway and invoke the Hadoop REST APIs directly.
+This can easily be done using the cURL command line utility or many other REST/HTTP clients.
+Exactly how to use cURL depends on the configuration of your Hadoop cluster.
+In general however you will use a command line the one that follows.</p>
+<div class="highlight"><pre><span></span><code>curl -ikv -X GET &#39;http://namenode-host:50070/webhdfs/v1/?op=LISTSTATUS&#39;
+</code></pre></div>
+<p>If you are using Sandbox the WebHDFS or NameNode port will be mapped to localhost so this command can be used.</p>
+<div class="highlight"><pre><span></span><code>curl -ikv -X GET &#39;http://localhost:50070/webhdfs/v1/?op=LISTSTATUS&#39;
+</code></pre></div>
+<p>If you are using a cluster secured with Kerberos you will need to have used <code>kinit</code> to authenticate to the KDC.
+Then the command below should verify that WebHDFS in the Hadoop cluster is accessible.</p>
+<div class="highlight"><pre><span></span><code>curl -ikv --negotiate -u : -X &#39;http://localhost:50070/webhdfs/v1/?op=LISTSTATUS&#39;
+</code></pre></div>
+<h3 id="authentication-issues">Authentication Issues<a class="headerlink" href="#authentication-issues" title="Permanent link">&para;</a></h3>
+<p>The following log information is available when you enable debug level logging for shiro. This can be done within the conf/log4j.properties file. Not the "Password not correct for user" message.</p>
+<div class="highlight"><pre><span></span><code>13/11/15 16:37:15 DEBUG authc.BasicHttpAuthenticationFilter: Attempting to execute login with headers [Basic Z3Vlc3Q6Z3Vlc3QtcGFzc3dvcmQw]
+13/11/15 16:37:15 DEBUG ldap.JndiLdapRealm: Authenticating user &#39;guest&#39; through LDAP
+13/11/15 16:37:15 DEBUG ldap.JndiLdapContextFactory: Initializing LDAP context using URL [ldap://localhost:33389] and principal [uid=guest,ou=people,dc=hadoop,dc=apache,dc=org] with pooling disabled
+2013-11-15 16:37:15,899 INFO  Password not correct for user &#39;uid=guest,ou=people,dc=hadoop,dc=apache,dc=org&#39;
+2013-11-15 16:37:15,899 INFO  Authenticator org.apache.directory.server.core.authn.SimpleAuthenticator@354c78e3 failed to authenticate: BindContext for DN &#39;uid=guest,ou=people,dc=hadoop,dc=apache,dc=org&#39;, credentials &lt;0x67 0x75 0x65 0x73 0x74 0x2D 0x70 0x61 0x73 0x73 0x77 0x6F 0x72 0x64 0x30 &gt;
+2013-11-15 16:37:15,899 INFO  Cannot bind to the server
+13/11/15 16:37:15 DEBUG servlet.SimpleCookie: Added HttpServletResponse Cookie [rememberMe=deleteMe; Path=/gateway/vaultservice; Max-Age=0; Expires=Thu, 14-Nov-2013 21:37:15 GMT]
+13/11/15 16:37:15 DEBUG authc.BasicHttpAuthenticationFilter: Authentication required: sending 401 Authentication challenge response.
+</code></pre></div>
+<p>The client will likely see something along the lines of:</p>
+<div class="highlight"><pre><span></span><code>HTTP/1.1 401 Unauthorized
+WWW-Authenticate: BASIC realm=&quot;application&quot;
+Content-Length: 0
+Server: Jetty(8.1.12.v20130726)
+</code></pre></div>
+<h4 id="using-ldapsearch-to-verify-ldap-connectivity-and-credentials">Using ldapsearch to verify LDAP connectivity and credentials<a class="headerlink" href="#using-ldapsearch-to-verify-ldap-connectivity-and-credentials" title="Permanent link">&para;</a></h4>
+<p>If your authentication to Knox fails and you believe you're using correct credentials, you could try to verify the connectivity and credentials using ldapsearch, assuming you are using LDAP directory for authentication.</p>
+<p>Assuming you are using the default values that came out of box with Knox, your ldapsearch command would be like the following</p>
+<div class="highlight"><pre><span></span><code>ldapsearch -h localhost -p 33389 -D &quot;uid=guest,ou=people,dc=hadoop,dc=apache,dc=org&quot; -w guest-password -b &quot;uid=guest,ou=people,dc=hadoop,dc=apache,dc=org&quot; &quot;objectclass=*&quot;
+</code></pre></div>
+<p>This should produce output like the following</p>
+<div class="highlight"><pre><span></span><code># extended LDIF
+
+LDAPv3
+base &lt;uid=guest,ou=people,dc=hadoop,dc=apache,dc=org&gt; with scope subtree
+filter: objectclass=*
+requesting: ALL
+
+
+# guest, people, hadoop.apache.org
+dn: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
+objectClass: organizationalPerson
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: top
+uid: guest
+cn: Guest
+sn: User
+userpassword:: Z3Vlc3QtcGFzc3dvcmQ=
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 2
+# numEntries: 1
+</code></pre></div>
+<p>In a more general form the ldapsearch command would be</p>
+<div class="highlight"><pre><span></span><code>ldapsearch -h {HOST} -p {PORT} -D {DN of binding user} -w {bind password} -b {DN of binding user} &quot;objectclass=*}
+</code></pre></div>
+<h3 id="hostname-resolution-issues">Hostname Resolution Issues<a class="headerlink" href="#hostname-resolution-issues" title="Permanent link">&para;</a></h3>
+<p>The deployments/sandbox.xml topology file has the host mapping feature enabled.
+This is required due to the way networking is setup in the Sandbox VM.
+Specifically the VM's internal hostname is sandbox.hortonworks.com.
+Since this hostname cannot be resolved to the actual VM Knox needs to map that hostname to something resolvable.</p>
+<p>If for example host mapping is disabled but the Sandbox VM is still used you will see an error in the diagnostic output similar to the below.</p>
+<div class="highlight"><pre><span></span><code>13/11/18 19:11:35 WARN knox.gateway: Connection exception dispatching request: http://sandbox.hortonworks.com:50075/webhdfs/v1/user/guest/example/README?op=CREATE&amp;namenoderpcaddress=sandbox.hortonworks.com:8020&amp;user.name=guest&amp;overwrite=false java.net.UnknownHostException: sandbox.hortonworks.com
+java.net.UnknownHostException: sandbox.hortonworks.com
+  at java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method)
+</code></pre></div>
+<p>On the other hand if you are migrating from the Sandbox based configuration to a cluster you have deployment you may see a similar error.
+However in this case you may need to disable host mapping.
+This can be done by modifying the topology file (e.g. deployments/sandbox.xml) for the cluster.</p>
+<div class="highlight"><pre><span></span><code>...
+&lt;provider&gt;
+    &lt;role&gt;hostmap&lt;/role&gt;
+    &lt;name&gt;static&lt;/name&gt;
+    &lt;enabled&gt;false&lt;/enabled&gt;
+    &lt;param&gt;&lt;name&gt;localhost&lt;/name&gt;&lt;value&gt;sandbox,sandbox.hortonworks.com&lt;/value&gt;&lt;/param&gt;
+&lt;/provider&gt;
+....
+</code></pre></div>
+<h3 id="job-submission-issues-hdfs-home-directories">Job Submission Issues - HDFS Home Directories<a class="headerlink" href="#job-submission-issues-hdfs-home-directories" title="Permanent link">&para;</a></h3>
+<p>If you see error like the following in your console  while submitting a Job using groovy shell, it is likely that the authenticated user does not have a home directory on HDFS.</p>
+<div class="highlight"><pre><span></span><code>Caught: org.apache.knox.gateway.shell.HadoopException: org.apache.knox.gateway.shell.ErrorResponse: HTTP/1.1 403 Forbidden
+org.apache.knox.gateway.shell.HadoopException: org.apache.knox.gateway.shell.ErrorResponse: HTTP/1.1 403 Forbidden
+</code></pre></div>
+<p>You would also see this error if you try file operation on the home directory of the authenticating user.</p>
+<p>The error would look a little different as shown below  if you are attempting to the operation with cURL.</p>
+<div class="highlight"><pre><span></span><code>{&quot;RemoteException&quot;:{&quot;exception&quot;:&quot;AccessControlException&quot;,&quot;javaClassName&quot;:&quot;org.apache.hadoop.security.AccessControlException&quot;,&quot;message&quot;:&quot;Permission denied: user=tom, access=WRITE, inode=\&quot;/user\&quot;:hdfs:hdfs:drwxr-xr-x&quot;}}*
+</code></pre></div>
+<h4 id="resolution">Resolution<a class="headerlink" href="#resolution" title="Permanent link">&para;</a></h4>
+<p>Create the home directory for the user on HDFS.
+The home directory is typically of the form <code>/user/{userid}</code> and should be owned by the user.
+user 'hdfs' can create such a directory and make the user owner of the directory.</p>
+<h3 id="job-submission-issues-os-accounts">Job Submission Issues - OS Accounts<a class="headerlink" href="#job-submission-issues-os-accounts" title="Permanent link">&para;</a></h3>
+<p>If the Hadoop cluster is not secured with Kerberos, the user submitting a job need not have an OS account on the Hadoop NodeManagers.</p>
+<p>If the Hadoop cluster is secured with Kerberos, the user submitting the job should have an OS account on Hadoop NodeManagers.</p>
+<p>In either case if the user does not have such OS account, his file permissions are based on user ownership of files or "other" permission in "ugo" posix permission.
+The user does not get any file permission as a member of any group if you are using default <code>hadoop.security.group.mapping</code>.</p>
+<p>TODO: add sample error message from running test on secure cluster with missing OS account</p>
+<h3 id="hbase-issues">HBase Issues<a class="headerlink" href="#hbase-issues" title="Permanent link">&para;</a></h3>
+<p>If you experience problems running the HBase samples with the Sandbox VM it may be necessary to restart HBase and the HBASE REST API.
+This can sometimes occur with the Sandbox VM is restarted from a saved state.
+If the client hangs after emitting the last line in the sample output below you are most likely affected.</p>
+<div class="highlight"><pre><span></span><code>System version : {...}
+Cluster version : 0.96.0.2.0.6.0-76-hadoop2
+Status : {...}
+Creating table &#39;test_table&#39;...
+</code></pre></div>
+<p>HBase and the HBASE REST API can be restarted using the following commands on the Hadoop Sandbox VM.
+You will need to ssh into the VM in order to run these commands.</p>
+<div class="highlight"><pre><span></span><code>sudo -u hbase /usr/lib/hbase/bin/hbase-daemon.sh stop master
+sudo -u hbase /usr/lib/hbase/bin/hbase-daemon.sh start master
+sudo -u hbase /usr/lib/hbase/bin/hbase-daemon.sh restart rest
+</code></pre></div>
+<h3 id="ssl-certificate-issues">SSL Certificate Issues<a class="headerlink" href="#ssl-certificate-issues" title="Permanent link">&para;</a></h3>
+<p>Clients that do not trust the certificate presented by the server will behave in different ways.
+A browser will typically warn you of the inability to trust the received certificate and give you an opportunity to add an exception for the particular certificate.
+Curl will present you with the follow message and instructions for turning of certificate verification:</p>
+<div class="highlight"><pre><span></span><code>curl performs SSL certificate verification by default, using a &quot;bundle&quot; 
+ of Certificate Authority (CA) public keys (CA certs). If the default
+ bundle file isn&#39;t adequate, you can specify an alternate file
+ using the --cacert option.
+If this HTTPS server uses a certificate signed by a CA represented 
+ the bundle, the certificate verification probably failed due to a
+ problem with the certificate (it might be expired, or the name might
+ not match the domain name in the URL).
+If you&#39;d like to turn off curl&#39;s verification of the certificate, use
+ the -k (or --insecure) option.
+</code></pre></div>
+<h3 id="spnego-authentication-issues">SPNego Authentication Issues<a class="headerlink" href="#spnego-authentication-issues" title="Permanent link">&para;</a></h3>
+<p>Calls from Knox to Secure Hadoop Cluster fails, with SPNego authentication problems,
+if there was a TGT for Knox in disk cache when Knox was started.</p>
+<p>You are likely to run into this situation on developer machines where the developer could have kinited for some testing.</p>
+<p>Work Around: clear TGT of Knox from disk cache (calling <code>kdestroy</code> would do it), before starting Knox</p>
+<h3 id="filing-bugs">Filing Bugs<a class="headerlink" href="#filing-bugs" title="Permanent link">&para;</a></h3>
+<p>Bugs can be filed using [Jira][jira].
+Please include the results of this command below in the Environment section.
+Also include the version of Hadoop being used in the same section.</p>
+<div class="highlight"><pre><span></span><code>cd {GATEWAY_HOME}
+java -jar bin/gateway.jar -version
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

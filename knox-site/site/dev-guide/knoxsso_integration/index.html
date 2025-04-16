@@ -1,0 +1,3332 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/dev-guide/knoxsso_integration/">
+      
+      
+        <link rel="prev" href="../knox_monitoring_api/">
+      
+      
+        <link rel="next" href="../../knox_cli/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>KnoxSSO Integration - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#knox-sso-integration-for-uis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              KnoxSSO Integration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knox_token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_id_assertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knox_monitoring_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Flow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knoxsso-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxSSO Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxSSO Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knoxssoxml-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      knoxsso.xml Topology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sandboxxml-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      sandbox.xml Topology
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curl-the-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Curl the Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#browse-the-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse the Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-by-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter by Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-signature-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Signature Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#public-key-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Public Key Parsing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../knoxshell-guide/knoxshell_user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      General Flow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knoxsso-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxSSO Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxSSO Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knoxssoxml-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      knoxsso.xml Topology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sandboxxml-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      sandbox.xml Topology
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#curl-the-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Curl the Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#browse-the-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse the Flow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-by-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter by Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-signature-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Signature Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#public-key-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Public Key Parsing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="knox-sso-integration-for-uis">Knox SSO Integration for UIs<a class="headerlink" href="#knox-sso-integration-for-uis" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>KnoxSSO provides an abstraction for integrating any number of authentication systems and SSO solutions and enables participating web applications to scale to those solutions more easily. Without the token exchange capabilities offered by KnoxSSO each component UI would need to integrate with each desired solution on its own. </p>
+<p>This document examines the way to integrate with Knox SSO in the form of a Servlet Filter. This approach should be easily extrapolated into other frameworks - ie. Spring Security.</p>
+<h3 id="general-flow">General Flow<a class="headerlink" href="#general-flow" title="Permanent link">&para;</a></h3>
+<p>The following is a generic sequence diagram for SAML integration through KnoxSSO.</p>
+<p>&lt;<general_saml_flow.puml>&gt; </p>
+<h4 id="knoxsso-setup">KnoxSSO Setup<a class="headerlink" href="#knoxsso-setup" title="Permanent link">&para;</a></h4>
+<h5 id="knoxssoxml-topology">knoxsso.xml Topology<a class="headerlink" href="#knoxssoxml-topology" title="Permanent link">&para;</a></h5>
+<p>In order to enable KnoxSSO, we need to configure the IdP topology. The following is an example of this topology that is configured to use HTTP Basic Auth against the Knox Demo LDAP server. This is the lowest barrier of entry for your development environment that actually authenticates against a real user store. What’s great is if you work against the IdP with Basic Auth then you will work with SAML or anything else as well.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>        &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>        &lt;topology&gt;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>            &lt;gateway&gt;
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                &lt;provider&gt;
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                    &lt;role&gt;authentication&lt;/role&gt;
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                    &lt;name&gt;ShiroProvider&lt;/name&gt;
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                    &lt;enabled&gt;true&lt;/enabled&gt;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                    &lt;param&gt;
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                        &lt;name&gt;sessionTimeout&lt;/name&gt;
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                        &lt;value&gt;30&lt;/value&gt;
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                    &lt;param&gt;
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                        &lt;name&gt;main.ldapRealm&lt;/name&gt;
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                        &lt;value&gt;org.apache.knox.gateway.shirorealm.KnoxLdapRealm&lt;/value&gt;
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                    &lt;param&gt;
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                        &lt;name&gt;main.ldapContextFactory&lt;/name&gt;
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                        &lt;value&gt;org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory&lt;/value&gt;
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>                    &lt;param&gt;
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                        &lt;name&gt;main.ldapRealm.contextFactory&lt;/name&gt;
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                        &lt;value&gt;$ldapContextFactory&lt;/value&gt;
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                    &lt;param&gt;
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>                        &lt;name&gt;main.ldapRealm.userDnTemplate&lt;/name&gt;
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>                        &lt;value&gt;uid={0},ou=people,dc=hadoop,dc=apache,dc=org&lt;/value&gt;
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>                    &lt;param&gt;
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>                        &lt;name&gt;main.ldapRealm.contextFactory.url&lt;/name&gt;
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                        &lt;value&gt;ldap://localhost:33389&lt;/value&gt;
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>                    &lt;param&gt;
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>                        &lt;name&gt;main.ldapRealm.contextFactory.authenticationMechanism&lt;/name&gt;
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>                        &lt;value&gt;simple&lt;/value&gt;
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>                    &lt;param&gt;
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>                        &lt;name&gt;urls./**&lt;/name&gt;
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>                        &lt;value&gt;authcBasic&lt;/value&gt;
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>                    &lt;/param&gt;
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>                &lt;/provider&gt;
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>            &lt;provider&gt;
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>                    &lt;role&gt;identity-assertion&lt;/role&gt;
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>                    &lt;name&gt;Default&lt;/name&gt;
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>                    &lt;enabled&gt;true&lt;/enabled&gt;
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>                &lt;/provider&gt;
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>            &lt;/gateway&gt;
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>        &lt;service&gt;
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>                &lt;role&gt;KNOXSSO&lt;/role&gt;
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>                &lt;param&gt;
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>                    &lt;name&gt;knoxsso.cookie.secure.only&lt;/name&gt;
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>                    &lt;value&gt;true&lt;/value&gt;
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>                &lt;/param&gt;
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>                &lt;param&gt;
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>                    &lt;name&gt;knoxsso.token.ttl&lt;/name&gt;
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a>                    &lt;value&gt;100000&lt;/value&gt;
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a>                &lt;/param&gt;
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a>            &lt;/service&gt;
+<a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a>        &lt;/topology&gt;
+</code></pre></div>
+<p>Just as with any Knox service, the KNOXSSO service is protected by the gateway providers defined above it. In this case, the ShiroProvider is taking care of HTTP Basic Auth against LDAP for us. Once the user authenticates the request processing continues to the KNOXSSO service that will create the required cookie and do the necessary redirects.</p>
+<p>The authenticate/federation provider can be swapped out to fit your deployment environment.</p>
+<h5 id="sandboxxml-topology">sandbox.xml Topology<a class="headerlink" href="#sandboxxml-topology" title="Permanent link">&para;</a></h5>
+<p>In order to see the end to end story and use it as an example in your development, you can configure one of the cluster topologies to use the SSOCookieProvider instead of the out of the box ShiroProvider. The following is an example sandbox.xml topology that is configured for using KnoxSSO to protect access to the Hadoop REST APIs.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>    &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>&lt;topology&gt;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  &lt;gateway&gt;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    &lt;provider&gt;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        &lt;role&gt;federation&lt;/role&gt;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        &lt;name&gt;SSOCookieProvider&lt;/name&gt;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        &lt;enabled&gt;true&lt;/enabled&gt;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        &lt;param&gt;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            &lt;name&gt;sso.authentication.provider.url&lt;/name&gt;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>            &lt;value&gt;https://localhost:9443/gateway/idp/api/v1/websso&lt;/value&gt;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        &lt;/param&gt;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    &lt;/provider&gt;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    &lt;provider&gt;
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        &lt;role&gt;identity-assertion&lt;/role&gt;
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        &lt;name&gt;Default&lt;/name&gt;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        &lt;enabled&gt;true&lt;/enabled&gt;
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    &lt;/provider&gt;
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &lt;/gateway&gt;    
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &lt;service&gt;
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>      &lt;role&gt;NAMENODE&lt;/role&gt;
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>      &lt;url&gt;hdfs://localhost:8020&lt;/url&gt;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  &lt;/service&gt;
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>  &lt;service&gt;
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>      &lt;role&gt;JOBTRACKER&lt;/role&gt;
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>      &lt;url&gt;rpc://localhost:8050&lt;/url&gt;
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>  &lt;/service&gt;
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  &lt;service&gt;
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>      &lt;role&gt;WEBHDFS&lt;/role&gt;
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>      &lt;url&gt;http://localhost:50070/webhdfs&lt;/url&gt;
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>  &lt;/service&gt;
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>  &lt;service&gt;
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>      &lt;role&gt;WEBHCAT&lt;/role&gt;
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>      &lt;url&gt;http://localhost:50111/templeton&lt;/url&gt;
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  &lt;/service&gt;
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>  &lt;service&gt;
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>      &lt;role&gt;OOZIE&lt;/role&gt;
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>      &lt;url&gt;http://localhost:11000/oozie&lt;/url&gt;
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>  &lt;/service&gt;
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>  &lt;service&gt;
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>      &lt;role&gt;WEBHBASE&lt;/role&gt;
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>      &lt;url&gt;http://localhost:60080&lt;/url&gt;
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>  &lt;/service&gt;
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>  &lt;service&gt;
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>      &lt;role&gt;HIVE&lt;/role&gt;
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>      &lt;url&gt;http://localhost:10001/cliservice&lt;/url&gt;
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>  &lt;/service&gt;
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>  &lt;service&gt;
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>      &lt;role&gt;RESOURCEMANAGER&lt;/role&gt;
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>      &lt;url&gt;http://localhost:8088/ws&lt;/url&gt;
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>  &lt;/service&gt;
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>&lt;/topology&gt;
+</code></pre></div>
+<ul>
+<li>NOTE: Be aware that when using Chrome as your browser that cookies don’t seem to work for “localhost”. Either use a VM or like I did - use 127.0.0.1. Safari works with localhost without problems.</li>
+</ul>
+<p>As you can see above, the only thing being configured is the SSO provider URL. Since Knox is the issuer of the cookie and token, we don’t need to configure the public key since we have programmatic access to the actual keystore for use at verification time.</p>
+<h4 id="curl-the-flow">Curl the Flow<a class="headerlink" href="#curl-the-flow" title="Permanent link">&para;</a></h4>
+<p>We should now be able to walk through the SSO Flow at the command line with curl to see everything that happens.</p>
+<p>First, issue a request to WEBHDFS through knox.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>    bash-3.2$ curl -iku guest:guest-password https://localhost:8443/gateway/sandbox/webhdfs/v1/tmp?op+LISTSTATUS
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    HTTP/1.1 302 Found
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    Location: https://localhost:8443/gateway/idp/api/v1/websso?originalUrl=https://localhost:8443/gateway/sandbox/webhdfs/v1/tmp?op+LISTSTATUS
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    Content-Length: 0
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    Server: Jetty(8.1.14.v20131031)
+</code></pre></div>
+<p>Note the redirect to the knoxsso endpoint and the loginUrl with the originalUrl request parameter. We need to see that come from your integration as well.</p>
+<p>Let’s manually follow that redirect with curl now:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>    bash-3.2$ curl -iku guest:guest-password &quot;https://localhost:8443/gateway/idp/api/v1/websso?originalUrl=https://localhost:9443/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    HTTP/1.1 307 Temporary Redirect
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    Set-Cookie: JSESSIONID=mlkda4crv7z01jd0q0668nsxp;Path=/gateway/idp;Secure;HttpOnly
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    Set-Cookie: hadoop-jwt=eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE0NDM1ODUzNzEsInN1YiI6Imd1ZXN0IiwiYXVkIjoiSFNTTyIsImlzcyI6IkhTU08ifQ.RpA84Qdr6RxEZjg21PyVCk0G1kogvkuJI2bo302bpwbvmc-i01gCwKNeoGYzUW27MBXf6a40vylHVR3aZuuBUxsJW3aa_ltrx0R5ztKKnTWeJedOqvFKSrVlBzJJ90PzmDKCqJxA7JUhyo800_lDHLTcDWOiY-ueWYV2RMlCO0w;Path=/;Domain=localhost;Secure;HttpOnly
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    Expires: Thu, 01 Jan 1970 00:00:00 GMT
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    Location: https://localhost:8443/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    Content-Length: 0
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    Server: Jetty(8.1.14.v20131031)
+</code></pre></div>
+<p>Note the redirect back to the original URL in the Location header and the Set-Cookie for the hadoop-jwt cookie. This is what the SSOCookieProvider in sandbox (and ultimately in your integration) will be looking for.</p>
+<p>Finally, we should be able to take the above cookie and pass it to the original url as indicated in the Location header for our originally requested resource:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>    bash-3.2$ curl -ikH &quot;Cookie: hadoop-jwt=eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE0NDM1ODY2OTIsInN1YiI6Imd1ZXN0IiwiYXVkIjoiSFNTTyIsImlzcyI6IkhTU08ifQ.Os5HEfVBYiOIVNLRIvpYyjeLgAIMbBGXHBWMVRAEdiYcNlJRcbJJ5aSUl1aciNs1zd_SHijfB9gOdwnlvQ_0BCeGHlJBzHGyxeypIoGj9aOwEf36h-HVgqzGlBLYUk40gWAQk3aRehpIrHZT2hHm8Pu8W-zJCAwUd8HR3y6LF3M;Path=/;Domain=localhost;Secure;HttpOnly&quot; https://localhost:9443/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    TODO: cluster was down and needs to be recreated :/
+</code></pre></div>
+<h4 id="browse-the-flow">Browse the Flow<a class="headerlink" href="#browse-the-flow" title="Permanent link">&para;</a></h4>
+<p>At this point, we can use a web browser instead of the command line and see how the browser will challenge the user for Basic Auth Credentials and then manage the cookies such that the SSO and token exchange aspects of the flow are hidden from the user.</p>
+<p>Simply, try to invoke the same webhdfs API from the browser URL bar.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>        https://localhost:8443/gateway/sandbox/webhdfs/v1/tmp?op=LISTSTATUS
+</code></pre></div>
+<p>Based on our understanding of the flow it should behave like:</p>
+<ul>
+<li>SSOCookieProvider checks for hadoop-jwt cookie and in its absence redirects to the configured SSO provider URL (knoxsso endpoint)</li>
+<li>ShiroProvider on the KnoxSSO endpoint returns a 401 and the browser challenges the user for username/password</li>
+<li>The ShiroProvider authenticates the user against the Demo LDAP Server using a simple LDAP bind and establishes the security context for the WebSSO request</li>
+<li>The WebSSO service exchanges the normalized Java Subject into a JWT token and sets it on the response as a cookie named hadoop-jwt</li>
+<li>The WebSSO service then redirects the user agent back to the originally requested URL - the webhdfs Knox service
+subsequent invocations will find the cookie in the incoming request and not need to engage the WebSSO service again until it expires.</li>
+</ul>
+<h4 id="filter-by-example">Filter by Example<a class="headerlink" href="#filter-by-example" title="Permanent link">&para;</a></h4>
+<p>We have added a federation provider to Knox for accepting KnoxSSO cookies for REST APIs. This provides us with a couple benefits:
+KnoxSSO support for REST APIs for XmlHttpRequests from JavaScript (basic CORS functionality is also included). This is still rather basic and considered beta code.
+A model and real world usecase for others to base their integrations on</p>
+<p>In addition, https://issues.apache.org/jira/browse/HADOOP-11717 added support for the Hadoop UIs to the hadoop-auth module and it can be used as another example.</p>
+<p>We will examine the new SSOCookieFederationFilter in Knox here.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>package org.apache.knox.gateway.provider.federation.jwt.filter;
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    import java.io.IOException;
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        import java.security.Principal;
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        import java.security.PrivilegedActionException;
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        import java.security.PrivilegedExceptionAction;
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        import java.util.ArrayList;
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        import java.util.Date;
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        import java.util.HashSet;
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        import java.util.List;
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        import java.util.Set;
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        import javax.security.auth.Subject;
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        import javax.servlet.Filter;
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>        import javax.servlet.FilterChain;
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>        import javax.servlet.FilterConfig;
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        import javax.servlet.ServletException;
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        import javax.servlet.ServletRequest;
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>        import javax.servlet.ServletResponse;
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>        import javax.servlet.http.Cookie;
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        import javax.servlet.http.HttpServletRequest;
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>        import javax.servlet.http.HttpServletResponse;
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>        import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>        import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>        import org.apache.knox.gateway.security.PrimaryPrincipal;
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>        import org.apache.knox.gateway.services.GatewayServices;
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>        import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>        import org.apache.knox.gateway.services.security.token.TokenServiceException;
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>        import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>        public class SSOCookieFederationFilter implements Filter {
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>          private static JWTMessages log = MessagesFactory.get( JWTMessages.class );
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>          private static final String ORIGINAL_URL_QUERY_PARAM = &quot;originalUrl=&quot;;
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>          private static final String SSO_COOKIE_NAME = &quot;sso.cookie.name&quot;;
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>          private static final String SSO_EXPECTED_AUDIENCES = &quot;sso.expected.audiences&quot;;
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>          private static final String SSO_AUTHENTICATION_PROVIDER_URL = &quot;sso.authentication.provider.url&quot;;
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>          private static final String DEFAULT_SSO_COOKIE_NAME = &quot;hadoop-jwt&quot;;
+</code></pre></div>
+<p>The above represent the configurable aspects of the integration</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>    private JWTokenAuthority authority = null;
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    private String cookieName = null;
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    private List&lt;String&gt; audiences = null;
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    private String authenticationProviderUrl = null;
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    @Override
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    public void init( FilterConfig filterConfig ) throws ServletException {
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>      GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>      authority = (JWTokenAuthority)services.getService(GatewayServices.TOKEN_SERVICE);
+</code></pre></div>
+<p>The above is a Knox specific internal service that we use to issue and verify JWT tokens. This will be covered separately and you will need to be implement something similar in your filter implementation.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>    // configured cookieName
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    cookieName = filterConfig.getInitParameter(SSO_COOKIE_NAME);
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    if (cookieName == null) {
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>      cookieName = DEFAULT_SSO_COOKIE_NAME;
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    }
+</code></pre></div>
+<p>The configurable cookie name is something that can be used to change a cookie name to fit your deployment environment. The default name is hadoop-jwt which is also the default in the Hadoop implementation. This name must match the name being used by the KnoxSSO endpoint when setting the cookie.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>    // expected audiences or null
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    String expectedAudiences = filterConfig.getInitParameter(SSO_EXPECTED_AUDIENCES);
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    if (expectedAudiences != null) {
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>      audiences = parseExpectedAudiences(expectedAudiences);
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    }
+</code></pre></div>
+<p>Audiences are configured as a comma separated list of audience strings. Names of intended recipients or intents. The semantics that we are using for this processing is that - if not configured than any (or none) audience is accepted. If there are audiences configured then as long as one of the expected ones is found in the set of claims in the token it is accepted.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>    // url to SSO authentication provider
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    authenticationProviderUrl = filterConfig.getInitParameter(SSO_AUTHENTICATION_PROVIDER_URL);
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    if (authenticationProviderUrl == null) {
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>      log.missingAuthenticationProviderUrlConfiguration();
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    }
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  }
+</code></pre></div>
+<p>This is the URL to the KnoxSSO endpoint. It is required and SSO/token exchange will not work without this set correctly.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>    /**
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    * @param expectedAudiences
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    * @return
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    */
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    private List&lt;String&gt; parseExpectedAudiences(String expectedAudiences) {
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>     ArrayList&lt;String&gt; audList = null;
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>       // setup the list of valid audiences for token validation
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>       if (expectedAudiences != null) {
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>         // parse into the list
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>         String[] audArray = expectedAudiences.split(&quot;,&quot;);
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>         audList = new ArrayList&lt;String&gt;();
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>         for (String a : audArray) {
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>           audList.add(a);
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>         }
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>       }
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>       return audList;
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>     }
+</code></pre></div>
+<p>The above method parses the comma separated list of expected audiences and makes it available for interrogation during token validation.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>    public void destroy() {
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    }
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>        throws IOException, ServletException {
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>      String wireToken = null;
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>      HttpServletRequest req = (HttpServletRequest) request;
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>      String loginURL = constructLoginURL(req);
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>      wireToken = getJWTFromCookie(req);
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>      if (wireToken == null) {
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>        if (req.getMethod().equals(&quot;OPTIONS&quot;)) {
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>          // CORS preflight requests to determine allowed origins and related config
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>          // must be able to continue without being redirected
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>          Subject sub = new Subject();
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>          sub.getPrincipals().add(new PrimaryPrincipal(&quot;anonymous&quot;));
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>          continueWithEstablishedSecurityContext(sub, req, (HttpServletResponse) response, chain);
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        }
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>        log.sendRedirectToLoginURL(loginURL);
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>        ((HttpServletResponse) response).sendRedirect(loginURL);
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>      }
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>      else {
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>        JWTToken token = new JWTToken(wireToken);
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>        boolean verified = false;
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>        try {
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>          verified = authority.verifyToken(token);
+<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>          if (verified) {
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>            Date expires = token.getExpiresDate();
+<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>            if (expires == null || new Date().before(expires)) {
+<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>              boolean audValid = validateAudiences(token);
+<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>              if (audValid) {
+<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>                Subject subject = createSubjectFromToken(token);
+<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>                continueWithEstablishedSecurityContext(subject, (HttpServletRequest)request, (HttpServletResponse)response, chain);
+<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>              }
+<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>              else {
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>                log.failedToValidateAudience();
+<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>                ((HttpServletResponse) response).sendRedirect(loginURL);
+<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>              }
+<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>            }
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>            else {
+<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>              log.tokenHasExpired();
+<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>            ((HttpServletResponse) response).sendRedirect(loginURL);
+<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a>            }
+<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>          }
+<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a>          else {
+<a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a>            log.failedToVerifyTokenSignature();
+<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a>          ((HttpServletResponse) response).sendRedirect(loginURL);
+<a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>          }
+<a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a>        } catch (TokenServiceException e) {
+<a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a>          log.unableToVerifyToken(e);
+<a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a>        ((HttpServletResponse) response).sendRedirect(loginURL);
+<a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a>        }
+<a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a>      }
+<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a>    }
+</code></pre></div>
+<p>The doFilter method above is where all the real work is done. We look for a cookie by the configured name. If it isn’t there then we redirect to the configured SSO provider URL in order to acquire one. That is unless it is an OPTIONS request which may be a preflight CORS request. You shouldn’t need to worry about this aspect. It is really a REST API concern not a web app UI one.</p>
+<p>Once we get a cookie, the underlying JWT token is extracted and returned as the wireToken from which we create a Knox specific JWTToken. This abstraction is around the use of the nimbus JWT library which you can use directly. We will cover those details separately.</p>
+<p>We then ask the token authority component to verify the token. This involves signature validation of the signed token. In order to verify the signature of the token you will need to have the public key of the Knox SSO server configured and provided to the nimbus library through its API at verification time. NOTE: This is a good place to look at the Hadoop implementation as an example.</p>
+<p>Once we know the token is signed by a trusted party we then validate whether it is expired and that it has an expected (or no) audience claims.</p>
+<p>Finally, when we have a valid token, we create a Java Subject from it and continue the request through the filterChain as the authenticated user.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>    /**
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    * Encapsulate the acquisition of the JWT token from HTTP cookies within the
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    * request.
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    *
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    * @param req servlet request to get the JWT token from
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    * @return serialized JWT token
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    */
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    protected String getJWTFromCookie(HttpServletRequest req) {
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    String serializedJWT = null;
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    Cookie[] cookies = req.getCookies();
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    if (cookies != null) {
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>      for (Cookie cookie : cookies) {
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        if (cookieName.equals(cookie.getName())) {
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>          log.cookieHasBeenFound(cookieName);
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>          serializedJWT = cookie.getValue();
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>          break;
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>        }
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>      }
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    }
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    return serializedJWT;
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    }
+</code></pre></div>
+<p>The above method extracts the serialized token from the cookie and returns it as the wireToken.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>    /**
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    * Create the URL to be used for authentication of the user in the absence of
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    * a JWT token within the incoming request.
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    *
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    * @param request for getting the original request URL
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    * @return url to use as login url for redirect
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    */
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    protected String constructLoginURL(HttpServletRequest request) {
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    String delimiter = &quot;?&quot;;
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    if (authenticationProviderUrl.contains(&quot;?&quot;)) {
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>      delimiter = &quot;&amp;&quot;;
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    }
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>    String loginURL = authenticationProviderUrl + delimiter
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>        + ORIGINAL_URL_QUERY_PARAM
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>        + request.getRequestURL().toString()+ getOriginalQueryString(request);
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>        return loginURL;
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>    }
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    private String getOriginalQueryString(HttpServletRequest request) {
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>        String originalQueryString = request.getQueryString();
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>        return (originalQueryString == null) ? &quot;&quot; : &quot;?&quot; + originalQueryString;
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>    }
+</code></pre></div>
+<p>The above method creates the full URL to be used in redirecting to the KnoxSSO endpoint. It includes the SSO provider URL as well as the original request URL so that we can redirect back to it after authentication and token exchange.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>    /**
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    * Validate whether any of the accepted audience claims is present in the
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    * issued token claims list for audience. Override this method in subclasses
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    * in order to customize the audience validation behavior.
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    *
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    * @param jwtToken
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    *          the JWT token where the allowed audiences will be found
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    * @return true if an expected audience is present, otherwise false
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    */
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    protected boolean validateAudiences(JWTToken jwtToken) {
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>        boolean valid = false;
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>        String[] tokenAudienceList = jwtToken.getAudienceClaims();
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>        // if there were no expected audiences configured then just
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>        // consider any audience acceptable
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>        if (audiences == null) {
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>            valid = true;
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>        } else {
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>            // if any of the configured audiences is found then consider it
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>            // acceptable
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>            for (String aud : tokenAudienceList) {
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>            if (audiences.contains(aud)) {
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>                //log.debug(&quot;JWT token audience has been successfully validated&quot;);
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a>                log.jwtAudienceValidated();
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a>                valid = true;
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a>                break;
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a>            }
+<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a>        }
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a>    }
+<a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a>    return valid;
+<a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a>    }
+</code></pre></div>
+<p>The above method implements the audience claim semantics explained earlier.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>    private void continueWithEstablishedSecurityContext(Subject subject, final      HttpServletRequest request, final HttpServletResponse response, final FilterChain chain) throws IOException, ServletException {
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    try {
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>      Subject.doAs(
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>        subject,
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>        new PrivilegedExceptionAction&lt;Object&gt;() {
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>          @Override
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>          public Object run() throws Exception {
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>            chain.doFilter(request, response);
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>            return null;
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>          }
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>        }
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>        );
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>    }
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    catch (PrivilegedActionException e) {
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>      Throwable t = e.getCause();
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>      if (t instanceof IOException) {
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>        throw (IOException) t;
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>      }
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>      else if (t instanceof ServletException) {
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>        throw (ServletException) t;
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>      }
+<a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a>      else {
+<a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a>        throw new ServletException(t);
+<a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a>      }
+<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a>    }
+<a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a>    }
+</code></pre></div>
+<p>This method continues the filter chain processing upon successful validation of the token. This would need to be replaced with your environment’s equivalent of continuing the request or login to the app as the authenticated user.</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>    private Subject createSubjectFromToken(JWTToken token) {
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>        final String principal = token.getSubject();
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>        @SuppressWarnings(&quot;rawtypes&quot;)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>        HashSet emptySet = new HashSet();
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>        Set&lt;Principal&gt; principals = new HashSet&lt;Principal&gt;();
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>        Principal p = new PrimaryPrincipal(principal);
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>        principals.add(p);
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>        javax.security.auth.Subject subject = new javax.security.auth.Subject(true, principals, emptySet, emptySet);
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>        return subject;
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    }
+</code></pre></div>
+This method takes a JWTToken and creates a Java Subject with the principals expected by the rest of the Knox processing. This would need to be implemented in a way appropriate for your operating environment as well. For instance, the Hadoop handler implementation returns a Hadoop AuthenticationToken to the calling filter which in turn ends up in the Hadoop auth cookie.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>    }
+</code></pre></div>
+<h4 id="token-signature-validation">Token Signature Validation<a class="headerlink" href="#token-signature-validation" title="Permanent link">&para;</a></h4>
+<p>The following is the method from the Hadoop handler implementation that validates the signature.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>    /** 
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    * Verify the signature of the JWT token in this method. This method depends on the  * public key that was established during init based upon the provisioned public key.    * Override this method in subclasses in order to customize the signature verification behavior.
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    * @param jwtToken the token that contains the signature to be validated
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    * @return valid true if signature verifies successfully; false otherwise
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    */
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    protected boolean validateSignature(SignedJWT jwtToken){
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>        boolean valid=false;
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>        if (JWSObject.State.SIGNED == jwtToken.getState()) {
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>            LOG.debug(&quot;JWT token is in a SIGNED state&quot;);
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>            if (jwtToken.getSignature() != null) {
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>                LOG.debug(&quot;JWT token signature is not null&quot;);
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>                try {
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>                    JWSVerifier verifier=new RSASSAVerifier(publicKey);
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>                    if (jwtToken.verify(verifier)) {
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>                    valid=true;
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>                    LOG.debug(&quot;JWT token has been successfully verified&quot;);
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>                }
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>            else {
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>                LOG.warn(&quot;JWT signature verification failed.&quot;);
+<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>            }
+<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a>        }
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a>        catch (JOSEException je) {
+<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a>            LOG.warn(&quot;Error while validating signature&quot;,je);
+<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a>        }
+<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a>    }
+<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a>    }
+<a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a>    return valid;
+<a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a>    }
+</code></pre></div>
+<p>Hadoop Configuration Example
+The following is like the configuration in the Hadoop handler implementation.</p>
+<p>OBSOLETE but in the proper spirit of HADOOP-11717 ( HADOOP-11717 - Add Redirecting WebSSO behavior with JWT Token in Hadoop Auth RESOLVED )</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>    &lt;property&gt;
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>        &lt;name&gt;hadoop.http.authentication.type&lt;/name&gt;
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>        &lt;value&gt;org.apache.hadoop/security.authentication/server.JWTRedirectAuthenticationHandler&lt;/value&gt;
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    &lt;/property&gt;
+</code></pre></div>
+<p>This is the handler classname in Hadoop auth for JWT token (KnoxSSO) support.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>    &lt;property&gt;
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>        &lt;name&gt;hadoop.http.authentication.authentication.provider.url&lt;/name&gt;
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>        &lt;value&gt;http://c6401.ambari.apache.org:8888/knoxsso&lt;/value&gt;
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    &lt;/property&gt;
+</code></pre></div>
+<p>The above property is the SSO provider URL that points to the knoxsso endpoint.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>    &lt;property&gt;
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>        &lt;name&gt;hadoop.http.authentication.public.key.pem&lt;/name&gt;
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>        &lt;value&gt;MIICVjCCAb+gAwIBAgIJAPPvOtuTxFeiMA0GCSqGSIb3DQEBBQUAMG0xCzAJBgNV
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    BAYTAlVTMQ0wCwYDVQQIEwRUZXN0MQ0wCwYDVQQHEwRUZXN0MQ8wDQYDVQQKEwZI
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    YWRvb3AxDTALBgNVBAsTBFRlc3QxIDAeBgNVBAMTF2M2NDAxLmFtYmFyaS5hcGFj
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    aGUub3JnMB4XDTE1MDcxNjE4NDcyM1oXDTE2MDcxNTE4NDcyM1owbTELMAkGA1UE
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    BhMCVVMxDTALBgNVBAgTBFRlc3QxDTALBgNVBAcTBFRlc3QxDzANBgNVBAoTBkhh
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    ZG9vcDENMAsGA1UECxMEVGVzdDEgMB4GA1UEAxMXYzY0MDEuYW1iYXJpLmFwYWNo
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    ZS5vcmcwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMFs/rymbiNvg8lDhsdA
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    qvh5uHP6iMtfv9IYpDleShjkS1C+IqId6bwGIEO8yhIS5BnfUR/fcnHi2ZNrXX7x
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>    QUtQe7M9tDIKu48w//InnZ6VpAqjGShWxcSzR6UB/YoGe5ytHS6MrXaormfBg3VW
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>    tDoy2MS83W8pweS6p5JnK7S5AgMBAAEwDQYJKoZIhvcNAQEFBQADgYEANyVg6EzE
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>    2q84gq7wQfLt9t047nYFkxcRfzhNVL3LB8p6IkM4RUrzWq4kLA+z+bpY2OdpkTOe
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>    wUpEdVKzOQd4V7vRxpdANxtbG/XXrJAAcY/S+eMy1eDK73cmaVPnxPUGWmMnQXUi
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>    TLab+w8tBQhNbq6BOQ42aOrLxA8k/M4cV1A=&lt;/value&gt;
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>    &lt;/property&gt;
+</code></pre></div>
+<p>The above property holds the KnoxSSO server’s public key for signature verification. Adding it directly to the config like this is convenient and is easily done through Ambari to existing config files that take custom properties. Config is generally protected as root access only as well - so it is a pretty good solution.</p>
+<h4 id="public-key-parsing">Public Key Parsing<a class="headerlink" href="#public-key-parsing" title="Permanent link">&para;</a></h4>
+<p>In order to turn the pem encoded config item into a public key the hadoop handler implementation does the following in the init() method.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>    if (publicKey == null) {
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>     String pemPublicKey = config.getProperty(PUBLIC_KEY_PEM);
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>     if (pemPublicKey == null) {
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>       throw new ServletException(
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>           &quot;Public key for signature validation must be provisioned.&quot;);
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>     }
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>     publicKey = CertificateUtil.parseRSAPublicKey(pemPublicKey);
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>   }
+</code></pre></div>
+<p>and the CertificateUtil class is below:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>    package org.apache.hadoop.security.authentication.util;
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    import java.io.ByteArrayInputStream;
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    import java.io.UnsupportedEncodingException;
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    import java.security.PublicKey;
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    import java.security.cert.CertificateException;
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    import java.security.cert.CertificateFactory;
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    import java.security.cert.X509Certificate;
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>    import java.security.interfaces.RSAPublicKey;
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>    import javax.servlet.ServletException;
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>    public class CertificateUtil {
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>        private static final String PEM_HEADER = &quot;-----BEGIN CERTIFICATE-----\n&quot;;
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>        private static final String PEM_FOOTER = &quot;\n-----END CERTIFICATE-----&quot;;
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>     /**
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>      * Gets an RSAPublicKey from the provided PEM encoding.
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>      *
+<a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>      * @param pem
+<a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>      *          - the pem encoding from config without the header and footer
+<a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>      * @return RSAPublicKey the RSA public key
+<a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>      * @throws ServletException thrown if a processing error occurred
+<a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>      */
+<a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>    public static RSAPublicKey parseRSAPublicKey(String pem) throws ServletException {
+<a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>        String fullPem = PEM_HEADER + pem + PEM_FOOTER;
+<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>        PublicKey key = null;
+<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>        try {
+<a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>            CertificateFactory fact = CertificateFactory.getInstance(&quot;X.509&quot;);
+<a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>            ByteArrayInputStream is = new ByteArrayInputStream(
+<a id="__codelineno-24-31" name="__codelineno-24-31" href="#__codelineno-24-31"></a>                fullPem.getBytes(&quot;UTF8&quot;));
+<a id="__codelineno-24-32" name="__codelineno-24-32" href="#__codelineno-24-32"></a>            X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
+<a id="__codelineno-24-33" name="__codelineno-24-33" href="#__codelineno-24-33"></a>            key = cer.getPublicKey();
+<a id="__codelineno-24-34" name="__codelineno-24-34" href="#__codelineno-24-34"></a>        } catch (CertificateException ce) {
+<a id="__codelineno-24-35" name="__codelineno-24-35" href="#__codelineno-24-35"></a>            String message = null;
+<a id="__codelineno-24-36" name="__codelineno-24-36" href="#__codelineno-24-36"></a>            if (pem.startsWith(PEM_HEADER)) {
+<a id="__codelineno-24-37" name="__codelineno-24-37" href="#__codelineno-24-37"></a>                message = &quot;CertificateException - be sure not to include PEM header &quot;
+<a id="__codelineno-24-38" name="__codelineno-24-38" href="#__codelineno-24-38"></a>                    + &quot;and footer in the PEM configuration element.&quot;;
+<a id="__codelineno-24-39" name="__codelineno-24-39" href="#__codelineno-24-39"></a>            } else {
+<a id="__codelineno-24-40" name="__codelineno-24-40" href="#__codelineno-24-40"></a>                message = &quot;CertificateException - PEM may be corrupt&quot;;
+<a id="__codelineno-24-41" name="__codelineno-24-41" href="#__codelineno-24-41"></a>            }
+<a id="__codelineno-24-42" name="__codelineno-24-42" href="#__codelineno-24-42"></a>            throw new ServletException(message, ce);
+<a id="__codelineno-24-43" name="__codelineno-24-43" href="#__codelineno-24-43"></a>        } catch (UnsupportedEncodingException uee) {
+<a id="__codelineno-24-44" name="__codelineno-24-44" href="#__codelineno-24-44"></a>            throw new ServletException(uee);
+<a id="__codelineno-24-45" name="__codelineno-24-45" href="#__codelineno-24-45"></a>        }
+<a id="__codelineno-24-46" name="__codelineno-24-46" href="#__codelineno-24-46"></a>        return (RSAPublicKey) key;
+<a id="__codelineno-24-47" name="__codelineno-24-47" href="#__codelineno-24-47"></a>        }
+<a id="__codelineno-24-48" name="__codelineno-24-48" href="#__codelineno-24-48"></a>    }
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

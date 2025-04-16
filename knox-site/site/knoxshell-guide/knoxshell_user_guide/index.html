@@ -1,0 +1,2811 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/knoxshell-guide/knoxshell_user_guide/">
+      
+      
+        <link rel="prev" href="../../knox_cli/">
+      
+      
+        <link rel="next" href="../../admin_api/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Knox Shell - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#apache-knox-knoxshell-21x-user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Knox Shell
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../dev-guide/book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knox_token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_id_assertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/knox_monitoring_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dev-guide/knoxsso_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<p>&lt;&lt;../../common/header.md&gt;&gt;</p>
+<p><img src="/assets/images/knox-logo.gif" alt="Knox"/>
+<img src="/assets/images/apache-logo.gif" align="right" alt="Apache"/></p>
+<h1 id="apache-knox-knoxshell-21x-user-guide">Apache Knox - KnoxShell 2.1.x User Guide<a class="headerlink" href="#apache-knox-knoxshell-21x-user-guide" title="Permanent link">&para;</a></h1>
+<ul>
+<li>
+<h1 id="introduction">[Introduction]<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="representing-and-working-with-tabular-data">[Representing and Working with Tabular Data]<a class="headerlink" href="#representing-and-working-with-tabular-data" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="knoxshelltable">[KnoxShellTable]<a class="headerlink" href="#knoxshelltable" title="Permanent link">&para;</a></h1>
+<ul>
+<li>
+<h1 id="builders">[Builders]<a class="headerlink" href="#builders" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</li>
+<li>
+<h1 id="usecases">[Usecases]<a class="headerlink" href="#usecases" title="Permanent link">&para;</a></h1>
+<ul>
+<li>
+<h1 id="jdbc-resultset-representations">[JDBC Resultset Representations]<a class="headerlink" href="#jdbc-resultset-representations" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="csv-representations">[CSV Representations]<a class="headerlink" href="#csv-representations" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="general-table-operations">[General Table Operations]<a class="headerlink" href="#general-table-operations" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="persistence-and-publishing">[Persistence and Publishing]<a class="headerlink" href="#persistence-and-publishing" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="knoxline-sql-shell">[KnoxLine SQL Shell]<a class="headerlink" href="#knoxline-sql-shell" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="custom-groovysh-commands">[Custom GroovySh Commands]<a class="headerlink" href="#custom-groovysh-commands" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</li>
+<li>
+<h1 id="jdbc-resultset-representations_1">[JDBC Resultset Representations]<a class="headerlink" href="#jdbc-resultset-representations_1" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="csv-representations_1">[CSV Representations]<a class="headerlink" href="#csv-representations_1" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="general-table-operations_1">[General Table Operations]<a class="headerlink" href="#general-table-operations_1" title="Permanent link">&para;</a></h1>
+<ul>
+<li>
+<h1 id="sorting">[Sorting]<a class="headerlink" href="#sorting" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="selecting">[Selecting]<a class="headerlink" href="#selecting" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="filtering">[Filtering]<a class="headerlink" href="#filtering" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="fluent-api">[Fluent API]<a class="headerlink" href="#fluent-api" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="aggregating">[Aggregating]<a class="headerlink" href="#aggregating" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</li>
+<li>
+<h1 id="knoxline-sql-shell_1">[KnoxLine SQL Shell]<a class="headerlink" href="#knoxline-sql-shell_1" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="custom-groovysh-commands_1">[Custom GroovySh Commands]<a class="headerlink" href="#custom-groovysh-commands_1" title="Permanent link">&para;</a></h1>
+<ul>
+<li>
+<h1 id="knoxshell-commands">[KnoxShell Commands:]<a class="headerlink" href="#knoxshell-commands" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</li>
+<li>
+<h1 id="example-covid19-data-flow-into-datalake">[EXAMPLE: COVID19 Data Flow into DataLake]<a class="headerlink" href="#example-covid19-data-flow-into-datalake" title="Permanent link">&para;</a></h1>
+<ul>
+<li>
+<h1 id="build-table-from-public-csv-file">[Build Table from Public CSV File]<a class="headerlink" href="#build-table-from-public-csv-file" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="select-columns-filter-and-sort-by-column">[Select Columns, Filter and Sort by Column]<a class="headerlink" href="#select-columns-filter-and-sort-by-column" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="aggregate-calculations-on-columns-of-table">[Aggregate Calculations on Columns of Table]<a class="headerlink" href="#aggregate-calculations-on-columns-of-table" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="persist-tables-to-local-disk">[Persist Tables to Local Disk]<a class="headerlink" href="#persist-tables-to-local-disk" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="add-tables-to-datalake">[Add Tables to DataLake]<a class="headerlink" href="#add-tables-to-datalake" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="building-knoxshell-truststore">[Building KnoxShell Truststore]<a class="headerlink" href="#building-knoxshell-truststore" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="mount-a-webhdfs-filesystem">[Mount a WebHDFS Filesystem]<a class="headerlink" href="#mount-a-webhdfs-filesystem" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="accessing-a-filesystem">[Accessing a Filesystem]<a class="headerlink" href="#accessing-a-filesystem" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="put-tables-into-datalake">[Put Tables into DataLake]<a class="headerlink" href="#put-tables-into-datalake" title="Permanent link">&para;</a></h1>
+</li>
+<li>
+<h1 id="pull-csv-files-from-webhdfs-and-create-tables">[Pull CSV Files from WebHDFS and Create Tables]<a class="headerlink" href="#pull-csv-files-from-webhdfs-and-create-tables" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="introduction_1">Introduction<a class="headerlink" href="#introduction_1" title="Permanent link">&para;</a></h2>
+<p>The KnoxShell environment has been extended to provide more of an interactive experience through the use of custom commands and the newly added KnoxShellTable rendering and dataset representation class. This is provided through by integrating the power of groovysh extensions and the KnoxShell client classes/SDK and make for some really powerful command line capabilities that would otherwise require the user to SSH to a node within the cluster and use CLIs of different tools or components.</p>
+<p>This document will cover the various KnoxShell extentions and how to use them on their own and describe combinations of them as flows for working with tabular data from various sources.</p>
+<h2 id="representing-and-working-with-tabular-data_1">Representing and Working with Tabular Data<a class="headerlink" href="#representing-and-working-with-tabular-data_1" title="Permanent link">&para;</a></h2>
+<p>The ability to read, write and work with tabular data formats such as CSV files, JDBC resultsets and others is core to the motivations of this KnoxShell oriented work. Intentions include: the ability to read arbitrary data from sources from inside a proxied cluster or from external sources, the ability to render the resulting tables, sort the table, filter it for specific subsets of the data and do some interesting calculations that can provide simple insights into your data.</p>
+<p>KnoxShellTable represents those core capabilties with its simple representation of a table, operation methods and builder classes.</p>
+<h2 id="knoxshelltable_1">KnoxShellTable<a class="headerlink" href="#knoxshelltable_1" title="Permanent link">&para;</a></h2>
+<p>KnoxShellTable has a number of dedicated builders that have a fluent API for building table representations from various sources.</p>
+<h3 id="builders_1">Builders<a class="headerlink" href="#builders_1" title="Permanent link">&para;</a></h3>
+<p>The following builders aid in the creation of tables from various types of data sources.</p>
+<h4 id="jdbc">JDBC<a class="headerlink" href="#jdbc" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>    ports = KnoxShellTable.builder().jdbc().
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>      connect(&quot;jdbc:hive2://knox-host:8443/;ssl=true;transportMode=http;httpPath=topology/cdp-proxy-api/hive&quot;).
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>      driver(&quot;org.apache.hive.jdbc.HiveDriver&quot;).
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      username(&quot;lmccay&quot;).pwd(&quot;xxxx&quot;).
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>      sql(&quot;select * FROM ports&quot;);
+</code></pre></div>
+<p>Running the above within KnoxShell will submit the provided SQL to HS2, create and assign a new KnoxShellTable instance to the "ports" variable representing the border ports of entry data.</p>
+<h4 id="csv">CSV<a class="headerlink" href="#csv" title="Permanent link">&para;</a></h4>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>crossings = KnoxShellTable.builder().csv().
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    withHeaders().
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    url(&quot;file:///home/lmccay/Border_Crossing_Entry_Data.csv&quot;)
+</code></pre></div>
+Running the above within KnoxShell will import a CSV file from local disk, create and assign a new KnoxShellTable instance to the "result" variable.</p>
+<p>A higher level KnoxShell Custom Command allows for easier use of the builder through more natural syntax and hides the use of the lower level classes and syntax.</p>
+<h4 id="join">Join<a class="headerlink" href="#join" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>crossings = KnoxShellTable.builder().join().
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  left(ports).
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  right(crossings).
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  on(&quot;code&quot;,&quot;Port Code&quot;
+</code></pre></div>
+<p>Running the above within KnoxShell will import a join the two tables with a simple match of the values in left and right tables on each row that matches.</p>
+<h4 id="json">JSON<a class="headerlink" href="#json" title="Permanent link">&para;</a></h4>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tornados = KnoxShellTable.builder().json().
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  url(&quot;file:///home/lmccay/.knoxshell/.tables/tornados.json&quot;)
+</code></pre></div>
+Running the above within KnoxShell will rematerialize a table that was persisted as JSON and assign it to a local "tornados" variable.</p>
+<h4 id="persistence-and-publishing_1">Persistence and Publishing<a class="headerlink" href="#persistence-and-publishing_1" title="Permanent link">&para;</a></h4>
+<p>Being able to create tables, combine them with other datasets, filter them and add new cols based on calculations between cols, etc is all great for creating tables in memory and working with them.</p>
+<p>We also want to be able to persist these tables in a KnoxShellTable canonical JSON format of its own and be able to reload the same datasets later.</p>
+<p>We also want to be able to take a given dataset and publish it as a brand new CSV file that can be pushed into HDFS, saved to local disk, written to cloud storage, etc.</p>
+<p>In addition, we may want to be able to write it directly to Hive or another JDBC datasource.</p>
+<h5 id="json_1">JSON<a class="headerlink" href="#json_1" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>tornados.toJSON()
+</code></pre></div>
+The above will return and render a JSON representation of the tornados KnoxShellTable including: headers, rows, optionally title and optionally callHistory.</p>
+<h5 id="csv_1">CSV<a class="headerlink" href="#csv_1" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tornados.toCSV()
+</code></pre></div>
+The above will return and render a CSV representation of the tornados KnoxShellTable including: headers (if present), and all rows.</p>
+<p>Note that title and callhistory which are KnoxShellTable specifics are excluded and lost unless also saved as JSON.</p>
+<h2 id="usecases_1">Usecases<a class="headerlink" href="#usecases_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li>JDBC Resultset Representations</li>
+<li>CSV Representations</li>
+<li>General Table Operations</li>
+<li>Joining</li>
+<li>Sorting, Selecting, Filtering, Calculations</li>
+<li>Persistence and Publishing</li>
+<li>KnoxLine SQL Shell</li>
+<li>Custom GroovySh Commands</li>
+</ul>
+<p>Let's take a look at each usecase.</p>
+<h2 id="jdbc-resultset-representations_2">JDBC Resultset Representations<a class="headerlink" href="#jdbc-resultset-representations_2" title="Permanent link">&para;</a></h2>
+<p>KnoxLine SQL Client requires a tabular representation of the data from a SQL/JDBC Resultset. This requirement led to the creation of the KnoxShellTable JDBC Builder. It may be used outside of KnoxLine within your own Java clients or groovy scripts leveraging the KnoxShell classes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ports = KnoxShellTable.builder().jdbc().
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  connect(&quot;jdbc:hive2://knox-host:8443/;ssl=true;transportMode=http;httpPath=topology/datalake-api/hive&quot;).
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  driver(&quot;org.apache.hive.jdbc.HiveDriver&quot;).
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  username(&quot;lmccay&quot;).pwd(&quot;xxxx&quot;).
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  sql(&quot;select * FROM ports&quot;);
+</code></pre></div>
+<p>It can create the cols based on the metadata of the resultset and accurately represent the data and perform type specific operations, sorts, etc.</p>
+<p>A higher level KnoxShell Custom Command allows for the use of this builder with Datasources that are managed within the KnoxShell environment and persisted to the users' home directory to allow continued use across sessions. This command hides the use of the underlying classes and syntax and allows the user to concentrate on SQL.</p>
+<h2 id="csv-representations_2">CSV Representations<a class="headerlink" href="#csv-representations_2" title="Permanent link">&para;</a></h2>
+<p>Another dedicated table builder is provided for creating a table from a CSV file that is imported via URL.</p>
+<p>Combined with all the general table operations and ability to join them with other KnoxShellTable representations, this allows for CSV data to be combined with JDBC datasets, filtered and republished as a new dataset or report to be rendered or even reexecuted later.</p>
+<h2 id="general-table-operations_2">General Table Operations<a class="headerlink" href="#general-table-operations_2" title="Permanent link">&para;</a></h2>
+<p>In addition to the builders described above, there are a number of operations that may be executed on the table itself.</p>
+<h3 id="sorting_1">Sorting<a class="headerlink" href="#sorting_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tornados.sort(&quot;state&quot;)
+</code></pre></div>
+<p>When a column is of String type values but they are numerics, you may also sort numerically.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>tornados.sortNumeric(&quot;count&quot;)
+</code></pre></div>
+<p>The above will sort the tornados table by the "state" column.</p>
+<h3 id="selecting_1">Selecting<a class="headerlink" href="#selecting_1" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>tornados.select(&quot;state,cat,inj,fat,date,month,day,year&quot;)
+</code></pre></div>
+The above will return and render a new table with only the subset of cols selected.</p>
+<h3 id="filtering_1">Filtering<a class="headerlink" href="#filtering_1" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>tornados.filter().name(&quot;fat&quot;).greaterThan(0)
+</code></pre></div>
+The above will return and render a table with only those tornados that resulted in one or more fatalities.</p>
+<h3 id="fluent-api_1">Fluent API<a class="headerlink" href="#fluent-api_1" title="Permanent link">&para;</a></h3>
+<p>The above operations can be combined in a natural, fluent manner
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>tornados.select(&quot;state,cat,inj,fat,date,month,day,year&quot;).
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  filter().name(&quot;fat&quot;).greaterThan(0).
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  sort(&quot;state&quot;)
+</code></pre></div></p>
+<h3 id="aggregating_1">Aggregating<a class="headerlink" href="#aggregating_1" title="Permanent link">&para;</a></h3>
+<p>The following method allows for the use of table column calculations to build an aggregate view of helpful calculations for multiple columns in a table and summarizes them in a new table representation.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>table.aggregate().columns(&quot;col1, col2, col3&quot;).functions(&quot;min,max,mean,median,mode,sum&quot;)
+</code></pre></div>
+<p>The above allows you to combine them by streaming them into each other in one line the select of only certain cols, the filtering of only those events with more than 0 fatalities and the much more efficient sort of the resulting table.</p>
+<h2 id="knoxline-sql-shell_2">KnoxLine SQL Shell<a class="headerlink" href="#knoxline-sql-shell_2" title="Permanent link">&para;</a></h2>
+<p>KnoxLine is a beeline like facility built into the KnoxShell client toolbox with basic datasource management and simple SQL client capabilities.
+ResultSets are rendered via KnoxShellTable but further table based manipulations are not available within the knoxline shell. This is purely
+dedicated to SQL interactions and table renderings.</p>
+<p>For leveraging the SQL builder of KnoxShellTable to be able to operate on the results locally, see the custom KnoxShell command 'SQL'.</p>
+<p><img alt="KnoxLine Splash" src="../assets/images/knoxshell/knoxline-splash-2.png" /></p>
+<p>Once connected to the datasource, SQL commands may be invoked via the command line directly.</p>
+<h2 id="custom-groovysh-commands_2">Custom GroovySh Commands<a class="headerlink" href="#custom-groovysh-commands_2" title="Permanent link">&para;</a></h2>
+<p>Groovy shell has the ability to extend the commands available to help automate scripting or coding that you would otherwise need to do programmatically over and over.</p>
+<p>By providing custom commands for KnoxShellTable operations,  builders and manipulation we can greatly simplify what would need to be done with the fluent API of KnoxShellTable and groovy/java code for saving state, etc.</p>
+<h3 id="knoxshell-commands_1">KnoxShell Commands:<a class="headerlink" href="#knoxshell-commands_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Datasources</strong> (:datasource|:ds) CRUD and select operations for a set of JDBC datasources that are persisted to disk (KNOX-2128)</li>
+<li><strong>SQL</strong> (:SQL|:sql) SQL query execution with persisted SQL history per datasource (KNOX-2128)</li>
+<li><strong>CSV</strong> (:CSV|:csv) Import and Export from CSV and JSON formats</li>
+<li><strong>Filesystem</strong> (:Filesystem|:fs) POSIX style commands for HDFS and cloud storage (mount, unmount, mounts, ls, rm, mkdir, cat, put, etc)</li>
+</ol>
+<p><img alt="KnoxShell Help" src="../assets/images/knoxshell/knoxshell-help.png" /></p>
+<h2 id="example-covid19-data-flow-into-datalake_1">EXAMPLE: COVID19 Data Flow into DataLake<a class="headerlink" href="#example-covid19-data-flow-into-datalake_1" title="Permanent link">&para;</a></h2>
+<p>Let's start to put the commands and table capabilities together to consume some public tabular data and usher it into our datalake or cluster.</p>
+<h3 id="build-table-from-public-csv-file_1">Build Table from Public CSV File<a class="headerlink" href="#build-table-from-public-csv-file_1" title="Permanent link">&para;</a></h3>
+<p><img alt="Covid19 CSV Example" src="../assets/images/knoxshell/covid19csv-1.png" /></p>
+<p>The use of the CSV KnoxShell command above can be easily correlated to the CSV builder of KnoxShellTable. It is obviously less verbose and more natural than using the fluent API of KnoxShellTable directly and also leverages a separate capability for KnoxShell to assign the resulting table to a KnoxShell variable that can be references and manipulated afterward.</p>
+<p>As you can see the result of creating the table from a CSV file is a rendering of the entire table and often does not fit the screen propertly.
+This is where the operations on the resulting table come in handy for explorer the dataset.
+Let's filter the above dataset of COVID19 across the world to only a subset of columns and for only New Jersey by selecting, filtering and sorting numerically by number of Confirmed cases.</p>
+<h3 id="select-columns-filter-and-sort-by-column_1">Select Columns, Filter and Sort by Column<a class="headerlink" href="#select-columns-filter-and-sort-by-column_1" title="Permanent link">&para;</a></h3>
+<p>First we will interrogate the table for its column names or headers. Then we will select only those columns that we want in order to fit it to the screen, filter it for only New Jersey information and sort numerically by the number of Confirmed cases per county.</p>
+<p><img alt="Covid19 NJ Example" src="../assets/images/knoxshell/covid19nj-1.png" /></p>
+<p>From the above operation, we can now see the COVID19 data for New Jersey counties for 4/10/2020 sorted by the number of Confirmed cases and the subset of cols of the most interest and tailored to fit our screen. From the above table, we can visually see a number of insights in terms of the most affected counties across the state of New Jersey but it may be more interesting to be able to see an aggregation of some of the calculations available for numeric columns through KnoxShellTable. Let's take a look at an aggregate table for this dataset.</p>
+<h3 id="aggregate-calculations-on-columns-of-table_1">Aggregate Calculations on Columns of Table<a class="headerlink" href="#aggregate-calculations-on-columns-of-table_1" title="Permanent link">&para;</a></h3>
+<p>Since the KnoxShellTable fluent API allows us to chain such operations together easily, we will just hit the up arrow to get the previous table operation command and add the aggregate operation to the chain.</p>
+<p><img alt="Covid19 NJ Aggregate" src="../assets/images/knoxshell/covid19nj-aggregate-1.png" /></p>
+<p>Now, by using both tables above, we can see that my county of Camden is both visually in approximately the center of the counties in terms of Confirmed case numbers but how it stands related to both the average and the median calculations. You can also see the sum of all of New Jersey and the number of those that belong to my county.</p>
+<h3 id="persist-tables-to-local-disk_1">Persist Tables to Local Disk<a class="headerlink" href="#persist-tables-to-local-disk_1" title="Permanent link">&para;</a></h3>
+<p>Next, we will persist these tables to our local disk and then push them into our HDFS based datalake for access by cluster resources and other users.</p>
+<p><img alt="Covid19 Persistence" src="../assets/images/knoxshell/covid19-persistence.png" /></p>
+<h3 id="add-tables-to-datalake_1">Add Tables to DataLake<a class="headerlink" href="#add-tables-to-datalake_1" title="Permanent link">&para;</a></h3>
+<p>Now that we have these tables persisted to local disk, we can use our KnoxShell Filesystem commands to add them to the datalake.</p>
+<h3 id="building-knoxshell-truststore_1">Building KnoxShell Truststore<a class="headerlink" href="#building-knoxshell-truststore_1" title="Permanent link">&para;</a></h3>
+<p>Before we can access resources from datalake behind Knox we need to insure that the cert presented by the Knox instance is trusted. If the deployment is using certs signed by a well-known ca, then we generally don't have to do anything. If we are using Knox self-signed certs or certs signed by an internal ca of some sort then we must import them into the KnoxShell truststore. While this can be located in arbitrary places and configured via system properties and environment variables, the most common approach is to use then default location.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// exit knoxshell
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>^C
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>bin/knoxshell.sh buildTrustStore https://nightly7x-1.nightly7x.root.hwx.site:8443/gateway/datalake-api
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>ls -l ~/gateway-client-trust.jks
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>// to reenter knoxshell
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>bin/knoxshell.sh
+</code></pre></div>
+<p>With the default password of 'changeit'.</p>
+<h3 id="mount-a-webhdfs-filesystem_1">Mount a WebHDFS Filesystem<a class="headerlink" href="#mount-a-webhdfs-filesystem_1" title="Permanent link">&para;</a></h3>
+<p>We may now mount a filesystem from the remote Knox instance by mounting the topology that hosts the WebHDFS API endpoint.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>:fs mount https://nightly7x-1.nightly7x.root.hwx.site:8443/gateway/datalake-api nightly
+</code></pre></div>
+<h3 id="accessing-a-filesystem_1">Accessing a Filesystem<a class="headerlink" href="#accessing-a-filesystem_1" title="Permanent link">&para;</a></h3>
+<p>Once we have the desired mount, we may now access it by specifying the mountpoint name as the path prefix into the HDFS filesystem.
+Upon mounting or first access, the KnoxShell will prompt for user credentials for use as HTTP Basic credentials while accessing WebHDFS API.</p>
+<p><img alt="FS Mount Login" src="../assets/images/knoxshell/fs-mount-login-1.png" /></p>
+<p>Once we authenticate to the mounted filesystem, we reference it by mountpoint and never concern ourselves with the actual URL to the endpoint.</p>
+<h3 id="put-tables-into-datalake_1">Put Tables into DataLake<a class="headerlink" href="#put-tables-into-datalake_1" title="Permanent link">&para;</a></h3>
+<p><img alt="Covid19 NJ Put WebHDFS" src="../assets/images/knoxshell/covid19nj-put-webhdfs-1.png" /></p>
+<p>Above, we have put the previously persisted CSV files into the tmp directory of the mounted filesystem to be available to other datalake users.</p>
+<p>We can now also access them from any other KnoxShell instance that has mounted this filesystem with appropriate credentials.
+Let's now cat the contents of one of the CSV files into the KnoxShell and then render it as a table from the raw CSV format.</p>
+<h3 id="pull-csv-files-from-webhdfs-and-create-tables_1">Pull CSV Files from WebHDFS and Create Tables<a class="headerlink" href="#pull-csv-files-from-webhdfs-and-create-tables_1" title="Permanent link">&para;</a></h3>
+<p><img alt="Covid19 NJ Aggregate from WebHDFS" src="../assets/images/knoxshell/covid19-nj-agg-from-webhdfs-1.png" /></p>
+<p>Note that the cat command returns the CSV file contents as a string to the KnoxShell environment as a variable called '_' .</p>
+<p>This is true of any command in groovysh or KnoxShell. The previous result is always available as this variable.
+Here we pass the contents of the variable to the CSV KnoxShellTable builder string() method. This is a very convenient way to render tabular data from a cat'd file from your remote datalake. </p>
+<p>Also note that tables that are assigned to variables within KnoxShell will render themselves just by typing the variable name.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

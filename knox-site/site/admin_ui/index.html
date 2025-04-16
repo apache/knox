@@ -1,0 +1,3130 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/admin_ui/">
+      
+      
+        <link rel="prev" href="../admin_api/">
+      
+      
+        <link rel="next" href="../webshell/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Admin UI - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#admin-ui" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Admin UI
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dev-guide/book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_id_assertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knox_monitoring_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knoxsso_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knoxshell-guide/knoxshell_user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#admin-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Admin UI
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Admin UI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#admin-ui-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      Admin UI URL
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Admin UI URL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Navigation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provider Configurations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider Configurations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing-provider-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editing Provider Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-provider-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Provider Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composite-provider-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Composite Provider Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persisting-the-new-provider-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Persisting the New Provider Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#descriptors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Descriptors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Descriptors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-descriptors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Descriptors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Discovery
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Topologies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Topologies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-only-protections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Read-Only Protections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knox-ha-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Knox HA Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Definitions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Service Definitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing-service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editing Service Definitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deleting Service Definitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Service Definitions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#admin-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      Admin UI
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Admin UI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#admin-ui-url" class="md-nav__link">
+    <span class="md-ellipsis">
+      Admin UI URL
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Admin UI URL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Navigation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provider Configurations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider Configurations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing-provider-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editing Provider Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-provider-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Provider Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composite-provider-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Composite Provider Types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persisting-the-new-provider-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Persisting the New Provider Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#descriptors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Descriptors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Descriptors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-descriptors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Descriptors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Discovery
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topologies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Topologies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Topologies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-only-protections" class="md-nav__link">
+    <span class="md-ellipsis">
+      Read-Only Protections
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knox-ha-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Knox HA Considerations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Definitions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Service Definitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing-service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Editing Service Definitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deleting Service Definitions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-service-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Service Definitions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>Admin UI</h1>
+
+<!---
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+--->
+
+<h3 id="admin-ui">Admin UI<a class="headerlink" href="#admin-ui" title="Permanent link">&para;</a></h3>
+<p>The Admin UI is a web application hosted by Knox, which provides the ability to manage provider configurations, descriptors, topologies ans service definitions.</p>
+<p>As an authoring facility, it eliminates the need for ssh/scp access to the Knox host(s) to effect topology changes.<br>
+Furthermore, using the Admin UI simplifies the management of topologies in Knox HA deployments by eliminating the need to copy files to multiple Knox hosts.</p>
+<h4 id="admin-ui-url">Admin UI URL<a class="headerlink" href="#admin-ui-url" title="Permanent link">&para;</a></h4>
+<p>The URL mapping for the Knox Admin UI is:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gateway</td>
+<td><code>https://{gateway-host}:{gateway-port}/{gateway-path}/manager/admin-ui/</code></td>
+</tr>
+</tbody>
+</table>
+<h5 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h5>
+<p>The admin UI is deployed using the <strong>manager</strong> topology. The out-of-box authentication mechanism is KNOXSSO, backed by the demo LDAP server.
+ Only someone in the <strong>admin</strong> role can access the UI functionality.</p>
+<h5 id="basic-navigation">Basic Navigation<a class="headerlink" href="#basic-navigation" title="Permanent link">&para;</a></h5>
+<p>Initially, the Admin UI presents the types of resources which can be managed: <a href="#provider-configurations"><strong>Provider Configurations</strong></a>, <a href="#descriptors"><strong>Descriptors</strong></a>, <a href="#topologies"><strong>Topologies</strong></a> and <a href="#service-definitions"><strong>Service Definitions</strong></a>.</p>
+<p><img src="static/images/adminui/image1.png" alt="Admin UI Main Screen" style="width:6.5in;height:3.28403in" /></p>
+<p>Selecting a resource type yields a listing of the existing resources of that type in the adjacent column, and selecting an individual resource
+presents the details of that selected resource.</p>
+<p>For the provider configuration, descriptor and service definition resources types, the <img src="static/images/adminui/plus-icon.png" style="width:20px;height:20px;vertical-align:bottom"/>
+icon next to the resource list header is the trigger for the respective facility for creating a new resource of that type.<br>
+Modification options, including deletion, are available from the detail view for an individual resource.</p>
+<h5 id="provider-configurations">Provider Configurations<a class="headerlink" href="#provider-configurations" title="Permanent link">&para;</a></h5>
+<p>The Admin UI lists the provider configurations currently deployed to Knox.</p>
+<p>By choosing a particular provider configuration from the list, its details can be viewed and edited.<br>
+The provider configuration can also be deleted (as long as there are no referencing descriptors).</p>
+<p>By default, there is a provider configuration named <strong><em>default-providers</em></strong>.</p>
+<p><img src="static/images/adminui/image2.png" alt="Provider Configuration View" style="width:6.5in;height:3.76597in" /></p>
+<h6 id="editing-provider-configurations">Editing Provider Configurations<a class="headerlink" href="#editing-provider-configurations" title="Permanent link">&para;</a></h6>
+<p>For each provider in a given provider configuration, the attributes can be modified:</p>
+<ul>
+<li>The provider can be enabled/disabled</li>
+<li>Parameters can be added (<img src="static/images/adminui/plus-icon.png" style="width:20px;height:20px;vertical-align:bottom"/>) or removed (<img src="static/images/adminui/x-icon.png" style="height:12px;vertical-align:middle"/>)</li>
+<li>Parameter values can be modified (by clicking on the value)
+  <img src="static/images/adminui/image21.png" alt="Parameter Value Editing"/></li>
+</ul>
+<p><br>
+To persist changes, the <img src="static/images/adminui/save-icon.png" style="height:32px;vertical-align:bottom"> button must be clicked. To revert <em>unsaved</em> changes, click the <img src="static/images/adminui/undo-icon.png" style="height:32px;vertical-align:bottom"> button or simply choose another resource.
+<br></p>
+<h6 id="create-provider-configurations">Create Provider Configurations<a class="headerlink" href="#create-provider-configurations" title="Permanent link">&para;</a></h6>
+<p>The Admin UI provides the ability to define new provider configurations, which can subsequently be referenced by one or more descriptors.</p>
+<p>These provider configurations can be created based on the functionality needed, rather than requiring intimate knowledge of the various provider names
+and their respective parameter names.</p>
+<p>A provider configuration is a named set of providers. The wizard allows an administrator to specify the name, and add providers to it.</p>
+<p><img src="static/images/adminui/image3.png" alt="New Provider Configuration" style="width:6.5in;height:3.11319in" /></p>
+<p>To add a provider, first a category must be chosen.</p>
+<p><img src="static/images/adminui/image4.png" alt="Provider Category Selection" style="width:6.5in;height:2.27917in" /></p>
+<p>After choosing a category, the type within that category must be selected.</p>
+<p><img src="static/images/adminui/image5.png" alt="Provider Type Selection" style="width:6.5in;height:3.19097in" /></p>
+<p>Finally, for the selected type, the type-specific parameter values can be specified.</p>
+<p><img src="static/images/adminui/image6.png" alt="Provider Parameter Configuration" style="width:6.5in;height:2.74167in" /></p>
+<p>After adding a provider, others can be added similarly by way of the <strong>Add Provider</strong> button.</p>
+<p><img src="static/images/adminui/image7.png" alt="Add Additional Provider" style="width:6.5in;height:1.99792in" /></p>
+<h6 id="composite-provider-types">Composite Provider Types<a class="headerlink" href="#composite-provider-types" title="Permanent link">&para;</a></h6>
+<p>The wizard for some provider types, such as the HA provider, behave a little differently than the other provider types.</p>
+<p>For example, when you choose the HA provider category, you subsequently choose a service role (e.g., WEBHDFS), and specify the parameter values for that service role's entry in the HA provider.</p>
+<p><img src="static/images/adminui/image8.png" alt="HA Provider Service Selection" style="width:6.5in;height:1.34028in" /></p>
+<p><img src="static/images/adminui/image9.png" alt="HA Provider Configuration" style="width:6.5in;height:3.36458in" /></p>
+<p>If multiple services are configured in this way, the result is still a single HA provider, which contains all of the service role configurations.</p>
+<p><img src="static/images/adminui/image10.png" alt="Multiple Service Configuration" style="width:6.5in;height:2.20208in" /></p>
+<h6 id="persisting-the-new-provider-configuration">Persisting the New Provider Configuration<a class="headerlink" href="#persisting-the-new-provider-configuration" title="Permanent link">&para;</a></h6>
+<p>After adding all the desired providers to the new configuration, choosing <img src="static/images/adminui/ok-button.png" style="height:24px;vertical-align:bottom"/> persists it.</p>
+<p><img src="static/images/adminui/image11.png" alt="Provider Configuration Summary" style="width:6.25in;height:6.95833in" /></p>
+<h5 id="descriptors">Descriptors<a class="headerlink" href="#descriptors" title="Permanent link">&para;</a></h5>
+<p>A descriptor is essentially a named set of service roles to be proxied with a provider configuration reference.
+The Admin UI lists the descriptors currently deployed to Knox.</p>
+<p>By choosing a particular descriptor from the list, its details can be viewed and edited. The provider configuration can also be deleted.</p>
+<p>Modifications to descriptors will result in topology changes. When a descriptor is saved or deleted, the corresponding topology is [re]generated or deleted/undeployed respectively.</p>
+<p><img src="static/images/adminui/image12.png" alt="Descriptor List" style="width:6.5in;height:2.06319in" /></p>
+<p><img src="static/images/adminui/image13.png" alt="Descriptor Details" style="width:6.5in;height:2.81181in" /></p>
+<p><img src="static/images/adminui/image14.png" alt="Descriptor Edit View" style="width:6.5in;height:3.50556in" /></p>
+<h6 id="create-descriptors">Create Descriptors<a class="headerlink" href="#create-descriptors" title="Permanent link">&para;</a></h6>
+<p>The Admin UI provides the ability to define new descriptors, which result in the generation and deployment of corresponding topologies.</p>
+<p>The <strong>new descriptor</strong> dialog provides the ability to specify the name, which will also be the name of the resulting topology. It also
+allows one or more supported service roles to be selected for inclusion.</p>
+<p><img src="static/images/adminui/image15.png" alt="New Descriptor Dialog" style="width:6.5in;height:3.82361in" /></p>
+<p>The provider configuration reference can entered manually, or the provider configuration selector can be used, to specify the name of an
+existing provider configuration.</p>
+<p><img src="static/images/adminui/image16.png" alt="Provider Configuration Selection" style="width:6.5in;height:3.88125in" /></p>
+<p>Optionally, discovery details can also be specified to direct Knox to discover the endpoints for the declared service roles from a supported discovery source for the
+target cluster.</p>
+<p><img src="static/images/adminui/image17.png" alt="Discovery Configuration" style="width:6.5in;height:5.24167in" /></p>
+<p>Choosing <img src="static/images/adminui/ok-button.png" style="height:24px;vertical-align:bottom"/> results in the persistence of the descriptor, and subsequently, the generation and deployment of the associated topology.</p>
+<h6 id="service-discovery">Service Discovery<a class="headerlink" href="#service-discovery" title="Permanent link">&para;</a></h6>
+<p>Descriptors are a means to <em>declaratively</em> specify which services should be proxied by a particular topology, allowing Knox to interrogate a discovery source
+to determine the endpoint URLs for those declared services. The Service Discovery options tell Knox how to connect to the desired discovery source
+to perform this endpoint discovery.</p>
+<p><em>Type</em></p>
+<p>This property specifies the type of discovery source for the cluster hosting the services whose endpoints are to be discovered.</p>
+<p><em>Address</em></p>
+<p>This property specifies the address of the discovery source managing the cluster hosting the services whose endpoints are to be discovered.</p>
+<p><em>Cluster</em></p>
+<p>This property specifies from which of the clusters, among those being managed by the specified discovery source, the service endpoints should be determined.</p>
+<p><em>Username</em></p>
+<p>This is the identity of the discovery source user (e.g., Ambari <em>Cluster User</em> role), which will be used to get service configuration details from the discovery source.</p>
+<p><em>Password Alias</em></p>
+<p>This is the Knox alias whose value is the password associated with the specified username.</p>
+<p>This alias must have been defined prior to specifying it in a descriptor, or else the service discovery will fail for authentication reasons.</p>
+<p><img src="static/images/adminui/image18.png" alt="Service Discovery Details" style="width:6.5in;height:3.04097in" /></p>
+<h5 id="topologies">Topologies<a class="headerlink" href="#topologies" title="Permanent link">&para;</a></h5>
+<p>The Admin UI allows an administrator to view, modify, duplicate and delete topologies which are currently deployed to the Knox instance.
+Changes to a topology results in the [re]deployment of that topology, and deleting a topology results in its undeployment.</p>
+<p><img src="static/images/adminui/image19.png" alt="Topology List" style="width:6.5in;height:3.1625in" /></p>
+<p><img src="static/images/adminui/image20.png" alt="Topology Details" style="width:6.5in;height:3.38889in" /></p>
+<h6 id="read-only-protections">Read-Only Protections<a class="headerlink" href="#read-only-protections" title="Permanent link">&para;</a></h6>
+<p>Topologies which are generated from descriptors are treated as read-only in the Admin UI. This is to avoid the potential confusion resulting from an administrator directly editing
+a generated topology only to have those changes overwritten by a regeneration of that same topology because the source descriptor or provider configuration changed.</p>
+<h5 id="knox-ha-considerations">Knox HA Considerations<a class="headerlink" href="#knox-ha-considerations" title="Permanent link">&para;</a></h5>
+<p>If the Knox instance which is hosting the Admin UI is configured for <a href="#remote-configuration-monitor">remote configuration monitoring</a>, then provider configuration and descriptor changes will
+be persisted in the configured ZooKeeper ensemble. Then, every Knox instance which is also configured to monitor configuration in this same ZooKeeper will apply
+those changes, and [re]generate/[re]deploy the affected topologies. In this way, Knox HA deployments can be managed by making changes once, and from any of the
+Knox instances.</p>
+<h5 id="service-definitions">Service Definitions<a class="headerlink" href="#service-definitions" title="Permanent link">&para;</a></h5>
+<p>The Admin UI allows an administrator to view, modify, create and delete service definitions which are currently supported by Knox.</p>
+<p><img src="static/images/adminui/image22.png" alt="Service Definitions List" style="height:3.5in" /></p>
+<p>A service definition is a declarative way of plugging-in a new Service. It consists of two separate files as described in the relevant section in <a href="https://knox.apache.org/books/knox-2-0-0/dev-guide.html#Service+Definition+Files">Knox's Developer Guide</a>. The Admin UI lists the service definitions currently supported by Knox in a data table ordered by the service name. If a particular service has more than one service definition (for different versions), a separate service definition entry is displayed in the table. Under the table there is a pagination panel that let's end-users to navigate to the desired service definition.</p>
+<p>By choosing a particular service definition from the table, its details can be viewed and edited. The service definition can also be deleted.</p>
+<p><img src="static/images/adminui/image23.png" alt="Service Definition Details" style="height:3.5in" /></p>
+<h6 id="editing-service-definitions">Editing Service Definitions<a class="headerlink" href="#editing-service-definitions" title="Permanent link">&para;</a></h6>
+<p>When a particular service definition is selected, the Admin UI displays a free-text area where the content can be updated and saved. End-users will see the following structure in this text area:</p>
+<div class="highlight"><pre><span></span><code>&lt;serviceDefinition&gt;
+    &lt;service&gt;
+    ...
+    &lt;/service&gt;
+    &lt;rules&gt;
+    ...
+    &lt;/rules&gt;
+&lt;/serviceDefinition&gt;
+</code></pre></div>
+<p>Everything within the <code>&lt;service&gt;</code> section will be written into the given service's <code>service.xml</code> file whereas the content of <code>rules</code> are going into the <code>rewrite.xml</code>.</p>
+<p>To persist changes, the <img src="static/images/adminui/save-icon.png" style="height:32px;vertical-align:bottom"> button must be clicked. To revert <em>unsaved</em> changes, simply choose another resource. In case you choose to save your changes, a confirmation window is shown asking for your approval, where you can make your changes final by clicking the &lt;img src="static/images/adminui/ok-button.png"</p>
+<p><img src="static/images/adminui/image24.png" alt="Service Definition Edit" style="height:3.5in" />
+<br />
+<br />
+<img src="static/images/adminui/image25.png" alt="Save Confirmation" style="height:3.5in" /></p>
+<p>If you are unsure about the change you made, you can still click the <code>Cancel</code> button and select another resource to revert your unsaved change.</p>
+<p><strong>Important note:</strong> editing a service definition will result in redeploying all topologies that include the updated service (identified by it's name and, optionally, version).</p>
+<h6 id="deleting-service-definitions">Deleting Service Definitions<a class="headerlink" href="#deleting-service-definitions" title="Permanent link">&para;</a></h6>
+<p>Similarly to the service definition editing function, end-users have to select the service defintion first they are about to remove.</p>
+<p>The service definition details are displayed along with the <img src="static/images/adminui/delete-icon.png" style="height:32px;vertical-align:bottom"> button in the bottom-left corner of the service definition details window. To remove the selected service definition, you have to cick that button and you will be shown a confirmation window where you can verify the service definition removal by clicking the <img src="static/images/adminui/ok-button.png" style="height:24px;vertical-align:bottom"/> button.</p>
+<p><img src="static/images/adminui/image26.png" alt="Delete Service Definition" style="height:3.5in" />
+<br />
+<br />
+<img src="static/images/adminui/image27.png" alt="Delete Confirmation" style="height:3.5in" /></p>
+<p><strong>Important note:</strong> deleting a service definition will result in redeploying all topologies that included the removed service (identified by it's name and, optionally, version).</p>
+<h6 id="creating-service-definitions">Creating Service Definitions<a class="headerlink" href="#creating-service-definitions" title="Permanent link">&para;</a></h6>
+<p>The Admin UI provides the ability to define new service definitions which can be included in topologies later on.</p>
+<p>The new service definition dialog provides the ability to specify the service name, role and version as well as all the required information in <code>service.xml</code> and <code>rewrite.xml</code> files such as routes and rewrite rules.</p>
+<p>To create a new service provider, please click the <img src="static/images/adminui/plus-icon.png" style="width:20px;height:20px;vertical-align:bottom"/> button after you selected <code>Service Definitions</code> from the <code>Resource Types</code> list.</p>
+<p><img src="static/images/adminui/image28.png" alt="New Service Definition" style="height:3.5in" /></p>
+<p>After defining all details, you have to click the <img src="../assets/images/adminui/ok-button.png" style="height:24px;vertical-align:bottom"/> button to save the newly created service definition on the disk.</p>
+<p><img src="../assets/images/adminui/tip-icon.png" alt="Tip" style="height:24px;vertical-align:bottom"/> You may want to copy-paste a valid service definition before you open the new service definition dialog and self-tailor the content for your needs.</p>
+<p><br /></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

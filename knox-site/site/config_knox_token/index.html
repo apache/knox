@@ -1,0 +1,3581 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/config_knox_token/">
+      
+      
+        <link rel="prev" href="../config_knox_sso/">
+      
+      
+        <link rel="next" href="../config_preauth_sso_provider/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Knox Token - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#knoxtoken-configuration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Knox Token
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dev-guide/book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#knoxtoken-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxToken Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knoxtoken-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken service
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxToken service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knoxtoken-configuration-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken Configuration Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knoxtoken-renewal-revocation-and-enabledisable-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken Renewal, Revocation and Enable/Disable actions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxToken Renewal, Revocation and Enable/Disable actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#renewal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renewal
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Revocation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Disable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fetching-tokens-for-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fetching tokens for users
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-generationmanagement-uis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Generation/Management UIs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token Generation/Management UIs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-the-token-hash-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating the token hash key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-state-service-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token state service implementations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-the-jdbc-token-state-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the JDBC token state service
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the JDBC token state service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database design
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generating-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generating a token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#about-the-generated-token-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      About the generated token TTL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#successful-token-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Successful token generation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-generation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token generation failed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-impersonation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token impersonation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token metadata
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_id_assertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knox_monitoring_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knoxsso_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knoxshell-guide/knoxshell_user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#knoxtoken-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxToken Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knoxtoken-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken service
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxToken service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knoxtoken-configuration-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken Configuration Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#knoxtoken-renewal-revocation-and-enabledisable-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      KnoxToken Renewal, Revocation and Enable/Disable actions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="KnoxToken Renewal, Revocation and Enable/Disable actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#renewal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renewal
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Revocation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable" class="md-nav__link">
+    <span class="md-ellipsis">
+      Disable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fetching-tokens-for-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fetching tokens for users
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-generationmanagement-uis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Generation/Management UIs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token Generation/Management UIs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-the-token-hash-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating the token hash key
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-state-service-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token state service implementations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-the-jdbc-token-state-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the JDBC token state service
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the JDBC token state service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#database-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database design
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generating-a-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generating a token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#about-the-generated-token-ttl" class="md-nav__link">
+    <span class="md-ellipsis">
+      About the generated token TTL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#successful-token-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Successful token generation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-generation-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token generation failed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-impersonation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token impersonation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token metadata
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>Knox Token</h1>
+
+<h2 id="knoxtoken-configuration">KnoxToken Configuration<a class="headerlink" href="#knoxtoken-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h3>
+<hr />
+<p>The Knox Token Service enables the ability for clients to acquire the same JWT token that is used for KnoxSSO with WebSSO flows for UIs to be used for accessing REST APIs. By acquiring the token and setting it as a Bearer token on a request, a client is able to access REST APIs that are protected with the JWTProvider federation provider.</p>
+<p>This section describes the overall setup requirements and options for KnoxToken service.</p>
+<h3 id="knoxtoken-service">KnoxToken service<a class="headerlink" href="#knoxtoken-service" title="Permanent link">&para;</a></h3>
+<p>The Knox Token Service configuration can be configured in any descriptor/topology, tailored to issue tokens to authenticated users, and constrain the usage of the tokens in a number of ways.</p>
+<div class="highlight"><pre><span></span><code>&quot;services&quot;: [
+  {
+    &quot;name&quot;: &quot;KNOXTOKEN&quot;,
+    &quot;params&quot;: {
+      &quot;knox.token.ttl&quot;: &quot;36000000&quot;,
+      &quot;knox.token.audiences&quot;: &quot;tokenbased&quot;,
+      &quot;knox.token.target.url&quot;: &quot;https://localhost:8443/gateway/tokenbased&quot;,
+      &quot;knox.token.exp.server-managed&quot;: &quot;false&quot;,
+      &quot;knox.token.renewer.whitelist&quot;: &quot;admin&quot;,
+      &quot;knox.token.exp.renew-interval&quot;: &quot;86400000&quot;,
+      &quot;knox.token.exp.max-lifetime&quot;: &quot;604800000&quot;,
+      &quot;knox.token.type&quot;: &quot;JWT&quot;
+    }
+  }
+]
+</code></pre></div>
+<h4 id="knoxtoken-configuration-parameters">KnoxToken Configuration Parameters<a class="headerlink" href="#knoxtoken-configuration-parameters" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>knox.token.ttl</td>
+<td>This indicates the lifespan (milliseconds) of the token. Once it expires a new token must be acquired from KnoxToken service. The 36000000 in the topology above gives you 10 hrs.</td>
+<td>30000 (30 seconds)</td>
+</tr>
+<tr>
+<td>knox.token.audiences</td>
+<td>This is a comma-separated list of audiences to add to the JWT token. This is used to ensure that a token received by a participating application knows that the token was intended for use with that application. It is optional. In the event that an endpoint has expected audiences and they are not present the token must be rejected. In the event where the token has audiences and the endpoint has none expected then the token is accepted.</td>
+<td>empty</td>
+</tr>
+<tr>
+<td>knox.token.target.url</td>
+<td>This is an optional configuration parameter to indicate the intended endpoint for which the token may be used. The KnoxShell token credential collector can pull this URL from a knoxtokencache file to be used in scripts. This eliminates the need to prompt for or hardcode endpoints in your scripts.</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>knox.token.exp.server-managed</td>
+<td>This is an optional configuration parameter to enable/disable server-managed token state, to support the associated token renewal and revocation APIs.</td>
+<td>false</td>
+</tr>
+<tr>
+<td>knox.token.renewer.whitelist</td>
+<td>This is an optional configuration parameter to authorize the comma-separated list of users to invoke the associated token renewal and revocation APIs.</td>
+<td></td>
+</tr>
+<tr>
+<td>knox.token.exp.renew-interval</td>
+<td>This is an optional configuration parameter to specify the amount of time (milliseconds) to be added to a token's TTL when a renewal request is approved.</td>
+<td>86400000 (24 hours)</td>
+</tr>
+<tr>
+<td>knox.token.exp.max-lifetime</td>
+<td>This is an optional configuration parameter to specify the maximum allowed lifetime (milliseconds) of a token, after which renewal will not be permitted.</td>
+<td>604800000 (7 days)</td>
+</tr>
+<tr>
+<td>knox.token.type</td>
+<td>If this is configured the generated JWT's header will have this value as the <code>typ</code> property</td>
+<td></td>
+</tr>
+<tr>
+<td>knox.token.issuer</td>
+<td>This is an optional configuration parameter to specify the issuer of a token.</td>
+<td>KNOXSSO</td>
+</tr>
+</tbody>
+</table>
+<p>Note that server-managed token state can be configured for all KnoxToken service deployments in gateway-site (see <a href="#gateway-server-configuration">gateway.knox.token.exp.server-managed</a>). If it is configured at the gateway level, then the associated service parameter, if configured, will override the gateway configuration.</p>
+<p>Adding the KnoxToken configuration shown above to a topology that is protected with the ShrioProvider is a very simple and effective way to expose an endpoint from which a Knox token can be requested. Once it is acquired it may be used to access resources at intended endpoints until it expires.</p>
+<p>The following curl command can be used to acquire a token from the Knox Token service as configured in the sandbox topology:</p>
+<div class="highlight"><pre><span></span><code>curl -ivku guest:guest-password https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token
+</code></pre></div>
+<p>Resulting in a JSON response that contains the token, the expiration and the optional target endpoint:</p>
+<div class="highlight"><pre><span></span><code>      `{&quot;access_token&quot;:&quot;eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJndWVzdCIsImF1ZCI6InRva2VuYmFzZWQiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNDg5OTQyMTg4fQ.bcqSK7zMnABEM_HVsm3oWNDrQ_ei7PcMI4AtZEERY9LaPo9dzugOg3PA5JH2BRF-lXM3tuEYuZPaZVf8PenzjtBbuQsCg9VVImuu2r1YNVJlcTQ7OV-eW50L6OTI0uZfyrFwX6C7jVhf7d7YR1NNxs4eVbXpS1TZ5fDIRSfU3MU&quot;,&quot;target_url&quot;:&quot;https://localhost:8443/gateway/tokenbased&quot;,&quot;token_type&quot;:&quot;Bearer &quot;,&quot;expires_in&quot;:1489942188233}`
+</code></pre></div>
+<p>The following curl example shows how to add a bearer token to an Authorization header:</p>
+<div class="highlight"><pre><span></span><code>curl -ivk -H &quot;Authorization: Bearer eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJndWVzdCIsImF1ZCI6InRva2VuYmFzZWQiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNDg5OTQyMTg4fQ.bcqSK7zMnABEM_HVsm3oWNDrQ_ei7PcMI4AtZEERY9LaPo9dzugOg3PA5JH2BRF-lXM3tuEYuZPaZVf8PenzjtBbuQsCg9VVImuu2r1YNVJlcTQ7OV-eW50L6OTI0uZfyrFwX6C7jVhf7d7YR1NNxs4eVbXpS1TZ5fDIRSfU3MU&quot; https://localhost:8443/gateway/tokenbased/webhdfs/v1/tmp?op=LISTSTATUS
+</code></pre></div>
+<p>If you want tokens to include group membership informations, add a <code>knox.token.include.groups</code> query parameter to the URL.</p>
+<div class="highlight"><pre><span></span><code>curl -u admin:admin-password -k &quot;https://localhost:8443/gateway/homepage/knoxtoken/api/v1/token?knox.token.include.groups=true&quot;
+</code></pre></div>
+<p>The response contains the token with the group information:</p>
+<div class="highlight"><pre><span></span><code>{
+      &quot;sub&quot;: &quot;admin&quot;,
+      &quot;jku&quot;: &quot;https://localhost:8443/gateway/homepage/knoxtoken/api/v1/jwks.json&quot;,
+      &quot;kid&quot;: &quot;oigA7mZCwA2d7oimQyUaB0oDAfhI-1Bjq9y1n-Mw_OU&quot;,
+      &quot;iss&quot;: &quot;KNOXSSO&quot;,
+      &quot;exp&quot;: 1649777837,
+      &quot;knox.groups&quot;: [
+        &quot;admin-group2&quot;,
+        &quot;admin-group1&quot;
+      ],
+      &quot;managed.token&quot;: &quot;true&quot;,
+      &quot;knox.id&quot;: &quot;dfeb8979-7f00-4938-bbff-1bc7574bb53d&quot;
+}
+</code></pre></div>
+<p>This feature is enabled by default. If you want to disable it, add the following configuration to the KNOXTOKEN service.</p>
+<div class="highlight"><pre><span></span><code>     &lt;param&gt;
+        &lt;name&gt;knox.token.include.groups.allowed&lt;/name&gt; &lt;!-- default = true --&gt;
+        &lt;value&gt;false&lt;/value&gt;
+    &lt;/param&gt;
+</code></pre></div>
+<h4 id="knoxtoken-renewal-revocation-and-enabledisable-actions">KnoxToken Renewal, Revocation and Enable/Disable actions<a class="headerlink" href="#knoxtoken-renewal-revocation-and-enabledisable-actions" title="Permanent link">&para;</a></h4>
+<p>The KnoxToken service supports the renewal and explicit revocation of tokens it has issued.
+Support for both requires server-managed token state to be enabled with at least one renewer white-listed.</p>
+<h5 id="renewal">Renewal<a class="headerlink" href="#renewal" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code>curl -ivku admin:admin-password -X PUT -d $TOKEN &#39;https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/renew&#39;
+</code></pre></div>
+<p>The JSON responses include a flag indicating success or failure.</p>
+<p>A successful result includes the updated expiration time.</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;renewed&quot;: &quot;true&quot;,
+  &quot;expires&quot;: &quot;1584278311658&quot;
+}
+</code></pre></div>
+<p>Error results include a message describing the reason for failure.</p>
+<p>Invalid token</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;renewed&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Unknown token: 9caf743e-1e0d-4708-a9ac-a684a576067c&quot;
+}
+</code></pre></div>
+<p>Unauthorized caller</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;renewed&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Caller (guest) not authorized to renew tokens.&quot;
+}
+</code></pre></div>
+<h5 id="revocation">Revocation<a class="headerlink" href="#revocation" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code>curl -ivku admin:admin-password -X DELETE -d $TOKEN &#39;https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/revoke&#39;
+</code></pre></div>
+<p>The JSON responses include a flag indicating success or failure.</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;revoked&quot;: &quot;true&quot;
+}
+</code></pre></div>
+<p>Error results include a message describing the reason for the failure.</p>
+<p>Invalid token</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;revoked&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Unknown token: 9caf743e-1e0d-4708-a9ac-a684a576067c&quot;
+}
+</code></pre></div>
+<p>Unauthorized caller</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;revoked&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Caller (guest) not authorized to revoke tokens.&quot;
+}
+</code></pre></div>
+<p>KnoxSSO Cookies must not be revoked</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password  -H &quot;Content-Type: application/json&quot; -d &#39;c236d20c-4a05-4cfa-b35e-2ba6dc451de0&#39; -X DELETE https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/revoke
+HTTP/1.1 403 Forbidden
+Date: Fri, 09 Oct 2023 08:55:25 GMT
+Set-Cookie: KNOXSESSIONID=node03e9y0cy8giy31rh00xc1mrcfx0.node0; Path=/gateway/sandbox; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Set-Cookie: rememberMe=deleteMe; Path=/gateway/sandbox; Max-Age=0; Expires=Thu, 05-Oct-2023 08:55:25 GMT; SameSite=lax
+Content-Type: application/json
+Content-Length: 113
+
+{
+  &quot;revoked&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;SSO cookie (c236d20c...2ba6dc451de0) cannot not be revoked.&quot;,
+  &quot;code&quot;: 20
+}
+</code></pre></div>
+<p>Revoke multiple tokens in one batch:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -H &quot;Content-Type: application/json&quot; -d &#39;[&quot;3c043de7-f9e9-4c1a-b32f-abfbc3dcbcb2&quot;,&quot;5735f5ae-bddd-4ed1-9383-47a839b9ae2b&quot;]&#39; -X DELETE https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/revokeTokens
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:20:39 GMT
+...
+
+{
+  &quot;revoked&quot;: &quot;true&quot;
+}
+</code></pre></div>
+<p>When revoking multiple tokens, current token state check is executed one by one. This means, if there was at least failed token revocation, the HTTP response will indicate that despite the fact that the rest of the token revocation actions succeeded.</p>
+<h5 id="enable">Enable<a class="headerlink" href="#enable" title="Permanent link">&para;</a></h5>
+<p>This endpoint added in the scope of <a href="https://issues.apache.org/jira/browse/KNOX-2602">KNOX-2602</a>.</p>
+<div class="highlight"><pre><span></span><code>$ curl -ku admin:admin-password -d &quot;1e2f286e-9df1-4123-8d41-e6af523d6923&quot; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/enable
+
+{
+  &quot;setEnabledFlag&quot;: &quot;true&quot;,
+  &quot;isEnabled&quot;: &quot;true&quot;
+}
+</code></pre></div>
+<p>The JSON responses include a flag (<code>setEnabledFlag</code>) indicating success or failure along with the token state after the action is executed (<code>isEnabled</code>).</p>
+<p>Trying to enable an already enabled token:</p>
+<div class="highlight"><pre><span></span><code>$ curl -ku admin:admin-password -d &quot;1e2f286e-9df1-4123-8d41-e6af523d6923&quot; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/enable
+{
+  &quot;setEnabledFlag&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Token is already enabled&quot;
+}
+</code></pre></div>
+<p>Disabled KnoxSSO Cookies must not be (re-)enabled:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password  -H &quot;Content-Type: application/json&quot; -d &#39;107824ab-c54d-4db3-b3b5-5c964892ad05&#39; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/enable
+HTTP/1.1 400 Bad Request
+Date: Fri, 06 Oct 2023 08:57:58 GMT
+Set-Cookie: KNOXSESSIONID=node011ejmvgcjnlpl13mchqmqjtdjc1.node0; Path=/gateway/sandbox; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Set-Cookie: rememberMe=deleteMe; Path=/gateway/sandbox; Max-Age=0; Expires=Thu, 05-Oct-2023 08:57:58 GMT; SameSite=lax
+Content-Type: application/json
+Content-Length: 107
+
+{
+  &quot;setEnabledFlag&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Disabled KnoxSSO Cookies cannot not be enabled&quot;,
+  &quot;code&quot;: 80
+}
+</code></pre></div>
+<p>Enable multiple tokens in one batch:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -H &quot;Content-Type: application/json&quot; -d &#39;[&quot;3c043de7-f9e9-4c1a-b32f-abfbc3dcbcb2&quot;,&quot;5735f5ae-bddd-4ed1-9383-47a839b9ae2b&quot;]&#39; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/enableTokens
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:19:23 GMT
+...
+
+{
+  &quot;setEnabledFlag&quot;: &quot;true&quot;,
+  &quot;isEnabled&quot;: &quot;true&quot;
+}
+</code></pre></div>
+<p>When enabling multiple tokens, current token state check is not executed. This means, if you are enabling tokens that were already enabled before the batch operation, they remain enabled.</p>
+<h5 id="disable">Disable<a class="headerlink" href="#disable" title="Permanent link">&para;</a></h5>
+<p>This endpoint added in the scope of <a href="https://issues.apache.org/jira/browse/KNOX-2602">KNOX-2602</a>.</p>
+<div class="highlight"><pre><span></span><code>$ curl -ku admin:admin-password -d &quot;1e2f286e-9df1-4123-8d41-e6af523d6923&quot; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/disable
+{
+  &quot;setEnabledFlag&quot;: &quot;true&quot;,
+  &quot;isEnabled&quot;: &quot;false&quot;
+}
+</code></pre></div>
+<p>The JSON responses include a flag (<code>setEnabledFlag</code>) indicating success or failure along with the token state after the action is executed (<code>isEnabled</code>).</p>
+<p>Trying to enable an already enabled token:</p>
+<div class="highlight"><pre><span></span><code>$ curl -ku admin:admin-password -d &quot;1e2f286e-9df1-4123-8d41-e6af523d6923&quot; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/disable
+{
+  &quot;setEnabledFlag&quot;: &quot;false&quot;,
+  &quot;error&quot;: &quot;Token is already disabled&quot;
+}
+</code></pre></div>
+<p>Disable multiple tokens in one batch:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -H &quot;Content-Type: application/json&quot; -d &#39;[&quot;3c043de7-f9e9-4c1a-b32f-abfbc3dcbcb2&quot;,&quot;5735f5ae-bddd-4ed1-9383-47a839b9ae2b&quot;]&#39; -X PUT https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/disableTokens
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:16:14 GMT
+...
+
+{
+  &quot;setEnabledFlag&quot;: &quot;true&quot;,
+  &quot;isEnabled&quot;: &quot;false&quot;
+}
+</code></pre></div>
+<p>When disabling multiple tokens, current token state check is not executed. This means, if you are disabling tokens that were already disabled before the batch operation, they remain disabled.</p>
+<h5 id="fetching-tokens-for-users">Fetching tokens for users<a class="headerlink" href="#fetching-tokens-for-users" title="Permanent link">&para;</a></h5>
+<p>Fetching tokens by <code>userName</code>:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -X GET https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/getUserTokens?userName=admin
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:02:32 GMT
+Set-Cookie: KNOXSESSIONID=node01vfrmf5kpjt0ku6mt9765wwx64.node0; Path=/gateway/sandbox; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Set-Cookie: rememberMe=deleteMe; Path=/gateway/sandbox; Max-Age=0; Expires=Mon, 09-Oct-2023 07:02:32 GMT; SameSite=lax
+Content-Type: application/json
+Content-Length: 822
+
+{&quot;tokens&quot;:[{&quot;tokenId&quot;:&quot;5244358f-19a3-4834-b16f-aa7ddb2e7fe1&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:03.904+0200&quot;,&quot;expiration&quot;:&quot;2023-10-11T09:02:03.000+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:03.904+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:true,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;admin&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:null},&quot;issueTimeLong&quot;:1696921323904,&quot;expirationLong&quot;:1697007723000,&quot;maxLifetimeLong&quot;:1697526123904},{&quot;tokenId&quot;:&quot;9b37e838-4aa2-43fd-b2f1-b35660b33778&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:14.271+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:02:14.242+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:14.271+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;admin&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;admin token 1&quot;},&quot;issueTimeLong&quot;:1696921334271,&quot;expirationLong&quot;:1696924934242,&quot;maxLifetimeLong&quot;:1697526134271}]}
+</code></pre></div>
+<p>Fetching tokens by <code>createdBy</code>:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -X GET https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/getUserTokens?createdBy=admin
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:05:45 GMT
+Set-Cookie: KNOXSESSIONID=node047nn0zjkauc41qzexnjmlhj2j6.node0; Path=/gateway/sandbox; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Set-Cookie: rememberMe=deleteMe; Path=/gateway/sandbox; Max-Age=0; Expires=Mon, 09-Oct-2023 07:05:46 GMT; SameSite=lax
+Content-Type: application/json
+Content-Length: 436
+
+{&quot;tokens&quot;:[{&quot;tokenId&quot;:&quot;3c043de7-f9e9-4c1a-b32f-abfbc3dcbcb2&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:29.146+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:02:29.127+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:29.146+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:&quot;admin&quot;,&quot;userName&quot;:&quot;guest&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;admin token 1 for guest&quot;},&quot;issueTimeLong&quot;:1696921349146,&quot;expirationLong&quot;:1696924949127,&quot;maxLifetimeLong&quot;:1697526149146}]}
+</code></pre></div>
+<p>Fetching tokens by <code>userNameOrCreatedBy</code>:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -X GET https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/getUserTokens?userNameOrCreatedBy=admin
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:07:02 GMT
+Set-Cookie: KNOXSESSIONID=node0rt50pq4getaj1s1owcj3pvgfm7.node0; Path=/gateway/sandbox; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Set-Cookie: rememberMe=deleteMe; Path=/gateway/sandbox; Max-Age=0; Expires=Mon, 09-Oct-2023 07:07:02 GMT; SameSite=lax
+Content-Type: application/json
+Content-Length: 1246
+
+{&quot;tokens&quot;:[{&quot;tokenId&quot;:&quot;5244358f-19a3-4834-b16f-aa7ddb2e7fe1&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:03.904+0200&quot;,&quot;expiration&quot;:&quot;2023-10-11T09:02:03.000+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:03.904+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:true,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;admin&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:null},&quot;issueTimeLong&quot;:1696921323904,&quot;expirationLong&quot;:1697007723000,&quot;maxLifetimeLong&quot;:1697526123904},{&quot;tokenId&quot;:&quot;9b37e838-4aa2-43fd-b2f1-b35660b33778&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:14.271+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:02:14.242+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:14.271+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;admin&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;admin token 1&quot;},&quot;issueTimeLong&quot;:1696921334271,&quot;expirationLong&quot;:1696924934242,&quot;maxLifetimeLong&quot;:1697526134271},{&quot;tokenId&quot;:&quot;3c043de7-f9e9-4c1a-b32f-abfbc3dcbcb2&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:29.146+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:02:29.127+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:29.146+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:&quot;admin&quot;,&quot;userName&quot;:&quot;guest&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;admin token 1 for guest&quot;},&quot;issueTimeLong&quot;:1696921349146,&quot;expirationLong&quot;:1696924949127,&quot;maxLifetimeLong&quot;:1697526149146}]}
+</code></pre></div>
+<p>Fetching <code>all</code> tokens:</p>
+<div class="highlight"><pre><span></span><code>$ curl -iku admin:admin-password -X GET https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/getUserTokens?allTokens=true
+HTTP/1.1 200 OK
+Date: Tue, 10 Oct 2023 07:08:08 GMT
+Set-Cookie: KNOXSESSIONID=node0fctcnhp9fm3w1gq1mc2z993109.node0; Path=/gateway/sandbox; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Set-Cookie: rememberMe=deleteMe; Path=/gateway/sandbox; Max-Age=0; Expires=Mon, 09-Oct-2023 07:08:08 GMT; SameSite=lax
+Content-Type: application/json
+Content-Length: 2048
+
+{&quot;tokens&quot;:[{&quot;tokenId&quot;:&quot;5244358f-19a3-4834-b16f-aa7ddb2e7fe1&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:03.904+0200&quot;,&quot;expiration&quot;:&quot;2023-10-11T09:02:03.000+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:03.904+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:true,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;admin&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:null},&quot;issueTimeLong&quot;:1696921323904,&quot;expirationLong&quot;:1697007723000,&quot;maxLifetimeLong&quot;:1697526123904},{&quot;tokenId&quot;:&quot;9b37e838-4aa2-43fd-b2f1-b35660b33778&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:14.271+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:02:14.242+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:14.271+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;admin&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;admin token 1&quot;},&quot;issueTimeLong&quot;:1696921334271,&quot;expirationLong&quot;:1696924934242,&quot;maxLifetimeLong&quot;:1697526134271},{&quot;tokenId&quot;:&quot;3c043de7-f9e9-4c1a-b32f-abfbc3dcbcb2&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:02:29.146+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:02:29.127+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:02:29.146+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:&quot;admin&quot;,&quot;userName&quot;:&quot;guest&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;admin token 1 for guest&quot;},&quot;issueTimeLong&quot;:1696921349146,&quot;expirationLong&quot;:1696924949127,&quot;maxLifetimeLong&quot;:1697526149146},{&quot;tokenId&quot;:&quot;75f1b921-680d-433d-976f-270a100a1cf9&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:07:50.871+0200&quot;,&quot;expiration&quot;:&quot;2023-10-11T09:07:50.000+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:07:50.871+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:true,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;sam&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:null},&quot;issueTimeLong&quot;:1696921670871,&quot;expirationLong&quot;:1697008070000,&quot;maxLifetimeLong&quot;:1697526470871},{&quot;tokenId&quot;:&quot;5735f5ae-bddd-4ed1-9383-47a839b9ae2b&quot;,&quot;issueTime&quot;:&quot;2023-10-10T09:07:55.293+0200&quot;,&quot;expiration&quot;:&quot;2023-10-10T10:07:55.276+0200&quot;,&quot;maxLifetime&quot;:&quot;2023-10-17T09:07:55.293+0200&quot;,&quot;metadata&quot;:{&quot;customMetadataMap&quot;:{},&quot;knoxSsoCookie&quot;:false,&quot;createdBy&quot;:null,&quot;userName&quot;:&quot;sam&quot;,&quot;enabled&quot;:true,&quot;comment&quot;:&quot;sam token&quot;},&quot;issueTimeLong&quot;:1696921675293,&quot;expirationLong&quot;:1696925275276,&quot;maxLifetimeLong&quot;:1697526475293}]}
+</code></pre></div>
+<h4 id="token-generationmanagement-uis">Token Generation/Management UIs<a class="headerlink" href="#token-generationmanagement-uis" title="Permanent link">&para;</a></h4>
+<h5 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h5>
+<p>In Apache Knox v2.0.0 the team added two new UIs that are directly accessible from the Knox Home page:</p>
+<ul>
+<li>Token Generation</li>
+<li>Token Management</li>
+</ul>
+<p>By default, the <code>homepage</code> topology comes with the <code>KNOXTOKEN</code> service enabled with the following attributes:</p>
+<ul>
+<li>token TTL is set to 120 days</li>
+<li>token service is enabled (default to keystore-based token state service)</li>
+<li>the admin user is allowed to renew/revoke tokens</li>
+</ul>
+<p>In this topology, homepage, two new applications were added in order to display the above-listed UIs:</p>
+<ul>
+<li><code>tokengen</code>: this is an old-style JSP UI, with a relatively simple JS code included. The source is located in the <a href="https://github.com/apache/knox/tree/v2.0.0/gateway-applications/src/main/resources/applications/tokengen">gateway-applications</a> Maven sub-module.</li>
+<li><code>token-management</code>: this is an Angular UI. The source is located in its own <a href="https://github.com/apache/knox/tree/v2.0.0/knox-token-management-ui">knox-token-management-ui</a> Maven sub-module.</li>
+</ul>
+<p>On the Knox Home page, you will see a new town in the General Proxy Information table like this:</p>
+<p><img alt="Knox Token Management Homepage" src="assets/images/token/knoxtokenmanagement_homepage.png" /></p>
+<p>However, the <em>Integration Token</em> links are disabled by default, because token integration requires a gateway-level alias - called <code>knox.token.hash.key</code> - being created and without that alias, it <a href="https://github.com/apache/knox/pull/512">does not make sense to show those links</a>.</p>
+<h5 id="creating-the-token-hash-key">Creating the token hash key<a class="headerlink" href="#creating-the-token-hash-key" title="Permanent link">&para;</a></h5>
+<p>As explained, if you would like to use Knox's token generation features, you will have to create a gateway-level alias with a 256, 384, or 512-bit length JWK. You can do it in - at least - two different ways:</p>
+<ol>
+<li>You generate your own MAC (using <a href="https://8gwifi.org/jwkfunctions.jsp">this online tool</a> for instance) and save it as an alias using Knox CLI.</li>
+<li>You do it running the following Knox CLI command:<br />
+<code>generate-jwk --saveAlias knox.token.hash.key</code></li>
+</ol>
+<p>The second option involves a newly created Knox CLI command called <code>generate-jwk</code>:</p>
+<h5 id="token-state-service-implementations">Token state service implementations<a class="headerlink" href="#token-state-service-implementations" title="Permanent link">&para;</a></h5>
+<p>There was an important step the Knox team made to provide more flexibility for our end-users: there are some internal service implementations in Knox that were hard-coded in the Java source code. One of those services is the <code>Token State</code> service implementation which you can change in gateway-site.xml going forward by setting the <code>gateway.service.tokenstate.impl</code> property to any of:</p>
+<ol>
+<li><code>org.apache.knox.gateway.services.token.impl.DefaultTokenStateService</code> - keeps all token information in memory, therefore all of this information is lost when Knox is shut down</li>
+<li><code>org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService</code> - token information is stored in the gateway credential store. This is a durable option, but not suitable for HA deployments</li>
+<li><code>org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService</code> - token information is stored in plain files within <code>$KNOX_DATA_DIR/security/token-state</code> folder. This option also provides a durable persistence layer for tokens and it might be good for HA scenarios too (in case of KNOX_DATA_DIR is on a shared drive), but the token data is written out in plain text (i.e. not encrypted) so it's less secure.</li>
+<li><code>org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService</code> - this is an extension of the keystore-based approach. In this case, token information is stored in Zookeeper using Knox aliases. The token's alias name equals to its generated token ID.</li>
+<li><code>org.apache.knox.gateway.services.token.impl.JDBCTokenStateService</code> - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. Currently, PostgreSQL and MySQL databases are supported.</li>
+</ol>
+<p>By default, the <code>AliasBasedTokenStateService</code> implementation is used.</p>
+<h5 id="configuring-the-jdbc-token-state-service">Configuring the JDBC token state service<a class="headerlink" href="#configuring-the-jdbc-token-state-service" title="Permanent link">&para;</a></h5>
+<p>If you want to use the newly implemented database token management, you’ve to set <code>gateway.service.tokenstate.impl</code> in <em>gateway-site.xml</em> to <code>org.apache.knox.gateway.services.token.impl.JDBCTokenStateService</code>.</p>
+<p>Now, that you have configured your token state backend, you need to configure a valid database in <em>gateway-site.xml</em>. There are two ways to do that:</p>
+<ol>
+<li>You either declare database connection properties one-by-one:<br />
+<code>gateway.database.type</code> - should be set to <code>postgresql</code> or <code>mysql</code><br />
+<code>gateway.database.host</code> - the host where your DB server is running<br />
+<code>gateway.database.port</code> - the port that your DB server is listening on<br />
+<code>gateway.database.name</code> - the name of the database you are connecting to</li>
+<li>Or you declare an all-in-one JDBC connection string called <code>gateway.database.connection.url</code>. The following value will show you how to connect to an SSL enabled PostgreSQL server:<br />
+    <code>jdbc:postgresql://$myPostgresServerHost:5432/postgres?user=postgres&amp;ssl=true&amp;sslmode=verify-full&amp;sslrootcert=/usr/local/var/postgresql@10/data/root.crt</code></li>
+</ol>
+<p>If your database requires user/password authentication, the following aliases must be saved into the Knox Gateway’s credential store (__gateway-credentials.jceks):</p>
+<ul>
+<li><code>gateway_database_user</code> - the username</li>
+<li><code>gateway_database_password</code> - the password</li>
+</ul>
+<h6 id="database-design">Database design<a class="headerlink" href="#database-design" title="Permanent link">&para;</a></h6>
+<p><img alt="JDBC Token State Service Database Design" src="assets/images/token/jdbc_tss_db_design.png" /></p>
+<p>As you can see, there are only 2 tables:</p>
+<ul>
+<li><code>KNOXTOKENS</code> contains basic information about the generated token</li>
+<li><code>KNOX_TOKEN_METADATA</code> contains an arbitrary number of metadata information for the generated token. At the time of this document being written the following metadata exist:<ul>
+<li><code>passcode</code> - this is the BASE-64 encoded value of the generated
+   passcode token MAC. That is, the BASE-64 decoded value is a generated
+   MAC.</li>
+<li><code>userName</code> - the logged-in user who generated the token</li>
+<li><code>enabled</code> - this is a boolean flag indicating that the given token is enabled or not (a <em>disabled</em> token cannot be used for
+   authentication purposes)</li>
+<li><code>comment</code> - this is optional metadata, saved only if the user enters something in the <em>Comment</em> input field on the <em>Token
+   Generation</em> page (see below)</li>
+<li><code>createdBy</code> - if the token is an impersonated token, this metadata holds the name if the user who generated the token (see <em>Token impersonation</em> below)</li>
+</ul>
+</li>
+</ul>
+<h5 id="generating-a-token">Generating a token<a class="headerlink" href="#generating-a-token" title="Permanent link">&para;</a></h5>
+<p>Once you configured the <code>knox.token.hash.key</code> alias and optionally customized your token state service, you are all set to generate Knox tokens using the new Token Generation UI:</p>
+<p><img alt="Token Generation UI" src="assets/images/token/knoxtokenmanagement_token_generation_ui-1.png" /></p>
+<p>The following sections are displayed on the page:</p>
+<ul>
+<li>status bar: here you can see an informative message on the configured Token State backend. There are 3 different statuses:<ul>
+<li>ERROR: shown in red. This indicates a problem with the service backend which makes the feature not work. Usually, this is visible when end-users configure JDBC token state service, but they make a mistake in their DB settings</li>
+<li>WARN: displayed in yellow (see above picture). This indicates that the feature is enabled and working, but there are some limitations</li>
+<li>INFO: displayed in green. This indicates when the token management backend is properly configured for HA and production deployments</li>
+</ul>
+</li>
+<li>there is an information label explaining the purpose of the token generation page</li>
+<li>comment: this is an <em>optional</em> input field that allows end-users to add meaningful comments (mnemonics) to their generated tokens. The maximum length is 255 characters.</li>
+<li>the <code>Configured maximum lifetime</code> informs the clients about the <code>knox.token.ttl</code> property set in the <code>homepage</code> topology (defaults to 120 days). If that property is not set (e.g. someone removes it from he homepage topology), Knox uses a hard-coded value of 30 seconds (aka. default Knox token TTL)</li>
+<li>Custom token lifetime can be set by adjusting the days/hours/minutes spinners. The default configuration will yield one hour.</li>
+<li>Token impersonation: an optional free text input field that makes it possible to generate a token for someone else.</li>
+<li>Clicking the Generate Token button will try to create a token for you.</li>
+</ul>
+<h5 id="about-the-generated-token-ttl">About the generated token TTL<a class="headerlink" href="#about-the-generated-token-ttl" title="Permanent link">&para;</a></h5>
+<p>Out of the box, Knox will display the custom lifetime spinners on the Token Generation page. However, they can be hidden by setting the <code>knox.token.lifespan.input.enabled</code> property to <code>false</code> in the <code>homepage</code> topology. Given that possibility and the configured maximum lifetime the generated token can have the following TTL value:</p>
+<ul>
+<li>there is no configured token TTL and lifespan inputs are disabled -&gt; the default TTL is used (30 seconds)</li>
+<li>there is configured TTL and lifespan inputs are disabled -&gt; the configured TTL is used</li>
+<li>there is configured TTL and lifespan inputs are enabled and lifespan inputs result in a value that is less than or equal to the configured TTL -&gt; the lifespan query param is used</li>
+<li>there is configured TTL and lifespan inputs are enabled and lifespan inputs result in a value that is greater than the configured TTL -&gt; the configured TTL is used</li>
+</ul>
+<h5 id="successful-token-generation">Successful token generation<a class="headerlink" href="#successful-token-generation" title="Permanent link">&para;</a></h5>
+<p><img alt="Successful Token Generation" src="assets/images/token/knoxtokenmanagement_token_generation_ui-successful.png" /></p>
+<p>On the resulting page there is two sensitive information that you can use in Knox to authenticate your request:</p>
+<ol>
+<li>
+<p><strong>JWT token</strong> - this is the serialized JWT and is fully compatible with the old-style Bearer authorization method. Clicking the <code>JWT Token</code> label on the page will copy the value into the clipboard. You might want to use it as the ‘Token’ user:</p>
+<p><code>$ curl -ku Token:eyJqa3UiOiJodHRwczpcL1wvbG9jYWxob3N0Ojg0NDNcL2dhdGV3YXlcL2hvbWVwYWdlXC9rbm94dG9rZW5cL2FwaVwvdjFcL2p3a3MuanNvbiIsImtpZCI6IkdsOTZfYTM2MTJCZWFsS2tURFRaOTZfVkVsLVhNRVRFRmZuNTRMQ1A2UDQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImprdSI6Imh0dHBzOlwvXC9sb2NhbGhvc3Q6ODQ0M1wvZ2F0ZXdheVwvaG9tZXBhZ2VcL2tub3h0b2tlblwvYXBpXC92MVwvandrcy5qc29uIiwia2lkIjoiR2w5Nl9hMzYxMkJlYWxLa1REVFo5Nl9WRWwtWE1FVEVGZm41NExDUDZQNCIsImlzcyI6IktOT1hTU08iLCJleHAiOjE2MzY2MjU3MTAsIm1hbmFnZWQudG9rZW4iOiJ0cnVlIiwia25veC5pZCI6ImQxNjFjYWMxLWY5M2UtNDIyOS1hMGRkLTNhNzdhYjkxNDg3MSJ9.e_BNPf_G1iBrU0m3hul5VmmSbpw0w1pUAXl3czOcuxFOQ0Tki-Gq76fCBFUNdKt4QwLpNXxM321cH1TeMG4IhL-92QORSIZgRxY4OUtUgERzcU7-27VNYOzJbaRCjrx-Vb4bSriRJJDwbbXyAoEw_bjiP8EzFFJTPmGcctEzrOLWFk57cLO-2QLd2nbrNd4qmrRR6sEfP81Jg8UL-Ptp66vH_xalJJWuoyoNgGRmH8IMdLVwBgeLeVHiI7NmokuhO-vbctoEwV3Rt4pMpA0VSWGFN0MI4WtU0crjXXHg8U9xSZyOeyT3fMZBXctvBomhGlWaAvuT5AxQGyMMP3VLGw https:/localhost:8443/gateway/sandbox/webhdfs/v1?op=LISTSTATUS</code>
+<code>{"FileStatuses":{"FileStatus":[{"accessTime":0,"blockSize":0,"childrenNum":1,"fileId":16386,"group":"supergroup","length":0,"modificationTime":1621238405734,"owner":"hdfs","pathSuffix":"tmp","permission":"1777","replication":0,"storagePolicy":0,"type":"DIRECTORY"},{"accessTime":0,"blockSize":0,"childrenNum":1,"fileId":16387,"group":"supergroup","length":0,"modificationTime":1621238326078,"owner":"hdfs","pathSuffix":"user","permission":"755","replication":0,"storagePolicy":0,"type":"DIRECTORY"}]}}</code></p>
+</li>
+<li>
+<p><strong>Passcode token</strong> - this is the serialized passcode token, which you can use as the ‘Passcode’ user (Clicking the <code>Passcode Token</code> label on the page will copy the value into the clipboard):</p>
+<p><code>$ curl -ku Passcode:WkRFMk1XTmhZekV0WmprelpTMDBNakk1TFdFd1pHUXRNMkUzTjJGaU9URTBPRGN4OjpPVEV5Tm1KbFltUXROVEUyWkMwME9HSTBMVGd4TTJZdE1HRmxaalJrWlRVNFpXRTA= https://localhost:8443/gateway/sandbox/webhdfs/v1?op=LISTSTATUS</code>
+<code>{"FileStatuses":{"FileStatus":[{"accessTime":0,"blockSize":0,"childrenNum":1,"fileId":16386,"group":"supergroup","length":0,"modificationTime":1621238405734,"owner":"hdfs","pathSuffix":"tmp","permission":"1777","replication":0,"storagePolicy":0,"type":"DIRECTORY"},{"accessTime":0,"blockSize":0,"childrenNum":1,"fileId":16387,"group":"supergroup","length":0,"modificationTime":1621238326078,"owner":"hdfs","pathSuffix":"user","permission":"755","replication":0,"storagePolicy":0,"type":"DIRECTORY"}]}}</code></p>
+</li>
+</ol>
+<p>The reason, we needed to support the shorter <code>Passcode token</code>, is that there are 3rd party tools where the long JWT exceeds input fields limitations so we need to address this issue with shorter token values.</p>
+<p>The rest of the fields are complementary information such as the expiration date/time of the generated token or the user who created it.</p>
+<h5 id="token-generation-failed">Token generation failed<a class="headerlink" href="#token-generation-failed" title="Permanent link">&para;</a></h5>
+<p>If there was an error during token generation, you will see a failure right under the input field boxes (above the Generate Token button):</p>
+<p><img alt="Failed Token Generation" src="assets/images/token/knoxtokenmanagement_token_generation_ui-fail.png" /></p>
+<p>The above error message indicates a failure that the admin user already generated more tokens than they are allowed to. This limitation is configurable in the <code>gateway-site.xml</code>:</p>
+<ul>
+<li><code>gateway.knox.token.limit.per.user</code> - indicates the maximum number of tokens a user can manage at the same time. <code>-1</code> means that users are allowed to create/manage as many tokens as they want. This configuration only applies when the server-managed token state is enabled either in <code>gateway-site</code> or at the <code>topology</code> level. Defaults to 10.</li>
+</ul>
+<p>This behavior can be changed by setting the following <code>KNOXTOKEN</code> service-level parameter called <code>knox.token.user.limit.exceeded.action</code>. This property may have the following values:</p>
+<ul>
+<li><code>REMOVE_OLDEST</code> - if that’s configured, the oldest token of the user, who the token is being generated for, will be removed</li>
+<li><code>RETURN_ERROR</code> - if that’s configured, Knox will return an error response with 403 error code (as it did in previous versions)</li>
+</ul>
+<p>The default value is <code>RETURN_ERROR</code>.</p>
+<h5 id="token-management">Token Management<a class="headerlink" href="#token-management" title="Permanent link">&para;</a></h5>
+<p>In addition to the token generation UI, Knox comes with the Token Management UI where logged-in users can see all the active tokens that were generated before. That is, if a token got expired and was removed from the underlying token store, it won't be displayed here. Based on a configuration you can find below, users can see only their tokens or all of them.</p>
+<p><img alt="Token Management UI" src="assets/images/token/knoxtokenmanagement_token_management_ui-1.png" /></p>
+<p>On this page, you will a table with the following information:</p>
+<ol>
+<li>Each row starts with a selection checkbox for batch operations (except for disabled KnoxSSO cookies, as there is no point in doing anything with them)</li>
+<li>A unique token identifer. Disabled token's Token ID value is shown in orange</li>
+<li>Information on when the token was created and when it will expire<ol>
+<li>if the token is already expired, the expiration time is shown in red</li>
+<li>if the token is still valid, the expiration time is shown in green</li>
+</ol>
+</li>
+<li>Username indicates the user for whom the token is created for</li>
+<li>Impersonated is a boolean flag indicating if this is an impersonated token:<ol>
+<li>green check: yes, this is impersonated. You'll see the user who created the token under the icon</li>
+<li>red cross: no, this is not an impersonated token</li>
+</ol>
+</li>
+<li>KnoxSSO is another boolean flag that indicates if this token is created by the <code>KNOXSSO</code> service if the feature was enabled<ol>
+<li>green check: yes, this is KnoxSSO cookie (token)</li>
+<li>red cross: no, this is not a KnoxSSO cookie (it was created by a regular token API call or on the Token Generation page)</li>
+</ol>
+</li>
+<li>In the Actions column you will see<ol>
+<li>the enable/disable/revoke actions are visible for impersonated tokens too</li>
+<li>KnoxSSO cookies cannot be revoked nor re-enabled</li>
+</ol>
+</li>
+</ol>
+<p>In order to refresh the table, you can use the <code>Refresh icon</code> above the table (if you generated tokens on another tab for instance).</p>
+<p><strong>Batch operations</strong></p>
+<p>When at least one token is selected, the following buttons are shown under the table:</p>
+<ul>
+<li><code>Disable Selected Tokens</code>: when executed, all the selected tokens become disabled (if they were disabled originally, they will remain disabled)</li>
+<li><code>Enable Selected Tokens</code>: when executed, all the selected tokens become enabled (if they were enabled originally, they will remain enabled)</li>
+<li><code>Revoke Selected Tokens</code>: when executed, all the selected tokens will be revoked. Please note this option is shown only, if there is no KnoxSSO cookie (token) selected (i.e. batch revocation only works with regular tokens).</li>
+</ul>
+<p><strong>Toggles</strong></p>
+<ul>
+<li><code>Show Disabled KnoxSSO Cookies</code>: this is true by default. Since disabled KnoxSSO cookies remain in the underlying token state service until they expire, it may bother users to see them in the tokens table. Flipping this toggle button helps to hide them.</li>
+<li><code>Show My Tokens Only</code>: this toggle button is only visible to users, who can see all tokens. By default, this is false. Enabling it will filter the tokens table in a way such that it will contain tokens only that were generated for the logged in user (impersonated or not).</li>
+</ul>
+<p><strong>Configuration</strong></p>
+<p>By default, logged in users can see token that were generated by them or for them (in caase of token impersonation). However, you may want to edit the <code>gateway.knox.token.management.users.can.see.all.tokens</code> parameter in <code>gateway-site.xml</code> to allow other users than <code>admin</code> to become such a "superuser", who can see all tokens on the Token Management UI.</p>
+<div class="highlight"><pre><span></span><code> &lt;property&gt;
+    &lt;name&gt;gateway.knox.token.management.users.can.see.all.tokens&lt;/name&gt;
+    &lt;value&gt;admin&lt;/value&gt;
+    &lt;description&gt;A comma-separated list of user names who can see all tokens on the Token Management page&lt;/description&gt;
+&lt;/property&gt;
+</code></pre></div>
+<h5 id="token-impersonation">Token impersonation<a class="headerlink" href="#token-impersonation" title="Permanent link">&para;</a></h5>
+<p>On the token generation page end-users can generate tokens on behalf of other users by specifying the desired user name in the token <code>impersonation</code> field. The following screenshot sows a successful token generation for user <code>tom</code> (the logged in user is <code>admin</code>).</p>
+<p><img alt="Successful Token Generation with DoAs" src="assets/images/token/knoxtokenmanagement_token_generation_ui-successful-doas.png" /></p>
+<p>For this to work, the topology has to be configured with
+the HadoopAuth authentication provider, or
+an identity assertion provider where impersonation is enabled
+In both cases, <code>doAs</code> support will only work with a valid Hadoop proxyuser configuration (see <a href="#hadoop-proxyuser-impersonation">Hadoop Proxyuser impersonation</a> above)</p>
+<h5 id="token-metadata">Token metadata<a class="headerlink" href="#token-metadata" title="Permanent link">&para;</a></h5>
+<p>As indicated above, the <code>KNOXTOKEN</code> service maintains some hard-coded token metadata out-of-the-box:</p>
+<ul>
+<li>userName</li>
+<li>comment</li>
+<li>enabled</li>
+<li>passcode</li>
+<li>createdBy (in case of impersonated tokens)</li>
+</ul>
+<p>In v2.0.0, the Knox team implemented a change in this service that allows end-users to add accept query parameters starting with the <code>md_</code> prefix and treat them as Knox Token Metadata.</p>
+<p>For instance:</p>
+<p><code>curl -iku admin:admin-password -X GET 'https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token?md_notebookName=accountantKnoxToken&amp;md_souldBeRemovedBy=31March2022&amp;md_otherMeaningfuMetadata=KnoxIsCool'</code>
+When such a token is created by Knox, we should save the following metadata too:</p>
+<ul>
+<li>notebookName=accountantKnoxToken</li>
+<li>shouldBeRemovedBy=31March2022</li>
+<li>otherMeaningfulMetadata=KnoxIsCool</li>
+</ul>
+<p>It's not only Knox can save these metadata, but the Knox's existing <code>getUserTokens API</code> endpoint is able to fetch basic token information using the supplied metadata name besides the user name information.</p>
+<p>It's important to note the following: the <code>getUserTokens</code> API returns tokens if <em>any</em> of the supplied metadata exists for the given token. Metadata values may or may not be matched: you can either use the <code>*</code> wildcard to match all metadata values with a given name <em>or</em> you can further filter the stored metadata information by specifying the desired value.</p>
+<p>For instance:</p>
+<p><code>curl -iku admin:admin-password -X GET 'https://localhost:8443/gateway/sandbox/knoxtoken/api/v1/token/getUserTokens?userName=admin&amp;md_notebookName=accountantKnoxToken&amp;md_name=*'</code></p>
+<p>will return all Knox tokens where metadata with <code>notebookName</code> exists and equals <code>accountantKnoxToken</code> OR metadata with <code>name</code> exists.</p>
+<p>Another sample:</p>
+<ol>
+<li>Create token1 with <code>md_Name=reina&amp;md_Score=50</code></li>
+<li>Create token2 with <code>md_Name=mary&amp;md_Score=100</code></li>
+<li>Create token3 with <code>md_Name=mary&amp;md_Score=20&amp;md_Grade=A</code></li>
+</ol>
+<p>The following table shows the returned token(s) in case metadata filtering is added in the <code>getUserTokens</code> API:</p>
+<table>
+<thead>
+<tr>
+<th>Metadata</th>
+<th>Token returned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>md_Name=reina</td>
+<td>token1</td>
+</tr>
+<tr>
+<td>md_Name=mary</td>
+<td>token2 and token3</td>
+</tr>
+<tr>
+<td>md_Score=100</td>
+<td>token2</td>
+</tr>
+<tr>
+<td>md_Name=mary&amp;md_Score=20</td>
+<td>token2 and token3</td>
+</tr>
+<tr>
+<td>md_Name=mary&amp;md_Name=reina</td>
+<td>token1, token2 and token3</td>
+</tr>
+<tr>
+<td>md_Name=*</td>
+<td>token1, token2 and token3</td>
+</tr>
+<tr>
+<td>md_Uknown=*</td>
+<td>Empty list</td>
+</tr>
+</tbody>
+</table>
+<p>You may want to check out <a href="https://github.com/apache/knox/pull/542">GitHub Pull Request #542</a> for sample <code>curl</code> commands.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

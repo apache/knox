@@ -1,0 +1,3829 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/config_id_assertion/">
+      
+      
+        <link rel="prev" href="../config_authz/">
+      
+      
+        <link rel="next" href="../config_ha/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Identity Assertion - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#identity-assertion" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Identity Assertion
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../dev-guide/book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book_troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knox_token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#identity-assertion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identity Assertion
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity Assertion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hadoop-proxyuser-impersonation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hadoop Proxyuser impersonation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hadoop Proxyuser impersonation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#principal-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Principal Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expression-based-principal-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expression-Based Principal Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-principal-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group Principal Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-mapping-based-on-predicates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group Mapping Based on Predicates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supported-functions-and-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported functions and operators
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported functions and operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#or" class="md-nav__link">
+    <span class="md-ellipsis">
+      or
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and" class="md-nav__link">
+    <span class="md-ellipsis">
+      and
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not" class="md-nav__link">
+    <span class="md-ellipsis">
+      not
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      =
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      !=
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#member" class="md-nav__link">
+    <span class="md-ellipsis">
+      member
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#username" class="md-nav__link">
+    <span class="md-ellipsis">
+      username
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#size" class="md-nav__link">
+    <span class="md-ellipsis">
+      size
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#empty" class="md-nav__link">
+    <span class="md-ellipsis">
+      empty
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#match" class="md-nav__link">
+    <span class="md-ellipsis">
+      match
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      request-header
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-attribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      request-attribute
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session" class="md-nav__link">
+    <span class="md-ellipsis">
+      session
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lowercase" class="md-nav__link">
+    <span class="md-ellipsis">
+      lowercase
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uppercase" class="md-nav__link">
+    <span class="md-ellipsis">
+      uppercase
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Constants
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#username_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      username
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concat-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concat Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switchcase-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      SwitchCase Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regular-expression-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regular Expression Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hadoop-group-lookup-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hadoop Group Lookup Provider
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityjnibasedunixgroupsmappingwithfallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityjnibasedunixgroupsnetgroupmappingwithfallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.JniBasedUnixGroupsNetgroupMappingWithFallback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityshellbasedunixgroupsmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.ShellBasedUnixGroupsMapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityshellbasedunixgroupsnetgroupmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.ShellBasedUnixGroupsNetgroupMapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityldapgroupsmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.LdapGroupsMapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecuritycompositegroupsmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.CompositeGroupsMapping
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knox_monitoring_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-guide/knoxsso_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knoxshell-guide/knoxshell_user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#identity-assertion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Identity Assertion
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity Assertion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hadoop-proxyuser-impersonation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hadoop Proxyuser impersonation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hadoop Proxyuser impersonation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#principal-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Principal Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expression-based-principal-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Expression-Based Principal Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-principal-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group Principal Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-mapping-based-on-predicates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group Mapping Based on Predicates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supported-functions-and-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported functions and operators
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported functions and operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#or" class="md-nav__link">
+    <span class="md-ellipsis">
+      or
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and" class="md-nav__link">
+    <span class="md-ellipsis">
+      and
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not" class="md-nav__link">
+    <span class="md-ellipsis">
+      not
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      =
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      !=
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#member" class="md-nav__link">
+    <span class="md-ellipsis">
+      member
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#username" class="md-nav__link">
+    <span class="md-ellipsis">
+      username
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#size" class="md-nav__link">
+    <span class="md-ellipsis">
+      size
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#empty" class="md-nav__link">
+    <span class="md-ellipsis">
+      empty
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#match" class="md-nav__link">
+    <span class="md-ellipsis">
+      match
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      request-header
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-attribute" class="md-nav__link">
+    <span class="md-ellipsis">
+      request-attribute
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session" class="md-nav__link">
+    <span class="md-ellipsis">
+      session
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lowercase" class="md-nav__link">
+    <span class="md-ellipsis">
+      lowercase
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uppercase" class="md-nav__link">
+    <span class="md-ellipsis">
+      uppercase
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Constants
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#username_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      username
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      groups
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concat-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concat Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switchcase-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      SwitchCase Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regular-expression-identity-assertion-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regular Expression Identity Assertion Provider
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hadoop-group-lookup-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hadoop Group Lookup Provider
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityjnibasedunixgroupsmappingwithfallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityjnibasedunixgroupsnetgroupmappingwithfallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.JniBasedUnixGroupsNetgroupMappingWithFallback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityshellbasedunixgroupsmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.ShellBasedUnixGroupsMapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityshellbasedunixgroupsnetgroupmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.ShellBasedUnixGroupsNetgroupMapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecurityldapgroupsmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.LdapGroupsMapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orgapachehadoopsecuritycompositegroupsmapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      org.apache.hadoop.security.CompositeGroupsMapping
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>Identity Assertion</h1>
+
+<!---
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<h3 id="identity-assertion">Identity Assertion<a class="headerlink" href="#identity-assertion" title="Permanent link">&para;</a></h3>
+<p>The identity assertion provider within Knox plays the critical role of communicating the identity principal to be used within the Hadoop cluster to represent the identity that has been authenticated at the gateway.</p>
+<p>The general responsibilities of the identity assertion provider is to interrogate the current Java Subject that has been established by the authentication or federation provider and:</p>
+<ol>
+<li>determine whether it matches any principal mapping rules and apply them appropriately</li>
+<li>determine whether it matches any group principal mapping rules and apply them</li>
+<li>if it is determined that the principal will be impersonating another through a principal mapping rule then a Subject.doAS is required so providers farther downstream can determine the appropriate effective principal name and groups for the user</li>
+</ol>
+<h6 id="default-identity-assertion-provider">Default Identity Assertion Provider<a class="headerlink" href="#default-identity-assertion-provider" title="Permanent link">&para;</a></h6>
+<p>The following configuration is required for asserting the users identity to the Hadoop cluster using Pseudo or Simple "authentication" and for using Kerberos/SPNEGO for secure clusters.</p>
+<div class="highlight"><pre><span></span><code>&lt;provider&gt;
+    &lt;role&gt;identity-assertion&lt;/role&gt;
+    &lt;name&gt;Default&lt;/name&gt;
+    &lt;enabled&gt;true&lt;/enabled&gt;
+&lt;/provider&gt;
+</code></pre></div>
+<p>This particular configuration indicates that the Default identity assertion provider is enabled and that there are no principal mapping rules to apply to identities flowing from the authentication in the gateway to the backend Hadoop cluster services. The primary principal of the current subject will therefore be asserted via a query parameter or as a form parameter - ie. <code>?user.name={primaryPrincipal}</code></p>
+<div class="highlight"><pre><span></span><code>&lt;provider&gt;
+    &lt;role&gt;identity-assertion&lt;/role&gt;
+    &lt;name&gt;Default&lt;/name&gt;
+    &lt;enabled&gt;true&lt;/enabled&gt;
+    &lt;param&gt;
+        &lt;name&gt;principal.mapping&lt;/name&gt;
+        &lt;value&gt;guest=hdfs;&lt;/value&gt;
+    &lt;/param&gt;
+    &lt;param&gt;
+        &lt;name&gt;group.principal.mapping&lt;/name&gt;
+        &lt;value&gt;*=users;hdfs=admin&lt;/value&gt;
+    &lt;/param&gt;
+    &lt;param&gt;
+       &lt;name&gt;hadoop.proxyuser.impersonation.enabled&lt;/name&gt;
+       &lt;value&gt;false&lt;/value&gt;
+     &lt;/param&gt;
+     &lt;param&gt;
+       &lt;name&gt;hadoop.proxyuser.admin.users&lt;/name&gt;
+       &lt;value&gt;*&lt;/value&gt;
+     &lt;/param&gt;
+     &lt;param&gt;
+       &lt;name&gt;hadoop.proxyuser.admin.groups&lt;/name&gt;
+       &lt;value&gt;*&lt;/value&gt;
+     &lt;/param&gt;
+     &lt;param&gt;
+       &lt;name&gt;hadoop.proxyuser.admin.hosts&lt;/name&gt;
+       &lt;value&gt;*&lt;/value&gt;
+     &lt;/param&gt;
+&lt;/provider&gt;
+</code></pre></div>
+<p>This configuration identifies the same identity assertion provider but does provide principal and group mapping rules. In this case, when a user is authenticated as "guest" his identity is actually asserted to the Hadoop cluster as "hdfs". In addition, since there are group principal mappings defined, he will also be considered as a member of the groups "users" and "admin". In this particular example the wildcard "*" is used to indicate that all authenticated users need to be considered members of the "users" group and that only the user "hdfs" is mapped to be a member of the "admin" group.</p>
+<p><strong>NOTE: These group memberships are currently only meaningful for Service Level Authorization using the AclsAuthorization provider. The groups are not currently asserted to the Hadoop cluster at this time. See the Authorization section within this guide to see how this is used.</strong></p>
+<p>The principal mapping aspect of the identity assertion provider is important to understand in order to fully utilize the authorization features of this provider.</p>
+<p>This feature allows us to map the authenticated principal to a runAs or impersonated principal to be asserted to the Hadoop services in the backend.</p>
+<p>When a principal mapping is defined that results in an impersonated principal, this impersonated principal is then the effective principal.</p>
+<p>If there is no mapping to another principal then the authenticated or primary principal is the effective principal.</p>
+<p>Another way to impersonate principals is to apply Hadoop Proxyuser-based impersonations as described in the next section.</p>
+<h5 id="hadoop-proxyuser-impersonation">Hadoop Proxyuser impersonation<a class="headerlink" href="#hadoop-proxyuser-impersonation" title="Permanent link">&para;</a></h5>
+<p>From v2.0.0, an authenticated user can impersonate other user(s) leveraging Hadoop's proxuyser configuration mechanism. This feature was implemented in <a href="https://issues.apache.org/jira/browse/KNOX-2839">KNOX-2839</a> and requires the following configuration to work:</p>
+<ul>
+<li><code>hadoop.proxyuser.impersonation.enabled</code> - a <code>boolean</code> flag indicates if token impersonation is enabled. Defaults to <code>true</code></li>
+<li><code>hadoop.proxyuser.$username.users</code>  - indicates the list of users for whom <code>$username</code> is allowed to impersonate. It is possible to set this to a 1-element list using the <code>*</code> wildcard which means <code>$username</code> can impersonate everyone. Defaults to an empty list that is equivalent to  <code>$username</code> is not allowed to impersonate anyone.</li>
+<li><code>hadoop.proxyuser.$username.groups</code>  - indicates the list of group names for whose members <code>$username</code> is allowed to impersonate. It is possible to set this to a 1-element list using the <code>*</code> wildcard which means <code>$username</code> can impersonate members of any group. Defaults to an empty list that is equivalent to <code>$username</code> is not allowed to impersonate members from any group.</li>
+<li><code>hadoop.proxyuser.$username.hosts</code>  - indicates a list of hostnames from where the requests are allowed to be accepted in case the <code>doAs</code> parameter is used when impersonating requests. It is possible to set this to a 1-element list using the <code>*</code> wildcard which means <code>$username</code> can impersonate incoming requests from any host. Defaults to an empty list that is equivalent to <code>$username</code> is not allowed to impersonate requests from any host.</li>
+</ul>
+<p>Please note this configuration is applied <strong>iff</strong> the <code>doAs</code> query parameter is present in the incoming request and impersonation is enabled in the affected topology.</p>
+<p><em><strong>Important note:</strong></em> this new-type impersonation support on the identity assertion layer is ignored if the topology uses the <code>HadoopAuth</code> authentication provider because the <code>doAs</code> support is working OOTB there, therefore a second authorization is useless going forward.</p>
+<p>It's also worth articulating that Hadoop Proxyuser-based impersonation works together with the already existing principal mapping (see below). At first, Knox applies the Hadoop Proxyuser impersonation, then it proceeds with principal mappings (if any). Let see a sample:</p>
+<ul>
+<li><code>hadoop.proxyuser.admin.users</code> is set to <code>bob</code> (<code>admin</code> is allowed to impersonate <code>bob</code>)</li>
+<li><code>principal.mapping</code> is set to <code>bob=tom</code> (<code>bob</code> is mapped as <code>tom</code> )</li>
+</ul>
+<p>The <code>admin</code> user sends the following request:</p>
+<div class="highlight"><pre><span></span><code>curl https://KNOX_HOST:8443/gateway/sandbox/service/path?doAs=bob
+</code></pre></div>
+<p>In the request processing flow, after the identity assertion phase is completed, <code>tom</code> will be the effective user. As you can see, the rules were applied transitively.</p>
+<p>For other use cases you may want to check out <a href="https://github.com/apache/knox/pull/681">GitHub Pull Request #681</a>.</p>
+<h6 id="principal-mapping">Principal Mapping<a class="headerlink" href="#principal-mapping" title="Permanent link">&para;</a></h6>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;principal.mapping&lt;/name&gt;
+    &lt;value&gt;{primaryPrincipal}[,...]={impersonatedPrincipal}[;...]&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>For instance:</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;principal.mapping&lt;/name&gt;
+    &lt;value&gt;guest=hdfs&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>For multiple mappings:</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;principal.mapping&lt;/name&gt;
+    &lt;value&gt;guest,alice=hdfs;mary=alice2&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<h6 id="expression-based-principal-mapping">Expression-Based Principal Mapping<a class="headerlink" href="#expression-based-principal-mapping" title="Permanent link">&para;</a></h6>
+<p>Alternatively, you can use an expression language to define principal mappings.</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+  &lt;name&gt;expression.principal.mapping&lt;/name&gt;
+  &lt;!-- expression that returns the new principal --&gt;
+  &lt;value&gt;...&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>The value of <code>expression.principal.mapping</code> must be a valid expression that evaluates to a string. </p>
+<p>For example, the following expression will map all users to one constant user, 'bob'.</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+  &lt;name&gt;expression.principal.mapping&lt;/name&gt;
+  &lt;value&gt;&#39;bob&#39;&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>By adding a conditional you can selectively apply the mapping to specific users.</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+  &lt;name&gt;expression.principal.mapping&lt;/name&gt;
+  &lt;!-- Only map sam/tom to bob --&gt;
+  &lt;value&gt;
+    (if (or (= username &#39;sam&#39;) 
+            (= username &#39;tom&#39;)) 
+        &#39;bob&#39;)
+  &lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>The <code>if</code> expression expects ether 2 or 3 parameters. The first one is always a conditional that should return a boolean value.
+The second parameter is the consequent branch that is only evaluated if the conditional is true.
+The third, optional part is the alternative branch that is evaluated if the conditional is false.</p>
+<div class="highlight"><pre><span></span><code>(if (&lt; (strlen username) 5)
+    (concat username &#39;_suffix&#39;) 
+    (concat &#39;prefix_&#39; username))
+</code></pre></div>
+<p>Here the user <code>admin</code> will be mapped to <code>prefix_admin</code>, while <code>sam</code> will be mapped to <code>sam_suffix</code>.</p>
+<p>In an XML topology, the less than and greater than operators should be either encoded as <code>&amp;lt;</code> <code>&amp;gt;</code>,
+or the expression should be put inside a CDATA section.</p>
+<div class="highlight"><pre><span></span><code>(&amp;lt; (strlen username) 5)
+</code></pre></div>
+<p>The following expression capitalizes the principal:</p>
+<div class="highlight"><pre><span></span><code>(concat
+  (uppercase (substr username 0 1))
+  (lowercase (substr username 1)))
+</code></pre></div>
+<p>The functionality of the Regex-based identity assertion provider is exposed via the <code>regex-template</code> function.</p>
+<div class="highlight"><pre><span></span><code>(regex-template  username &#39;(.*)@(.*?)\..*&#39; &#39;{1}_{[2]}&#39; (hash &#39;us&#39; &#39;USA&#39; &#39;ca&#39; &#39;CANADA&#39;) true)
+</code></pre></div>
+<p>The above expression turns <code>nobody@us.imaginary.tld</code> to <code>nobody_USA</code>.</p>
+<p>See <a href="https://issues.apache.org/jira/browse/KNOX-2983">KNOX-2983</a> for the complete list of functions.</p>
+<h6 id="group-principal-mapping">Group Principal Mapping<a class="headerlink" href="#group-principal-mapping" title="Permanent link">&para;</a></h6>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;group.principal.mapping&lt;/name&gt;
+    &lt;value&gt;{userName[,*|userName...]}={groupName[,groupName...]}[,...]&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>For instance:</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;group.principal.mapping&lt;/name&gt;
+    &lt;value&gt;*=users;hdfs=admin&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>this configuration indicates that all (*) authenticated users are members of the "users" group and that user "hdfs" is a member of the admin group. Group principal mapping has been added along with the authorization provider described in this document.</p>
+<h6 id="group-mapping-based-on-predicates">Group Mapping Based on Predicates<a class="headerlink" href="#group-mapping-based-on-predicates" title="Permanent link">&para;</a></h6>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;group.mapping.{mappedGroupName}&lt;/name&gt;
+    &lt;value&gt;{predicate}&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>The predicate-based group mapping offers more flexibility by allowing the use of arbitrary logical expressions to define the mappings. The predicate expression must evaluate to a boolean result, true or false. The syntax is inspired by the Lisp language, but it is limited to boolean expressions and comparisons.</p>
+<p>For instance:</p>
+<div class="highlight"><pre><span></span><code>&lt;param&gt;
+    &lt;name&gt;group.mapping.admin&lt;/name&gt;
+    &lt;value&gt;(or (username &#39;guest&#39;) (member &#39;analyst&#39;))&lt;/value&gt;
+&lt;/param&gt;
+</code></pre></div>
+<p>This configuration maps the user to the "admin" group if either the authenticated user is "guest" or the authenticated user is a member of the "analyst" group.</p>
+<p>The syntax of the language is based on parenthesized prefix notation, meaning that the operators precede their operands.</p>
+<p>The language is made up of two basic building blocks: atoms (boolean, string, number, symbol) and lists. A list is written with its elements separated by whitespace, and surrounded by parentheses. A list can contain other lists or atoms.</p>
+<p>A function call or an operator is written as a list with the function or operator's name first, and the arguments following. For instance, a function f that takes three arguments would be called as (f arg1 arg2 arg3).</p>
+<p>Lists are of arbitrary length and can be nested to express more complex conditionals.</p>
+<div class="highlight"><pre><span></span><code>(or 
+    (and
+        (member &#39;admin&#39;)
+        (member &#39;scientist&#39;))
+    (or
+        (username &#39;tom&#39;)
+        (username &#39;sam&#39;)))
+</code></pre></div>
+<p>Returns:</p>
+<ol>
+<li>True if the user is either 'tom' or 'sam'</li>
+<li>True if the user is both in the 'admin' and the 'scientist' group.</li>
+<li>False otherwise.</li>
+</ol>
+<p>The following predicate checks if the user is a member of any group:</p>
+<div class="highlight"><pre><span></span><code>(!= (size groups) 0)
+
+(not (empty groups))
+
+(match groups &#39;.*&#39;)
+</code></pre></div>
+<p>This predicate checks if the username is either "tom" or "sam":</p>
+<div class="highlight"><pre><span></span><code>(match username &#39;tom|sam&#39;)
+</code></pre></div>
+<p>This checks the username in a case insensitive manner:</p>
+<div class="highlight"><pre><span></span><code>(= (lowercase username) &#39;bob&#39;)
+</code></pre></div>
+<h5 id="supported-functions-and-operators">Supported functions and operators<a class="headerlink" href="#supported-functions-and-operators" title="Permanent link">&para;</a></h5>
+<h6 id="or">or<a class="headerlink" href="#or" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if one or more of its operands is true. Supports short-circuit evaluation and variable number of arguments.</p>
+<p>Number of arguments: 1..N</p>
+<div class="highlight"><pre><span></span><code>(or bool1 bool2 ... boolN)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>(or true false true)
+</code></pre></div>
+<h6 id="and">and<a class="headerlink" href="#and" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if all of its operands are true. Supports short-circuit evaluation and variable number of arguments.</p>
+<p>Number of arguments: 1..N</p>
+<div class="highlight"><pre><span></span><code>(and bool1 bool2 ... boolN)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (and true false true)
+</code></pre></div>
+<h6 id="not">not<a class="headerlink" href="#not" title="Permanent link">&para;</a></h6>
+<p>Negates the operand.</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (not aBool)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (not true)
+</code></pre></div>
+<h6 id="_1">=<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if the two operands are equal.</p>
+<p>Number of arguments: 2</p>
+<div class="highlight"><pre><span></span><code> (= op1 op2)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (= &#39;apple&#39; &#39;orange&#39;)
+</code></pre></div>
+<h6 id="_2">!=<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if the two operands are not equal.</p>
+<p>Number of arguments: 2</p>
+<div class="highlight"><pre><span></span><code> (!= op1 op2)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>  (!= &#39;apple&#39; &#39;orange&#39;)
+</code></pre></div>
+<h6 id="member">member<a class="headerlink" href="#member" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if the current user is a member of the given group</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (member aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (member &#39;analyst&#39;)
+</code></pre></div>
+<h6 id="username">username<a class="headerlink" href="#username" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if the current user has the given username</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code>(username aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>(username &#39;admin&#39;)
+</code></pre></div>
+<p>This is a shorter version of (= username 'admin')</p>
+<h6 id="size">size<a class="headerlink" href="#size" title="Permanent link">&para;</a></h6>
+<p>Gets the size of a list</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (size alist)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (size groups)
+</code></pre></div>
+<h6 id="empty">empty<a class="headerlink" href="#empty" title="Permanent link">&para;</a></h6>
+<p>Evaluates to true if the given list is empty</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (empty alist)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (empty groups)
+</code></pre></div>
+<h6 id="match">match<a class="headerlink" href="#match" title="Permanent link">&para;</a></h6>
+<p>Evaluates true if the given string matches to the given regexp. Or any items of the given list matches the given regexp.</p>
+<p>Number of arguments: 2</p>
+<div class="highlight"><pre><span></span><code>(match aString aRegExpString)
+
+(match aList aRegExpString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>(match username &#39;tom|sam&#39;)
+</code></pre></div>
+<p>This function can also take a list as a first argument. In this case it will return true if the regexp matches to any of the items in the list.</p>
+<div class="highlight"><pre><span></span><code>(match groups &#39;analyst|scientist&#39;)
+</code></pre></div>
+<p>This returns true if the user is either in the 'analyst' group or in the 'scientist' group. The same can be expressed by combining 2 member functions with an or expression.</p>
+<h6 id="request-header">request-header<a class="headerlink" href="#request-header" title="Permanent link">&para;</a></h6>
+<p>Returns the value of the specified request header as a String. If the given key doesn't exist empty string is returned.</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code>(request-header aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>(request-header &#39;User-Agent&#39;)
+</code></pre></div>
+<h6 id="request-attribute">request-attribute<a class="headerlink" href="#request-attribute" title="Permanent link">&para;</a></h6>
+<p>Returns the value of the specified request attribute as a String. If the given key doesn't exist empty string is returned.</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code>(request-attribute aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>(request-attribute &#39;sourceRequestUrl&#39;)
+</code></pre></div>
+<h6 id="session">session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h6>
+<p>Returns the value of the specified session attribute as a String. If the given key doesn't exist empty string is returned.</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (session aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (session &#39;subject.userRoles&#39;)
+</code></pre></div>
+<h6 id="lowercase">lowercase<a class="headerlink" href="#lowercase" title="Permanent link">&para;</a></h6>
+<p>Converts the given string to lowercase.</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (lowercase aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code> (lowercase &#39;KNOX&#39;)
+</code></pre></div>
+<h6 id="uppercase">uppercase<a class="headerlink" href="#uppercase" title="Permanent link">&para;</a></h6>
+<p>Converts the given string to uppercase.</p>
+<p>Number of arguments: 1</p>
+<div class="highlight"><pre><span></span><code> (uppercase aString)
+</code></pre></div>
+<p>Example</p>
+<div class="highlight"><pre><span></span><code>(uppercase &#39;knox&#39;)
+</code></pre></div>
+<h3 id="constants">Constants<a class="headerlink" href="#constants" title="Permanent link">&para;</a></h3>
+<p>The following constants are populated automatically from the current security context.</p>
+<h6 id="username_1">username<a class="headerlink" href="#username_1" title="Permanent link">&para;</a></h6>
+<p>The username (principal) of the current user, derived from javax.security.auth.Subject.</p>
+<h6 id="groups">groups<a class="headerlink" href="#groups" title="Permanent link">&para;</a></h6>
+<p>The groups of the current user (as determined by the authentication provider), derived from subject.getPrincipals(GroupPrincipal.class).</p>
+<h6 id="concat-identity-assertion-provider">Concat Identity Assertion Provider<a class="headerlink" href="#concat-identity-assertion-provider" title="Permanent link">&para;</a></h6>
+<p>The Concat identity assertion provider allows for composition of a new user principal through the concatenation of optionally configured prefix and/or suffix provider parameters. This is a useful assertion provider for converting an incoming identity into a disambiguated identity within the Hadoop cluster based on what topology is used to access Hadoop.</p>
+<p>The following configuration would convert the user principal into a value that represents a domain specific identity where the identities used inside the Hadoop cluster represent this same separation.</p>
+<div class="highlight"><pre><span></span><code>&lt;provider&gt;
+    &lt;role&gt;identity-assertion&lt;/role&gt;
+    &lt;name&gt;Concat&lt;/name&gt;
+    &lt;enabled&gt;true&lt;/enabled&gt;
+    &lt;param&gt;
+        &lt;name&gt;concat.suffix&lt;/name&gt;
+        &lt;value&gt;_domain1&lt;/value&gt;
+    &lt;/param&gt;
+&lt;/provider&gt;
+</code></pre></div>
+<p>The above configuration will result in all user interactions through that topology to have their principal communicated to the Hadoop cluster with a domain designator concatenated to the username. Possibly useful for multi-tenant deployment scenarios.</p>
+<p>In addition to the concat.suffix parameter, the provider supports the setting of a prefix through a <code>concat.prefix</code> parameter.</p>
+<h6 id="switchcase-identity-assertion-provider">SwitchCase Identity Assertion Provider<a class="headerlink" href="#switchcase-identity-assertion-provider" title="Permanent link">&para;</a></h6>
+<p>The SwitchCase identity assertion provider solves issues where down stream ecosystem components require user and group principal names to be a specific case.
+An example of how this provider is enabled and configured within the <code>&lt;gateway&gt;</code> section of a topology file is shown below.
+This particular example will switch user principals names to lower case and group principal names to upper case.</p>
+<div class="highlight"><pre><span></span><code>&lt;provider&gt;
+    &lt;role&gt;identity-assertion&lt;/role&gt;
+    &lt;name&gt;SwitchCase&lt;/name&gt;
+    &lt;param&gt;
+        &lt;name&gt;principal.case&lt;/name&gt;
+        &lt;value&gt;lower&lt;/value&gt;
+    &lt;/param&gt;
+    &lt;param&gt;
+        &lt;name&gt;group.principal.case&lt;/name&gt;
+        &lt;value&gt;upper&lt;/value&gt;
+    &lt;/param&gt;
+    &lt;enabled&gt;true&lt;/enabled&gt;
+&lt;/provider&gt;
+</code></pre></div>
+<p>These are the configuration parameters used to control the behavior of the provider.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>principal.case</td>
+<td>The case mapping of user principal names. Choices are: lower, upper, none.  Defaults to lower.</td>
+</tr>
+<tr>
+<td>group.principal.case</td>
+<td>The case mapping of group principal names. Choices are: lower, upper, none. Defaults to setting of principal.case.</td>
+</tr>
+</tbody>
+</table>
+<p>If no parameters are provided the full defaults will results in both user and group principal names being switched to lower case.
+A setting of "none" or anything other than "upper" or "lower" leaves the case of the principal name unchanged.</p>
+<h6 id="regular-expression-identity-assertion-provider">Regular Expression Identity Assertion Provider<a class="headerlink" href="#regular-expression-identity-assertion-provider" title="Permanent link">&para;</a></h6>
+<p>The regular expression identity assertion provider allows incoming identities to be translated using a regular expression, template and lookup table.
+This will probably be most useful in conjunction with the HeaderPreAuth federation provider.</p>
+<p>There are three configuration parameters used to control the behavior of the provider.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>input</td>
+<td>This is a regular expression that will be applied to the incoming identity. The most critical part of the regular expression is the group notation within the expression. In regular expressions, groups are expressed within parenthesis. For example in the regular expression "<code>(.*)@(.*?)\..*</code>" there are two groups. When this regular expression is applied to "nobody@us.imaginary.tld" group 1 matches "nobody" and group 2 matches "us".</td>
+</tr>
+<tr>
+<td>output</td>
+<td>This is a template that assembles the result identity. The result is assembled from the static text and the matched groups from the input regular expression. In addition, the matched group values can be looked up in the lookup table. An output value of "<code>{1}_{2}</code>" of will result in "nobody_us".</td>
+</tr>
+<tr>
+<td>lookup</td>
+<td>This lookup table provides a simple (albeit limited) way to translate text in the incoming identities. This configuration takes the form of "=" separated name values pairs separated by ";". For example a lookup setting is "us=USA;ca=CANADA". The lookup is invoked in the output setting by surrounding the desired group number in square brackets (i.e. []). Putting it all together, output setting of "<code>{1}_[{2}]</code>" combined with input of "<code>(.*)@(.*?)\..*</code>" and lookup of "us=USA;ca=CANADA" will turn "nobody@us.imaginary.tld" into "nobody@USA".</td>
+</tr>
+<tr>
+<td>use.original.on.lookup.failure</td>
+<td>(Optional) Default value is false. If set to true, it will preserve the original string if there is no match. e.g. In the above lookup case for email nobody@uk.imaginary.tld, it will be transformed to nobody@ , if this property is set to true it will be transformed to  nobody@uk.</td>
+</tr>
+</tbody>
+</table>
+<p>Within the topology file the provider configuration might look like this.</p>
+<div class="highlight"><pre><span></span><code>&lt;provider&gt;
+    &lt;role&gt;identity-assertion&lt;/role&gt;
+    &lt;name&gt;Regex&lt;/name&gt;
+    &lt;enabled&gt;true&lt;/enabled&gt;
+    &lt;param&gt;
+        &lt;name&gt;input&lt;/name&gt;
+        &lt;value&gt;(.*)@(.*?)\..*&lt;/value&gt;
+    &lt;/param&gt;
+    &lt;param&gt;
+        &lt;name&gt;output&lt;/name&gt;
+        &lt;value&gt;{1}_{[2]}&lt;/value&gt;
+    &lt;/param&gt;
+    &lt;param&gt;
+        &lt;name&gt;lookup&lt;/name&gt;
+        &lt;value&gt;us=USA;ca=CANADA&lt;/value&gt;
+    &lt;/param&gt;
+&lt;/provider&gt;
+</code></pre></div>
+<p>Using curl with this type of configuration might produce the following results. </p>
+<div class="highlight"><pre><span></span><code>curl -k --header &quot;SM_USER: nobody@us.imaginary.tld&quot; &#39;https://localhost:8443/gateway/sandbox/webhdfs/v1?op=GETHOMEDIRECTORY&#39;
+
+{&quot;Path&quot;:&quot;/user/member_USA&quot;}
+
+url -k --header &quot;SM_USER: nobody@ca.imaginary.tld&quot; &#39;https://localhost:8443/gateway/sandbox/webhdfs/v1?op=GETHOMEDIRECTORY&#39;
+
+{&quot;Path&quot;:&quot;/user/member_CANADA&quot;}
+</code></pre></div>
+<h3 id="hadoop-group-lookup-provider">Hadoop Group Lookup Provider<a class="headerlink" href="#hadoop-group-lookup-provider" title="Permanent link">&para;</a></h3>
+<p>An identity assertion provider that looks up user's 'group membership' for authenticated users using Hadoop's group mapping service (GroupMappingServiceProvider).</p>
+<p>This allows existing investments in the Hadoop to be leveraged within Knox and used within the access control policy enforcement at the perimeter.</p>
+<p>The 'role' for this provider is 'identity-assertion' and name is 'HadoopGroupProvider'.</p>
+<div class="highlight"><pre><span></span><code>    &lt;provider&gt;
+        &lt;role&gt;identity-assertion&lt;/role&gt;
+        &lt;name&gt;HadoopGroupProvider&lt;/name&gt;
+        &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;&lt;param&gt; ... &lt;/param&gt;
+    &lt;/provider&gt;
+</code></pre></div>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<p>All the configuration for 'HadoopGroupProvider' resides in the provider section in a gateway topology file.
+The 'hadoop.security.group.mapping' property determines the implementation. This configuration may be centralized within the gateway-site.xml through the use of a special param to this provider called CENTRAL_GROUP_CONFIG_PREFIX. This indicates to the provider that the required configuration can be found within the gateway-site.xml file with the provided prefix.</p>
+<div class="highlight"><pre><span></span><code>     &lt;param&gt;
+        &lt;name&gt;CENTRAL_GROUP_CONFIG_PREFIX&lt;/name&gt;
+        &lt;value&gt;gateway.group.config.&lt;/value&gt;
+     &lt;/param&gt;
+</code></pre></div>
+<p>Some of the valid implementations are as follows: </p>
+<h6 id="orgapachehadoopsecurityjnibasedunixgroupsmappingwithfallback">org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback<a class="headerlink" href="#orgapachehadoopsecurityjnibasedunixgroupsmappingwithfallback" title="Permanent link">&para;</a></h6>
+<p>This is the default implementation and will be picked up if 'hadoop.security.group.mapping' is not specified. This implementation will determine if the Java Native Interface (JNI) is available. If JNI is available, the implementation will use the API within Hadoop to resolve a list of groups for a user. If JNI is not available then the shell implementation, <code>org.apache.hadoop.security.ShellBasedUnixGroupsMapping</code>, is used, which shells out with the <code>bash -c id -gn &lt;user&gt; ; id -Gn &lt;user&gt;</code> command (for a Linux/Unix environment) or the <code>groups -F &lt;user&gt;</code> command (for a Windows environment) to resolve a list of groups for a user.</p>
+<h6 id="orgapachehadoopsecurityjnibasedunixgroupsnetgroupmappingwithfallback">org.apache.hadoop.security.JniBasedUnixGroupsNetgroupMappingWithFallback<a class="headerlink" href="#orgapachehadoopsecurityjnibasedunixgroupsnetgroupmappingwithfallback" title="Permanent link">&para;</a></h6>
+<p>As above, if JNI is available then we get the netgroup membership using Hadoop native API, else fallback on ShellBasedUnixGroupsNetgroupMapping to resolve list of groups for a user.</p>
+<h6 id="orgapachehadoopsecurityshellbasedunixgroupsmapping">org.apache.hadoop.security.ShellBasedUnixGroupsMapping<a class="headerlink" href="#orgapachehadoopsecurityshellbasedunixgroupsmapping" title="Permanent link">&para;</a></h6>
+<p>Uses the <code>bash -c id -gn &lt;user&gt; ; id -Gn &lt;user&gt;</code> command (for a Linux/Unix environment) or the <code>groups -F &lt;user&gt;</code> command (for a Windows environment) to resolve list of groups for a user.</p>
+<h6 id="orgapachehadoopsecurityshellbasedunixgroupsnetgroupmapping">org.apache.hadoop.security.ShellBasedUnixGroupsNetgroupMapping<a class="headerlink" href="#orgapachehadoopsecurityshellbasedunixgroupsnetgroupmapping" title="Permanent link">&para;</a></h6>
+<p>Similar to <code>org.apache.hadoop.security.ShellBasedUnixGroupsMapping</code> except it uses <code>getent netgroup</code> command to get netgroup membership.</p>
+<h6 id="orgapachehadoopsecurityldapgroupsmapping">org.apache.hadoop.security.LdapGroupsMapping<a class="headerlink" href="#orgapachehadoopsecurityldapgroupsmapping" title="Permanent link">&para;</a></h6>
+<p>This implementation connects directly to an LDAP server to resolve the list of groups. However, this should only be used if the required groups reside exclusively in LDAP, and are not materialized on the Unix servers.</p>
+<h6 id="orgapachehadoopsecuritycompositegroupsmapping">org.apache.hadoop.security.CompositeGroupsMapping<a class="headerlink" href="#orgapachehadoopsecuritycompositegroupsmapping" title="Permanent link">&para;</a></h6>
+<p>This implementation asks multiple other group mapping providers for determining group membership, see <a href="https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/GroupsMapping.html#Composite_Groups_Mapping">Composite Groups Mapping</a> for more details.</p>
+<p>For more information on the implementation and properties refer to Hadoop Group Mapping.</p>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<p>The following example snippet works with the demo ldap server that ships with Apache Knox. Replace the existing 'Default' identity-assertion provider with the one below (HadoopGroupProvider).</p>
+<div class="highlight"><pre><span></span><code>    &lt;provider&gt;
+        &lt;role&gt;identity-assertion&lt;/role&gt;
+        &lt;name&gt;HadoopGroupProvider&lt;/name&gt;
+        &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping&lt;/name&gt;
+            &lt;value&gt;org.apache.hadoop.security.LdapGroupsMapping&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.bind.user&lt;/name&gt;
+            &lt;value&gt;uid=tom,ou=people,dc=hadoop,dc=apache,dc=org&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.bind.password&lt;/name&gt;
+            &lt;value&gt;tom-password&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.url&lt;/name&gt;
+            &lt;value&gt;ldap://localhost:33389&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.base&lt;/name&gt;
+            &lt;value&gt;&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.search.filter.user&lt;/name&gt;
+            &lt;value&gt;(&amp;amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.search.filter.group&lt;/name&gt;
+            &lt;value&gt;(objectclass=groupOfNames)&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.search.attr.member&lt;/name&gt;
+            &lt;value&gt;member&lt;/value&gt;
+        &lt;/param&gt;
+        &lt;param&gt;
+            &lt;name&gt;hadoop.security.group.mapping.ldap.search.attr.group.name&lt;/name&gt;
+            &lt;value&gt;cn&lt;/value&gt;
+        &lt;/param&gt;
+    &lt;/provider&gt;
+</code></pre></div>
+<p>Here, we are working with the demo LDAP server running at 'ldap://localhost:33389' which populates some dummy users for testing that we will use in this example. This example uses the user 'tom' for LDAP binding. If you have different LDAP/AD settings, you will have to update the properties accordingly. </p>
+<p>Let's test our setup using the following command (assuming the gateway is started and listening on localhost:8443). Note that we are using credentials for the user 'sam' along with the command. </p>
+<div class="highlight"><pre><span></span><code>    curl -i -k -u sam:sam-password -X GET &#39;https://localhost:8443/gateway/sandbox/webhdfs/v1/?op=LISTSTATUS&#39;
+</code></pre></div>
+<p>The command should be executed successfully and you should see the groups 'scientist' and 'analyst' to which user 'sam' belongs to in gateway-audit.log i.e.</p>
+<div class="highlight"><pre><span></span><code>    ||a99aa0ab-fc06-48f2-8df3-36e6fe37c230|audit|WEBHDFS|sam|||identity-mapping|principal|sam|success|Groups: [scientist, analyst]
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,47 @@
+# This sed script must be kept in sync with the table of contents
+
+#wrap the entire page and the banner
+s@<p><br>  <img src="knox-logo.gif"@<div id="page-wrap"><div id="banner"><p><br>  <img src="knox-logo.gif"@
+
+# close the banner and the start the sidebar
+s@<h2><a id="Table+Of+Contents"></a>Table Of Contents</h2>@</div><div id="sidebar">@
+
+#close the sidebar, start main content section and start the first of the chapers
+s@<h2><a id="Introduction@</div><div id="content"><div id="Introduction"><h2><a id="Introduction@
+s@<h2><a id="Quick+Start@</div><div id="Quick+Start"><h2><a id="Quick+Start@
+s@<h2><a id="Apache+Knox+Details@</div><div id="Apache+Knox+Details"><h2><a id="Apache+Knox+Details@
+# subchapters...
+s@<h4><a id="Apache+Knox+Directory+Layout@</div><div id="Apache+Knox+Directory+Layout"><h4><a id="Layout@
+s@<h3><a id="Supported+Services@</div><div id="Supported+Services"><h3><a id="Supported+Services@
+s@<h4><a id="Configure+Sandbox+port+mapping+for+VirtualBox@</div><div id="Configure+Sandbox+port+mapping+for+VirtualBox"><h4><a id="Configure+Sandbox+port+mapping+for+VirtualBox@
+s@<h2><a id="Gateway+Details@</div><div id="Gateway+Details"><h2><a id="Gateway+Details@
+s@<h3><a id="Configuration@</div><div id="Configuration"><h3><a id="Configuration@
+s@<h3><a id="Knox+CLI@</div><div id="Knox+CLI"><h3><a id="Knox+CLI@
+s@<h3><a id="Authentication@</div><div id="Authentication"><h3><a id="Authentication@
+s@<h3><a id="LDAP+Group+Lookup@</div><div id="LDAP+Group+Lookup"><h3><a id="LDAP+Group+Lookup@
+s@<h3><a id="Identity+Assertion@</div><div id="Identity+Assertion"><h3><a id="Identity+Assertion@
+s@<h3><a id="Authorization@</div><div id="Authorization"><h3><a id="Authorization@
+s@<h2><a id="Configuration@</div><div id="Configuration"><h2><a id="Configuration@
+s@<h3><a id="Secure+Clusters@</div><div id="Secure+Clusters"><h3><a id="Secure+Clusters@
+s@<h3><a id="High+Availability@</div><div id="High+Availability"><h3><a id="High+Availability@
+s@<h3><a id="Web+App+Security+Provider@</div><div id="Web+App+Security+Provider"><h3><a id="Web+App+Security+Provider@
+s@<h3><a id="Preauthenticated+SSO+Provider@</div><div id="Preauthenticated+SSO+Provider"><h3><a id="Preauthenticated+SSO+Provider@
+s@<h3><a id="Mutual+Authentication+with+SSL@</div><div id="Mutual+Authentication+with+SSL"><h3><a id="Mutual+Authentication+with+SSL@
+s@<h3><a id="Audit@</div><div id="Audit"><h3><a id="Audit@
+s@<h2><a id="Client+Details@</div><div id="Client+Details"><h2><a id="Client+Details@
+s@<h2><a id="Service+Details@</div><div id="Service+Details"><h2><a id="Service+Details@
+s@<h3><a id="WebHDFS@</div><div id="WebHDFS"><h3><a id="WebHDFS@
+s@<h3><a id="WebHCat@</div><div id="WebHCat"><h3><a id="WebHCat@
+s@<h3><a id="Oozie@</div><div id="Oozie"><h3><a id="Oozie@
+s@<h3><a id="HBase@</div><div id="HBase"><h3><a id="HBase@
+s@<h3><a id="Hive@</div><div id="Hive"><h3><a id="Hive@
+s@<h3><a id="Storm@</div><div id="Storm"><h3><a id="Storm@
+s@<h3><a id="Default+Service+HA+support@</div><div id="Default+Service+HA+support"><h3><a id="Default+Service+HA+support@
+s@<h2><a id="Limitations@</div><div id="Limitations"><h2><a id="Limitations@
+s@<h2><a id="Troubleshooting@</div><div id="Troubleshooting"><h2><a id="Troubleshooting@
+s@<h2><a id="Export+Controls@</div><div id="Export+Controls"><h2><a id="Export+Controls@
+
+# closing the last chapter section, page-wrap and content sections is done outside of this script
+# using cat >> filename
+
+# sed -f likeised knox-incubating-0-4-0.html > knox-incubating-0-4-0-new.html && echo "</div></div></div>" >> knox-incubating-0-4-0-new.html

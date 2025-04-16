@@ -1,0 +1,3027 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for Apache Knox Gateway">
+      
+      
+      
+        <link rel="canonical" href="https://knox.apache.org/dev-guide/knox_monitoring_api/">
+      
+      
+        <link rel="prev" href="../admin-ui/">
+      
+      
+        <link rel="next" href="../knoxsso_integration/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
+    
+    
+      
+        <title>Monitoring API - Apache Knox</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#health-monitoring-rest-api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Apache Knox" class="md-header__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Apache Knox
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Monitoring API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quick_start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quick Start
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../service_config/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Services
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../book/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../knox_cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sse-support/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced Topics
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Apache Knox" class="md-nav__button md-logo" aria-label="Apache Knox" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Apache Knox
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quick Start
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_gateway-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gateway Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_client-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Client Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_service-details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_ui_service_details/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UI Service Details
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_knox-samples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Samples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_topology_port_mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Topology Port Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_limitations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Limitations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../book_troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_kerberos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kerberos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ldap_authc_cache/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Authentication Cache
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ldap_group_lookup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    LDAP Group Lookup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_advanced_ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Advanced LDAP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_pam_authn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAM Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knox_sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knox_token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_preauth_sso_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pre-auth SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_sso_cookie_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSO Cookie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TLS Client Certificate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_pac4j_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PAC4J
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_hadoop_auth_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hadoop Auth
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_authz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_id_assertion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity Assertion
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    High Availability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_knoxauth_service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Auth Service
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_mutual_authentication_ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mutual Auth SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_webappsec_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web App Security
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config_sandbox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sandbox
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Services
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Services
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_default_ha/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default HA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_ssl_certificate_trust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL Certificate Trust
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_avatica/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Avatica
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_cloudera_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloudera Manager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_elasticsearch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elasticsearch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_hbase/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HBase
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_hive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hive
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_kafka/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kafka
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_livy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Livy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_oozie/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Oozie
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_service_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_solr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Solr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_storm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Storm
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_webhcat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHCat
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_webhdfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebHDFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../service_yarn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YARN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../admin-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitoring API
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#health-monitoring-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Monitoring Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Health Monitoring Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#healthxml-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      health.xml Topology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verify
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-end-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      REST End Points
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST End Points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ping" class="md-nav__link">
+    <span class="md-ellipsis">
+      /ping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      /metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../knoxsso_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    KnoxSSO Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tools
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../knox_cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../knoxshell-guide/knoxshell_user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knox Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin_ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin UI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../webshell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Web Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced Topics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced Topics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sse-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSE Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../websocket-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    WebSocket Support
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../x-forwarded-headers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    X-Forwarded Headers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#health-monitoring-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Monitoring Setup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Health Monitoring Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#service-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Service Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#healthxml-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      health.xml Topology
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verify
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-end-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      REST End Points
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST End Points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ping" class="md-nav__link">
+    <span class="md-ellipsis">
+      /ping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      /metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="health-monitoring-rest-api">Health Monitoring REST API<a class="headerlink" href="#health-monitoring-rest-api" title="Permanent link">&para;</a></h1>
+<p>Knox provides REST-ful API for monitoring the core service. It primarily exposes the health of the Knox service that includes service status (up/down) as well as other health metrics. This is a work-in-progress feature, which started with an extensible framework to support basic functionalities. In particular, it currently supports the API to  A) <em>ping</em> the service and B) time-based statistics related to all API calls.</p>
+<h4 id="health-monitoring-setup">Health Monitoring Setup<a class="headerlink" href="#health-monitoring-setup" title="Permanent link">&para;</a></h4>
+<p>The basic setup includes two major steps A) add configurations to enable the metrics collection and reporting B) write a topology file and upload it into <em>topologies</em> directory.</p>
+<h5 id="service-configurations">Service Configurations<a class="headerlink" href="#service-configurations" title="Permanent link">&para;</a></h5>
+<p>At first, we need to make sure the gateway configurations to gather and report to JMX are turned on in <em>gateway-site.xml</em>. The following two configurations into <em>gateway-site.xml</em> will serve the purpose.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&lt;property&gt;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>   &lt;name&gt;gateway.metrics.enabled&lt;/name&gt;
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>   &lt;value&gt;true&lt;/value&gt;
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>   &lt;description&gt;Boolean flag indicates whether to enable the metrics collection&lt;/description&gt;
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>&lt;/property&gt;
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>&lt;property&gt;
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>   &lt;name&gt;gateway.jmx.metrics.reporting.enabled&lt;/name&gt;
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>   &lt;value&gt;true&lt;/value&gt;
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   &lt;description&gt;Boolean flag indicates whether to enable the metrics reporting using JMX&lt;/description&gt;
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>&lt;/property&gt;
+</code></pre></div>
+<h5 id="healthxml-topology">health.xml Topology<a class="headerlink" href="#healthxml-topology" title="Permanent link">&para;</a></h5>
+<p>In order to enable health monitoring REST service, you need to add a new topology file (i.e. <em>health.xml</em>). The following is an example that is configured to test the basic functionalities of Knox service. It is highly recommended using more restricted authentication mechanism.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&lt;topology&gt;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    &lt;gateway&gt;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        &lt;provider&gt;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>            &lt;role&gt;authentication&lt;/role&gt;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>            &lt;name&gt;ShiroProvider&lt;/name&gt;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>            &lt;enabled&gt;true&lt;/enabled&gt;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            &lt;param&gt;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>                &lt;!-- 
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>                session timeout in minutes,  this is really idle timeout,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>                defaults to 30 mins, if the property value is not defined,, 
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>                current client authentication would expire if client idles continuously for more than this value
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>                --&gt;
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>                &lt;name&gt;sessionTimeout&lt;/name&gt;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>                &lt;value&gt;30&lt;/value&gt;
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>            &lt;/param&gt;
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            &lt;param&gt;
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>                &lt;name&gt;main.ldapRealm&lt;/name&gt;
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>                &lt;value&gt;org.apache.knox.gateway.shirorealm.KnoxLdapRealm&lt;/value&gt;
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>            &lt;/param&gt;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>            &lt;param&gt;
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>                &lt;name&gt;main.ldapContextFactory&lt;/name&gt;
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>                &lt;value&gt;org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory&lt;/value&gt;
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>            &lt;/param&gt;
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>            &lt;param&gt;
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>                &lt;name&gt;main.ldapRealm.contextFactory&lt;/name&gt;
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>                &lt;value&gt;$ldapContextFactory&lt;/value&gt;
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>            &lt;/param&gt;
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>            &lt;param&gt;
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>                &lt;name&gt;main.ldapRealm.userDnTemplate&lt;/name&gt;
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>                &lt;value&gt;uid={0},ou=people,dc=hadoop,dc=apache,dc=org&lt;/value&gt;
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>            &lt;/param&gt;
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>            &lt;param&gt;
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>                &lt;name&gt;main.ldapRealm.contextFactory.url&lt;/name&gt;
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>                &lt;value&gt;ldap://localhost:33389&lt;/value&gt;
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>            &lt;/param&gt;
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>            &lt;param&gt;
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>                &lt;name&gt;main.ldapRealm.contextFactory.authenticationMechanism&lt;/name&gt;
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>                &lt;value&gt;simple&lt;/value&gt;
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>            &lt;/param&gt;
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>            &lt;param&gt;
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>                &lt;name&gt;urls./**&lt;/name&gt;
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>                &lt;value&gt;authcBasic&lt;/value&gt;
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>            &lt;/param&gt;
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>        &lt;/provider&gt;
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>        &lt;provider&gt;
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>            &lt;role&gt;authorization&lt;/role&gt;
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>            &lt;name&gt;AclsAuthz&lt;/name&gt;
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>            &lt;enabled&gt;false&lt;/enabled&gt;
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>            &lt;param&gt;
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>                &lt;name&gt;knox.acl&lt;/name&gt;
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>                &lt;value&gt;admin;*;*&lt;/value&gt;
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>            &lt;/param&gt;
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>        &lt;/provider&gt;
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>
+<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>        &lt;provider&gt;
+<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>            &lt;role&gt;identity-assertion&lt;/role&gt;
+<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>            &lt;name&gt;Default&lt;/name&gt;
+<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>            &lt;enabled&gt;false&lt;/enabled&gt;
+<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>        &lt;/provider&gt;
+<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>
+<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>        &lt;provider&gt;
+<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>            &lt;role&gt;hostmap&lt;/role&gt;
+<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>            &lt;name&gt;static&lt;/name&gt;
+<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>            &lt;enabled&gt;true&lt;/enabled&gt;
+<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>            &lt;param&gt;&lt;name&gt;localhost&lt;/name&gt;&lt;value&gt;sandbox,sandbox.hortonworks.com&lt;/value&gt;&lt;/param&gt;
+<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>        &lt;/provider&gt;
+<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>
+<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>    &lt;/gateway&gt;
+<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>
+<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>    &lt;service&gt;
+<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a>        &lt;role&gt;HEALTH&lt;/role&gt;
+<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>    &lt;/service&gt;
+<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a>
+<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a>&lt;/topology&gt;
+</code></pre></div>
+<p>Just as with any Knox service, the gateway providers protect the health monitoring REST service defined above it. In this case, the ShiroProvider is taking care of HTTP Basic Auth using LDAP. Once the user authenticates with LDAP, the request processing continues to the <em>Health</em> service that will perform the necessary actions.</p>
+<p>The authenticate/federation provider can be swapped out to fit your deployment environment.</p>
+<p>After creating the file health.xml with above contents, you need to copy the file to <em>KNOX_HOME/conf/topologies</em> directory. If Knox/gateway service is not running, you can start it using "<em>bin/gateway.sh start</em>". Otherwise the service would automatically pick this new '<em>health</em>' service. When gateway service registers the new service, it displays the following log messages in <em>log/gateway.log</em>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>2017-08-22 03:44:25,045 INFO  knox.gateway (GatewayServer.java:handleCreateDeployment(677)) - Deploying topology health to /home/joe/knox/knox-0.12.0/bin/../data/deployments/health.topo.15e080a91c0
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>2017-08-22 03:44:25,045 INFO  knox.gateway (GatewayServer.java:internalDeactivateTopology(596)) - Deactivating topology health
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>2017-08-22 03:44:25,119 INFO  knox.gateway (DefaultGatewayServices.java:initializeContribution(197)) - Creating credential store for the cluster: health
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>2017-08-22 03:44:25,142 INFO  knox.gateway (GatewayServer.java:internalActivateTopology(566)) - Activating topology health
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>2017-08-22 03:44:25,142 INFO  knox.gateway (GatewayServer.java:internalActivateArchive(576)) - Activating topology health archive %2F
+</code></pre></div>
+<h5 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h5>
+<p>Once the health service is active, you can verify it by using the following <em>curl</em> command. The '<em>ping</em>' end point displays if the service is up. This end point can be utilized for monitoring the basic health of a Knox service.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ curl -i -k -u guest:guest-password -X GET &#39;https://localhost:8445/gateway/health/v1/ping&#39;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>HTTP/1.1 200 OK
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Date: Tue, 22 Aug 2017 07:09:37 GMT
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Set-Cookie: JSESSIONID=1o82bcvoqbhbb1apt7zs8ubybb;Path=/gateway/health;Secure;HttpOnly
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Expires: Thu, 01 Jan 1970 00:00:00 GMT
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Set-Cookie: rememberMe=deleteMe; Path=/gateway/health; Max-Age=0; Expires=Mon, 21-Aug-2017 07:09:37 GMT
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>Cache-Control: must-revalidate,no-cache,no-store
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>Content-Type: text/plain; charset=ISO-8859-1
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>Content-Length: 3
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>Server: Jetty(9.2.15.v20160210)
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>OK
+</code></pre></div>
+<p>To retrieve the meaningful metrics details of various service calls, you may need to run multiple REST calls such as the followings. After that, execute the metrics REST call as shown below with a sample output. As shown, metrics output is returned in JSON format.</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl -i -k -u guest:guest-password -X GET &#39;https://localhost:8445/gateway/sandbox/webhdfs/v1/?op=LISTSTATUS&#39;
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$ curl -i -k -u guest:guest-password -X GET &#39;https://localhost:8445/gateway/health/v1/metrics?pretty=true&#39;
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>HTTP/1.1 200 OK
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Date: Tue, 22 Aug 2017 07:10:44 GMT
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Set-Cookie: JSESSIONID=kqntcdaje9uai3pup7ffvfw4;Path=/gateway/health;Secure;HttpOnly
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Expires: Thu, 01 Jan 1970 00:00:00 GMT
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Set-Cookie: rememberMe=deleteMe; Path=/gateway/health; Max-Age=0; Expires=Mon, 21-Aug-2017 07:10:44 GMT
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Content-Type: application/json
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>Cache-Control: must-revalidate,no-cache,no-store
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Transfer-Encoding: chunked
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>Server: Jetty(9.2.15.v20160210)
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>{
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>  &quot;version&quot; : &quot;3.0.0&quot;,
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>  &quot;gauges&quot; : { },
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>  &quot;counters&quot; : { },
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>  &quot;histograms&quot; : { },
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>  &quot;meters&quot; : { },
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>  &quot;timers&quot; : {
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>    &quot;client./gateway/health/v1/metrics.GET-requests&quot; : {
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>      &quot;count&quot; : 5,
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>      &quot;max&quot; : 0.624587973,
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>      &quot;mean&quot; : 0.027655743001736188,
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>      &quot;min&quot; : 0.006145587,
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>      &quot;p50&quot; : 0.010020548,
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>      &quot;p75&quot; : 0.010020548,
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>      &quot;p95&quot; : 0.074454725,
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>      &quot;p98&quot; : 0.624587973,
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>      &quot;p99&quot; : 0.624587973,
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>      &quot;p999&quot; : 0.624587973,
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>      &quot;stddev&quot; : 0.0929226225229978,
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>      &quot;m15_rate&quot; : 2.657500857422334E-7,
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>      &quot;m1_rate&quot; : 5.770087852901534E-89,
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>      &quot;m5_rate&quot; : 4.769163772973399E-19,
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>      &quot;mean_rate&quot; : 4.0952378345310894E-4,
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>    },
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    &quot;client./gateway/health/v1/ping.GET-requests&quot; : {
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>      &quot;count&quot; : 1,
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>      &quot;max&quot; : 0.017257638000000002,
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>      &quot;mean&quot; : 0.017257638000000002,
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>      &quot;min&quot; : 0.017257638000000002,
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>      &quot;p50&quot; : 0.017257638000000002,
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>      &quot;p75&quot; : 0.017257638000000002,
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>      &quot;p95&quot; : 0.017257638000000002,
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a>      &quot;p98&quot; : 0.017257638000000002,
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>      &quot;p99&quot; : 0.017257638000000002,
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a>      &quot;p999&quot; : 0.017257638000000002,
+<a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>      &quot;stddev&quot; : 0.0,
+<a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a>      &quot;m15_rate&quot; : 0.18710139700632353,
+<a id="__codelineno-5-51" name="__codelineno-5-51" href="#__codelineno-5-51"></a>      &quot;m1_rate&quot; : 0.0735758882342885,
+<a id="__codelineno-5-52" name="__codelineno-5-52" href="#__codelineno-5-52"></a>      &quot;m5_rate&quot; : 0.1637461506155964,
+<a id="__codelineno-5-53" name="__codelineno-5-53" href="#__codelineno-5-53"></a>      &quot;mean_rate&quot; : 0.014990517517814805,
+<a id="__codelineno-5-54" name="__codelineno-5-54" href="#__codelineno-5-54"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-5-55" name="__codelineno-5-55" href="#__codelineno-5-55"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-5-56" name="__codelineno-5-56" href="#__codelineno-5-56"></a>    },
+<a id="__codelineno-5-57" name="__codelineno-5-57" href="#__codelineno-5-57"></a>    &quot;client./gateway/sandbox/health/v1/.GET-requests&quot; : {
+<a id="__codelineno-5-58" name="__codelineno-5-58" href="#__codelineno-5-58"></a>      &quot;count&quot; : 1,
+<a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a>      &quot;max&quot; : 4.01873E-4,
+<a id="__codelineno-5-60" name="__codelineno-5-60" href="#__codelineno-5-60"></a>      &quot;mean&quot; : 4.01873E-4,
+<a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a>      &quot;min&quot; : 4.01873E-4,
+<a id="__codelineno-5-62" name="__codelineno-5-62" href="#__codelineno-5-62"></a>      &quot;p50&quot; : 4.01873E-4,
+<a id="__codelineno-5-63" name="__codelineno-5-63" href="#__codelineno-5-63"></a>      &quot;p75&quot; : 4.01873E-4,
+<a id="__codelineno-5-64" name="__codelineno-5-64" href="#__codelineno-5-64"></a>      &quot;p95&quot; : 4.01873E-4,
+<a id="__codelineno-5-65" name="__codelineno-5-65" href="#__codelineno-5-65"></a>      &quot;p98&quot; : 4.01873E-4,
+<a id="__codelineno-5-66" name="__codelineno-5-66" href="#__codelineno-5-66"></a>      &quot;p99&quot; : 4.01873E-4,
+<a id="__codelineno-5-67" name="__codelineno-5-67" href="#__codelineno-5-67"></a>      &quot;p999&quot; : 4.01873E-4,
+<a id="__codelineno-5-68" name="__codelineno-5-68" href="#__codelineno-5-68"></a>      &quot;stddev&quot; : 0.0,
+<a id="__codelineno-5-69" name="__codelineno-5-69" href="#__codelineno-5-69"></a>      &quot;m15_rate&quot; : 2.536740427767808E-7,
+<a id="__codelineno-5-70" name="__codelineno-5-70" href="#__codelineno-5-70"></a>      &quot;m1_rate&quot; : 7.074903404511115E-90,
+<a id="__codelineno-5-71" name="__codelineno-5-71" href="#__codelineno-5-71"></a>      &quot;m5_rate&quot; : 4.081014139447941E-19,
+<a id="__codelineno-5-72" name="__codelineno-5-72" href="#__codelineno-5-72"></a>      &quot;mean_rate&quot; : 8.179827684854002E-5,
+<a id="__codelineno-5-73" name="__codelineno-5-73" href="#__codelineno-5-73"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-5-74" name="__codelineno-5-74" href="#__codelineno-5-74"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-5-75" name="__codelineno-5-75" href="#__codelineno-5-75"></a>    },
+<a id="__codelineno-5-76" name="__codelineno-5-76" href="#__codelineno-5-76"></a>    &quot;client./gateway/sandbox/v1/health/.GET-requests&quot; : {
+<a id="__codelineno-5-77" name="__codelineno-5-77" href="#__codelineno-5-77"></a>      &quot;count&quot; : 1,
+<a id="__codelineno-5-78" name="__codelineno-5-78" href="#__codelineno-5-78"></a>      &quot;max&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-79" name="__codelineno-5-79" href="#__codelineno-5-79"></a>      &quot;mean&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-80" name="__codelineno-5-80" href="#__codelineno-5-80"></a>      &quot;min&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-81" name="__codelineno-5-81" href="#__codelineno-5-81"></a>      &quot;p50&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-82" name="__codelineno-5-82" href="#__codelineno-5-82"></a>      &quot;p75&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-83" name="__codelineno-5-83" href="#__codelineno-5-83"></a>      &quot;p95&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-84" name="__codelineno-5-84" href="#__codelineno-5-84"></a>      &quot;p98&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-85" name="__codelineno-5-85" href="#__codelineno-5-85"></a>      &quot;p99&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-86" name="__codelineno-5-86" href="#__codelineno-5-86"></a>      &quot;p999&quot; : 5.470700000000001E-4,
+<a id="__codelineno-5-87" name="__codelineno-5-87" href="#__codelineno-5-87"></a>      &quot;stddev&quot; : 0.0,
+<a id="__codelineno-5-88" name="__codelineno-5-88" href="#__codelineno-5-88"></a>      &quot;m15_rate&quot; : 2.413022137213267E-7,
+<a id="__codelineno-5-89" name="__codelineno-5-89" href="#__codelineno-5-89"></a>      &quot;m1_rate&quot; : 3.341947732164585E-90,
+<a id="__codelineno-5-90" name="__codelineno-5-90" href="#__codelineno-5-90"></a>      &quot;m5_rate&quot; : 3.512561421726287E-19,
+<a id="__codelineno-5-91" name="__codelineno-5-91" href="#__codelineno-5-91"></a>      &quot;mean_rate&quot; : 8.149518570285245E-5,
+<a id="__codelineno-5-92" name="__codelineno-5-92" href="#__codelineno-5-92"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-5-93" name="__codelineno-5-93" href="#__codelineno-5-93"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-5-94" name="__codelineno-5-94" href="#__codelineno-5-94"></a>    },
+<a id="__codelineno-5-95" name="__codelineno-5-95" href="#__codelineno-5-95"></a>    &quot;client./gateway/sandbox/webhdfs/v1/.GET-requests&quot; : {
+<a id="__codelineno-5-96" name="__codelineno-5-96" href="#__codelineno-5-96"></a>      &quot;count&quot; : 4,
+<a id="__codelineno-5-97" name="__codelineno-5-97" href="#__codelineno-5-97"></a>      &quot;max&quot; : 0.463745401,
+<a id="__codelineno-5-98" name="__codelineno-5-98" href="#__codelineno-5-98"></a>      &quot;mean&quot; : 0.024924118143299912,
+<a id="__codelineno-5-99" name="__codelineno-5-99" href="#__codelineno-5-99"></a>      &quot;min&quot; : 0.016542244,
+<a id="__codelineno-5-100" name="__codelineno-5-100" href="#__codelineno-5-100"></a>      &quot;p50&quot; : 0.024799078000000002,
+<a id="__codelineno-5-101" name="__codelineno-5-101" href="#__codelineno-5-101"></a>      &quot;p75&quot; : 0.033933548,
+<a id="__codelineno-5-102" name="__codelineno-5-102" href="#__codelineno-5-102"></a>      &quot;p95&quot; : 0.033933548,
+<a id="__codelineno-5-103" name="__codelineno-5-103" href="#__codelineno-5-103"></a>      &quot;p98&quot; : 0.033933548,
+<a id="__codelineno-5-104" name="__codelineno-5-104" href="#__codelineno-5-104"></a>      &quot;p99&quot; : 0.033933548,
+<a id="__codelineno-5-105" name="__codelineno-5-105" href="#__codelineno-5-105"></a>      &quot;p999&quot; : 0.033933548,
+<a id="__codelineno-5-106" name="__codelineno-5-106" href="#__codelineno-5-106"></a>      &quot;stddev&quot; : 0.007284773511002474,
+<a id="__codelineno-5-107" name="__codelineno-5-107" href="#__codelineno-5-107"></a>      &quot;m15_rate&quot; : 2.120680068580741E-8,
+<a id="__codelineno-5-108" name="__codelineno-5-108" href="#__codelineno-5-108"></a>      &quot;m1_rate&quot; : 4.7541228609699333E-91,
+<a id="__codelineno-5-109" name="__codelineno-5-109" href="#__codelineno-5-109"></a>      &quot;m5_rate&quot; : 1.5806080232092864E-20,
+<a id="__codelineno-5-110" name="__codelineno-5-110" href="#__codelineno-5-110"></a>      &quot;mean_rate&quot; : 2.7314359915623396E-4,
+<a id="__codelineno-5-111" name="__codelineno-5-111" href="#__codelineno-5-111"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-5-112" name="__codelineno-5-112" href="#__codelineno-5-112"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-5-113" name="__codelineno-5-113" href="#__codelineno-5-113"></a>    },
+<a id="__codelineno-5-114" name="__codelineno-5-114" href="#__codelineno-5-114"></a>    &quot;service./gateway/sandbox/webhdfs/v1/.get-requests&quot; : {
+<a id="__codelineno-5-115" name="__codelineno-5-115" href="#__codelineno-5-115"></a>      &quot;count&quot; : 3,
+<a id="__codelineno-5-116" name="__codelineno-5-116" href="#__codelineno-5-116"></a>      &quot;max&quot; : 0.014635496000000001,
+<a id="__codelineno-5-117" name="__codelineno-5-117" href="#__codelineno-5-117"></a>      &quot;mean&quot; : 0.00342438191233768,
+<a id="__codelineno-5-118" name="__codelineno-5-118" href="#__codelineno-5-118"></a>      &quot;min&quot; : 0.0020088890000000002,
+<a id="__codelineno-5-119" name="__codelineno-5-119" href="#__codelineno-5-119"></a>      &quot;p50&quot; : 0.0020088890000000002,
+<a id="__codelineno-5-120" name="__codelineno-5-120" href="#__codelineno-5-120"></a>      &quot;p75&quot; : 0.005144646,
+<a id="__codelineno-5-121" name="__codelineno-5-121" href="#__codelineno-5-121"></a>      &quot;p95&quot; : 0.005144646,
+<a id="__codelineno-5-122" name="__codelineno-5-122" href="#__codelineno-5-122"></a>      &quot;p98&quot; : 0.005144646,
+<a id="__codelineno-5-123" name="__codelineno-5-123" href="#__codelineno-5-123"></a>      &quot;p99&quot; : 0.005144646,
+<a id="__codelineno-5-124" name="__codelineno-5-124" href="#__codelineno-5-124"></a>      &quot;p999&quot; : 0.005144646,
+<a id="__codelineno-5-125" name="__codelineno-5-125" href="#__codelineno-5-125"></a>      &quot;stddev&quot; : 0.0015604555820128599,
+<a id="__codelineno-5-126" name="__codelineno-5-126" href="#__codelineno-5-126"></a>      &quot;m15_rate&quot; : 1.9913776931949195E-8,
+<a id="__codelineno-5-127" name="__codelineno-5-127" href="#__codelineno-5-127"></a>      &quot;m1_rate&quot; : 3.1334281325640874E-91,
+<a id="__codelineno-5-128" name="__codelineno-5-128" href="#__codelineno-5-128"></a>      &quot;m5_rate&quot; : 1.055281734633953E-20,
+<a id="__codelineno-5-129" name="__codelineno-5-129" href="#__codelineno-5-129"></a>      &quot;mean_rate&quot; : 2.0486339070804923E-4,
+<a id="__codelineno-5-130" name="__codelineno-5-130" href="#__codelineno-5-130"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-5-131" name="__codelineno-5-131" href="#__codelineno-5-131"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-5-132" name="__codelineno-5-132" href="#__codelineno-5-132"></a>    }
+<a id="__codelineno-5-133" name="__codelineno-5-133" href="#__codelineno-5-133"></a>  }
+<a id="__codelineno-5-134" name="__codelineno-5-134" href="#__codelineno-5-134"></a>}
+</code></pre></div></p>
+<h4 id="rest-end-points">REST End Points<a class="headerlink" href="#rest-end-points" title="Permanent link">&para;</a></h4>
+<p>As mentioned above, currently Knox provides a few monitoring APIs to start with. The list will gradually grow to support new use-cases.</p>
+<h5 id="ping">/ping<a class="headerlink" href="#ping" title="Permanent link">&para;</a></h5>
+<p>This end-point can be used to determine if a Knox gateway service is alive or not. It is useful for basic health monitoring of the core service. Although most of the results of REST calls are in JSON format, this one (<em>/ping</em>) is in plain text.  </p>
+<p>Sample response</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>OK
+</code></pre></div>
+<h5 id="metrics">/metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h5>
+<p>This end-point returns all Knox metrics grouped by individual call type. For example, timer metrics for all <em>webhdfs</em> calls are aggregated into one set of metrics and then returned in a separate JSON element. This end-point also supports an option (<em>/metrics?pretty=true</em>) to pretty print the metrics output.</p>
+<p>A sample response with <em>pretty=true</em> is shown below:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>{
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  &quot;version&quot; : &quot;3.0.0&quot;,
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  &quot;gauges&quot; : { },
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  &quot;counters&quot; : { },
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  &quot;histograms&quot; : { },
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  &quot;meters&quot; : { },
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  &quot;timers&quot; : {
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    &quot;client./gateway/health/v1/ping.GET-requests&quot; : {
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>      &quot;count&quot; : 1,
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>      &quot;max&quot; : 0.017257638000000002,
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>      &quot;mean&quot; : 0.017257638000000002,
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>      &quot;min&quot; : 0.017257638000000002,
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>      &quot;p50&quot; : 0.017257638000000002,
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>      &quot;p75&quot; : 0.017257638000000002,
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>      &quot;p95&quot; : 0.017257638000000002,
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>      &quot;p98&quot; : 0.017257638000000002,
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>      &quot;p99&quot; : 0.017257638000000002,
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>      &quot;p999&quot; : 0.017257638000000002,
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>      &quot;stddev&quot; : 0.0,
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>      &quot;m15_rate&quot; : 0.18710139700632353,
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>      &quot;m1_rate&quot; : 0.0735758882342885,
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>      &quot;m5_rate&quot; : 0.1637461506155964,
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>      &quot;mean_rate&quot; : 0.014990517517814805,
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>    },
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>    &quot;client./gateway/sandbox/v1/health/.GET-requests&quot; : {
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>      &quot;count&quot; : 1,
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>      &quot;max&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>      &quot;mean&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a>      &quot;min&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>      &quot;p50&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a>      &quot;p75&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>      &quot;p95&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a>      &quot;p98&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a>      &quot;p99&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a>      &quot;p999&quot; : 5.470700000000001E-4,
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a>      &quot;stddev&quot; : 0.0,
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>      &quot;m15_rate&quot; : 2.413022137213267E-7,
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a>      &quot;m1_rate&quot; : 3.341947732164585E-90,
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a>      &quot;m5_rate&quot; : 3.512561421726287E-19,
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a>      &quot;mean_rate&quot; : 8.149518570285245E-5,
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a>    },
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a>    &quot;client./gateway/sandbox/webhdfs/v1/.GET-requests&quot; : {
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a>      &quot;count&quot; : 4,
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a>      &quot;max&quot; : 0.463745401,
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a>      &quot;mean&quot; : 0.024924118143299912,
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a>      &quot;min&quot; : 0.016542244,
+<a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a>      &quot;p50&quot; : 0.024799078000000002,
+<a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a>      &quot;p75&quot; : 0.033933548,
+<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a>      &quot;p95&quot; : 0.033933548,
+<a id="__codelineno-7-54" name="__codelineno-7-54" href="#__codelineno-7-54"></a>      &quot;p98&quot; : 0.033933548,
+<a id="__codelineno-7-55" name="__codelineno-7-55" href="#__codelineno-7-55"></a>      &quot;p99&quot; : 0.033933548,
+<a id="__codelineno-7-56" name="__codelineno-7-56" href="#__codelineno-7-56"></a>      &quot;p999&quot; : 0.033933548,
+<a id="__codelineno-7-57" name="__codelineno-7-57" href="#__codelineno-7-57"></a>      &quot;stddev&quot; : 0.007284773511002474,
+<a id="__codelineno-7-58" name="__codelineno-7-58" href="#__codelineno-7-58"></a>      &quot;m15_rate&quot; : 2.120680068580741E-8,
+<a id="__codelineno-7-59" name="__codelineno-7-59" href="#__codelineno-7-59"></a>      &quot;m1_rate&quot; : 4.7541228609699333E-91,
+<a id="__codelineno-7-60" name="__codelineno-7-60" href="#__codelineno-7-60"></a>      &quot;m5_rate&quot; : 1.5806080232092864E-20,
+<a id="__codelineno-7-61" name="__codelineno-7-61" href="#__codelineno-7-61"></a>      &quot;mean_rate&quot; : 2.7314359915623396E-4,
+<a id="__codelineno-7-62" name="__codelineno-7-62" href="#__codelineno-7-62"></a>      &quot;duration_units&quot; : &quot;seconds&quot;,
+<a id="__codelineno-7-63" name="__codelineno-7-63" href="#__codelineno-7-63"></a>      &quot;rate_units&quot; : &quot;calls/second&quot;
+<a id="__codelineno-7-64" name="__codelineno-7-64" href="#__codelineno-7-64"></a>    }
+<a id="__codelineno-7-65" name="__codelineno-7-65" href="#__codelineno-7-65"></a>  }
+<a id="__codelineno-7-66" name="__codelineno-7-66" href="#__codelineno-7-66"></a>}
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "search.highlight", "search.share", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+    
+  </body>
+</html>
