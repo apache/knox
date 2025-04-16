@@ -22,41 +22,6 @@
 
 # Apache Knox - KnoxShell 2.1.x User Guide #
 
-
-* #[Introduction]
-* #[Representing and Working with Tabular Data]
-* #[KnoxShellTable]
-    * #[Builders]
-* #[Usecases]
-    * #[JDBC Resultset Representations]
-    * #[CSV Representations]
-    * #[General Table Operations]
-    * #[Persistence and Publishing]
-    * #[KnoxLine SQL Shell]
-    * #[Custom GroovySh Commands]
-* #[JDBC Resultset Representations]
-* #[CSV Representations]
-* #[General Table Operations]
-    * #[Sorting]
-    * #[Selecting]
-    * #[Filtering]
-    * #[Fluent API]
-    * #[Aggregating]
-* #[KnoxLine SQL Shell]
-* #[Custom GroovySh Commands]
-    * #[KnoxShell Commands:]
-* #[EXAMPLE: COVID19 Data Flow into DataLake]
-    * #[Build Table from Public CSV File]
-    * #[Select Columns, Filter and Sort by Column]
-    * #[Aggregate Calculations on Columns of Table]
-    * #[Persist Tables to Local Disk]
-    * #[Add Tables to DataLake]
-    * #[Building KnoxShell Truststore]
-    * #[Mount a WebHDFS Filesystem]
-    * #[Accessing a Filesystem]
-    * #[Put Tables into DataLake]
-    * #[Pull CSV Files from WebHDFS and Create Tables]
-
 ## Introduction
 
 The KnoxShell environment has been extended to provide more of an interactive experience through the use of custom commands and the newly added KnoxShellTable rendering and dataset representation class. This is provided through by integrating the power of groovysh extensions and the KnoxShell client classes/SDK and make for some really powerful command line capabilities that would otherwise require the user to SSH to a node within the cluster and use CLIs of different tools or components.
@@ -227,7 +192,7 @@ dedicated to SQL interactions and table renderings.
 For leveraging the SQL builder of KnoxShellTable to be able to operate on the results locally, see the custom KnoxShell command 'SQL'.
 
 
- ![KnoxLine Splash](../assets/images/knoxshell/knoxline-splash-2.png)
+ ![KnoxLine Splash](../static/images/knoxshell/knoxline-splash-2.png)
 
 Once connected to the datasource, SQL commands may be invoked via the command line directly.
 
@@ -246,7 +211,7 @@ By providing custom commands for KnoxShellTable operations,  builders and manipu
 4. 	**Filesystem** (:Filesystem|:fs) POSIX style commands for HDFS and cloud storage (mount, unmount, mounts, ls, rm, mkdir, cat, put, etc)
 
 
- ![KnoxShell Help](../assets/images/knoxshell/knoxshell-help.png)
+ ![KnoxShell Help](../static/images/knoxshell/knoxshell-help.png)
 
 
 ## EXAMPLE: COVID19 Data Flow into DataLake
@@ -255,7 +220,7 @@ Let's start to put the commands and table capabilities together to consume some 
 
 ### Build Table from Public CSV File
 
- ![Covid19 CSV Example](../assets/images/knoxshell/covid19csv-1.png)
+ ![Covid19 CSV Example](../static/images/knoxshell/covid19csv-1.png)
  
 The use of the CSV KnoxShell command above can be easily correlated to the CSV builder of KnoxShellTable. It is obviously less verbose and more natural than using the fluent API of KnoxShellTable directly and also leverages a separate capability for KnoxShell to assign the resulting table to a KnoxShell variable that can be references and manipulated afterward.
 
@@ -267,7 +232,7 @@ Let's filter the above dataset of COVID19 across the world to only a subset of c
 
 First we will interrogate the table for its column names or headers. Then we will select only those columns that we want in order to fit it to the screen, filter it for only New Jersey information and sort numerically by the number of Confirmed cases per county.
 
- ![Covid19 NJ Example](../assets/images/knoxshell/covid19nj-1.png)
+ ![Covid19 NJ Example](../static/images/knoxshell/covid19nj-1.png)
 
 From the above operation, we can now see the COVID19 data for New Jersey counties for 4/10/2020 sorted by the number of Confirmed cases and the subset of cols of the most interest and tailored to fit our screen. From the above table, we can visually see a number of insights in terms of the most affected counties across the state of New Jersey but it may be more interesting to be able to see an aggregation of some of the calculations available for numeric columns through KnoxShellTable. Let's take a look at an aggregate table for this dataset.
 
@@ -275,7 +240,7 @@ From the above operation, we can now see the COVID19 data for New Jersey countie
 
 Since the KnoxShellTable fluent API allows us to chain such operations together easily, we will just hit the up arrow to get the previous table operation command and add the aggregate operation to the chain.
 
- ![Covid19 NJ Aggregate](../assets/images/knoxshell/covid19nj-aggregate-1.png)
+ ![Covid19 NJ Aggregate](../static/images/knoxshell/covid19nj-aggregate-1.png)
 
 Now, by using both tables above, we can see that my county of Camden is both visually in approximately the center of the counties in terms of Confirmed case numbers but how it stands related to both the average and the median calculations. You can also see the sum of all of New Jersey and the number of those that belong to my county.
 
@@ -283,7 +248,7 @@ Now, by using both tables above, we can see that my county of Camden is both vis
 
 Next, we will persist these tables to our local disk and then push them into our HDFS based datalake for access by cluster resources and other users.
 
- ![Covid19 Persistence](../assets/images/knoxshell/covid19-persistence.png)
+ ![Covid19 Persistence](../static/images/knoxshell/covid19-persistence.png)
 
 ### Add Tables to DataLake
 
@@ -320,13 +285,13 @@ We may now mount a filesystem from the remote Knox instance by mounting the topo
 Once we have the desired mount, we may now access it by specifying the mountpoint name as the path prefix into the HDFS filesystem.
 Upon mounting or first access, the KnoxShell will prompt for user credentials for use as HTTP Basic credentials while accessing WebHDFS API.
 
- ![FS Mount Login](../assets/images/knoxshell/fs-mount-login-1.png)
+ ![FS Mount Login](../static/images/knoxshell/fs-mount-login-1.png)
 
 Once we authenticate to the mounted filesystem, we reference it by mountpoint and never concern ourselves with the actual URL to the endpoint.
 
 ### Put Tables into DataLake
 
- ![Covid19 NJ Put WebHDFS](../assets/images/knoxshell/covid19nj-put-webhdfs-1.png)
+ ![Covid19 NJ Put WebHDFS](../static/images/knoxshell/covid19nj-put-webhdfs-1.png)
 
 Above, we have put the previously persisted CSV files into the tmp directory of the mounted filesystem to be available to other datalake users.
 
@@ -335,7 +300,7 @@ Let's now cat the contents of one of the CSV files into the KnoxShell and then r
 
 ### Pull CSV Files from WebHDFS and Create Tables
 
- ![Covid19 NJ Aggregate from WebHDFS](../assets/images/knoxshell/covid19-nj-agg-from-webhdfs-1.png)
+ ![Covid19 NJ Aggregate from WebHDFS](../static/images/knoxshell/covid19-nj-agg-from-webhdfs-1.png)
 
 Note that the cat command returns the CSV file contents as a string to the KnoxShell environment as a variable called '_' .
 
