@@ -15,10 +15,8 @@
    limitations under the License.
 -->
 
-<<../../common/header.md>>
-
-<img src="/assets/images/knox-logo.gif" alt="Knox"/>
-<img src="/assets/images/apache-logo.gif" align="right" alt="Apache"/>
+<img src="../../static/images/knox-logo.gif" alt="Knox"/>
+<img src="../../static/images/apache-logo.gif" align="right" alt="Apache"/>
 
 # Apache Knox - KnoxShell 2.1.x User Guide #
 
