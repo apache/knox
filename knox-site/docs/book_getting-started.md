@@ -86,10 +86,10 @@ This table enumerates the versions of various Hadoop services that have been tes
 
 These examples provide more detail about how to access various Apache Hadoop services via the Apache Knox Gateway.
 
-* #[WebHDFS Examples]
-* #[WebHCat Examples]
-* #[Oozie Examples]
-* #[HBase Examples]
-* #[Hive Examples]
-* #[Yarn Examples]
-* #[Storm Examples]
+* [WebHDFS Examples](service_webhdfs.md)
+* [WebHCat Examples](service_webhcat.md)
+* [Oozie Examples](service_oozie.md)
+* [HBase Examples](service_hbase.md)
+* [Hive Examples](service_hive.md)
+* [Yarn Examples](service_yarn.md)
+* [Storm Examples](service_storm.md)
