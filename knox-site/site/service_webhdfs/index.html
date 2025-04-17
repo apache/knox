@@ -2945,25 +2945,96 @@ This could alternatively be configured to use the HTTPS endpoint by providing th
 <h5 id="hdfs-namenode-federation">HDFS NameNode Federation<a class="headerlink" href="#hdfs-namenode-federation" title="Permanent link">&para;</a></h5>
 <p>NameNode federation introduces some additional complexity when determining to which URL(s) Knox should proxy HDFS-related requests.</p>
 <p>The HDFS core-site.xml configuration includes additional properties, which represent options in terms of the NameNode endpoints.</p>
-<p>| ------- | ---------------------------------------------------- | ---------------------- |
-| Property Name             | Description                        | Example Value          |
-| dfs.internal.nameservices | The list of defined namespaces     | ns1,ns2                |</p>
+<table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Description</th>
+<th>Example Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dfs.internal.nameservices</td>
+<td>The list of defined namespaces</td>
+<td>ns1,ns2</td>
+</tr>
+</tbody>
+</table>
 <p>For each value enumerated by <em>dfs.internal.nameservices</em>, there is another property defined, for specifying the associated NameNode names.</p>
-<p>| ------- | ------------------------------------------------------------------ | ---------- |
-| Property Name        | Description                                           | Example Value |
-| dfs.ha.namenodes.ns1 | The NameNode identifiers associated with the ns1 namespace  | nn1,nn2 |
-| dfs.ha.namenodes.ns2 | The NameNode identifiers associated with the ns2 namespace  | nn3,nn4 |</p>
+<table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Description</th>
+<th>Example Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dfs.ha.namenodes.ns1</td>
+<td>The NameNode identifiers associated with the ns1 namespace</td>
+<td>nn1,nn2</td>
+</tr>
+<tr>
+<td>dfs.ha.namenodes.ns2</td>
+<td>The NameNode identifiers associated with the ns2 namespace</td>
+<td>nn3,nn4</td>
+</tr>
+</tbody>
+</table>
 <p>For each namenode name enumerated by each of these properties, there are other properties defined, for specifying the associated host addresses.</p>
-<p>| ------- | ---------------------------------------------------- | ---------------------- |
-| Property Name             | Description                        | Example Value          |
-| dfs.namenode.http-address.ns1.nn1  | The HTTP host address of nn1 NameNode in the ns1 namespace  | host1:50070 |
-| dfs.namenode.https-address.ns1.nn1 | The HTTPS host address of nn1 NameNode in the ns1 namespace | host1:50470 |
-| dfs.namenode.http-address.ns1.nn2  | The HTTP host address of nn2 NameNode in the ns1 namespace  | host2:50070 |
-| dfs.namenode.https-address.ns1.nn2 | The HTTPS host address of nn2 NameNode in the ns1 namespace | host2:50470 |
-| dfs.namenode.http-address.ns2.nn3  | The HTTP host address of nn3 NameNode in the ns2 namespace  | host3:50070 |
-| dfs.namenode.https-address.ns2.nn3 | The HTTPS host address of nn3 NameNode in the ns2 namespace | host3:50470 |
-| dfs.namenode.http-address.ns2.nn4  | The HTTP host address of nn4 NameNode in the ns2 namespace  | host4:50070 |
-| dfs.namenode.https-address.ns2.nn4 | The HTTPS host address of nn4 NameNode in the ns2 namespace | host4:50470 |</p>
+<table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Description</th>
+<th>Example Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dfs.namenode.http-address.ns1.nn1</td>
+<td>The HTTP host address of nn1 NameNode in the ns1 namespace</td>
+<td>host1:50070</td>
+</tr>
+<tr>
+<td>dfs.namenode.https-address.ns1.nn1</td>
+<td>The HTTPS host address of nn1 NameNode in the ns1 namespace</td>
+<td>host1:50470</td>
+</tr>
+<tr>
+<td>dfs.namenode.http-address.ns1.nn2</td>
+<td>The HTTP host address of nn2 NameNode in the ns1 namespace</td>
+<td>host2:50070</td>
+</tr>
+<tr>
+<td>dfs.namenode.https-address.ns1.nn2</td>
+<td>The HTTPS host address of nn2 NameNode in the ns1 namespace</td>
+<td>host2:50470</td>
+</tr>
+<tr>
+<td>dfs.namenode.http-address.ns2.nn3</td>
+<td>The HTTP host address of nn3 NameNode in the ns2 namespace</td>
+<td>host3:50070</td>
+</tr>
+<tr>
+<td>dfs.namenode.https-address.ns2.nn3</td>
+<td>The HTTPS host address of nn3 NameNode in the ns2 namespace</td>
+<td>host3:50470</td>
+</tr>
+<tr>
+<td>dfs.namenode.http-address.ns2.nn4</td>
+<td>The HTTP host address of nn4 NameNode in the ns2 namespace</td>
+<td>host4:50070</td>
+</tr>
+<tr>
+<td>dfs.namenode.https-address.ns2.nn4</td>
+<td>The HTTPS host address of nn4 NameNode in the ns2 namespace</td>
+<td>host4:50470</td>
+</tr>
+</tbody>
+</table>
 <p>So, if Knox should proxy the NameNodes associated with <em>ns1</em>, and the configuration does not dictate HTTPS, then the WEBHDFS service must
 contain URLs based on the values of <em>dfs.namenode.http-address.ns1.nn1</em> and <em>dfs.namenode.http-address.ns1.nn2</em>. Likewise, if Knox should
 proxy the NameNodes associated with <em>ns2</em>, the WEBHDFS service must contain URLs based on the values of <em>dfs.namenode.http-address.ns2.nn3</em>
@@ -2984,9 +3055,24 @@ property named <em>fs.defaultFS</em> defined in the HDFS <em>core-site.xml</em> 
 <p><br></p>
 <h4 id="webhdfs-url-mapping">WebHDFS URL Mapping<a class="headerlink" href="#webhdfs-url-mapping" title="Permanent link">&para;</a></h4>
 <p>For Name Node URLs, the mapping of Knox Gateway accessible WebHDFS URLs to direct WebHDFS URLs is simple.</p>
-<p>| ------- | ----------------------------------------------------------------------------- |
-| Gateway | <code>https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/webhdfs</code> |
-| Cluster | <code>http://{webhdfs-host}:50070/webhdfs</code>                                         |</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gateway</td>
+<td><code>https://{gateway-host}:{gateway-port}/{gateway-path}/{cluster-name}/webhdfs</code></td>
+</tr>
+<tr>
+<td>Cluster</td>
+<td><code>http://{webhdfs-host}:50070/webhdfs</code></td>
+</tr>
+</tbody>
+</table>
 <p>However, there is a subtle difference to URLs that are returned by WebHDFS in the Location header of many requests.
 Direct WebHDFS requests may return Location headers that contain the address of a particular DataNode.
 The gateway will rewrite these URLs to ensure subsequent requests come back through the gateway and internal cluster details are protected.</p>

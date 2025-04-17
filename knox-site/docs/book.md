@@ -15,8 +15,7 @@
    limitations under the License.
 -->
 
-<img src="../static/images/knox-logo.gif" alt="Knox"/>
-<img src="../static/images/apache-logo.gif" align="right" alt="Apache"/>
+<img src="../../static/images/knox-logo.gif" alt="Knox" style="width:25%;"/>
 
 # Apache Knox Gateway 2.1.x User's Guide #
 
@@ -58,7 +57,4 @@ The following provides more details on the included cryptographic software:
 * Apache Knox Gateway uses the ApacheDS which in turn uses Bouncy Castle generic encryption libraries.
 * See http://www.bouncycastle.org for more details on Bouncy Castle.
 * See http://directory.apache.org/apacheds for more details on ApacheDS.
-
-
-<<../common/footer.md>>
 

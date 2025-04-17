@@ -32,12 +32,16 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
+  extra:
+    footer:
+      - '<a href="https://github.com/apache/knox" target="_blank">GitHub</a>'
 
 extra_css:
   - assets/stylesheets/extra.css
 
 plugins:
   - search
+
 
 nav:
   - Home: index.md
@@ -111,6 +115,7 @@ nav:
     - SSE Support: sse-support.md
     - WebSocket Support: websocket-support.md
     - X-Forwarded Headers: x-forwarded-headers.md
+  - GitHub: https://github.com/apache/knox
 
 markdown_extensions:
   - toc:
