@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 
-<img src="../../static/images/knox-logo.gif" alt="Knox" style="width:100%;"/>
+<img src="../static/images/knox-logo.gif" alt="Knox" style="width:100%;"/>
 
 # Apache Knox Documentation Home
 
