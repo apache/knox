@@ -1874,11 +1874,7 @@ public class CustomResourceSample {
 }
 ```
 
-## Admin UI  ##
 
-<<admin-ui.md>>
-
-<<../../common/footer.md>>
 
 
 
