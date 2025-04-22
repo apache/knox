@@ -1379,9 +1379,9 @@ public class KnoxCLITest {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     outContent.reset();
-    String[] args1 = {"create-aliases", "--alias", "alias1", "--value", "value1", "--cluster", "cluster1",
+    String[] args1 = {"create-list-aliases", "--alias", "alias1", "--value", "value1", "--cluster", "cluster1",
             "--alias", "alias2", "--value", "value2", "--alias", "alias1", "--value", "value1", "--cluster", "cluster2",
-            "--master", "master", "--list"};
+            "--master", "master"};
     int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
@@ -1407,9 +1407,9 @@ public class KnoxCLITest {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     outContent.reset();
-    String[] args1 = {"create-aliases", "--alias", "alias1", "--cluster", "cluster1", "--alias",
+    String[] args1 = {"create-list-aliases", "--alias", "alias1", "--cluster", "cluster1", "--alias",
             "alias2", "--value", "value2", "--alias", "alias3", "--cluster", "cluster2",
-            "--master", "master", "--generate", "--list"};
+            "--master", "master", "--generate"};
     int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
@@ -1437,9 +1437,9 @@ public class KnoxCLITest {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
     outContent.reset();
-    String[] args1 = {"create-aliases", "--alias", "alias1", "--cluster", "cluster1", "--alias",
+    String[] args1 = {"create-list-aliases", "--alias", "alias1", "--cluster", "cluster1", "--alias",
             "alias2", "--value", "value2", "--alias", "alias3",
-            "--master", "master", "--generate", "--list"};
+            "--master", "master", "--generate"};
     int rc;
     KnoxCLI cli = new KnoxCLI();
     cli.setConf(config);
@@ -1460,30 +1460,6 @@ public class KnoxCLITest {
             outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: __gateway"));
     assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
             outContent.toString(StandardCharsets.UTF_8.name()).contains("alias3"));
-  }
-
-  @Test
-  public void testCreateAndListForMultipleClustersNoListing() throws Exception {
-    GatewayConfigImpl config = new GatewayConfigImpl();
-
-    outContent.reset();
-    String[] args1 = {"create-aliases", "--alias", "alias1", "--value", "value1", "--cluster", "cluster1",
-            "--alias", "alias2", "--value", "value2", "--alias", "alias1", "--value", "value1", "--cluster", "cluster2",
-            "--master", "master"};
-    int rc;
-    KnoxCLI cli = new KnoxCLI();
-    cli.setConf(config);
-    rc = cli.run(args1);
-    assertEquals(0, rc);
-    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
-            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully created: [alias1]"));
-    assertFalse(outContent.toString(StandardCharsets.UTF_8.name()),
-            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster1"));
-
-    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
-            outContent.toString(StandardCharsets.UTF_8.name()).contains("2 alias(es) have been successfully created: [alias2, alias1]"));
-    assertFalse(outContent.toString(StandardCharsets.UTF_8.name()),
-            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster2"));
   }
 
   private void testGeneratingJWK(JWSAlgorithm jwkAlgorithm) throws Exception {
