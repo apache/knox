@@ -1309,6 +1309,159 @@ public class KnoxCLITest {
     testGeneratingJWK(JWSAlgorithm.HS512);
   }
 
+  @Test
+  public void testListingAliasesForMultipleClusters() throws Exception {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    outContent.reset();
+    String[] args1 = {"create-alias", "multiplealias", "--value", "multiplealias", "--cluster", "cluster1", "--master", "master"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(config);
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias has been successfully " +
+                    "created."));
+
+    outContent.reset();
+    String[] args2 = {"create-alias", "multiplealias2", "--value", "multiplealias2", "--cluster", "test",
+            "--master", "master"};
+    cli = new KnoxCLI();
+    cli.setConf( config );
+    rc = cli.run(args2);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias2 has been successfully " +
+            "created."));
+
+    outContent.reset();
+    String[] args3 = { "list-alias", "--cluster", "cluster1,test", "--master", "master" };
+    rc = cli.run(args3);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias2"));
+
+    outContent.reset();
+    String[] args4 = { "list-alias", "--cluster", "cluster1,test,invalidcluster", "--master", "master" };
+    rc = cli.run(args4);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias2"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Invalid cluster name provided: invalidcluster"));
+
+    outContent.reset();
+    String[] args5 = {"delete-alias", "multiplealias", "--cluster", "cluster1", "--master", "master"};
+    rc = cli.run(args5);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias has been successfully " +
+            "deleted."));
+
+    outContent.reset();
+    String[] args6 = {"delete-alias", "multiplealias2", "--cluster", "test", "--master", "master"};
+    rc = cli.run(args6);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias2 has been successfully " +
+            "deleted."));
+
+    outContent.reset();
+    rc = cli.run(args3);
+    assertEquals(0, rc);
+    assertFalse(outContent.toString(StandardCharsets.UTF_8.name()), outContent.toString(StandardCharsets.UTF_8.name()).contains("multiplealias2"));
+  }
+
+  @Test
+  public void testCreateAndListForMultipleClusters() throws Exception {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    outContent.reset();
+    String[] args1 = {"create-list-aliases", "--alias", "alias1", "--value", "value1", "--cluster", "cluster1",
+            "--alias", "alias2", "--value", "value2", "--alias", "alias1", "--value", "value1", "--cluster", "cluster2",
+            "--master", "master"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(config);
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully created: [alias1]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster1"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1"));
+
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("2 alias(es) have been successfully created: [alias2, alias1]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster2"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("alias2"));
+  }
+
+  @Test
+  public void testCreateAndListForMultipleClustersWithGenerate() throws Exception {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    outContent.reset();
+    String[] args1 = {"create-list-aliases", "--alias", "alias1", "--cluster", "cluster1", "--alias",
+            "alias2", "--value", "value2", "--alias", "alias3", "--cluster", "cluster2",
+            "--master", "master", "--generate"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(config);
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully generated: [alias1]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster1"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1"));
+
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully created: [alias2]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully generated: [alias3]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster2"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("alias3"));
+  }
+
+  @Test
+  public void testCreateAndListForMultipleClustersNoCLuster() throws Exception {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    outContent.reset();
+    String[] args1 = {"create-list-aliases", "--alias", "alias1", "--cluster", "cluster1", "--alias",
+            "alias2", "--value", "value2", "--alias", "alias3",
+            "--master", "master", "--generate"};
+    int rc;
+    KnoxCLI cli = new KnoxCLI();
+    cli.setConf(config);
+    rc = cli.run(args1);
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully generated: [alias1]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: cluster1"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("alias1"));
+
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully created: [alias2]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("1 alias(es) have been successfully generated: [alias3]"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("Listing aliases for: __gateway"));
+    assertTrue(outContent.toString(StandardCharsets.UTF_8.name()),
+            outContent.toString(StandardCharsets.UTF_8.name()).contains("alias3"));
+  }
+
   private void testGeneratingJWK(JWSAlgorithm jwkAlgorithm) throws Exception {
     testGeneratingJWK(jwkAlgorithm, null);
   }
