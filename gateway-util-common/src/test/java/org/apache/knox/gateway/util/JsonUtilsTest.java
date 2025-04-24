@@ -133,7 +133,7 @@ public class JsonUtilsTest {
     @Test
     public void testRenderAsJsonStringWithDateFormat() {
         // Create a test object with a date
-        Date testDate = new Date(1609459200000L); // 2020-12-31 00:00:00 UTC
+        Date testDate = new Date(1609459200000L); // 2021-01-01 00:00:00 UTC
         TestObjectWithDate testObject = new TestObjectWithDate("test-value", testDate);
 
         // Create a custom date format
@@ -145,7 +145,7 @@ public class JsonUtilsTest {
         // Verify the JSON contains the expected values
         assertNotNull(json);
         assertThat(json, containsString("\"stringProperty\" : \"test-value\""));
-        assertThat(json, containsString("\"dateProperty\" : \"2020-12-31\""));
+        assertThat(json, containsString("\"dateProperty\" : \"2021-01-01\""));
     }
 
     // Simple test class for JSON serialization
