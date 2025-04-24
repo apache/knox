@@ -17,8 +17,12 @@
  */
 package org.apache.knox.gateway.util;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.junit.Test;
@@ -97,4 +101,88 @@ public class JsonUtilsTest {
     Map<String,HashMap<String, ArrayList<HashMap<String, String>>>> map = JsonUtils.getFileStatusesAsMap(json);
     assertNotNull(map);
   }
+
+    @Test
+    public void testRenderAsJsonStringObject() {
+        // Create a test object
+        TestObject testObject = new TestObject("test-value", 123);
+
+        // Render the object as JSON
+        String json = JsonUtils.renderAsJsonString(testObject);
+
+        // Verify the JSON contains the expected values
+        assertNotNull(json);
+        assertThat(json, containsString("\"stringProperty\" : \"test-value\""));
+        assertThat(json, containsString("\"intProperty\" : 123"));
+    }
+
+    @Test
+    public void testGetObjectFromJsonString() {
+        // Create a simple JSON string
+        String json = "{\"key1\":\"value1\",\"key2\":42}";
+
+        // Parse the JSON string
+        Map<String, Object> result = (Map<String, Object>) JsonUtils.getObjectFromJsonString(json);
+
+        // Verify the parsed object
+        assertNotNull(result);
+        assertEquals("value1", result.get("key1"));
+        assertEquals(42, result.get("key2"));
+    }
+
+    @Test
+    public void testRenderAsJsonStringWithDateFormat() {
+        // Create a test object with a date
+        Date testDate = new Date(1609459200000L); // 2021-01-01 00:00:00 UTC
+        TestObjectWithDate testObject = new TestObjectWithDate("test-value", testDate);
+
+        // Create a custom date format
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
+
+        // Render the object as JSON with the custom date format
+        String json = JsonUtils.renderAsJsonString(testObject, null, dateFormat);
+
+        // Verify the JSON contains the expected values
+        assertNotNull(json);
+        assertThat(json, containsString("\"stringProperty\" : \"test-value\""));
+        assertThat(json, containsString("\"dateProperty\" : \"2021-01-01\""));
+    }
+
+    // Simple test class for JSON serialization
+    private static class TestObject {
+        private String stringProperty;
+        private int intProperty;
+
+        TestObject(String stringProperty, int intProperty) {
+            this.stringProperty = stringProperty;
+            this.intProperty = intProperty;
+        }
+
+        public String getStringProperty() {
+            return stringProperty;
+        }
+
+        public int getIntProperty() {
+            return intProperty;
+        }
+    }
+
+    // Test class with a date property for testing date formatting
+    private static class TestObjectWithDate {
+        private String stringProperty;
+        private Date dateProperty;
+
+        TestObjectWithDate(String stringProperty, Date dateProperty) {
+            this.stringProperty = stringProperty;
+            this.dateProperty = dateProperty;
+        }
+
+        public String getStringProperty() {
+            return stringProperty;
+        }
+
+        public Date getDateProperty() {
+            return dateProperty;
+        }
+    }
 }
