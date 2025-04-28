@@ -190,8 +190,8 @@ public class GatewayWebsocketHandler extends WebSocketHandler
               headers.put("Host", Arrays.asList(backendURL.getHost() + ":" + backendURL.getPort()));
             } catch (final URISyntaxException e) {
               LOG.onError(String.format(Locale.ROOT,
-                  "Error getting backend url, this could cause 'Host does not match SNI' exception. Cause: ",
-                  e.toString()));
+                  "Error getting backend url, this could cause 'Host does not match SNI' exception. Cause: %s",
+                  e));
             }
           }
         }).build();
