@@ -128,12 +128,13 @@ public class KnoxTokenWorkerThread implements Runnable {
   private String acquireKnoxToken(KnoxSession knoxSession) throws IOException {
     LOG.acquireKnoxToken();
     long getStart = System.currentTimeMillis();
-    final Get.Response getTokenResponse = Token.get(knoxSession).now();
-    final long getResponseTime = System.currentTimeMillis() - getStart;
-    LOG.acquiredKnoxToken();
-    responseTimeCache.saveAcquireResponseTime(getResponseTime);
-    final Map<String, String> tokenAsMap = JsonUtils.getMapFromJsonString(getTokenResponse.getString());
-    return tokenAsMap.get("access_token");
+    try (Get.Response getTokenResponse = Token.get(knoxSession).now()) {
+      final long getResponseTime = System.currentTimeMillis() - getStart;
+      LOG.acquiredKnoxToken();
+      responseTimeCache.saveAcquireResponseTime(getResponseTime);
+      final Map<String, String> tokenAsMap = JsonUtils.getMapFromJsonString(getTokenResponse.getString());
+      return tokenAsMap.get("access_token");
+    }
   }
 
   private void renewKnoxToken(KnoxSession knoxSession) throws Exception {

@@ -215,12 +215,8 @@ public class KnoxSh {
       String username = credentials.get("user").string();
       String pass = credentials.get("pass").string();
 
-      KnoxSession session = null;
-      Get.Response response;
-      try {
-        session = KnoxSession.login(gateway, username, pass);
-
-        response = Token.get( session ).now();
+      try (KnoxSession session = KnoxSession.login(gateway, username, pass);
+           Get.Response response = Token.get( session ).now()) {
         String text = response.getString();
         Map<String, String> json = JsonUtils.getMapFromJsonString(text);
 
@@ -247,9 +243,6 @@ public class KnoxSh {
               }
           }
         System.out.println(message);
-      }
-      if ( session != null ) {
-        session.shutdown();
       }
     }
 
