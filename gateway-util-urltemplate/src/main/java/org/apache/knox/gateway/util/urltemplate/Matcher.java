@@ -206,7 +206,6 @@ public class Matcher<V> {
   }
 
   private Match pickBestMatch( Template input, Status status ) {
-    Match bestMatch = new Match( null, null );
     PathNode bestPath = null;
     QueryNode bestQuery = null;
     MatchSegment bestMatchSegment = null;
@@ -220,8 +219,6 @@ public class Matcher<V> {
         if( pathNode.template != null ) {
           bestPath = pathNode;
           bestQuery = null;
-          bestMatch.template = pathNode.template;
-          bestMatch.value = pathNode.value;
           bestMatchSegment = matchSegment;
         }
         // If the path node has queries see if one is better match than the path node itself.
@@ -229,8 +226,6 @@ public class Matcher<V> {
           bestQuery = pickBestQueryMatch( input, pathNode );
           if( bestQuery != null && bestQuery.template != null ) {
             bestPath = pathNode;
-            bestMatch.template = bestQuery.template;
-            bestMatch.value = bestQuery.value;
             bestMatchSegment = matchSegment;
           }
         }
