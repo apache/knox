@@ -57,8 +57,10 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 import java.io.IOException;
 import java.util.Enumeration;
@@ -127,6 +129,9 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
 
   /* default value is same is KNOXSSO token ttl default */
   private static final String PAC4J_COOKIE_MAX_AGE_DEFAULT = "-1";
+
+  private static final String PAC4J_CSRF_TOKEN = "pac4jCsrfToken";
+  private static boolean SSL_ENABLED = true;
 
   private CallbackFilter callbackFilter;
 
@@ -250,6 +255,8 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
 
     SessionInvalidators.KNOX_SSO_INVALIDATOR.registerSessionInvalidator(this);
 
+    GatewayConfig gatewayConfig = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    SSL_ENABLED = gatewayConfig.isSSLEnabled();
   }
 
   /**
@@ -320,7 +327,6 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
 
   @Override
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     request.setAttribute(PAC4J_CONFIG, securityFilter.getSharedConfig());
 
@@ -333,7 +339,7 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
     } else {
       // otherwise just apply security and requires authentication
       // apply RequiresAuthenticationFilter
-      securityFilter.doFilter(servletRequest, servletResponse, filterChain);
+      securityFilter.doFilter(servletRequest, new Pac4jSetCookieResponseWrapper((HttpServletResponse) servletResponse), filterChain);
     }
   }
 
@@ -350,4 +356,21 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
     SessionInvalidators.KNOX_SSO_INVALIDATOR.unregisterSessionInvalidator(this);
   }
 
+  static class Pac4jSetCookieResponseWrapper extends HttpServletResponseWrapper {
+
+    Pac4jSetCookieResponseWrapper(HttpServletResponse response) {
+      super(response);
+    }
+
+    @Override
+    public void addCookie(Cookie cookie) {
+      if(cookie.getName().equals(PAC4J_CSRF_TOKEN)) {
+        cookie.setHttpOnly(true);
+        if(SSL_ENABLED) {
+          cookie.setSecure(true);
+        }
+      }
+      super.addCookie(cookie);
+    }
+  }
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.pac4j.filter;
 
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.pac4j.session.KnoxSessionStore;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -30,12 +31,16 @@ import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.pac4j.config.client.PropertiesConstants.SAML_IDENTITY_PROVIDER_METADATA_PATH;
 import static org.pac4j.config.client.PropertiesConstants.SAML_KEYSTORE_PATH;
 
@@ -53,6 +58,7 @@ public class Pac4jDispatcherFilterTest {
         MasterService masterService;
         FilterConfig filterConfig;
         KeyStore ks;
+        GatewayConfig gatewayConfig;
     }
 
     private TestMocks createMocks() throws Exception {
@@ -65,6 +71,7 @@ public class Pac4jDispatcherFilterTest {
         mocks.keystoreService = EasyMock.createNiceMock(KeystoreService.class);
         mocks.masterService = EasyMock.createNiceMock(MasterService.class);
         mocks.filterConfig = EasyMock.createNiceMock(FilterConfig.class);
+        mocks.gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
         return mocks;
     }
 
@@ -94,6 +101,7 @@ public class Pac4jDispatcherFilterTest {
         EasyMock.expect(mocks.filterConfig.getInitParameter("clientName")).andReturn("SAML2Client").anyTimes();
         EasyMock.expect(mocks.aliasService.getPasswordFromAliasForCluster(TEST_CLUSTER_NAME, KnoxSessionStore.PAC4J_PASSWORD, true))
                 .andReturn(KnoxSessionStore.PAC4J_PASSWORD.toCharArray()).anyTimes();
+        EasyMock.expect(mocks.context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(mocks.gatewayConfig).anyTimes();
     }
 
     private void verifyCookiemaxAge(FilterConfig filterConfig, String expectedCookieMaxAge) throws Exception {
@@ -119,12 +127,12 @@ public class Pac4jDispatcherFilterTest {
         setupCommonExpectations(mocks, additionalParams);
         EasyMock.expect(mocks.filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE)).andReturn(expectedCookieMaxAge).anyTimes();
 
-        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
 
         verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
 
         // Verify all mock interactions
-        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
     }
 
     /**
@@ -142,11 +150,71 @@ public class Pac4jDispatcherFilterTest {
         TestMocks mocks = createMocks();
         setupCommonExpectations(mocks, Collections.EMPTY_LIST);
 
-        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
 
         verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
 
         // Verify all mock interactions
-        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig);
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+    }
+
+    @Test
+    public void testPAC4JSetCookieResponseWrapperStaysTrue() throws Exception {
+        HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        Cookie cookie = new Cookie("pac4jCsrfToken", "pac4j_value");
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, Collections.EMPTY_LIST);
+        EasyMock.expect(mocks.gatewayConfig.isSSLEnabled()).andReturn(false).anyTimes();
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+
+        Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
+        filter.init(mocks.filterConfig);
+        Pac4jDispatcherFilter.Pac4jSetCookieResponseWrapper wrapper = new Pac4jDispatcherFilter.Pac4jSetCookieResponseWrapper(response);
+        wrapper.addCookie(cookie);
+
+        assertTrue(cookie.getSecure());
+        assertTrue(cookie.isHttpOnly());
+    }
+
+    @Test
+    public void testPAC4JSetCookieResponseWrapperFalseToTrue() throws Exception {
+        HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        Cookie cookie = new Cookie("pac4jCsrfToken", "pac4j_value");
+        cookie.setSecure(false);
+        cookie.setHttpOnly(false);
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, Collections.EMPTY_LIST);
+        EasyMock.expect(mocks.gatewayConfig.isSSLEnabled()).andReturn(true).anyTimes();
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+
+        Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
+        filter.init(mocks.filterConfig);
+        Pac4jDispatcherFilter.Pac4jSetCookieResponseWrapper wrapper = new Pac4jDispatcherFilter.Pac4jSetCookieResponseWrapper(response);
+        wrapper.addCookie(cookie);
+
+        assertTrue(cookie.getSecure());
+        assertTrue(cookie.isHttpOnly());
+    }
+
+    @Test
+    public void testPAC4JSetCookieResponseWrapperNoSSL() throws Exception {
+        HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        Cookie cookie = new Cookie("pac4jCsrfToken", "pac4j_value");
+        cookie.setSecure(false);
+        cookie.setHttpOnly(false);
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, Collections.EMPTY_LIST);
+        EasyMock.expect(mocks.gatewayConfig.isSSLEnabled()).andReturn(false).anyTimes();
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+
+        Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
+        filter.init(mocks.filterConfig);
+        Pac4jDispatcherFilter.Pac4jSetCookieResponseWrapper wrapper = new Pac4jDispatcherFilter.Pac4jSetCookieResponseWrapper(response);
+        wrapper.addCookie(cookie);
+
+        assertFalse(cookie.getSecure());
+        assertTrue(cookie.isHttpOnly());
     }
 }
