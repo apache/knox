@@ -65,8 +65,6 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
       AuditConstants.KNOX_COMPONENT_NAME );
   private static final String SHIRO_URL_CONFIG = "urls";
-  /* Map of shiro url configs */
-  private static Map<String,String> urls = new HashMap<>();
 
   /* List of URLs with anon authentication */
   private static List<Matcher> anonUrls = new ArrayList<>();
@@ -80,7 +78,6 @@ public class ShiroSubjectIdentityAdapter implements Filter {
       if (StringUtils.startsWithIgnoreCase(param, SHIRO_URL_CONFIG)) {
         String value = filterConfig.getInitParameter(param);
         final String pathParam = param.substring(param.indexOf('.') + 1);
-        urls.put(pathParam, value);
         if("anon".equalsIgnoreCase(value)) {
           final Template urlPatternTemplate;
           final Matcher urlMatcher = new Matcher();

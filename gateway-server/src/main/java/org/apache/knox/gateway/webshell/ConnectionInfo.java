@@ -63,7 +63,6 @@ public class ConnectionInfo {
     private final Thread shutdownHook;
     private final AtomicInteger concurrentWebshells;
     private long pid;
-    private final Map<String, String> webshellEnvVariables = new HashMap();
 
     @SuppressWarnings("PMD.DoNotUseThreads") //we need to define a Thread to clean up resources using shutdown hook
     public ConnectionInfo(String username, String gatewayPIDDir, AtomicInteger concurrentWebshells) {
@@ -72,7 +71,6 @@ public class ConnectionInfo {
         this.concurrentWebshells = concurrentWebshells;
         shutdownHook = new Thread(this::disconnect);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-        webshellEnvVariables.put(TERMINAL_EMULATOR_KEY, TERMINAL_EMULATOR_VALUE);
     }
 
     private void saveProcessPID(long pid){
