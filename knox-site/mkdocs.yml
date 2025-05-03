@@ -2,6 +2,7 @@ site_name: Apache Knox
 site_description: Documentation for Apache Knox Gateway
 site_url: https://knox.apache.org/
 use_directory_urls: true
+
 theme:
   name: material
   features:
@@ -43,79 +44,83 @@ extra_css:
 plugins:
   - search
 
-
 nav:
   - Home: index.md
   - Quick Start: quick_start.md
-  - User Guide:
-    - Overview: book.md
-    - Getting Started: book_getting-started.md
-    - Gateway Details: book_gateway-details.md
-    - Client Details: book_client-details.md
-    - Service Details: book_service-details.md
-    - UI Service Details: book_ui_service_details.md
-    - Knox Samples: book_knox-samples.md
-    - Topology Port Mapping: book_topology_port_mapping.md
-    - Limitations: book_limitations.md
-    - Troubleshooting: book_troubleshooting.md
-  - Configuration:
-    - Overview: config.md
-    - Authentication:
-      - Overview: config_authn.md
-      - Kerberos: config_kerberos.md
-      - LDAP Authentication Cache: config_ldap_authc_cache.md
-      - LDAP Group Lookup: config_ldap_group_lookup.md
-      - Advanced LDAP: config_advanced_ldap.md
-      - PAM Authentication: config_pam_authn.md
-      - Knox SSO: config_knox_sso.md
-      - Knox Token: config_knox_token.md
-      - Pre-auth SSO: config_preauth_sso_provider.md
-      - SSO Cookie: config_sso_cookie_provider.md
-      - TLS Client Certificate: config_tls_client_certificate_authentication_provider.md
-      - PAC4J: config_pac4j_provider.md
-      - Hadoop Auth: config_hadoop_auth_provider.md
-    - Authorization: config_authz.md
-    - Identity Assertion: config_id_assertion.md
-    - High Availability: config_ha.md
-    - Knox Auth Service: config_knoxauth_service.md
-    - Mutual Auth SSL: config_mutual_authentication_ssl.md
-    - Web App Security: config_webappsec_provider.md
-    - Metrics: config_metrics.md
-    - Audit: config_audit.md
-    - Sandbox: config_sandbox.md
-  - Services:
-    - Overview: service_config.md
-    - Default HA: service_default_ha.md
-    - SSL Certificate Trust: service_ssl_certificate_trust.md
-    - Avatica: service_avatica.md
-    - Cloudera Manager: service_cloudera_manager.md
-    - Elasticsearch: service_elasticsearch.md
-    - HBase: service_hbase.md
-    - Hive: service_hive.md
-    - Kafka: service_kafka.md
-    - Livy: service_livy.md
-    - Oozie: service_oozie.md
-    - Service Test: service_service_test.md
-    - Solr: service_solr.md
-    - Storm: service_storm.md
-    - WebHCat: service_webhcat.md
-    - WebHDFS: service_webhdfs.md
-    - YARN: service_yarn.md
+  - Client/User Guide:
+      - Knox Shell: knoxshell-guide/knoxshell_user_guide.md
+      - Knox CLI: knox_cli.md
+      - Discovering Resources: book_client-details.md
+      - Troubleshooting:
+          - General Troubleshooting: book_troubleshooting.md
+          - Client-Specific Troubleshooting: client_troubleshooting.md
+      - FAQ: faq.md
+  - Admin Guide:
+      - Gateway Overview: book_gateway-details.md
+      - Configuration:
+          - Overview: config.md
+          - Authentication:
+              - Overview: config_authn.md
+              - Kerberos: config_kerberos.md
+              - LDAP Authentication Cache: config_ldap_authc_cache.md
+              - LDAP Group Lookup: config_ldap_group_lookup.md
+              - Advanced LDAP: config_advanced_ldap.md
+              - PAM Authentication: config_pam_authn.md
+              - Knox SSO: config_knox_sso.md
+              - Knox Token: config_knox_token.md
+              - Pre-auth SSO: config_preauth_sso_provider.md
+              - SSO Cookie: config_sso_cookie_provider.md
+              - TLS Client Certificate: config_tls_client_certificate_authentication_provider.md
+              - PAC4J: config_pac4j_provider.md
+              - Hadoop Auth: config_hadoop_auth_provider.md
+          - Authorization: config_authz.md
+          - Identity Assertion: config_id_assertion.md
+          - High Availability: config_ha.md
+          - Knox Auth Service: config_knoxauth_service.md
+          - Mutual Auth SSL: config_mutual_authentication_ssl.md
+          - Web App Security: config_webappsec_provider.md
+          - Metrics: config_metrics.md
+          - Audit: config_audit.md
+          - Sandbox: config_sandbox.md
+      - Service-Specific Configurations:
+          - Overview: service_config.md
+          - Default HA: service_default_ha.md
+          - SSL Certificate Trust: service_ssl_certificate_trust.md
+          - Avatica: service_avatica.md
+          - Cloudera Manager: service_cloudera_manager.md
+          - Elasticsearch: service_elasticsearch.md
+          - HBase: service_hbase.md
+          - Hive: service_hive.md
+          - Kafka: service_kafka.md
+          - Livy: service_livy.md
+          - Oozie: service_oozie.md
+          - Service Test: service_service_test.md
+          - Solr: service_solr.md
+          - Storm: service_storm.md
+          - WebHCat: service_webhcat.md
+          - WebHDFS: service_webhdfs.md
+          - YARN: service_yarn.md
+      - Maintenance and Monitoring:
+          - Admin UI: admin_ui.md
+          - Monitoring API: dev-guide/knox_monitoring_api.md
+          - Metrics and Logs: metrics_logs.md
+      - Troubleshooting:
+          - General Troubleshooting: admin_troubleshooting.md
+          - Authentication Issues: auth_troubleshooting.md
+          - Service-Specific Issues: service_troubleshooting.md
   - Developer Guide:
-    - Overview: dev-guide/book.md
-    - Admin UI: dev-guide/admin-ui.md
-    - Monitoring API: dev-guide/knox_monitoring_api.md
-    - KnoxSSO Integration: dev-guide/knoxsso_integration.md
-  - Tools:
-    - Knox CLI: knox_cli.md
-    - Knox Shell: knoxshell-guide/knoxshell_user_guide.md
-    - Admin API: admin_api.md
-    - Admin UI: admin_ui.md
-    - Web Shell: webshell.md
-  - Advanced Topics:
-    - SSE Support: sse-support.md
-    - WebSocket Support: websocket-support.md
-    - X-Forwarded Headers: x-forwarded-headers.md
+      - Overview: dev-guide/book.md
+      - Extending Knox:
+          - Overview: extending_knox.md
+          - KnoxSSO Integration: dev-guide/knoxsso_integration.md
+          - Custom Authentication: dev-guide/custom_authn.md
+      - API Reference:
+          - Admin API: admin_api.md
+          - Monitoring API: dev-guide/knox_monitoring_api.md
+      - Advanced Topics:
+          - SSE Support: sse-support.md
+          - WebSocket Support: websocket-support.md
+          - X-Forwarded Headers: x-forwarded-headers.md
   - GitHub: https://github.com/apache/knox
 
 markdown_extensions:

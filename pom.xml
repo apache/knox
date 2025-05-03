@@ -503,6 +503,7 @@
                         <exclude>**/PULL_REQUEST_TEMPLATE*</exclude>
                         <exclude>**/new-service-definition-template.xml</exclude>
                         <exclude>**/token-management/**/assets/**</exclude>
+                        <exclude>**/knox-site/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
