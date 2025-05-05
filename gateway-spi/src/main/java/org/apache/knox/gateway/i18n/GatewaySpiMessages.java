@@ -85,6 +85,9 @@ public interface GatewaySpiMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to load truststore due to {0}")
   void failedToLoadTruststore(String message, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Impersonation failed, user {0} does not belong to configured proxy group")
+  void failedToImpersonateViaGroups(String user);
+
   @Message(level = MessageLevel.WARN, text = "Duplicated filter param key: {0}")
   void duplicatedFilterParamKey(String name);
 
@@ -93,4 +96,7 @@ public interface GatewaySpiMessages {
 
   @Message(level=MessageLevel.DEBUG, text="Ignoring cookie path scope filter for default topology")
   void ignoringCookiePathScopeForDefaultTopology();
+
+  @Message(level=MessageLevel.DEBUG, text="Loaded proxy groups ACLs: {0}")
+  void loadedProxyGroupsAcls(String acls);
 }
