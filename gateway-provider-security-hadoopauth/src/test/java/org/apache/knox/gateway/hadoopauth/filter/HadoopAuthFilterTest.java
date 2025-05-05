@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.hadoopauth.filter;
 
 import static org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter.JWT_INSTANCE_KEY_FALLBACK;
+import static org.apache.knox.gateway.util.AuthFilterUtils.GROUP_IMPERSONATION_ENABLED_PARAM;
+import static org.apache.knox.gateway.util.AuthFilterUtils.IMPERSONATION_ENABLED_PARAM;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.captureInt;
@@ -143,6 +145,8 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
     Properties configProperties = createMock(Properties.class);
     expect(configProperties.getProperty("signature.secret.file")).andReturn("signature.secret.file").atLeastOnce();
@@ -207,6 +211,8 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("support.jwt")).andReturn("false").anyTimes();
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
 
     EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
@@ -257,6 +263,8 @@ public class HadoopAuthFilterTest {
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -318,6 +326,8 @@ public class HadoopAuthFilterTest {
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -379,6 +389,8 @@ public class HadoopAuthFilterTest {
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -440,6 +452,8 @@ public class HadoopAuthFilterTest {
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -502,6 +516,8 @@ public class HadoopAuthFilterTest {
     /* update the default list to use favicon.ico */
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(request_semicolon_path).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
 
     HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     /* capture errors */
@@ -579,6 +595,8 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
     expect(filterConfig.getInitParameter(JWT_INSTANCE_KEY_FALLBACK)).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
+    expect(filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM)).andReturn(null).anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();
