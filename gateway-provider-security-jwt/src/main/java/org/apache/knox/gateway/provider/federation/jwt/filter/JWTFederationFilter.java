@@ -249,21 +249,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           passcode = decodeBase64(base64DecodedTokenIdAndPasscode[1]);
           // if this is a client credentials flow request then ensure the presented clientId is
           // the actual owner of the client_secret
-          final String requestBodyString = getRequestBodyString(request);
-          if (requestBodyString != null && !requestBodyString.isEmpty()) {
-            final String grantType = RequestBodyUtils.getRequestBodyParameter(requestBodyString, GRANT_TYPE);
-            if (grantType != null && !grantType.isEmpty()) {
-              final String clientID = RequestBodyUtils.getRequestBodyParameter(requestBodyString, CLIENT_ID);
-              // if there is no client_id then this is not a client credentials flow
-              if (clientID != null && !tokenId.equals(clientID)) {
-                prechecks = false;
-                log.wrongPasscodeToken(tokenId);
-                handleValidationError((HttpServletRequest) request, (HttpServletResponse) response,
-                        HttpServletResponse.SC_UNAUTHORIZED,
-                        MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
-              }
-            }
-          }
+          prechecks = validateClientCredentialsFlow((HttpServletRequest) request, (HttpServletResponse) response, tokenId);
         } catch (Exception e) {
           log.failedToParsePasscodeToken(e);
           handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
@@ -283,6 +269,27 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       log.missingTokenFromHeader(wireToken);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
+  }
+
+  private boolean validateClientCredentialsFlow(HttpServletRequest request, HttpServletResponse response, String tokenId)
+       throws IOException {
+    boolean validated = true;
+    final String requestBodyString = getRequestBodyString(request);
+    if (requestBodyString != null && !requestBodyString.isEmpty()) {
+      final String grantType = RequestBodyUtils.getRequestBodyParameter(requestBodyString, GRANT_TYPE);
+      if (grantType != null && !grantType.isEmpty()) {
+        final String clientID = RequestBodyUtils.getRequestBodyParameter(requestBodyString, CLIENT_ID);
+        // if there is no client_id then this is not a client credentials flow
+        if (clientID != null && !tokenId.equals(clientID)) {
+          validated = false;
+          log.wrongPasscodeToken(tokenId);
+          handleValidationError((HttpServletRequest) request, (HttpServletResponse) response,
+                  HttpServletResponse.SC_UNAUTHORIZED,
+                  MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
+        }
+      }
+    }
+    return validated;
   }
 
   private String decodeBase64(String toBeDecoded) {
