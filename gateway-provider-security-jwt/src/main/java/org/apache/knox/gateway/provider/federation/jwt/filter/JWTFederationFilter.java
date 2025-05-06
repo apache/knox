@@ -70,6 +70,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String GRANT_TYPE = "grant_type";
   public static final String CLIENT_CREDENTIALS = "client_credentials";
   public static final String CLIENT_SECRET = "client_secret";
+  public static final String CLIENT_ID = "client_id";
+  public static final String MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET = "Client credentials flow with mismatching client_id and client_secret";
 
   public enum TokenType {
     JWT, Passcode;
@@ -240,17 +242,20 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         // The received token value must be a Base64 encoded value of Base64(tokenId)::Base64(rawPasscode)
         String tokenId = null;
         String passcode = null;
+        boolean prechecks = true;
         try {
           final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
           tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
           passcode = decodeBase64(base64DecodedTokenIdAndPasscode[1]);
+          // if this is a client credentials flow request then ensure the presented clientId is
+          // the actual owner of the client_secret
+          prechecks = validateClientCredentialsFlow((HttpServletRequest) request, (HttpServletResponse) response, tokenId);
         } catch (Exception e) {
           log.failedToParsePasscodeToken(e);
           handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
               "Error while parsing the received passcode token");
         }
-
-        if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
+        if (prechecks && validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
             Subject subject = createSubjectFromTokenIdentifier(tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
@@ -264,6 +269,27 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       log.missingTokenFromHeader(wireToken);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
+  }
+
+  private boolean validateClientCredentialsFlow(HttpServletRequest request, HttpServletResponse response, String tokenId)
+       throws IOException {
+    boolean validated = true;
+    final String requestBodyString = getRequestBodyString(request);
+    if (requestBodyString != null && !requestBodyString.isEmpty()) {
+      final String grantType = RequestBodyUtils.getRequestBodyParameter(requestBodyString, GRANT_TYPE);
+      if (grantType != null && !grantType.isEmpty()) {
+        final String clientID = RequestBodyUtils.getRequestBodyParameter(requestBodyString, CLIENT_ID);
+        // if there is no client_id then this is not a client credentials flow
+        if (clientID != null && !tokenId.equals(clientID)) {
+          validated = false;
+          log.wrongPasscodeToken(tokenId);
+          handleValidationError((HttpServletRequest) request, (HttpServletResponse) response,
+                  HttpServletResponse.SC_UNAUTHORIZED,
+                  MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
+        }
+      }
+    }
+    return validated;
   }
 
   private String decodeBase64(String toBeDecoded) {
