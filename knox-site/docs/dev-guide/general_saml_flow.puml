@@ -1,0 +1,45 @@
+@startuml
+autonumber
+footbox off
+participant Browser as B
+participant UI as A
+participant Knox as G
+participant SAML_IdP as E
+
+B->A: GET(ui-origin-url)
+note right: User/browser makes request to UI without valid token
+activate A
+A-->B: redirect(knox-sso+ui-origin-url)
+note right: AuthFilter in UI detects no/invalid token redirects to\nKnoxSSO preserving ui-origin-url
+deactivate A
+B->G: GET(knox-sso+ui-origin-url)
+note right: Browser follows redirect
+activate G
+G-->B: redirect(idp-login-ui)
+note right: KnoxSSO finds no/invalid token, redirects to SAML IdP
+deactivate G
+B->E: POST(idp-login-ui)
+note right: Browser follows redirect
+activate E
+E-->B: ok(idp-login-ui)
+note right: SAML IdP presents login form to user
+deactivate E
+B->E: POST(idp-login-ui,credentials)
+note right: User provides credentials to IdP via login form.\nSAML IdP validates credentials.
+activate E
+E-->B: redirect(knox-sso,saml-assertion)
+note right: IdP redirects back to knox-origin-url with SAML assertion\nin form POST
+deactivate E
+B->G: POST(knox-sso,saml-assertion)
+note right: KnoxSSO converts SAML assertion to a KnoxSSO cookie\nand extracts ui-origin-url from original-url cookie
+activate G
+G-->B: redirect(ui-origin-url,knox-token)
+note right: KnoxSSO redirects client back to ui-origin-url with KnoxSSO cookie
+deactivate G
+B->A: GET(ui-origin-url,knox-token)
+note right: Browser follows redirect to ui-origin-url with JWT Bearer Token in cookie.\nJWT Bearer Token validated by AuthFilter in UI
+activate A
+A->B: ok(ui-cookie)
+note right: Request processes and response returned to client.
+deactivate A
+@enduml

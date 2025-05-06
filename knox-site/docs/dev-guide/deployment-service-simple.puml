@@ -1,0 +1,28 @@
+@startuml
+title Service Deployment\n(Simplified)
+hide footbox
+autonumber
+
+participant "Deployment\nFactory" as DF
+participant "Service\nDeployment\nContributor" as SDC
+
+activate DF
+
+  DF -> SDC:initializeContribution
+  activate SDC
+  deactivate SDC
+
+  DF -> SDC:contributeService
+  activate SDC
+    SDC -> DF: contributeFilter
+    activate DF
+    deactivate DF
+  deactivate SDC
+
+  DF -> SDC:finalizeContribution
+  activate SDC
+  deactivate SDC
+
+deactivate DF
+
+@enduml
