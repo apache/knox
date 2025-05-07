@@ -24,11 +24,12 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
-import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.saml.profile.SAML2Profile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,9 +69,11 @@ public class KnoxSessionStoreTest {
     final Map<String, String> sessionStoreConfigs = new HashMap();
 
     final Capture<org.pac4j.core.context.Cookie> captureCookieValue = EasyMock.newCapture();
-    final WebContext mockContext = EasyMock.createNiceMock(WebContext.class);
+    final JEEContext mockContext = EasyMock.createNiceMock(JEEContext.class);
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     EasyMock.expect(mockContext.getFullRequestURL()).andReturn("https://local.com/gateway/knoxsso/").anyTimes();
     mockContext.addResponseCookie(EasyMock.capture(captureCookieValue));
+    EasyMock.expect(mockContext.getNativeResponse()).andReturn(response).anyTimes();
 
     EasyMock.replay(mockContext);
 
