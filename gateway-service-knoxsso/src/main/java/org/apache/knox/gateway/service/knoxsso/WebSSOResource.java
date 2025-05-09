@@ -65,6 +65,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.session.control.ConcurrentSessionVerifier;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.RegExUtils;
+import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
@@ -409,23 +410,22 @@ public class WebSSOResource {
      * SameSite param. Change this back to Cookie impl. after
      * SameSite header is supported by javax.servlet.http.Cookie.
      */
-    final StringBuilder setCookie = new StringBuilder(50);
     try {
-      setCookie.append(cookieName).append('=').append(token.toString());
-      setCookie.append("; Path=/");
+      SetCookieHeader setCookieHeader = new SetCookieHeader(cookieName, token.toString());
+      setCookieHeader.setPath("/");
       final String domain = Urls.getDomainName(original, domainSuffix);
       if (domain != null) {
-        setCookie.append("; Domain=").append(domain);
+        setCookieHeader.setDomain(domain);
       }
-      setCookie.append("; HttpOnly");
+      setCookieHeader.setHttpOnly(true);
       if (secureOnly) {
-        setCookie.append("; Secure");
+        setCookieHeader.setSecure(true);
       }
       if (maxAge != -1) {
-        setCookie.append("; Max-Age=").append(maxAge);
+        setCookieHeader.setMaxAge(maxAge);
       }
-      setCookie.append("; SameSite=").append(this.sameSiteValue);
-      response.setHeader("Set-Cookie", setCookie.toString());
+      setCookieHeader.setSameSite(sameSiteValue);
+      response.setHeader("Set-Cookie", setCookieHeader.toString());
       LOGGER.addedJWTCookie(logSafeToken);
     } catch (Exception e) {
       LOGGER.unableAddCookieToResponse(e.getMessage(),
