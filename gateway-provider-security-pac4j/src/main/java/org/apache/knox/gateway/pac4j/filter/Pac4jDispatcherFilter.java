@@ -130,6 +130,9 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
   /* default value is same is KNOXSSO token ttl default */
   private static final String PAC4J_COOKIE_MAX_AGE_DEFAULT = "-1";
 
+  public static final String PAC4J_COOKIE_SAMESITE = "pac4j.cookie.samesite";
+  private static final String PAC4J_COOKIE_SAMESITE_DEFAULT = "Strict";
+
   private static final String PAC4J_CSRF_TOKEN = "pac4jCsrfToken";
   private static boolean SSL_ENABLED = true;
 
@@ -229,6 +232,8 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
       setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES, PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT);
       /* add cookie expiry */
       setSessionStoreConfig(filterConfig, PAC4J_COOKIE_MAX_AGE, PAC4J_COOKIE_MAX_AGE_DEFAULT);
+      /* add cookie samesite */
+      setSessionStoreConfig(filterConfig, PAC4J_COOKIE_SAMESITE, PAC4J_COOKIE_SAMESITE_DEFAULT);
       //decorating client configuration (if needed)
       PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
     }

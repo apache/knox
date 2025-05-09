@@ -25,15 +25,16 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MockHttpServletResponse extends HttpServletResponseWrapper {
 
-    private List<Cookie> cookies = new ArrayList<>();
+    private final List<Cookie> cookies = new ArrayList<>();
     private int status;
-    private Map<String, String> headers = new HashMap<>();
+    private final Map<String, List<String>> headers = new HashMap<>();
 
     public MockHttpServletResponse() {
         super(setupMockResponse());
@@ -47,15 +48,17 @@ public class MockHttpServletResponse extends HttpServletResponseWrapper {
 
     @Override
     public void setHeader(String name, String value) {
-        headers.put(name, value);
+        headers.put(name, new ArrayList<>(Collections.singletonList(value)));
     }
 
     @Override
     public void addHeader(String name, String value) {
-        headers.put(name, value);
+        List<String> values = headers.getOrDefault(name, new ArrayList<>());
+        values.add(value);
+        headers.put(name, values);
     }
 
-    public Map<String, String> getHeaders() {
+    public Map<String, List<String>> getHeaders() {
         return headers;
     }
 

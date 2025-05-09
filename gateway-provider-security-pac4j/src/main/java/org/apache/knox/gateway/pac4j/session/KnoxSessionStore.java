@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter;
 import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.EncryptionResult;
+import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +49,7 @@ import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS;
@@ -161,18 +163,17 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
     @Override
     public void set(WebContext context, String key, Object value) {
         Object profile = value;
-        Cookie cookie;
+        SetCookieHeader setCookieHeader;
 
         if (value == null) {
-            cookie = new Cookie(PAC4J_SESSION_PREFIX + key, null);
+            setCookieHeader = new SetCookieHeader(PAC4J_SESSION_PREFIX + key, null);
         } else {
             if (key.contentEquals(Pac4jConstants.USER_PROFILES)) {
                 /* trim the profile object */
                 profile = clearUserProfile(value);
             }
             logger.debug("Save in session: {} = {}", key, profile);
-            cookie = new Cookie(PAC4J_SESSION_PREFIX + key,
-                compressEncryptBase64(profile));
+            setCookieHeader = new SetCookieHeader(PAC4J_SESSION_PREFIX + key, compressEncryptBase64(profile));
         }
         try {
             String domain = Urls
@@ -180,12 +181,14 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
             if (domain == null) {
                 domain = context.getServerName();
             }
-            cookie.setDomain(domain);
+            setCookieHeader.setDomain(domain);
         } catch (final Exception e) {
             throw new TechnicalException(e);
         }
-        cookie.setHttpOnly(true);
-        cookie.setSecure(ContextHelper.isHttpsOrSecure(context));
+        setCookieHeader.setSecure(true);
+        if(ContextHelper.isHttpsOrSecure(context)) {
+            setCookieHeader.setHttpOnly(true);
+        }
 
         /*
          *  set the correct path for setting pac4j profile cookie.
@@ -198,16 +201,19 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
             final String[] parts = ((JEEContext) context).getNativeRequest().getRequestURI()
                 .split(
                     "websso"+ Pac4jDispatcherFilter.URL_PATH_SEPARATOR + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER);
-
-            cookie.setPath(parts[0]);
-
+            setCookieHeader.setPath(parts[0]);
         }
 
         /* Set cookie max age */
         if(sessionStoreConfigs != null && sessionStoreConfigs.containsKey(PAC4J_COOKIE_MAX_AGE)) {
-            cookie.setMaxAge(Integer.parseInt(sessionStoreConfigs.get(PAC4J_COOKIE_MAX_AGE)));
+            setCookieHeader.setMaxAge(Integer.parseInt(sessionStoreConfigs.get(PAC4J_COOKIE_MAX_AGE)));
         }
-        context.addResponseCookie(cookie);
+
+        if(sessionStoreConfigs != null && sessionStoreConfigs.containsKey(PAC4J_COOKIE_SAMESITE)) {
+            setCookieHeader.setSameSite(sessionStoreConfigs.get(PAC4J_COOKIE_SAMESITE));
+        }
+
+        ((JEEContext) context).getNativeResponse().addHeader("Set-Cookie", setCookieHeader.toString());
     }
 
     /**
