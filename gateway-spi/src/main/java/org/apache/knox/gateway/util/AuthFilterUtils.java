@@ -43,11 +43,14 @@ public class AuthFilterUtils {
     public static final String DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM = "/knoxtoken/api/v1/jwks.json";
     public static final String PROXYUSER_PREFIX = "hadoop.proxyuser";
     public static final String PROXYGROUP_PREFIX = "hadoop.proxygroup";
+    public static final String IMPERSONATION_MODE = "hadoop.impersonation.mode";
+    public static final String DEFAULT_IMPERSONATION_MODE = "OR";
     public static final String QUERY_PARAMETER_DOAS = "doAs";
     public static final String REAL_USER_NAME_ATTRIBUTE = "real.user.name";
     public static final String DO_GLOBAL_LOGOUT_ATTRIBUTE = "do.global.logout";
     public static final String IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYUSER_PREFIX + ".impersonation.enabled";
     public static final String GROUP_IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYGROUP_PREFIX + ".impersonation.enabled";
+
 
     private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
     private static final Map<String, Map<String, ImpersonationProvider>> TOPOLOGY_IMPERSONATION_PROVIDERS = new ConcurrentHashMap<>();
@@ -119,6 +122,13 @@ public class AuthFilterUtils {
                 String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
                 conf.set(name, value);
             });
+
+            initParameterNames.stream().filter(name -> name.startsWith(IMPERSONATION_MODE + ".")).forEach(name -> {
+                String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
+                conf.set(name, value);
+            });
+
+
         }
 
         saveImpersonationProvider(filterConfig, topologyName, role, conf);
@@ -129,6 +139,7 @@ public class AuthFilterUtils {
         try {
             boolean isProxyUserEnabled = false;
             boolean isProxyGroupEnabled = false;
+            String impersonationModeFilterValue;
             /* Check if user or group impersonation is enabled */
             if (filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM) != null) {
                 String userImpersonationEnabledString = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);

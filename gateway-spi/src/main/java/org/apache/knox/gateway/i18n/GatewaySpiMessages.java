@@ -99,4 +99,16 @@ public interface GatewaySpiMessages {
 
   @Message(level=MessageLevel.DEBUG, text="Loaded proxy groups ACLs: {0}")
   void loadedProxyGroupsAcls(String acls);
+
+  @Message(level = MessageLevel.ERROR, text = "Unauthorized connection for super-user: {0} from IP remoteAddress {1}")
+  void failedToImpersonateUser(String user, String address);
+
+  @Message(level = MessageLevel.ERROR, text = "User {0} is allowed to impersonate user {1}")
+  void successfulImpersonation(String user, String iuser);
+
+  @Message(level = MessageLevel.ERROR, text = "User {0} with groups {1} is not allowed to impersonate {2}")
+  void failedToImpersonateGroups(String user, String groups, String iuser);
+
+  @Message(level = MessageLevel.ERROR, text = "User {0} with groups {1} is not allowed to impersonate {2} from address {3}")
+  void failedToImpersonateGroupsFromAddress(String user, String groups, String iuser, String address);
 }
