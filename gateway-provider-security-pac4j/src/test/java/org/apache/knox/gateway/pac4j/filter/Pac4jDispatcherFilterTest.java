@@ -104,14 +104,14 @@ public class Pac4jDispatcherFilterTest {
         EasyMock.expect(mocks.context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(mocks.gatewayConfig).anyTimes();
     }
 
-    private void verifyCookiemaxAge(FilterConfig filterConfig, String expectedCookieMaxAge) throws Exception {
+    private void verifyCookieConfig(FilterConfig filterConfig, String key, String expected) throws Exception {
         Pac4jDispatcherFilter filter = new Pac4jDispatcherFilter();
         filter.init(filterConfig);
 
         java.lang.reflect.Field configField = filter.getClass().getDeclaredField("sessionStoreConfigs");
         configField.setAccessible(true);
         Map<String, String> sessionStoreConfigs = (Map<String, String>) configField.get(filter);
-        Assert.assertEquals(expectedCookieMaxAge, sessionStoreConfigs.get(Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE));
+        Assert.assertEquals(expected, sessionStoreConfigs.get(key));
     }
 
 
@@ -129,7 +129,7 @@ public class Pac4jDispatcherFilterTest {
 
         EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
 
-        verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
+        verifyCookieConfig(mocks.filterConfig, Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE,  expectedCookieMaxAge);
 
         // Verify all mock interactions
         EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
@@ -152,7 +152,44 @@ public class Pac4jDispatcherFilterTest {
 
         EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
 
-        verifyCookiemaxAge(mocks.filterConfig, expectedCookieMaxAge);
+        verifyCookieConfig(mocks.filterConfig, Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE,  expectedCookieMaxAge);
+
+        // Verify all mock interactions
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+    }
+
+    @Test
+    public void testDefaultCookieSameSite() throws Exception {
+        final String expectedSameSite = "Strict";
+        List<String> params = new ArrayList<>();
+        params.add(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL);
+        params.add("clientName");
+        params.add(SAML_KEYSTORE_PATH);
+        params.add(SAML_IDENTITY_PROVIDER_METADATA_PATH);
+
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, Collections.EMPTY_LIST);
+
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+
+        verifyCookieConfig(mocks.filterConfig, Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE,  expectedSameSite);
+
+        // Verify all mock interactions
+        EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+    }
+
+    @Test
+    public void testCustomCookieSameSite() throws Exception {
+        final String expectedSameSite = "None";
+        List<String> additionalParams = new ArrayList<>();
+        additionalParams.add(Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE);
+        TestMocks mocks = createMocks();
+        setupCommonExpectations(mocks, additionalParams);
+        EasyMock.expect(mocks.filterConfig.getInitParameter(Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE)).andReturn(expectedSameSite).anyTimes();
+
+        EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
+
+        verifyCookieConfig(mocks.filterConfig, Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE,  expectedSameSite);
 
         // Verify all mock interactions
         EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
