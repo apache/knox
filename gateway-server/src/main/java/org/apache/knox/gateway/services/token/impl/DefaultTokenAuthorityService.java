@@ -229,7 +229,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(algorithm);
         /* Retry one time in case of failure and cache JWKS in case there is outage, TTL is OUTAGE_TTL */
         long outageTTL = config.getJwksOutageCacheTTL();
+        long cacheTTL = config.getJwksCacheTimeToLive();
+        long cacheTimeOut = config.getJwksCacheRefreshTimeout();
+
         JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(new URL(jwksurl))
+                .cache(cacheTTL, cacheTimeOut)
+                .refreshAheadCache(true)
                 .retrying(true)
                 .outageTolerant(outageTTL)
                 .build();

@@ -357,6 +357,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String JWKS_OUTAGE_CACHE_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".jwks.outage.cache.ttl";
   private static final long JWKS_OUTAGE_CACHE_TTL_DEFAULT = TimeUnit.HOURS.toMillis(2);
+
+  private static final String JWKS_CACHE_TTL = GATEWAY_CONFIG_FILE_PREFIX + ".jwks.cache.ttl";
+  private static final String JWKS_CACHE_REFRESH_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".jwks.cache.refresh.interval";
+  /* The default time to live of cached JWK sets, in milliseconds. Set to 20 minutes. */
+  private static final long JWKS_CACHE_TTL_DEFAULT = 20 * 60 * 1000;
+  /* The default refresh timeout of cached JWK sets, in milliseconds. Set to 15 seconds. */
+  private static final long JWKS_CACHE_REFRESH_TIMEOUT_DEFAULT = 15 * 1000;
+
+
   private static final String ISSUER_IGNORE_TYPE_VALIDATION = GATEWAY_CONFIG_FILE_PREFIX + ".token.issuers.ignore.type.validation";
 
   //Strict-Transport Option
@@ -1625,6 +1634,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public long getJwksOutageCacheTTL() {
     return getLong(JWKS_OUTAGE_CACHE_TTL, JWKS_OUTAGE_CACHE_TTL_DEFAULT);
+  }
+
+  @Override
+  public long getJwksCacheTimeToLive(){
+    return getLong(JWKS_CACHE_TTL, JWKS_CACHE_TTL_DEFAULT);
+  }
+
+  @Override
+  public long getJwksCacheRefreshTimeout(){
+    return getLong(JWKS_CACHE_REFRESH_TIMEOUT, JWKS_CACHE_REFRESH_TIMEOUT_DEFAULT);
   }
 
   @Override
