@@ -179,5 +179,120 @@ public class GroupBasedImpersonationProviderTest {
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
         provider.authorize(userGroupInformation, "2.2.2.2");
     }
-}
 
+    /**
+     * Test the case where both proxy user and proxy group are disabled.
+     * Authorization should succeed in this case.
+     *
+     * @throws AuthorizationException
+     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     */
+    @Test
+    public void testAuthorizationSuccessWithBothProxyMethodsDisabled() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(false, false);
+        Configuration gConfig = new Configuration();
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+
+        String proxyUser = "testuser";
+        String[] proxyGroups = {"virtual_group_1"};
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+
+        // This should not throw an exception since both proxy methods are disabled
+        gProvider.authorize(userGroupInformation, "2.2.2.2");
+    }
+
+    /**
+     * Test the case where only proxy user is enabled and proxy group is disabled.
+     * i.e.
+     * hadoop.proxyuser.impersonation.enabled = true
+     * hadoop.proxygroup.impersonation.enabled = false
+     *
+     * @throws AuthorizationException
+     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     */
+    @Test
+    public void testAuthorizationSuccessWithOnlyProxyUserConfigured() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(true, false);
+        Configuration gConfig = new Configuration();
+
+        // Setup proxy user configuration
+        gConfig.set("hadoop.proxyuser.testuser.groups", "*");
+        gConfig.set("hadoop.proxyuser.testuser.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+
+        String proxyUser = "testuser";
+        String[] proxyGroups = {"somegroup"};
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+
+        // This should not throw an exception since proxy user is enabled and configured correctly
+        gProvider.authorize(userGroupInformation, "2.2.2.2");
+    }
+
+    /**
+     * Test the case where both proxy user and proxy group are enabled with AND mode.
+     * This ensures that both authorization methods are actually being used.
+     * i.e.
+     * hadoop.proxyuser.impersonation.enabled = true
+     * hadoop.proxygroup.impersonation.enabled = true
+     * impersonation.mode = AND
+     *
+     * @throws AuthorizationException
+     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     */
+    @Test
+    public void testAuthorizationSuccessWithBothProxyMethodsEnabledAndMode() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(true, true);
+        Configuration gConfig = new Configuration();
+
+        // Set impersonation mode to AND
+        gConfig.set("impersonation.mode", "AND");
+
+        // Setup proxy user configuration
+        gConfig.set("hadoop.proxyuser.testuser.groups", "*");
+        gConfig.set("hadoop.proxyuser.testuser.hosts", "*");
+
+        // Setup proxy group configuration
+        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+
+        String proxyUser = "testuser";
+        String[] proxyGroups = {"virtual_group_1"};
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+
+        // This should not throw an exception since both proxy user and proxy group are enabled and configured correctly
+        gProvider.authorize(userGroupInformation, "2.2.2.2");
+    }
+}

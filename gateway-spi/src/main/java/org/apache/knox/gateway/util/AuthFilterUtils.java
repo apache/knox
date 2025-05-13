@@ -137,20 +137,9 @@ public class AuthFilterUtils {
     private static void saveImpersonationProvider(FilterConfig filterConfig, String topologyName, String role, final Configuration conf) {
         refreshSuperUserGroupsLock.lock();
         try {
-            boolean isProxyUserEnabled = false;
-            boolean isProxyGroupEnabled = false;
-            String impersonationModeFilterValue;
-            /* Check if user or group impersonation is enabled */
-            if (filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM) != null) {
-                String userImpersonationEnabledString = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);
-                isProxyUserEnabled = userImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(userImpersonationEnabledString);
-            }
-
-            if (filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM) != null) {
-                String groupImpersonationEnabledString = filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM);
-                isProxyGroupEnabled = groupImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(groupImpersonationEnabledString);
-
-            }
+            boolean[] impersonationFlags = getImpersonationEnabledFlags(filterConfig);
+            boolean isProxyUserEnabled = impersonationFlags[0];
+            boolean isProxyGroupEnabled = impersonationFlags[1];
 
             final GroupBasedImpersonationProvider groupBasedImpersonationProvider = new GroupBasedImpersonationProvider(isProxyUserEnabled, isProxyGroupEnabled);
             groupBasedImpersonationProvider.setConf(conf);
@@ -280,6 +269,40 @@ public class AuthFilterUtils {
 
     public static boolean shouldDoGlobalLogout(HttpServletRequest request) {
         return request.getAttribute(DO_GLOBAL_LOGOUT_ATTRIBUTE) == null ? false : Boolean.parseBoolean((String) request.getAttribute(DO_GLOBAL_LOGOUT_ATTRIBUTE));
+    }
+
+    /**
+     * Check if user or group impersonation is enabled based on filter configuration.
+     *
+     * @param filterConfig The filter configuration
+     * @return A boolean array where the first element indicates if user impersonation is enabled
+     *         and the second element indicates if group impersonation is enabled
+     */
+    public static boolean[] getImpersonationEnabledFlags(final FilterConfig filterConfig) {
+        boolean userImpersonationEnabledValue = false;
+        boolean groupImpersonationEnabledValue = false;
+        /* Check if user or group impersonation is enabled */
+        if (filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM) != null) {
+            String userImpersonationEnabledString = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);
+            userImpersonationEnabledValue = userImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(userImpersonationEnabledString);
+        }
+
+        if (filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM) != null) {
+            String groupImpersonationEnabledString = filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM);
+            groupImpersonationEnabledValue = groupImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(groupImpersonationEnabledString);
+        }
+        return new boolean[] { userImpersonationEnabledValue, groupImpersonationEnabledValue };
+    }
+
+    /**
+     * Check if either user or group impersonation is enabled based on filter configuration.
+     *
+     * @param filterConfig The filter configuration
+     * @return true if either user or group impersonation is enabled, false otherwise
+     */
+    public static boolean isImpersonationEnabled(final FilterConfig filterConfig) {
+        boolean[] flags = getImpersonationEnabledFlags(filterConfig);
+        return flags[0] || flags[1];
     }
 
 }

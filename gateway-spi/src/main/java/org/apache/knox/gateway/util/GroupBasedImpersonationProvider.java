@@ -128,6 +128,11 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
 
     @Override
     public void authorize(UserGroupInformation user, InetAddress remoteAddress) throws AuthorizationException {
+        // If both authorization methods are disabled, allow the operation to proceed
+        if (!isProxyUserEnabled && !isProxyGroupEnabled) {
+            LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
+            return;
+        }
 
         boolean isProxyUserAuthorized = false;
         boolean isProxyGroupAuthorized = false;
