@@ -61,8 +61,6 @@ import java.util.stream.Collectors;
 import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.ROLE;
 import static org.apache.knox.gateway.identityasserter.common.filter.VirtualGroupMapper.addRequestFunctions;
-import static org.apache.knox.gateway.util.AuthFilterUtils.GROUP_IMPERSONATION_ENABLED_PARAM;
-import static org.apache.knox.gateway.util.AuthFilterUtils.IMPERSONATION_ENABLED_PARAM;
 
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
     public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
@@ -177,20 +175,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
      * @return
      */
     boolean shouldAddImpersonationProvider(final FilterConfig filterConfig) {
-        boolean userImpersonationEnabledValue = false;
-        boolean groupImpersonationEnabledValue = false;
-        /* Check if user or group impersonation is enabled */
-        if (filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM) != null) {
-            String userImpersonationEnabledString = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);
-            userImpersonationEnabledValue = userImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(userImpersonationEnabledString);
-        }
-
-        if (filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM) != null) {
-            String groupImpersonationEnabledString = filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM);
-            groupImpersonationEnabledValue = groupImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(groupImpersonationEnabledString);
-
-        }
-        return (userImpersonationEnabledValue || groupImpersonationEnabledValue);
+        return AuthFilterUtils.isImpersonationEnabled(filterConfig);
     }
 
     boolean isImpersonationEnabled() {
