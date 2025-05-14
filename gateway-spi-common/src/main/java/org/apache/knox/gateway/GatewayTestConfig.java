@@ -1142,6 +1142,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return TimeUnit.HOURS.toMillis(2);
   }
 
+  @Override
+  public long getJwksCacheTimeToLive() {
+    return 0;
+  }
+
+  @Override
+  public long getJwksCacheRefreshTimeout() {
+    return 0;
+  }
+
 
   @Override
   public Set<String> getIssuersWithIgnoredTypeHeader() {

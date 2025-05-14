@@ -972,6 +972,18 @@ public interface GatewayConfig {
   long getJwksOutageCacheTTL();
 
   /**
+   * The time to live of the cached JWK set, in milliseconds.
+   * @return jwks cache TTL
+   */
+  long getJwksCacheTimeToLive();
+
+  /**
+   * The cache refresh timeout, in milliseconds.
+   * @return
+   */
+  long getJwksCacheRefreshTimeout();
+
+  /**
    * Some JWT tokens could be missing typ header.
    * This config skips typ validation for tokens issued by
    * configured Issuers.
