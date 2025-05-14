@@ -236,18 +236,19 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         long cacheTTL = config.getJwksCacheTimeToLive();
         long cacheTimeOut = config.getJwksCacheRefreshTimeout();
 
-        if(cachedJwkSources.get(jwksurl) == null) {
-          final JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(new URL(jwksurl))
+        JWKSource<SecurityContext> jwksSource = cachedJwkSources.get(jwksurl);
+
+        if(jwksSource == null) {
+          jwksSource = JWKSourceBuilder.create(new URL(jwksurl))
                   .cache(cacheTTL, cacheTimeOut)
                   .refreshAheadCache(true)
                   .retrying(true)
                   .outageTolerant(outageTTL)
                   .build();
-            cachedJwkSources.put(jwksurl, keySource);
+            cachedJwkSources.put(jwksurl, jwksSource);
         }
 
-
-        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, cachedJwkSources.get(jwksurl));
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwksSource);
 
         // Create a JWT processor for the access tokens
         ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
