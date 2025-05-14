@@ -32,6 +32,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -91,6 +92,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private char[] cachedSigningKeyPassphrase;
   private byte[] cachedSigningHmacSecret;
   private RSAPrivateKey signingKey;
+
+  /* Cache JWKS Key source which has its own cache for the jwk keys */
+  private Map<String, JWKSource<SecurityContext>> cachedJwkSources = new HashMap<>();
 
   private Optional<String> cachedSigningKeyID = Optional.empty();
 
@@ -232,13 +236,18 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         long cacheTTL = config.getJwksCacheTimeToLive();
         long cacheTimeOut = config.getJwksCacheRefreshTimeout();
 
-        JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(new URL(jwksurl))
-                .cache(cacheTTL, cacheTimeOut)
-                .refreshAheadCache(true)
-                .retrying(true)
-                .outageTolerant(outageTTL)
-                .build();
-        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, keySource);
+        if(cachedJwkSources.get(jwksurl) == null) {
+          final JWKSource<SecurityContext> keySource = JWKSourceBuilder.create(new URL(jwksurl))
+                  .cache(cacheTTL, cacheTimeOut)
+                  .refreshAheadCache(true)
+                  .retrying(true)
+                  .outageTolerant(outageTTL)
+                  .build();
+            cachedJwkSources.put(jwksurl, keySource);
+        }
+
+
+        JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, cachedJwkSources.get(jwksurl));
 
         // Create a JWT processor for the access tokens
         ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
