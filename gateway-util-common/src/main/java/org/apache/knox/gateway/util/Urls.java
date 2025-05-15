@@ -19,6 +19,7 @@ package org.apache.knox.gateway.util;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
@@ -79,6 +80,20 @@ public class Urls {
    */
   public static boolean containsUserInfo(String url) throws MalformedURLException {
     return (new URL(url).getUserInfo() != null);
+  }
+
+  /**
+   * Checks if a given URL is valid according to RFC2396.
+   * @param url a URL
+   * @return true if URL conforms to RFC2396, false otherwise.
+   */
+  public static boolean isValidURL(String url) {
+    try {
+      new URL(url).toURI();
+      return true;
+    } catch (MalformedURLException | URISyntaxException e) {
+      return false;
+    }
   }
 
   /**
