@@ -206,13 +206,13 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
 
     LOG.onError(t.toString());
     if (t.toString().contains("exceeds maximum size")) {
-      if(frontendSession != null && !frontendSession.isOpen()) {
+      if(frontendSession != null && frontendSession.isOpen()) {
         frontendSession.close(StatusCode.MESSAGE_TOO_LARGE, t.getMessage());
       }
     }
 
     else {
-      if(frontendSession != null && !frontendSession.isOpen()) {
+      if(frontendSession != null && frontendSession.isOpen()) {
         frontendSession.close(StatusCode.SERVER_ERROR, t.getMessage());
       }
       cleanup();
