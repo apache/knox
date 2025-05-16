@@ -44,7 +44,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -145,12 +144,8 @@ public class BadUrlTest {
     container.connectToServer(client,
         new URI(serverUri.toString() + "gateway/websocket/ws"));
 
-    client.awaitClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(),
-        5000, TimeUnit.MILLISECONDS);
-
-    Assert.assertThat(client.close.getCloseCode().getCode(),
-        CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));
-
+    Assert.assertTrue(client.awaitExpectedClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(), 5000L,
+            TimeUnit.MILLISECONDS));
   }
 
   private static void startGatewayServer() throws Exception {
