@@ -826,9 +826,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getAutoDeployTopologyNames() {
-    ArrayList<String> names = new ArrayList<>();
-    names.add("manager");
-    names.add("admin");
     return null;
   }
 
