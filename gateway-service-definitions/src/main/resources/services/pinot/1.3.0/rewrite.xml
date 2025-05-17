@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
-Licensed to the Apache Software Foundation (ASF) under one or more
+   Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
    this work for additional information regarding copyright ownership.
    The ASF licenses this file to You under the Apache License, Version 2.0
@@ -14,9 +15,6 @@ Licensed to the Apache Software Foundation (ASF) under one or more
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-
-
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <rules>
 
     <!-- Root -->
