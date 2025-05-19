@@ -18,33 +18,47 @@
 package org.apache.knox.gateway.ha.dispatch;
 
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.nio.client.methods.AsyncCharConsumer;
+import org.apache.http.nio.client.methods.HttpAsyncMethods;
+import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.ha.dispatch.i18n.HaDispatchMessages;
 import org.apache.knox.gateway.ha.provider.HaProvider;
-import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.sse.SSEDispatch;
+import org.apache.knox.gateway.sse.SSEResponse;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SSEHaDispatch extends SSEDispatch implements LBHaDispatch {
+public class SSEHaDispatch extends SSEDispatch implements CommonHaDispatch {
 
     protected static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
+
     protected HaProvider haProvider;
     private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
     private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
     private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
     private List<String> disableLoadBalancingForUserAgents = Collections.singletonList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
     private final boolean sslEnabled;
+
+    protected int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
+    protected int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
+    protected boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
+    private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
 
     /**
      * This activeURL is used to track urls when LB is turned off for some clients.
@@ -71,8 +85,7 @@ public class SSEHaDispatch extends SSEDispatch implements LBHaDispatch {
         super.init();
         LOG.initializingForResourceRole(getServiceRole());
         if (haProvider != null) {
-            HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(getServiceRole());
-            this.initializeLBHaDispatch(serviceConfig);
+            initializeCommonHaDispatch(haProvider.getHaDescriptor().getServiceConfig(getServiceRole()));
         }
     }
 
@@ -136,17 +149,100 @@ public class SSEHaDispatch extends SSEDispatch implements LBHaDispatch {
         activeURL.set(url);
     }
 
+    @Override
+    public int getMaxFailoverAttempts() {
+        return maxFailoverAttempts;
+    }
+
+    @Override
+    public void setMaxFailoverAttempts(int maxFailoverAttempts) {
+        this.maxFailoverAttempts = maxFailoverAttempts;
+    }
+
+    @Override
+    public int getFailoverSleep() {
+        return failoverSleep;
+    }
+
+    @Override
+    public void setFailoverSleep(int failoverSleep) {
+        this.failoverSleep = failoverSleep;
+    }
+
+    @Override
+    public void setFailoverNonIdempotentRequestEnabled(boolean enabled) {
+        this.failoverNonIdempotentRequestEnabled = enabled;
+    }
+
+    @Override
+    public boolean isFailoverNonIdempotentRequestEnabled() {
+        return failoverNonIdempotentRequestEnabled;
+    }
+
+    @Override
+    public void setNoFallbackEnabled(boolean enabled) {
+        this.noFallbackEnabled = enabled;
+    }
+
+    @Override
+    public boolean isNoFallbackEnabled() {
+        return noFallbackEnabled;
+    }
+
+    @Override
+    protected void executeAsyncRequest(HttpUriRequest outboundRequest, HttpServletResponse outboundResponse,
+                                     AsyncContext asyncContext, HttpServletRequest inboundRequest) {
+        HttpAsyncRequestProducer producer = HttpAsyncMethods.create(outboundRequest);
+        AsyncCharConsumer<SSEResponse> consumer = new SSECharConsumer(outboundResponse, outboundRequest.getURI(), asyncContext, inboundRequest, outboundRequest);
+        LOG.dispatchRequest(outboundRequest.getMethod(), outboundRequest.getURI());
+        auditor.audit(Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod(outboundRequest.getMethod()));
+        asyncClient.execute(producer, consumer, new SSEHaCallback(outboundResponse, asyncContext, producer, this, outboundRequest, inboundRequest));
+    }
+
+    protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletResponse outboundResponse,
+                                   HttpServletRequest inboundRequest, AsyncContext asyncContext) {
+
+        try {
+            if (disabledFailoverHandled(inboundRequest, outboundResponse)) {
+                asyncContext.complete();
+                return;
+            }
+
+            /* mark endpoint as failed */
+            final AtomicInteger counter = markEndpointFailed(outboundRequest, inboundRequest);
+            inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
+            if (counter.get() <= getMaxFailoverAttempts()) {
+                inboundRequest = prepareForFailover(outboundRequest, inboundRequest);
+                executeAsyncRequest(outboundRequest, outboundResponse, asyncContext, inboundRequest);
+            } else {
+                LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
+                outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, max failover attempts reached");
+                asyncContext.complete();
+            }
+        } catch (IOException e) {
+            asyncContext.complete();
+        }
+    }
 
     @Override
     protected void executeRequestWrapper(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) {
         boolean userAgentDisabled = isUserAgentDisabled(inboundRequest);
-        Optional<URI> backendURI = setBackendUri(outboundRequest, inboundRequest, userAgentDisabled);
+        setBackendUri(outboundRequest, inboundRequest, userAgentDisabled);
         executeRequest(outboundRequest, inboundRequest, outboundResponse);
-        shiftActiveURL(userAgentDisabled, backendURI);
     }
 
     @Override
     protected void outboundResponseWrapper(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest, final HttpServletResponse outboundResponse) {
         setKnoxHaCookie(outboundRequest, inboundRequest, outboundResponse, sslEnabled);
+    }
+
+    @Override
+    protected void shiftCallback(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
+        /*
+            Due to the async behavior shifting has to take place after a successful response-received event
+            and not in the executeRequest method. This is the same as in a sync dispatch.
+        */
+        boolean userAgentDisabled = isUserAgentDisabled(inboundRequest);
+        shiftActiveURL(userAgentDisabled, userAgentDisabled ? Optional.empty() : getBackendFromHaCookie(outboundRequest, inboundRequest));
     }
 }

@@ -25,7 +25,6 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.client.HttpAsyncClient;
@@ -52,7 +51,7 @@ import java.nio.charset.StandardCharsets;
 
 public class SSEDispatch extends ConfigurableDispatch {
 
-    private final HttpAsyncClient asyncClient;
+    protected final HttpAsyncClient asyncClient;
     private static final String TEXT_EVENT_STREAM_VALUE = "text/event-stream";
 
     public SSEDispatch(FilterConfig filterConfig) {
@@ -106,35 +105,16 @@ public class SSEDispatch extends ConfigurableDispatch {
         AsyncContext asyncContext = inboundRequest.startAsync();
         //No timeout
         asyncContext.setTimeout(0L);
-
-        HttpAsyncRequestProducer producer = HttpAsyncMethods.create(outboundRequest);
-        AsyncCharConsumer<SSEResponse> consumer = new SSECharConsumer(outboundResponse, outboundRequest.getURI(), asyncContext, inboundRequest, outboundRequest);
-        this.executeAsyncRequest(producer, consumer, outboundRequest);
+        this.executeAsyncRequest(outboundRequest, outboundResponse, asyncContext, inboundRequest);
     }
 
-    private void executeAsyncRequest(HttpAsyncRequestProducer producer, AsyncCharConsumer<SSEResponse> consumer, HttpUriRequest outboundRequest) {
+    protected void executeAsyncRequest(HttpUriRequest outboundRequest, HttpServletResponse outboundResponse,
+                                     AsyncContext asyncContext, HttpServletRequest inboundRequest) {
+        HttpAsyncRequestProducer producer = HttpAsyncMethods.create(outboundRequest);
+        AsyncCharConsumer<SSEResponse> consumer = new SSECharConsumer(outboundResponse, outboundRequest.getURI(), asyncContext, inboundRequest, outboundRequest);
         LOG.dispatchRequest(outboundRequest.getMethod(), outboundRequest.getURI());
         auditor.audit(Action.DISPATCH, outboundRequest.getURI().toString(), ResourceType.URI, ActionOutcome.UNAVAILABLE, RES.requestMethod(outboundRequest.getMethod()));
-        asyncClient.execute(producer, consumer, new FutureCallback<SSEResponse>() {
-
-            @Override
-            public void completed(final SSEResponse response) {
-                closeProducer(producer);
-                LOG.sseConnectionDone();
-            }
-
-            @Override
-            public void failed(final Exception ex) {
-                closeProducer(producer);
-                LOG.sseConnectionError(ex.getMessage());
-            }
-
-            @Override
-            public void cancelled() {
-                closeProducer(producer);
-                LOG.sseConnectionCancelled();
-            }
-        });
+        asyncClient.execute(producer, consumer, new SSECallback(outboundResponse, asyncContext, producer));
     }
 
     private void addAcceptHeader(HttpUriRequest outboundRequest) {
@@ -164,15 +144,11 @@ public class SSEDispatch extends ConfigurableDispatch {
         return (statusCode >= HttpStatus.SC_OK && statusCode < 300);
     }
 
-    private void closeProducer(HttpAsyncRequestProducer producer) {
-        try {
-            producer.close();
-        } catch (IOException e) {
-            LOG.sseProducerCloseError(e);
-        }
+    protected void shiftCallback(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
+        // No need to shift the URL for non-HA SSE requests
     }
 
-    private class SSECharConsumer extends AsyncCharConsumer<SSEResponse> {
+    protected class SSECharConsumer extends AsyncCharConsumer<SSEResponse> {
         private SSEResponse sseResponse;
         private final HttpServletResponse outboundResponse;
         private final HttpUriRequest outboundRequest;
@@ -180,7 +156,7 @@ public class SSEDispatch extends ConfigurableDispatch {
         private final URI url;
         private final AsyncContext asyncContext;
 
-        SSECharConsumer(HttpServletResponse outboundResponse, URI url, AsyncContext asyncContext, HttpServletRequest inboundRequest, HttpUriRequest outboundRequest) {
+        public SSECharConsumer(HttpServletResponse outboundResponse, URI url, AsyncContext asyncContext, HttpServletRequest inboundRequest, HttpUriRequest outboundRequest) {
             this.outboundResponse = outboundResponse;
             this.outboundRequest = outboundRequest;
             this.inboundRequest = inboundRequest;
@@ -197,6 +173,7 @@ public class SSEDispatch extends ConfigurableDispatch {
             } else {
                 handleErrorResponse(outboundResponse, url, inboundResponse);
             }
+            shiftCallback(outboundRequest, inboundRequest);
         }
 
         @Override
@@ -209,11 +186,6 @@ public class SSEDispatch extends ConfigurableDispatch {
                 LOG.errorWritingOutputStream(e);
                 throw new SSEException(e.getMessage(), e);
             }
-        }
-
-        @Override
-        protected void releaseResources() {
-            this.asyncContext.complete();
         }
 
         @Override
