@@ -95,27 +95,12 @@ public class WebsocketClient {
    * @param expectedCloseCode code to expect on close
    * @param timeoutDuration duration to wait
    * @param timeoutUnit duration unit
-   * @throws TimeoutException if waiting too long to close
+   * @throws InterruptedException if waiting is interrupted
    */
-  public void awaitClose(int expectedCloseCode, int timeoutDuration, TimeUnit timeoutUnit)
-      throws TimeoutException {
-
-    long msDur = TimeUnit.MILLISECONDS.convert(timeoutDuration, timeoutUnit);
-    long now = System.currentTimeMillis();
-    long expireOn = now + msDur;
-
-    while (close == null) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(10);
-      } catch (InterruptedException ignore) {
-        /* ignore */
-      }
-      if ((System.currentTimeMillis() > expireOn)) {
-        throw new TimeoutException("Timed out reading message from queue");
-      }
-
-    }
-
+  public boolean awaitExpectedClose(int expectedCloseCode, long timeoutDuration, TimeUnit timeoutUnit)
+          throws InterruptedException {
+      return closeLatch.await(timeoutDuration, timeoutUnit) &&
+              (close != null && close.getCloseCode().getCode() == expectedCloseCode);
   }
 
   public class MessageQueue extends BlockingArrayQueue<String> {

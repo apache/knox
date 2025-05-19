@@ -21,7 +21,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -31,7 +30,6 @@ import org.easymock.EasyMock;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -62,7 +60,7 @@ public class BadBackendTest {
    * Test for a message within limit.
    */
   @Test(timeout = 8000)
-  public void testBadBackEnd() throws IOException, Exception {
+  public void testBadBackEnd() throws Exception {
     final String message = "Echo";
 
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -72,10 +70,8 @@ public class BadBackendTest {
         proxyUri);
     session.getBasicRemote().sendText(message);
 
-    client.awaitClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(), 5000,
-        TimeUnit.MILLISECONDS);
-
-    Assert.assertThat(client.close.getCloseCode().getCode(), CoreMatchers.is(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode()));
+    Assert.assertTrue(client.awaitExpectedClose(CloseReason.CloseCodes.UNEXPECTED_CONDITION.getCode(), 5000L,
+            TimeUnit.MILLISECONDS));
   }
 
   private static void startProxy() throws Exception {
