@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.ha.dispatch.i18n.HaDispatchMessages;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
@@ -30,6 +31,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -38,14 +40,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public interface LBHaDispatch {
+public interface CommonHaDispatch {
 
     HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
     Map<String, String> urlToHashLookup = new HashMap<>();
     Map<String, String> hashToUrlLookup = new HashMap<>();
+    String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
+    List<String> nonIdempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
 
     boolean isStickySessionEnabled();
 
@@ -71,7 +76,25 @@ public interface LBHaDispatch {
 
     void setActiveURL(String url);
 
-    default void initializeLBHaDispatch(HaServiceConfig serviceConfig) {
+    int getMaxFailoverAttempts();
+
+    void setMaxFailoverAttempts(int maxFailoverAttempts);
+
+    int getFailoverSleep();
+
+    void setFailoverSleep(int failoverSleep);
+
+    void setFailoverNonIdempotentRequestEnabled(boolean enabled);
+
+    boolean isFailoverNonIdempotentRequestEnabled();
+
+    void setNoFallbackEnabled(boolean enabled);
+
+    boolean isNoFallbackEnabled();
+
+    URI getDispatchUrl(HttpServletRequest request);
+
+    default void initializeCommonHaDispatch(HaServiceConfig serviceConfig) {
         setLoadBalancingEnabled(serviceConfig.isLoadBalancingEnabled());
         setStickySessionsEnabled(isLoadBalancingEnabled() && serviceConfig.isStickySessionEnabled());
 
@@ -92,6 +115,12 @@ public interface LBHaDispatch {
         // Suffix the cookie name by the service to make it unique
         // The cookie path is NOT unique since Knox is stripping the service name.
         setStickySessionCookieName(getStickySessionCookieName() + '-' + getServiceRole());
+
+        // Set the failover parameters
+        setMaxFailoverAttempts(serviceConfig.getMaxFailoverAttempts());
+        setFailoverSleep(serviceConfig.getFailoverSleep());
+        setFailoverNonIdempotentRequestEnabled(serviceConfig.isFailoverNonIdempotentRequestEnabled());
+        setNoFallbackEnabled(isStickySessionEnabled() && serviceConfig.isNoFallbackEnabled());
     }
 
     default void setKnoxHaCookie(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest,
@@ -129,7 +158,7 @@ public interface LBHaDispatch {
         }
     }
 
-    default Optional<URI> setBackendFromHaCookie(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
+    default Optional<URI> getBackendFromHaCookie(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
         if (isLoadBalancingEnabled() && isStickySessionEnabled() && inboundRequest.getCookies() != null) {
             for (Cookie cookie : inboundRequest.getCookies()) {
                 if (getStickySessionCookieName().equals(cookie.getName())) {
@@ -148,6 +177,7 @@ public interface LBHaDispatch {
         }
         return Optional.empty();
     }
+
 
     default String hash(String url) {
         return DigestUtils.sha256Hex(url);
@@ -197,7 +227,7 @@ public interface LBHaDispatch {
         /* if disable LB is set don't bother setting backend from cookie */
         Optional<URI> backendURI = Optional.empty();
         if (!userAgentDisabled) {
-            backendURI = setBackendFromHaCookie(outboundRequest, inboundRequest);
+            backendURI = getBackendFromHaCookie(outboundRequest, inboundRequest);
             backendURI.ifPresent(uri -> ((HttpRequestBase) outboundRequest).setURI(uri));
         }
 
@@ -239,5 +269,74 @@ public interface LBHaDispatch {
                 getHaProvider().makeNextActiveURLAvailable(getServiceRole());
             }
         }
+    }
+
+    /**
+     * A helper method that marks an endpoint failed.
+     * Changes HA Provider state.
+     * Changes ActiveUrl state.
+     * Changes for inbound urls should be handled by calling functions.
+     *
+     * @param outboundRequest
+     * @param inboundRequest
+     * @return current failover counter
+     */
+    default AtomicInteger markEndpointFailed(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest) {
+        synchronized (this) {
+            getHaProvider().markFailedURL(getServiceRole(), outboundRequest.getURI().toString());
+            AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
+            if (counter == null) {
+                counter = new AtomicInteger(0);
+            }
+
+            if (counter.incrementAndGet() <= getMaxFailoverAttempts()) {
+                setupUrlHashLookup(); // refresh the url hash after failing a url
+                /* in case of failover update the activeURL variable */
+                getActiveURL().set(outboundRequest.getURI().toString());
+            }
+            return counter;
+        }
+    }
+
+    default HttpServletRequest prepareForFailover(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
+        //null out target url so that rewriters run again
+        inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
+        // Make sure to remove the ha cookie from the request
+        inboundRequest = new StickySessionCookieRemovedRequest(getStickySessionCookieName(), inboundRequest);
+        URI uri = getDispatchUrl(inboundRequest);
+        ((HttpRequestBase) outboundRequest).setURI(uri);
+        if (getFailoverSleep() > 0) {
+            try {
+                Thread.sleep(getFailoverSleep());
+            } catch (InterruptedException e) {
+                LOG.failoverSleepFailed(getServiceRole(), e);
+                Thread.currentThread().interrupt();
+            }
+        }
+        LOG.failingOverRequest(outboundRequest.getURI().toString());
+        return inboundRequest;
+    }
+
+    default boolean disabledFailoverHandled(HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
+        // Check whether the session cookie is present
+        Optional<Cookie> sessionCookie = Optional.empty();
+        if (inboundRequest.getCookies() != null) {
+            sessionCookie =
+                    Arrays.stream(inboundRequest.getCookies())
+                            .filter(cookie -> getStickySessionCookieName().equals(cookie.getName()))
+                            .findFirst();
+        }
+
+        // Check for a case where no fallback is configured
+        if (isStickySessionEnabled() && isNoFallbackEnabled() && sessionCookie.isPresent()) {
+            LOG.noFallbackError();
+            outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
+            return true;
+        }
+        return false;
+    }
+
+    default boolean isNonIdempotentAndNonIdempotentFailoverDisabled(HttpUriRequest outboundRequest) {
+        return !isFailoverNonIdempotentRequestEnabled() && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase);
     }
 }
