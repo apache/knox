@@ -17,6 +17,33 @@
  */
 package org.apache.knox.gateway.identityasserter.common.filter;
 
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.ROLE;
+import static org.apache.knox.gateway.identityasserter.common.filter.VirtualGroupMapper.addRequestFunctions;
+
+import java.io.IOException;
+import java.security.AccessController;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.stream.Collectors;
+import javax.security.auth.Subject;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.IdentityAsserterMessages;
@@ -35,58 +62,25 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.AuthorizationException;
 import org.apache.knox.gateway.util.HttpExceptionUtils;
 
-import javax.security.auth.Subject;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.security.AccessController;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.stream.Collectors;
-
-import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
-import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.ROLE;
-import static org.apache.knox.gateway.identityasserter.common.filter.VirtualGroupMapper.addRequestFunctions;
-
 public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilter {
+    private static final IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
+
     public static final String VIRTUAL_GROUP_MAPPING_PREFIX = "group.mapping.";
     public static final String GROUP_PRINCIPAL_MAPPING = "group.principal.mapping";
     public static final String PRINCIPAL_MAPPING = "principal.mapping";
     public static final String ADVANCED_PRINCIPAL_MAPPING = "expression.principal.mapping";
-    private static final IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
     private static final String PRINCIPAL_PARAM = "user.name";
     private static final String DOAS_PRINCIPAL_PARAM = "doAs";
+    static final String IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYUSER_PREFIX + ".impersonation.enabled";
+
+    private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
+    private final Parser parser = new Parser();
+    private VirtualGroupMapper virtualGroupMapper;
     /* List of all default and configured impersonation params */
     protected final List<String> impersonationParamsList = new ArrayList<>();
-    private final Parser parser = new Parser();
     protected boolean impersonationEnabled;
-    private SimplePrincipalMapper mapper = new SimplePrincipalMapper();
-    private VirtualGroupMapper virtualGroupMapper;
     private AbstractSyntaxTree expressionPrincipalMapping;
     private String topologyName;
-
-    private static List<String> virtualGroupParameterNames(List<String> initParameterNames) {
-        return initParameterNames == null ? new ArrayList<>()
-                : initParameterNames.stream().filter(name -> name.startsWith(VIRTUAL_GROUP_MAPPING_PREFIX)).collect(Collectors.toList());
-    }
-
-    private static String[] unique(String[] groups) {
-        return new HashSet<>(Arrays.asList(groups)).toArray(new String[0]);
-    }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -153,7 +147,9 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     }
 
     private void initProxyUserConfiguration(FilterConfig filterConfig, List<String> initParameterNames) {
-        impersonationEnabled = shouldAddImpersonationProvider(filterConfig);
+        final String impersonationEnabledValue = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);
+        impersonationEnabled = impersonationEnabledValue == null ? Boolean.FALSE : Boolean.parseBoolean(impersonationEnabledValue);
+
         if (impersonationEnabled) {
             if (AuthFilterUtils.hasProxyConfig(topologyName, "HadoopAuth")) {
                 LOG.ignoreProxyuserConfig();
@@ -165,17 +161,6 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         } else {
             filterConfig.getServletContext().setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.FALSE);
         }
-    }
-
-    /**
-     * Check if the impersonation provider should be added to the filter chain based on
-     * user and group impersonation settings.
-     *
-     * @param filterConfig
-     * @return
-     */
-    boolean shouldAddImpersonationProvider(final FilterConfig filterConfig) {
-        return AuthFilterUtils.isImpersonationEnabled(filterConfig);
     }
 
     boolean isImpersonationEnabled() {
@@ -219,6 +204,11 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         }
     }
 
+    private static List<String> virtualGroupParameterNames(List<String> initParameterNames) {
+        return initParameterNames == null ? new ArrayList<>()
+                : initParameterNames.stream().filter(name -> name.startsWith(VIRTUAL_GROUP_MAPPING_PREFIX)).collect(Collectors.toList());
+    }
+
     @Override
     public void destroy() {
     }
@@ -231,41 +221,56 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
+
+        final Subject subject = getSubject();
+        String mappedPrincipalName = null;
+        try {
+            mappedPrincipalName = handleProxyUserImpersonation(request, subject);
+        } catch(AuthorizationException e) {
+            LOG.hadoopAuthProxyUserFailed(e);
+            HttpExceptionUtils.createServletExceptionResponse((HttpServletResponse) response, HttpServletResponse.SC_FORBIDDEN, e);
+            return;
+        }
+
+        mappedPrincipalName = getMappedPrincipalName(request, mappedPrincipalName, subject);
+        String[] groups = getMappedGroups(request, mappedPrincipalName, subject);
+
+        HttpServletRequestWrapper wrapper = wrapHttpServletRequest(request, mappedPrincipalName);
+
+        continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+    }
+
+    protected String[] getMappedGroups(ServletRequest request, String mappedPrincipalName, Subject subject) {
+        String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
+        String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
+        String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
+        groups = combineGroupMappings(mappedGroups, groups);
+        groups = combineGroupMappings(virtualGroups, groups);
+        return groups;
+    }
+
+    protected String getMappedPrincipalName(ServletRequest request, String mappedPrincipalName, Subject subject) {
+        String mprincipalName = mappedPrincipalName;
+        // mapping principal name using user principal mapping (if configured)
+        mprincipalName = mapUserPrincipalBase(mprincipalName);
+        mprincipalName = mapUserPrincipal(mprincipalName);
+        if (expressionPrincipalMapping != null) {
+            String result = evalAdvancedPrincipalMapping(request, subject, mprincipalName);
+            if (result != null) {
+                mprincipalName = result;
+            }
+        }
+        return mprincipalName;
+    }
+
+    protected Subject getSubject() {
         Subject subject = Subject.getSubject(AccessController.getContext());
 
         if (subject == null) {
             LOG.subjectNotAvailable();
             throw new IllegalStateException("Required Subject Missing");
         }
-
-        String mappedPrincipalName = null;
-        try {
-            mappedPrincipalName = handleProxyUserImpersonation(request, subject);
-        } catch (AuthorizationException e) {
-            LOG.hadoopAuthProxyUserFailed(e);
-            HttpExceptionUtils.createServletExceptionResponse((HttpServletResponse) response, HttpServletResponse.SC_FORBIDDEN, e);
-            return;
-        }
-
-        // mapping principal name using user principal mapping (if configured)
-        mappedPrincipalName = mapUserPrincipalBase(mappedPrincipalName);
-        mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
-        if (expressionPrincipalMapping != null) {
-            String result = evalAdvancedPrincipalMapping(request, subject, mappedPrincipalName);
-            if (result != null) {
-                mappedPrincipalName = result;
-            }
-        }
-        String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
-        String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
-        String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
-        groups = combineGroupMappings(mappedGroups, groups);
-        groups = combineGroupMappings(virtualGroups, groups);
-
-        HttpServletRequestWrapper wrapper = wrapHttpServletRequest(request, mappedPrincipalName);
-
-
-        continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+        return subject;
     }
 
     private String evalAdvancedPrincipalMapping(ServletRequest request, Subject subject, String originalPrincipal) {
@@ -275,14 +280,14 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         addRequestFunctions(request, interpreter);
         Object mappedPrincipal = interpreter.eval(expressionPrincipalMapping);
         if (mappedPrincipal instanceof String) {
-            return (String) mappedPrincipal;
+            return (String)mappedPrincipal;
         } else {
             LOG.invalidAdvancedPrincipalMappingResult(originalPrincipal, expressionPrincipalMapping, mappedPrincipal);
             return null;
         }
     }
 
-    private String handleProxyUserImpersonation(ServletRequest request, Subject subject) throws AuthorizationException {
+    protected String handleProxyUserImpersonation(ServletRequest request, Subject subject) throws AuthorizationException {
         String principalName = SubjectUtils.getEffectivePrincipalName(subject);
         if (impersonationEnabled) {
             final String doAsUser = request.getParameter(AuthFilterUtils.QUERY_PARAMETER_DOAS);
@@ -306,10 +311,15 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         return result;
     }
 
+    protected static String[] unique(String[] groups) {
+        return new HashSet<>(Arrays.asList(groups)).toArray(new String[0]);
+    }
+
     protected String[] combineGroupMappings(String[] mappedGroups, String[] groups) {
         if (mappedGroups != null && groups != null) {
             return ArrayUtils.addAll(mappedGroups, groups);
-        } else {
+        }
+        else {
             return groups != null ? groups : mappedGroups;
         }
     }

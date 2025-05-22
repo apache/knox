@@ -27,14 +27,13 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_IMPERSONATION_MODE;
-import static org.apache.knox.gateway.util.AuthFilterUtils.IMPERSONATION_MODE;
 
 /**
  * An extension of Hadoop's DefaultImpersonationProvider that adds support for group-based impersonation.
@@ -46,22 +45,13 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     private static final String CONF_USERS = ".users";
     private static final String CONF_GROUPS = ".groups";
     private final Map<String, AccessControlList> proxyGroupsAcls = new HashMap<>();
-    /* is the proxy user configuration enabled  */
-    boolean isProxyUserEnabled = true;
-    /* is the proxy group configuration enabled, defaulting it to false for backwards compatibility  */
-    boolean isProxyGroupEnabled;
+    EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
     private Map<String, MachineList> groupProxyHosts = new HashMap<>();
     private String groupConfigPrefix;
-    private String impersonationMode = DEFAULT_IMPERSONATION_MODE;
 
-    public GroupBasedImpersonationProvider() {
+    public GroupBasedImpersonationProvider(EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags) {
         super();
-    }
-
-    public GroupBasedImpersonationProvider(boolean isProxyUserEnabled, boolean isProxyGroupEnabled) {
-        super();
-        this.isProxyUserEnabled = isProxyUserEnabled;
-        this.isProxyGroupEnabled = isProxyGroupEnabled;
+        this.impersonationFlags = impersonationFlags;
     }
 
     @Override
@@ -74,13 +64,12 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
         super.setConf(conf);
     }
 
-    public void init(String configurationPrefix, String proxyGroupPrefix) {
-        super.init(configurationPrefix);
+    @Override
+    public void init(String proxyGroupPrefix) {
         initGroupBasedProvider(proxyGroupPrefix);
     }
 
     private void initGroupBasedProvider(String proxyGroupPrefix) {
-        impersonationMode = getConf().get(IMPERSONATION_MODE, DEFAULT_IMPERSONATION_MODE);
         groupConfigPrefix = proxyGroupPrefix +
                 (proxyGroupPrefix.endsWith(".") ? "" : ".");
 
@@ -126,86 +115,69 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
         return key;
     }
 
+    /**
+     * Authorization based on groups that are already in Subject
+     *
+     * @param user the user information attempting the operation, which includes the real
+     *             user and the effective impersonated user.
+     * @param remoteAddress the remote address from which the user is connecting.
+     * @throws AuthorizationException if the user is not authorized based on the
+     *                                configured impersonation and group policies.
+     */
     @Override
     public void authorize(UserGroupInformation user, InetAddress remoteAddress) throws AuthorizationException {
         // If both authorization methods are disabled, allow the operation to proceed
-        if (!isProxyUserEnabled && !isProxyGroupEnabled) {
+        if (impersonationFlags.isEmpty() || !impersonationFlags.contains(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION)) {
             LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
             return;
         }
-
-        boolean isProxyUserAuthorized = false;
-        boolean isProxyGroupAuthorized = false;
-        if (isProxyUserEnabled) {
-            /* authorize proxy user */
-            isProxyUserAuthorized = checkProxyUserAuthorization(user, remoteAddress);
-            /* In case of AND no reason to check for proxy groups if isProxyUserAuthorized=false */
-            if("AND".equalsIgnoreCase(impersonationMode) && !isProxyUserAuthorized) {
-                throw new AuthorizationException("User: " + user.getRealUser().getUserName()
-                        + " is not allowed to impersonate " + user.getUserName());
-            }
-        }
-
-        if (isProxyGroupEnabled) {
-            /* check for proxy group impersonation */
-            isProxyGroupAuthorized = checkProxyGroupAuthorization(user, remoteAddress);
-        }
-
-        if("AND".equalsIgnoreCase(impersonationMode)) {
-            if (isProxyUserAuthorized && isProxyGroupAuthorized) {
-                LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
-            } else {
-                throw new AuthorizationException("User: " + user.getRealUser().getUserName()
-                        + " is not allowed to impersonate " + user.getUserName());
-            }
-
-        } else {
-            /* OR */
-            if (isProxyUserAuthorized || isProxyGroupAuthorized) {
-                LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
-            } else {
-                throw new AuthorizationException("User: " + user.getRealUser().getUserName()
-                        + " is not allowed to impersonate " + user.getUserName());
-            }
-        }
+        checkProxyGroupAuthorization(user, remoteAddress, Collections.emptyList());
     }
 
     /**
-     * Helper method to check if the user is authorized to impersonate
-     * Returns true if the user is authorized, false otherwise.
-     * @param user
-     * @param remoteAddress
-     * @return
+     * Authorization based on groups that are provided as a function agument
+     *
+     * @param user the user information attempting the operation, which includes the real
+     *             user and the effective impersonated user.
+     * @param groups the list of groups to check for authorization.
+     * @param remoteAddress the remote address from which the user is connecting.
+     * @throws AuthorizationException if the user is not authorized based on the
+     *                                configured impersonation and group policies.
      */
-    private boolean checkProxyUserAuthorization(final UserGroupInformation user, final InetAddress remoteAddress) {
-        try {
-            super.authorize(user, remoteAddress);
-            return true;
-        } catch (final AuthorizationException e) {
-            LOG.failedToImpersonateUser(user.getRealUser().getUserName(), remoteAddress.getHostAddress());
-            return false;
+    public void authorize(UserGroupInformation user, InetAddress remoteAddress, List<String> groups) throws AuthorizationException {
+        // If both authorization methods are disabled, allow the operation to proceed
+        if (impersonationFlags.isEmpty() || !impersonationFlags.contains(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION)) {
+            LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
+            return;
         }
+        checkProxyGroupAuthorization(user, remoteAddress, groups);
     }
 
     /**
      * Helper method to check if the group a given user belongs to is authorized to impersonate
      * Returns true if the user is authorized, false otherwise.
+     *
      * @param user
      * @param remoteAddress
      * @return
      */
-    private boolean checkProxyGroupAuthorization(final UserGroupInformation user, final InetAddress remoteAddress) {
+    private void checkProxyGroupAuthorization(final UserGroupInformation user, final InetAddress remoteAddress, List<String> groups) throws AuthorizationException {
         if (user == null) {
             throw new IllegalArgumentException("user is null.");
         }
 
         final UserGroupInformation realUser = user.getRealUser();
         if (realUser == null) {
-            return true;
+            return;
         }
 
         // Get the real user's groups (both real and virtual)
         Set<String> realUserGroups = new HashSet<>();
+        /* Add provided groups */
+        if(groups != null && !groups.isEmpty()) {
+            realUserGroups.addAll(groups);
+        }
+        /* Add groups from subject */
         if (user.getRealUser().getGroupNames() != null) {
             Collections.addAll(realUserGroups, user.getRealUser().getGroupNames());
         }
@@ -226,7 +198,9 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
 
         if (!proxyGroupFound) {
             LOG.failedToImpersonateGroups(realUser.getUserName(), realUserGroups.toString(), user.getUserName());
-            return false;
+            throw new AuthorizationException("User: " + realUser.getUserName()
+                    + " with groups " + realUserGroups.toString()
+                    + " is not allowed to impersonate " + user.getUserName());
         }
 
         boolean proxyGroupHostFound = false;
@@ -243,10 +217,12 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
 
         if (!proxyGroupHostFound) {
             LOG.failedToImpersonateGroupsFromAddress(realUser.getUserName(), realUserGroups.toString(), user.getUserName(), remoteAddress.toString());
-            return false;
+            throw new AuthorizationException("User: " + realUser.getUserName()
+                    + "with groups " + realUserGroups.toString()
+                    + " from address " + remoteAddress.toString()
+                    + " is not allowed to impersonate " + user.getUserName());
         }
 
         /* all checks pass */
-        return true;
     }
 }

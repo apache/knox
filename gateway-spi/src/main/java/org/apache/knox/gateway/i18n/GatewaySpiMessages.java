@@ -103,7 +103,7 @@ public interface GatewaySpiMessages {
   @Message(level = MessageLevel.ERROR, text = "Unauthorized connection for super-user: {0} from IP remoteAddress {1}")
   void failedToImpersonateUser(String user, String address);
 
-  @Message(level = MessageLevel.ERROR, text = "User {0} is allowed to impersonate user {1}")
+  @Message(level = MessageLevel.INFO, text = "User {0} is allowed to impersonate user {1}")
   void successfulImpersonation(String user, String iuser);
 
   @Message(level = MessageLevel.ERROR, text = "User {0} with groups {1} is not allowed to impersonate {2}")

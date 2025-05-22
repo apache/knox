@@ -24,10 +24,10 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.mockito.Mockito;
 
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYGROUP_PREFIX;
-import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYUSER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -40,7 +40,10 @@ public class GroupBasedImpersonationProviderTest {
 
     @Before
     public void setUp() {
-        provider = new GroupBasedImpersonationProvider(true, true);
+        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
+        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION);
+        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.USER_IMPERSONATION);
+        provider = new GroupBasedImpersonationProvider(impersonationFlags);
         config = new Configuration();
 
         config.set("hadoop.proxyuser.testuser.groups", "*");
@@ -54,7 +57,7 @@ public class GroupBasedImpersonationProviderTest {
         config.set("hadoop.proxygroup.virtual group_3.groups", "*");
         config.set("hadoop.proxygroup.virtual group_3.hosts", "*");
         provider.setConf(config);
-        provider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+        provider.init(PROXYGROUP_PREFIX);
     }
 
     @Test
@@ -132,7 +135,10 @@ public class GroupBasedImpersonationProviderTest {
     @Test
     public void testAuthorizationSuccessWithOnlyProxyGroupsConfigured() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
 
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(false, true);
+        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
+        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION);
+
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
         Configuration gConfig = new Configuration();
         // Setup 3 proxy users
         gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
@@ -142,7 +148,7 @@ public class GroupBasedImpersonationProviderTest {
         gConfig.set("hadoop.proxygroup.virtual group_3.groups", "*");
         gConfig.set("hadoop.proxygroup.virtual group_3.hosts", "*");
         gProvider.setConf(gConfig);
-        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+        gProvider.init(PROXYGROUP_PREFIX);
 
         String proxyUser = "testuser";
         String[] proxyGroups = {"virtual_group_1"};
@@ -165,7 +171,7 @@ public class GroupBasedImpersonationProviderTest {
         gProvider.authorize(userGroupInformation, "2.2.2.2");
     }
 
-    @Test(expected = org.apache.hadoop.security.authorize.AuthorizationException.class)
+    @Test(timeout = 100000000, expected = org.apache.hadoop.security.authorize.AuthorizationException.class)
     public void testAuthorizationFailure() throws Exception {
         String proxyUser = "dummyUser";
         String[] proxyGroups = {"virtual group_3"};
@@ -189,10 +195,12 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithBothProxyMethodsDisabled() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(false, false);
+        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
+
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
         Configuration gConfig = new Configuration();
         gProvider.setConf(gConfig);
-        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+        gProvider.init(PROXYGROUP_PREFIX);
 
         String proxyUser = "testuser";
         String[] proxyGroups = {"virtual_group_1"};
@@ -222,7 +230,9 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithOnlyProxyUserConfigured() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(true, false);
+        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
+        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.USER_IMPERSONATION);
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
         Configuration gConfig = new Configuration();
 
         // Setup proxy user configuration
@@ -230,7 +240,7 @@ public class GroupBasedImpersonationProviderTest {
         gConfig.set("hadoop.proxyuser.testuser.hosts", "*");
 
         gProvider.setConf(gConfig);
-        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+        gProvider.init(PROXYGROUP_PREFIX);
 
         String proxyUser = "testuser";
         String[] proxyGroups = {"somegroup"};
@@ -262,7 +272,10 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithBothProxyMethodsEnabledAndMode() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(true, true);
+        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
+        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.USER_IMPERSONATION);
+        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION);
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
         Configuration gConfig = new Configuration();
 
         // Set impersonation mode to AND
@@ -277,7 +290,7 @@ public class GroupBasedImpersonationProviderTest {
         gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
 
         gProvider.setConf(gConfig);
-        gProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
+        gProvider.init(PROXYGROUP_PREFIX);
 
         String proxyUser = "testuser";
         String[] proxyGroups = {"virtual_group_1"};

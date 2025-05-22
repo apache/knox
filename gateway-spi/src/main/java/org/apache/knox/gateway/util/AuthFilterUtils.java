@@ -17,20 +17,11 @@
  */
 package org.apache.knox.gateway.util;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authorize.ImpersonationProvider;
-import org.apache.knox.gateway.i18n.GatewaySpiMessages;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.Principal;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,27 +30,57 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authorize.DefaultImpersonationProvider;
+import org.apache.hadoop.security.authorize.ImpersonationProvider;
+import org.apache.knox.gateway.i18n.GatewaySpiMessages;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+
 public class AuthFilterUtils {
     public static final String DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM = "/knoxtoken/api/v1/jwks.json";
     public static final String PROXYUSER_PREFIX = "hadoop.proxyuser";
-    public static final String PROXYGROUP_PREFIX = "hadoop.proxygroup";
-    public static final String IMPERSONATION_MODE = "hadoop.impersonation.mode";
-    public static final String DEFAULT_IMPERSONATION_MODE = "OR";
     public static final String QUERY_PARAMETER_DOAS = "doAs";
     public static final String REAL_USER_NAME_ATTRIBUTE = "real.user.name";
     public static final String DO_GLOBAL_LOGOUT_ATTRIBUTE = "do.global.logout";
+
+    public static final String PROXYGROUP_PREFIX = "hadoop.proxygroup";
+    public static final String IMPERSONATION_MODE = "hadoop.impersonation.mode";
+    public static final String DEFAULT_IMPERSONATION_MODE = "OR";
     public static final String IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYUSER_PREFIX + ".impersonation.enabled";
     public static final String GROUP_IMPERSONATION_ENABLED_PARAM = AuthFilterUtils.PROXYGROUP_PREFIX + ".impersonation.enabled";
-
 
     private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
     private static final Map<String, Map<String, ImpersonationProvider>> TOPOLOGY_IMPERSONATION_PROVIDERS = new ConcurrentHashMap<>();
     private static final Lock refreshSuperUserGroupsLock = new ReentrantLock();
 
     /**
+     * Represents the modes of impersonation that can be configured and used
+     * within the authentication process.
+     *
+     * USER_IMPERSONATION:
+     * Indicates that the impersonation process is based on a user identity.
+     * This is typically used when one user needs to act on behalf of another.
+     *
+     * GROUP_IMPERSONATION:
+     * Represents group-based impersonation where actions can be performed
+     * based on group roles or permissions.
+     */
+    public enum ImpersonationFlags {
+        USER_IMPERSONATION, GROUP_IMPERSONATION
+    }
+
+
+    /**
      * A helper method that checks whether request contains
      * unauthenticated path
-     *
      * @param request
      * @return
      */
@@ -72,7 +93,6 @@ public class AuthFilterUtils {
     /**
      * A helper method that parses a string and adds to the
      * provided unauthenticated set.
-     *
      * @param unAuthenticatedPaths
      * @param list
      */
@@ -86,7 +106,6 @@ public class AuthFilterUtils {
     /**
      * A method that parses a string (delimiters = ;,) and adds them to the
      * provided un-authenticated path set.
-     *
      * @param unAuthenticatedPaths
      * @param list
      * @param defaultList
@@ -99,6 +118,14 @@ public class AuthFilterUtils {
             AuthFilterUtils.parseStringThenAdd(unAuthenticatedPaths, list);
         }
     }
+
+    public static void refreshSuperUserGroupsConfiguration(ServletContext context, List<String> initParameterNames, String topologyName, String role) {
+        if (context == null) {
+            throw new IllegalArgumentException("Cannot get proxyuser configuration from NULL context");
+        }
+        refreshSuperUserGroupsConfiguration(context, null, initParameterNames, topologyName, role);
+    }
+
     public static void refreshSuperUserGroupsConfiguration(FilterConfig filterConfig, List<String> initParameterNames, String topologyName, String role) {
         if (filterConfig == null) {
             throw new IllegalArgumentException("Cannot get proxyuser configuration from NULL filter config");
@@ -107,48 +134,50 @@ public class AuthFilterUtils {
     }
 
     private static void refreshSuperUserGroupsConfiguration(ServletContext context, FilterConfig filterConfig, List<String> initParameterNames, String topologyName, String role) {
-        if (filterConfig == null) {
-            throw new IllegalArgumentException("Cannot get proxyuser configuration from NULL filter config");
-        }
-
         final Configuration conf = new Configuration(false);
         if (initParameterNames != null) {
             initParameterNames.stream().filter(name -> name.startsWith(PROXYUSER_PREFIX + ".")).forEach(name -> {
                 String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
                 conf.set(name, value);
             });
+        }
 
+        saveImpersonationProvider(topologyName, role, conf, new DefaultImpersonationProvider(), PROXYUSER_PREFIX);
+    }
+
+    /* For proxy groups */
+    public static void refreshProxyGroupsConfiguration(FilterConfig filterConfig, List<String> initParameterNames, String topologyName, String role) {
+        if (filterConfig == null) {
+            throw new IllegalArgumentException("Cannot get proxyuser configuration from NULL filter config");
+        }
+        refreshProxyGroupsConfiguration(null, filterConfig, initParameterNames, topologyName, role);
+    }
+
+    private static void refreshProxyGroupsConfiguration(ServletContext context, FilterConfig filterConfig, List<String> initParameterNames, String topologyName, String role) {
+        final Configuration conf = new Configuration(false);
+        if (initParameterNames != null) {
             initParameterNames.stream().filter(name -> name.startsWith(PROXYGROUP_PREFIX + ".")).forEach(name -> {
                 String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
                 conf.set(name, value);
             });
-
             initParameterNames.stream().filter(name -> name.startsWith(IMPERSONATION_MODE + ".")).forEach(name -> {
                 String value = context == null ? filterConfig.getInitParameter(name) : context.getInitParameter(name);
                 conf.set(name, value);
             });
-
-
         }
-
-        saveImpersonationProvider(filterConfig, topologyName, role, conf);
+        /* For proxy group use GroupBasedImpersonationProvider */
+        saveImpersonationProvider(topologyName, role, conf, new GroupBasedImpersonationProvider(getImpersonationEnabledFlags(filterConfig)), PROXYGROUP_PREFIX);
     }
 
-    private static void saveImpersonationProvider(FilterConfig filterConfig, String topologyName, String role, final Configuration conf) {
+
+    private static void saveImpersonationProvider(String topologyName, String role, final Configuration conf, final ImpersonationProvider impersonationProvider, final String prefix) {
         refreshSuperUserGroupsLock.lock();
         try {
-            boolean[] impersonationFlags = getImpersonationEnabledFlags(filterConfig);
-            boolean isProxyUserEnabled = impersonationFlags[0];
-            boolean isProxyGroupEnabled = impersonationFlags[1];
-
-            final GroupBasedImpersonationProvider groupBasedImpersonationProvider = new GroupBasedImpersonationProvider(isProxyUserEnabled, isProxyGroupEnabled);
-            groupBasedImpersonationProvider.setConf(conf);
-            groupBasedImpersonationProvider.init(PROXYUSER_PREFIX, PROXYGROUP_PREFIX);
-            LOG.createImpersonationProvider(topologyName, role, PROXYUSER_PREFIX, conf.getPropsWithPrefix(PROXYUSER_PREFIX + ".").toString());
-            LOG.createImpersonationProvider(topologyName, role, PROXYGROUP_PREFIX, conf.getPropsWithPrefix(PROXYGROUP_PREFIX + ".").toString());
-
+            impersonationProvider.setConf(conf);
+            impersonationProvider.init(prefix);
+            LOG.createImpersonationProvider(topologyName, role, prefix, conf.getPropsWithPrefix(prefix + ".").toString());
             TOPOLOGY_IMPERSONATION_PROVIDERS.putIfAbsent(topologyName, new ConcurrentHashMap<String, ImpersonationProvider>());
-            TOPOLOGY_IMPERSONATION_PROVIDERS.get(topologyName).put(role, groupBasedImpersonationProvider);
+            TOPOLOGY_IMPERSONATION_PROVIDERS.get(topologyName).put(role, impersonationProvider);
         } finally {
             refreshSuperUserGroupsLock.unlock();
         }
@@ -188,6 +217,14 @@ public class AuthFilterUtils {
         return null;
     }
 
+    public static void authorizeGroupImpersonationRequest(HttpServletRequest request, String remoteUser, String doAsUser, String topologyName, String role, List<String> groups) throws AuthorizationException {
+        final UserGroupInformation remoteRequestUgi = getRemoteRequestUgi(remoteUser, doAsUser);
+
+        if (remoteRequestUgi != null) {
+            authorizeImpersonationRequest(request, remoteRequestUgi, topologyName, role, groups);
+        }
+    }
+
     public static void authorizeImpersonationRequest(HttpServletRequest request, String remoteUser, String doAsUser, String topologyName, String role) throws AuthorizationException {
         final UserGroupInformation remoteRequestUgi = getRemoteRequestUgi(remoteUser, doAsUser);
         if (remoteRequestUgi != null) {
@@ -197,13 +234,23 @@ public class AuthFilterUtils {
 
     private static void authorizeImpersonationRequest(HttpServletRequest request, UserGroupInformation remoteRequestUgi, String topologyName, String role)
             throws AuthorizationException {
+        authorizeImpersonationRequest(request, remoteRequestUgi, topologyName, role, Collections.emptyList());
+    }
+
+    private static void authorizeImpersonationRequest(HttpServletRequest request, UserGroupInformation remoteRequestUgi, String topologyName, String role, List<String> groups)
+            throws AuthorizationException {
 
         final ImpersonationProvider impersonationProvider = getImpersonationProvider(topologyName, role);
 
         if (impersonationProvider != null) {
             try {
-                impersonationProvider.authorize(remoteRequestUgi, request.getRemoteAddr());
-            } catch (org.apache.hadoop.security.authorize.AuthorizationException e) {
+                if (impersonationProvider instanceof GroupBasedImpersonationProvider) {
+                    ((GroupBasedImpersonationProvider) impersonationProvider).authorize(remoteRequestUgi, InetAddress.getByName(request.getRemoteAddr()), groups);
+                } else {
+                    impersonationProvider.authorize(remoteRequestUgi, request.getRemoteAddr());
+                }
+
+            } catch (org.apache.hadoop.security.authorize.AuthorizationException | UnknownHostException e) {
                 throw new AuthorizationException(e);
             }
         } else {
@@ -256,8 +303,8 @@ public class AuthFilterUtils {
      * collection should be used instead.
      *
      * @return the names of the filter's initialization parameters as a List of
-     * String objects, or an empty List if the filter has no initialization
-     * parameters.
+     *         String objects, or an empty List if the filter has no initialization
+     *         parameters.
      */
     public static List<String> getInitParameterNamesAsList(FilterConfig filterConfig) {
         return filterConfig.getInitParameterNames() == null ? Collections.emptyList() : Collections.list(filterConfig.getInitParameterNames());
@@ -278,31 +325,27 @@ public class AuthFilterUtils {
      * @return A boolean array where the first element indicates if user impersonation is enabled
      *         and the second element indicates if group impersonation is enabled
      */
-    public static boolean[] getImpersonationEnabledFlags(final FilterConfig filterConfig) {
+    public static EnumSet<ImpersonationFlags> getImpersonationEnabledFlags(final FilterConfig filterConfig) {
         boolean userImpersonationEnabledValue = false;
         boolean groupImpersonationEnabledValue = false;
+        final EnumSet <ImpersonationFlags> impersonationFlags = EnumSet.noneOf(ImpersonationFlags.class);
         /* Check if user or group impersonation is enabled */
         if (filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM) != null) {
             String userImpersonationEnabledString = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);
             userImpersonationEnabledValue = userImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(userImpersonationEnabledString);
+            if(userImpersonationEnabledValue) {
+                impersonationFlags.add(ImpersonationFlags.USER_IMPERSONATION);
+            }
         }
 
         if (filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM) != null) {
             String groupImpersonationEnabledString = filterConfig.getInitParameter(GROUP_IMPERSONATION_ENABLED_PARAM);
             groupImpersonationEnabledValue = groupImpersonationEnabledString == null ? Boolean.FALSE : Boolean.parseBoolean(groupImpersonationEnabledString);
+            if(groupImpersonationEnabledValue) {
+                impersonationFlags.add(ImpersonationFlags.GROUP_IMPERSONATION);
+            }
         }
-        return new boolean[] { userImpersonationEnabledValue, groupImpersonationEnabledValue };
-    }
-
-    /**
-     * Check if either user or group impersonation is enabled based on filter configuration.
-     *
-     * @param filterConfig The filter configuration
-     * @return true if either user or group impersonation is enabled, false otherwise
-     */
-    public static boolean isImpersonationEnabled(final FilterConfig filterConfig) {
-        boolean[] flags = getImpersonationEnabledFlags(filterConfig);
-        return flags[0] || flags[1];
+        return impersonationFlags;
     }
 
 }
