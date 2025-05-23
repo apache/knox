@@ -138,4 +138,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to close SSE producer" )
   void sseProducerCloseError(@StackTrace(level=MessageLevel.ERROR) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to send error to client" )
+  void failedToSendErrorToClient(@StackTrace(level=MessageLevel.ERROR) Exception e);
 }

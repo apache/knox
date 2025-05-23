@@ -18,25 +18,19 @@
 package org.apache.knox.gateway.ha.dispatch;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
-import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.ha.dispatch.i18n.HaDispatchMessages;
 import org.apache.knox.gateway.ha.provider.HaProvider;
-import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -49,9 +43,7 @@ import static org.apache.knox.gateway.util.HttpUtils.isConnectionError;
  * A configurable HA dispatch class that has a very basic failover mechanism and
  * configurable options of ConfigurableDispatch class.
  */
-public class ConfigurableHADispatch extends ConfigurableDispatch implements LBHaDispatch {
-
-  protected static final String FAILOVER_COUNTER_ATTRIBUTE = "dispatch.ha.failover.counter";
+public class ConfigurableHADispatch extends ConfigurableDispatch implements CommonHaDispatch {
 
   protected static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
 
@@ -60,8 +52,6 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements LBHa
   protected int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
 
   protected HaProvider haProvider;
-
-  protected static final List<String> nonIdempotentRequests = Arrays.asList("POST", "PATCH", "CONNECT");
 
   private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
   private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
@@ -81,18 +71,13 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements LBHa
    *  connection which will be an issue.
    *  This variable keeps track of non-LB'ed url and updated upon failover.
    */
-  private AtomicReference<String> activeURL =  new AtomicReference();
+  private final AtomicReference<String> activeURL =  new AtomicReference<>();
   @Override
   public void init() {
     super.init();
     LOG.initializingForResourceRole(getServiceRole());
     if ( haProvider != null ) {
-      HaServiceConfig serviceConfig = haProvider.getHaDescriptor().getServiceConfig(getServiceRole());
-      maxFailoverAttempts = serviceConfig.getMaxFailoverAttempts();
-      failoverSleep = serviceConfig.getFailoverSleep();
-      failoverNonIdempotentRequestEnabled = serviceConfig.isFailoverNonIdempotentRequestEnabled();
-      initializeLBHaDispatch(serviceConfig);
-      noFallbackEnabled = stickySessionsEnabled && serviceConfig.isNoFallbackEnabled();
+      initializeCommonHaDispatch(haProvider.getHaDescriptor().getServiceConfig(getServiceRole()));
     }
   }
 
@@ -157,6 +142,46 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements LBHa
   }
 
   @Override
+  public int getMaxFailoverAttempts() {
+    return maxFailoverAttempts;
+  }
+
+  @Override
+  public void setMaxFailoverAttempts(int maxFailoverAttempts) {
+    this.maxFailoverAttempts = maxFailoverAttempts;
+  }
+
+  @Override
+  public int getFailoverSleep() {
+    return failoverSleep;
+  }
+
+  @Override
+  public void setFailoverSleep(int failoverSleep) {
+    this.failoverSleep = failoverSleep;
+  }
+
+  @Override
+  public void setFailoverNonIdempotentRequestEnabled(boolean enabled) {
+    this.failoverNonIdempotentRequestEnabled = enabled;
+  }
+
+  @Override
+  public boolean isFailoverNonIdempotentRequestEnabled() {
+    return failoverNonIdempotentRequestEnabled;
+  }
+
+  @Override
+  public void setNoFallbackEnabled(boolean enabled) {
+    this.noFallbackEnabled = enabled;
+  }
+
+  @Override
+  public boolean isNoFallbackEnabled() {
+    return noFallbackEnabled;
+  }
+
+  @Override
   protected void executeRequestWrapper(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
       boolean userAgentDisabled = isUserAgentDisabled(inboundRequest);
       Optional<URI> backendURI = setBackendUri(outboundRequest, inboundRequest, userAgentDisabled);
@@ -195,45 +220,16 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements LBHa
     }
   }
 
-  private boolean isNonIdempotentAndNonIdempotentFailoverDisabled(HttpUriRequest outboundRequest) {
-    return !failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase);
-  }
-
   protected void failoverRequest(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse, HttpResponse inboundResponse, Exception exception) throws IOException {
-    // Check whether the session cookie is present
-    Optional<Cookie> sessionCookie = Optional.empty();
-    if (inboundRequest.getCookies() != null) {
-        sessionCookie =
-                Arrays.stream(inboundRequest.getCookies())
-                      .filter(cookie -> stickySessionCookieName.equals(cookie.getName()))
-                      .findFirst();
-    }
-
-    // Check for a case where no fallback is configured
-    if(stickySessionsEnabled && noFallbackEnabled && sessionCookie.isPresent()) {
-      LOG.noFallbackError();
-      outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, HA failover disabled");
+    if (disabledFailoverHandled(inboundRequest, outboundResponse)) {
       return;
     }
+
     /* mark endpoint as failed */
     final AtomicInteger counter = markEndpointFailed(outboundRequest, inboundRequest);
     inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
-    if ( counter.get() <= maxFailoverAttempts ) {
-      //null out target url so that rewriters run again
-      inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
-      // Make sure to remove the cookie ha cookie from the request
-      inboundRequest = new StickySessionCookieRemovedRequest(stickySessionCookieName, inboundRequest);
-      URI uri = getDispatchUrl(inboundRequest);
-      ((HttpRequestBase) outboundRequest).setURI(uri);
-      if ( failoverSleep > 0 ) {
-        try {
-          Thread.sleep(failoverSleep);
-        } catch ( InterruptedException e ) {
-          LOG.failoverSleepFailed(getServiceRole(), e);
-          Thread.currentThread().interrupt();
-        }
-      }
-      LOG.failingOverRequest(outboundRequest.getURI().toString());
+    if ( counter.get() <= getMaxFailoverAttempts() ) {
+      inboundRequest = prepareForFailover(outboundRequest, inboundRequest);
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
     } else {
       LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
@@ -242,60 +238,6 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements LBHa
       } else {
         throw new IOException(exception);
       }
-    }
-  }
-
-  /**
-   * A helper method that marks an endpoint failed.
-   * Changes HA Provider state.
-   * Changes ActiveUrl state.
-   * Changes for inbound urls should be handled by calling functions.
-   * @param outboundRequest
-   * @param inboundRequest
-   * @return current failover counter
-   */
-  private synchronized AtomicInteger markEndpointFailed(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest) {
-    haProvider.markFailedURL(getServiceRole(), outboundRequest.getURI().toString());
-    AtomicInteger counter = (AtomicInteger) inboundRequest.getAttribute(FAILOVER_COUNTER_ATTRIBUTE);
-    if ( counter == null ) {
-      counter = new AtomicInteger(0);
-    }
-
-    if ( counter.incrementAndGet() <= maxFailoverAttempts ) {
-      setupUrlHashLookup(); // refresh the url hash after failing a url
-      /* in case of failover update the activeURL variable */
-      activeURL.set(outboundRequest.getURI().toString());
-    }
-    return counter;
-  }
-
-  /**
-   * Strips out the cookies by the cookie name provided
-   */
-  private static class StickySessionCookieRemovedRequest extends HttpServletRequestWrapper {
-    private final Cookie[] cookies;
-
-    StickySessionCookieRemovedRequest(String cookieName, HttpServletRequest request) {
-      super(request);
-      this.cookies = filterCookies(cookieName, request.getCookies());
-    }
-
-    private Cookie[] filterCookies(String cookieName, Cookie[] cookies) {
-      if (super.getCookies() == null) {
-        return null;
-      }
-      List<Cookie> cookiesInternal = new ArrayList<>();
-      for (Cookie cookie : cookies) {
-        if (!cookieName.equals(cookie.getName())) {
-          cookiesInternal.add(cookie);
-        }
-      }
-      return cookiesInternal.toArray(new Cookie[0]);
-    }
-
-    @Override
-    public Cookie[] getCookies() {
-      return cookies;
     }
   }
 }
