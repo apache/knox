@@ -95,6 +95,11 @@ public class ExtAuthzResource extends AbstractAuthResource {
     return doGetImpl();
   }
 
+  @PATCH
+  public Response doPatchWithPath() {
+    return doGetImpl();
+  }
+
   /*
    * This method will handle additional paths.
    * Currently, if there are any additional paths they are ignored.
@@ -137,6 +142,12 @@ public class ExtAuthzResource extends AbstractAuthResource {
   @Path("{subResources: .*}")
   @OPTIONS
   public Response doOptionsWithPath(@Context UriInfo ui) {
+    return doGetWithPath(ui);
+  }
+
+  @Path("{subResources: .*}")
+  @PATCH
+  public Response doPatchWithPath(@Context UriInfo ui) {
     return doGetWithPath(ui);
   }
 
