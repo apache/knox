@@ -41,10 +41,12 @@ import java.util.Set;
 class ServletContextWrapper implements ServletContext {
     private ServletContext delegate;
     private Map<String, String> defaultParams;
+    private Map<String, String> extensionParams;
 
     ServletContextWrapper(ServletContext delegate) {
         this.delegate = delegate;
         defaultParams = new HashMap<>();
+        extensionParams = new HashMap<>();
     }
 
     @Override
@@ -149,9 +151,12 @@ class ServletContextWrapper implements ServletContext {
 
     @Override
     public String getInitParameter(String name) {
-        String value = delegate.getInitParameter(name);
+        String value = extensionParams.get(name);
         if (value == null) {
-            value =  defaultParams.get(name);
+            value =  delegate.getInitParameter(name);
+        }
+        if (value == null) {
+            value = defaultParams.get(name);
         }
         return value;
     }
@@ -167,6 +172,10 @@ class ServletContextWrapper implements ServletContext {
             combinedNames.add(delegateNames.nextElement());
         }
 
+        // Add all parameter names from the extension context
+        Set<String> extensionNames = extensionParams.keySet();
+        combinedNames.addAll(extensionNames);
+
         // Return an Enumeration of the combined set
         return Collections.enumeration(combinedNames);
     }
@@ -175,6 +184,11 @@ class ServletContextWrapper implements ServletContext {
     public boolean setInitParameter(String name, String value) {
         defaultParams.put(name, value);
         return defaultParams.get(name).equals(value);
+    }
+
+    public boolean setExtensionParameter(String name, String value) {
+        extensionParams.put(name, value);
+        return extensionParams.get(name).equals(value);
     }
 
     @Override

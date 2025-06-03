@@ -22,6 +22,7 @@ import org.apache.knox.gateway.services.security.token.TokenMetadataType;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import javax.inject.Singleton;
+import javax.servlet.FilterConfig;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -39,6 +40,8 @@ public class APIKeyResource extends PasscodeTokenResourceBase {
     public static final String RESOURCE_PATH = "apikey/api/v1/auth/key";
     public static final String API_KEY = "api_key";
     public static final String KEY_ID = "key_id";
+
+    public static final String PREFIX = "apikey.";
 
     @Override
     @GET
@@ -58,6 +61,11 @@ public class APIKeyResource extends PasscodeTokenResourceBase {
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
         tokenMetadata.add(TYPE, TokenMetadataType.API_KEY.name());
         super.addArbitraryTokenMetadata(tokenMetadata);
+    }
+
+    @Override
+    public String getPrefix() {
+        return PREFIX;
     }
 
     @Override

@@ -35,6 +35,7 @@ import javax.servlet.ServletException;
 import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.UUID;
 
@@ -51,10 +52,38 @@ public class PasscodeTokenResourceBase extends TokenResource {
 
     @Override
     protected ServletContext wrapContextForDefaultParams(ServletContext context) throws ServletException {
-        ServletContext wrapperContext = new ServletContextWrapper(context);
-        wrapperContext.setInitParameter(TokenResource.TOKEN_TTL_PARAM, "-1");
+        ServletContextWrapper wrapperContext = new ServletContextWrapper(context);
+        wrapperContext.setInitParameter(getPrefix() + TokenResource.TOKEN_TTL_PARAM, "-1");
+        // let's translate API extension param names into what is expected by the KNOXTOKEN API parent:
+        // find all params that start with the extension specific prefix and remove the prefix, setting the value
+        // for the expected param name.
+        setExpectedParamsFromExtensionParams(wrapperContext);
         setupTokenStateService(wrapperContext);
         return wrapperContext;
+    }
+
+    private void setExpectedParamsFromExtensionParams(ServletContextWrapper context) {
+        String prefix = getPrefix();
+        if (prefix == null) {
+            return;
+        }
+
+        Enumeration<String> names = context.getInitParameterNames();
+        String name;
+        int start;
+        while(names.hasMoreElements()) {
+            name = names.nextElement();
+            if (name.startsWith(prefix)) {
+                start = prefix.indexOf('.');
+                if (start != -1) {
+                    context.setExtensionParameter(name.substring(start + 1), context.getInitParameter(name));
+                }
+            }
+        }
+    }
+
+    public String getPrefix() {
+        return null;
     }
 
     protected void setupTokenStateService(ServletContext wrapperContext) throws ServletException {
