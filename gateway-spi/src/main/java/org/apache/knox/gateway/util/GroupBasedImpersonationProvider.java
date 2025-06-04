@@ -202,6 +202,44 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
 
         boolean proxyGroupFound = false;
         // Check if any of the real user's groups have permission to impersonate the proxy user
+        proxyGroupFound = isProxyGroupFound(user, realUserGroups, proxyGroupFound);
+
+        if (!proxyGroupFound) {
+            LOG.failedToImpersonateGroups(realUser.getUserName(), realUserGroups.toString(), user.getUserName());
+            throw new AuthorizationException("User: " + realUser.getUserName()
+                    + " with groups " + realUserGroups.toString()
+                    + " is not allowed to impersonate " + user.getUserName());
+        }
+
+        boolean proxyGroupHostFound = false;
+        proxyGroupHostFound = isProxyGroupHostFound(remoteAddress, realUserGroups, proxyGroupHostFound);
+
+        if (!proxyGroupHostFound) {
+            LOG.failedToImpersonateGroupsFromAddress(realUser.getUserName(), realUserGroups.toString(), user.getUserName(), remoteAddress.toString());
+            throw new AuthorizationException("User: " + realUser.getUserName()
+                    + " with groups " + realUserGroups.toString()
+                    + " from address " + remoteAddress.toString()
+                    + " is not allowed to impersonate " + user.getUserName());
+        }
+
+        /* all checks pass */
+    }
+
+    private boolean isProxyGroupHostFound(InetAddress remoteAddress, Set<String> realUserGroups, boolean proxyGroupHostFound) {
+        for (final String group : realUserGroups) {
+            final MachineList machineList = groupProxyHosts.get(groupConfigPrefix + group + CONF_HOSTS);
+
+            if (machineList == null || !machineList.includes(remoteAddress)) {
+                continue;
+            } else {
+                proxyGroupHostFound = true;
+                break;
+            }
+        }
+        return proxyGroupHostFound;
+    }
+
+    private boolean isProxyGroupFound(UserGroupInformation user, Set<String> realUserGroups, boolean proxyGroupFound) {
         for (String group : realUserGroups) {
             final AccessControlList acl = proxyGroupsAcls.get(groupConfigPrefix +
                     group);
@@ -213,34 +251,7 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
                 break;
             }
         }
-
-        if (!proxyGroupFound) {
-            LOG.failedToImpersonateGroups(realUser.getUserName(), realUserGroups.toString(), user.getUserName());
-            throw new AuthorizationException("User: " + realUser.getUserName()
-                    + " with groups " + realUserGroups.toString()
-                    + " is not allowed to impersonate " + user.getUserName());
-        }
-
-        boolean proxyGroupHostFound = false;
-        for (final String group : realUserGroups) {
-            final MachineList machineList = groupProxyHosts.get(groupConfigPrefix + group + CONF_HOSTS);
-
-            if (machineList == null || !machineList.includes(remoteAddress)) {
-                continue;
-            } else {
-                proxyGroupHostFound = true;
-                break;
-            }
-        }
-
-        if (!proxyGroupHostFound) {
-            LOG.failedToImpersonateGroupsFromAddress(realUser.getUserName(), realUserGroups.toString(), user.getUserName(), remoteAddress.toString());
-            throw new AuthorizationException("User: " + realUser.getUserName()
-                    + "with groups " + realUserGroups.toString()
-                    + " from address " + remoteAddress.toString()
-                    + " is not allowed to impersonate " + user.getUserName());
-        }
-
-        /* all checks pass */
+        return proxyGroupFound;
     }
+
 }
