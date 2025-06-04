@@ -1,0 +1,36 @@
+@startuml
+title Request Processing Overview
+hide footbox
+autonumber
+
+actor "REST Client" as C
+box "Gateway"
+  participant "Embedded\nJetty" as GW
+  participant "Map\n<URL,Chain<Filter>>" as CM
+  participant "Chain\n<Filter>" as FC
+end box
+participant "Hadoop\nService" as S
+
+C -> GW: GET( URL )
+activate GW
+  GW -> CM: Chain<Filter> = lookup( URL )
+  activate CM
+  deactivate CM
+  GW -> FC: doFilter
+  activate FC
+
+      FC -> FC: doFilter*
+      activate FC
+        FC -> S: GET( URL' )
+        activate S
+        FC <-- S: JSON
+        deactivate S
+      FC <-- FC: JSON
+      deactivate FC
+
+    GW <-- FC: JSON
+  deactivate FC
+C <-- GW: JSON
+deactivate GW
+
+@enduml

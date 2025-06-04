@@ -1,0 +1,38 @@
+@startuml
+title Request Processing Behavior
+hide footbox
+autonumber
+
+actor Client as C
+participant "Gateway\nServer\n(Jetty)" as GW
+participant "Gateway\nServlet" as GS
+participant "Gateway\nFilter" as GF
+participant "Matcher<Chain>" as UM
+participant "Chain" as FC
+participant "Filter" as PF
+
+C -> GW: GET( URL )
+activate C
+  activate GW
+    GW -> GS: service
+    activate GS
+      GS -> GF: doFilter
+      activate GF
+        GF -> UM: match( URL ): Chain
+        GF -> FC: doFilter
+        activate FC
+          FC -> PF: doFilter
+          activate PF
+            PF -> PF: doFilter
+            activate PF
+            deactivate PF
+          'FC <-- PF
+          deactivate PF
+        deactivate FC
+      deactivate GS
+    deactivate GF
+  deactivate GW
+deactivate C
+
+
+@enduml
