@@ -20,6 +20,7 @@ package org.apache.knox.gateway.identityasserter.common.filter;
 import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
 import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.ROLE;
 import static org.apache.knox.gateway.identityasserter.common.filter.VirtualGroupMapper.addRequestFunctions;
+import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYGROUP_PREFIX;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -81,6 +82,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     protected boolean impersonationEnabled;
     private AbstractSyntaxTree expressionPrincipalMapping;
     private String topologyName;
+    private boolean hasProxyGroupParams;
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -149,6 +151,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     private void initProxyUserConfiguration(FilterConfig filterConfig, List<String> initParameterNames) {
         final String impersonationEnabledValue = filterConfig.getInitParameter(IMPERSONATION_ENABLED_PARAM);
         impersonationEnabled = impersonationEnabledValue == null ? Boolean.FALSE : Boolean.parseBoolean(impersonationEnabledValue);
+        hasProxyGroupParams = initParameterNames.stream().anyMatch(name -> name.startsWith(PROXYGROUP_PREFIX + "."));
 
         if (impersonationEnabled) {
             if (AuthFilterUtils.hasProxyConfig(topologyName, "HadoopAuth")) {
@@ -221,56 +224,58 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-
-        final Subject subject = getSubject();
-        String mappedPrincipalName = null;
-        try {
-            mappedPrincipalName = handleProxyUserImpersonation(request, subject);
-        } catch(AuthorizationException e) {
-            LOG.hadoopAuthProxyUserFailed(e);
-            HttpExceptionUtils.createServletExceptionResponse((HttpServletResponse) response, HttpServletResponse.SC_FORBIDDEN, e);
-            return;
-        }
-
-        mappedPrincipalName = getMappedPrincipalName(request, mappedPrincipalName, subject);
-        String[] groups = getMappedGroups(request, mappedPrincipalName, subject);
-
-        HttpServletRequestWrapper wrapper = wrapHttpServletRequest(request, mappedPrincipalName);
-
-        continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
-    }
-
-    protected String[] getMappedGroups(ServletRequest request, String mappedPrincipalName, Subject subject) {
-        String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
-        String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
-        String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
-        groups = combineGroupMappings(mappedGroups, groups);
-        groups = combineGroupMappings(virtualGroups, groups);
-        return groups;
-    }
-
-    protected String getMappedPrincipalName(ServletRequest request, String mappedPrincipalName, Subject subject) {
-        String mprincipalName = mappedPrincipalName;
-        // mapping principal name using user principal mapping (if configured)
-        mprincipalName = mapUserPrincipalBase(mprincipalName);
-        mprincipalName = mapUserPrincipal(mprincipalName);
-        if (expressionPrincipalMapping != null) {
-            String result = evalAdvancedPrincipalMapping(request, subject, mprincipalName);
-            if (result != null) {
-                mprincipalName = result;
-            }
-        }
-        return mprincipalName;
-    }
-
-    protected Subject getSubject() {
         Subject subject = Subject.getSubject(AccessController.getContext());
 
         if (subject == null) {
             LOG.subjectNotAvailable();
             throw new IllegalStateException("Required Subject Missing");
         }
-        return subject;
+
+        String principalName = SubjectUtils.getEffectivePrincipalName(subject);
+        String[] groupsForPrincipal = {};
+        /* get groups from non-impersonated user IF groups params are configured */
+        if(hasProxyGroupParams) {
+            groupsForPrincipal = getGroupsForPrincipal(principalName, subject, request);
+        }
+
+        String mappedPrincipalName = null;
+        try {
+            mappedPrincipalName = handleProxyUserImpersonation(request, subject, groupsForPrincipal);
+        } catch(AuthorizationException e) {
+            LOG.hadoopAuthProxyUserFailed(e);
+            HttpExceptionUtils.createServletExceptionResponse((HttpServletResponse) response, HttpServletResponse.SC_FORBIDDEN, e);
+            return;
+        }
+
+
+        // mapping principal name using user principal mapping (if configured)
+        mappedPrincipalName = mapUserPrincipalBase(mappedPrincipalName);
+        mappedPrincipalName = mapUserPrincipal(mappedPrincipalName);
+        if (expressionPrincipalMapping != null) {
+            String result = evalAdvancedPrincipalMapping(request, subject, mappedPrincipalName);
+            if (result != null) {
+                mappedPrincipalName = result;
+            }
+        }
+
+        String[] groups = getGroupsForPrincipal(mappedPrincipalName, subject, request);
+
+
+
+
+        HttpServletRequestWrapper wrapper = wrapHttpServletRequest(request, mappedPrincipalName);
+
+
+        continueChainAsPrincipal(wrapper, response, chain, mappedPrincipalName, unique(groups));
+    }
+
+    private String[] getGroupsForPrincipal(String mappedPrincipalName, Subject subject, ServletRequest request) {
+        String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
+        String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
+        String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
+        groups = combineGroupMappings(mappedGroups, groups);
+        groups = combineGroupMappings(virtualGroups, groups);
+        return groups;
     }
 
     private String evalAdvancedPrincipalMapping(ServletRequest request, Subject subject, String originalPrincipal) {
@@ -287,14 +292,14 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         }
     }
 
-    protected String handleProxyUserImpersonation(ServletRequest request, Subject subject) throws AuthorizationException {
+    private String handleProxyUserImpersonation(ServletRequest request, Subject subject, String[] groups) throws AuthorizationException {
         String principalName = SubjectUtils.getEffectivePrincipalName(subject);
         if (impersonationEnabled) {
             final String doAsUser = request.getParameter(AuthFilterUtils.QUERY_PARAMETER_DOAS);
             if (doAsUser != null && !doAsUser.equals(principalName)) {
                 LOG.hadoopAuthDoAsUser(doAsUser, principalName, request.getRemoteAddr());
                 if (principalName != null) {
-                    AuthFilterUtils.authorizeImpersonationRequest((HttpServletRequest) request, principalName, doAsUser, topologyName, ROLE);
+                    AuthFilterUtils.authorizeImpersonationRequest((HttpServletRequest) request, principalName, doAsUser, topologyName, ROLE, Arrays.asList(groups));
                     LOG.hadoopAuthProxyUserSuccess();
                     principalName = doAsUser;
                 }
@@ -311,7 +316,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
         return result;
     }
 
-    protected static String[] unique(String[] groups) {
+    private static String[] unique(String[] groups) {
         return new HashSet<>(Arrays.asList(groups)).toArray(new String[0]);
     }
 

@@ -17,27 +17,13 @@
  */
 package org.apache.knox.gateway.identityasserter.common.filter;
 
-import org.apache.knox.gateway.context.ContextAttributes;
-import org.apache.knox.gateway.security.GroupPrincipal;
-import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.security.SubjectUtils;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.util.AuthFilterUtils;
-import org.apache.logging.log4j.ThreadContext;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import static org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService.MDC_AUDIT_CONTEXT_KEY;
+import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
+import static org.easymock.EasyMock.createMock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import javax.security.auth.Subject;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -52,12 +38,27 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static org.apache.knox.gateway.audit.log4j.audit.Log4jAuditService.MDC_AUDIT_CONTEXT_KEY;
-import static org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAsserterDeploymentContributor.IMPERSONATION_PARAMS;
-import static org.easymock.EasyMock.createMock;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import javax.security.auth.Subject;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.knox.gateway.context.ContextAttributes;
+import org.apache.knox.gateway.security.GroupPrincipal;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.util.AuthFilterUtils;
+import org.apache.logging.log4j.ThreadContext;
+import org.easymock.EasyMock;
+import org.junit.Before;
+import org.junit.Test;
 
 public class CommonIdentityAssertionFilterTest {
     private String username;
@@ -77,7 +78,7 @@ public class CommonIdentityAssertionFilterTest {
             public String[] mapGroupPrincipals(String principalName, Subject subject) {
                 String[] groups = new String[4];
                 int i = 0;
-                for (GroupPrincipal p : subject.getPrincipals(GroupPrincipal.class)) {
+                for(GroupPrincipal p : subject.getPrincipals(GroupPrincipal.class)) {
                     groups[i] = p.getName().toUpperCase(Locale.ROOT);
                     i++;
                 }
@@ -108,7 +109,7 @@ public class CommonIdentityAssertionFilterTest {
         servletContext.setAttribute(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.FALSE);
         EasyMock.expectLastCall();
         EasyMock.replay(servletContext);
-        FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+        FilterConfig config = EasyMock.createNiceMock( FilterConfig.class );
         EasyMock.expect(config.getServletContext()).andReturn(servletContext).anyTimes();
         EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.ADVANCED_PRINCIPAL_MAPPING)).
                 andReturn("username").anyTimes();
@@ -129,16 +130,15 @@ public class CommonIdentityAssertionFilterTest {
                 andReturn("(and (username 'lmccay') (and (member 'users') (member 'admin')))").anyTimes();
         EasyMock.expect(config.getInitParameter(CommonIdentityAssertionFilter.VIRTUAL_GROUP_MAPPING_PREFIX)).
                 andReturn("true").anyTimes();
-        EasyMock.replay(config);
+        EasyMock.replay( config );
 
-        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-        EasyMock.replay(request);
+        final HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+        EasyMock.replay( request );
 
-        final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-        EasyMock.replay(response);
+        final HttpServletResponse response = EasyMock.createNiceMock( HttpServletResponse.class );
+        EasyMock.replay( response );
 
-        final FilterChain chain = (req, resp) -> {
-        };
+        final FilterChain chain = (req, resp) -> {};
 
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal("ljm"));
@@ -152,13 +152,16 @@ public class CommonIdentityAssertionFilterTest {
                         filter.doFilter(request, response, chain);
                         return null;
                     });
-        } catch (PrivilegedActionException e) {
+        }
+        catch (PrivilegedActionException e) {
             Throwable t = e.getCause();
             if (t instanceof IOException) {
                 throw (IOException) t;
-            } else if (t instanceof ServletException) {
+            }
+            else if (t instanceof ServletException) {
                 throw (ServletException) t;
-            } else {
+            }
+            else {
                 throw new ServletException(t);
             }
         }
@@ -242,6 +245,25 @@ public class CommonIdentityAssertionFilterTest {
         assertEquals("bob", SubjectUtils.getEffectivePrincipalName(impersonatedSubject));
     }
 
+    private static final class FilterChainWrapper implements FilterChain {
+        private final FilterChain wrappedFilterChain;
+        private Subject subject;
+
+        FilterChainWrapper(FilterChain wrappedFilterChain) {
+            this.wrappedFilterChain = wrappedFilterChain;
+        }
+
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
+            this.subject = SubjectUtils.getCurrentSubject();
+            wrappedFilterChain.doFilter(request, response);
+        }
+
+        Subject getSubject() {
+            return subject;
+        }
+    }
+
     private void testProxyUserImpersonationEnabled(boolean impersonationEnabled) throws Exception {
         testProxyUserImpersonationEnabled(impersonationEnabled, false, Arrays.asList());
     }
@@ -261,7 +283,7 @@ public class CommonIdentityAssertionFilterTest {
         }
         final FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
         final String impersonatedEnabledParam = impersonationEnabled ? Boolean.TRUE.toString() : Boolean.FALSE.toString();
-        EasyMock.expect(filterConfig.getInitParameter(AuthFilterUtils.IMPERSONATION_ENABLED_PARAM)).andReturn(impersonatedEnabledParam).anyTimes();
+        EasyMock.expect(filterConfig.getInitParameter(CommonIdentityAssertionFilter.IMPERSONATION_ENABLED_PARAM)).andReturn(impersonatedEnabledParam);
         EasyMock.expect(filterConfig.getInitParameter(CommonIdentityAssertionFilter.PRINCIPAL_MAPPING)).andReturn(null).anyTimes();
         EasyMock.expect(filterConfig.getInitParameter(CommonIdentityAssertionFilter.GROUP_PRINCIPAL_MAPPING)).andReturn(null).anyTimes();
         EasyMock.expect(filterConfig.getInitParameterNames()).andReturn(Collections.enumeration(filterConfigParameterNames)).atLeastOnce();
@@ -280,25 +302,6 @@ public class CommonIdentityAssertionFilterTest {
         filter.init(filterConfig);
         assertEquals(impersonationEnabled && !configuredInHadoopAuth, filter.isImpersonationEnabled());
         EasyMock.verify(servletContext, filterConfig);
-    }
-
-    private static final class FilterChainWrapper implements FilterChain {
-        private final FilterChain wrappedFilterChain;
-        private Subject subject;
-
-        FilterChainWrapper(FilterChain wrappedFilterChain) {
-            this.wrappedFilterChain = wrappedFilterChain;
-        }
-
-        @Override
-        public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
-            this.subject = SubjectUtils.getCurrentSubject();
-            wrappedFilterChain.doFilter(request, response);
-        }
-
-        Subject getSubject() {
-            return subject;
-        }
     }
 
 }

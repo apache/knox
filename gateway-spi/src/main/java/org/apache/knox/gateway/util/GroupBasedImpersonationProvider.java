@@ -27,13 +27,17 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.net.InetAddress;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYGROUP_PREFIX;
+import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYUSER_PREFIX;
 
 /**
  * An extension of Hadoop's DefaultImpersonationProvider that adds support for group-based impersonation.
@@ -45,13 +49,13 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     private static final String CONF_USERS = ".users";
     private static final String CONF_GROUPS = ".groups";
     private final Map<String, AccessControlList> proxyGroupsAcls = new HashMap<>();
-    EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
     private Map<String, MachineList> groupProxyHosts = new HashMap<>();
     private String groupConfigPrefix;
+    private boolean doesProxyUserConfigExist = true;
+    static final String IMPERSONATION_ENABLED_PARAM = "impersonation.enabled";
 
-    public GroupBasedImpersonationProvider(EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags) {
+    public GroupBasedImpersonationProvider() {
         super();
-        this.impersonationFlags = impersonationFlags;
     }
 
     @Override
@@ -65,8 +69,20 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     }
 
     @Override
-    public void init(String proxyGroupPrefix) {
-        initGroupBasedProvider(proxyGroupPrefix);
+    public void init(String configurationPrefix) {
+        super.init(configurationPrefix);
+
+        /* Check if user proxy configs are provided */
+        final Map<String, String> filteredProps = Optional.ofNullable(getConf().getPropsWithPrefix(PROXYUSER_PREFIX + "."))
+                .orElse(Collections.emptyMap())  // handle null map defensively
+                .entrySet()
+                .stream()
+                .filter(entry -> !IMPERSONATION_ENABLED_PARAM.equals(entry.getKey())) // avoid NPE by reversing equals
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        doesProxyUserConfigExist = !filteredProps.isEmpty();
+
+        initGroupBasedProvider(PROXYGROUP_PREFIX);
     }
 
     private void initGroupBasedProvider(String proxyGroupPrefix) {
@@ -116,7 +132,7 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     }
 
     /**
-     * Authorization based on groups that are already in Subject
+     * Authorization based on user and group impersonation policies.
      *
      * @param user the user information attempting the operation, which includes the real
      *             user and the effective impersonated user.
@@ -126,16 +142,11 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
      */
     @Override
     public void authorize(UserGroupInformation user, InetAddress remoteAddress) throws AuthorizationException {
-        // If both authorization methods are disabled, allow the operation to proceed
-        if (impersonationFlags.isEmpty() || !impersonationFlags.contains(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION)) {
-            LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
-            return;
-        }
-        checkProxyGroupAuthorization(user, remoteAddress, Collections.emptyList());
+        authorize(user, remoteAddress, Collections.emptyList());
     }
 
     /**
-     * Authorization based on groups that are provided as a function agument
+     * Authorization based on groups that are provided as a function argument
      *
      * @param user the user information attempting the operation, which includes the real
      *             user and the effective impersonated user.
@@ -145,13 +156,20 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
      *                                configured impersonation and group policies.
      */
     public void authorize(UserGroupInformation user, InetAddress remoteAddress, List<String> groups) throws AuthorizationException {
-        // If both authorization methods are disabled, allow the operation to proceed
-        if (impersonationFlags.isEmpty() || !impersonationFlags.contains(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION)) {
-            LOG.successfulImpersonation(user.getRealUser().getUserName(), user.getUserName());
-            return;
+
+        /**
+         *  check for proxy user authorization only if PROXYUSER_PREFIX properties exist.
+         *  If proxy is configured then use those properties instead of group-based properties
+         *  given user based configs are more finegrained.
+         */
+        if (doesProxyUserConfigExist) {
+            super.authorize(user, remoteAddress);
+        } else{
+            /* check for proxy group authorization */
+            checkProxyGroupAuthorization(user, remoteAddress, groups);
         }
-        checkProxyGroupAuthorization(user, remoteAddress, groups);
     }
+
 
     /**
      * Helper method to check if the group a given user belongs to is authorized to impersonate

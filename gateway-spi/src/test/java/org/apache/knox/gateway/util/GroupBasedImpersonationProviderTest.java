@@ -24,10 +24,17 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.mockito.Mockito;
 
-import java.util.EnumSet;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYGROUP_PREFIX;
+
+
+import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYUSER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -40,24 +47,28 @@ public class GroupBasedImpersonationProviderTest {
 
     @Before
     public void setUp() {
-        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
-        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION);
-        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.USER_IMPERSONATION);
-        provider = new GroupBasedImpersonationProvider(impersonationFlags);
+
+        provider = new GroupBasedImpersonationProvider();
         config = new Configuration();
 
+        // Setup proxy user configuration
+        config.set("hadoop.proxyuser.testuser.users", "*");
         config.set("hadoop.proxyuser.testuser.groups", "*");
         config.set("hadoop.proxyuser.testuser.hosts", "*");
 
-        // Setup 3 proxy users
+        // Setup 3 proxy groups
+        config.set("hadoop.proxygroup.virtual_group_1.users", "*");
         config.set("hadoop.proxygroup.virtual_group_1.groups", "*");
         config.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+        config.set("hadoop.proxygroup.virtual.group_2.users", "*");
         config.set("hadoop.proxygroup.virtual.group_2.groups", "*");
         config.set("hadoop.proxygroup.virtual.group_2.hosts", "*");
+        config.set("hadoop.proxygroup.virtual group_3.users", "*");
         config.set("hadoop.proxygroup.virtual group_3.groups", "*");
         config.set("hadoop.proxygroup.virtual group_3.hosts", "*");
+
         provider.setConf(config);
-        provider.init(PROXYGROUP_PREFIX);
+        provider.init(PROXYUSER_PREFIX);
     }
 
     @Test
@@ -101,8 +112,9 @@ public class GroupBasedImpersonationProviderTest {
     }
 
     @Test
-    public void testAuthorizationSuccess() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
+    public void testAuthorizationSuccess() throws Exception {
         String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
         String[] proxyGroups = {"virtual_group_1"};
 
         UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
@@ -113,14 +125,26 @@ public class GroupBasedImpersonationProviderTest {
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
 
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        provider.authorize(userGroupInformation, "2.2.2.2");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+                "checkProxyGroupAuthorization",
+                UserGroupInformation.class,
+                InetAddress.class,
+                List.class);
+        method.setAccessible(true);
+        method.invoke(provider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
 
         String[] proxyGroups2 = {"virtual.group_2"};
         when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
         when(realUserUGI.getUserName()).thenReturn(proxyUser);
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups2);
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        provider.authorize(userGroupInformation, "2.2.2.2");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        method.invoke(provider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
     }
 
     /**
@@ -129,28 +153,35 @@ public class GroupBasedImpersonationProviderTest {
      * hadoop.proxyuser.impersonation.enabled = false
      * hadoop.proxygroup.impersonation.enabled = true
      *
-     * @throws AuthorizationException
-     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws Exception
      */
     @Test
-    public void testAuthorizationSuccessWithOnlyProxyGroupsConfigured() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-
-        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
-        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION);
-
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
+    public void testAuthorizationSuccessWithOnlyProxyGroupsConfigured() throws Exception {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
         Configuration gConfig = new Configuration();
-        // Setup 3 proxy users
-        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
-        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
-        gConfig.set("hadoop.proxygroup.virtual.group_2.groups", "*");
-        gConfig.set("hadoop.proxygroup.virtual.group_2.hosts", "*");
-        gConfig.set("hadoop.proxygroup.virtual group_3.groups", "*");
-        gConfig.set("hadoop.proxygroup.virtual group_3.hosts", "*");
-        gProvider.setConf(gConfig);
-        gProvider.init(PROXYGROUP_PREFIX);
 
         String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
+        // Setup proxy user configuration
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".users", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
+
+        // Setup 3 proxy groups
+        gConfig.set("hadoop.proxygroup.virtual_group_1.users", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+        gConfig.set("hadoop.proxygroup.virtual.group_2.users", "*");
+        gConfig.set("hadoop.proxygroup.virtual.group_2.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual.group_2.hosts", "*");
+        gConfig.set("hadoop.proxygroup.virtual group_3.users", "*");
+        gConfig.set("hadoop.proxygroup.virtual group_3.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual group_3.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        // Initialize with both prefixes to enable both proxy user and proxy group authorization
+        gProvider.init(PROXYUSER_PREFIX);
+
         String[] proxyGroups = {"virtual_group_1"};
 
         UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
@@ -161,19 +192,32 @@ public class GroupBasedImpersonationProviderTest {
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
 
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        gProvider.authorize(userGroupInformation, "2.2.2.2");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+                "checkProxyGroupAuthorization",
+                UserGroupInformation.class,
+                InetAddress.class,
+                List.class);
+        method.setAccessible(true);
+        method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
 
         String[] proxyGroups2 = {"virtual.group_2"};
         when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
         when(realUserUGI.getUserName()).thenReturn(proxyUser);
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups2);
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        gProvider.authorize(userGroupInformation, "2.2.2.2");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
     }
 
-    @Test(timeout = 100000000, expected = org.apache.hadoop.security.authorize.AuthorizationException.class)
+    @Test(expected = org.apache.hadoop.security.authorize.AuthorizationException.class)
     public void testAuthorizationFailure() throws Exception {
         String proxyUser = "dummyUser";
+        String impersonatedUser = "impersonatedUser";
         String[] proxyGroups = {"virtual group_3"};
 
         UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
@@ -183,26 +227,37 @@ public class GroupBasedImpersonationProviderTest {
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
 
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        provider.authorize(userGroupInformation, "2.2.2.2");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        provider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"));
     }
 
     /**
      * Test the case where both proxy user and proxy group are disabled.
      * Authorization should succeed in this case.
      *
-     * @throws AuthorizationException
-     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws Exception
      */
     @Test
-    public void testAuthorizationSuccessWithBothProxyMethodsDisabled() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
+    public void testAuthorizationSuccessWithBothProxyMethodsDisabled() throws Exception {
 
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
         Configuration gConfig = new Configuration();
-        gProvider.setConf(gConfig);
-        gProvider.init(PROXYGROUP_PREFIX);
 
         String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
+        // Setup proxy user configuration
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".users", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
+
+        // Setup proxy group configuration
+        gConfig.set("hadoop.proxygroup.virtual_group_1.users", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX);
+
         String[] proxyGroups = {"virtual_group_1"};
 
         UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
@@ -213,10 +268,16 @@ public class GroupBasedImpersonationProviderTest {
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
 
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
-        // This should not throw an exception since both proxy methods are disabled
-        gProvider.authorize(userGroupInformation, "2.2.2.2");
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+                "checkProxyGroupAuthorization",
+                UserGroupInformation.class,
+                InetAddress.class,
+                List.class);
+        method.setAccessible(true);
+        method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
     }
 
     /**
@@ -225,24 +286,29 @@ public class GroupBasedImpersonationProviderTest {
      * hadoop.proxyuser.impersonation.enabled = true
      * hadoop.proxygroup.impersonation.enabled = false
      *
-     * @throws AuthorizationException
-     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws Exception
      */
     @Test
-    public void testAuthorizationSuccessWithOnlyProxyUserConfigured() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
-        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.USER_IMPERSONATION);
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
+    public void testAuthorizationSuccessWithOnlyProxyUserConfigured() throws Exception {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
         Configuration gConfig = new Configuration();
 
+        String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
         // Setup proxy user configuration
-        gConfig.set("hadoop.proxyuser.testuser.groups", "*");
-        gConfig.set("hadoop.proxyuser.testuser.hosts", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".users", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".groups", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
+
+        // Setup proxy group configuration for the group the user belongs to
+        gConfig.set("hadoop.proxygroup.somegroup.users", "*");
+        gConfig.set("hadoop.proxygroup.somegroup.groups", "*");
+        gConfig.set("hadoop.proxygroup.somegroup.hosts", "*");
 
         gProvider.setConf(gConfig);
-        gProvider.init(PROXYGROUP_PREFIX);
+        gProvider.init(PROXYUSER_PREFIX);
 
-        String proxyUser = "testuser";
         String[] proxyGroups = {"somegroup"};
 
         UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
@@ -253,10 +319,16 @@ public class GroupBasedImpersonationProviderTest {
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
 
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
-        // This should not throw an exception since proxy user is enabled and configured correctly
-        gProvider.authorize(userGroupInformation, "2.2.2.2");
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+                "checkProxyGroupAuthorization",
+                UserGroupInformation.class,
+                InetAddress.class,
+                List.class);
+        method.setAccessible(true);
+        method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
     }
 
     /**
@@ -267,32 +339,32 @@ public class GroupBasedImpersonationProviderTest {
      * hadoop.proxygroup.impersonation.enabled = true
      * impersonation.mode = AND
      *
-     * @throws AuthorizationException
-     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws Exception
      */
     @Test
-    public void testAuthorizationSuccessWithBothProxyMethodsEnabledAndMode() throws AuthorizationException, org.apache.hadoop.security.authorize.AuthorizationException {
-        EnumSet<AuthFilterUtils.ImpersonationFlags> impersonationFlags = EnumSet.noneOf(AuthFilterUtils.ImpersonationFlags.class);
-        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.USER_IMPERSONATION);
-        impersonationFlags.add(AuthFilterUtils.ImpersonationFlags.GROUP_IMPERSONATION);
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider(impersonationFlags);
+    public void testAuthorizationSuccessWithBothProxyMethodsEnabledAndMode() throws Exception {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         // Set impersonation mode to AND
         gConfig.set("impersonation.mode", "AND");
 
+        String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
         // Setup proxy user configuration
-        gConfig.set("hadoop.proxyuser.testuser.groups", "*");
-        gConfig.set("hadoop.proxyuser.testuser.hosts", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".users", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".groups", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
 
         // Setup proxy group configuration
+        gConfig.set("hadoop.proxygroup.virtual_group_1.users", "*");
         gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
         gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
 
         gProvider.setConf(gConfig);
-        gProvider.init(PROXYGROUP_PREFIX);
+        gProvider.init(PROXYUSER_PREFIX);
 
-        String proxyUser = "testuser";
         String[] proxyGroups = {"virtual_group_1"};
 
         UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
@@ -303,9 +375,155 @@ public class GroupBasedImpersonationProviderTest {
         when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
 
         when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Use reflection to call the checkProxyGroupAuthorization method directly
+        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+                "checkProxyGroupAuthorization",
+                UserGroupInformation.class,
+                InetAddress.class,
+                List.class);
+        method.setAccessible(true);
+        method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
+    }
+
+    /**
+     * Test the case where authorization is successful using the new authorize method
+     * that accepts a list of groups as a parameter.
+     *
+     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws UnknownHostException
+     */
+    @Test
+    public void testAuthorizationSuccessWithProvidedGroups() throws org.apache.hadoop.security.authorize.AuthorizationException, UnknownHostException {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        Configuration gConfig = new Configuration();
+
+        // Setup proxy group configuration
+        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX);
+
+        String proxyUser = "testuser";
+        // User has no groups in their subject
+        String[] emptyGroups = {};
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(emptyGroups);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
         when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
 
-        // This should not throw an exception since both proxy user and proxy group are enabled and configured correctly
-        gProvider.authorize(userGroupInformation, "2.2.2.2");
+        // Create a list of groups to provide to the authorize method
+        List<String> providedGroups = new ArrayList<>();
+        providedGroups.add("virtual_group_1");
+
+        // This should not throw an exception since the provided groups include virtual_group_1
+        // which is authorized to impersonate
+        gProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"), providedGroups);
+    }
+
+    /**
+     * Test the case where authorization fails when the provided groups
+     * do not have permission to impersonate.
+     *
+     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws UnknownHostException
+     */
+    @Test(expected = org.apache.hadoop.security.authorize.AuthorizationException.class)
+    public void testAuthorizationFailureWithProvidedGroups() throws org.apache.hadoop.security.authorize.AuthorizationException, UnknownHostException {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        Configuration gConfig = new Configuration();
+
+        // Setup proxy group configuration
+        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX);
+
+        String proxyUser = "testuser";
+        // User has no groups in their subject
+        String[] emptyGroups = {};
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(emptyGroups);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+
+        // Create a list of groups to provide to the authorize method
+        // These groups do not have permission to impersonate
+        List<String> providedGroups = new ArrayList<>();
+        providedGroups.add("unauthorized_group");
+
+        // This should throw an exception since the provided groups do not include any
+        // that are authorized to impersonate
+        gProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"), providedGroups);
+    }
+
+    /**
+     * Test the case where authorization succeeds when the user's subject groups
+     * combined with the provided groups include one that has permission to impersonate.
+     *
+     * @throws org.apache.hadoop.security.authorize.AuthorizationException
+     * @throws UnknownHostException
+     */
+    @Test
+    public void testAuthorizationSuccessWithCombinedGroups() throws org.apache.hadoop.security.authorize.AuthorizationException, UnknownHostException {
+        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        Configuration gConfig = new Configuration();
+
+        String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
+        // Setup proxy user configuration
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".users", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".groups", "*");
+        gConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
+
+        // Setup proxy group configuration
+        gConfig.set("hadoop.proxygroup.virtual_group_1.users", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_1.hosts", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_2.users", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_2.groups", "*");
+        gConfig.set("hadoop.proxygroup.virtual_group_2.hosts", "*");
+
+        gProvider.setConf(gConfig);
+        gProvider.init(PROXYUSER_PREFIX);
+
+        // User has virtual_group_1 in their subject
+        String[] subjectGroups = {"virtual_group_1"};
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(subjectGroups);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Create a list of groups to provide to the authorize method
+        // These include virtual_group_2 which is also authorized
+        List<String> providedGroups = new ArrayList<>();
+        providedGroups.add("virtual_group_2");
+
+        // This should not throw an exception since the combined groups include
+        // both virtual_group_1 (from subject) and virtual_group_2 (provided)
+        // which are both authorized to impersonate
+        gProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"), providedGroups);
     }
 }
