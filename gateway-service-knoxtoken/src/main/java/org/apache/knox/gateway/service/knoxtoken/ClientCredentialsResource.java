@@ -39,6 +39,7 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
     public static final String RESOURCE_PATH = "clientid/api/v1/oauth/credentials";
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";
+    private static final String PREFIX = "clientid.";
 
     @Override
     @GET
@@ -58,6 +59,11 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
         tokenMetadata.add(TYPE, TokenMetadataType.CLIENT_ID.name());
         super.addArbitraryTokenMetadata(tokenMetadata);
+    }
+
+    @Override
+    public String getPrefix() {
+        return PREFIX;
     }
 
     @Override

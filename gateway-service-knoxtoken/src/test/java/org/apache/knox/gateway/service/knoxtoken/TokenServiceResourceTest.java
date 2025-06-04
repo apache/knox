@@ -1330,7 +1330,7 @@ public class TokenServiceResourceTest {
     try {
       tss = new PersistentTestTokenStateService();
       if (expiryInMs != null) {
-        contextExpectations.put("knox.token.ttl", expiryInMs);
+        contextExpectations.put("clientid.knox.token.ttl", expiryInMs);
       }
       configureCommonExpectations(contextExpectations, Boolean.TRUE);
       ClientCredentialsResource ccr = new ClientCredentialsResource();
@@ -1445,7 +1445,7 @@ public class TokenServiceResourceTest {
       tss = new PersistentTestTokenStateService();
       // let the default built into
       if (expiryInMs != null) {
-        contextExpectations.put("knox.token.ttl", expiryInMs);
+        contextExpectations.put("apikey.knox.token.ttl", expiryInMs);
       }
       configureCommonExpectations(contextExpectations, Boolean.TRUE);
 

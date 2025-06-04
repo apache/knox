@@ -40,6 +40,8 @@ public class APIKeyResource extends PasscodeTokenResourceBase {
     public static final String API_KEY = "api_key";
     public static final String KEY_ID = "key_id";
 
+    public static final String PREFIX = "apikey.";
+
     @Override
     @GET
     @Produces({ APPLICATION_JSON, APPLICATION_XML })
@@ -58,6 +60,11 @@ public class APIKeyResource extends PasscodeTokenResourceBase {
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
         tokenMetadata.add(TYPE, TokenMetadataType.API_KEY.name());
         super.addArbitraryTokenMetadata(tokenMetadata);
+    }
+
+    @Override
+    public String getPrefix() {
+        return PREFIX;
     }
 
     @Override
