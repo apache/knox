@@ -44,4 +44,7 @@ public interface ShiroMessages {
 
   @Message( level = MessageLevel.WARN, text = "There was an error closing the CacheManager, reason: {0}" )
   void errorClosingManagedCacheManager(@StackTrace(level=MessageLevel.WARN) Exception e);
+
+  @Message( level = MessageLevel.WARN, text = "Unable to create Ehcache manager, changing persistence dir, reason: {0}" )
+  void errorCreatingCacheManager(String cause);
 }
