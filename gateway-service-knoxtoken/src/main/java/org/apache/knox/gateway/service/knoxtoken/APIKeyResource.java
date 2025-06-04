@@ -22,7 +22,6 @@ import org.apache.knox.gateway.services.security.token.TokenMetadataType;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import javax.inject.Singleton;
-import javax.servlet.FilterConfig;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
