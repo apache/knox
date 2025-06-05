@@ -113,7 +113,7 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
       try {
         manager.init();
       } catch (StateTransitionException e) {
-        LOG.errorCreatingCacheManager(e.getMessage());
+        LOG.resolvePersistenceDirLockError(e.getMessage());
         this.resolveLockConflict(xmlConfiguration);
         if(manager.getStatus() != Status.UNINITIALIZED) {
             manager.close();
