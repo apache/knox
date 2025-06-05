@@ -26,14 +26,23 @@ import org.apache.shiro.io.ResourceUtils;
 import org.apache.shiro.util.Destroyable;
 import org.apache.shiro.util.Initializable;
 import org.ehcache.CacheManager;
+import org.ehcache.StateTransitionException;
+import org.ehcache.Status;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.impl.config.persistence.CacheManagerPersistenceConfiguration;
 import org.ehcache.integrations.shiro.EhcacheShiro;
+import org.ehcache.spi.service.ServiceCreationConfiguration;
 import org.ehcache.xml.XmlConfiguration;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.UUID;
 
 public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, Initializable, Destroyable {
   private static final ShiroMessages LOG = MessagesFactory.get(ShiroMessages.class);
@@ -42,6 +51,7 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
   private String cacheManagerConfigFile = "classpath:org/ehcache/integrations/shiro/ehcache.xml";
   private boolean cacheManagerImplicitlyCreated;
   private XmlConfiguration cacheConfiguration;
+  private static final String DEFAULT_FOLDER_NAME = "ehcache-shiro";
 
   public CacheManager getCacheManager() {
     return manager;
@@ -99,8 +109,23 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
 
   private org.ehcache.CacheManager ensureCacheManager() throws MalformedURLException {
     if (manager == null) {
-      manager = CacheManagerBuilder.newCacheManager(getConfiguration());
-      manager.init();
+      XmlConfiguration xmlConfiguration = getConfiguration();
+      manager = CacheManagerBuilder.newCacheManager(xmlConfiguration);
+      try {
+        manager.init();
+      } catch (StateTransitionException e) {
+        if(containsOverlappingFileLockException(e)) {
+          LOG.resolvePersistenceDirLockError(e.getMessage());
+          this.resolveLockConflict(xmlConfiguration);
+          if(manager.getStatus() != Status.UNINITIALIZED) {
+            manager.close();
+          }
+          manager = CacheManagerBuilder.newCacheManager(xmlConfiguration);
+          manager.init();
+        } else {
+          throw e;
+        }
+      }
 
       cacheManagerImplicitlyCreated = true;
     }
@@ -108,7 +133,44 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
     return manager;
   }
 
-  private URL getResource() {
+  private static boolean containsOverlappingFileLockException(Throwable throwable) {
+    while (throwable != null) {
+      if (throwable instanceof OverlappingFileLockException) {
+        return true;
+      }
+      throwable = throwable.getCause();
+    }
+    return false;
+  }
+
+  /**
+   * Resolves lock conflicts by changing the persistence directory of the cache manager.
+   * This is necessary when multiple instances of the cache manager are created with the same configuration file,
+   * which can lead to lock conflicts.
+   *
+   * @param xmlConfiguration the XML configuration of the cache manager
+   */
+  private void resolveLockConflict(XmlConfiguration xmlConfiguration) {
+    Optional<ServiceCreationConfiguration<?>> serviceConfig = xmlConfiguration.getServiceCreationConfigurations().stream()
+            .filter(service -> service instanceof CacheManagerPersistenceConfiguration).findFirst();
+
+    if (serviceConfig.isPresent()) {
+      CacheManagerPersistenceConfiguration cachePersistenceConfig = (CacheManagerPersistenceConfiguration) serviceConfig.get();
+      String path = cachePersistenceConfig.getRootDirectory().getPath();
+      xmlConfiguration.getServiceCreationConfigurations().remove(cachePersistenceConfig);
+      String newFolder = DEFAULT_FOLDER_NAME + UUID.randomUUID().toString().substring(0, 4);
+      String newRootDirectory = Paths.get(path).getParent().resolve(newFolder).toAbsolutePath().toString();
+      xmlConfiguration.getServiceCreationConfigurations()
+              .add(new CacheManagerPersistenceConfiguration(
+                      new File(newRootDirectory)));
+    }
+  }
+
+  private URL getResource() throws MalformedURLException {
+    if (this.cacheManagerConfigFile.startsWith("file:")) {
+      return new URL(this.cacheManagerConfigFile);
+    }
+
     String URL = ResourceUtils.hasResourcePrefix(this.cacheManagerConfigFile) ?
             stripPrefix(this.cacheManagerConfigFile) : this.cacheManagerConfigFile;
 

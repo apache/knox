@@ -45,4 +45,22 @@ public class KnoxCacheManagerTest {
         assertNull(cacheManager.getCacheManager());
     }
 
+    @Test
+    public void testMultipleCacheManagersWithSameConfiguration() {
+        KnoxCacheManager cacheManager1 = new KnoxCacheManager();
+        KnoxCacheManager cacheManager2 = new KnoxCacheManager();
+
+        Cache<Object, Object> cache1 = cacheManager1.getCache("cache");
+        Cache<Object, Object> cache2 = cacheManager2.getCache("cache");
+
+        cache1.put("testK", "testV");
+        assertEquals("testV", cache1.get("testK"));
+        cache2.put("testK2", "testV2");
+        assertEquals("testV2", cache2.get("testK2"));
+
+        cacheManager1.destroy();
+        assertNull(cacheManager1.getCacheManager());
+        cacheManager2.destroy();
+        assertNull(cacheManager2.getCacheManager());
+    }
 }

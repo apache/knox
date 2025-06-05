@@ -44,4 +44,7 @@ public interface ShiroMessages {
 
   @Message( level = MessageLevel.WARN, text = "There was an error closing the CacheManager, reason: {0}" )
   void errorClosingManagedCacheManager(@StackTrace(level=MessageLevel.WARN) Exception e);
+
+  @Message( level = MessageLevel.WARN, text = "The default or configured ehcache persistence directory is unavailable; Choosing an alternative directory. reason: {0}" )
+  void resolvePersistenceDirLockError(String cause);
 }
