@@ -39,6 +39,7 @@ import org.ehcache.xml.XmlConfiguration;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.UUID;
@@ -113,19 +114,33 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
       try {
         manager.init();
       } catch (StateTransitionException e) {
-        LOG.resolvePersistenceDirLockError(e.getMessage());
-        this.resolveLockConflict(xmlConfiguration);
-        if(manager.getStatus() != Status.UNINITIALIZED) {
+        if(containsOverlappingFileLockException(e)) {
+          LOG.resolvePersistenceDirLockError(e.getMessage());
+          this.resolveLockConflict(xmlConfiguration);
+          if(manager.getStatus() != Status.UNINITIALIZED) {
             manager.close();
+          }
+          manager = CacheManagerBuilder.newCacheManager(xmlConfiguration);
+          manager.init();
+        } else {
+          throw e;
         }
-        manager = CacheManagerBuilder.newCacheManager(xmlConfiguration);
-        manager.init();
       }
 
       cacheManagerImplicitlyCreated = true;
     }
 
     return manager;
+  }
+
+  private static boolean containsOverlappingFileLockException(Throwable throwable) {
+    while (throwable != null) {
+      if (throwable instanceof OverlappingFileLockException) {
+        return true;
+      }
+      throwable = throwable.getCause();
+    }
+    return false;
   }
 
   /**
