@@ -1,0 +1,37 @@
+@startuml
+title Deployment Processing Overview
+hide footbox
+autonumber
+
+participant "Gateway\nServer" as GW
+participant "Embedded\nJetty" as EJ
+participant "Deployment\nFactory" as DF
+participant "Deployment\nContributors" as DC
+participant "Topology\nDescriptor" as TD
+participant "Web\nArchive" as WAR
+
+activate GW
+
+  create TD
+  GW -> TD: td = loadTopology( xml )
+
+  GW -> DF: war = createDeployment( td )
+  activate DF
+
+    create WAR
+    DF -> WAR: war = createEmptyWar()
+
+    DF -> DC: addDescriptors( td, war )
+    activate DC
+    deactivate DC
+
+  GW <-- DF
+  deactivate DF
+
+  GW -> EJ: deploy( war )
+  activate EJ
+  deactivate EJ
+
+deactivate GW
+
+@enduml
