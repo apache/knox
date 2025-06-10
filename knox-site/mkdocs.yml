@@ -49,39 +49,43 @@ nav:
   - Quick Start: quick_start.md
   - Client/User Guide:
       - Knox Shell: knoxshell-guide/knoxshell_user_guide.md
-      - Knox CLI: knox_cli.md
       - Discovering Resources: book_client-details.md
       - Troubleshooting:
           - General Troubleshooting: book_troubleshooting.md
           - Client-Specific Troubleshooting: client_troubleshooting.md
       - FAQ: faq.md
   - Admin Guide:
+      - Knox CLI: knox_cli.md
       - Gateway Overview: book_gateway-details.md
       - Configuration:
-          - Overview: config.md
-          - Authentication:
+          - Gateway Config Overview: config.md
+          - Knox Security Config: config_kerberos.md
+          - High Availability: config_ha.md
+          - Mutual Auth SSL: config_mutual_authentication_ssl.md
+          - Metrics: config_metrics.md
+          - Audit: config_audit.md
+          - Authentication Services:
+            - Providers:
               - Overview: config_authn.md
-              - Kerberos: config_kerberos.md
-              - LDAP Authentication Cache: config_ldap_authc_cache.md
-              - LDAP Group Lookup: config_ldap_group_lookup.md
-              - Advanced LDAP: config_advanced_ldap.md
+              - LDAP:
+                - LDAP Group Lookup: config_ldap_group_lookup.md
+                - Advanced LDAP: config_advanced_ldap.md
+                - LDAP Authentication Cache: config_ldap_authc_cache.md
               - PAM Authentication: config_pam_authn.md
-              - Knox SSO: config_knox_sso.md
-              - Knox Token: config_knox_token.md
               - Pre-auth SSO: config_preauth_sso_provider.md
               - SSO Cookie: config_sso_cookie_provider.md
               - TLS Client Certificate: config_tls_client_certificate_authentication_provider.md
               - PAC4J: config_pac4j_provider.md
               - Hadoop Auth: config_hadoop_auth_provider.md
+            - Services/APIs:
+              - Knox SSO: config_knox_sso.md
+              - API Key: config_apikey.md
+              - Client Credentials: config_client_credentials.md
+              - Knox Auth Service: config_knoxauth_service.md
+              - Knox Token: config_knox_token.md
           - Authorization: config_authz.md
           - Identity Assertion: config_id_assertion.md
-          - High Availability: config_ha.md
-          - Knox Auth Service: config_knoxauth_service.md
-          - Mutual Auth SSL: config_mutual_authentication_ssl.md
           - Web App Security: config_webappsec_provider.md
-          - Metrics: config_metrics.md
-          - Audit: config_audit.md
-          - Sandbox: config_sandbox.md
       - Service-Specific Configurations:
           - Overview: service_config.md
           - Default HA: service_default_ha.md

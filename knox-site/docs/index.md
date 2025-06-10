@@ -33,6 +33,8 @@
 
 <img src="static/images/knox-logo.gif" alt="Knox" style="width:100%;"/>
 
+# ***DRAFT - WORK IN PROGRESS***
+
 # Apache Knox Documentation Home
 
 ## Contributing to Apache Knox Documentation
