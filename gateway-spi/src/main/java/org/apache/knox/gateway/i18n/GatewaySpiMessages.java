@@ -101,7 +101,10 @@ public interface GatewaySpiMessages {
   void loadedProxyGroupsAcls(String acls);
 
   @Message(level = MessageLevel.ERROR, text = "Unauthorized connection for super-user: {0} from IP remoteAddress {1}")
-  void failedToImpersonateUser(String user, String address);
+  void failedToImpersonateUserFromIP(String user, String address);
+
+  @Message(level = MessageLevel.ERROR, text = "User impersonation failed for user {0}, cause {1}. Trying group impersonation ...")
+  void failedToImpersonateUserTryingGroups(String user, String cause);
 
   @Message(level = MessageLevel.INFO, text = "User {0} is allowed to impersonate user {1}")
   void successfulImpersonation(String user, String iuser);

@@ -28,9 +28,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 
 
@@ -525,5 +529,197 @@ public class GroupBasedImpersonationProviderTest {
         // both virtual_group_1 (from subject) and virtual_group_2 (provided)
         // which are both authorized to impersonate
         gProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"), providedGroups);
+    }
+    /**
+     * Test the isProxyGroupFound method directly.
+     * This method checks if any of the real user's groups have permission to impersonate the proxy user.
+     *
+     * @throws Exception if an error occurs during the test
+     */
+    @Test
+    public void testIsProxyGroupFound() throws Exception {
+        // Set up the provider with specific configuration
+        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        Configuration testConfig = new Configuration();
+
+        // Configure a specific proxy group
+        testConfig.set("hadoop.proxygroup.authorized_group.users", "*");
+        testConfig.set("hadoop.proxygroup.authorized_group.groups", "*");
+        testConfig.set("hadoop.proxygroup.authorized_group.hosts", "*");
+
+        testProvider.setConf(testConfig);
+        testProvider.init("hadoop.proxygroup");
+
+        // Create mocks for testing
+        UserGroupInformation userToImpersonate = Mockito.mock(UserGroupInformation.class);
+        when(userToImpersonate.getUserName()).thenReturn("impersonatedUser");
+
+        // Set up the method to test via reflection
+        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+                "isProxyGroupFound",
+                UserGroupInformation.class,
+                Set.class,
+                boolean.class);
+        method.setAccessible(true);
+
+        // Test case 1: User belongs to an authorized group
+        Set<String> authorizedGroups = new HashSet<>();
+        authorizedGroups.add("authorized_group");
+
+        boolean result1 = (boolean) method.invoke(testProvider, userToImpersonate, authorizedGroups, false);
+        assertTrue("User with authorized group should be allowed to impersonate", result1);
+
+        // Test case 2: User belongs to an unauthorized group
+        Set<String> unauthorizedGroups = new HashSet<>();
+        unauthorizedGroups.add("unauthorized_group");
+
+        boolean result2 = (boolean) method.invoke(testProvider, userToImpersonate, unauthorizedGroups, false);
+        assertFalse("User with unauthorized group should not be allowed to impersonate", result2);
+
+        // Test case 3: User belongs to multiple groups, including an authorized one
+        Set<String> mixedGroups = new HashSet<>();
+        mixedGroups.add("unauthorized_group");
+        mixedGroups.add("authorized_group");
+
+        boolean result3 = (boolean) method.invoke(testProvider, userToImpersonate, mixedGroups, false);
+        assertTrue("User with mixed groups including an authorized one should be allowed to impersonate", result3);
+
+        // Test case 4: Empty group set
+        Set<String> emptyGroups = new HashSet<>();
+
+        boolean result4 = (boolean) method.invoke(testProvider, userToImpersonate, emptyGroups, false);
+        assertFalse("User with no groups should not be allowed to impersonate", result4);
+
+        // Test case 5: Initial proxyGroupFound is true
+        boolean result5 = (boolean) method.invoke(testProvider, userToImpersonate, unauthorizedGroups, true);
+        assertTrue("Method should return true if initial proxyGroupFound is true", result5);
+    }
+    /**
+     * Test the authorize method when doesProxyUserConfigExist is false and groups exist.
+     * In this scenario, the method should directly call checkProxyGroupAuthorization.
+     *
+     * @throws Exception if an error occurs during the test
+     */
+    @Test
+    public void testAuthorizeWhenProxyUserConfigDoesNotExistAndGroupsExist() throws Exception {
+        // Set up a provider with only proxy group configuration (no proxy user configuration)
+        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        Configuration testConfig = new Configuration();
+
+        // Configure only proxy groups, not proxy users
+        testConfig.set("hadoop.proxygroup.authorized_group.users", "*");
+        testConfig.set("hadoop.proxygroup.authorized_group.groups", "*");
+        testConfig.set("hadoop.proxygroup.authorized_group.hosts", "*");
+
+        testProvider.setConf(testConfig);
+        testProvider.init("hadoop.proxygroup");
+
+        // Create mocks for testing
+        String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getGroupNames()).thenReturn(new String[0]); // No groups in subject
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Create a list of groups to provide to the authorize method
+        List<String> providedGroups = new ArrayList<>();
+        providedGroups.add("authorized_group");
+
+        // This should not throw an exception since the provided groups include authorized_group
+        // which is authorized to impersonate
+        testProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"), providedGroups);
+    }
+
+    /**
+     * Test the authorize method when doesProxyUserConfigExist is true and valid proxyuser configuration exists.
+     * In this scenario, the method should successfully authorize using the parent class's authorize method.
+     *
+     * @throws Exception if an error occurs during the test
+     */
+    @Test
+    public void testAuthorizeWhenProxyUserConfigExistsAndIsValid() throws Exception {
+        // Set up a provider with valid proxy user configuration
+        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        Configuration testConfig = new Configuration();
+
+        String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+
+        // Setup valid proxy user configuration
+        testConfig.set("hadoop.proxyuser." + proxyUser + ".users", "*");
+        testConfig.set("hadoop.proxyuser." + proxyUser + ".groups", "*");
+        testConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
+
+        testProvider.setConf(testConfig);
+        testProvider.init("hadoop.proxyuser");
+
+        // Create mocks for testing
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
+        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // This should not throw an exception since the proxy user configuration is valid
+        testProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"));
+    }
+
+    /**
+     * Test the authorize method when doesProxyUserConfigExist is true but the proxy user authorization fails,
+     * causing it to fall back to checkProxyGroupAuthorization.
+     *
+     * @throws Exception if an error occurs during the test
+     */
+    @Test
+    public void testAuthorizeWhenProxyUserConfigExistsButAuthorizationFails() throws Exception {
+        // Set up a provider with proxy user configuration that will fail authorization
+        // but with valid proxy group configuration
+        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        Configuration testConfig = new Configuration();
+
+        String proxyUser = "testuser";
+        String impersonatedUser = "impersonatedUser";
+        String unauthorizedUser = "unauthorizedUser"; // Different from the configured proxy user
+
+        // Setup proxy user configuration for a specific user
+        testConfig.set("hadoop.proxyuser." + proxyUser + ".users", "specificUser"); // Not wildcard
+        testConfig.set("hadoop.proxyuser." + proxyUser + ".groups", "specificGroup"); // Not wildcard
+        testConfig.set("hadoop.proxyuser." + proxyUser + ".hosts", "*");
+
+        // Setup proxy group configuration
+        testConfig.set("hadoop.proxygroup.authorized_group.users", "*");
+        testConfig.set("hadoop.proxygroup.authorized_group.groups", "*");
+        testConfig.set("hadoop.proxygroup.authorized_group.hosts", "*");
+
+        testProvider.setConf(testConfig);
+        testProvider.init("hadoop.proxyuser");
+
+        // Create mocks for testing
+        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+
+        when(realUserUGI.getShortUserName()).thenReturn(unauthorizedUser); // Use unauthorized user
+        when(realUserUGI.getUserName()).thenReturn(unauthorizedUser);
+        when(realUserUGI.getGroupNames()).thenReturn(new String[0]); // No groups in subject
+
+        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
+        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+
+        // Create a list of groups to provide to the authorize method
+        List<String> providedGroups = new ArrayList<>();
+        providedGroups.add("authorized_group");
+
+        // This should not throw an exception because even though proxy user authorization fails,
+        // it falls back to group-based authorization which succeeds
+        testProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"), providedGroups);
     }
 }

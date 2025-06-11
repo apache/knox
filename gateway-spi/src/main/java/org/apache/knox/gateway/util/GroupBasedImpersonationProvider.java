@@ -48,6 +48,10 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     private static final String CONF_HOSTS = ".hosts";
     private static final String CONF_USERS = ".users";
     private static final String CONF_GROUPS = ".groups";
+    private static final String PREFIX_REGEX_EXP = "\\.";
+    private static final String USERS_GROUPS_REGEX_EXP = "[\\S]*(" +
+            Pattern.quote(CONF_USERS) + "|" + Pattern.quote(CONF_GROUPS) + ")";
+    private static final String HOSTS_REGEX_EXP = "[\\S]*" + Pattern.quote(CONF_HOSTS);
     private final Map<String, AccessControlList> proxyGroupsAcls = new HashMap<>();
     private Map<String, MachineList> groupProxyHosts = new HashMap<>();
     private String groupConfigPrefix;
@@ -85,19 +89,13 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
         initGroupBasedProvider(PROXYGROUP_PREFIX);
     }
 
-    private void initGroupBasedProvider(String proxyGroupPrefix) {
+    private void initGroupBasedProvider(final String proxyGroupPrefix) {
         groupConfigPrefix = proxyGroupPrefix +
                 (proxyGroupPrefix.endsWith(".") ? "" : ".");
 
-        // constructing regex to match the following patterns:
-        //   $configPrefix.[ANY].users
-        //   $configPrefix.[ANY].groups
-        //   $configPrefix.[ANY].hosts
-        //
-        String prefixRegEx = groupConfigPrefix.replace(".", "\\.");
-        String usersGroupsRegEx = prefixRegEx + "[\\S]*(" +
-                Pattern.quote(CONF_USERS) + "|" + Pattern.quote(CONF_GROUPS) + ")";
-        String hostsRegEx = prefixRegEx + "[\\S]*" + Pattern.quote(CONF_HOSTS);
+        String prefixRegEx = groupConfigPrefix.replace(".", PREFIX_REGEX_EXP);
+        String usersGroupsRegEx = prefixRegEx + USERS_GROUPS_REGEX_EXP;
+        String hostsRegEx = prefixRegEx + HOSTS_REGEX_EXP;
 
         // get list of users and groups per proxygroup
         // Map of <hadoop.proxygroup.[VIRTUAL_GROUP].users|groups, group1,group2>
@@ -157,14 +155,22 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
      */
     public void authorize(UserGroupInformation user, InetAddress remoteAddress, List<String> groups) throws AuthorizationException {
 
-        /**
-         *  check for proxy user authorization only if PROXYUSER_PREFIX properties exist.
-         *  If proxy is configured then use those properties instead of group-based properties
-         *  given user based configs are more finegrained.
-         */
+        /* Proxy user configuration takes precedence over proxy group configuration. */
         if (doesProxyUserConfigExist) {
-            super.authorize(user, remoteAddress);
-        } else{
+            try{
+                /* check for proxy user authorization */
+                super.authorize(user, remoteAddress);
+            } catch (final AuthorizationException e) {
+                /*
+                 * Log and try group based impersonation.
+                 * Since this provider is for groups no need to check if
+                 * proxy group config exists, we know it does.
+                 */
+                LOG.failedToImpersonateUserTryingGroups(user.getUserName(), e.toString());
+                /* check for proxy group authorization */
+                checkProxyGroupAuthorization(user, remoteAddress, groups);
+            }
+        } else {
             /* check for proxy group authorization */
             checkProxyGroupAuthorization(user, remoteAddress, groups);
         }
