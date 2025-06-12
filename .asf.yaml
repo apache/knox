@@ -21,4 +21,4 @@ notifications:
     jira_options: link label worklog
 github:
   ghp_branch:  gh-pages
-  ghp_path:    /docs
+  ghp_path:    /
