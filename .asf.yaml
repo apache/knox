@@ -19,4 +19,6 @@ notifications:
     issues:       dev@knox.apache.org
     pullrequests: dev@knox.apache.org
     jira_options: link label worklog
-
+github:
+  ghp_branch:  master
+  ghp_path:    /docs
