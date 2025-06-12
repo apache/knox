@@ -56,7 +56,8 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     private Map<String, MachineList> groupProxyHosts = new HashMap<>();
     private String groupConfigPrefix;
     private boolean doesProxyUserConfigExist = true;
-    static final String IMPERSONATION_ENABLED_PARAM = "impersonation.enabled";
+    private boolean doesProxyGroupConfigExist;
+    static final String IMPERSONATION_ENABLED_PARAM = ".impersonation.enabled";
 
     public GroupBasedImpersonationProvider() {
         super();
@@ -77,16 +78,28 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
         super.init(configurationPrefix);
 
         /* Check if user proxy configs are provided */
-        final Map<String, String> filteredProps = Optional.ofNullable(getConf().getPropsWithPrefix(PROXYUSER_PREFIX + "."))
-                .orElse(Collections.emptyMap())  // handle null map defensively
-                .entrySet()
-                .stream()
-                .filter(entry -> !IMPERSONATION_ENABLED_PARAM.equals(entry.getKey())) // avoid NPE by reversing equals
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        doesProxyUserConfigExist = !getFilteredProps(PROXYUSER_PREFIX).isEmpty();
 
-        doesProxyUserConfigExist = !filteredProps.isEmpty();
+        /* Check if group proxy configs are provided */
+        doesProxyGroupConfigExist = !getFilteredProps(PROXYGROUP_PREFIX).isEmpty();
 
         initGroupBasedProvider(PROXYGROUP_PREFIX);
+    }
+
+    /**
+     * Returns a filtered map of properties with the specified prefix,
+     * excluding the impersonation enabled parameter.
+     *
+     * @param prefix the prefix to filter properties by
+     * @return a map of filtered properties
+     */
+    private Map<String, String> getFilteredProps(String prefix) {
+        return Optional.ofNullable(getConf().getPropsWithPrefix(prefix))
+                .orElse(Collections.emptyMap())
+                .entrySet()
+                .stream()
+                .filter(entry -> !IMPERSONATION_ENABLED_PARAM.equals(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void initGroupBasedProvider(final String proxyGroupPrefix) {
@@ -155,7 +168,16 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
      */
     public void authorize(UserGroupInformation user, InetAddress remoteAddress, List<String> groups) throws AuthorizationException {
 
-        /* Proxy user configuration takes precedence over proxy group configuration. */
+        /*
+         * There are few cases to consider here:
+         *  1. If proxy user config exists and there is impersonation failure:
+         *    1.1 if proxy group config exists, try to authorize using groups
+         *    1.2 if proxy group config does not exist, throw the original exception
+         *  2. If proxy user config exists and there is impersonation success:
+         *    2.2 Do not check for proxy group auth
+         *  3. If proxy user config does not exist:
+         *    3.1 Check for proxy group config and return success or failure based on the results.
+         */
         if (doesProxyUserConfigExist) {
             try{
                 /* check for proxy user authorization */
@@ -168,9 +190,14 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
                  */
                 LOG.failedToImpersonateUserTryingGroups(user.getUserName(), e.toString());
                 /* check for proxy group authorization */
-                checkProxyGroupAuthorization(user, remoteAddress, groups);
+                if(doesProxyGroupConfigExist) {
+                    checkProxyGroupAuthorization(user, remoteAddress, groups);
+                } else {
+                    /* If proxy group config does not exist, throw the original exception */
+                    throw e;
+                }
             }
-        } else {
+        } else if (doesProxyGroupConfigExist) {
             /* check for proxy group authorization */
             checkProxyGroupAuthorization(user, remoteAddress, groups);
         }

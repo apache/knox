@@ -38,7 +38,6 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authorize.DefaultImpersonationProvider;
 import org.apache.hadoop.security.authorize.ImpersonationProvider;
 import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -128,16 +127,7 @@ public class AuthFilterUtils {
                 });
             }
         }
-
-        ImpersonationProvider impersonationProvider;
-        if(hasProxyGroupParams) {
-            /* If proxy groups configured use GroupBasedImpersonationProvider */
-            impersonationProvider = new GroupBasedImpersonationProvider();
-        } else {
-            /* For proxy user use DefaultImpersonationProvider */
-            impersonationProvider = new DefaultImpersonationProvider();
-        }
-        saveImpersonationProvider(topologyName, role, conf, impersonationProvider, PROXYUSER_PREFIX);
+        saveImpersonationProvider(topologyName, role, conf, new GroupBasedImpersonationProvider(), PROXYUSER_PREFIX);
     }
 
     private static void saveImpersonationProvider(String topologyName, String role, final Configuration conf, final ImpersonationProvider impersonationProvider, final String prefix) {
