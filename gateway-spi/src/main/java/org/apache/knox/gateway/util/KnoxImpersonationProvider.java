@@ -200,6 +200,11 @@ public class KnoxImpersonationProvider extends DefaultImpersonationProvider {
         } else if (doesProxyGroupConfigExist) {
             /* check for proxy group authorization */
             checkProxyGroupAuthorization(user, remoteAddress, groups);
+        } else {
+            /* If no proxy user or group config exists, throw an exception */
+            LOG.noProxyUserOrGroupConfigExists();
+            throw new AuthorizationException("User: " + user.getRealUser()
+                    + " is not allowed to impersonate " + user.getUserName());
         }
     }
 

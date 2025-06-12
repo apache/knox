@@ -213,7 +213,7 @@ public class CommonIdentityAssertionFilterTest {
             filter.doFilter(request, response, chain);
             return null;
         });
-        assertTrue(new String(out.toByteArray(), StandardCharsets.UTF_8).contains("User: admin is not allowed to impersonate bob"));
+        assertTrue(new String(out.toByteArray(), StandardCharsets.UTF_8).contains("User: admin (auth:SIMPLE) is not allowed to impersonate bob"));
     }
 
     @Test

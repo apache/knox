@@ -114,4 +114,7 @@ public interface GatewaySpiMessages {
 
   @Message(level = MessageLevel.ERROR, text = "User {0} with groups {1} is not allowed to impersonate {2} from address {3}")
   void failedToImpersonateGroupsFromAddress(String user, String groups, String iuser, String address);
+
+  @Message(level=MessageLevel.ERROR, text="No proxy user or group configuration exists.")
+  void noProxyUserOrGroupConfigExists();
 }
