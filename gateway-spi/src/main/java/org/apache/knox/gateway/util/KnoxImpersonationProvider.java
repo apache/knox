@@ -43,7 +43,7 @@ import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYUSER_PREFIX;
  * An extension of Hadoop's DefaultImpersonationProvider that adds support for group-based impersonation.
  * This provider allows users who belong to specific groups to impersonate other users.
  */
-public class GroupBasedImpersonationProvider extends DefaultImpersonationProvider {
+public class KnoxImpersonationProvider extends DefaultImpersonationProvider {
     private static final GatewaySpiMessages LOG = MessagesFactory.get(GatewaySpiMessages.class);
     private static final String CONF_HOSTS = ".hosts";
     private static final String CONF_USERS = ".users";
@@ -59,7 +59,7 @@ public class GroupBasedImpersonationProvider extends DefaultImpersonationProvide
     private boolean doesProxyGroupConfigExist;
     static final String IMPERSONATION_ENABLED_PARAM = ".impersonation.enabled";
 
-    public GroupBasedImpersonationProvider() {
+    public KnoxImpersonationProvider() {
         super();
     }
 

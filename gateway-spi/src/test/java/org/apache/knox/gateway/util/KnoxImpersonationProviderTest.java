@@ -42,17 +42,17 @@ import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYUSER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
-public class GroupBasedImpersonationProviderTest {
+public class KnoxImpersonationProviderTest {
 
     @Rule
     public Timeout globalTimeout = new Timeout(10000, TimeUnit.MILLISECONDS);
-    private GroupBasedImpersonationProvider provider;
+    private KnoxImpersonationProvider provider;
     private Configuration config;
 
     @Before
     public void setUp() {
 
-        provider = new GroupBasedImpersonationProvider();
+        provider = new KnoxImpersonationProvider();
         config = new Configuration();
 
         // Setup proxy user configuration
@@ -107,7 +107,7 @@ public class GroupBasedImpersonationProviderTest {
     @Test
     public void testGetAclKey() throws Exception {
         // Test the private getAclKey method using reflection
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod("getAclKey", String.class);
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod("getAclKey", String.class);
         method.setAccessible(true);
 
         assertEquals("hadoop.proxygroup.admin", method.invoke(provider, "hadoop.proxygroup.admin.users"));
@@ -132,7 +132,7 @@ public class GroupBasedImpersonationProviderTest {
         when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
                 "checkProxyGroupAuthorization",
                 UserGroupInformation.class,
                 InetAddress.class,
@@ -161,7 +161,7 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithOnlyProxyGroupsConfigured() throws Exception {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         String proxyUser = "testuser";
@@ -199,7 +199,7 @@ public class GroupBasedImpersonationProviderTest {
         when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
                 "checkProxyGroupAuthorization",
                 UserGroupInformation.class,
                 InetAddress.class,
@@ -244,7 +244,7 @@ public class GroupBasedImpersonationProviderTest {
     @Test
     public void testAuthorizationSuccessWithBothProxyMethodsDisabled() throws Exception {
 
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         String proxyUser = "testuser";
@@ -275,7 +275,7 @@ public class GroupBasedImpersonationProviderTest {
         when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
                 "checkProxyGroupAuthorization",
                 UserGroupInformation.class,
                 InetAddress.class,
@@ -294,7 +294,7 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithOnlyProxyUserConfigured() throws Exception {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         String proxyUser = "testuser";
@@ -326,7 +326,7 @@ public class GroupBasedImpersonationProviderTest {
         when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
                 "checkProxyGroupAuthorization",
                 UserGroupInformation.class,
                 InetAddress.class,
@@ -347,7 +347,7 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithBothProxyMethodsEnabledAndMode() throws Exception {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         // Set impersonation mode to AND
@@ -382,7 +382,7 @@ public class GroupBasedImpersonationProviderTest {
         when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
                 "checkProxyGroupAuthorization",
                 UserGroupInformation.class,
                 InetAddress.class,
@@ -400,7 +400,7 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithProvidedGroups() throws org.apache.hadoop.security.authorize.AuthorizationException, UnknownHostException {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         // Setup proxy group configuration
@@ -442,7 +442,7 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test(expected = org.apache.hadoop.security.authorize.AuthorizationException.class)
     public void testAuthorizationFailureWithProvidedGroups() throws org.apache.hadoop.security.authorize.AuthorizationException, UnknownHostException {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         // Setup proxy group configuration
@@ -485,7 +485,7 @@ public class GroupBasedImpersonationProviderTest {
      */
     @Test
     public void testAuthorizationSuccessWithCombinedGroups() throws org.apache.hadoop.security.authorize.AuthorizationException, UnknownHostException {
-        GroupBasedImpersonationProvider gProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider gProvider = new KnoxImpersonationProvider();
         Configuration gConfig = new Configuration();
 
         String proxyUser = "testuser";
@@ -539,7 +539,7 @@ public class GroupBasedImpersonationProviderTest {
     @Test
     public void testIsProxyGroupFound() throws Exception {
         // Set up the provider with specific configuration
-        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider testProvider = new KnoxImpersonationProvider();
         Configuration testConfig = new Configuration();
 
         // Configure a specific proxy group
@@ -555,7 +555,7 @@ public class GroupBasedImpersonationProviderTest {
         when(userToImpersonate.getUserName()).thenReturn("impersonatedUser");
 
         // Set up the method to test via reflection
-        java.lang.reflect.Method method = GroupBasedImpersonationProvider.class.getDeclaredMethod(
+        java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
                 "isProxyGroupFound",
                 UserGroupInformation.class,
                 Set.class,
@@ -603,7 +603,7 @@ public class GroupBasedImpersonationProviderTest {
     @Test
     public void testAuthorizeWhenProxyUserConfigDoesNotExistAndGroupsExist() throws Exception {
         // Set up a provider with only proxy group configuration (no proxy user configuration)
-        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider testProvider = new KnoxImpersonationProvider();
         Configuration testConfig = new Configuration();
 
         // Configure only proxy groups, not proxy users
@@ -645,7 +645,7 @@ public class GroupBasedImpersonationProviderTest {
     @Test
     public void testAuthorizeWhenProxyUserConfigExistsAndIsValid() throws Exception {
         // Set up a provider with valid proxy user configuration
-        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider testProvider = new KnoxImpersonationProvider();
         Configuration testConfig = new Configuration();
 
         String proxyUser = "testuser";
@@ -683,7 +683,7 @@ public class GroupBasedImpersonationProviderTest {
     public void testAuthorizeWhenProxyUserConfigExistsButAuthorizationFails() throws Exception {
         // Set up a provider with proxy user configuration that will fail authorization
         // but with valid proxy group configuration
-        GroupBasedImpersonationProvider testProvider = new GroupBasedImpersonationProvider();
+        KnoxImpersonationProvider testProvider = new KnoxImpersonationProvider();
         Configuration testConfig = new Configuration();
 
         String proxyUser = "testuser";

@@ -127,7 +127,7 @@ public class AuthFilterUtils {
                 });
             }
         }
-        saveImpersonationProvider(topologyName, role, conf, new GroupBasedImpersonationProvider(), PROXYUSER_PREFIX);
+        saveImpersonationProvider(topologyName, role, conf, new KnoxImpersonationProvider(), PROXYUSER_PREFIX);
     }
 
     private static void saveImpersonationProvider(String topologyName, String role, final Configuration conf, final ImpersonationProvider impersonationProvider, final String prefix) {
@@ -203,8 +203,8 @@ public class AuthFilterUtils {
 
         if (impersonationProvider != null) {
             try {
-                if (impersonationProvider instanceof GroupBasedImpersonationProvider) {
-                    ((GroupBasedImpersonationProvider) impersonationProvider).authorize(remoteRequestUgi, InetAddress.getByName(request.getRemoteAddr()), groups);
+                if (impersonationProvider instanceof KnoxImpersonationProvider) {
+                    ((KnoxImpersonationProvider) impersonationProvider).authorize(remoteRequestUgi, InetAddress.getByName(request.getRemoteAddr()), groups);
                 } else {
                     impersonationProvider.authorize(remoteRequestUgi, request.getRemoteAddr());
                 }
