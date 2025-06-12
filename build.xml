@@ -423,6 +423,7 @@ Release build file for the Apache Knox Gateway
     <target name="start-debug-gateway" description="Start test gateway server enabling remote debugging.">
         <exec executable="java" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
             <arg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>
+            <arg value="--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED"/> 
             <arg value="-jar"/>
             <arg value="bin/gateway.jar"/>
         </exec>

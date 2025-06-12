@@ -85,6 +85,9 @@ public interface GatewaySpiMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to load truststore due to {0}")
   void failedToLoadTruststore(String message, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Impersonation failed, user {0} does not belong to configured proxy group")
+  void failedToImpersonateViaGroups(String user);
+
   @Message(level = MessageLevel.WARN, text = "Duplicated filter param key: {0}")
   void duplicatedFilterParamKey(String name);
 
@@ -93,4 +96,25 @@ public interface GatewaySpiMessages {
 
   @Message(level=MessageLevel.DEBUG, text="Ignoring cookie path scope filter for default topology")
   void ignoringCookiePathScopeForDefaultTopology();
+
+  @Message(level=MessageLevel.DEBUG, text="Loaded proxy groups ACLs: {0}")
+  void loadedProxyGroupsAcls(String acls);
+
+  @Message(level = MessageLevel.ERROR, text = "User impersonation failed for user {0}. Connections from remote address {1} are not authorized.")
+  void failedToImpersonateUserFromIP(String user, String address);
+
+  @Message(level = MessageLevel.ERROR, text = "User impersonation failed for user {0}, cause {1}. Trying group impersonation ...")
+  void failedToImpersonateUserTryingGroups(String user, String cause);
+
+  @Message(level = MessageLevel.INFO, text = "User {0} is allowed to impersonate user {1}")
+  void successfulImpersonation(String user, String iuser);
+
+  @Message(level = MessageLevel.ERROR, text = "User {0} with groups {1} is not allowed to impersonate {2}")
+  void failedToImpersonateGroups(String user, String groups, String iuser);
+
+  @Message(level = MessageLevel.ERROR, text = "User {0} with groups {1} is not allowed to impersonate {2} from address {3}")
+  void failedToImpersonateGroupsFromAddress(String user, String groups, String iuser, String address);
+
+  @Message(level=MessageLevel.ERROR, text="No proxy user or group configuration exists.")
+  void noProxyUserOrGroupConfigExists();
 }
