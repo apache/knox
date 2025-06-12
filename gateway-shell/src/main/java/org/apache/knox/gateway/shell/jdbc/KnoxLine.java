@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.logging.Logger;
 import java.util.Map;
 
 import org.apache.knox.gateway.shell.CredentialCollectionException;
@@ -37,6 +38,8 @@ public class KnoxLine {
   private KnoxDataSource datasource;
   private Connection conn;
 
+  Logger logger = Logger.getLogger(getClass().getName());
+
   @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to be able to register a shutdown hook
   public void execute(String[] args)
       throws ClassNotFoundException, SQLException, CredentialCollectionException {
@@ -44,7 +47,7 @@ public class KnoxLine {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        System.out.println("Closing any open connections ...");
+        logger.info("Closing any open connections ...");
         closeConnection();
       }
     });
@@ -54,14 +57,14 @@ public class KnoxLine {
   private void executeShell() {
     String sql;
 
-    System.out.println(" _                    _ _            ");
-    System.out.println("| | ___ __   _____  _| (_)_ __   ___ ");
-    System.out.println("| |/ / '_ \\ / _ \\ \\/ / | | '_ \\ / _ \\");
-    System.out.println("|   <| | | | (_) >  <| | | | | |  __/");
-    System.out.println("|_|\\_\\_| |_|\\___/_/\\_\\_|_|_| |_|\\\\__|");
-    System.out.println("powered by Apache Knox");
-    System.out.println("");
-    System.out.println("");
+    logger.info(" _                    _ _            ");
+    logger.info("| | ___ __   _____  _| (_)_ __   ___ ");
+    logger.info("| |/ / '_ \\ / _ \\ \\/ / | | '_ \\ / _ \\");
+    logger.info("|   <| | | | (_) >  <| | | | | |  __/");
+    logger.info("|_|\\_\\_| |_|\\___/_/\\_\\_|_|_| |_|\\\\__|");
+    logger.info("powered by Apache Knox");
+    logger.info("");
+    logger.info("");
 
     while(true) {
       sql = System.console().readLine("knoxline> ");
@@ -76,25 +79,25 @@ public class KnoxLine {
         else {
           // Configure JDBC connection
           if (datasource != null) {
-            System.out.println(sql);
+            logger.info(sql);
             try {
               establishConnection();
               try (Statement statement = conn.createStatement()) {
                 if (statement.execute(sql)) {
                   try (ResultSet resultSet = statement.getResultSet()) {
                     KnoxShellTable table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
-                    System.out.println(table.toString());
-                    System.out.println("\nRows: " + table.getRows().size() + "\n");
+                    logger.info(table.toString());
+                    logger.info("\nRows: " + table.getRows().size() + "\n");
                   }
                 }
               }
             }
             catch (SQLException e) {
-              System.out.println("SQL Exception encountered... " + e.getMessage());
+              logger.info("SQL Exception encountered... " + e.getMessage());
             }
           }
           else {
-            System.out.println("No datasource selected. Use :ds select {datasource-name}");
+            logger.info("No datasource selected. Use :ds select {datasource-name}");
           }
         }
       }
@@ -103,7 +106,7 @@ public class KnoxLine {
 
   private void establishConnection() throws SQLException {
     if (conn == null || conn.isClosed()) {
-      System.out.println("Connecting...");
+      logger.info("Connecting...");
       conn = JDBCUtils.createConnection(datasource.getConnectStr(), user, pass);
     }
   }
@@ -121,7 +124,7 @@ public class KnoxLine {
         addDataSource(args[2], args[3], args[4], args[5]);
       }
       else {
-        System.out.println("Invalid number of arguments for :ds add. Useage: :ds add {ds-name} {connectStr} {driver} {authnType: none|basic}");
+        logger.info("Invalid number of arguments for :ds add. Useage: :ds add {ds-name} {connectStr} {driver} {authnType: none|basic}");
       }
     }
     else if (args[1].contentEquals("remove")) {
@@ -129,7 +132,7 @@ public class KnoxLine {
         removeDataSource(args[2]);
       }
       else {
-        System.out.println("Invalid number of arguments for :ds remove. Useage: :ds remove {ds-name}");
+        logger.info("Invalid number of arguments for :ds remove. Useage: :ds remove {ds-name}");
       }
     }
   }
@@ -137,10 +140,10 @@ public class KnoxLine {
   private void listDataSources() {
     Map<String, KnoxDataSource> sources = getDataSources();
     if (sources != null) {
-      sources.forEach((name, ds)->System.out.println("Name : " + name + " : " + ds.getConnectStr()));
+      sources.forEach((name, ds)->logger.info("Name : " + name + " : " + ds.getConnectStr()));
     }
     else {
-      System.out.println("No datasources configured. Use :ds add {ds-name} {connectStr} {driver} {authnType: none|basic}");
+      logger.info("No datasources configured. Use :ds add {ds-name} {connectStr} {driver} {authnType: none|basic}");
     }
   }
 
@@ -174,7 +177,7 @@ public class KnoxLine {
     datasource = sources.get(name);
 
     if (datasource == null) {
-      System.out.println("Invalid datasource name provided. See output from: :ds list");
+      logger.info("Invalid datasource name provided. See output from: :ds list");
       return;
     }
 

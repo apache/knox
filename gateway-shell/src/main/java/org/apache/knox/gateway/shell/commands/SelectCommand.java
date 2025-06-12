@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -49,6 +50,8 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
   public SelectCommand(Groovysh shell) {
     super(shell, ":SQL", ":sql", DESC, USAGE, DESC);
   }
+
+  Logger logger = Logger.getLogger(getClass().getName());
 
   @Override
   public void keyPressed(KeyEvent event) {
@@ -145,7 +148,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
       //KnoxShellTable.builder().jdbc().connect("jdbc:derby:codejava/webdb1").driver("org.apache.derby.jdbc.EmbeddedDriver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
       try {
         if (ok) {
-          System.out.println(sql);
+          logger.info(sql);
           try {
             Connection conn = getConnectionFromSession(ds);
             if (conn == null || conn.isClosed()) {
@@ -167,7 +170,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
             }
           }
           catch (SQLException e) {
-            System.out.println("SQL Exception encountered... " + e.getMessage());
+            logger.info("SQL Exception encountered... " + e.getMessage());
           }
         }
       }

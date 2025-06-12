@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.shell.jdbc.Database;
@@ -35,7 +36,7 @@ public class DerbyDatabase implements Database {
   private static final String DEFAULT_SCHEMA_NAME = "APP";
 
   private final String dbUri;
-
+  Logger logger = Logger.getLogger(getClass().getName());
   /**
    * Constructor
    *
@@ -128,6 +129,6 @@ public class DerbyDatabase implements Database {
 
   // being a test only class we now log into the STDOUT for now
   private void log(MessageLevel logLevel, String message, Throwable error) {
-    System.out.println(logLevel.name() + " - " + message + (error == null ? "" : " - caused by " + error));
+    logger.info(logLevel.name() + " - " + message + (error == null ? "" : " - caused by " + error));
   }
 }

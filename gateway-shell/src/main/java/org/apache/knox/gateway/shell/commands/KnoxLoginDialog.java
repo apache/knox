@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
+import java.util.logging.Logger;
+
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -98,11 +100,12 @@ public class KnoxLoginDialog implements CredentialCollector {
 
   public static void main(String[] args) {
     KnoxLoginDialog dlg = new KnoxLoginDialog();
+    Logger logger = Logger.getLogger(KnoxLoginDialog.class.getName());
     try {
       dlg.collect();
       if (dlg.ok) {
-        System.out.println("username: " + dlg.username);
-        System.out.println("password: " + new String(dlg.pass));
+        logger.info("username: " + dlg.username);
+        logger.info("password: " + new String(dlg.pass));
       }
     } catch (CredentialCollectionException e) {
       e.printStackTrace();
