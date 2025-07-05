@@ -146,9 +146,9 @@ public class DiscoveryApiClient extends ApiClient {
 
   private void configureTimeouts(GatewayConfig config) {
     OkHttpClient.Builder builder = getHttpClient().newBuilder();
-    builder.connectTimeout(config.getServiceDiscoveryConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
-    builder.readTimeout(config.getServiceDiscoveryReadTimeoutMillis(), TimeUnit.MILLISECONDS);
-    builder.writeTimeout(config.getServiceDiscoveryWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    builder.connectTimeout(config.getClouderaManagerServiceDiscoveryConnectTimeoutMillis(), TimeUnit.MILLISECONDS);
+    builder.readTimeout(config.getClouderaManagerServiceDiscoveryReadTimeoutMillis(), TimeUnit.MILLISECONDS);
+    builder.writeTimeout(config.getClouderaManagerServiceDiscoveryWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
     OkHttpClient client = builder.build();
     setHttpClient(client);
     log.discoveryClientTimeout(client.connectTimeoutMillis(), client.readTimeoutMillis(), client.writeTimeoutMillis());

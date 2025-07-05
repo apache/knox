@@ -919,11 +919,31 @@ public interface GatewayConfig {
 
   Map<String, Collection<String>> getApplicationPathAliases();
 
+  /**
+   * @deprecated use {@link #getClouderaManagerServiceDiscoveryConnectTimeoutMillis()}
+   */
+  @Deprecated
   long getServiceDiscoveryConnectTimeoutMillis();
 
+  long getClouderaManagerServiceDiscoveryConnectTimeoutMillis();
+
+  /**
+   * @deprecated use {@link #getClouderaManagerServiceDiscoveryReadTimeoutMillis()}
+   */
+  @Deprecated
   long getServiceDiscoveryReadTimeoutMillis();
 
+  long getClouderaManagerServiceDiscoveryReadTimeoutMillis();
+
+  /**
+   * @deprecated use {@link #getClouderaManagerServiceDiscoveryWriteTimeoutMillis()}
+   */
+  @Deprecated
   long getServiceDiscoveryWriteTimeoutMillis();
+
+  long getClouderaManagerServiceDiscoveryWriteTimeoutMillis();
+
+  long getClouderaManagerServiceDiscoveryRoleConfigPageSize();
 
   /**
    * @return <code>true</code> if token migration must be skipped when a

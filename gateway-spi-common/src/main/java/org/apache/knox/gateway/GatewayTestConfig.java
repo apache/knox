@@ -1093,13 +1093,33 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public long getClouderaManagerServiceDiscoveryConnectTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
   public long getServiceDiscoveryReadTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryReadTimeoutMillis() {
     return -1;
   }
 
   @Override
   public long getServiceDiscoveryWriteTimeoutMillis() {
     return -1;
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryWriteTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryRoleConfigPageSize() {
+    return 500;
   }
 
   @Override

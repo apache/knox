@@ -104,6 +104,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   private int maxRetryAttempts = -1;
   private Collection<String> excludedServiceTypes = Collections.emptySet();
   private Collection<String> excludedRoleTypes = Collections.emptySet();
+  private long roleConfigPageSize = 500;
 
   ClouderaManagerServiceDiscovery(GatewayConfig gatewayConfig) {
     this(false, gatewayConfig);
@@ -130,6 +131,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       configureRetryParams(gatewayConfig);
       excludedServiceTypes = getLowercaseStringCollection(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes());
       excludedRoleTypes = getLowercaseStringCollection(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes());
+      roleConfigPageSize = gatewayConfig.getClouderaManagerServiceDiscoveryRoleConfigPageSize();
     }
   }
 
@@ -457,7 +459,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
           log.noRoles();
         } else {
           log.lookupRoleConfigsFromCM();
-          roleConfigs = rolesResourceApi.readRolesConfig(clusterName, serviceName, null, null, "full");
+          ServiceRoleCollector roleCollector =
+                  new ClouderaManagerServiceRoleCollector(rolesResourceApi, clusterName, roleConfigPageSize);
+          roleConfigs = roleCollector.getAllServiceRoleConfiguration(serviceName);
         }
 
         roleConfigs = excludeRoles(roleConfigs);
