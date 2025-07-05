@@ -21,7 +21,8 @@ import com.cloudera.api.swagger.ServicesResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
@@ -67,7 +68,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
 
-  static final String API_PATH = "api/v32";
+  static final String API_PATH = "api/v57";
 
   private static final String VIEW_SUMMARY     = "summary";
   private static final String VIEW_FULL        = "full";
@@ -77,6 +78,14 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   public static final String CM_SERVICE_TYPE  = "CM";
   public static final String CM_ROLE_TYPE  = "CM_SERVER";
+
+  private static final ApiService CM_SERVICE = new ApiService()
+  .name(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT))
+  .type(CM_SERVICE_TYPE);
+
+  private static final ApiRoleConfigList CM_SERVICE_ROLE_CONFIGS = new ApiRoleConfigList()
+  .addItemsItem(new ApiRoleConfig().name(CM_ROLE_TYPE).roleType(CM_ROLE_TYPE));
+
   public static final String CORE_SETTINGS_TYPE = "CORE_SETTINGS";
 
   private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
@@ -262,72 +271,99 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     log.discoveringCluster(clusterName);
 
+    List<ApiService> serviceList = getServiceList(client.getConfig(), servicesResourceApi);
+    if (serviceList == null) {
+      return null;
+    }
+
+    // if Legacy Cloudera Manager API Clients Compatibility is turned off, some HDFS settings are in CORE_SETTINGS
+    ApiServiceConfig coreSettingsConfig = coreSettingsConfig(client, servicesResourceApi, serviceList);
+
     Set<ServiceModel> serviceModels = new HashSet<>();
+    for (ApiService service : serviceList) {
+      serviceModels.addAll(
+      discoverService(client, clusterName, includedServices, service, servicesResourceApi, rolesResourceApi, coreSettingsConfig)
+      );
+    }
 
-    List<ApiService> serviceList = getClusterServices(client.getConfig(), servicesResourceApi);
+    ClouderaManagerCluster cluster = new ClouderaManagerCluster(clusterName);
+    cluster.addServiceModels(serviceModels);
+    return cluster;
+  }
 
-    if (serviceList != null) {
-      /*
-      Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
-      service so that we can add CM service to topology when auto-discovery is
-      turned on and CM service is selected in the descriptor
-      */
-      final ApiService cmService = new ApiService();
-      cmService.setName(CM_SERVICE_TYPE.toLowerCase(Locale.ROOT));
-      cmService.setType(CM_SERVICE_TYPE);
-      serviceList.add(cmService);
+  private Set<ServiceModel> discoverService(DiscoveryApiClient client, String clusterName, Collection<String> includedServices,
+                                            ApiService service, ServicesResourceApi servicesResourceApi,
+                                            RolesResourceApi rolesResourceApi, ApiServiceConfig coreSettingsConfig) throws ApiException {
+    Set<ServiceModel> serviceModels = new HashSet<>();
+    final List<ServiceModelGenerator> modelGenerators = serviceModelGeneratorsHolder.getServiceModelGenerators(service.getType());
+    if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
+      //log.skipServiceDiscovery(service.getName(), service.getType());
+      //continue;
+    }
+    log.discoveringService(service.getName(), service.getType());
+    ApiServiceConfig serviceConfig = null;
+    /* no reason to check service config for CM or CORE_SETTINGS services */
+    if (!CM_SERVICE_TYPE.equals(service.getType()) && !CORE_SETTINGS_TYPE.equals(service.getType())) {
+      serviceConfig = getServiceConfig(client.getConfig(), servicesResourceApi, service);
+    }
+    ApiRoleConfigList roleConfigList = getAllServiceRoleConfigurations(client.getConfig(), rolesResourceApi, clusterName, service);
+    if (roleConfigList != null && roleConfigList.getItems() != null) {
+      for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
+        ApiRole role = new ApiRole()
+        .name(roleConfig.getName())
+        .type(roleConfig.getRoleType())
+        .hostRef(roleConfig.getHostRef());
+        ApiConfigList roleConfigs = roleConfig.getConfig();
+        ServiceRoleDetails serviceRoleDetails = new ServiceRoleDetails(service, serviceConfig, role, roleConfigs);
 
-      // if Legacy Cloudera Manager API Clients Compatibility is turned off, some HDFS settings are in CORE_SETTINGS
-      ApiServiceConfig coreSettingsConfig = coreSettingsConfig(client, servicesResourceApi, serviceList);
-
-      for (ApiService service : serviceList) {
-        final List<ServiceModelGenerator> modelGenerators = serviceModelGeneratorsHolder.getServiceModelGenerators(service.getType());
-        if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
-          //log.skipServiceDiscovery(service.getName(), service.getType());
-          //continue;
-        }
-        log.discoveringService(service.getName(), service.getType());
-        ApiServiceConfig serviceConfig = null;
-        /* no reason to check service config for CM or CORE_SETTINGS services */
-        if (!CM_SERVICE_TYPE.equals(service.getType()) && !CORE_SETTINGS_TYPE.equals(service.getType())) {
-          serviceConfig = getServiceConfig(client.getConfig(), servicesResourceApi, service);
-        }
-        ApiRoleList roleList = getRoles(client.getConfig(), rolesResourceApi, clusterName, service);
-        if (roleList != null && roleList.getItems() != null) {
-          for (ApiRole role : roleList.getItems()) {
-            String roleName = role.getName();
-            log.discoveringServiceRole(roleName, role.getType());
-
-            ApiConfigList roleConfig = null;
-            /* no reason to check role config for CM or CORE_SETTINGS services */
-            if (!CM_SERVICE_TYPE.equals(service.getType())  && !CORE_SETTINGS_TYPE.equals(service.getType())) {
-              roleConfig = getRoleConfig(client.getConfig(), rolesResourceApi, service, role);
-            }
-
-            if (modelGenerators != null) {
-              for (ServiceModelGenerator serviceModelGenerator : modelGenerators) {
-                ServiceModelGeneratorHandleResponse response = serviceModelGenerator.handles(service, serviceConfig, role, roleConfig);
-                if (response.handled()) {
-                  serviceModelGenerator.setApiClient(client);
-                  ServiceModel serviceModel = serviceModelGenerator.generateService(service, serviceConfig, role, roleConfig, coreSettingsConfig);
-                  serviceModels.add(serviceModel);
-                } else if (!response.getConfigurationIssues().isEmpty()) {
-                  log.serviceRoleHasConfigurationIssues(roleName, String.join(";", response.getConfigurationIssues()));
-                }
-              }
-            }
-
-            log.discoveredServiceRole(roleName, role.getType());
-          }
-        }
-
-        log.discoveredService(service.getName(), service.getType());
+        serviceModels.addAll(generateServiceModels(client, serviceRoleDetails, coreSettingsConfig, modelGenerators));
       }
-      ClouderaManagerCluster cluster = new ClouderaManagerCluster(clusterName);
-      cluster.addServiceModels(serviceModels);
-      return cluster;
+    }
+
+    log.discoveredService(service.getName(), service.getType());
+    return serviceModels;
+  }
+
+  private Set<ServiceModel> generateServiceModels(DiscoveryApiClient client, ServiceRoleDetails serviceRoleDetails, ApiServiceConfig coreSettingsConfig, List<ServiceModelGenerator> modelGenerators) throws ApiException {
+    Set<ServiceModel> serviceModels = new HashSet<>();
+    log.discoveringServiceRole(serviceRoleDetails.getRole().getName(), serviceRoleDetails.getRole().getType());
+
+    if (modelGenerators != null) {
+      for (ServiceModelGenerator serviceModelGenerator : modelGenerators) {
+        ServiceModel serviceModel = generateServiceModel(client, serviceRoleDetails, coreSettingsConfig, serviceModelGenerator);
+        if (serviceModel != null) {
+          serviceModels.add(serviceModel);
+        }
+      }
+    }
+
+    log.discoveredServiceRole(serviceRoleDetails.getRole().getName(), serviceRoleDetails.getRole().getType());
+    return serviceModels;
+  }
+
+  private static ServiceModel generateServiceModel(DiscoveryApiClient client, ServiceRoleDetails sd,
+                                                   ApiServiceConfig coreSettingsConfig, ServiceModelGenerator serviceModelGenerator) throws ApiException {
+    ServiceModelGeneratorHandleResponse response = serviceModelGenerator.handles(sd.getService(), sd.getServiceConfig(), sd.getRole(), sd.getRoleConfig());
+    if (response.handled()) {
+      serviceModelGenerator.setApiClient(client);
+      return serviceModelGenerator.generateService(sd.getService(), sd.getServiceConfig(), sd.getRole(), sd.getRoleConfig(), coreSettingsConfig);
+    } else if (!response.getConfigurationIssues().isEmpty()) {
+      log.serviceRoleHasConfigurationIssues(sd.getRole().getName(), String.join(";", response.getConfigurationIssues()));
     }
     return null;
+  }
+
+  private List<ApiService> getServiceList(ServiceDiscoveryConfig config, ServicesResourceApi servicesResourceApi) throws ApiException {
+    List<ApiService> serviceList = getClusterServices(config, servicesResourceApi);
+    if (serviceList != null) {
+      /*
+       Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
+       service so that we can add CM service to topology when auto-discovery is
+       turned on and CM service is selected in the descriptor
+      */
+      serviceList.add(CM_SERVICE);
+    }
+    return serviceList;
   }
 
   private ApiServiceConfig coreSettingsConfig(DiscoveryApiClient client, ServicesResourceApi servicesResourceApi, List<ApiService> serviceList) throws ApiException {
@@ -404,33 +440,31 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return serviceConfig;
   }
 
-  private ApiRoleList getRoles(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, String clusterName, ApiService service) throws ApiException {
+  private ApiRoleConfigList getAllServiceRoleConfigurations(ServiceDiscoveryConfig serviceDiscoveryConfig,
+                                                            RolesResourceApi rolesResourceApi,
+                                                            String clusterName, ApiService service) throws ApiException {
     log.lookupRolesFromRepository();
     //first, try in the service discovery repository
-    ApiRoleList roles  = repository.getRoles(serviceDiscoveryConfig, service);
-    if (roles == null || roles.getItems() == null) {
+    ApiRoleConfigList roleConfigs = repository.getServiceRoleConfigs(serviceDiscoveryConfig, service);
+    if (roleConfigs == null) {
       // no roles in the repository -> query CM
       final String serviceName = service.getName();
       try {
         /* Populate roles for CM Service since they are not discoverable */
         if (CM_SERVICE_TYPE.equalsIgnoreCase(serviceName)) {
-          roles = new ApiRoleList();
-          final ApiRole cmRole = new ApiRole();
-          cmRole.setName(CM_ROLE_TYPE);
-          cmRole.setType(CM_ROLE_TYPE);
-          roles.addItemsItem(cmRole);
-        } else if (!CORE_SETTINGS_TYPE.equalsIgnoreCase(serviceName)) { //CORE_SETTINGS has no roles, it does not make sense to discover them
-          log.lookupRolesFromCM();
-          roles = rolesResourceApi.readRoles(clusterName, serviceName, "", VIEW_SUMMARY);
-        } else {
+          roleConfigs  = CM_SERVICE_ROLE_CONFIGS;
+        } else if (CORE_SETTINGS_TYPE.equalsIgnoreCase(serviceName)) { //CORE_SETTINGS has no roles, it does not make sense to discover them
           log.noRoles();
+        } else {
+          log.lookupRoleConfigsFromCM();
+          roleConfigs = rolesResourceApi.readRolesConfig(clusterName, serviceName, null, null, "full");
         }
 
-        roles = excludeRoles(roles);
+        roleConfigs = excludeRoles(roleConfigs);
 
         // make sure that role is populated in the service discovery repository to avoid subsequent CM calls
-        if (roles != null && roles.getItems() != null) {
-          repository.addRoles(serviceDiscoveryConfig, service, roles);
+        if (roleConfigs != null) {
+          repository.setServiceRoleConfigs(serviceDiscoveryConfig, service, roleConfigs);
         }
       } catch (ApiException e) {
         log.failedToAccessServiceRoleConfigs(serviceName, "N/A", clusterName, e);
@@ -438,42 +472,27 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       }
     }
 
-    return roles;
+    return roleConfigs;
   }
 
-  private ApiRoleList excludeRoles(ApiRoleList roles) {
-    if (roles == null || roles.getItems() == null) {
-      return roles;
+  private boolean isExcluded(ApiRoleConfig apiRoleConfig) {
+    return excludedRoleTypes.contains(apiRoleConfig.getRoleType().toLowerCase(Locale.ROOT));
+  }
+
+  private ApiRoleConfigList excludeRoles(ApiRoleConfigList roleConfigs) {
+    if (roleConfigs == null || roleConfigs.getItems() == null) {
+      return roleConfigs;
     }
-    final ApiRoleList filteredRoles = new ApiRoleList();
-    roles.getItems().forEach(role -> {
-      if (excludedRoleTypes.contains(role.getType().toLowerCase(Locale.ROOT))) {
-        log.skipRoleDiscovery(role.getName(), role.getType());
+
+    final ApiRoleConfigList filteredRoles = new ApiRoleConfigList();
+    roleConfigs.getItems().forEach((apiRoleConfig) -> {
+      if (isExcluded(apiRoleConfig)) {
+        log.skipRoleDiscovery(apiRoleConfig.getName(), apiRoleConfig.getRoleType());
       } else {
-        filteredRoles.addItemsItem(role);
+        filteredRoles.addItemsItem(apiRoleConfig);
       }
     });
     return filteredRoles;
-  }
-
-  private ApiConfigList getRoleConfig(ServiceDiscoveryConfig serviceDiscoveryConfig, RolesResourceApi rolesResourceApi, ApiService service, ApiRole role) throws ApiException {
-    log.lookupRoleConfigsFromRepository();
-    // first, try in the service discovery repository
-    ApiConfigList configList = repository.getRoleConfigs(serviceDiscoveryConfig, service, role);
-    if (configList == null || configList.getItems() == null) {
-      // no role configs in the repository -> query CM
-      try {
-        log.lookupRoleConfigsFromCM();
-        configList = rolesResourceApi.readRoleConfig(serviceDiscoveryConfig.getCluster(), role.getName(), service.getName(), VIEW_FULL);
-
-        // make sure that role config is populated in the service discovery repository to avoid subsequent CM calls
-        repository.addRoleConfigs(serviceDiscoveryConfig, service, role, configList);
-      } catch (ApiException e) {
-        log.failedToAccessServiceRoleConfigs(service.getName(), role.getName(), serviceDiscoveryConfig.getCluster(), e);
-        throw e;
-      }
-    }
-    return configList;
   }
 
   @Override
@@ -482,4 +501,33 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     repository.clear();
   }
 
+  private static class ServiceRoleDetails {
+    private final ApiService service;
+    private final ApiServiceConfig serviceConfig;
+    private final ApiRole role;
+    private final ApiConfigList roleConfig;
+
+    ServiceRoleDetails(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
+      this.service = service;
+      this.serviceConfig = serviceConfig;
+      this.role = role;
+      this.roleConfig = roleConfig;
+    }
+
+    public ApiService getService() {
+      return service;
+    }
+
+    public ApiServiceConfig getServiceConfig() {
+      return serviceConfig;
+    }
+
+    public ApiRole getRole() {
+      return role;
+    }
+
+    public ApiConfigList getRoleConfig() {
+      return roleConfig;
+    }
+  }
 }

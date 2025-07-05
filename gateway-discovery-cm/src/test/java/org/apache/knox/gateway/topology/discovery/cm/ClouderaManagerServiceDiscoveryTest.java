@@ -25,8 +25,8 @@ import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiHostRef;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
@@ -1255,16 +1255,18 @@ public class ClouderaManagerServiceDiscoveryTest {
     ApiServiceConfig serviceConfig = createMockApiServiceConfig(serviceProperties);
     mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(serviceConfig));
 
-    // Prepare the role
-    ApiRole role = createMockApiRole(roleName, roleType, hostName);
-    ApiRoleList roleList = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(roleList.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
-    EasyMock.replay(roleList);
-    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(roleList));
-
-    // Configure the role
+    // Prepare the role configuration list
     ApiConfigList roleConfigList = createMockApiConfigList(roleProperties);
     mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(roleConfigList));
+
+    // Prepare the role with configuration
+    ApiRoleConfig role = createMockApiRoleConfig(roleName, roleType, hostName, roleConfigList);
+    ApiRoleConfigList roleList = EasyMock.createNiceMock(ApiRoleConfigList.class);
+
+    EasyMock.expect(roleList.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
+    EasyMock.replay(roleList);
+
+    mockClient.addResponse(ApiRoleConfigList.class, new TestApiRoleConfigListResponse(roleList));
 
     // Invoke the service discovery
     ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true, gwConf);
@@ -1273,7 +1275,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertNotNull(cluster);
     assertEquals(clusterName, cluster.getName());
     if (serviceName.equals(ATLAS_SERVICE_NAME)) {
-      assertEquals(testRetry ? 9 : 4, mockClient.getExecuteCount());
+      assertEquals(testRetry ? 7 : 3, mockClient.getExecuteCount());
     }
     return cluster;
   }
@@ -1306,14 +1308,15 @@ public class ClouderaManagerServiceDiscoveryTest {
     return s;
   }
 
-  private static ApiRole createMockApiRole(String name, String type, String hostname) {
-    ApiRole r = EasyMock.createNiceMock(ApiRole.class);
+  private static ApiRoleConfig createMockApiRoleConfig(String name, String type, String hostname, ApiConfigList configList) {
+    ApiRoleConfig r = EasyMock.createNiceMock(ApiRoleConfig.class);
     EasyMock.expect(r.getName()).andReturn(name).anyTimes();
-    EasyMock.expect(r.getType()).andReturn(type).anyTimes();
+    EasyMock.expect(r.getRoleType()).andReturn(type).anyTimes();
     ApiHostRef hostRef = EasyMock.createNiceMock(ApiHostRef.class);
     EasyMock.expect(hostRef.getHostname()).andReturn(hostname).anyTimes();
     EasyMock.replay(hostRef);
     EasyMock.expect(r.getHostRef()).andReturn(hostRef).anyTimes();
+    EasyMock.expect(r.getConfig()).andReturn(configList).anyTimes();
     EasyMock.replay(r);
     return r;
   }
@@ -1433,8 +1436,8 @@ public class ClouderaManagerServiceDiscoveryTest {
     }
   }
 
-  private static class TestApiRoleListResponse extends TestResponseBase<ApiRoleList> {
-    TestApiRoleListResponse(ApiRoleList data) {
+  private static class TestApiRoleConfigListResponse extends TestResponseBase<ApiRoleConfigList> {
+    TestApiRoleConfigListResponse(ApiRoleConfigList data) {
       super(data);
     }
   }

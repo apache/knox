@@ -26,8 +26,10 @@ import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
 import com.cloudera.api.swagger.model.ApiEventQueryResult;
+import com.cloudera.api.swagger.model.ApiHostRef;
 import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -602,11 +604,16 @@ public class PollingConfigurationAnalyzer implements Runnable {
       ApiServiceConfig svcConfig = api.readServiceConfig(clusterName, service, "full");
 
       Map<ApiRole, ApiConfigList> roleConfigs = new HashMap<>();
-      RolesResourceApi rolesApi = (new RolesResourceApi(apiClient));
-      ApiRoleList roles = rolesApi.readRoles(clusterName, service, "", "full");
-      for (ApiRole role : roles.getItems()) {
-        ApiConfigList config = rolesApi.readRoleConfig(clusterName, role.getName(), service, "full");
-        roleConfigs.put(role, config);
+      RolesResourceApi rolesApi = new RolesResourceApi(apiClient);
+      ApiRoleConfigList roleConfigList = rolesApi.readRolesConfig(clusterName, service, null, null, "full");
+      for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
+        ApiConfigList configList = roleConfig.getConfig();
+
+        String roleName = roleConfig.getName();
+        String roleType = roleConfig.getRoleType();
+        ApiHostRef hostRef = roleConfig.getHostRef();
+        ApiRole role = new ApiRole().name(roleName).type(roleType).hostRef(hostRef);
+        roleConfigs.put(role, configList);
       }
       currentConfig = new ServiceConfigurationModel(svcConfig, roleConfigs);
     } catch (ApiException e) {
