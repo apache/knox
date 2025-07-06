@@ -19,30 +19,33 @@ package org.apache.knox.gateway.topology.discovery.cm;
 
 import com.cloudera.api.swagger.RolesResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
 import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class ClouderaManagerServiceRoleCollector implements ServiceRoleCollector {
+public class ServiceRoleCollectorByService implements ServiceRoleCollector {
 
     private static final String VIEW_FULL = "full";
     private final RolesResourceApi rolesResourceApi;
-    private final String clusterName;
     private final long limit;
+    private final TypeNameFilter roleFilter;
     private static final ClouderaManagerServiceDiscoveryMessages log =
             MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
-    public ClouderaManagerServiceRoleCollector(RolesResourceApi rolesResourceApi, String clusterName,
-                                               long roleConfigPageSize) {
+    public ServiceRoleCollectorByService(RolesResourceApi rolesResourceApi, long roleConfigPageSize,
+                                         TypeNameFilter roleFilter) {
         this.rolesResourceApi = rolesResourceApi;
-        this.clusterName = clusterName;
         this.limit = roleConfigPageSize;
+        this.roleFilter = roleFilter;
     }
 
     @Override
-    public ApiRoleConfigList getAllServiceRoleConfiguration(String serviceName) throws ApiException {
+    public ApiRoleConfigList getAllServiceRoleConfigurations(String clusterName, String serviceName) throws ApiException {
         long offset = 0;
         ApiRoleConfigList allServiceRoleConfigs = new ApiRoleConfigList();
         allServiceRoleConfigs.setItems(new ArrayList<>());
@@ -54,14 +57,28 @@ public class ClouderaManagerServiceRoleCollector implements ServiceRoleCollector
             if (roleConfigList != null && roleConfigList.getItems() != null) {
                 allServiceRoleConfigs.getItems().addAll(roleConfigList.getItems());
             } else {
-                log.receivedNullServiceRoleConfigs(serviceName, clusterName, offset, limit);
+                log.receivedNullServiceRoleConfigs(serviceName, clusterName);
             }
             offset += limit;
         } while (configItemSizeMatchesLimit(roleConfigList, limit));
-        return allServiceRoleConfigs;
+        return filterIncluded(allServiceRoleConfigs);
     }
 
+    private ApiRoleConfigList filterIncluded(ApiRoleConfigList roleConfigs) {
+        List<ApiRoleConfig> filteredItems = roleConfigs.getItems().stream()
+                .filter(this::isIncluded).collect(Collectors.toList());
+        return new ApiRoleConfigList().items(filteredItems);
+    }
     private boolean configItemSizeMatchesLimit(ApiRoleConfigList roleConfigList, long limit) {
         return roleConfigList != null && roleConfigList.getItems() != null && (roleConfigList.getItems().size() == limit);
     }
+
+    public boolean isIncluded(ApiRoleConfig apiRoleConfig) {
+        boolean isExcluded = roleFilter.isExcluded(apiRoleConfig.getRoleType());
+        if (isExcluded) {
+            log.skipRoleDiscovery(apiRoleConfig.getName(), apiRoleConfig.getRoleType());
+        }
+        return !isExcluded;
+    }
+
 }

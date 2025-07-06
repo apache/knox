@@ -16,10 +16,6 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
-import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.API_PATH;
-import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_PWD_ALIAS;
-import static org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery.DEFAULT_USER_ALIAS;
-
 import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
@@ -54,7 +50,11 @@ public class DiscoveryApiClient extends ApiClient {
 
   private boolean isKerberos;
 
-  private ServiceDiscoveryConfig config;
+  private final ServiceDiscoveryConfig config;
+
+  private static final String API_PATH_PREFIX = "api/";
+  private static final String DEFAULT_USER_ALIAS = "cm.discovery.user";
+  private static final String DEFAULT_PWD_ALIAS  = "cm.discovery.password";
 
   public DiscoveryApiClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig discoveryConfig, AliasService aliasService,
       KeyStore trustStore) {
@@ -71,9 +71,7 @@ public class DiscoveryApiClient extends ApiClient {
   }
 
   private void configure(GatewayConfig gatewayConfig, AliasService aliasService, KeyStore trustStore) {
-    String apiAddress = config.getAddress();
-    apiAddress += (apiAddress.endsWith("/") ? API_PATH : "/" + API_PATH);
-
+    String apiAddress = getApiAddress(config, gatewayConfig);
     setBasePath(apiAddress);
 
     String username = config.getUser();
@@ -137,6 +135,20 @@ public class DiscoveryApiClient extends ApiClient {
     configureTimeouts(gatewayConfig);
 
     configureSsl(gatewayConfig, trustStore);
+  }
+
+  private String getApiPath(GatewayConfig gatewayConfig) {
+    if (gatewayConfig == null) {
+      return API_PATH_PREFIX + GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION;
+    } else {
+      return API_PATH_PREFIX + gatewayConfig.getClouderaManagerServiceDiscoveryApiVersion();
+    }
+  }
+
+  private String getApiAddress(ServiceDiscoveryConfig serviceDiscoveryConfig, GatewayConfig gatewayConfig) {
+    String address = serviceDiscoveryConfig.getAddress();
+    String apiPath = getApiPath(gatewayConfig);
+    return (address.endsWith("/") ? address + apiPath : address + "/" + apiPath);
   }
 
   private void addInterceptor(Interceptor interceptor) {

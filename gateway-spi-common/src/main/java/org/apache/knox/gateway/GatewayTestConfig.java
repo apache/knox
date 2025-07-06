@@ -893,6 +893,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getClouderaManagerServiceDiscoveryApiVersion() {
+    return DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION;
+  }
+
+  @Override
+  public String getClouderaManagerServiceDiscoveryRoleFetchStrategy() {
+    return CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE;
+  }
+
+  @Override
   public boolean isServerManagedTokenStateEnabled() {
     return false;
   }

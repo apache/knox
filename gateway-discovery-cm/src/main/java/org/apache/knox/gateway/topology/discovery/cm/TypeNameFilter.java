@@ -17,16 +17,30 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
-import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiRoleConfigList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-public interface ServiceRoleCollector {
+public class TypeNameFilter {
+    private final Collection<String> excludedTypeNames;
 
-    /**
-     * Fetches all the configuration data for every role of a given service.
-     *
-     * @param clusterName name of the cluster
-     * @param serviceName name of the service
-     */
-    ApiRoleConfigList getAllServiceRoleConfigurations(String clusterName, String serviceName) throws ApiException;
+    public TypeNameFilter(Collection<String> excludedTypeNames) {
+        this.excludedTypeNames = mapToLowerCase(excludedTypeNames);
+    }
+
+    public boolean isExcluded(String roleType) {
+        return excludedTypeNames.contains(roleType.toLowerCase(Locale.ROOT));
+    }
+
+    private Set<String> mapToLowerCase(Collection<String> items) {
+        if (items == null) {
+            return Collections.emptySet();
+        }
+        return items.stream()
+                .map(item -> item.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+    }
+
 }

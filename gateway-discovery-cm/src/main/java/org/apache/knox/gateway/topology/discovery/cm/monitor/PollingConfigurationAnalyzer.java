@@ -48,10 +48,10 @@ import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
-import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceRoleCollector;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollector;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollectorBuilder;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
@@ -607,10 +607,12 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       Map<ApiRole, ApiConfigList> roleConfigs = new HashMap<>();
       RolesResourceApi rolesResourceApi = new RolesResourceApi(apiClient);
-      long roleConfigPageSize = gatewayConfig.getClouderaManagerServiceDiscoveryRoleConfigPageSize();
-      ServiceRoleCollector roleCollector =
-              new ClouderaManagerServiceRoleCollector(rolesResourceApi, clusterName, roleConfigPageSize);
-      ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfiguration(service);
+      ServiceRoleCollector roleCollector = ServiceRoleCollectorBuilder.newBuilder()
+              .gatewayConfig(gatewayConfig)
+              .rolesResourceApi(rolesResourceApi)
+              .build();
+
+      ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
 
       for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
         ApiConfigList configList = roleConfig.getConfig();

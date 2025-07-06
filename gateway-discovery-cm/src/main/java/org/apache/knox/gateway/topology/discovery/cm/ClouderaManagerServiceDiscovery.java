@@ -68,13 +68,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
 
-  static final String API_PATH = "api/v57";
-
   private static final String VIEW_SUMMARY     = "summary";
   private static final String VIEW_FULL        = "full";
-
-  static final String DEFAULT_USER_ALIAS = "cm.discovery.user";
-  static final String DEFAULT_PWD_ALIAS  = "cm.discovery.password";
 
   public static final String CM_SERVICE_TYPE  = "CM";
   public static final String CM_ROLE_TYPE  = "CM_SERVER";
@@ -103,8 +98,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   private final int retrySleepSeconds = 3;  // It's been agreed that we not expose this config
   private int maxRetryAttempts = -1;
   private Collection<String> excludedServiceTypes = Collections.emptySet();
-  private Collection<String> excludedRoleTypes = Collections.emptySet();
-  private long roleConfigPageSize = 500;
 
   ClouderaManagerServiceDiscovery(GatewayConfig gatewayConfig) {
     this(false, gatewayConfig);
@@ -130,8 +123,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       repository.setCacheEntryTTL(gatewayConfig.getClouderaManagerServiceDiscoveryRepositoryEntryTTL());
       configureRetryParams(gatewayConfig);
       excludedServiceTypes = getLowercaseStringCollection(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes());
-      excludedRoleTypes = getLowercaseStringCollection(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes());
-      roleConfigPageSize = gatewayConfig.getClouderaManagerServiceDiscoveryRoleConfigPageSize();
     }
   }
 
@@ -223,9 +214,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     }
 
     try {
-      cluster = discoverCluster(client, clusterName, includedServices);
+        cluster = discoverCluster(gatewayConfig, client, clusterName, includedServices);
 
-      if (configChangeMonitor != null && cluster != null) {
+        if (configChangeMonitor != null && cluster != null) {
         // Notify the cluster config monitor about these cluster configuration details
         configChangeMonitor.addServiceConfiguration(cluster, discoveryConfig);
       }
@@ -266,10 +257,16 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return false;
   }
 
-  private ClouderaManagerCluster discoverCluster(DiscoveryApiClient client, String clusterName, Collection<String> includedServices)
+  private ClouderaManagerCluster discoverCluster(GatewayConfig gatewayConfig, DiscoveryApiClient client,
+                                                 String clusterName, Collection<String> includedServices)
       throws ApiException {
     ServicesResourceApi servicesResourceApi = new ServicesResourceApi(client);
     RolesResourceApi rolesResourceApi = new RolesResourceApi(client);
+    ServiceRoleCollector roleCollector =
+            ServiceRoleCollectorBuilder.newBuilder()
+                    .gatewayConfig(gatewayConfig)
+                    .rolesResourceApi(rolesResourceApi)
+                    .build();
 
     log.discoveringCluster(clusterName);
 
@@ -283,32 +280,33 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     Set<ServiceModel> serviceModels = new HashSet<>();
     for (ApiService service : serviceList) {
-      serviceModels.addAll(
-      discoverService(client, clusterName, includedServices, service, servicesResourceApi, rolesResourceApi, coreSettingsConfig)
-      );
+        serviceModels.addAll(
+          discoverService(client, clusterName, includedServices, service, servicesResourceApi, roleCollector, coreSettingsConfig));
     }
 
     ClouderaManagerCluster cluster = new ClouderaManagerCluster(clusterName);
     cluster.addServiceModels(serviceModels);
+    log.discoveredCluster(clusterName);
     return cluster;
   }
 
+  @SuppressWarnings("PMD.UnusedFormalParameter")
   private Set<ServiceModel> discoverService(DiscoveryApiClient client, String clusterName, Collection<String> includedServices,
                                             ApiService service, ServicesResourceApi servicesResourceApi,
-                                            RolesResourceApi rolesResourceApi, ApiServiceConfig coreSettingsConfig) throws ApiException {
+                                            ServiceRoleCollector roleCollector, ApiServiceConfig coreSettingsConfig) throws ApiException {
     Set<ServiceModel> serviceModels = new HashSet<>();
     final List<ServiceModelGenerator> modelGenerators = serviceModelGeneratorsHolder.getServiceModelGenerators(service.getType());
-    if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
+    //if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
       //log.skipServiceDiscovery(service.getName(), service.getType());
       //continue;
-    }
+    //}
     log.discoveringService(service.getName(), service.getType());
     ApiServiceConfig serviceConfig = null;
     /* no reason to check service config for CM or CORE_SETTINGS services */
     if (!CM_SERVICE_TYPE.equals(service.getType()) && !CORE_SETTINGS_TYPE.equals(service.getType())) {
       serviceConfig = getServiceConfig(client.getConfig(), servicesResourceApi, service);
     }
-    ApiRoleConfigList roleConfigList = getAllServiceRoleConfigurations(client.getConfig(), rolesResourceApi, clusterName, service);
+    ApiRoleConfigList roleConfigList = getAllServiceRoleConfigurations(client.getConfig(), roleCollector, clusterName, service);
     if (roleConfigList != null && roleConfigList.getItems() != null) {
       for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
         ApiRole role = new ApiRole()
@@ -377,6 +375,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return null;
   }
 
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private boolean shouldSkipServiceDiscovery(List<ServiceModelGenerator> modelGenerators, Collection<String> includedServices) {
     if (includedServices == null || includedServices.isEmpty()) {
       // per the contract of org.apache.knox.gateway.topology.discovery.ServiceDiscovery.discover(GatewayConfig, ServiceDiscoveryConfig, String, Collection<String>):
@@ -443,7 +442,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   }
 
   private ApiRoleConfigList getAllServiceRoleConfigurations(ServiceDiscoveryConfig serviceDiscoveryConfig,
-                                                            RolesResourceApi rolesResourceApi,
+                                                            ServiceRoleCollector roleCollector,
                                                             String clusterName, ApiService service) throws ApiException {
     log.lookupRolesFromRepository();
     //first, try in the service discovery repository
@@ -459,12 +458,8 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
           log.noRoles();
         } else {
           log.lookupRoleConfigsFromCM();
-          ServiceRoleCollector roleCollector =
-                  new ClouderaManagerServiceRoleCollector(rolesResourceApi, clusterName, roleConfigPageSize);
-          roleConfigs = roleCollector.getAllServiceRoleConfiguration(serviceName);
+          roleConfigs = roleCollector.getAllServiceRoleConfigurations(clusterName, serviceName);
         }
-
-        roleConfigs = excludeRoles(roleConfigs);
 
         // make sure that role is populated in the service discovery repository to avoid subsequent CM calls
         if (roleConfigs != null) {
@@ -477,26 +472,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     }
 
     return roleConfigs;
-  }
-
-  private boolean isExcluded(ApiRoleConfig apiRoleConfig) {
-    return excludedRoleTypes.contains(apiRoleConfig.getRoleType().toLowerCase(Locale.ROOT));
-  }
-
-  private ApiRoleConfigList excludeRoles(ApiRoleConfigList roleConfigs) {
-    if (roleConfigs == null || roleConfigs.getItems() == null) {
-      return roleConfigs;
-    }
-
-    final ApiRoleConfigList filteredRoles = new ApiRoleConfigList();
-    roleConfigs.getItems().forEach((apiRoleConfig) -> {
-      if (isExcluded(apiRoleConfig)) {
-        log.skipRoleDiscovery(apiRoleConfig.getName(), apiRoleConfig.getRoleType());
-      } else {
-        filteredRoles.addItemsItem(apiRoleConfig);
-      }
-    });
-    return filteredRoles;
   }
 
   @Override
