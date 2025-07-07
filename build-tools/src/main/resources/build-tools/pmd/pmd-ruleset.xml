@@ -47,6 +47,8 @@ limitations under the License.
         <exclude name="UnitTestContainsTooManyAsserts" />
         <exclude name="UnusedAssignment" />
         <exclude name="LiteralsFirstInComparisons" />
+        <exclude name="UnusedLocalVariable" />
+        <exclude name="UnusedPrivateField" />
     </rule>
 
     <!--<rule ref="category/java/codestyle.xml" />-->
@@ -58,7 +60,6 @@ limitations under the License.
     <rule ref="category/java/codestyle.xml/PackageCase" />
     <rule ref="category/java/codestyle.xml/UnnecessaryModifier" />
     <rule ref="category/java/codestyle.xml/UnnecessaryReturn" />
-    <rule ref="category/java/codestyle.xml/UseDiamondOperator"  enabled="false"/>
 
     <!--<rule ref="category/java/design.xml" />-->
     <!--<rule ref="category/java/documentation.xml" />-->
@@ -86,11 +87,14 @@ limitations under the License.
         <exclude name="TestClassWithoutTestCases" />
         <exclude name="AvoidAccessibilityAlteration" />
         <exclude name="ConfusingArgumentToVarargsMethod" />
+        <exclude name="CloneMethodReturnTypeMustMatchClassName" />
+        <exclude name="CloseResource" />
     </rule>
     <rule ref="category/java/multithreading.xml">
         <exclude name="AvoidSynchronizedAtMethodLevel" />
         <exclude name="UseConcurrentHashMap" />
         <exclude name="DoNotUseThreads" />
+        <exclude name="AvoidSynchronizedStatement" />
     </rule>
     <rule ref="category/java/performance.xml">
         <exclude name="AvoidInstantiatingObjectsInLoops" />

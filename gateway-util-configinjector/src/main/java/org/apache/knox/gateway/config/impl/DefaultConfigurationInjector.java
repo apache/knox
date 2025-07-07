@@ -89,7 +89,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
         }
       } else {
         try {
-          if( !field.isAccessible() ) {
+          if( !field.canAccess(null) ) {
             field.setAccessible( true );
           }
           field.set( target, value );
@@ -128,7 +128,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
         }
         args[ i ] = argValue;
       }
-      if( !method.isAccessible() ) {
+      if( !method.canAccess(null) ) {
         method.setAccessible( true );
       }
       try {
