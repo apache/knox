@@ -205,7 +205,7 @@
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
         <fastinfoset.version>1.2.18</fastinfoset.version>
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
-        <forbiddenapis.version>3.1</forbiddenapis.version>
+        <forbiddenapis.version>3.9</forbiddenapis.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <gethostname4j.version>1.0.0</gethostname4j.version>  <!-- See here: https://github.com/mattsheppard/gethostname4j -->
         <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
@@ -252,7 +252,7 @@
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.3.0</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
-        <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
+        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
         <metrics.version>4.1.16</metrics.version>
         <mina.version>2.0.27</mina.version>
         <mockito.version>4.8.1</mockito.version>
@@ -269,16 +269,16 @@
         <protobuf.version>3.25.5</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
-        <!-- After JDK 11 we can use 0.12.4 from maven central -->
-        <pty4j.version>0.11.4</pty4j.version>
+        <!-- Updated for Java 17 compatibility -->
+        <pty4j.version>0.12.4</pty4j.version>
         <rest-assured.version>4.3.3</rest-assured.version>
         <shiro-ehcache3.version>1.0.0</shiro-ehcache3.version>
         <shiro.version>1.13.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>1.7.30</slf4j.version>
-        <spotbugs.version>4.2.0</spotbugs.version>
-        <spotbugs-maven-plugin.version>4.1.4</spotbugs-maven-plugin.version>
+        <spotbugs.version>4.9.3</spotbugs.version>
+        <spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
         <spring.version>5.3.21</spring.version>
         <spring-vault.version>2.3.4</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
@@ -595,7 +595,7 @@
                                     <version>[3.1.0,3.6.2),(3.6.2,)</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>[1.8,18)</version>
+                                    <version>[17,18)</version>
                                 </requireJavaVersion>
                                 <bannedDependencies>
                                     <excludes>
@@ -822,7 +822,7 @@
                     <printFailingErrors>true</printFailingErrors>
                     <includeTests>true</includeTests>
                     <linkXRef>false</linkXRef>
-                    <targetJdk>1.8</targetJdk>
+                    <targetJdk>17</targetJdk>
                 </configuration>
                 <executions>
                     <execution>
@@ -891,7 +891,7 @@
                     </rulesets>
                     <includeTests>true</includeTests>
                     <linkXRef>false</linkXRef>
-                    <targetJdk>1.8</targetJdk>
+                    <targetJdk>17</targetJdk>
                 </configuration>
             </plugin>
         </plugins>

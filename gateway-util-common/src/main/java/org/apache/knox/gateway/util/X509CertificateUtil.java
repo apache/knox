@@ -486,7 +486,7 @@ public class X509CertificateUtil {
   public static boolean isSelfSignedCertificate(Certificate certificate) {
     if (certificate instanceof X509Certificate) {
       X509Certificate x509Certificate = (X509Certificate) certificate;
-      return x509Certificate.getSubjectDN().equals(x509Certificate.getIssuerDN());
+      return x509Certificate.getSubjectX500Principal().equals(x509Certificate.getIssuerX500Principal());
     } else {
       return false;
     }

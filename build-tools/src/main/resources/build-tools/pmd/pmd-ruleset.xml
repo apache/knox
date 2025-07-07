@@ -32,32 +32,33 @@ limitations under the License.
         <exclude name="ConstantsInInterface" />
         <exclude name="ForLoopVariableCount" />
         <exclude name="GuardLogStatement" />
-        <exclude name="JUnitAssertionsShouldIncludeMessage" />
-        <exclude name="JUnitTestContainsTooManyAsserts" />
-        <exclude name="JUnitTestsShouldIncludeAssert" />
+        <exclude name="UnitTestShouldIncludeAssert" />
         <exclude name="MethodReturnsInternalArray" />
         <exclude name="OneDeclarationPerLine" />
         <exclude name="PreserveStackTrace" />
         <exclude name="ReplaceEnumerationWithIterator" />
         <exclude name="ReplaceHashtableWithMap" />
-        <exclude name="SwitchStmtsShouldHaveDefault" />
+        <exclude name="NonExhaustiveSwitch" />
         <exclude name="SystemPrintln" />
         <exclude name="UseTryWithResources" />
         <exclude name="UseVarargs" />
+        <exclude name="UnitTestAssertionsShouldIncludeMessage" />
+        <exclude name="LooseCoupling" />
+        <exclude name="UnitTestContainsTooManyAsserts" />
+        <exclude name="UnusedAssignment" />
+        <exclude name="LiteralsFirstInComparisons" />
     </rule>
 
     <!--<rule ref="category/java/codestyle.xml" />-->
     <rule ref="category/java/codestyle.xml/AvoidProtectedFieldInFinalClass" />
     <rule ref="category/java/codestyle.xml/ControlStatementBraces" />
-    <rule ref="category/java/codestyle.xml/DontImportJavaLang" />
-    <rule ref="category/java/codestyle.xml/DuplicateImports" />
     <rule ref="category/java/codestyle.xml/ExtendsObject" />
     <rule ref="category/java/codestyle.xml/ForLoopShouldBeWhileLoop" />
     <rule ref="category/java/codestyle.xml/NoPackage" />
     <rule ref="category/java/codestyle.xml/PackageCase" />
     <rule ref="category/java/codestyle.xml/UnnecessaryModifier" />
     <rule ref="category/java/codestyle.xml/UnnecessaryReturn" />
-    <rule ref="category/java/codestyle.xml/UseDiamondOperator" />
+    <rule ref="category/java/codestyle.xml/UseDiamondOperator"  enabled="false"/>
 
     <!--<rule ref="category/java/design.xml" />-->
     <!--<rule ref="category/java/documentation.xml" />-->
@@ -71,30 +72,33 @@ limitations under the License.
         <exclude name="AvoidDuplicateLiterals" />
         <exclude name="AvoidFieldNameMatchingMethodName" />
         <exclude name="AvoidLiteralsInIfCondition" />
-        <exclude name="BeanMembersShouldSerialize" />
+        <exclude name="NonSerializableClass" />
         <exclude name="ConstructorCallsOverridableMethod" />
-        <exclude name="DataflowAnomalyAnalysis" />
-        <exclude name="DoNotCallSystemExit" />
+        <exclude name="DoNotTerminateVM" />
         <exclude name="EmptyCatchBlock" />
-        <exclude name="EmptyIfStmt" />
-        <exclude name="LoggerIsNotStaticFinal" />
-        <exclude name="MissingBreakInSwitch" />
+        <exclude name="ProperLogger" />
+        <exclude name="ImplicitSwitchFallThrough" />
         <exclude name="MissingSerialVersionUID" />
         <exclude name="MoreThanOneLogger" />
         <exclude name="NullAssignment" />
-        <exclude name="ReturnEmptyArrayRatherThanNull" />
+        <exclude name="ReturnEmptyCollectionRatherThanNull" />
         <exclude name="UseProperClassLoader" />
+        <exclude name="TestClassWithoutTestCases" />
+        <exclude name="AvoidAccessibilityAlteration" />
+        <exclude name="ConfusingArgumentToVarargsMethod" />
     </rule>
     <rule ref="category/java/multithreading.xml">
         <exclude name="AvoidSynchronizedAtMethodLevel" />
         <exclude name="UseConcurrentHashMap" />
+        <exclude name="DoNotUseThreads" />
     </rule>
     <rule ref="category/java/performance.xml">
         <exclude name="AvoidInstantiatingObjectsInLoops" />
         <exclude name="InefficientEmptyStringCheck" />
-        <exclude name="SimplifyStartsWith" />
-        <exclude name="TooFewBranchesForASwitchStatement" />
+        <exclude name="TooFewBranchesForSwitch" />
         <exclude name="UseStringBufferForStringAppends" />
+        <exclude name="AppendCharacterWithChar" />
+        <exclude name="ConsecutiveAppendsShouldReuse" />
     </rule>
     <rule ref="category/java/security.xml" />
 </ruleset>
