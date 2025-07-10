@@ -37,6 +37,7 @@ velocity.log
 *.py~
 *.patch
 .checkstyle
+**/package-lock.json
 
 # other IDEs and editors
 .vscode
