@@ -270,12 +270,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     log.discoveringCluster(clusterName);
 
-    List<ApiService> serviceList = getServiceList(client.getConfig(), servicesResourceApi);
-    if (serviceList == null) {
-      return null;
-    }
+    List<ApiService> serviceList = getClusterServices(client.getConfig(), servicesResourceApi);
 
-    // if Legacy Cloudera Manager API Clients Compatibility is turned off, some HDFS settings are in CORE_SETTINGS
+      // if Legacy Cloudera Manager API Clients Compatibility is turned off, some HDFS settings are in CORE_SETTINGS
     ApiServiceConfig coreSettingsConfig = coreSettingsConfig(client, servicesResourceApi, serviceList);
 
     Set<ServiceModel> serviceModels = new HashSet<>();
@@ -353,19 +350,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return null;
   }
 
-  private List<ApiService> getServiceList(ServiceDiscoveryConfig config, ServicesResourceApi servicesResourceApi) throws ApiException {
-    List<ApiService> serviceList = getClusterServices(config, servicesResourceApi);
-    if (serviceList != null) {
-      /*
-       Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
-       service so that we can add CM service to topology when auto-discovery is
-       turned on and CM service is selected in the descriptor
-      */
-      serviceList.add(CM_SERVICE);
-    }
-    return serviceList;
-  }
-
   private ApiServiceConfig coreSettingsConfig(DiscoveryApiClient client, ServicesResourceApi servicesResourceApi, List<ApiService> serviceList) throws ApiException {
     for (ApiService service : serviceList) {
       if (CORE_SETTINGS_TYPE.equals(service.getType())) {
@@ -417,6 +401,12 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
         throw e;
       }
     }
+    /*
+     Since Cloudera Manager does not have a service for itself, we will add a skeleton CM
+     service so that we can add CM service to topology when auto-discovery is
+     turned on and CM service is selected in the descriptor
+    */
+    services.add(CM_SERVICE);
     return services;
   }
 
