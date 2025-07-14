@@ -48,14 +48,17 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Skipping service discovery: {0} ({1})")
   void skipServiceDiscovery(String serviceName, String serviceType);
 
-  @Message(level = MessageLevel.INFO, text = "Discovering service role: {0} ({1}) ...")
+  @Message(level = MessageLevel.DEBUG, text = "Discovering service role: {0} ({1}) ...")
   void discoveringServiceRole(String roleName, String roleType);
 
   @Message(level = MessageLevel.INFO, text = "Skipping role discovery: {0} ({1})")
   void skipRoleDiscovery(String roleName, String roleType);
 
-  @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
+  @Message(level = MessageLevel.DEBUG, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
+
+  @Message(level = MessageLevel.INFO, text = "Processed roles for service {0}: {1}")
+  void processedServiceRoles(String serviceName, String serviceRoles);
 
   @Message(level = MessageLevel.WARN, text = "Service role {0} has configuration issues: {1}")
   void serviceRoleHasConfigurationIssues(String roleName, String configurationIssuesText);

@@ -305,16 +305,26 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     }
     ApiRoleConfigList roleConfigList = getAllServiceRoleConfigurations(client.getConfig(), roleCollector, clusterName, service);
     if (roleConfigList != null && roleConfigList.getItems() != null) {
+      List<ApiRole> allApiRoles = new ArrayList<>();
       for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
         ApiRole role = new ApiRole()
         .name(roleConfig.getName())
         .type(roleConfig.getRoleType())
         .hostRef(roleConfig.getHostRef());
+        allApiRoles.add(role);
+
         ApiConfigList roleConfigs = roleConfig.getConfig();
         ServiceRoleDetails serviceRoleDetails = new ServiceRoleDetails(service, serviceConfig, role, roleConfigs);
+        log.discoveringServiceRole(role.getName(), role.getType());
 
-        serviceModels.addAll(generateServiceModels(client, serviceRoleDetails, coreSettingsConfig, modelGenerators));
+        Set<ServiceModel> modelsForRole = generateServiceModels(client, serviceRoleDetails, coreSettingsConfig, modelGenerators);
+
+        log.discoveredServiceRole(role.getName(), role.getType());
+
+        serviceModels.addAll(modelsForRole);
       }
+      String allServiceRoles = allApiRoles.stream().map(r -> r.getName() + " (" + r.getType() + ")").collect(Collectors.joining(", "));
+      log.processedServiceRoles(service.getName(), allServiceRoles);
     }
 
     log.discoveredService(service.getName(), service.getType());
@@ -323,7 +333,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   private Set<ServiceModel> generateServiceModels(DiscoveryApiClient client, ServiceRoleDetails serviceRoleDetails, ApiServiceConfig coreSettingsConfig, List<ServiceModelGenerator> modelGenerators) throws ApiException {
     Set<ServiceModel> serviceModels = new HashSet<>();
-    log.discoveringServiceRole(serviceRoleDetails.getRole().getName(), serviceRoleDetails.getRole().getType());
 
     if (modelGenerators != null) {
       for (ServiceModelGenerator serviceModelGenerator : modelGenerators) {
@@ -334,7 +343,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       }
     }
 
-    log.discoveredServiceRole(serviceRoleDetails.getRole().getName(), serviceRoleDetails.getRole().getType());
     return serviceModels;
   }
 
