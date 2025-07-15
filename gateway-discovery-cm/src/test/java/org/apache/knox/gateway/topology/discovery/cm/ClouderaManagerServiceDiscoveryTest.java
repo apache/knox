@@ -18,9 +18,12 @@ package org.apache.knox.gateway.topology.discovery.cm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.client.ApiResponse;
+import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
 import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
@@ -33,8 +36,10 @@ import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
 import okhttp3.Call;
+import okhttp3.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator;
@@ -63,6 +68,7 @@ import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClus
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import javax.security.auth.Subject;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -77,12 +83,90 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ClouderaManagerServiceDiscoveryTest {
 
   private static final String DISCOVERY_URL = "http://localhost:1234";
+  private static final String DISCOVERY_USER = "discoveryUser";
+  private static final String CLUSTER_NAME = "Cluster 1";
+  private static final String DISCOVERY_PASSWORD_ALIAS = "discovery.alias";
   private static final String ATLAS_SERVICE_NAME = "ATLAS-1";
   private static final String READ_ROLES_CONFIG_API_VERSION = "v57";
   private static final List<String> EXPECTED_API_CALLS_BY_ROLE =
           Arrays.asList("readServices","readServiceConfig","readRoles", "readRoleConfig" );
   private static final List<String> EXPECTED_API_CALLS_BY_SERVICE =
           Arrays.asList("readServices","readServiceConfig","readRolesConfig");
+
+  @Test
+  public void testApiClientBasicAuthentication() throws AliasServiceException {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdConfig.getAddress()).andReturn(DISCOVERY_URL).anyTimes();
+    EasyMock.expect(sdConfig.getUser()).andReturn(DISCOVERY_USER);
+    EasyMock.expect(sdConfig.getPasswordAlias()).andReturn(DISCOVERY_PASSWORD_ALIAS);
+    EasyMock.replay(sdConfig);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+
+    final String discoveryPasswordAlias = "discoveryPwdAliasValue";
+    final char[] passwordAliasCharArray = discoveryPasswordAlias.toCharArray();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(DISCOVERY_PASSWORD_ALIAS)).andReturn(passwordAliasCharArray);
+    EasyMock.replay(aliasService);
+
+    ApiClient apiClient = new TestDiscoveryApiClientWithKerberosSubject(gwConf, sdConfig, aliasService);
+
+    HttpBasicAuth authentication = getBasicAuthentication(apiClient);
+
+    assertNotNull(authentication);
+    assertEquals(DISCOVERY_USER, authentication.getUsername());
+    assertEquals(discoveryPasswordAlias, authentication.getPassword());
+
+    List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
+    assertEquals(0, interceptors.size());
+  }
+
+  @Test
+  public void testApiClientInterceptorsWhenKerberosIsEnabledAndPasswordIsNotSet() {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    ApiClient apiClient = new TestDiscoveryApiClientWithKerberosSubject(gwConf, sdConfig, aliasService);
+
+    HttpBasicAuth authentication = getBasicAuthentication(apiClient);
+    assertNotNull(authentication);
+    assertEquals(DISCOVERY_USER, authentication.getUsername());
+    assertNull("basic authentication password should be null.", authentication.getPassword());
+
+    List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
+    assertEquals(2, interceptors.size());
+  }
+
+  @Test
+  public void testApiClientInterceptorsWhenKerberosIsDisabledAndPasswordIsNotSet() {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    ApiClient apiClient = new TestDiscoveryApiClient(gwConf, sdConfig, aliasService);
+
+    HttpBasicAuth authentication = getBasicAuthentication(apiClient);
+    assertNotNull(authentication);
+    assertEquals(DISCOVERY_USER, authentication.getUsername());
+    assertNull("basic authentication password should be null.", authentication.getPassword());
+
+    List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
+    assertEquals(0, interceptors.size());
+  }
 
   @Test
   public void testServiceDiscoveryRetryWithSimpleRoleFetch() throws Exception {
@@ -1448,6 +1532,32 @@ public class ClouderaManagerServiceDiscoveryTest {
     EasyMock.expect(configList.getItems()).andReturn(roleConfigs).anyTimes();
     EasyMock.replay(configList);
     return configList;
+  }
+
+
+  private static HttpBasicAuth getBasicAuthentication(ApiClient apiClient) {
+    return apiClient.getAuthentications().values().stream()
+    .filter(a -> a instanceof HttpBasicAuth)
+    .map(a -> (HttpBasicAuth) a)
+    .findFirst().orElse(null);
+  }
+
+  private static class TestDiscoveryApiClientWithKerberosSubject extends DiscoveryApiClient {
+
+    TestDiscoveryApiClientWithKerberosSubject(GatewayConfig gatewayConfig, ServiceDiscoveryConfig sdConfig, AliasService aliasService) {
+      super(gatewayConfig, sdConfig, aliasService, null);
+    }
+
+    @Override
+    boolean isKerberos() {
+      return true;
+    }
+
+    @Override
+    Subject getKerberosSubject() {
+      return new Subject();
+    }
+
   }
 
   private static class TestDiscoveryApiClient extends DiscoveryApiClient {

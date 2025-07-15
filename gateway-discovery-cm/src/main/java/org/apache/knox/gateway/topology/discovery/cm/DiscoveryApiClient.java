@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.discovery.cm;
 
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -48,8 +49,6 @@ public class DiscoveryApiClient extends ApiClient {
   private ClouderaManagerServiceDiscoveryMessages log =
       MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
 
-  private boolean isKerberos;
-
   private final ServiceDiscoveryConfig config;
 
   private static final String API_PATH_PREFIX = "api/";
@@ -67,7 +66,11 @@ public class DiscoveryApiClient extends ApiClient {
   }
 
   boolean isKerberos() {
-    return isKerberos;
+    return Boolean.getBoolean(GatewayConfig.HADOOP_KERBEROS_SECURED);
+  }
+
+  Subject getKerberosSubject() {
+    return AuthUtils.getKerberosSubject();
   }
 
   private void configure(GatewayConfig gatewayConfig, AliasService aliasService, KeyStore trustStore) {
@@ -115,25 +118,26 @@ public class DiscoveryApiClient extends ApiClient {
       }
     }
 
-    // If the password could not be determined
-    if (password == null) {
-      log.aliasServicePasswordNotFound();
-      isKerberos = Boolean.getBoolean(GatewayConfig.HADOOP_KERBEROS_SECURED);
-    }
-
     setUsername(username);
     setPassword(password);
 
-    if (isKerberos()) {
-      // If there is a Kerberos subject, then add the SPNEGO auth interceptor
-      Subject subject = AuthUtils.getKerberosSubject();
-      if (subject != null) {
-        addInterceptor(new SpnegoAuthInterceptor(subject));
-      }
-      addInterceptor(new DoAsQueryParameterInterceptor(username));
-    }
-    configureTimeouts(gatewayConfig);
+    // If the password could not be determined
+    if (password == null) {
+      log.aliasServicePasswordNotFound();
 
+      if (isKerberos()) {
+        final List<Interceptor> interceptors = new ArrayList<>();
+        // If there is a Kerberos subject, then add the SPNEGO auth interceptor
+        Subject subject = getKerberosSubject();
+        if (subject != null) {
+          interceptors.add(new SpnegoAuthInterceptor(subject));
+        }
+        interceptors.add(new DoAsQueryParameterInterceptor(username));
+        configureInterceptors(interceptors);
+      }
+    }
+
+    configureTimeouts(gatewayConfig);
     configureSsl(gatewayConfig, trustStore);
   }
 
@@ -151,9 +155,10 @@ public class DiscoveryApiClient extends ApiClient {
     return (address.endsWith("/") ? address + apiPath : address + "/" + apiPath);
   }
 
-  private void addInterceptor(Interceptor interceptor) {
-    OkHttpClient newClient = getHttpClient().newBuilder().addInterceptor(interceptor).build();
-    setHttpClient(newClient);
+  private void configureInterceptors(List<Interceptor> interceptors) {
+    final OkHttpClient.Builder builder = getHttpClient().newBuilder();
+    interceptors.forEach(builder::addInterceptor);
+    setHttpClient(builder.build());
   }
 
   private void configureTimeouts(GatewayConfig config) {
