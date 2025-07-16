@@ -45,10 +45,16 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.Objects;
+
+import static org.apache.knox.gateway.util.ExceptionSanitizer.from;
 
 public class GatewayServlet implements Servlet, Filter {
   public static final String GATEWAY_DESCRIPTOR_LOCATION_DEFAULT = "gateway.xml";
   public static final String GATEWAY_DESCRIPTOR_LOCATION_PARAM = "gatewayDescriptorLocation";
+
+  private static boolean isErrorMessageSanitizationEnabled = true;
+  private static String errorMessageSanitizationPattern = "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b";
 
   private static final GatewayResources res = ResourcesFactory.get( GatewayResources.class );
   private static final GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
@@ -83,6 +89,8 @@ public class GatewayServlet implements Servlet, Filter {
 
   @Override
   public synchronized void init( ServletConfig servletConfig ) throws ServletException {
+    final GatewayConfig gatewayConfig = (GatewayConfig) servletConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    configureErrorMessageSanitizationConfigs(gatewayConfig);
     try {
       if( filter == null ) {
         filter = createFilter( servletConfig );
@@ -92,23 +100,31 @@ public class GatewayServlet implements Servlet, Filter {
         filter.init( filterConfig );
       }
     } catch( ServletException | RuntimeException e ) {
-      LOG.failedToInitializeServletInstace( e );
-      throw e;
+      throw logAndSanitizeException(e);
+    }
+  }
+
+  private void configureErrorMessageSanitizationConfigs(final GatewayConfig gatewayConfig) {
+    if (Objects.nonNull(gatewayConfig)) {
+      isErrorMessageSanitizationEnabled = gatewayConfig.isErrorMessageSanitizationEnabled();
+      errorMessageSanitizationPattern = gatewayConfig.getErrorMessageSanitizationPattern();
     }
   }
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     try {
-      if( filter == null ) {
+      final GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+      configureErrorMessageSanitizationConfigs(gatewayConfig);
+
+      if ( filter == null ) {
         filter = createFilter( filterConfig );
       }
       if( filter != null ) {
         filter.init( filterConfig );
       }
     } catch( ServletException | RuntimeException e ) {
-      LOG.failedToInitializeServletInstace( e );
-      throw e;
+      throw logAndSanitizeException(e);
     }
   }
 
@@ -126,8 +142,7 @@ public class GatewayServlet implements Servlet, Filter {
         try {
           f.doFilter( servletRequest, servletResponse, null );
         } catch( IOException | RuntimeException | ServletException e ) {
-          LOG.failedToExecuteFilter( e );
-          throw e;
+          throw logAndSanitizeException(e);
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
@@ -153,10 +168,8 @@ public class GatewayServlet implements Servlet, Filter {
             //TODO: This should really happen naturally somehow as part of being a filter.  This way will cause problems eventually.
             chain.doFilter( servletRequest, servletResponse );
           }
-
-        } catch( IOException | RuntimeException | ServletException e ) {
-          LOG.failedToExecuteFilter( e );
-          throw e;
+        } catch (Exception e) {
+          throw logAndSanitizeException(e);
         }
       } else {
         ((HttpServletResponse)servletResponse).setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
@@ -167,7 +180,6 @@ public class GatewayServlet implements Servlet, Filter {
       CorrelationServiceFactory.getCorrelationService().detachContext();
     }
   }
-
 
   @Override
   public String getServletInfo() {
@@ -276,5 +288,10 @@ public class GatewayServlet implements Servlet, Filter {
     public Enumeration<String> getInitParameterNames() {
       return config.getInitParameterNames();
     }
+  }
+
+  private SanitizedException logAndSanitizeException(Exception e) {
+    LOG.failedToExecuteFilter(e);
+    return from(e, isErrorMessageSanitizationEnabled, errorMessageSanitizationPattern);
   }
 }
