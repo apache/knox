@@ -21,6 +21,7 @@
 <%@ page import="org.apache.knox.gateway.config.GatewayConfig" %>
 <%@ page import="java.net.MalformedURLException" %>
 <%@ page import="org.apache.knox.gateway.util.Urls" %>
+<%@ page import="org.apache.commons.text.StringEscapeUtils" %>
 
 <!DOCTYPE html>
 <!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -92,6 +93,9 @@
         String origUrl = request.getParameter("originalUrl");
         if (origUrl != null) {
           validRedirect = RegExUtils.checkWhitelist(whitelist, origUrl);
+        }
+        if (validRedirect) {
+            validRedirect = Urls.isValidURL(originalUrl);
         }
         if (("1".equals(request.getParameter("returnToApp")))) {
           if (validRedirect) {
@@ -178,7 +182,7 @@
                 the application. If your previously established SSO session is still valid then
                 you will likely be automatically logged into your application. Otherwise, you
                 will be required to login again.
-                <a href="?returnToApp=1&originalUrl=<%= originalUrl %>" >Return to Application</a>
+                <a href="?returnToApp=1&originalUrl=<%= StringEscapeUtils.escapeHtml4(originalUrl) %>" >Return to Application</a>
               </p>
         <%
             if (globalLogoutPageURL != null && !globalLogoutPageURL.isEmpty()) {
