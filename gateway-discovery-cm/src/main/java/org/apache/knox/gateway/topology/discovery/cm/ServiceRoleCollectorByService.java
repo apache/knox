@@ -69,6 +69,7 @@ public class ServiceRoleCollectorByService implements ServiceRoleCollector {
                 .filter(this::isIncluded).collect(Collectors.toList());
         return new ApiRoleConfigList().items(filteredItems);
     }
+
     private boolean configItemSizeMatchesLimit(ApiRoleConfigList roleConfigList, long limit) {
         return roleConfigList != null && roleConfigList.getItems() != null && (roleConfigList.getItems().size() == limit);
     }

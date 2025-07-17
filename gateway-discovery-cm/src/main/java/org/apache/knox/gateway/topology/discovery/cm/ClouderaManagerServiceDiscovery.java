@@ -308,9 +308,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       List<ApiRole> allApiRoles = new ArrayList<>();
       for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
         ApiRole role = new ApiRole()
-        .name(roleConfig.getName())
-        .type(roleConfig.getRoleType())
-        .hostRef(roleConfig.getHostRef());
+            .name(roleConfig.getName())
+            .type(roleConfig.getRoleType())
+            .hostRef(roleConfig.getHostRef());
         allApiRoles.add(role);
 
         ApiConfigList roleConfigs = roleConfig.getConfig();
