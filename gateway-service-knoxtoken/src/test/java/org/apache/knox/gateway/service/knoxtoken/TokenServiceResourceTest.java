@@ -81,6 +81,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -158,6 +159,7 @@ public class TokenServiceResourceTest {
     configureCommonExpectations(contextExpectations, null, serverManagedTssEnabled);
   }
 
+  @SuppressForbidden
   private void configureCommonExpectations(Map<String, String> contextExpectations, String expectedSubjectDN, Boolean serverManagedTssEnabled) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());

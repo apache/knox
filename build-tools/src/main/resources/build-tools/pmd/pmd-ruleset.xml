@@ -49,6 +49,15 @@ limitations under the License.
         <exclude name="LiteralsFirstInComparisons" />
         <exclude name="UnusedLocalVariable" />
         <exclude name="UnusedPrivateField" />
+        <exclude name="UnnecessaryVarargsArrayCreation" />
+        <exclude name="UnitTestShouldUseTestAnnotation" />
+        <exclude name="UnitTestShouldUseBeforeAnnotation" />
+        <exclude name="CheckResultSet" />
+        <exclude name="UseEnumCollections" />
+        <exclude name="UnitTestShouldUseAfterAnnotation" />
+        <exclude name="SimplifiableTestAssertion" />
+        <exclude name="DoubleBraceInitialization" />
+        <exclude name="UseCollectionIsEmpty" />
     </rule>
 
     <!--<rule ref="category/java/codestyle.xml" />-->
@@ -59,7 +68,6 @@ limitations under the License.
     <rule ref="category/java/codestyle.xml/NoPackage" />
     <rule ref="category/java/codestyle.xml/PackageCase" />
     <rule ref="category/java/codestyle.xml/UnnecessaryModifier" />
-    <rule ref="category/java/codestyle.xml/UnnecessaryReturn" />
 
     <!--<rule ref="category/java/design.xml" />-->
     <!--<rule ref="category/java/documentation.xml" />-->
@@ -89,6 +97,7 @@ limitations under the License.
         <exclude name="ConfusingArgumentToVarargsMethod" />
         <exclude name="CloneMethodReturnTypeMustMatchClassName" />
         <exclude name="CloseResource" />
+        <exclude name="CompareObjectsWithEquals" />
     </rule>
     <rule ref="category/java/multithreading.xml">
         <exclude name="AvoidSynchronizedAtMethodLevel" />
@@ -103,6 +112,9 @@ limitations under the License.
         <exclude name="UseStringBufferForStringAppends" />
         <exclude name="AppendCharacterWithChar" />
         <exclude name="ConsecutiveAppendsShouldReuse" />
+        <exclude name="UseArraysAsList" />
+        <exclude name="StringInstantiation" />
+        <exclude name="InsufficientStringBufferDeclaration" />
     </rule>
     <rule ref="category/java/security.xml" />
 </ruleset>

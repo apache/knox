@@ -767,7 +767,7 @@ public class DefaultKeystoreServiceTest {
     Certificate certificate = keystore.getCertificate(alias);
     assertTrue(certificate instanceof X509Certificate);
 
-    Principal subject = ((X509Certificate) certificate).getSubjectDN();
+    Principal subject = ((X509Certificate) certificate).getSubjectX500Principal();
     assertEquals(expectedSubjectName, subject.getName());
 
     verify(masterService);
