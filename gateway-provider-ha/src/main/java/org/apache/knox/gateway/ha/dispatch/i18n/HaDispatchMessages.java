@@ -22,6 +22,8 @@ import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
 import org.apache.knox.gateway.i18n.messages.StackTrace;
 
+import java.net.URI;
+
 @Messages(logger = "org.apache.knox.gateway")
 public interface HaDispatchMessages {
   @Message(level = MessageLevel.INFO, text = "Initializing Ha Dispatch for: {0}")
@@ -56,4 +58,7 @@ public interface HaDispatchMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Request is non-idempotent {0}, failover prevented, to allow non-idempotent requests to failover set 'failoverNonIdempotentRequestEnabled=true' in HA config. Non connection related error: {1}")
   void cannotFailoverNonIdempotentRequest(String method, Throwable cause);
+
+  @Message( level = MessageLevel.DEBUG, text = "Dispatch request: {0} {1}" )
+  void dispatchRequest( String method, URI uri );
 }
