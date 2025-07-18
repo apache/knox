@@ -34,8 +34,8 @@ import org.junit.Test;
 
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 
@@ -99,42 +99,13 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   }
 
   @Test
-  public void testAddRole() throws Exception {
-    final String serviceName = "HDFS-1";
-    final String roleName = "NAMENODE-1";
-    final ApiService service = EasyMock.createNiceMock(ApiService.class);
-    EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
-    final ApiRole role = EasyMock.createNiceMock(ApiRole.class);
-    EasyMock.expect(role.getName()).andReturn(roleName).anyTimes();
-    final ApiRoleList roles = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(roles.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
-    EasyMock.replay(service, role, roles);
-    assertFalse(containsRole(service, roleName));
-    repository.addService(serviceDiscoveryConfig, service);
-    repository.addRoles(serviceDiscoveryConfig, service, roles);
-    assertTrue(containsRole(service, roleName));
-  }
-
-  @Test
-  public void testAddNullRoles() throws Exception {
+  public void testNullRoleConfigs() throws Exception {
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE).anyTimes();
     EasyMock.replay(service);
     repository.addService(serviceDiscoveryConfig, service);
-    repository.addRoles(serviceDiscoveryConfig, service, null);
-    assertNull(repository.getRoles(serviceDiscoveryConfig, service).getItems());
-  }
-
-  @Test
-  public void testAddNullRoleItems() throws Exception {
-    final ApiService service = EasyMock.createNiceMock(ApiService.class);
-    EasyMock.expect(service.getName()).andReturn(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE).anyTimes();
-    final ApiRoleList roles = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(roles.getItems()).andReturn(null).anyTimes();
-    EasyMock.replay(service, roles);
-    repository.addService(serviceDiscoveryConfig, service);
-    repository.addRoles(serviceDiscoveryConfig, service, roles);
-    assertNull(repository.getRoles(serviceDiscoveryConfig, service).getItems());
+    repository.setServiceRoleConfigs(serviceDiscoveryConfig, service, null);
+    assertNull(repository.getServiceRoleConfigs(serviceDiscoveryConfig, service));
   }
 
   @Test
@@ -146,21 +117,31 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
 
     final ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
-    final ApiRole role = EasyMock.createNiceMock(ApiRole.class);
-    EasyMock.expect(role.getName()).andReturn(roleName).anyTimes();
-    final ApiRoleList roles = EasyMock.createNiceMock(ApiRoleList.class);
-    EasyMock.expect(roles.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
-    final ApiConfig roleConfig = EasyMock.createNiceMock(ApiConfig.class);
-    EasyMock.expect(roleConfig.getName()).andReturn(roleConfigName).anyTimes();
-    EasyMock.expect(roleConfig.getValue()).andReturn(roleConfigValue).anyTimes();
+
+    final ApiConfig roleConfigItem = EasyMock.createNiceMock(ApiConfig.class);
+    EasyMock.expect(roleConfigItem.getName()).andReturn(roleConfigName).anyTimes();
+    EasyMock.expect(roleConfigItem.getValue()).andReturn(roleConfigValue).anyTimes();
+
     final ApiConfigList roleConfigs = EasyMock.createNiceMock(ApiConfigList.class);
-    EasyMock.expect(roleConfigs.getItems()).andReturn(Collections.singletonList(roleConfig)).anyTimes();
-    EasyMock.replay(service, role, roles, roleConfig, roleConfigs);
-    assertFalse(containsRoleConfig(service, role, roleConfigName, roleConfigValue));
+    EasyMock.expect(roleConfigs.getItems()).andReturn(Collections.singletonList(roleConfigItem)).anyTimes();
+
+    final ApiRoleConfig role = EasyMock.createNiceMock(ApiRoleConfig.class);
+    EasyMock.expect(role.getName()).andReturn(roleName).anyTimes();
+    EasyMock.expect(role.getConfig()).andReturn(roleConfigs).anyTimes();
+
+    ApiRoleConfigList serviceRoleConfigs = EasyMock.createNiceMock(ApiRoleConfigList.class);
+    EasyMock.expect(serviceRoleConfigs.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
+
+    EasyMock.replay(service, roleConfigItem, roleConfigs, role, serviceRoleConfigs);
+
+    assertFalse(containsRole(service, roleName));
+    assertFalse(containsRoleConfig(service, roleName, roleConfigName, roleConfigValue));
+
     repository.addService(serviceDiscoveryConfig, service);
-    repository.addRoles(serviceDiscoveryConfig, service, roles);
-    repository.addRoleConfigs(serviceDiscoveryConfig, service, role, roleConfigs);
-    assertTrue(containsRoleConfig(service, role, roleConfigName, roleConfigValue));
+    repository.setServiceRoleConfigs(serviceDiscoveryConfig, service, serviceRoleConfigs);
+
+    assertTrue(containsRole(service, roleName));
+    assertTrue(containsRoleConfig(service, roleName, roleConfigName, roleConfigValue));
   }
 
   @Test
@@ -191,19 +172,27 @@ public class ClouderaManagerServiceDiscoveryRepositoryTest {
   }
 
   private boolean containsRole(ApiService service, String roleName) {
-    final ApiRoleList roles = repository.getRoles(serviceDiscoveryConfig, service);
-    if (roles != null && roles.getItems() != null) {
-      return roles.getItems().stream().anyMatch(role -> role.getName().equals(roleName));
+    final ApiRoleConfigList roleConfigs = repository.getServiceRoleConfigs(serviceDiscoveryConfig, service);
+    if (roleConfigs != null && roleConfigs.getItems() != null) {
+      return roleConfigs.getItems().stream().anyMatch(role -> role.getName().equals(roleName));
     }
     return false;
   }
 
-  private boolean containsRoleConfig(ApiService service, ApiRole role, String roleConfigName, String roleConfigValue) {
-    final ApiConfigList roleConfigs = repository.getRoleConfigs(serviceDiscoveryConfig, service, role);
+  private boolean containsRoleConfig(ApiService service, String roleName, String roleConfigName, String roleConfigValue) {
+    final ApiRoleConfigList roleConfigs = repository.getServiceRoleConfigs(serviceDiscoveryConfig, service);
     if (roleConfigs != null && roleConfigs.getItems() != null) {
-      return roleConfigs.getItems().stream()
-          .anyMatch(roleConfig -> roleConfig.getName().equals(roleConfigName) && roleConfig.getValue().equals(roleConfigValue));
+      ApiRoleConfig roleConfig = roleConfigs.getItems().stream().filter(
+              item -> item.getName().equals(roleName)).findFirst().orElse(null);
+      return roleConfig != null && hasConfigItem(roleConfig.getConfig(), roleConfigName, roleConfigValue);
     }
     return false;
+  }
+
+  private static boolean hasConfigItem(ApiConfigList config, String roleConfigName, String roleConfigValue) {
+    return config != null && config.getItems() != null &&
+            config.getItems().stream().anyMatch(
+                    configItem -> roleConfigName.equals(configItem.getName()) &&
+                            roleConfigValue.equals(configItem.getValue()));
   }
 }

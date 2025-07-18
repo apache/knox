@@ -18,21 +18,28 @@ package org.apache.knox.gateway.topology.discovery.cm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.client.ApiResponse;
+import com.cloudera.api.swagger.client.auth.HttpBasicAuth;
 import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiHostRef;
 import com.cloudera.api.swagger.model.ApiRole;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
-import com.squareup.okhttp.Call;
+import okhttp3.Call;
+import okhttp3.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator;
@@ -61,6 +68,7 @@ import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClus
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import javax.security.auth.Subject;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -72,16 +80,108 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 public class ClouderaManagerServiceDiscoveryTest {
 
   private static final String DISCOVERY_URL = "http://localhost:1234";
+  private static final String DISCOVERY_USER = "discoveryUser";
+  private static final String CLUSTER_NAME = "Cluster 1";
+  private static final String DISCOVERY_PASSWORD_ALIAS = "discovery.alias";
   private static final String ATLAS_SERVICE_NAME = "ATLAS-1";
+  private static final String READ_ROLES_CONFIG_API_VERSION = "v57";
+  private static final List<String> EXPECTED_API_CALLS_BY_ROLE =
+          Arrays.asList("readServices","readServiceConfig","readRoles", "readRoleConfig" );
+  private static final List<String> EXPECTED_API_CALLS_BY_SERVICE =
+          Arrays.asList("readServices","readServiceConfig","readRolesConfig");
 
   @Test
-  public void testServiceDiscoveryRetry() throws Exception {
+  public void testApiClientBasicAuthentication() throws AliasServiceException {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdConfig.getAddress()).andReturn(DISCOVERY_URL).anyTimes();
+    EasyMock.expect(sdConfig.getUser()).andReturn(DISCOVERY_USER);
+    EasyMock.expect(sdConfig.getPasswordAlias()).andReturn(DISCOVERY_PASSWORD_ALIAS);
+    EasyMock.replay(sdConfig);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+
+    final String discoveryPasswordAlias = "discoveryPwdAliasValue";
+    final char[] passwordAliasCharArray = discoveryPasswordAlias.toCharArray();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(DISCOVERY_PASSWORD_ALIAS)).andReturn(passwordAliasCharArray);
+    EasyMock.replay(aliasService);
+
+    ApiClient apiClient = new TestDiscoveryApiClientWithKerberosSubject(gwConf, sdConfig, aliasService);
+
+    HttpBasicAuth authentication = getBasicAuthentication(apiClient);
+
+    assertNotNull(authentication);
+    assertEquals(DISCOVERY_USER, authentication.getUsername());
+    assertEquals(discoveryPasswordAlias, authentication.getPassword());
+
+    List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
+    assertEquals(0, interceptors.size());
+  }
+
+  @Test
+  public void testApiClientInterceptorsWhenKerberosIsEnabledAndPasswordIsNotSet() {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    ApiClient apiClient = new TestDiscoveryApiClientWithKerberosSubject(gwConf, sdConfig, aliasService);
+
+    HttpBasicAuth authentication = getBasicAuthentication(apiClient);
+    assertNotNull(authentication);
+    assertEquals(DISCOVERY_USER, authentication.getUsername());
+    assertNull("basic authentication password should be null.", authentication.getPassword());
+
+    List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
+    assertEquals(2, interceptors.size());
+  }
+
+  @Test
+  public void testApiClientInterceptorsWhenKerberosIsDisabledAndPasswordIsNotSet() {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    ApiClient apiClient = new TestDiscoveryApiClient(gwConf, sdConfig, aliasService);
+
+    HttpBasicAuth authentication = getBasicAuthentication(apiClient);
+    assertNotNull(authentication);
+    assertEquals(DISCOVERY_USER, authentication.getUsername());
+    assertNull("basic authentication password should be null.", authentication.getPassword());
+
+    List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
+    assertEquals(0, interceptors.size());
+  }
+
+  @Test
+  public void testServiceDiscoveryRetryWithSimpleRoleFetch() throws Exception {
     //re-using an already existing test with 'true' retry flag
-    doTestAtlasDiscovery(true, true);
+    doTestAtlasDiscovery(true, true,
+            GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION,
+            GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE);
+  }
+
+  @Test
+  public void testServiceDiscoveryRetryWithBulkRoleFetch() throws Exception {
+    //re-using an already existing test with 'true' retry flag
+      doTestAtlasDiscovery(true, true,
+      READ_ROLES_CONFIG_API_VERSION,
+      GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_SERVICE);
   }
 
   @Test
@@ -119,13 +219,32 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
-  public void testAtlasDiscovery() {
-    doTestAtlasDiscovery(false);
+  public void testAtlasDiscoveryWithRoleFetchStrategyByRole() {
+    doTestAtlasDiscovery(false,
+    GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION,
+    GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE);
   }
 
   @Test
-  public void testAtlasDiscoverySSL() {
-    doTestAtlasDiscovery(true);
+  public void testAtlasDiscoveryWithRoleFetchStrategyByService() {
+    doTestAtlasDiscovery(false,
+      GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION,
+      GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_SERVICE);
+  }
+
+
+  @Test
+  public void testAtlasDiscoverySSLWithRoleFetchStrategyByRole() {
+    doTestAtlasDiscovery(true,
+      GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION,
+      GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE);
+  }
+
+  @Test
+  public void testAtlasDiscoverySSLWithRoleFetchStrategyByService() {
+    doTestAtlasDiscovery(true,
+      GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION,
+      GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE);
   }
 
   @Test
@@ -138,15 +257,14 @@ public class ClouderaManagerServiceDiscoveryTest {
     doTestAtlasAPIDiscovery(true);
   }
 
-  private void doTestAtlasDiscovery(final boolean isSSL) {
-    doTestAtlasDiscovery(isSSL, false);
+  private void doTestAtlasDiscovery(final boolean isSSL, String apiVersion, String roleFetchStrategy) {
+    doTestAtlasDiscovery(isSSL, false, apiVersion, roleFetchStrategy);
   }
 
-  private void doTestAtlasDiscovery(final boolean isSSL, boolean testRetry) {
-    final String hostName       = "atlas-host-1";
+  private void doTestAtlasDiscovery(final boolean isSSL, boolean testRetry, String apiVersion, String roleFetchStrategy) {    final String hostName       = "atlas-host-1";
     final String port           = "21000";
     final String sslPort        = "21003";
-    ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL, testRetry);
+    ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL, testRetry, apiVersion, roleFetchStrategy);
     List<String> atlastURLs = cluster.getServiceURLs(AtlasServiceModelGenerator.SERVICE);
     assertEquals(1, atlastURLs.size());
     assertEquals((isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port),
@@ -157,7 +275,9 @@ public class ClouderaManagerServiceDiscoveryTest {
     final String hostName       = "atlas-host-1";
     final String port           = "21000";
     final String sslPort        = "21003";
-    ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL);
+    final String apiVersion     = GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION;
+    final String roleFetchStrategy = GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE;
+    ServiceDiscovery.Cluster cluster = doTestAtlasDiscovery(hostName, port, sslPort, isSSL, apiVersion, roleFetchStrategy);
     List<String> atlastURLs = cluster.getServiceURLs(AtlasAPIServiceModelGenerator.SERVICE);
     assertEquals(1, atlastURLs.size());
     assertEquals((isSSL ? "https" : "http") + "://" + hostName + ":" + (isSSL ? sslPort : port),
@@ -430,6 +550,8 @@ public class ClouderaManagerServiceDiscoveryTest {
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("hive_webhcat_address_port", port);
+    final String apiVersion     = GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION;
+    final String roleFetchStrategy = GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE;
 
     ServiceDiscovery.Cluster cluster = doTestDiscovery(hostName,
                                                        "HIVE-1",
@@ -440,7 +562,9 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                        roleProperties,
                                                        false,
                                                        excludeHiveService ? WebHCatServiceModelGenerator.SERVICE_TYPE : null,
-                                                       excludeWebHCatRole ?  WebHCatServiceModelGenerator.ROLE_TYPE : null);
+                                                       excludeWebHCatRole ?  WebHCatServiceModelGenerator.ROLE_TYPE : null,
+                                                       apiVersion,
+                                                       roleFetchStrategy);
 
     List<String> urls = cluster.getServiceURLs("WEBHCAT");
     assertNotNull(urls);
@@ -975,15 +1099,19 @@ public class ClouderaManagerServiceDiscoveryTest {
   private ServiceDiscovery.Cluster doTestAtlasDiscovery(final String  atlasHost,
       final String  port,
       final String  sslPort,
-      final boolean isSSL) {
-    return doTestAtlasDiscovery(atlasHost, port, sslPort, isSSL, false);
+      final boolean isSSL,
+      final String apiVersion,
+      final String roleFetchStrategy) {
+    return doTestAtlasDiscovery(atlasHost, port, sslPort, isSSL, false, apiVersion, roleFetchStrategy);
   }
 
   private ServiceDiscovery.Cluster doTestAtlasDiscovery(final String  atlasHost,
                                                         final String  port,
                                                         final String  sslPort,
                                                         final boolean isSSL,
-                                                        final boolean testRetry) {
+                                                        final boolean testRetry,
+                                                        final String apiVersion,
+                                                        final String roleFetchStrategy) {
     // Configure the role
     Map<String, String> roleProperties = new HashMap<>();
     roleProperties.put("atlas_server_http_port", port);
@@ -997,7 +1125,9 @@ public class ClouderaManagerServiceDiscoveryTest {
                            AtlasServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties,
-                           testRetry);
+                           testRetry,
+                           apiVersion,
+                           roleFetchStrategy);
   }
 
 
@@ -1191,7 +1321,11 @@ public class ClouderaManagerServiceDiscoveryTest {
       final String roleType,
       final Map<String, String> serviceProperties,
       final Map<String, String> roleProperties) {
-    return doTestDiscovery(hostName, serviceName, serviceType, roleName, roleType, serviceProperties, roleProperties, false);
+    String apiVersion = GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION;
+    String roleFetchStrategy = GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE;
+
+    return doTestDiscovery(hostName, serviceName, serviceType, roleName, roleType, serviceProperties, roleProperties,
+            false, apiVersion, roleFetchStrategy);
   }
 
   private ServiceDiscovery.Cluster doTestDiscovery(final String hostName,
@@ -1201,8 +1335,12 @@ public class ClouderaManagerServiceDiscoveryTest {
       final String roleType,
       final Map<String, String> serviceProperties,
       final Map<String, String> roleProperties,
-      boolean testRetry) {
-    return doTestDiscovery(hostName, serviceName, serviceType, roleName, roleType, serviceProperties, roleProperties, testRetry, null, null);
+      boolean testRetry,
+      String apiVersion,
+      String roleFetchStrategy) {
+    return doTestDiscovery(hostName, serviceName, serviceType, roleName, roleType,
+            serviceProperties, roleProperties, testRetry, null, null,
+            apiVersion, roleFetchStrategy);
   }
 
   private ServiceDiscovery.Cluster doTestDiscovery(final String hostName,
@@ -1214,7 +1352,9 @@ public class ClouderaManagerServiceDiscoveryTest {
                                                    final Map<String, String> roleProperties,
                                                    boolean testRetry,
                                                    String excludedServiceType,
-                                                   String excludedRoleType) {
+                                                   String excludedRoleType,
+                                                   String apiVersion,
+                                                   String roleFetchStrategy) {
     final String clusterName = "cluster-1";
 
     GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
@@ -1224,6 +1364,8 @@ public class ClouderaManagerServiceDiscoveryTest {
     }
     EasyMock.expect(gwConf.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gwConf.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(apiVersion).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryRoleFetchStrategy()).andReturn(roleFetchStrategy).anyTimes();
     if (excludedServiceType == null) {
       EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Collections.emptySet()).anyTimes();
     } else {
@@ -1255,29 +1397,46 @@ public class ClouderaManagerServiceDiscoveryTest {
     ApiServiceConfig serviceConfig = createMockApiServiceConfig(serviceProperties);
     mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(serviceConfig));
 
-    // Prepare the role
+    // Prepare the role configuration list
+    ApiConfigList apiConfigList = createMockApiConfigList(roleProperties);
+    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(apiConfigList));
+
+    // Prepare the role with configuration
     ApiRole role = createMockApiRole(roleName, roleType, hostName);
     ApiRoleList roleList = EasyMock.createNiceMock(ApiRoleList.class);
     EasyMock.expect(roleList.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
     EasyMock.replay(roleList);
+    ApiRoleConfig roleConfig = createMockApiRoleConfig(roleName, roleType, hostName, apiConfigList);
+    ApiRoleConfigList roleConfigList = EasyMock.createNiceMock(ApiRoleConfigList.class);
+    EasyMock.expect(roleConfigList.getItems()).andReturn(Collections.singletonList(roleConfig)).anyTimes();
+    EasyMock.replay(roleConfigList);
     mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(roleList));
+    mockClient.addResponse(ApiRoleConfigList.class, new TestApiRoleConfigListResponse(roleConfigList));
 
-    // Configure the role
-    ApiConfigList roleConfigList = createMockApiConfigList(roleProperties);
-    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(roleConfigList));
 
-    // Invoke the service discovery
+      // Invoke the service discovery
     ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true, gwConf);
     cmsd.onConfigurationChange(null, null); //to clear the repo
     ServiceDiscovery.Cluster cluster = cmsd.discover(gwConf, sdConfig, clusterName, Collections.emptySet(), mockClient);
     assertNotNull(cluster);
     assertEquals(clusterName, cluster.getName());
     if (serviceName.equals(ATLAS_SERVICE_NAME)) {
-      assertEquals(testRetry ? 9 : 4, mockClient.getExecuteCount());
+      assertEquals(getExpectedExecuteCount(roleFetchStrategy, testRetry), mockClient.getExecuteCount());
     }
     return cluster;
   }
 
+  private int getExpectedExecuteCount(String roleFetchStrategy, boolean testRetry) {
+    // With testRetry, retryAttempts is configured to be 1,
+    // the first call for readServices() fails in TestFaultyDiscoveryApiClient
+    // with a retryable ApiException.
+    // Then discovery is retried and calls succeed.
+    if (GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE.equals(roleFetchStrategy)) {
+        return testRetry ? EXPECTED_API_CALLS_BY_ROLE.size() + 1 : EXPECTED_API_CALLS_BY_ROLE.size();
+    } else {
+        return testRetry ? EXPECTED_API_CALLS_BY_SERVICE.size() + 1 : EXPECTED_API_CALLS_BY_SERVICE.size();
+    }
+  }
 
   private static ServiceDiscoveryConfig createMockDiscoveryConfig(String clusterName) {
     return createMockDiscoveryConfig(DISCOVERY_URL, "itsme", clusterName);
@@ -1314,6 +1473,19 @@ public class ClouderaManagerServiceDiscoveryTest {
     EasyMock.expect(hostRef.getHostname()).andReturn(hostname).anyTimes();
     EasyMock.replay(hostRef);
     EasyMock.expect(r.getHostRef()).andReturn(hostRef).anyTimes();
+    EasyMock.replay(r);
+    return r;
+  }
+
+  private static ApiRoleConfig createMockApiRoleConfig(String name, String type, String hostname, ApiConfigList configList) {
+    ApiRoleConfig r = EasyMock.createNiceMock(ApiRoleConfig.class);
+    EasyMock.expect(r.getName()).andReturn(name).anyTimes();
+    EasyMock.expect(r.getRoleType()).andReturn(type).anyTimes();
+    ApiHostRef hostRef = EasyMock.createNiceMock(ApiHostRef.class);
+    EasyMock.expect(hostRef.getHostname()).andReturn(hostname).anyTimes();
+    EasyMock.replay(hostRef);
+    EasyMock.expect(r.getHostRef()).andReturn(hostRef).anyTimes();
+    EasyMock.expect(r.getConfig()).andReturn(configList).anyTimes();
     EasyMock.replay(r);
     return r;
   }
@@ -1362,6 +1534,32 @@ public class ClouderaManagerServiceDiscoveryTest {
     return configList;
   }
 
+
+  private static HttpBasicAuth getBasicAuthentication(ApiClient apiClient) {
+    return apiClient.getAuthentications().values().stream()
+    .filter(a -> a instanceof HttpBasicAuth)
+    .map(a -> (HttpBasicAuth) a)
+    .findFirst().orElse(null);
+  }
+
+  private static class TestDiscoveryApiClientWithKerberosSubject extends DiscoveryApiClient {
+
+    TestDiscoveryApiClientWithKerberosSubject(GatewayConfig gatewayConfig, ServiceDiscoveryConfig sdConfig, AliasService aliasService) {
+      super(gatewayConfig, sdConfig, aliasService, null);
+    }
+
+    @Override
+    boolean isKerberos() {
+      return true;
+    }
+
+    @Override
+    Subject getKerberosSubject() {
+      return new Subject();
+    }
+
+  }
+
   private static class TestDiscoveryApiClient extends DiscoveryApiClient {
 
     private Map<Type, ApiResponse<?>> responseMap = new HashMap<>();
@@ -1400,9 +1598,11 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     @Override
     public <T> ApiResponse<T> execute(Call call, Type returnType) throws ApiException {
-      if (executeCount.getAndIncrement() < GatewayConfig.DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS - 2) {
+      if (executeCount.get() == 0) {
+        executeCount.getAndIncrement();
         throw new ApiException(new SocketTimeoutException("Failed to connect to CM HOST"));
       }
+      //executeCount will be incremented in parent class
       return super.execute(call, returnType);
     }
   }
@@ -1435,6 +1635,12 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   private static class TestApiRoleListResponse extends TestResponseBase<ApiRoleList> {
     TestApiRoleListResponse(ApiRoleList data) {
+      super(data);
+    }
+  }
+
+  private static class TestApiRoleConfigListResponse extends TestResponseBase<ApiRoleConfigList> {
+    TestApiRoleConfigListResponse(ApiRoleConfigList data) {
       super(data);
     }
   }

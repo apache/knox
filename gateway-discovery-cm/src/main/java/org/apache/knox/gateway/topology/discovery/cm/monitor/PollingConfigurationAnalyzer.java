@@ -26,8 +26,10 @@ import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
 import com.cloudera.api.swagger.model.ApiEventQueryResult;
+import com.cloudera.api.swagger.model.ApiHostRef;
 import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiRoleConfig;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -48,6 +50,8 @@ import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollector;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollectorBuilder;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
@@ -602,11 +606,22 @@ public class PollingConfigurationAnalyzer implements Runnable {
       ApiServiceConfig svcConfig = api.readServiceConfig(clusterName, service, "full");
 
       Map<ApiRole, ApiConfigList> roleConfigs = new HashMap<>();
-      RolesResourceApi rolesApi = (new RolesResourceApi(apiClient));
-      ApiRoleList roles = rolesApi.readRoles(clusterName, service, "", "full");
-      for (ApiRole role : roles.getItems()) {
-        ApiConfigList config = rolesApi.readRoleConfig(clusterName, role.getName(), service, "full");
-        roleConfigs.put(role, config);
+      RolesResourceApi rolesResourceApi = new RolesResourceApi(apiClient);
+      ServiceRoleCollector roleCollector = ServiceRoleCollectorBuilder.newBuilder()
+              .gatewayConfig(gatewayConfig)
+              .rolesResourceApi(rolesResourceApi)
+              .build();
+
+      ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
+
+      for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
+        ApiConfigList configList = roleConfig.getConfig();
+
+        String roleName = roleConfig.getName();
+        String roleType = roleConfig.getRoleType();
+        ApiHostRef hostRef = roleConfig.getHostRef();
+        ApiRole role = new ApiRole().name(roleName).type(roleType).hostRef(hostRef);
+        roleConfigs.put(role, configList);
       }
       currentConfig = new ServiceConfigurationModel(svcConfig, roleConfigs);
     } catch (ApiException e) {

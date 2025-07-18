@@ -113,6 +113,10 @@ public interface GatewayConfig {
 
   long DEFAULT_CM_SERVICE_DISCOVERY_CACHE_ENTRY_TTL = 600; // 10 minutes
 
+  String CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE = "byRole";
+  String CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_SERVICE = "byService";
+  String DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION = "v32";
+
   int DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS = 3;
 
   String DEFAULT_API_SERVICES_VIEW_VERSION = "v1";
@@ -771,6 +775,11 @@ public interface GatewayConfig {
    */
   Collection<String> getClouderaManagerServiceDiscoveryExcludedRoleTypes();
 
+  String getClouderaManagerServiceDiscoveryApiVersion();
+
+
+  String getClouderaManagerServiceDiscoveryRoleFetchStrategy();
+
   /**
    * @return true, if state for tokens issued by the Knox Token service should be managed by Knox.
    */
@@ -919,11 +928,31 @@ public interface GatewayConfig {
 
   Map<String, Collection<String>> getApplicationPathAliases();
 
+  /**
+   * @deprecated use {@link #getClouderaManagerServiceDiscoveryConnectTimeoutMillis()}
+   */
+  @Deprecated
   long getServiceDiscoveryConnectTimeoutMillis();
 
+  long getClouderaManagerServiceDiscoveryConnectTimeoutMillis();
+
+  /**
+   * @deprecated use {@link #getClouderaManagerServiceDiscoveryReadTimeoutMillis()}
+   */
+  @Deprecated
   long getServiceDiscoveryReadTimeoutMillis();
 
+  long getClouderaManagerServiceDiscoveryReadTimeoutMillis();
+
+  /**
+   * @deprecated use {@link #getClouderaManagerServiceDiscoveryWriteTimeoutMillis()}
+   */
+  @Deprecated
   long getServiceDiscoveryWriteTimeoutMillis();
+
+  long getClouderaManagerServiceDiscoveryWriteTimeoutMillis();
+
+  long getClouderaManagerServiceDiscoveryRoleConfigPageSize();
 
   /**
    * @return <code>true</code> if token migration must be skipped when a
