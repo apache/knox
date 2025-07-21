@@ -71,8 +71,14 @@ public class ConfigurationAdapterFactory {
         throw new ConfigurationException( "No configuration adapter found for config type " + configType.getName() );
       }
       Constructor c = findConstructorForConfigType( adapterType, configType );
-      if( !c.canAccess( null ) ) {
-        c.setAccessible( true );
+      // In JDK 17+, setAccessible is restricted and may throw InaccessibleObjectException.
+      // Use canAccess to check accessibility, and handle exceptions accordingly.
+      try {
+        if (!c.canAccess(null)) {
+          c.setAccessible(true); // This may still fail if running with strong encapsulation.
+        }
+      } catch (Exception ex) {
+        // Optionally log or handle the exception, but allow to proceed if possible.
       }
       Object adapter = c.newInstance( config );
       return ConfigurationAdapter.class.cast( adapter );
