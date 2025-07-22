@@ -20,7 +20,7 @@ package org.apache.knox.gateway.filter;
 import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.util.MimeTypes;
 
-import javax.activation.MimeType;
+import jakarta.activation.MimeType;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;

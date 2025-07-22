@@ -26,7 +26,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 
-import javax.activation.MimeType;
+import jakarta.activation.MimeType;
 
 public class UrlRewriteUtil {
 
