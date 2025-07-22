@@ -35,6 +35,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.dispatch.AsyncDispatch;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.dispatch.DefaultHttpAsyncClientFactory;
 import org.apache.knox.gateway.dispatch.HttpAsyncClientFactory;
@@ -49,7 +50,7 @@ import java.net.URISyntaxException;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class SSEDispatch extends ConfigurableDispatch {
+public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
 
     protected final HttpAsyncClient asyncClient;
     private static final String TEXT_EVENT_STREAM_VALUE = "text/event-stream";
