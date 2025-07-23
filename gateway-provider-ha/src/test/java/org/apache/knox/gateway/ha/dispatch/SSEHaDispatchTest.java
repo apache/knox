@@ -232,7 +232,7 @@ public class SSEHaDispatchTest {
         latch.await(1L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -265,7 +265,7 @@ public class SSEHaDispatchTest {
         latch.await(1L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://localhost:" + MOCK_SSE_SERVER.getPort() + "/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -294,7 +294,7 @@ public class SSEHaDispatchTest {
 
         sseHaDispatch.doGet(URL, inboundRequest, outboundResponse);
         latch.await(1L, TimeUnit.SECONDS);
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
 
 
         //Second request, sticky session cookie included
@@ -325,7 +325,7 @@ public class SSEHaDispatchTest {
 
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter, inboundRequest2);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -358,7 +358,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -390,7 +390,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals(URL.toString(), sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals(URL.toString(), sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -422,7 +422,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals(URL.toString(), sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals(URL.toString(), sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -454,7 +454,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest);
         assertFalse(MOCK_SSE_SERVER.isEmpty());
-        assertEquals(URL.toString(), sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals(URL.toString(), sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -487,7 +487,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -520,7 +520,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -553,7 +553,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -586,7 +586,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
 
         //Second request, sticky session cookie included
         MOCK_SSE_SERVER.stop();
@@ -606,7 +606,7 @@ public class SSEHaDispatchTest {
         latch2.await(1L, TimeUnit.SECONDS);
 
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter, inboundRequest2);
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -639,7 +639,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals(URL.toString(), sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals(URL.toString(), sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     @Test
@@ -672,7 +672,7 @@ public class SSEHaDispatchTest {
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
         assertTrue(MOCK_SSE_SERVER.isEmpty());
-        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaProvider().getActiveURL("SSE"));
+        assertEquals("http://host2.valid:3333/sse", sseHaDispatch.getHaConfigurations().getHaProvider().getActiveURL("SSE"));
     }
 
     private SSEHaDispatch createDispatch(boolean failoverNeeded, HaServiceConfig serviceConfig) throws Exception {

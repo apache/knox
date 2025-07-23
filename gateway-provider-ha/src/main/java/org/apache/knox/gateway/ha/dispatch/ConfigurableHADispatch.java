@@ -23,16 +23,15 @@ import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.ha.dispatch.i18n.HaDispatchMessages;
+import org.apache.knox.gateway.ha.config.CommonHaConfigurations;
+import org.apache.knox.gateway.ha.config.HaConfigurations;
 import org.apache.knox.gateway.ha.provider.HaProvider;
-import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,139 +45,48 @@ import static org.apache.knox.gateway.util.HttpUtils.isConnectionError;
 public class ConfigurableHADispatch extends ConfigurableDispatch implements CommonHaDispatch {
 
   protected static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
-
-  protected int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
-
-  protected int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
-
-  protected HaProvider haProvider;
-
-  private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
-  private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
-  private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
-  protected boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
-  private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
-  private List<String> disableLoadBalancingForUserAgents = Arrays.asList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
+  private final HaConfigurations haConfigurations = new CommonHaConfigurations();
 
   /**
-   *  This activeURL is used to track urls when LB is turned off for some clients.
-   *  The problem we have with selectively turning off LB is that other clients
-   *  that use LB can change the state from under the current session where LB is
-   *  turned off.
-   *  e.g.
-   *  ODBC Connection established where LB is off. JDBC connection is established
-   *  next where LB is enabled. This changes the active URL under the existing ODBC
-   *  connection which will be an issue.
-   *  This variable keeps track of non-LB'ed url and updated upon failover.
+   * This activeURL is used to track urls when LB is turned off for some clients.
+   * The problem we have with selectively turning off LB is that other clients
+   * that use LB can change the state from under the current session where LB is
+   * turned off.
+   * e.g.
+   * ODBC Connection established where LB is off. JDBC connection is established
+   * next where LB is enabled. This changes the active URL under the existing ODBC
+   * connection which will be an issue.
+   * This variable keeps track of non-LB'ed url and updated upon failover.
    */
-  private final AtomicReference<String> activeURL =  new AtomicReference<>();
+  private final AtomicReference<String> activeURL = new AtomicReference<>();
+
   @Override
   public void init() {
     super.init();
     LOG.initializingForResourceRole(getServiceRole());
-    if ( haProvider != null ) {
-      initializeCommonHaDispatch(haProvider.getHaDescriptor().getServiceConfig(getServiceRole()));
+    if (haConfigurations.getHaProvider() != null) {
+      initializeCommonHaDispatch(haConfigurations.getHaProvider().getHaDescriptor().getServiceConfig(getServiceRole()));
     }
   }
 
   @Override
-  public HaProvider getHaProvider() {
-    return haProvider;
+  public HaConfigurations getHaConfigurations() {
+    return haConfigurations;
   }
 
   @Configure
   public void setHaProvider(HaProvider haProvider) {
-    this.haProvider = haProvider;
-  }
-
-  @Override
-  public boolean isStickySessionEnabled() {
-      return stickySessionsEnabled;
-  }
-
-  @Override
-  public void setStickySessionsEnabled(boolean enabled) {
-    this.stickySessionsEnabled = enabled;
-  }
-
-  @Override
-  public String getStickySessionCookieName() {
-      return stickySessionCookieName;
-  }
-
-  @Override
-  public void setStickySessionCookieName(String stickySessionCookieName) {
-    this.stickySessionCookieName = stickySessionCookieName;
-  }
-
-  @Override
-  public boolean isLoadBalancingEnabled() {
-      return loadBalancingEnabled;
-  }
-
-  @Override
-  public void setLoadBalancingEnabled(boolean enabled) {
-    this.loadBalancingEnabled = enabled;
-  }
-
-  @Override
-  public List<String> getDisableLoadBalancingForUserAgents() {
-      return disableLoadBalancingForUserAgents;
-  }
-
-  @Override
-  public void setDisableLoadBalancingForUserAgents(List<String> disableLoadBalancingForUserAgents) {
-    this.disableLoadBalancingForUserAgents = disableLoadBalancingForUserAgents;
+    getHaConfigurations().setHaProvider(haProvider);
   }
 
   @Override
   public AtomicReference<String> getActiveURL() {
-      return activeURL;
+    return activeURL;
   }
 
   @Override
   public void setActiveURL(String url) {
     activeURL.set(url);
-  }
-
-  @Override
-  public int getMaxFailoverAttempts() {
-    return maxFailoverAttempts;
-  }
-
-  @Override
-  public void setMaxFailoverAttempts(int maxFailoverAttempts) {
-    this.maxFailoverAttempts = maxFailoverAttempts;
-  }
-
-  @Override
-  public int getFailoverSleep() {
-    return failoverSleep;
-  }
-
-  @Override
-  public void setFailoverSleep(int failoverSleep) {
-    this.failoverSleep = failoverSleep;
-  }
-
-  @Override
-  public void setFailoverNonIdempotentRequestEnabled(boolean enabled) {
-    this.failoverNonIdempotentRequestEnabled = enabled;
-  }
-
-  @Override
-  public boolean isFailoverNonIdempotentRequestEnabled() {
-    return failoverNonIdempotentRequestEnabled;
-  }
-
-  @Override
-  public void setNoFallbackEnabled(boolean enabled) {
-    this.noFallbackEnabled = enabled;
-  }
-
-  @Override
-  public boolean isNoFallbackEnabled() {
-    return noFallbackEnabled;
   }
 
   @Override
@@ -228,11 +136,11 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements Comm
     /* mark endpoint as failed */
     final AtomicInteger counter = markEndpointFailed(outboundRequest, inboundRequest);
     inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
-    if ( counter.get() <= getMaxFailoverAttempts() ) {
+    if ( counter.get() <= haConfigurations.getMaxFailoverAttempts() ) {
       inboundRequest = prepareForFailover(outboundRequest, inboundRequest);
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
     } else {
-      LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
+      LOG.maxFailoverAttemptsReached(haConfigurations.getMaxFailoverAttempts(), getServiceRole());
       if ( inboundResponse != null ) {
         writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
       } else {
