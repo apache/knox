@@ -27,8 +27,9 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.ha.dispatch.i18n.HaDispatchMessages;
+import org.apache.knox.gateway.ha.config.CommonHaConfigurations;
+import org.apache.knox.gateway.ha.config.HaConfigurations;
 import org.apache.knox.gateway.ha.provider.HaProvider;
-import org.apache.knox.gateway.ha.provider.impl.HaServiceConfigConstants;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.sse.SSEDispatch;
 import org.apache.knox.gateway.sse.SSEResponse;
@@ -38,8 +39,6 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,18 +46,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SSEHaDispatch extends SSEDispatch implements CommonHaDispatch {
 
     protected static final HaDispatchMessages LOG = MessagesFactory.get(HaDispatchMessages.class);
-
-    protected HaProvider haProvider;
-    private boolean loadBalancingEnabled = HaServiceConfigConstants.DEFAULT_LOAD_BALANCING_ENABLED;
-    private boolean stickySessionsEnabled = HaServiceConfigConstants.DEFAULT_STICKY_SESSIONS_ENABLED;
-    private String stickySessionCookieName = HaServiceConfigConstants.DEFAULT_STICKY_SESSION_COOKIE_NAME;
-    private List<String> disableLoadBalancingForUserAgents = Collections.singletonList(HaServiceConfigConstants.DEFAULT_DISABLE_LB_USER_AGENTS);
     private final boolean sslEnabled;
-
-    protected int maxFailoverAttempts = HaServiceConfigConstants.DEFAULT_MAX_FAILOVER_ATTEMPTS;
-    protected int failoverSleep = HaServiceConfigConstants.DEFAULT_FAILOVER_SLEEP;
-    protected boolean failoverNonIdempotentRequestEnabled = HaServiceConfigConstants.DEFAULT_FAILOVER_NON_IDEMPOTENT;
-    private boolean noFallbackEnabled = HaServiceConfigConstants.DEFAULT_NO_FALLBACK_ENABLED;
+    private final HaConfigurations haConfigurations = new CommonHaConfigurations();
 
     /**
      * This activeURL is used to track urls when LB is turned off for some clients.
@@ -84,59 +73,19 @@ public class SSEHaDispatch extends SSEDispatch implements CommonHaDispatch {
     public void init() {
         super.init();
         LOG.initializingForResourceRole(getServiceRole());
-        if (haProvider != null) {
-            initializeCommonHaDispatch(haProvider.getHaDescriptor().getServiceConfig(getServiceRole()));
+        if (haConfigurations.getHaProvider() != null) {
+            initializeCommonHaDispatch(haConfigurations.getHaProvider().getHaDescriptor().getServiceConfig(getServiceRole()));
         }
-    }
-
-    @Override
-    public HaProvider getHaProvider() {
-        return haProvider;
-    }
-
-    @Override
-    public void setLoadBalancingEnabled(boolean enabled) {
-        this.loadBalancingEnabled = enabled;
     }
 
     @Configure
     public void setHaProvider(HaProvider haProvider) {
-        this.haProvider = haProvider;
+        getHaConfigurations().setHaProvider(haProvider);
     }
 
     @Override
-    public boolean isStickySessionEnabled() {
-        return stickySessionsEnabled;
-    }
-
-    @Override
-    public void setStickySessionsEnabled(boolean enabled) {
-        this.stickySessionsEnabled = enabled;
-    }
-
-    @Override
-    public String getStickySessionCookieName() {
-        return stickySessionCookieName;
-    }
-
-    @Override
-    public void setStickySessionCookieName(String stickySessionCookieName) {
-        this.stickySessionCookieName = stickySessionCookieName;
-    }
-
-    @Override
-    public boolean isLoadBalancingEnabled() {
-        return loadBalancingEnabled;
-    }
-
-    @Override
-    public List<String> getDisableLoadBalancingForUserAgents() {
-        return disableLoadBalancingForUserAgents;
-    }
-
-    @Override
-    public void setDisableLoadBalancingForUserAgents(List<String> disableLoadBalancingForUserAgents) {
-        this.disableLoadBalancingForUserAgents = disableLoadBalancingForUserAgents;
+    public HaConfigurations getHaConfigurations() {
+        return haConfigurations;
     }
 
     @Override
@@ -147,46 +96,6 @@ public class SSEHaDispatch extends SSEDispatch implements CommonHaDispatch {
     @Override
     public void setActiveURL(String url) {
         activeURL.set(url);
-    }
-
-    @Override
-    public int getMaxFailoverAttempts() {
-        return maxFailoverAttempts;
-    }
-
-    @Override
-    public void setMaxFailoverAttempts(int maxFailoverAttempts) {
-        this.maxFailoverAttempts = maxFailoverAttempts;
-    }
-
-    @Override
-    public int getFailoverSleep() {
-        return failoverSleep;
-    }
-
-    @Override
-    public void setFailoverSleep(int failoverSleep) {
-        this.failoverSleep = failoverSleep;
-    }
-
-    @Override
-    public void setFailoverNonIdempotentRequestEnabled(boolean enabled) {
-        this.failoverNonIdempotentRequestEnabled = enabled;
-    }
-
-    @Override
-    public boolean isFailoverNonIdempotentRequestEnabled() {
-        return failoverNonIdempotentRequestEnabled;
-    }
-
-    @Override
-    public void setNoFallbackEnabled(boolean enabled) {
-        this.noFallbackEnabled = enabled;
-    }
-
-    @Override
-    public boolean isNoFallbackEnabled() {
-        return noFallbackEnabled;
     }
 
     @Override
@@ -211,11 +120,11 @@ public class SSEHaDispatch extends SSEDispatch implements CommonHaDispatch {
             /* mark endpoint as failed */
             final AtomicInteger counter = markEndpointFailed(outboundRequest, inboundRequest);
             inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
-            if (counter.get() <= getMaxFailoverAttempts()) {
+            if (counter.get() <= haConfigurations.getMaxFailoverAttempts()) {
                 inboundRequest = prepareForFailover(outboundRequest, inboundRequest);
                 executeAsyncRequest(outboundRequest, outboundResponse, asyncContext, inboundRequest);
             } else {
-                LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getServiceRole());
+                LOG.maxFailoverAttemptsReached(haConfigurations.getMaxFailoverAttempts(), getServiceRole());
                 outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error, max failover attempts reached");
                 asyncContext.complete();
             }
