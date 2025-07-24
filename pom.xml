@@ -200,7 +200,7 @@
         <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
         <dom4j.version>2.1.3</dom4j.version>
         <easymock.version>5.2.0</easymock.version>
-        <eclipselink.version>2.7.8</eclipselink.version>
+        <!--<eclipselink.version>2.7.8</eclipselink.version>-->
         <ehcache.version>3.3.1</ehcache.version>
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
         <fastinfoset.version>1.2.18</fastinfoset.version>
@@ -235,7 +235,7 @@
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
         <jetty.version>9.4.56.v20240826</jetty.version>
-        <jline.version>3.30.4</jline.version>
+        <jline.version>3.21.0</jline.version>
         <jna.version>5.9.0</jna.version>
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.9.0</json-path.version>
@@ -300,6 +300,7 @@
         <jakarta.xml.ws.version>4.0.2</jakarta.xml.ws.version>
         <jakarta.activation.version>2.0.1</jakarta.activation.version>
         <objenesis.version>3.3</objenesis.version>
+        <moxy.version>4.0.2</moxy.version>
     </properties>
     <repositories>
         <repository>
@@ -542,7 +543,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>@{argLine} --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine} --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED</argLine>
                     <excludedGroups>
                         org.apache.knox.test.category.SlowTests,org.apache.knox.test.category.ManualTests,org.apache.knox.test.category.VerifyTest,org.apache.knox.test.category.ReleaseTest
                     </excludedGroups>
@@ -556,7 +557,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-                    <argLine>@{argLine} --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine} --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.security=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED</argLine>
                     <groups>${failsafe.group}</groups>
                 </configuration>
                 <executions>
@@ -1445,11 +1446,13 @@
                 <version>${jakarta.xml.ws.version}</version>
             </dependency>
 
+            <!--
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>jaxb-runtime</artifactId>
                 <version>${glassfish-jaxb.version}</version>
             </dependency>
+            -->
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>txw2</artifactId>
@@ -1469,6 +1472,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.eclipse.persistence</groupId>
+                <artifactId>org.eclipse.persistence.moxy</artifactId>
+                <version>${moxy.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.jvnet.staxex</groupId>
                 <artifactId>stax-ex</artifactId>
                 <version>${stax-ex.version}</version>
@@ -1480,11 +1489,13 @@
                 <version>${fastinfoset.version}</version>
             </dependency>
 
+            <!--
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>eclipselink</artifactId>
                 <version>${eclipselink.version}</version>
             </dependency>
+            -->
             <dependency>
                 <groupId>javax.json</groupId>
                 <artifactId>javax.json-api</artifactId>
@@ -1529,11 +1540,11 @@
                 <version>${jansi.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>jline</groupId>
-                <artifactId>jline</artifactId>
-                <version>${jline.version}</version>
-            </dependency>
+                    <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>${jline.version}</version>
+        </dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>

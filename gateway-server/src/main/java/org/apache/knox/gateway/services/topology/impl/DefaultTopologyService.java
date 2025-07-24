@@ -60,12 +60,14 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.knox.gateway.util.ServiceDefinitionsLoader;
 import org.apache.knox.gateway.util.TopologyUtils;
+
+import org.eclipse.persistence.jaxb.JAXBContextFactory;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.xml.sax.SAXException;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -116,10 +118,15 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
     String pkgName = Topology.class.getPackage().getName();
     String bindingFile = pkgName.replace(".", "/") + "/topology_binding-xml.xml";
 
-    Map<String, Object> properties = new HashMap<>(1);
-    properties.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
+
+    Map<String,Object> props = new HashMap<>();
+    props.put(JAXBContextProperties.OXM_METADATA_SOURCE, bindingFile);
+    props.put(JAXBContextProperties.MEDIA_TYPE, "application/xml"); // if you need it
+
     try {
-      return JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), properties);
+      //return JAXBContext.newInstance(pkgName, Topology.class.getClassLoader(), props);
+      //return JAXBContext.newInstance(Topology.class);
+      return JAXBContextFactory.createContext(pkgName, Topology.class.getClassLoader(), props);
     } catch (JAXBException e) {
       throw new IllegalStateException(e);
     }

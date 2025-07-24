@@ -64,7 +64,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
-            <artifactId>eclipselink</artifactId>
+            <artifactId>org.eclipse.persistence.moxy</artifactId>
         </dependency>
         <dependency>
             <groupId>org.glassfish.hk2.external</groupId>

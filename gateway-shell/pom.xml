@@ -67,7 +67,7 @@
             <artifactId>jansi</artifactId>
         </dependency>
         <dependency>
-            <groupId>jline</groupId>
+            <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
         </dependency>
         <dependency>

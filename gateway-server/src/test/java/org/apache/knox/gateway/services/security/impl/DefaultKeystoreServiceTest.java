@@ -768,7 +768,12 @@ public class DefaultKeystoreServiceTest {
     assertTrue(certificate instanceof X509Certificate);
 
     Principal subject = ((X509Certificate) certificate).getSubjectX500Principal();
-    assertEquals(expectedSubjectName, subject.getName());
+    // JDK 17 changed the DN format to be more compact (no spaces around commas)
+    // Handle both old and new formats for compatibility
+    String actualName = subject.getName();
+    String expectedCompact = expectedSubjectName.replace(", ", ",");
+    assertTrue("Expected: " + expectedSubjectName + " or " + expectedCompact + ", but got: " + actualName,
+               actualName.equals(expectedSubjectName) || actualName.equals(expectedCompact));
 
     verify(masterService);
   }
