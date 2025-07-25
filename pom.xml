@@ -290,7 +290,7 @@
         <woodstox-core.version>6.4.0</woodstox-core.version>
         <xmlsec.version>2.2.6</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
-        <xml-jaxb.version>2.3.0</xml-jaxb.version>
+        <xml-jaxb.version>2.3.1</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.8.4</zookeeper.version>
         <docker-maven-plugin.version>0.45.0</docker-maven-plugin.version>
@@ -1446,13 +1446,25 @@
                 <version>${jakarta.xml.ws.version}</version>
             </dependency>
 
-            <!--
+
+
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${xml-jaxb.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>jaxb-runtime</artifactId>
-                <version>${glassfish-jaxb.version}</version>
+                <version>${xml-jaxb.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.eclipse.angus</groupId>
+                        <artifactId>angus-activation</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
-            -->
+
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>txw2</artifactId>

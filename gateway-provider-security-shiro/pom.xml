@@ -101,6 +101,24 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
+        <!-- JAXB dependencies required for EhCache XML configuration in JDK 17+ -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.activation</groupId>
+            <artifactId>jakarta.activation</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-test-utils</artifactId>
