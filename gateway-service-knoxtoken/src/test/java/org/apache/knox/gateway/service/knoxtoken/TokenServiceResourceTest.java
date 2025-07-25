@@ -39,6 +39,7 @@ import java.security.KeyPairGenerator;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.cert.X509Certificate;
+import javax.security.auth.x500.X500Principal;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.AbstractMap;
@@ -217,6 +218,7 @@ public class TokenServiceResourceTest {
     if (StringUtils.isNotBlank(expectedSubjectDN)) {
       X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
       EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal(expectedSubjectDN)).anyTimes();
+      EasyMock.expect(trustedCertMock.getSubjectX500Principal()).andReturn(new X500Principal(expectedSubjectDN)).anyTimes();
       ArrayList<X509Certificate> certArrayList = new ArrayList<>();
       certArrayList.add(trustedCertMock);
       X509Certificate[] certs = {};
