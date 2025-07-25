@@ -138,4 +138,10 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Unable to close SSE producer" )
   void sseProducerCloseError(@StackTrace(level=MessageLevel.ERROR) Exception e);
+
+  @Message( level = MessageLevel.INFO, text = "BouncyCastle handleClose error, ignoring exception" )
+  void ignoreHandleCloseError();
+
+  @Message(level = MessageLevel.INFO, text = "FIPS environment, configuring intercepting socket")
+  void configureInterceptingSocket();
 }
