@@ -160,7 +160,6 @@ public class Pac4jDispatcherFilterTest {
 
     @Test
     public void testDefaultCookieSameSite() throws Exception {
-        final String expectedSameSite = "Strict";
         List<String> params = new ArrayList<>();
         params.add(Pac4jDispatcherFilter.PAC4J_CALLBACK_URL);
         params.add("clientName");
@@ -172,7 +171,7 @@ public class Pac4jDispatcherFilterTest {
 
         EasyMock.replay(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
 
-        verifyCookieConfig(mocks.filterConfig, Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE,  expectedSameSite);
+        verifyCookieConfig(mocks.filterConfig, Pac4jDispatcherFilter.PAC4J_COOKIE_SAMESITE,  null);
 
         // Verify all mock interactions
         EasyMock.verify(mocks.context, mocks.services, mocks.cryptoService, mocks.aliasService, mocks.keystoreService, mocks.masterService, mocks.filterConfig, mocks.gatewayConfig);
