@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  *   make request/response exclude headers configurable
  *   make url encoding configurable
  */
-public class ConfigurableDispatch extends DefaultDispatch {
+public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatch{
   private Set<String> requestExcludeHeaders = super.getOutboundRequestExcludeHeaders();
   private Set<String> responseExcludeHeaders = super.getOutboundResponseExcludeHeaders();
   private Map<String, String> requestAppendHeaders = Collections.emptyMap();
