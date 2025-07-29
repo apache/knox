@@ -190,7 +190,7 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
         //save the updated content in the file
         FileUtils.write(topologyFile, updated, StandardCharsets.UTF_8);
-      } catch (IOException e) {
+      } catch (Exception e) {
         auditor.audit(Action.REDEPLOY, topology.getName(), ResourceType.TOPOLOGY, ActionOutcome.FAILURE);
         log.failedToRedeployTopology(topology.getName(), e);
       }
