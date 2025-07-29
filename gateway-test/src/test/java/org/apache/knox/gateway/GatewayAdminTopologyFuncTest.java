@@ -339,11 +339,11 @@ public class GatewayAdminTopologyFuncTest {
         .when().get(serviceUrl).thenReturn().getBody().path("topologies.topology.href[1]");
 
        given()
-        //.log().all()
+        .log().all()
         .auth().preemptive().basic(username, password)
         .header("Accept", MediaType.APPLICATION_XML)
         .then()
-        //.log().all()
+        .log().all()
         .body("topologies.topology.href[1]", equalTo(href1))
         .statusCode(HttpStatus.SC_OK)
         .when().get(serviceUrl);
