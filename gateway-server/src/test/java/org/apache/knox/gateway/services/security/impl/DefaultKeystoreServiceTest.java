@@ -742,7 +742,7 @@ public class DefaultKeystoreServiceTest {
     if (hostname == null) {
       alias = "test_localhost";
       password = "test_localhost".toCharArray();
-      expectedSubjectName = "CN=localhost, OU=Test, O=Hadoop, L=Test, ST=Test, C=US";
+      expectedSubjectName = "C=US,ST=Test,L=Test,O=Hadoop,OU=Test,CN=localhost";
 
       keystoreService.addSelfSignedCertForGateway(alias, password);
     } else {
@@ -750,9 +750,9 @@ public class DefaultKeystoreServiceTest {
       password = ("test_" + hostname).toCharArray();
 
       if ("hostname".equals(hostname)) {
-        expectedSubjectName = "CN=" + InetAddress.getLocalHost().getHostName() + ", OU=Test, O=Hadoop, L=Test, ST=Test, C=US";
+        expectedSubjectName = "C=US,ST=Test,L=Test,O=Hadoop,OU=Test,"+"CN=" + InetAddress.getLocalHost().getHostName();
       } else {
-        expectedSubjectName = "CN=" + hostname + ", OU=Test, O=Hadoop, L=Test, ST=Test, C=US";
+        expectedSubjectName = "C=US,ST=Test,L=Test,O=Hadoop,OU=Test,"+"CN=" + hostname;
       }
 
       keystoreService.addSelfSignedCertForGateway(alias, password, hostname);
