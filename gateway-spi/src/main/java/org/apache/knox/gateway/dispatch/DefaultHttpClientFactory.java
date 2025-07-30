@@ -30,6 +30,8 @@ import javax.servlet.FilterConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.knox.gateway.fips.FipsConnectionManagerFactory;
+import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -91,11 +93,8 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       builder = HttpClients.custom();
     }
 
-    // Conditionally set a custom SSLContext
     SSLContext sslContext = createSSLContext(services, filterConfig, serviceRole);
-    if(sslContext != null) {
-      builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext));
-    }
+    setSSLSocketFactory(sslContext, filterConfig, builder);
 
     if (Boolean.parseBoolean(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
@@ -117,10 +116,6 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     builder.setRedirectStrategy( new NeverRedirectStrategy() );
     builder.setRetryHandler( new NeverRetryHandler() );
 
-    int maxConnections = getMaxConnections( filterConfig );
-    builder.setMaxConnTotal( maxConnections );
-    builder.setMaxConnPerRoute( maxConnections );
-
     builder.setDefaultRequestConfig(getRequestConfig(filterConfig, serviceRole));
 
     // See KNOX-1530 for details
@@ -141,6 +136,20 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
           retryNonIdempotent));
     }
     return builder.build();
+  }
+
+  private void setSSLSocketFactory(SSLContext sslContext, FilterConfig filterConfig, HttpClientBuilder builder) {
+    int maxConnections = getMaxConnections(filterConfig);
+    if (FipsUtils.isFipsEnabledWithBCProvider()) {
+      builder.setConnectionManager(FipsConnectionManagerFactory.createConnectionManager(sslContext, maxConnections));
+    } else {
+      builder.setMaxConnTotal(maxConnections);
+      builder.setMaxConnPerRoute(maxConnections);
+      // Conditionally set a custom SSLContext
+      if (sslContext != null) {
+        builder.setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext));
+      }
+    }
   }
 
   private boolean doesRetryParamExist(final FilterConfig filterConfig) {
