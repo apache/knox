@@ -298,12 +298,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.connect.timeout.ms";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.read.timeout.ms";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.write.timeout.ms";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_PAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.role.pagesize";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_SERVICE_TYPES = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.excluded.service.types";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_ROLE_TYPES = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.excluded.role.types";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.api.version";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.role.fetch.strategy";
 
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT = 10000;
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 10000;
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT_DEFAULT = 10000;
+  private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_PAGE_SIZE_DEFAULT = 500;
 
   private static final String KNOX_TOKEN_EVICTION_INTERVAL = KNOX_TOKEN_PREFIX + ".eviction.interval";
   private static final String KNOX_TOKEN_EVICTION_GRACE_PERIOD = KNOX_TOKEN_PREFIX + ".eviction.grace.period";
@@ -1349,6 +1353,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getClouderaManagerServiceDiscoveryApiVersion() {
+    return get(CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION, DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION);
+  }
+
+  @Override
+  public String getClouderaManagerServiceDiscoveryRoleFetchStrategy() {
+    return get(CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY, CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE);
+  }
+
+
+  @Override
   public boolean isServerManagedTokenStateEnabled() {
     return getBoolean(TOKEN_STATE_SERVER_MANAGED, false);
   }
@@ -1566,17 +1581,37 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public long getServiceDiscoveryConnectTimeoutMillis() {
+    return getClouderaManagerServiceDiscoveryConnectTimeoutMillis();
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryConnectTimeoutMillis() {
     return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT, CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT);
   }
 
   @Override
   public long getServiceDiscoveryReadTimeoutMillis() {
+    return getClouderaManagerServiceDiscoveryReadTimeoutMillis();
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryReadTimeoutMillis() {
     return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT, CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT);
   }
 
   @Override
   public long getServiceDiscoveryWriteTimeoutMillis() {
+    return getClouderaManagerServiceDiscoveryWriteTimeoutMillis();
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryWriteTimeoutMillis() {
     return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT, CLOUDERA_MANAGER_SERVICE_DISCOVERY_WRITE_TIMEOUT_DEFAULT);
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryRoleConfigPageSize() {
+    return getLong(CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_PAGE_SIZE, CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_PAGE_SIZE_DEFAULT);
   }
 
   @Override

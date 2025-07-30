@@ -36,6 +36,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Performing cluster discovery for \"{0}\"")
   void discoveringCluster(String clusterName);
 
+  @Message(level = MessageLevel.INFO, text = "Discovered cluster \"{0}\"")
+  void discoveredCluster(String clusterName);
+
   @Message(level = MessageLevel.INFO, text = "Discovering service: {0} ({1}) ...")
   void discoveringService(String serviceName, String serviceType);
 
@@ -45,14 +48,17 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Skipping service discovery: {0} ({1})")
   void skipServiceDiscovery(String serviceName, String serviceType);
 
-  @Message(level = MessageLevel.INFO, text = "Discovering service role: {0} ({1}) ...")
+  @Message(level = MessageLevel.DEBUG, text = "Discovering service role: {0} ({1}) ...")
   void discoveringServiceRole(String roleName, String roleType);
 
   @Message(level = MessageLevel.INFO, text = "Skipping role discovery: {0} ({1})")
   void skipRoleDiscovery(String roleName, String roleType);
 
-  @Message(level = MessageLevel.INFO, text = "Discovered service role: {0} ({1})")
+  @Message(level = MessageLevel.DEBUG, text = "Discovered service role: {0} ({1})")
   void discoveredServiceRole(String roleName, String roleType);
+
+  @Message(level = MessageLevel.INFO, text = "Processed roles for service {0}: {1}")
+  void processedServiceRoles(String serviceName, String serviceRoles);
 
   @Message(level = MessageLevel.WARN, text = "Service role {0} has configuration issues: {1}")
   void serviceRoleHasConfigurationIssues(String roleName, String configurationIssuesText);
@@ -96,6 +102,26 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.ERROR,
       text = "Failed to access the service role configurations ({0} / {1}) for cluster ({2}) discovery: {3}")
   void failedToAccessServiceRoleConfigs(String serviceName, String roleName, String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Fetching service role configurations for service {0} for cluster ({1}) at offset {2} and limit {3}")
+  void fetchingServiceRoleConfigs(String serviceName, String clusterName, long offset, long limit);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Received null or empty service role list for service {0} for cluster ({1})")
+  void receivedNullServiceRoleList(String serviceName, String clusterName);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Received null or empty service role configurations for service {0} for cluster ({1})")
+  void receivedNullServiceRoleConfigs(String serviceName, String clusterName);
+
+  @Message(level = MessageLevel.WARN,
+          text = "Received null or empty service role configurations for service {0} and role {2} for cluster ({1})")
+  void receivedNullServiceRoleConfigs(String serviceName, String clusterName, String roleName);
+
+  @Message(level = MessageLevel.DEBUG,
+          text = "Fetching service role configurations for service {0} and role {2} for cluster ({1})")
+  void fetchingServiceRoleConfigs(String serviceName, String clusterName, String roleName);
 
   @Message(level = MessageLevel.ERROR,
            text = "No address for Cloudera Manager service discovery has been configured.")
@@ -288,4 +314,14 @@ public interface ClouderaManagerServiceDiscoveryMessages {
 
   @Message(level = MessageLevel.DEBUG, text = "Service discovery client connect timeout {0} ms, read timeout {1} ms, write timeout {2} ms")
   void discoveryClientTimeout(long connectTimeout, long readTimeout, long writeTimeout);
+
+  @Message(level = MessageLevel.INFO, text = "Role fetch strategy was set to {0}. Will fetch role configuration by each role and client base path is {1}")
+  void usingSimpleRoleStrategy(String roleFetchConfigValue, String basePath);
+
+  @Message(level = MessageLevel.WARN, text = "Invalid role fetch strategy configured:{0}. Will fetch role configuration by each role and client base path is {1}")
+  void usingSimpleRoleStrategyFallback(String roleFetchConfigValue, String basePath);
+
+  @Message(level = MessageLevel.INFO, text = "Role fetch strategy was set to {0}. Will fetch role configuration by each service with page size {1} and client base path is {2}")
+  void usingRoleStrategyWithPageSize(String roleFetchConfigValue, long pageSize, String basePath);
+
 }

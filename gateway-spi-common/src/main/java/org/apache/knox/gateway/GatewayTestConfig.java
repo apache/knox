@@ -893,6 +893,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getClouderaManagerServiceDiscoveryApiVersion() {
+    return DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION;
+  }
+
+  @Override
+  public String getClouderaManagerServiceDiscoveryRoleFetchStrategy() {
+    return CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE;
+  }
+
+  @Override
   public boolean isServerManagedTokenStateEnabled() {
     return false;
   }
@@ -1093,13 +1103,33 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public long getClouderaManagerServiceDiscoveryConnectTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
   public long getServiceDiscoveryReadTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryReadTimeoutMillis() {
     return -1;
   }
 
   @Override
   public long getServiceDiscoveryWriteTimeoutMillis() {
     return -1;
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryWriteTimeoutMillis() {
+    return -1;
+  }
+
+  @Override
+  public long getClouderaManagerServiceDiscoveryRoleConfigPageSize() {
+    return 500;
   }
 
   @Override

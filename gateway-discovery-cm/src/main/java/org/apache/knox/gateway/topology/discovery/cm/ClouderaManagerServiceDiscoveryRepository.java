@@ -29,9 +29,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -89,28 +87,16 @@ class ClouderaManagerServiceDiscoveryRepository {
     return serviceDetails == null ? null : serviceDetails.getServiceConfig();
   }
 
-  void addRoles(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service, ApiRoleList roles) {
+  void setServiceRoleConfigs(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service, ApiRoleConfigList roleConfigs) {
     final ServiceDetails serviceDetails = getServiceDetails(serviceDiscoveryConfig, service);
     if (serviceDetails != null) {
-      serviceDetails.addRoles(roles);
+      serviceDetails.setAllServiceRoleConfigs(roleConfigs);
     }
   }
 
-  ApiRoleList getRoles(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service) {
+  ApiRoleConfigList getServiceRoleConfigs(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service) {
     final ServiceDetails serviceDetails = getServiceDetails(serviceDiscoveryConfig, service);
-    return serviceDetails == null ? null : serviceDetails.getRoles();
-  }
-
-  void addRoleConfigs(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service, ApiRole role, ApiConfigList roleConfigs) {
-    final ServiceDetails serviceDetails = getServiceDetails(serviceDiscoveryConfig, service);
-    if (serviceDetails != null) {
-      serviceDetails.addRoleConfigs(role, roleConfigs);
-    }
-  }
-
-  ApiConfigList getRoleConfigs(ServiceDiscoveryConfig serviceDiscoveryConfig, ApiService service, ApiRole role) {
-    final ServiceDetails serviceDetails = getServiceDetails(serviceDiscoveryConfig, service);
-    return serviceDetails == null ? null : serviceDetails.getRoleConfigs(role);
+    return serviceDetails == null ? null : serviceDetails.getAllServiceRoleConfigs();
   }
 
   private static final class RepositoryKey {
@@ -152,7 +138,7 @@ class ClouderaManagerServiceDiscoveryRepository {
 
   private static class ServiceDetails {
     private ApiServiceConfig serviceConfig;
-    private Map<ApiRole, ApiConfigList> roleConfigsMap = new ConcurrentHashMap<>();
+    private ApiRoleConfigList roleConfigList;
 
     public ApiServiceConfig getServiceConfig() {
       return serviceConfig;
@@ -162,29 +148,14 @@ class ClouderaManagerServiceDiscoveryRepository {
       this.serviceConfig = serviceConfig;
     }
 
-    public ApiRoleList getRoles() {
-      ApiRoleList roles = new ApiRoleList();
-      for (ApiRole role : roleConfigsMap.keySet()) {
-        roles = roles.addItemsItem(role);
-      }
-      return roles;
+    public ApiRoleConfigList getAllServiceRoleConfigs() {
+      return roleConfigList;
     }
 
-    public void addRoles(ApiRoleList roles) {
-      if (roles != null && roles.getItems() != null) {
-        for (ApiRole role : roles.getItems()) {
-          roleConfigsMap.put(role, new ApiConfigList());
-        }
-      }
+    public void setAllServiceRoleConfigs(ApiRoleConfigList roleConfigList) {
+      this.roleConfigList = roleConfigList;
     }
 
-    public ApiConfigList getRoleConfigs(ApiRole role) {
-      return roleConfigsMap.get(role);
-    }
-
-    public void addRoleConfigs(ApiRole role, ApiConfigList roleConfigs) {
-      roleConfigsMap.put(role, roleConfigs);
-    }
 
     @Override
     public int hashCode() {
