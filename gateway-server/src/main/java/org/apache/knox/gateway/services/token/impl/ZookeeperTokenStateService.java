@@ -63,19 +63,8 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     log.deprecatedServiceUsage(this.getClass().getCanonicalName());
 
-    // Debug logging for troubleshooting NullPointerException
-    System.out.println("DEBUG: ZookeeperTokenStateService.init() called");
-    System.out.println("DEBUG: gatewayServices = " + gatewayServices);
-    System.out.println("DEBUG: aliasServiceFactory = " + aliasServiceFactory);
-    System.out.println("DEBUG: config = " + config);
-    System.out.println("DEBUG: options = " + options);
-    System.out.println("DEBUG: About to call aliasServiceFactory.create()");
-
     final Object createdService = aliasServiceFactory.create(gatewayServices, ALIAS_SERVICE, config, options,
         ZookeeperRemoteAliasService.class.getName());
-
-    System.out.println("DEBUG: aliasServiceFactory.create() returned: " + createdService);
-    System.out.println("DEBUG: createdService class: " + (createdService != null ? createdService.getClass().getName() : "null"));
 
     if (createdService == null) {
       throw new ServiceLifecycleException("aliasServiceFactory.create() returned null - cannot create ZookeeperRemoteAliasService");
@@ -88,51 +77,33 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
 
     final ZookeeperRemoteAliasService zookeeperAliasService = (ZookeeperRemoteAliasService) createdService;
 
-    System.out.println("DEBUG: Successfully cast to ZookeeperRemoteAliasService: " + zookeeperAliasService);
 
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE, "true");
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS, "false");
 
-    System.out.println("DEBUG: About to call zookeeperAliasService.registerRemoteTokenStateChangeListener()");
     try {
       zookeeperAliasService.registerRemoteTokenStateChangeListener(this);
-      System.out.println("DEBUG: Successfully called zookeeperAliasService.registerRemoteTokenStateChangeListener()");
     } catch (Exception e) {
-      System.out.println("DEBUG: Exception in zookeeperAliasService.registerRemoteTokenStateChangeListener(): " + e);
       throw e;
     }
-
-    System.out.println("DEBUG: About to call zookeeperAliasService.init()");
     try {
       zookeeperAliasService.init(config, options);
-      System.out.println("DEBUG: Successfully called zookeeperAliasService.init()");
     } catch (Exception e) {
-      System.out.println("DEBUG: Exception in zookeeperAliasService.init(): " + e);
       throw e;
     }
-
-    System.out.println("DEBUG: About to call super.setAliasService()");
     try {
       super.setAliasService(zookeeperAliasService);
-      System.out.println("DEBUG: Successfully called super.setAliasService()");
     } catch (Exception e) {
-      System.out.println("DEBUG: Exception in super.setAliasService(): " + e);
       throw e;
     }
-
-    System.out.println("DEBUG: About to call super.init()");
     try {
       super.init(config, options);
-      System.out.println("DEBUG: Successfully called super.init()");
     } catch (Exception e) {
-      System.out.println("DEBUG: Exception in super.init(): " + e);
       throw e;
     }
 
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE);
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS);
-
-    System.out.println("DEBUG: ZookeeperTokenStateService.init() completed successfully");
   }
 
   @Override
