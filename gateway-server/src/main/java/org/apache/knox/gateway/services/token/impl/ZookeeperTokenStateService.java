@@ -81,26 +81,11 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE, "true");
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS, "false");
 
-    try {
-      zookeeperAliasService.registerRemoteTokenStateChangeListener(this);
-    } catch (Exception e) {
-      throw e;
-    }
-    try {
-      zookeeperAliasService.init(config, options);
-    } catch (Exception e) {
-      throw e;
-    }
-    try {
-      super.setAliasService(zookeeperAliasService);
-    } catch (Exception e) {
-      throw e;
-    }
-    try {
-      super.init(config, options);
-    } catch (Exception e) {
-      throw e;
-    }
+
+    zookeeperAliasService.registerRemoteTokenStateChangeListener(this);
+    zookeeperAliasService.init(config, options);
+    super.setAliasService(zookeeperAliasService);
+    super.init(config, options);
 
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE);
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS);
