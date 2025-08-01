@@ -17,36 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.security.auth.Subject;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.nimbusds.jose.JOSEObjectType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -58,9 +29,31 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
-import org.apache.knox.gateway.util.RequestBodyUtils;
 
-import com.nimbusds.jose.JOSEObjectType;
+import javax.security.auth.Subject;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
 
@@ -274,19 +267,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean validateClientCredentialsFlow(HttpServletRequest request, HttpServletResponse response, String tokenId)
        throws IOException {
     boolean validated = true;
-    final String requestBodyString = getRequestBodyString(request);
-    if (requestBodyString != null && !requestBodyString.isEmpty()) {
-      final String grantType = RequestBodyUtils.getRequestBodyParameter(requestBodyString, GRANT_TYPE);
-      if (grantType != null && !grantType.isEmpty()) {
-        final String clientID = RequestBodyUtils.getRequestBodyParameter(requestBodyString, CLIENT_ID);
-        // if there is no client_id then this is not a client credentials flow
-        if (clientID != null && !tokenId.equals(clientID)) {
-          validated = false;
-          log.wrongPasscodeToken(tokenId);
-          handleValidationError((HttpServletRequest) request, (HttpServletResponse) response,
-                  HttpServletResponse.SC_UNAUTHORIZED,
-                  MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
-        }
+    final String grantType = request.getParameter(GRANT_TYPE);
+    if (grantType != null && !grantType.isEmpty()) {
+      final String clientID = request.getParameter(CLIENT_ID);
+      // if there is no client_id then this is not a client credentials flow
+      if (clientID != null && !tokenId.equals(clientID)) {
+        validated = false;
+        log.wrongPasscodeToken(tokenId);
+        handleValidationError(request, response,
+                HttpServletResponse.SC_UNAUTHORIZED,
+                MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
       }
     }
     return validated;
@@ -346,39 +336,22 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         &grant_type=client_credentials
        */
 
-      if (request.getParameter(CLIENT_SECRET) != null) {
-        throw new SecurityException();
+      final HttpServletRequest httpRequest = (HttpServletRequest) request;
+      final boolean clientSecretPresentAsQueryString = httpRequest.getQueryString() != null && httpRequest.getQueryString().contains("client_secret=");
+      if (clientSecretPresentAsQueryString) {
+        throw new SecurityException("client_secret must not be sent as a query parameter");
       }
       return getClientCredentialsFromRequestBody(request);
     }
 
     private Pair<TokenType, String> getClientCredentialsFromRequestBody(ServletRequest request) throws IOException {
-      try {
-        final String requestBodyString = getRequestBodyString(request);
-        final String grantType = RequestBodyUtils.getRequestBodyParameter(requestBodyString, GRANT_TYPE);
-        if (CLIENT_CREDENTIALS.equals(grantType)) {
-          // this is indeed a client credentials flow client_id and
-          // client_secret are expected now the client_id will be in
-          // the token as the token_id so we will get that later
-          final String clientSecret = RequestBodyUtils.getRequestBodyParameter(requestBodyString, CLIENT_SECRET);
-          return Pair.of(TokenType.Passcode, clientSecret);
-        }
-      } catch (IOException e) {
-        log.errorFetchingClientSecret(e.getMessage(), e);
-        throw e;
-      }
-      return null;
-    }
-
-    private String getRequestBodyString(ServletRequest request) throws IOException {
-      if (request.getInputStream() != null) {
-        final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8));
-        final StringBuilder requestBodyBuilder = new StringBuilder();
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-          requestBodyBuilder.append(line);
-        }
-        return URLDecoder.decode(requestBodyBuilder.toString(), StandardCharsets.UTF_8.name());
+      final String grantType = request.getParameter(GRANT_TYPE);
+      if (CLIENT_CREDENTIALS.equals(grantType)) {
+        // this is indeed a client credentials flow client_id and
+        // client_secret are expected now the client_id will be in
+        // the token as the token_id so we will get that later
+        final String clientSecret = request.getParameter( CLIENT_SECRET);
+        return Pair.of(TokenType.Passcode, clientSecret);
       }
       return null;
     }
