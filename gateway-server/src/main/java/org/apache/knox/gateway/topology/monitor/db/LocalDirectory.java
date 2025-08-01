@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,7 +62,7 @@ public class LocalDirectory {
   public String fileContent(String name) throws IOException {
     try {
       return FileUtils.readFileToString(file(name), CHARSET);
-    } catch (FileNotFoundException e) {
+    } catch (NoSuchFileException | FileNotFoundException e) {
       return null;
     }
   }
