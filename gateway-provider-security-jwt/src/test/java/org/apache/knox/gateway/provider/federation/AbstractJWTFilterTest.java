@@ -26,6 +26,7 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
@@ -1476,6 +1477,7 @@ public abstract class AbstractJWTFilterTest  {
     boolean doFilterCalled;
     Subject subject;
 
+    @SuppressForbidden
     @Override
     public void doFilter(ServletRequest request, ServletResponse response) {
       doFilterCalled = true;

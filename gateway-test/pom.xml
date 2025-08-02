@@ -212,6 +212,13 @@
             <scope>test</scope>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.mycila.xmltool</groupId>
             <artifactId>xmltool</artifactId>
@@ -313,6 +320,16 @@
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>parsson</artifactId>
             <scope>test</scope>
         </dependency>
 
