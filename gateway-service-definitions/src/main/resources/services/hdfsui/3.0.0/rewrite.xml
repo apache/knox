@@ -21,7 +21,7 @@
 
   <!-- DATANODE Rules -->
   <rule dir="IN" name="DATANODE/datanode/inbound/master/query2" pattern="*://*:*/**/hdfs/datanode/?host={host}?{**}">
-    <rewrite template="{host}/?{**}"/>
+    <rewrite template="{host}/index.html?{**}"/>
   </rule>
   <rule dir="IN" name="DATANODE/datanode/inbound/master/query" pattern="*://*:*/**/hdfs/datanode/{**}?host={host}?{**}">
     <rewrite template="{host}/{**}?{**}"/>
@@ -78,7 +78,7 @@
 
   <!-- New rules to support like datanode -->
   <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/MAINROOT" pattern="*://*:*/**/hdfs/?host={host}?{**}">
-    <rewrite template="{host}/?{**}"/>
+    <rewrite template="{host}/index.html?{**}"/>
   </rule>
   
   <rule dir="IN" name="HDFSUI/hdfs/inbound/namenode/MAINROOT1" pattern="*://*:*/**/hdfs/{**}?host={host}?{**}">

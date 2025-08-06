@@ -141,6 +141,9 @@ public class SecureClusterTest {
     configuration.set("hadoop.proxyuser." + userName + ".hosts", "*");
     configuration.set("hadoop.proxyuser." + userName + ".groups", "*");
     configuration.setBoolean("dfs.permissions", true);
+    configuration.set("hadoop.http.authentication.type", "kerberos");
+    configuration.set("hadoop.http.authentication.kerberos.principal", spnegoPrincipal);
+    configuration.set("hadoop.http.authentication.kerberos.keytab", keytab);
 
     String keystoresDir = baseDir.getAbsolutePath();
     File sslClientConfFile = new File(keystoresDir + "/ssl-client.xml");
