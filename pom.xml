@@ -177,7 +177,7 @@
         <checkstyle.version>8.38</checkstyle.version>
         <cloudera-manager.version>7.13.1</cloudera-manager.version>
         <cloudera-manager-api-swagger.version>${cloudera-manager.version}</cloudera-manager-api-swagger.version>
-        <commons-beanutils.version>1.9.4</commons-beanutils.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
@@ -237,7 +237,7 @@
         <jee-pac4j.version>5.0.0</jee-pac4j.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>2.6</jersey.version>
-        <jetty.version>9.4.56.v20240826</jetty.version>
+        <jetty.version>9.4.57.v20241219</jetty.version>
         <jline.version>2.14.6</jline.version>
         <jna.version>5.9.0</jna.version>
         <joda-time.version>2.10.8</joda-time.version>
@@ -256,7 +256,7 @@
         <metrics.version>4.1.16</metrics.version>
         <mina.version>2.0.27</mina.version>
         <mockito.version>4.8.1</mockito.version>
-        <netty.version>4.1.77.Final</netty.version>
+        <netty.version>4.1.123.Final</netty.version>
         <nimbus-jose-jwt.version>10.0.2</nimbus-jose-jwt.version>
         <nodejs.version>v16.10.0</nodejs.version>
         <okhttp.version>4.12.0</okhttp.version>
