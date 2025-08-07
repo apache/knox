@@ -18,6 +18,7 @@ package org.apache.knox.gateway.topology.discovery.cm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 
 import com.cloudera.api.swagger.client.ApiClient;
@@ -48,6 +49,7 @@ import org.apache.knox.gateway.topology.discovery.cm.model.cm.ClouderaManagerUIS
 import org.apache.knox.gateway.topology.discovery.cm.model.hbase.HBaseUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hbase.WebHBaseServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.hive.IcebergRestServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.WebHCatServiceModelGenerator;
@@ -350,6 +352,42 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertEquals((expectedScheme + "://" + hostName + ":" + thriftPort + "/" + expectedThriftPath), hiveURLs.get(0));
   }
 
+  @Test
+  public void testHiveMetastoreRestCatalogServiceDiscovery() {
+    final String hostName = "test-host-1";
+    final String port = "10001";
+    final String hostName2 = "test-host-2";
+    final String defaultPort = "8090";
+
+    doTestHMSRestCatalogServiceDiscovery(hostName, port, null, null);
+    doTestHMSRestCatalogServiceDiscovery(hostName, port, "non_default_path", null);
+    doTestHMSRestCatalogServiceDiscovery(hostName, port, "icecli", null);
+
+    doTestHMSRestCatalogServiceDiscovery(hostName2, defaultPort, null, "false");
+    doTestHMSRestCatalogServiceDiscovery(hostName2, defaultPort, "non_default_path", "false");
+    doTestHMSRestCatalogServiceDiscovery(hostName2, defaultPort, "icecli", "false");
+
+    doTestHMSRestCatalogServiceDiscovery(hostName, port, null, "true");
+    doTestHMSRestCatalogServiceDiscovery(hostName, port, "non_default_path", "true");
+    doTestHMSRestCatalogServiceDiscovery(hostName, port, "icecli", "true");
+  }
+
+  private void doTestHMSRestCatalogServiceDiscovery(final String hostName, final String port, final String httpPath, final String enabled) {
+    final String expectedScheme = "http";
+    final String expectedPath = httpPath != null ? httpPath : "icecli";
+
+    ServiceDiscovery.Cluster cluster =
+        doHMSRestCatalogServiceDiscovery(hostName, port, httpPath, enabled);
+    List<String> serviceURLs = cluster.getServiceURLs("ICEBERG-REST");
+
+    if (Boolean.parseBoolean(enabled)) {
+      assertNotNull(serviceURLs);
+      assertEquals(1, serviceURLs.size());
+      assertEquals((expectedScheme + "://" + hostName + ":" + port + "/" + expectedPath), serviceURLs.get(0));
+    } else {
+      assertTrue(serviceURLs.isEmpty());
+    }
+  }
 
   @Test
   public void testWebHDFSServiceDiscovery() {
@@ -1189,6 +1227,28 @@ public class ClouderaManagerServiceDiscoveryTest {
                            roleProperties);
   }
 
+  private ServiceDiscovery.Cluster doHMSRestCatalogServiceDiscovery(final String  hostName,
+                                                                    final String  port,
+                                                                    final String  path,
+                                                                    final String enabled) {
+
+
+
+    Map<String, String> roleProperties = new HashMap<>();
+
+    final Map<String, String> serviceProperties = new HashMap<>();
+    serviceProperties.put("hive_metastore_catalog_servlet_port", port);
+    serviceProperties.put("hive_metastore_catalog_servlet_path", path);
+    serviceProperties.put("hive_rest_catalog_enabled", enabled);
+
+    return doTestDiscovery(hostName,
+        "HIVE-1",
+        IcebergRestServiceModelGenerator.SERVICE_TYPE,
+        "HIVE-1-HIVEMETASTORE-12345",
+        IcebergRestServiceModelGenerator.ROLE_TYPE,
+        serviceProperties,
+        roleProperties);
+  }
 
   private ServiceDiscovery.Cluster doTestHDFSDiscovery(final String hostName,
                                                        final String nameService,
