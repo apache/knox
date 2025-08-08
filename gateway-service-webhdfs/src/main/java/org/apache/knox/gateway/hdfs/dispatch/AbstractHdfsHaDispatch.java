@@ -61,7 +61,7 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
          writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
       } catch (StandbyException | SafeModeException | IOException e) {
         /* if non-idempotent requests are not allowed to failover */
-        if(!failoverNonIdempotentRequestEnabled && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
+        if(!getHaConfigurations().isFailoverNonIdempotentRequestEnabled() && nonIdempotentRequests.stream().anyMatch(outboundRequest.getMethod()::equalsIgnoreCase)) {
           LOG.cannotFailoverNonIdempotentRequest(outboundRequest.getMethod(), e.getCause());
           throw e;
         } else {
@@ -103,15 +103,15 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
          counter = new AtomicInteger(0);
       }
       inboundRequest.setAttribute(FAILOVER_COUNTER_ATTRIBUTE, counter);
-      if (counter.incrementAndGet() <= maxFailoverAttempts) {
-         haProvider.markFailedURL(getResourceRole(), outboundRequest.getURI().toString());
+      if (counter.incrementAndGet() <= getHaConfigurations().getMaxFailoverAttempts()) {
+          getHaConfigurations().getHaProvider().markFailedURL(getResourceRole(), outboundRequest.getURI().toString());
          //null out target url so that rewriters run again
          inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
          URI uri = getDispatchUrl(inboundRequest);
          ((HttpRequestBase) outboundRequest).setURI(uri);
-         if (failoverSleep > 0) {
+         if (getHaConfigurations().getFailoverSleep() > 0) {
             try {
-               Thread.sleep(failoverSleep);
+               Thread.sleep(getHaConfigurations().getFailoverSleep());
             } catch (InterruptedException e) {
                LOG.failoverSleepFailed(getResourceRole(), e);
                Thread.currentThread().interrupt();
@@ -120,7 +120,7 @@ public abstract class AbstractHdfsHaDispatch extends ConfigurableHADispatch {
          LOG.failingOverRequest(outboundRequest.getURI().toString());
          executeRequest(outboundRequest, inboundRequest, outboundResponse);
       } else {
-         LOG.maxFailoverAttemptsReached(maxFailoverAttempts, getResourceRole());
+         LOG.maxFailoverAttemptsReached(getHaConfigurations().getMaxFailoverAttempts(), getResourceRole());
          if (inboundResponse != null) {
             writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
          } else {
