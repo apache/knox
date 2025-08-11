@@ -235,20 +235,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         // The received token value must be a Base64 encoded value of Base64(tokenId)::Base64(rawPasscode)
         String tokenId = null;
         String passcode = null;
-        boolean prechecks = true;
         try {
           final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
           tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
           passcode = decodeBase64(base64DecodedTokenIdAndPasscode[1]);
-          // if this is a client credentials flow request then ensure the presented clientId is
-          // the actual owner of the client_secret
-          prechecks = validateClientCredentialsFlow((HttpServletRequest) request, (HttpServletResponse) response, tokenId);
         } catch (Exception e) {
           log.failedToParsePasscodeToken(e);
           handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
               "Error while parsing the received passcode token");
         }
-        if (prechecks && validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
+        if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
             Subject subject = createSubjectFromTokenIdentifier(tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
@@ -264,22 +260,19 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
   }
 
-  private boolean validateClientCredentialsFlow(HttpServletRequest request, HttpServletResponse response, String tokenId)
-       throws IOException {
-    boolean validated = true;
-    final String grantType = request.getParameter(GRANT_TYPE);
-    if (grantType != null && !grantType.isEmpty()) {
-      final String clientID = request.getParameter(CLIENT_ID);
-      // if there is no client_id then this is not a client credentials flow
-      if (clientID != null && !tokenId.equals(clientID)) {
-        validated = false;
-        log.wrongPasscodeToken(tokenId);
-        handleValidationError(request, response,
-                HttpServletResponse.SC_UNAUTHORIZED,
-                MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
-      }
+  private void validateClientID(HttpServletRequest request, String tokenValue) {
+    final String clientID = request.getParameter(CLIENT_ID);
+    String tokenId = null;
+    try {
+      final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
+      tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
+    } catch (Exception e) {
+      throw new SecurityException("Error while parsing the received client secret", e);
     }
-    return validated;
+    // if there is no client_id then this is not a client credentials flow
+    if (clientID != null && !tokenId.equals(clientID)) {
+     throw new SecurityException("Client ID mismatch");
+    }
   }
 
   private String decodeBase64(String toBeDecoded) {
@@ -344,15 +337,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return getClientCredentialsFromRequestBody(request);
     }
 
-    private Pair<TokenType, String> getClientCredentialsFromRequestBody(ServletRequest request) throws IOException {
-      final String grantType = request.getParameter(GRANT_TYPE);
-      if (CLIENT_CREDENTIALS.equals(grantType)) {
-        // this is indeed a client credentials flow client_id and
-        // client_secret are expected now the client_id will be in
-        // the token as the token_id so we will get that later
-        final String clientSecret = request.getParameter( CLIENT_SECRET);
-        return Pair.of(TokenType.Passcode, clientSecret);
-      }
+    private Pair<TokenType, String> getClientCredentialsFromRequestBody(ServletRequest request) {
+        final String grantType = request.getParameter(GRANT_TYPE);
+        if (CLIENT_CREDENTIALS.equals(grantType)) {
+          // this is indeed a client credentials flow client_id and
+          // client_secret are expected now the client_id will be in
+          // the token as the token_id so we will get that later
+          final String clientSecret = request.getParameter(CLIENT_SECRET);
+          validateClientID((HttpServletRequest) request, clientSecret);
+          return Pair.of(TokenType.Passcode, clientSecret);
+        }
       return null;
     }
 
@@ -450,5 +444,4 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       super("None of the presented cookies are valid.");
     }
   }
-
 }
