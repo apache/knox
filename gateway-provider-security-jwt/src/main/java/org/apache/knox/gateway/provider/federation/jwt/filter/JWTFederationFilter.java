@@ -262,7 +262,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   private void validateClientID(HttpServletRequest request, String tokenValue) {
     final String clientID = request.getParameter(CLIENT_ID);
-    String tokenId = null;
+    String tokenId;
     try {
       final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
       tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
@@ -271,7 +271,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
     // if there is no client_id then this is not a client credentials flow
     if (clientID != null && !tokenId.equals(clientID)) {
-     throw new SecurityException("Client ID mismatch");
+     throw new SecurityException(MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
     }
   }
 
