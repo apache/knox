@@ -39,17 +39,19 @@ public class UrlEncodedFormRequestTest {
 
   @Test
   public void testParametersAreComingFromQueryStringOnly() throws Exception {
-    MockHttpServletRequest originalRequest = makeRequest("a=1&b=2", "query1=x&query2=y&query2=y2");
+    MockHttpServletRequest originalRequest = makeRequest("a=1&b=2&client_id=payload_client_id", "query1=x&query2=y&query2=y2&client_id=query_client_id");
     assertEquals("1", originalRequest.getParameter("a"));
     assertEquals("2", originalRequest.getParameter("b"));
+    assertEquals("payload_client_id", originalRequest.getParameter("client_id"));
     UrlEncodedFormRequest wrappedRequest = new UrlEncodedFormRequest(originalRequest);
     assertEquals("x", wrappedRequest.getParameter("query1"));
     assertEquals("y", wrappedRequest.getParameter("query2"));
+    assertEquals("payload_client_id", wrappedRequest.getParameter("client_id"));
     assertNull(wrappedRequest.getParameter("a"));
     assertNull(wrappedRequest.getParameter("b"));
     assertArrayEquals(new String[]{"x"}, wrappedRequest.getParameterValues("query1"));
     assertArrayEquals(new String[]{"y", "y2"}, wrappedRequest.getParameterValues("query2"));
-    assertEquals(Arrays.asList("query1", "query2"), Collections.list(wrappedRequest.getParameterNames()));
+    assertEquals(Arrays.asList("query1", "query2", "client_id"), Collections.list(wrappedRequest.getParameterNames()));
     assertArrayEquals(new String[]{"x"}, wrappedRequest.getParameterMap().get("query1"));
     assertArrayEquals(new String[]{"y", "y2"}, wrappedRequest.getParameterMap().get("query2"));
     assertNull(wrappedRequest.getParameterValues("unknown"));

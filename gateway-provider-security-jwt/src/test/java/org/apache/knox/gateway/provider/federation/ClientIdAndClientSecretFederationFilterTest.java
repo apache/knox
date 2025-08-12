@@ -58,10 +58,13 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
 
     @Test
     public void testGetWireTokenUsingClientCredentialsFlow() throws Exception {
-      final String clientSecret = "sup3r5ecreT!";
+      final String clientId = "client-id-12345";
+      final String passcode = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
+
       final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-      ensureClientCredentials(request, clientSecret);
+      ensureClientCredentials(request, passcode);
       EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+      EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ID)).andReturn(clientId).anyTimes();
       EasyMock.replay(request);
       handler.init(new TestFilterConfig(getProperties()));
       final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
@@ -70,7 +73,7 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
 
       assertNotNull(wireToken);
       assertEquals(TokenType.Passcode, wireToken.getLeft());
-      assertEquals(clientSecret, wireToken.getRight());
+      assertEquals(passcode, wireToken.getRight());
     }
 
     @Test
@@ -117,7 +120,7 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
         Assert.assertNotNull(chain.subject);
     }
 
-    @Test
+    @Test(expected = SecurityException.class)
     public void testFailedVerifyClientCredentialsFlow() throws Exception {
         final String topologyName = "jwt-topology";
         final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650a";
@@ -173,6 +176,20 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
       ((TestJWTFederationFilter) handler).getWireToken(request);
     }
 
+    @Test(expected = SecurityException.class)
+    public void testInvalidClientSecret() throws Exception {
+        final String passcode = "sUpers3cret!";
+
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        ensureClientCredentials(request, passcode);
+        EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.replay(request);
+        handler.init(new TestFilterConfig(getProperties()));
+        ((TestJWTFederationFilter) handler).getWireToken(request);
+
+        EasyMock.verify(request);
+    }
+
     @Override
     @Test
     public void testInvalidUsername() throws Exception {
@@ -191,5 +208,15 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
         // to do so for our implementation. The username is actually
         // set by the JWTProvider when determining that the request
         // is a client credentials flow.
+    }
+
+    @Override
+    @Test
+    public void testInvalidPasscodeForJWT() throws Exception {
+    }
+
+    @Override
+    @Test
+    public void testUnableToParseJWT() throws Exception {
     }
 }
