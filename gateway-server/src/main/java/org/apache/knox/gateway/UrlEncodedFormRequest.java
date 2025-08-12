@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.UrlEncoded;
 
@@ -77,6 +78,9 @@ public class UrlEncodedFormRequest extends HttpServletRequestWrapper {
 
   @Override
   public String getParameter(String name) {
+    if(JWTFederationFilter.GRANT_TYPE.equals(name) || JWTFederationFilter.CLIENT_ID.equals(name) || JWTFederationFilter.CLIENT_SECRET.equals(name)) {
+      return super.getParameter(name);
+    }
     return queryParams.getValue(name, 0);
   }
 
