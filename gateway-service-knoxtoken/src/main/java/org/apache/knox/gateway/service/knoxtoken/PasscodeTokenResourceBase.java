@@ -39,7 +39,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.UUID;
 
-public class PasscodeTokenResourceBase extends TokenResource {
+public class PasscodeTokenResourceBase extends TokenResourceV2 {
     protected GatewayServices services;
     private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
 
