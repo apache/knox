@@ -1925,6 +1925,11 @@
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-reload4j</artifactId>
                     </exclusion>
+
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -2240,6 +2245,10 @@
                     <exclusion>
                         <groupId>ch.qos.logback</groupId>
                         <artifactId>logback-classic</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
