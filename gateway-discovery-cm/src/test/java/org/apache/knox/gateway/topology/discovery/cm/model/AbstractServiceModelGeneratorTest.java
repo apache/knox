@@ -113,7 +113,7 @@ public abstract class AbstractServiceModelGeneratorTest extends AbstractCMDiscov
     // Validate the role configuration
     Map<String, String> modelRoleProperties = candidate.getRoleProperties().get(getRoleType());
     if (validateCounts) {
-      assertEquals(roleConfig.size(), modelRoleProperties.size());
+      assertEquals(roleConfig.size(), modelRoleProperties == null ? 0 : modelRoleProperties.size());
     }
     for (Map.Entry<String, String> roleProp : roleConfig.entrySet()) {
       assertTrue(modelRoleProperties.containsKey(roleProp.getKey()));
