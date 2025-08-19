@@ -386,6 +386,8 @@ public class SSEDispatchTest {
         CountDownLatch latch = new CountDownLatch(1);
         SSEDispatch sseDispatch = this.createDispatch();
         HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+        outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error");
+        EasyMock.expectLastCall().once();
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
 
