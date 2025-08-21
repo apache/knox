@@ -303,6 +303,7 @@
         <eclipse.parsson.version>1.1.7</eclipse.parsson.version>
         <objenesis.version>3.3</objenesis.version>
         <moxy.version>4.0.2</moxy.version>
+        <xml-maven-plugin.version>1.1.0</xml-maven-plugin.version>
     </properties>
     <repositories>
         <repository>
@@ -443,6 +444,29 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>xml-maven-plugin</artifactId>
+                    <version>${xml-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>validate</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <validationSets>
+                            <validationSet>
+                                <dir>src/main/resources/services</dir>
+                                <includes>
+                                    <include>**/*.xml</include>
+                                </includes>
+                            </validationSet>
+                        </validationSets>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
