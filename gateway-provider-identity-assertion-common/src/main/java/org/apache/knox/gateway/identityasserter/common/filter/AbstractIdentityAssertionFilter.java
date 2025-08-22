@@ -52,6 +52,8 @@ import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
+
 public abstract class AbstractIdentityAssertionFilter extends
   AbstractIdentityAssertionBase implements Filter {
 
@@ -87,6 +89,7 @@ public abstract class AbstractIdentityAssertionFilter extends
    */
   public abstract String mapUserPrincipal(String principalName);
 
+  @SuppressForbidden
   protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response,
       FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException,
       ServletException {

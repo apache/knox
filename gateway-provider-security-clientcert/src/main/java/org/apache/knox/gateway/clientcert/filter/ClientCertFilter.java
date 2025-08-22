@@ -88,7 +88,7 @@ public class ClientCertFilter implements Filter {
   private String extractPrincipalFromCert(X509Certificate cert) {
     String p = null;
     if ("DN".equalsIgnoreCase(principalAttributeName)) {
-      p =  cert.getSubjectDN().getName();
+      p =  cert.getSubjectX500Principal().getName();
     }
     else if ("CN".equalsIgnoreCase(principalAttributeName)) {
       X500Principal x500Principal = cert.getSubjectX500Principal();
@@ -97,7 +97,7 @@ public class ClientCertFilter implements Filter {
     }
     else {
       log.unknownCertificateAttribute(principalAttributeName);
-      p =  cert.getSubjectDN().getName();
+      p =  cert.getSubjectX500Principal().getName();
     }
 
     return p;

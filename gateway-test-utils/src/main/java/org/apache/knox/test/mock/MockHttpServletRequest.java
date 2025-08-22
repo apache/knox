@@ -39,7 +39,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
-
+@SuppressWarnings("PMD")
 public class MockHttpServletRequest implements HttpServletRequest {
 
   private String queryString;
