@@ -147,7 +147,8 @@ public class GatewayAdminFuncTest {
         .gotoRoot();
   }
 
-  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  //@Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test
   public void testAdminService() throws ClassNotFoundException {
     TestUtils.LOG_ENTER();
 

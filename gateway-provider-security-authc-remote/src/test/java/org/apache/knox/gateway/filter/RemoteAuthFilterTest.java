@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -506,6 +507,7 @@ public class RemoteAuthFilterTest {
         }
     }
 
+    @SuppressForbidden
     protected static class TestFilterChain implements FilterChain {
         boolean doFilterCalled;
         Subject subject;
