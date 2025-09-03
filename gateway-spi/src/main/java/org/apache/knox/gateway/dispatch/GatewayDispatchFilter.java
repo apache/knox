@@ -225,7 +225,7 @@ public class GatewayDispatchFilter extends AbstractGatewayFilter {
       if(constructor != null) {
         return (T) constructor.newInstance(filterConfig);
       }
-      return clazz.newInstance();
+      return clazz.getDeclaredConstructor().newInstance();
     } catch ( Exception e ) {
       throw new ServletException(e);
     }

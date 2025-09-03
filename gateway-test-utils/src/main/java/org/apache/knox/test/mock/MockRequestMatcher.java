@@ -49,7 +49,7 @@ import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.xmlmatchers.XmlMatchers.isEquivalentTo;
 import static org.xmlmatchers.transform.XmlConverters.the;
 import static uk.co.datumedge.hamcrest.json.SameJSONAs.sameJSONAs;
-
+@SuppressWarnings("PMD")
 public class MockRequestMatcher {
 
   private String from;

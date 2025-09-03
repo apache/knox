@@ -36,7 +36,7 @@ import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.gateway.util.urltemplate.Template;
 import org.apache.commons.io.IOUtils;
 
-import javax.activation.MimeType;
+import jakarta.activation.MimeType;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
