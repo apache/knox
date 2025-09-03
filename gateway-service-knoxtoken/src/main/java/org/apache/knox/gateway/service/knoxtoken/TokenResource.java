@@ -140,6 +140,7 @@ public class TokenResource {
   private static final String TSS_MAXIMUM_LIFETIME_TEXT = "maximumLifetimeText";
   private static final String LIFESPAN_INPUT_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "lifespan.input.enabled";
   private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
+  static final String KNOX_TOKEN_USER_LIMIT_PER_USER = TOKEN_PARAM_PREFIX + "limit.per.user";
   static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = TOKEN_PARAM_PREFIX + "user.limit.exceeded.action";
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
@@ -300,6 +301,16 @@ public class TokenResource {
       tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
 
       tokenLimitPerUser = gatewayConfig.getMaximumNumberOfTokensPerUser();
+      final String tokenLimitPerUserParam = context.getInitParameter(KNOX_TOKEN_USER_LIMIT_PER_USER);
+      if (StringUtils.isNotBlank(tokenLimitPerUserParam)) {
+        try {
+          tokenLimitPerUser = Integer.parseInt(tokenLimitPerUserParam);
+        } catch (final NumberFormatException nfe) {
+          log.invalidConfigValue(topologyName, KNOX_TOKEN_USER_LIMIT_PER_USER, tokenLimitPerUserParam, nfe);
+          log.generalInfoMessage("Using the gateway-level token limit per user configuration.");
+        }
+      }
+
       final String userLimitExceededActionParam = context.getInitParameter(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION);
       if (userLimitExceededActionParam != null) {
         userLimitExceededAction = UserLimitExceededAction.valueOf(userLimitExceededActionParam);
