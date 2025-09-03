@@ -21,6 +21,7 @@ import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_U
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_USER_LIMIT_DEFAULT;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_ISSUER;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_PER_USER;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED;
 import static org.apache.knox.gateway.services.security.token.JWTokenAttributes.DEFAULT_ISSUER;
 import static org.apache.knox.gateway.services.security.token.impl.JWTToken.KNOX_GROUPS_CLAIM;
@@ -1113,7 +1114,13 @@ public class TokenServiceResourceTest {
 
   private void testLimitingTokensPerUser(int configuredLimit, int numberOfTokens, boolean revokeOldestToken) throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
-    contextExpectations.put(KNOX_TOKEN_USER_LIMIT, String.valueOf(configuredLimit));
+    //Setting token limit on gateway/topology level
+    if (configuredLimit > 0) {
+      contextExpectations.put(KNOX_TOKEN_USER_LIMIT_PER_USER, String.valueOf(configuredLimit));
+    } else {
+      contextExpectations.put(KNOX_TOKEN_USER_LIMIT, String.valueOf(configuredLimit));
+    }
+
     if (revokeOldestToken) {
       contextExpectations.put(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION, TokenResource.UserLimitExceededAction.REMOVE_OLDEST.name());
     }
