@@ -395,6 +395,339 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertTrue(errorResponse.endsWith(SSOCookieFederationFilter.IDLE_TIMEOUT_POSTFIX));
   }
 
+  /**
+   * Tests for the new original URL from header functionality
+   */
+
+  @Test
+  public void testOriginalUrlFromHeaderFeatureDisabledByDefault() throws Exception {
+    Properties props = getProperties();
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn("https://external.example.com/app").anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the request URL, not the header value, since feature is disabled by default
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderFeatureExplicitlyDisabled() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "false");
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn("https://external.example.com/app").anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the request URL, not the header value
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderFeatureEnabledNoHeader() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "false");
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(null).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the request URL since no header is present
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderFeatureEnabledWithValidHeader() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "false"); // Disable domain verification
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithCustomHeaderName() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.X_ORIGINAL_URL_HEADER_NAME, "X-Custom-Original-URL");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "false"); // Disable domain verification
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Custom-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value from the custom header name
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithDomainVerificationEnabled() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com, trusted.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value since domain is in whitelist
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithDomainVerificationEnabledMultipleDomainsInWhitelist() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com, trusted.example.com, another.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://trusted.example.com/different/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value since domain is in whitelist
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithDomainVerificationInvalidDomain() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com, trusted.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://malicious.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    try {
+      ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+      Assert.fail("Should have thrown IllegalArgumentException for domain not in whitelist");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue("Exception should mention domain not in whitelist",
+                       e.getMessage().contains("not in the allowed whitelist"));
+    }
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithMalformedUrl() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String malformedUrl = "not-a-valid-url";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(malformedUrl).anyTimes();
+    EasyMock.replay(request);
+
+    try {
+      ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+      Assert.fail("Should have thrown IllegalArgumentException for malformed URL");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue("Exception should mention invalid URL format",
+                       e.getMessage().contains("Invalid original URL format"));
+    }
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithEmptyHeader() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "false");
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn("").anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the request URL since header is empty
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithWhitespaceOnlyHeader() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "false");
+    handler.init(new TestFilterConfig(props));
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn("   ").anyTimes(); // Only whitespace
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the request URL since header contains only whitespace
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + SERVICE_URL, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithWhitespaceInDomainWhitelist() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    // Note: whitespace around domains to test trimming
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, " external.example.com , trusted.example.com , ");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value since domain is in whitelist (after trimming)
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithQueryStringInOriginalUrl() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com/app?param=value&other=test";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value including query string
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithPortInDomain() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com:8080/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value - domain validation should work with port
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderWithHttpProtocol() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN, "true");
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "http://external.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
+  @Test
+  public void testOriginalUrlFromHeaderDomainVerificationEnabledByDefault() throws Exception {
+    Properties props = getProperties();
+    props.put(SSOCookieFederationFilter.SHOULD_USE_ORIGINAL_URL_FROM_HEADER, "true");
+    // Don't explicitly set domain verification - should default to true
+    props.put(SSOCookieFederationFilter.VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST, "external.example.com");
+    handler.init(new TestFilterConfig(props));
+
+    String originalUrl = "https://external.example.com/app";
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    EasyMock.expect(request.getHeader("X-Original-URL")).andReturn(originalUrl).anyTimes();
+    EasyMock.replay(request);
+
+    String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(request);
+    Assert.assertNotNull("LoginURL should not be null.", loginURL);
+    // Should use the header value since domain is in whitelist and verification is enabled by default
+    Assert.assertEquals("https://localhost:8443/authserver?originalUrl=" + originalUrl, loginURL);
+  }
+
   @Override
   protected String getVerificationPemProperty() {
     return SSOCookieFederationFilter.SSO_VERIFICATION_PEM;

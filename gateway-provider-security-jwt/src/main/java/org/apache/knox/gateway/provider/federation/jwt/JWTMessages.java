@@ -126,4 +126,16 @@ public interface JWTMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Invalid URL ignored. Not a valid JWKS url {0}")
   void invalidJwksUrl(String jwksUrl);
+
+  @Message(level = MessageLevel.ERROR, text = "Original redirect URL is not in the whitelist {0}")
+  void invalidOriginalUrlDomain(String originalMainDomain);
+
+  @Message( level = MessageLevel.INFO, text = "Using original url: {0}, set by the header: {1}" )
+  void originalHeaderURLForwarding( String originalUrl, String header);
+
+  @Message( level = MessageLevel.INFO, text = "SSO is configured to use originalURL from request header: {0}" )
+  void usingOriginalUrlFromHeader( String originalUrl);
+
+  @Message(level = MessageLevel.ERROR, text = "Malformed original url passed: {0}")
+  void malformedOriginalUrlDomain(String originalMainDomain);
 }
