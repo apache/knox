@@ -47,6 +47,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -67,6 +68,25 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String X_FORWARDED_PORT = "X-Forwarded-Port";
   public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
 
+  /* Overwrite original from header */
+  /* Feature flag to turn the original url from header for SSO ON */
+  public static final String SHOULD_USE_ORIGINAL_URL_FROM_HEADER = "sso.use.original.url.from.header";
+  public static final String X_ORIGINAL_URL = "X-Original-URL";
+  /* Users can choose to use custom header names */
+  public static final String X_ORIGINAL_URL_HEADER_NAME = "sso.original.url.from.header.name";
+  private static final boolean DEFAULT_SHOULD_USE_ORIGINAL_URL_FROM_HEADER = false;
+  /* Should we check for domain in configured whitelist? */
+  public static final String VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN = "sso.original.url.from.header.verify.domain";
+  /*
+  * This is ONLY needed when you want tighter access,
+  * we already have `knoxsso.redirect.whitelist.regex` property
+  * that checks for redirect URL. If you add domains to whitelist here
+  * make sure they are added there as well.
+  */
+  private static final boolean DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN = false;
+  /* Param that specifies the whitelist for original url header domains, domains are comma seperated list */
+  public static final String VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST = "sso.original.url.from.header.domain.whitelist";
+
   private static final String ORIGINAL_URL_QUERY_PARAM = "originalUrl=";
   public static final String DEFAULT_SSO_COOKIE_NAME = "hadoop-jwt";
 
@@ -76,7 +96,12 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private String cookieName;
   private String authenticationProviderUrl;
   private String gatewayPath;
-  private Set<String> unAuthenticatedPaths = new HashSet<>(20);
+  private final Set<String> unAuthenticatedPaths = new HashSet<>(20);
+
+  private boolean shouldUseOriginalUrlFromHeader = DEFAULT_SHOULD_USE_ORIGINAL_URL_FROM_HEADER;
+  private boolean verifyOriginalUrlFromHeaderDomain = DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN;
+  private final List<String> verifyOriginalUrlFromHeaderDomainWhitelist = new ArrayList<>();
+  private String originalUrlHeaderName;
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -120,6 +145,46 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       idleTimeoutSeconds = Long.parseLong(ssoIdleTimeoutSeconds);
       LOGGER.configuredIdleTimeout(idleTimeoutSeconds, topologyName);
     }
+
+    /* Support to overwrite originalUrl by providing an option to pick it up from the request header value */
+    final String shouldUseOriginalUrlFromHeaderFilterParam = filterConfig.getInitParameter(SHOULD_USE_ORIGINAL_URL_FROM_HEADER);
+    if (shouldUseOriginalUrlFromHeaderFilterParam != null) {
+      shouldUseOriginalUrlFromHeader = Boolean.parseBoolean(shouldUseOriginalUrlFromHeaderFilterParam);
+    } else {
+      shouldUseOriginalUrlFromHeader = DEFAULT_SHOULD_USE_ORIGINAL_URL_FROM_HEADER;
+    }
+
+    /*
+    * If the feature to use update orignalurl for SSO to use headers is on populate
+    * required fields, else don't bother
+    */
+    if(shouldUseOriginalUrlFromHeader) {
+      originalUrlHeaderName = filterConfig.getInitParameter(X_ORIGINAL_URL_HEADER_NAME);
+      if (originalUrlHeaderName == null) {
+        originalUrlHeaderName = X_ORIGINAL_URL;
+      }
+
+      final String verifyOriginalUrlFromHeaderDomainFilterParam = filterConfig.getInitParameter(VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN);
+      if (verifyOriginalUrlFromHeaderDomainFilterParam != null) {
+        verifyOriginalUrlFromHeaderDomain = Boolean.parseBoolean(verifyOriginalUrlFromHeaderDomainFilterParam);
+      } else {
+        verifyOriginalUrlFromHeaderDomain = DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN;
+      }
+
+      /* populate the whitelisted domains */
+      final String verifyOriginalUrlDomainWhitelistParam = filterConfig.getInitParameter(VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN_WHITELIST);
+      if (verifyOriginalUrlFromHeaderDomain && verifyOriginalUrlDomainWhitelistParam != null) {
+        final String[] domains = verifyOriginalUrlDomainWhitelistParam.split(",");
+        for (final String domain : domains) {
+          final String trimmedDomain = domain.trim();
+          if (!trimmedDomain.isEmpty()) {
+            verifyOriginalUrlFromHeaderDomainWhitelist.add(trimmedDomain);
+          }
+        }
+      }
+    }
+
+
 
     configureExpectedParameters(filterConfig);
   }
@@ -265,9 +330,36 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     if (providerURL.contains("?")) {
       delimiter = "&";
     }
-    return providerURL + delimiter
-        + ORIGINAL_URL_QUERY_PARAM
-        + request.getRequestURL().append(getOriginalQueryString(request));
+
+    if(shouldUseOriginalUrlFromHeader && (request.getHeader(originalUrlHeaderName) != null) && !request.getHeader(originalUrlHeaderName).trim().isEmpty()) {
+      final String originalUrlFromHeader = request.getHeader(originalUrlHeaderName);
+      LOGGER.usingOriginalUrlFromHeader(originalUrlFromHeader);
+      /* verify if the original request domain and the domain in the header matches */
+      if(verifyOriginalUrlFromHeaderDomain) {
+        try {
+          final URL originalUrl = new URL(originalUrlFromHeader);
+          final String originalDomain = originalUrl.getHost();
+          if (!verifyOriginalUrlFromHeaderDomainWhitelist.contains(originalDomain)) {
+            LOGGER.invalidOriginalUrlDomain(originalDomain);
+            throw new IllegalArgumentException("Original URL domain '" + originalDomain +
+                                             "' is not in the allowed whitelist");
+          }
+        } catch (final MalformedURLException e) {
+          LOGGER.malformedOriginalUrlDomain(originalUrlFromHeader);
+          throw new IllegalArgumentException("Invalid original URL format: " + originalUrlFromHeader, e);
+        }
+      }
+
+      LOGGER.originalHeaderURLForwarding(originalUrlFromHeader, originalUrlHeaderName);
+      return providerURL + delimiter
+              + ORIGINAL_URL_QUERY_PARAM
+              + originalUrlFromHeader;
+    } else {
+      return providerURL + delimiter
+              + ORIGINAL_URL_QUERY_PARAM
+              + request.getRequestURL().append(getOriginalQueryString(request));
+    }
+
   }
 
   public String deriveDefaultAuthenticationProviderUrl(HttpServletRequest request) {
