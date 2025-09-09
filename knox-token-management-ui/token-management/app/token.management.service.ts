@@ -38,6 +38,7 @@ export class TokenManagementService {
     revokeKnoxTokenUrl = this.apiUrl + 'revoke';
     revokeKnoxTokensBatchUrl = this.apiUrl + 'revokeTokens';
     getTssStatusUrl = this.apiUrl + 'getTssStatus';
+    metadataInfoUrl = this.topologyContext + 'api/v1/metadata/info';
 
     constructor(private http: HttpClient) {}
 
@@ -121,6 +122,25 @@ export class TokenManagementService {
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> revokeTokensInBatch() --> ' + this.revokeKnoxTokensBatchUrl
                               + '\n  error: ' + err.status + ' ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
+
+    isTokenHashKeyPresent(): Promise<boolean> {
+        let headers = new HttpHeaders();
+        headers = this.addJsonHeaders(headers);
+        return this.http.get(this.metadataInfoUrl, { headers: headers})
+            .toPromise()
+            .then(response => {
+                return response['generalProxyInfo']?.['enableTokenManagement'] === 'true';
+            })
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenManagementService --> isTokenHashKeyPresent() --> '
+                    + this.metadataInfoUrl + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {

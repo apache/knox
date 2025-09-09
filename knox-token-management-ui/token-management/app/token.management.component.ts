@@ -22,6 +22,7 @@ import {MatPaginator} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
 import {MatSlideToggleChange} from '@angular/material/slide-toggle';
 import {SelectionModel} from '@angular/cdk/collections';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-token-management',
@@ -39,6 +40,7 @@ export class TokenManagementComponent implements OnInit {
     userName: string;
     canSeeAllTokens: boolean;
     currentKnoxSsoCookieTokenId: string;
+    tokenHashKeyPresent: boolean;
     knoxTokens: MatTableDataSource<KnoxToken> = new MatTableDataSource();
     selection = new SelectionModel<KnoxToken>(true, []);
     allKnoxTokens: KnoxToken[];
@@ -103,12 +105,25 @@ export class TokenManagementComponent implements OnInit {
 
     ngOnInit(): void {
         console.debug('TokenManagementComponent --> ngOnInit()');
+        this.tokenManagementService.isTokenHashKeyPresent().then(
+            tokenHashKeyPresent => {
+                this.tokenHashKeyPresent = tokenHashKeyPresent;
+                if (!tokenHashKeyPresent) {
+                    this.showMissingKnoxTokenHashKeyPopup();
+                }
+            }
+        );
+
         this.tokenManagementService.getSessionInformation()
             .then(sessionInformation => {
               this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
               this.currentKnoxSsoCookieTokenId = sessionInformation.currentKnoxSsoCookieTokenId;
               this.setUserName(sessionInformation.user);
             });
+    }
+
+    isTokenHashKeyPresent(): boolean{
+        return this.tokenHashKeyPresent;
     }
 
     setUserName(userName: string) {
@@ -121,8 +136,12 @@ export class TokenManagementComponent implements OnInit {
     }
 
     fetchKnoxTokens(): void {
-        this.tokenManagementService.getKnoxTokens(this.userName, this.canSeeAllTokens)
-            .then(tokens => this.updateTokens(tokens));
+        if (this.tokenHashKeyPresent) {
+            this.tokenManagementService.getKnoxTokens(this.userName, this.canSeeAllTokens)
+                .then(tokens => this.updateTokens(tokens));
+        } else {
+            console.debug('knox.token.hash.key is missing, skipping Knox token fetch...');
+        }
     }
 
     private isMyToken(token: KnoxToken): boolean {
@@ -282,6 +301,16 @@ export class TokenManagementComponent implements OnInit {
 
     private isCurrentKnoxSsoCookietoken(token: KnoxToken): boolean {
         return this.isKnoxSsoCookie(token) && token.tokenId === this.currentKnoxSsoCookieTokenId;
+    }
+
+    private showMissingKnoxTokenHashKeyPopup(): void {
+        const message = 'The required gateway-level alias, knox.token.hash.key, is missing.';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Token Management Disabled!',
+            text: message,
+            confirmButtonColor: '#7cd1f9'
+        });
     }
 
 }
