@@ -3,12 +3,6 @@ Release Notes - Apache Knox - Version 2.1.0
 ------------------------------------------------------------------------------
 
 ** New Feature
-    * [KNOX-929] - Identity Broker API
-    * [KNOX-1725] - gateway.custom.federation.header.name property should be at a dispatch level
-    * [KNOX-1729] - Add support for proxying Grafana
-    * [KNOX-1873] - Add HiveServer2 UI proxy support
-    * [KNOX-1991] - Rewrite websocket data
-    * [KNOX-2509] - Use Open API UI to browse the Knox Admin/Metadata API REST endpoints
     * [KNOX-2961] - KnoxSSO Token Invalidation
     * [KNOX-2974] - Add a new endpoint like 'pre' that supports other verbs and ignores paths
     * [KNOX-2998] - Path based authorization
@@ -20,27 +14,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3074] - Add HBase UI proxying for table.jsp and snapshot.jsp end points in HBase 2.5
 
 ** Improvement
-    * [KNOX-899] - Trailing slashes when proxying UIs causes issues
-    * [KNOX-925] - Configurable - Encryption Algorithm and it's key size, Salt and iteration count for PBKDF
-    * [KNOX-1380] - Create an Admin API to return a topology status
-    * [KNOX-1439] - HA Dispatch implementations should differentiate IOExceptions
-    * [KNOX-1591] - Remove NODEUI service since it doesn't work in current state
-    * [KNOX-1595] - Support JDK 12/13/14
-    * [KNOX-1614] - Improve error propagation for topology deployments
-    * [KNOX-1652] - Move Atlas dispatches to their own module
-    * [KNOX-1653] - Atlas dispatches - Add tests and reduce duplication
-    * [KNOX-1674] - Remove nimbus-jose-jwt allowWeakKey
-    * [KNOX-1704] - Upgrade to JUnit 5
-    * [KNOX-1706] - Look at using WebJars for knoxauth application
-    * [KNOX-1741] - KnoxSSO to Support IDP Initiated Flow
-    * [KNOX-1749] - Improve Docker integration
-    * [KNOX-1785] - Inject <base> tag to simplify rewrite rules
-    * [KNOX-2096] - Create new column from existing columns
-    * [KNOX-2358] - Reload the Knox Home page upon topology changes
-    * [KNOX-2361] - Fix SQL History in KnoxShell knoxline
-    * [KNOX-2362] - Extend KnoxShell Commands to publish KnoxShellTable to JDBC Data Source
-    * [KNOX-2363] - Fix KnoxShellTable Call History across the various Builders
-    * [KNOX-2580] - Adding a token in TokenStateService should work with token metadata
     * [KNOX-2859] - Search/filter tokens on Token Management page
     * [KNOX-2881] - KnoxCLI doesn’t hande ALIAS in (system)-user-auth-test
     * [KNOX-2895] - KnoxShell does not support dynamic truststore type
@@ -50,7 +23,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-2929] - Add user information on all Knox UIs
     * [KNOX-2953] - Uniform name of http method of client metric to lowerCase
     * [KNOX-2959] - Auto discovery to support scaling scenarios
-    * [KNOX-2962] - Knox readiness check gateway-status endpoint should return the list of topologies for which it is waiting for
     * [KNOX-2963] - CM service discovery should work when legacy mode is turned off
     * [KNOX-2966] - Improve hadoop-jwt cookie logging
     * [KNOX-2970] - During knox global logout , the corresponding SSO token should be either disabled or revoked
@@ -69,7 +41,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3011] - Resolve duplicated SL4J on classpath issue
     * [KNOX-3019] - Allow tokens to be renewed any times
     * [KNOX-3026] - Exclude services/roles from being discovered
-    * [KNOX-3027] - CM discovery cache improvements
     * [KNOX-3036] - Add a Primary Group Function to Virtual Groups
     * [KNOX-3044] - Port numbers are written with ',' format in logs.
     * [KNOX-3045] - Adding the most recent service definitions for Ranger
@@ -79,7 +50,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3051] - Add a classpath location for patches
     * [KNOX-3052] - Allow Multiple Issuers and JWTs with no Audience in same Topology as Others
     * [KNOX-3058] - Avoid 404 When Topology Is Being Redeployed
-    * [KNOX-3063] - Add monitorInterval property to log4j2 configuration file
     * [KNOX-3068] - Iceberg REST Catalog service definition
     * [KNOX-3073] - Token verification fallback to Knox keys behavior should configurable
     * [KNOX-3097] - Add more redirect.whitelist Test Cases for KNOXSSO
@@ -102,34 +72,14 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3134] - pac4jCsrfToken cookie Secure and HttpOnly attributes are not set
     * [KNOX-3146] - Failover ability for SSEHaDispatch
     * [KNOX-3156] - Improve Ehcache 3.x
-    * [KNOX-3160] - MkDocs Docathon Epic
     * [KNOX-3168] - Update to json-smart-2.5.2
     * [KNOX-3174] - Upgrade commons-io to 2.17
     * [KNOX-3177] - Service definitions XML validation during build time
+    * [KNOX-3181] - PasscodeTokenResourceBase should extend TokenResourceV2
     * [KNOX-3182] - Exclude netty from hadoop-common and zookeeper Dependencies
 
 ** Bug
-    * [KNOX-799] - Rewrite rules for handling of trailing slash '/'
-    * [KNOX-1204] - KIP-11 - S3 Access through Knox API
-    * [KNOX-1299] - Admin API does not serialize older deployed topology file with identity-assertion provider
-    * [KNOX-1339] - Support for cloud federation
-    * [KNOX-1355] - Knox not honoring originalUrl when pac4j federation is used
-    * [KNOX-1425] - UI Changes to include dispatch element in topology
-    * [KNOX-1432] - Knox directories should not be world readable (conf, logs, data etc.)
-    * [KNOX-1644] - Improve HDFSUI 3.0.0 version to handle no ?host= parameter
-    * [KNOX-1852] - Simplify ZookeeperRemoteAliasService and make it generic
-    * [KNOX-1860] - Need redirect to login when SSO cookie expires
-    * [KNOX-1865] - Admin UI Provider Config Forms need Tooltips/Help Text
-    * [KNOX-2297] - NPE during Shiro cleanup?
-    * [KNOX-2349] - knoxcli convert-topology descriptor-name is not optional
-    * [KNOX-2374] - Compress rolled logs and delete logs files that older
-    * [KNOX-2409] - HS2 Interactive Active/Passive HA not working
-    * [KNOX-2528] - Tracking URL link in YARN for Killed applications broken
-    * [KNOX-2643] - TopologyService should validate descriptor and provider config file paths
-    * [KNOX-2644] - Topology names should be validated when uploaded via API
-    * [KNOX-2688] - Perf test - Knox does not honour token limit per user
     * [KNOX-2719] - upgrade velocity due to security issue
-    * [KNOX-2828] - Token generation maximum token ttl unlimited not working when lifespan input is disabled
     * [KNOX-2888] - Update gateway-version to 2.1.0 in build.xml
     * [KNOX-2890] - When client-knox connection is broken knox should not retry the same client request
     * [KNOX-2891] - Topology is not deployed if the referred provider file is not available initially and recreated later
@@ -139,7 +89,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-2907] - Events related to non-proxied services cause Knox to perform a topology redeploy
     * [KNOX-2909] - Ignore CORE_SETTINGS service discovery
     * [KNOX-2915] - Knox should update topologies before deploying them
-    * [KNOX-2934] - Should not return passcode token when token management is disabled
     * [KNOX-2938] - jwks.json doesn't have double quotes which makes json invalid
     * [KNOX-2939] - Provider file configured with invalid syntax still gets created with few missing provider contents
     * [KNOX-2940] - knoxcli create-alias/create-aliases command doesn't support values starting with dash
@@ -152,7 +101,7 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-2948] - Make encryptquerystring provision optional
     * [KNOX-2949] - Topology file is not deleted after deleting descriptor via hadoop xml resource
     * [KNOX-2950] - Token generation should be reachable using the old URL
-    * [KNOX-2951] -  During discovery if cm is not reachable and throws SocketException then retry is not happening
+    * [KNOX-2951] - During discovery if cm is not reachable and throws SocketException then retry is not happening
     * [KNOX-2954] - Gateway service metric name contain hbase rowkey led to frequently full gc
     * [KNOX-2955] - Knox Readiness Awareness and Notification
     * [KNOX-2956] - Refactor CM-specific advanced service discovery
@@ -166,7 +115,7 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-2980] - Token id column in token management page is not word wrapped ,hence unable to view few characters in tokenid
     * [KNOX-2989] - Enable support for multi-arch docer builds for Knox
     * [KNOX-2995] - json contains NaN value parsing failed
-    * [KNOX-2996] -  Add proxy for hdfs UI network topology
+    * [KNOX-2996] - Add proxy for hdfs UI network topology
     * [KNOX-2999] - [Docker] Add public CA to Knox trust store
     * [KNOX-3006] - PAM module occasionally generates garbage group names
     * [KNOX-3009] - KNOX-SESSION missing from Manager Topology and Admin UI
@@ -183,7 +132,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3028] - KnoxToken extension for OAuth Token Flows
     * [KNOX-3029] - Fix Ozone version in ozone-scm 1.4.0 service.xml
     * [KNOX-3030] - SAXException occurs while parsing old topology on the descriptor handle path
-    * [KNOX-3031] - CLIENT_ID and CLIENT_SECRET without Token Managed set results in 200 inappropriately
     * [KNOX-3032] - Passcode token verification doesn't return error when TSS is disabled
     * [KNOX-3037] - Wrong usage of client secret should not be accepted
     * [KNOX-3038] - OAuth resource tokens are short-lived
@@ -193,24 +141,21 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3050] - “PATCH” method is not allowed for extauthz endpoint
     * [KNOX-3054] - Replace ignored meta tag cache headers to HTTP headers
     * [KNOX-3060] - Knox Homepage token management does not work when Cookie Management is enabled
-    * [KNOX-3064] - NullPointerException for GatewayServices in tests
     * [KNOX-3069] - Flakey Test - TokenServiceResourceTest
-    * [KNOX-3070] - Investigate Concurrency for Token IDs
     * [KNOX-3075] - JDBC Token State Server not handling -1 Expiry Correctly
     * [KNOX-3077] - Knox UI session timeout does not work with pac4j
-    * [KNOX-3081] - Upgrade commons-compress to fix CVE-2024-25710 and CVE-2024-26308
     * [KNOX-3087] - Support validation of JWTs without a typ parameter
     * [KNOX-3113] - HSTS headers duplicated with global config
     * [KNOX-3114] - Update Hadoop version to latest release 3.4.1
     * [KNOX-3150] - Support for caching JWKS keys
     * [KNOX-3152] - Gateway startup errors due to pinot service XMLs
-    * [KNOX-3155] - Isolate the CLIENTID and APIKEY param names from KNOXTOKEN
-    * [KNOX-3157] - Add Docs for APIKEY and CLIENTID APIs to knox-site
     * [KNOX-3167] - UI builds won't work with ARM64
     * [KNOX-3172] - BouncyCastle FIPS provider Broken Pipe exception
     * [KNOX-3173] - Remove default SameSite value for pac4j session cookies
     * [KNOX-3175] - Client credential flow validation drains request body
     * [KNOX-3178] - Update Dependencies
+    * [KNOX-3186] - SSOCookieProvider does not work with istio external authorizer
+    * [KNOX-3187] - Better indicator of missing knox.token.hash.key on Token Management/Generation UIs
 
 ** Test
     * [KNOX-3042] - TokenServiceResourceTest.testUnlimitedTokensPerUser intermittently fails
@@ -218,12 +163,10 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-3072] - GatewayBasicFuncTest.testEncodedForwardSlash failing
 
 ** Task
-    * [KNOX-2842] - ARM64 build support in GitHub actions
     * [KNOX-2862] - Setup idle timeout for SSO cookie to 15 minutes
     * [KNOX-2880] - Mark log4j1 as a banned dependency
     * [KNOX-2884] - Skip descriptor and provider generation from hadoop xml resource if provider/descriptor is read only
     * [KNOX-2889] - Change Hadoop Auth failure message to ERROR
-    * [KNOX-2897] - Eliminate or minimize the need for replayBufferSize configuration
     * [KNOX-2898] - Reconsider the usage of sso.unauthenticated.path.list
     * [KNOX-2899] - Disable service-based discovery filter
     * [KNOX-2901] - Deleting a descriptor/provider from hadoop xml resource
@@ -233,7 +176,6 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-2912] - Don't fail over non idempotent requests unless it's a connect exception
     * [KNOX-2928] - For malformed url should return 400 bad request instead of 500
     * [KNOX-2931] - Some special characters in the rewrite rule cannot be escaped
-    * [KNOX-2935] - knoxcli create-alias and create-aliases don't support spaces
     * [KNOX-2936] - knoxcli convert-topology doesn't work with output-path parameter
     * [KNOX-2965] - Document KnoxSSO Cookie Invalidation
     * [KNOX-2979] - Remove redundant 'refresh' query parameter from logout.jsp
@@ -242,25 +184,11 @@ Release Notes - Apache Knox - Version 2.1.0
     * [KNOX-2992] - Token impersonation config cleanup
     * [KNOX-3004] - Impala connection string should be a valid JDBC connection URL
     * [KNOX-3020] - Introduce type Knox Token metadata
-    * [KNOX-3055] - Change MySQL connector dependency scope to provided
-    * [KNOX-3059] - Upgrade Commons-configuration2 to 2.10.1
     * [KNOX-3061] - Upgrade Bouncy Castle to 1.78
     * [KNOX-3084] - Update CM service discovery with the enhanced role configs endpoint
     * [KNOX-3094] - Update CM API swagger to 7.13.1
     * [KNOX-3132] - Improve URL checks for originalUrl
     * [KNOX-3153] - Fix Java command invocations in knoxcli.sh
-
-** Sub-task
-    * [KNOX-1790] - Docker - Handle custom Knox master secret
-    * [KNOX-1953] - Figure out how to publish Knox Docker image
-    * [KNOX-2264] - Docker - move from docker-maven-plugin to dockerfile-maven
-    * [KNOX-2420] - Upgrade hadoop to 3.3.0
-    * [KNOX-2515] - Upgrade maven-pmd-plugin to 3.14.0
-    * [KNOX-3161] - Revisit the Hadoop centric Quickstart Guide to be more Modern
-    * [KNOX-3163] - Client/User Guide Discovering Resources Page
-    * [KNOX-3164] - Move General Troubleshooting Section from Client/User Guide to Admin Guide
-    * [KNOX-3165] - Broken Links from W3C Link Checker
-    * [KNOX-3166] - Replace Github Page with Community Page and include Github There
 
 
 ------------------------------------------------------------------------------
