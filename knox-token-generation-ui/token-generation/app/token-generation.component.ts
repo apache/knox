@@ -68,6 +68,7 @@ export class TokenGenerationComponent implements OnInit {
   // Data coming from TokenStateService status request
   tssStatus: TssStatusData;
 
+
   constructor(private http: HttpClient, private tokenGenService: TokenGenService) {
     this.tssStatusMessageLevel = 'info';
     this.tssStatusMessage = '';
@@ -79,7 +80,14 @@ export class TokenGenerationComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.setTokenStateServiceStatus();
+    this.tokenGenService.isTokenHashKeyPresent().then(
+        tokenHashKeyPresent => {
+          if (tokenHashKeyPresent) {
+            this.setTokenStateServiceStatus();
+          } else {
+            this.showMissingKnoxTokenHashKeyPopup();
+          }
+        });
   }
 
   generateToken() {
@@ -110,13 +118,13 @@ export class TokenGenerationComponent implements OnInit {
 
   setTokenStateServiceStatus() {
     this.tokenGenService.getTokenStateServiceStatus()
-    .then(tssStatus => {
-      this.tssStatus = tssStatus;
-      this.decideTssMessage();
-    })
-    .catch((errorMessage) => {
-      this.requestErrorMessage = errorMessage;
-    });
+        .then(tssStatus => {
+          this.tssStatus = tssStatus;
+          this.decideTssMessage();
+        })
+        .catch((errorMessage) => {
+          this.requestErrorMessage = errorMessage;
+        });
   }
 
   copyTextToClipboard(elementId) {
@@ -205,5 +213,15 @@ export class TokenGenerationComponent implements OnInit {
   private setTssMessage(level: 'info' | 'warning' | 'error', message: string) {
     this.tssStatusMessageLevel = level;
     this.tssStatusMessage = message;
+  }
+
+  private showMissingKnoxTokenHashKeyPopup(): void {
+    const message = 'The required gateway-level alias, knox.token.hash.key, is missing.';
+    Swal.fire({
+      icon: 'warning',
+      title: 'Token Generation Disabled!',
+      text: message,
+      confirmButtonColor: '#7cd1f9'
+    });
   }
 }

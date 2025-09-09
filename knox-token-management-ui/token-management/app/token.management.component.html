@@ -15,12 +15,12 @@
 <div>
 
     <div>
-        <button (click)="gotoTokenGenerationPage();">Generate New Token</button>
-        <button type="button" title="Refresh Knox Tokens" (click)="fetchKnoxTokens();">
+        <button (click)="gotoTokenGenerationPage();" [disabled]="!isTokenHashKeyPresent()">Generate New Token</button>
+        <button type="button" title="Refresh Knox Tokens" (click)="fetchKnoxTokens();" [disabled]="!isTokenHashKeyPresent()">
             <span class="glyphicon glyphicon-refresh"></span>
         </button>
         <span style="float: right;">
-            <mat-slide-toggle (change)="onChangeShowDisabledCookies($event)" [(ngModel)]="showDisabledKnoxSsoCookies">
+            <mat-slide-toggle (change)="onChangeShowDisabledCookies($event)" [(ngModel)]="showDisabledKnoxSsoCookies" [disabled]="!isTokenHashKeyPresent()">
               Show Disabled KnoxSSO Cookies
             </mat-slide-toggle>
         </span>
@@ -28,7 +28,7 @@
 
     <div *ngIf="userCanSeeAllTokens()">
         <span style="float: right;">
-            <mat-slide-toggle (change)="onChangeShowMyTokensOnly($event)" [(ngModel)]="showMyTokensOnly">
+            <mat-slide-toggle (change)="onChangeShowMyTokensOnly($event)" [(ngModel)]="showMyTokensOnly" [disabled]="!isTokenHashKeyPresent()">
               Show My Tokens Only
             </mat-slide-toggle>
         </span>
