@@ -25,6 +25,7 @@ export class TokenGenService {
     readonly tokenURL: string;
     readonly tssStatusRequestURL: string;
     readonly sessionUrl: string;
+    readonly metadataInfoUrl: string;
 
     constructor(private http: HttpClient) {
         const knoxtokenURL = 'knoxtoken/api/v2/token';
@@ -37,6 +38,7 @@ export class TokenGenService {
         this.tokenURL = topologyContext + knoxtokenURL;
         this.tssStatusRequestURL = topologyContext + tssStatusURL;
         this.sessionUrl = topologyContext + 'session/api/v1/sessioninfo';
+        this.metadataInfoUrl = topologyContext + 'api/v1/metadata/info';
     }
 
     getTokenStateServiceStatus(): Promise<TssStatusData> {
@@ -73,6 +75,23 @@ export class TokenGenService {
         });
     }
 
+    isTokenHashKeyPresent(): Promise<boolean> {
+        let headers = new HttpHeaders();
+        headers = this.addHeaders(headers);
+        return this.http.get(this.metadataInfoUrl, { headers: headers})
+            .toPromise()
+            .then(response => {
+                return response['generalProxyInfo']?.['enableTokenManagement'] === 'true';
+            })
+            .catch((err: HttpErrorResponse) => {
+                console.debug('TokenGenService --> isTokenHashKeyPresent() --> ' + this.metadataInfoUrl + '\n  error: ' + err.message);
+                if (err.status === 401) {
+                    window.location.assign(document.location.pathname);
+                } else {
+                    return this.handleError(err);
+                }
+            });
+    }
     getSessionInformation(): Promise<SessionInformation> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
@@ -80,7 +99,7 @@ export class TokenGenService {
             .toPromise()
             .then(response => response['sessioninfo'] as SessionInformation)
             .catch((err: HttpErrorResponse) => {
-                console.debug('TokenManagementService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
+                console.debug('TokenGenService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
                 } else {
