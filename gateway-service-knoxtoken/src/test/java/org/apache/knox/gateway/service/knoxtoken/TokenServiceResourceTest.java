@@ -86,6 +86,7 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
+import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -649,22 +650,37 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_ServerManagedStateConfiguredAtGatewayOnly() throws Exception {
     final String caller = "yarn";
-    Response renewalResponse = doTestTokenRenewal(null, true, caller, null, createTestSubject(caller)).getValue();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .gatewayLevelConfig(true)
+            .renewers(caller)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateSuccessfulRenewalResponse(renewalResponse);
   }
 
   @Test
   public void testTokenRenewal_ServerManagedStateDisabledAtGatewayWithServiceOverride() throws Exception {
     final String caller = "yarn";
-    Response renewalResponse = doTestTokenRenewal(true, false, caller, null, createTestSubject(caller)).getValue();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers(caller)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateSuccessfulRenewalResponse(renewalResponse);
   }
 
   @Test
   public void testTokenRenewal_ServerManagedStateEnabledAtGatewayWithServiceOverride() throws Exception {
     final String caller = "yarn";
-    Map.Entry<TestTokenStateService, Response> result =
-            doTestTokenRenewal(false, true, caller, null, createTestSubject(caller));
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .gatewayLevelConfig(true)
+            .serviceLevelConfig(false)
+            .renewers(caller)
+            .caller(createTestSubject(caller))
+            .build();
+    final Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(configs);
 
     // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
     TestTokenStateService tss = result.getKey();
@@ -681,7 +697,8 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_ServerManagedStateNotConfiguredAtAll() throws Exception {
-    Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(null, null, null, null, null);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().build();
+    Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(configs);
 
     // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
     TestTokenStateService tss = result.getKey();
@@ -698,7 +715,10 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_Disabled() throws Exception {
-    Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(false, null, null, null);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(false)
+            .build();
+    final Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(configs);
 
     // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
     TestTokenStateService tss = result.getKey();
@@ -715,14 +735,19 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_Enabled_NoRenewersNoSubject() throws Exception {
-    Response renewalResponse = doTestTokenRenewal(true, null, null);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().gatewayLevelConfig(true).build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateRenewalResponse(renewalResponse, 403, false, "Caller (null) not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
   public void testTokenRenewal_Enabled_NoRenewersWithSubject() throws Exception {
     final String caller = "yarn";
-    Response renewalResponse = doTestTokenRenewal(true, null, createTestSubject(caller));
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateRenewalResponse(renewalResponse,
                             403,
                             false,
@@ -731,7 +756,11 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_Enabled_WithRenewersNoSubject() throws Exception {
-    Response renewalResponse = doTestTokenRenewal(true, "larry, moe,  curly ", null);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("larry, moe,  curly ")
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateRenewalResponse(renewalResponse,
                             403,
                             false,
@@ -741,7 +770,12 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithRenewersWithInvalidSubject() throws Exception {
     final String caller = "shemp";
-    Response renewalResponse = doTestTokenRenewal(true, "larry, moe,  curly ", createTestSubject(caller));
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("larry, moe,  curly ")
+            .caller(createTestSubject(caller))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateRenewalResponse(renewalResponse,
                             403,
                             false,
@@ -751,24 +785,59 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithRenewersWithValidSubject() throws Exception {
     final String caller = "shemp";
-    Response renewalResponse =
-                      doTestTokenRenewal(true, ("larry, moe,  curly ," + caller), createTestSubject(caller));
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("larry, moe,  curly, " + caller)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateSuccessfulRenewalResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_WithoutUserRenewerAndWithCorrectGroup() throws Exception {
+    final String caller = "bob";
+    final String group = "devOps";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .groupRenewers(group)
+            .caller(createTestSubject(caller, group))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
+    validateSuccessfulRenewalResponse(renewalResponse);
+  }
+
+  @Test
+  public void testTokenRenewal_Enabled_WithoutUserRenewerOrCorrectGroup() throws Exception {
+    final String caller = "bob";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .groupRenewers("devOps")
+            .caller(createTestSubject(caller, "anotherGroup"))
+            .build();
+    final Response renewalResponse = doTestTokenRenewal(configs).getValue();
+    validateRenewalResponse(renewalResponse,
+            403,
+            false,
+            "Caller (" + caller + ") not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
   public void testTokenRenewal_Enabled_WithDefaultMaxTokenLifetime() throws Exception {
     final String caller = "yarn";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers(caller)
+            .caller(createTestSubject(caller))
+            .build();
 
-    // Max lifetime duration is 10ms
-    Map.Entry<TestTokenStateService, Response> testResult =
-                  doTestTokenRenewal(true, caller, null, createTestSubject(caller));
+    final Map.Entry<TestTokenStateService, Response> testResult = doTestTokenRenewal(configs);
 
     TestTokenStateService tss = testResult.getKey();
     assertEquals(1, tss.issueTimes.size());
     String token = tss.issueTimes.keySet().iterator().next();
 
-    // Verify that the configured max lifetime was honored
+    // Verify that the default max lifetime was honored
     assertEquals(tss.getDefaultMaxLifetimeDuration(), tss.getMaxLifetime(token) - tss.getIssueTime(token));
   }
 
@@ -776,10 +845,14 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithConfigurableMaxTokenLifetime() throws Exception {
     final String caller = "yarn";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers(caller)
+            .caller(createTestSubject(caller))
+            .maxTokenLifetime(10L) // Max lifetime duration is 10ms
+            .build();
 
-    // Max lifetime duration is 10ms
-    Map.Entry<TestTokenStateService, Response> testResult =
-                                              doTestTokenRenewal(true, caller, 10L, createTestSubject(caller));
+    final Map.Entry<TestTokenStateService, Response> testResult = doTestTokenRenewal(configs);
 
     TestTokenStateService tss = testResult.getKey();
     assertEquals(1, tss.issueTimes.size());
@@ -810,8 +883,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_ServerManagedStateNotConfigured() throws Exception {
-    Response renewalResponse = doTestTokenRevocation(null, null, null);
-    validateRevocationResponse(renewalResponse,
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
                                400,
                                false,
                                "Token revocation support is not configured", TokenResource.ErrorCode.CONFIGURATION_ERROR);
@@ -819,8 +893,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Disabled() throws Exception {
-    Response renewalResponse = doTestTokenRevocation(false, null, null);
-    validateRevocationResponse(renewalResponse,
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().gatewayLevelConfig(false).build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
                                400,
                                false,
                                "Token revocation support is not configured", TokenResource.ErrorCode.CONFIGURATION_ERROR);
@@ -828,8 +903,9 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Enabled_NoRenewersNoSubject() throws Exception {
-    Response renewalResponse = doTestTokenRevocation(true, null, null);
-    validateRevocationResponse(renewalResponse,
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().serviceLevelConfig(true).build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
                                403,
                                false,
                                "Caller (null) not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
@@ -838,8 +914,12 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_NoRenewersWithSubject() throws Exception {
     final String caller = "yarn";
-    Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(caller));
-    validateRevocationResponse(renewalResponse,
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
                                403,
                                false,
                                "Caller (" + caller + ") not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
@@ -847,8 +927,12 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Enabled_WithRenewersNoSubject() throws Exception {
-    Response renewalResponse = doTestTokenRevocation(true, "larry, moe,  curly ", null);
-    validateRevocationResponse(renewalResponse,
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("larry, moe,  curly ")
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
                                403,
                                false,
                                "Caller (null) not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
@@ -857,8 +941,13 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_WithRenewersWithInvalidSubject() throws Exception {
     final String caller = "shemp";
-    Response renewalResponse = doTestTokenRevocation(true, "larry, moe,  curly ", createTestSubject(caller));
-    validateRevocationResponse(renewalResponse,
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("larry, moe,  curly ")
+            .caller(createTestSubject(caller))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
                                403,
                                false,
                                "Caller (" + caller + ") not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
@@ -867,21 +956,61 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_WithRenewersWithValidSubject() throws Exception {
     final String caller = "shemp";
-    Response renewalResponse =
-        doTestTokenRevocation(true, ("larry, moe,  curly ," + caller), createTestSubject(caller));
-    validateSuccessfulRevocationResponse(renewalResponse);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("larry, moe,  curly ," + caller)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateSuccessfulRevocationResponse(revocationResponse);
   }
 
   @Test
   public void testTokenRevocation_Enabled_RevokeOwnToken() throws Exception {
-    final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME));
-    validateSuccessfulRevocationResponse(renewalResponse);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(USER_NAME))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateSuccessfulRevocationResponse(revocationResponse);
   }
 
   @Test
   public void testTokenRevocation_Enabled_RevokeImpersonatedToken() throws Exception {
-    final Response renewalResponse = doTestTokenRevocation(true, null, createTestSubject(USER_NAME), "impersonatedUserName");
-    validateSuccessfulRevocationResponse(renewalResponse);
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(USER_NAME))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs, "impersonatedUserName");
+    validateSuccessfulRevocationResponse(revocationResponse);
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_WithoutUserRenewerAndWithCorrectGroup() throws Exception {
+    final String caller = "bob";
+    final String group = "devOps";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .groupRenewers(group)
+            .caller(createTestSubject(caller, group))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateSuccessfulRevocationResponse(revocationResponse);
+  }
+
+  @Test
+  public void testTokenRevocation_Enabled_WithoutUserRenewerOrCorrectGroup() throws Exception {
+    final String caller = "bob";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .groupRenewers("devOps")
+            .caller(createTestSubject(caller, "anotherGroup"))
+            .build();
+    final Response revocationResponse = doTestTokenRevocation(configs);
+    validateRevocationResponse(revocationResponse,
+            403,
+            false,
+            "Caller (" + caller + ") not authorized to revoke tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
 
   @Test
@@ -1480,131 +1609,32 @@ public class TokenServiceResourceTest {
     }
   }
 
-  /**
-   *
-   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers A comma-delimited list of permitted renewer user names
-   * @param caller The user name making the request
-   *
-   * @return The Response from the token renewal request
-   *
-   * @throws Exception
-   */
-  private Response doTestTokenRenewal(final Boolean isTokenStateServerManaged,
-                                      final String  renewers,
-                                      final Subject caller) throws Exception {
-    return doTestTokenRenewal(isTokenStateServerManaged, renewers, null, caller).getValue();
-  }
 
   /**
-   *
-   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers                  A comma-delimited list of permitted renewer user names
-   * @param maxTokenLifetime          The maximum duration (milliseconds) for a token's lifetime
-   * @param caller                    The user name making the request
-   *
    * @return The Response from the token renewal request
-   *
-   * @throws Exception
    */
-  private Map.Entry<TestTokenStateService, Response> doTestTokenRenewal(final Boolean isTokenStateServerManaged,
-                                                                        final String  renewers,
-                                                                        final Long    maxTokenLifetime,
-                                                                        final Subject caller) throws Exception {
-    return doTestTokenRenewal(isTokenStateServerManaged,
-                              null,
-                              renewers,
-                              maxTokenLifetime,
-                              caller);
-  }
-
-  /**
-   *
-   * @param serviceLevelConfig true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param gatewayLevelConfig true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers           A comma-delimited list of permitted renewer user names
-   * @param maxTokenLifetime   The maximum duration (milliseconds) for a token's lifetime
-   * @param caller             The user name making the request
-   *
-   * @return The Response from the token renewal request
-   *
-   * @throws Exception
-   */
-  private Map.Entry<TestTokenStateService, Response> doTestTokenRenewal(final Boolean serviceLevelConfig,
-                                                                        final Boolean gatewayLevelConfig,
-                                                                        final String  renewers,
-                                                                        final Long    maxTokenLifetime,
-                                                                        final Subject caller) throws Exception {
+  private Map.Entry<TestTokenStateService, Response> doTestTokenRenewal(final TokenRenewalTestConfigs configs) throws Exception {
     return doTestTokenLifecyle(TokenLifecycleOperation.Renew,
-                               serviceLevelConfig,
-                               gatewayLevelConfig,
-                               renewers,
-                               maxTokenLifetime,
-                               caller);
+            configs.getServiceLevelConfig(),
+            configs.getGatewayLevelConfig(),
+            configs.getRenewers(),
+            configs.getGroupRenewers(),
+            configs.getMaxTokenLifetime(),
+            configs.getCaller(),
+            null);
   }
 
 
   /**
-   *
-   * @param isTokenStateServerManaged true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers A comma-delimited list of permitted renewer user names
-   * @param caller The user name making the request
-   *
    * @return The Response from the token revocation request
-   *
-   * @throws Exception
    */
-  private Response doTestTokenRevocation(final Boolean isTokenStateServerManaged,
-                                         final String  renewers,
-                                         final Subject caller) throws Exception {
-    return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, renewers, caller);
+  private Response doTestTokenRevocation(final TokenRenewalTestConfigs configs) throws Exception {
+    return doTestTokenRevocation(configs, null);
   }
 
-  private Response doTestTokenRevocation(final Boolean isTokenStateServerManaged, final String renewers, final Subject caller, String impersonatedUser)
+  private Response doTestTokenRevocation(final TokenRenewalTestConfigs configs, String impersonatedUser)
       throws Exception {
-    return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, isTokenStateServerManaged, null, renewers, null, caller, impersonatedUser).getValue();
-  }
-
-  /**
-   * @param operation     A TokenLifecycleOperation
-   * @param serverManaged true, if server-side token state management should be enabled; Otherwise, false or null.
-   * @param renewers      A comma-delimited list of permitted renewer user names
-   * @param caller        The user name making the request
-   *
-   * @return The Response from the token revocation request
-   *
-   * @throws Exception
-   */
-  private Response doTestTokenLifecyle(final TokenLifecycleOperation operation,
-                                       final Boolean                 serverManaged,
-                                       final String                  renewers,
-                                       final Subject                 caller) throws Exception {
-    return doTestTokenLifecyle(operation, serverManaged, renewers, null, caller).getValue();
-  }
-
-  /**
-   * @param operation          A TokenLifecycleOperation
-   * @param serviceLevelConfig true, if server-side token state management should be enabled at the service level;
-   *                           Otherwise, false or null.
-   * @param renewers           A comma-delimited list of permitted renewer user names
-   * @param maxTokenLifetime   The maximum lifetime duration for a token.
-   * @param caller             The user name making the request
-   *
-   * @return The Response from the token revocation request
-   *
-   * @throws Exception
-   */
-  private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation,
-                                                                         final Boolean                 serviceLevelConfig,
-                                                                         final String                  renewers,
-                                                                         final Long                    maxTokenLifetime,
-                                                                         final Subject                 caller) throws Exception {
-    return doTestTokenLifecyle(operation, serviceLevelConfig, null, renewers, maxTokenLifetime, caller);
-  }
-
-  private Map.Entry<TestTokenStateService, Response> doTestTokenLifecyle(final TokenLifecycleOperation operation, final Boolean serviceLevelConfig,
-      final Boolean gatewayLevelConfig, final String renewers, final Long maxTokenLifetime, final Subject caller) throws Exception {
-    return doTestTokenLifecyle(operation, serviceLevelConfig, gatewayLevelConfig, renewers, maxTokenLifetime, caller, null);
+    return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, configs.isTokenStateServerManaged(), null, configs.getRenewers(), configs.getGroupRenewers(), null, configs.getCaller(), impersonatedUser).getValue();
   }
 
   /**
@@ -1625,6 +1655,7 @@ public class TokenServiceResourceTest {
                                                                          final Boolean                 serviceLevelConfig,
                                                                          final Boolean                 gatewayLevelConfig,
                                                                          final String                  renewers,
+                                                                         final String                  groupRenewers,
                                                                          final Long                    maxTokenLifetime,
                                                                          final Subject                 caller,
                                                                          final String impersonatedUser) throws Exception {
@@ -1640,6 +1671,7 @@ public class TokenServiceResourceTest {
       }
     }
     contextExpectations.put("knox.token.renewer.whitelist", renewers);
+    contextExpectations.put("knox.token.renewer.group.whitelist", groupRenewers);
 
     if (StringUtils.isNotBlank(impersonatedUser)) {
       contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, "true");
@@ -1763,11 +1795,16 @@ public class TokenServiceResourceTest {
    *
    * @return A Subject
    */
-  private Subject createTestSubject(final String username) {
+  private Subject createTestSubject(final String username, final String... groups) {
     Subject s = new Subject();
 
     Set<Principal> principals = s.getPrincipals();
     principals.add(new PrimaryPrincipal(username));
+    if (groups != null) {
+      for (String group : groups) {
+        principals.add(new GroupPrincipal(group));
+      }
+    }
 
     return s;
   }
