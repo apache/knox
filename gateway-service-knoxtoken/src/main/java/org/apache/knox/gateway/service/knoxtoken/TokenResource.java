@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -132,6 +133,7 @@ public class TokenResource {
   private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = TOKEN_PARAM_PREFIX + "exp.max-lifetime";
   private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = TOKEN_PARAM_PREFIX + "exp.tokengen.allowed.tss.backends";
   private static final String TOKEN_RENEWER_WHITELIST = TOKEN_PARAM_PREFIX + "renewer.whitelist";
+  private static final String TOKEN_RENEWER_GROUP_WHITELIST = TOKEN_PARAM_PREFIX + "renewer.group.whitelist";
   private static final String TSS_STATUS_IS_MANAGEMENT_ENABLED = "tokenManagementEnabled";
   private static final String TSS_STATUS_CONFIFURED_BACKEND = "configuredTssBackend";
   private static final String TSS_STATUS_ACTUAL_BACKEND = "actualTssBackend";
@@ -191,6 +193,7 @@ public class TokenResource {
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
 
   private List<String> allowedRenewers;
+  private Set<String> allowedRenewerGroups;
 
   @Context
   HttpServletRequest request;
@@ -344,6 +347,14 @@ public class TokenResource {
       } else {
         log.noRenewersConfigured(topologyName);
       }
+
+      final String renewerGroups = context.getInitParameter(TOKEN_RENEWER_GROUP_WHITELIST);
+      allowedRenewerGroups = StringUtils.isBlank(renewerGroups)
+              ? new HashSet<>()
+              : Arrays.stream(renewerGroups.split(","))
+              .map(String::trim)
+              .filter(s -> !s.isEmpty())
+              .collect(Collectors.toSet());
     }
     setTokenStateServiceStatusMap();
   }
@@ -562,8 +573,15 @@ public class TokenResource {
         errorCode = ErrorCode.INTERNAL_ERROR;
       }
     } else {
-      String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
-      if (allowedRenewers.contains(renewer)) {
+      final String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
+      final Set<GroupPrincipal> groups = SubjectUtils.getCurrentGroupPrincipals();
+
+      final boolean userAllowed = allowedRenewers.contains(renewer);
+      final boolean groupAllowed = groups.stream()
+              .map(GroupPrincipal::getName)
+              .anyMatch(allowedRenewerGroups::contains);
+
+      if (userAllowed || groupAllowed) {
         try {
           JWTToken jwt = new JWTToken(token);
           if (tokenStateService.isExpired(jwt)) {
@@ -641,12 +659,17 @@ public class TokenResource {
     } else {
       try {
         final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
+        final boolean userAllowed = allowedRenewers.contains(revoker);
+        final boolean groupAllowed = SubjectUtils.getCurrentGroupPrincipals()
+                .stream()
+                .map(GroupPrincipal::getName)
+                .anyMatch(allowedRenewerGroups::contains);
         final String tokenId = getTokenId(token);
         if (isKnoxSsoCookie(tokenId)) {
           errorStatus = Response.Status.FORBIDDEN;
           error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked.";
           errorCode = ErrorCode.UNAUTHORIZED;
-        } else if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
+        } else if (triesToRevokeOwnToken(tokenId, revoker) || userAllowed || groupAllowed) {
           tokenStateService.revokeToken(tokenId);
           log.revokedToken(getTopologyName(),
                   Tokens.getTokenDisplayText(token),

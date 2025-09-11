@@ -21,6 +21,7 @@ import javax.security.auth.Subject;
 
 import java.security.AccessController;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -79,6 +80,11 @@ public class SubjectUtils {
   public static String getCurrentEffectivePrincipalName() {
     final Subject subject = getCurrentSubject();
     return subject == null ? null : getEffectivePrincipalName(subject);
+  }
+
+  public static Set<GroupPrincipal> getCurrentGroupPrincipals() {
+    final Subject subject = getCurrentSubject();
+    return subject == null ? Collections.emptySet() : getGroupPrincipals(subject);
   }
 
   public static Set<GroupPrincipal> getGroupPrincipals(Subject subject) {
