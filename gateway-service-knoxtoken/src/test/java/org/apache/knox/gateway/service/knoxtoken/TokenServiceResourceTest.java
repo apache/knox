@@ -650,7 +650,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_ServerManagedStateConfiguredAtGatewayOnly() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .gatewayLevelConfig(true)
             .renewers(caller)
             .caller(createTestSubject(caller))
@@ -662,7 +662,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_ServerManagedStateDisabledAtGatewayWithServiceOverride() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers(caller)
             .caller(createTestSubject(caller))
@@ -674,7 +674,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_ServerManagedStateEnabledAtGatewayWithServiceOverride() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .gatewayLevelConfig(true)
             .serviceLevelConfig(false)
             .renewers(caller)
@@ -697,7 +697,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_ServerManagedStateNotConfiguredAtAll() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder().build();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().build();
     Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(configs);
 
     // Make sure the expiration was not recorded by the TokenStateService, since it is disabled for this test
@@ -715,7 +715,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_Disabled() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(false)
             .build();
     final Map.Entry<TestTokenStateService, Response> result = doTestTokenRenewal(configs);
@@ -735,7 +735,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_Enabled_NoRenewersNoSubject() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder().gatewayLevelConfig(true).build();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().gatewayLevelConfig(true).build();
     final Response renewalResponse = doTestTokenRenewal(configs).getValue();
     validateRenewalResponse(renewalResponse, 403, false, "Caller (null) not authorized to renew tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
   }
@@ -743,7 +743,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_NoRenewersWithSubject() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .caller(createTestSubject(caller))
             .build();
@@ -756,7 +756,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRenewal_Enabled_WithRenewersNoSubject() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers("larry, moe,  curly ")
             .build();
@@ -770,7 +770,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithRenewersWithInvalidSubject() throws Exception {
     final String caller = "shemp";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers("larry, moe,  curly ")
             .caller(createTestSubject(caller))
@@ -785,7 +785,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithRenewersWithValidSubject() throws Exception {
     final String caller = "shemp";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers("larry, moe,  curly, " + caller)
             .caller(createTestSubject(caller))
@@ -798,7 +798,7 @@ public class TokenServiceResourceTest {
   public void testTokenRenewal_Enabled_WithoutUserRenewerAndWithCorrectGroup() throws Exception {
     final String caller = "bob";
     final String group = "devOps";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .groupRenewers(group)
             .caller(createTestSubject(caller, group))
@@ -810,7 +810,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithoutUserRenewerOrCorrectGroup() throws Exception {
     final String caller = "bob";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .groupRenewers("devOps")
             .caller(createTestSubject(caller, "anotherGroup"))
@@ -825,7 +825,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithDefaultMaxTokenLifetime() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers(caller)
             .caller(createTestSubject(caller))
@@ -845,7 +845,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRenewal_Enabled_WithConfigurableMaxTokenLifetime() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers(caller)
             .caller(createTestSubject(caller))
@@ -883,7 +883,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_ServerManagedStateNotConfigured() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder().build();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().build();
     final Response revocationResponse = doTestTokenRevocation(configs);
     validateRevocationResponse(revocationResponse,
                                400,
@@ -893,7 +893,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Disabled() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder().gatewayLevelConfig(false).build();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().gatewayLevelConfig(false).build();
     final Response revocationResponse = doTestTokenRevocation(configs);
     validateRevocationResponse(revocationResponse,
                                400,
@@ -903,7 +903,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Enabled_NoRenewersNoSubject() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder().serviceLevelConfig(true).build();
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().serviceLevelConfig(true).build();
     final Response revocationResponse = doTestTokenRevocation(configs);
     validateRevocationResponse(revocationResponse,
                                403,
@@ -914,7 +914,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_NoRenewersWithSubject() throws Exception {
     final String caller = "yarn";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .caller(createTestSubject(caller))
             .build();
@@ -927,7 +927,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Enabled_WithRenewersNoSubject() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers("larry, moe,  curly ")
             .build();
@@ -941,7 +941,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_WithRenewersWithInvalidSubject() throws Exception {
     final String caller = "shemp";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers("larry, moe,  curly ")
             .caller(createTestSubject(caller))
@@ -956,7 +956,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_WithRenewersWithValidSubject() throws Exception {
     final String caller = "shemp";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .renewers("larry, moe,  curly ," + caller)
             .caller(createTestSubject(caller))
@@ -967,7 +967,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Enabled_RevokeOwnToken() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .caller(createTestSubject(USER_NAME))
             .build();
@@ -977,7 +977,7 @@ public class TokenServiceResourceTest {
 
   @Test
   public void testTokenRevocation_Enabled_RevokeImpersonatedToken() throws Exception {
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .caller(createTestSubject(USER_NAME))
             .build();
@@ -989,7 +989,7 @@ public class TokenServiceResourceTest {
   public void testTokenRevocation_Enabled_WithoutUserRenewerAndWithCorrectGroup() throws Exception {
     final String caller = "bob";
     final String group = "devOps";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .groupRenewers(group)
             .caller(createTestSubject(caller, group))
@@ -1001,7 +1001,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testTokenRevocation_Enabled_WithoutUserRenewerOrCorrectGroup() throws Exception {
     final String caller = "bob";
-    final TokenRenewalTestConfigs configs = new TokenRenewalTestConfigs.Builder()
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
             .serviceLevelConfig(true)
             .groupRenewers("devOps")
             .caller(createTestSubject(caller, "anotherGroup"))

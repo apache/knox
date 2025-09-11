@@ -41,10 +41,14 @@ class TokenRenewalTestConfigs {
     private TokenRenewalTestConfigs(Builder builder) {
         this.serviceLevelConfig = builder.serviceLevelConfig;
         this.gatewayLevelConfig = builder.gatewayLevelConfig;
-        this.renewers = builder.renwers;
+        this.renewers = builder.renewers;
         this.groupRenewers = builder.groupRenewers;
         this.maxTokenLifetime = builder.maxTokenLifetime;
         this.caller = builder.caller;
+    }
+
+    static Builder builder() {
+        return new Builder();
     }
 
     Boolean getServiceLevelConfig() {
@@ -78,7 +82,7 @@ class TokenRenewalTestConfigs {
     static class Builder {
         private Boolean serviceLevelConfig;
         private Boolean gatewayLevelConfig;
-        private String renwers;
+        private String renewers;
         private String groupRenewers;
         private Long maxTokenLifetime;
         private Subject caller;
@@ -94,7 +98,7 @@ class TokenRenewalTestConfigs {
         }
 
         Builder renewers(String renewers) {
-            this.renwers = renewers;
+            this.renewers = renewers;
             return this;
         }
 
@@ -113,6 +117,7 @@ class TokenRenewalTestConfigs {
             return this;
         }
 
+        @SuppressWarnings("PMD.AccessorClassGeneration")
         TokenRenewalTestConfigs build() {
             return new TokenRenewalTestConfigs(this);
         }

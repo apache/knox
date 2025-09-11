@@ -574,14 +574,8 @@ public class TokenResource {
       }
     } else {
       final String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
-      final Set<GroupPrincipal> groups = SubjectUtils.getCurrentGroupPrincipals();
 
-      final boolean userAllowed = allowedRenewers.contains(renewer);
-      final boolean groupAllowed = groups.stream()
-              .map(GroupPrincipal::getName)
-              .anyMatch(allowedRenewerGroups::contains);
-
-      if (userAllowed || groupAllowed) {
+      if (tokenRenewalOrRevocationAuthorized(renewer)) {
         try {
           JWTToken jwt = new JWTToken(token);
           if (tokenStateService.isExpired(jwt)) {
@@ -619,6 +613,14 @@ public class TokenResource {
     }
 
     return resp;
+  }
+
+  private boolean tokenRenewalOrRevocationAuthorized(final String principalName) {
+    final boolean userAllowed = allowedRenewers.contains(principalName);
+    final boolean groupAllowed = SubjectUtils.getCurrentGroupPrincipals().stream()
+            .map(GroupPrincipal::getName)
+            .anyMatch(allowedRenewerGroups::contains);
+    return userAllowed || groupAllowed;
   }
 
   @DELETE
@@ -659,17 +661,12 @@ public class TokenResource {
     } else {
       try {
         final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
-        final boolean userAllowed = allowedRenewers.contains(revoker);
-        final boolean groupAllowed = SubjectUtils.getCurrentGroupPrincipals()
-                .stream()
-                .map(GroupPrincipal::getName)
-                .anyMatch(allowedRenewerGroups::contains);
         final String tokenId = getTokenId(token);
         if (isKnoxSsoCookie(tokenId)) {
           errorStatus = Response.Status.FORBIDDEN;
           error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked.";
           errorCode = ErrorCode.UNAUTHORIZED;
-        } else if (triesToRevokeOwnToken(tokenId, revoker) || userAllowed || groupAllowed) {
+        } else if (triesToRevokeOwnToken(tokenId, revoker) || tokenRenewalOrRevocationAuthorized(revoker)) {
           tokenStateService.revokeToken(tokenId);
           log.revokedToken(getTopologyName(),
                   Tokens.getTokenDisplayText(token),
