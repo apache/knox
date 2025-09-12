@@ -204,7 +204,7 @@
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
         <fastinfoset.version>1.2.18</fastinfoset.version>
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
-        <forbiddenapis.version>3.8</forbiddenapis.version>
+        <forbiddenapis.version>3.9</forbiddenapis.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <gethostname4j.version>1.0.0</gethostname4j.version>  <!-- See here: https://github.com/mattsheppard/gethostname4j -->
         <glassfish-jaxb.version>2.3.3</glassfish-jaxb.version>
