@@ -52,7 +52,7 @@ class NiFiResponseUtil {
           throw new RuntimeException("Unable to parse the inbound request URI", e);
         }
         /*
-         * if the path specified in the Location header fron the inbound response contains the inbound request's URI's path,
+         * if the path specified in the Location header from the inbound response contains the inbound request's URI's path,
          * then it's going to the same web context, and the Location header should be updated based on the X_FORWARDED_* headers.
          */
         String inboundRequestUriPath = inboundRequestUriBuilder.getPath();
@@ -70,10 +70,15 @@ class NiFiResponseUtil {
 
           final String baseContextPath = inboundRequest.getHeader(NiFiHeaders.X_FORWARDED_CONTEXT);
           final String pathInfo = inboundRequest.getPathInfo();
+          final String fragment = originalLocationUriBuilder.getFragment();
 
           try {
-            final URI newLocation = new URIBuilder().setScheme(scheme).setHost(host).setPort((StringUtils.isNumeric(port) ? Integer.parseInt(port) : -1)).setPath(
-                baseContextPath + pathInfo + trailingSlash).setParameters(queryParams).build();
+              final URIBuilder builder = new URIBuilder().setScheme(scheme).setHost(host).setPort((StringUtils.isNumeric(port) ? Integer.parseInt(port) : -1)).setPath(
+                      baseContextPath + pathInfo + trailingSlash).setParameters(queryParams);
+              if(StringUtils.isNotBlank(fragment)) {
+                  builder.setFragment(fragment);
+              }
+              final URI newLocation = builder.build();
             outboundResponse.setHeader("Location", newLocation.toString());
           } catch (URISyntaxException e) {
             throw new RuntimeException("Unable to rewrite Location header in response", e);
