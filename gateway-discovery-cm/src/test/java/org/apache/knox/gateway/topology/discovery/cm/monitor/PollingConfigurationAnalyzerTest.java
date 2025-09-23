@@ -228,11 +228,11 @@ public class PollingConfigurationAnalyzerTest {
 
     // Simulate a successful rolling cluster restart event
     ApiEvent rollingRestartEvent = createApiEvent(clusterName,
-                                                  HiveOnTezServiceModelGenerator.SERVICE_TYPE,
-                                                  HiveOnTezServiceModelGenerator.SERVICE,
-                                                  PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
-                                                  PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
-                                                  "EV_CLUSTER_ROLLING_RESTARTED");
+            PollingConfigurationAnalyzer.CM_SERVICE_TYPE,
+            PollingConfigurationAnalyzer.CM_SERVICE,
+            PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND,
+            PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
+            "EV_CLUSTER_ROLLING_RESTARTED");
 
     ChangeListener listener =
             doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
@@ -248,10 +248,10 @@ public class PollingConfigurationAnalyzerTest {
     final String clusterName = "Cluster 8";
 
     // Simulate a successful restart waiting for staleness event
-    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
+    final ApiEvent restartWaitingForStalenessSuccessEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
         PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED");
 
-    final ChangeListener listener = doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
+    final ChangeListener listener = doTestEvent(restartWaitingForStalenessSuccessEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
   }
 
@@ -261,7 +261,7 @@ public class PollingConfigurationAnalyzerTest {
     final String clusterName = "Cluster 9";
 
     // Simulate a successful restart waiting for staleness event with id = 123
-    final ApiEvent rollingRestartEvent = createApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE, HiveOnTezServiceModelGenerator.SERVICE,
+    final ApiEvent restartWaitingForStalenessSuccessEvent = createApiEvent(clusterName, PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
         PollingConfigurationAnalyzer.RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS, "EV_CLUSTER_RESTARTED",
         "123");
 
@@ -269,12 +269,12 @@ public class PollingConfigurationAnalyzerTest {
     final TestablePollingConfigAnalyzer pca = buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(), listener);
 
     // this should trigger a change notification
-    doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
+    doTestEvent(restartWaitingForStalenessSuccessEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
 
     // this should NOT trigger a notification as the same event has already been processed
     listener.clearNotification();
-    doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
+    doTestEvent(restartWaitingForStalenessSuccessEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
     assertFalse("Unexpected change notification", listener.wasNotified(address, clusterName));
   }
 

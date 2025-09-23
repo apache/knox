@@ -512,7 +512,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
       log.noActivationEventFound();
     } else {
       for (ApiEvent event : events) {
-        if(isStartEvent(event) || isScaleEvent(event)) {
+        if (isStartEvent(event) || isScaleEvent(event)) {
           relevantEvents.add(new RelevantEvent(event));
         }
       }
@@ -527,9 +527,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final String command = getAttribute(attributeMap, COMMAND);
     final String status = getAttribute(attributeMap, COMMAND_STATUS);
     final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
+    final String service = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
-    final boolean relevant = START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists;
-    log.activationEventRelevance(event.getId(), String.valueOf(relevant), command, status, serviceType, serviceModelGeneratorExists);
+    final boolean clusterRollingOrStalenessRestart = CM_SERVICE.equals(service) && CM_SERVICE_TYPE.equals(serviceType)
+            && (ROLLING_RESTART_COMMAND.equals(command) || RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND.equals(command));
+    final boolean relevant = (clusterRollingOrStalenessRestart && SUCCEEDED_STATUS.equals(status))
+            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists);
+    log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists, clusterRollingOrStalenessRestart);
     return relevant;
   }
 
