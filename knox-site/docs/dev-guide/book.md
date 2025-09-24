@@ -169,16 +169,16 @@ mvn -Ppackage,release,docker clean package
 
 This will build 2 Docker images:
 
-* `apache/knox:gateway-2.1.0-SNAPSHOT`
-* `apache/knox:ldap-2.1.0-SNAPSHOT`
+* `apache/knox:gateway-3.0.0-SNAPSHOT`
+* `apache/knox:ldap-3.0.0-SNAPSHOT`
 
 The `gateway` image will use an entrypoint to start Knox Gateway. The `ldap` image will use an entrypoint to start Knox Demo LDAP.
 
 An example of using the Docker images would be the following:
 
 ```
-docker run -d --name knox-ldap -p 33389:33389 apache/knox:ldap-2.1.0-SNAPSHOT
-docker run -d --name knox-gateway -p 8443:8443 apache/knox:gateway-2.1.0-SNAPSHOT
+docker run -d --name knox-ldap -p 33389:33389 apache/knox:ldap-3.0.0-SNAPSHOT
+docker run -d --name knox-gateway -p 8443:8443 apache/knox:gateway-3.0.0-SNAPSHOT
 ```
 
 Using docker-compose that would look like this:
@@ -805,7 +805,7 @@ allRules.addRules( newRules );
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>2.1.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-service-weather</artifactId>
@@ -1448,7 +1448,7 @@ public interface ProviderDeploymentContributor {
     <parent>
         <groupId>org.apache.knox</groupId>
         <artifactId>gateway</artifactId>
-        <version>2.1.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gateway-provider-security-authn-sample</artifactId>
