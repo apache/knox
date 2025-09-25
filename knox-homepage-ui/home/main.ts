@@ -14,15 +14,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { environment } from './environments/environment';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { APP_BASE_HREF } from '@angular/common';
+import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
+import { MatGridListModule } from '@angular/material/grid-list';
+
+// Standalone components you're bootstrapping
+import { SessionInformationComponent } from './app/sessionInformation/session.information.component';
+import { GeneralProxyInformationComponent } from './app/generalProxyInformation/general.proxy.information.component';
+import { TopologyInformationsComponent } from './app/topologies/topology.information.component';
+
 import './polyfills.ts';
 
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-import {enableProdMode} from '@angular/core';
-import {environment} from './environments/environment';
-import {AppModule} from './app/app.module';
-
 if (environment.production) {
-    enableProdMode();
+  enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule);
+// Bootstrap multiple standalone components
+const bootstrapComponents = [
+  SessionInformationComponent,
+  GeneralProxyInformationComponent,
+  TopologyInformationsComponent
+];
+
+bootstrapComponents.forEach(component => {
+  bootstrapApplication(component, {
+    providers: [
+      importProvidersFrom(HttpClientModule, HttpClientXsrfModule, MatGridListModule),
+      provideRouter([]),
+      {
+        provide: APP_BASE_HREF,
+        useValue: window['base-href'] || '/'
+      }
+    ]
+  }).catch(err => console.error(err));
+});

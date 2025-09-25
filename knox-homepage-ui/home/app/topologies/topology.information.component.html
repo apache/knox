@@ -12,195 +12,139 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<hr/>
+<hr />
 <div>
-     <h4 (click)="toggleBoolean('showTopologies')"><span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showTopologies'] ? 'minus' : 'plus')"></span>&nbsp;Topologies</h4>
+    <h4 (click)="toggleBoolean('showTopologies')" class="d-flex align-items-center">
+        <mat-icon *ngIf="this['showTopologies']">remove</mat-icon>
+        <mat-icon *ngIf="!this['showTopologies']">add</mat-icon>Topologies
+    </h4>
 </div>
 <div *ngIf="this['showTopologies']">
-<ng-container *ngFor="let topology of topologies">
-    <div>
-      <span [class]="'clickable inline-glyph
-      glyhpicon glyphicon-' + (this['showTopology_' + topology.topology] ? 'minus' : 'plus')"
-      (click)="toggleBoolean('showTopology_' + topology.topology)"></span>
-      <span (click)="toggleBoolean('showTopology_' + topology.topology)"><strong>{{topology.topology}}</strong></span>
-      <span class="inline-glyph glyphicon glyphicon-pushpin btn btn-xs" *ngIf="topology.pinned"
-            title="You may unpin this topology in gateway-site.xml by removing it from the list declared in 'knox.homepage.pinned.topologies'"
-            data-toggle="tooltip"></span>
-      <span class="inline-glyph glyphicon glyphicon-cog btn btn-xs" *ngIf="!topology.pinned"
-            title="You may pin this topology in gateway-site.xml using the 'knox.homepage.pinned.topologies' property"
-            data-toggle="tooltip"></span>
-    </div>
+    <ng-container *ngFor="let topology of topologies">
+        <div class="d-flex align-items-center">
+            <mat-icon *ngIf="this['showTopology_' + topology.topology]" (click)="toggleBoolean('showTopology_' + topology.topology)" class="reduce-icon-size">remove</mat-icon>
+            <mat-icon *ngIf="!this['showTopology_' + topology.topology]" (click)="toggleBoolean('showTopology_' + topology.topology)" class="reduce-icon-size">add</mat-icon>
+            <strong>{{topology.topology}}</strong>
 
-    <div class="table-responsive" *ngIf="this['showTopology_' + topology.topology]">
+            <mat-icon *ngIf="topology.pinned" matTooltip="You may unpin this topology in gateway-site.xml by removing it from the list declared in 'knox.homepage.pinned.topologies'" class="reduce-icon-size">push_pin</mat-icon>
+            <mat-icon *ngIf="!topology.pinned" matTooltip="You may pin this topology in gateway-site.xml using the 'knox.homepage.pinned.topologies' property" class="reduce-icon-size">settings</mat-icon>
+        </div>
 
-        <h5 *ngIf="topology.uiServices.service.length > 0">UI Services</h5>
+        <div class="table-responsive ps-3" *ngIf="this['showTopology_' + topology.topology]">
+ 
+            <h5 *ngIf="topology.uiServices.service.length > 0" class="pt-2">UI Services</h5>
 
-        <!-- UI services -->
-        <mat-grid-list cols="4" rowHeight="130px">
-            <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
+            <!-- UI services -->
+            <mat-grid-list cols="4" rowHeight="130px" *ngIf="topology.uiServices.service.length > 0">
+                <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
 
-                <!-- Services with 1 service URL -->
-                <div *ngIf="service.serviceUrls.length === 1">
-                    <a href="{{service.serviceUrls[0]}}" target="_blank" *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
-                        <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
-                    </a>
-                    <a href="{{service.serviceUrls[0]}}" target="_blank" *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                    <!-- Services with 1 service URL -->
+                    <div *ngIf="service.serviceUrls.length === 1">
+                        <a href="{{service.serviceUrls[0]}}" target="_blank"
+                            *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                            <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"
+                                (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())" />
+                        </a>
+                        <a href="{{service.serviceUrls[0]}}" target="_blank"
+                            *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                            {{service.shortDesc}}
+                        </a>
+                        <mat-grid-tile-footer class="tile-shortDesc">
+                            <h3>{{service.shortDesc}} <span class="small"
+                                    *ngIf="service.version">(v{{service.version}})</span></h3>
+                        </mat-grid-tile-footer>
+                        <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
+                            <h3>{{service.description}}</h3>
+                        </mat-grid-tile-footer>
+                    </div>
+
+                    <!-- Services with more than 1 service URL -->
+                    <div *ngIf="service.serviceUrls.length > 1" (click)="openGroupServiceDialog(service)">
+                        <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"
+                            (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())" />
+                        <mat-grid-tile-footer class="tile-shortDesc">
+                            <h3>{{service.shortDesc}} ({{service.serviceUrls.length}})</h3>
+                        </mat-grid-tile-footer>
+                    </div>
+
+                </mat-grid-tile>
+            </mat-grid-list>
+
+            <!-- API services -->
+
+            <h5 *ngIf="topology.apiServices.service.length > 0" class="pt-2">API Services</h5>
+
+            <div *ngIf="topology.apiServicesViewVersion === 'v1'">
+
+                <!-- Header -->
+                <ng-container *ngIf="topology.apiServices.service.length === 0">
+                    <h5 class="pt-2">No API services found</h5>
+                </ng-container>
+
+                <!-- Material Table -->
+                <table mat-table [dataSource]="getApiServicesDataSource(topology)" class="mat-elevation-z8" *ngIf="topology.apiServices.service.length > 0">
+
+                    <!-- Description Column -->
+                    <ng-container matColumnDef="description">
+                        <th mat-header-cell *matHeaderCellDef> Description </th>
+                        <td mat-cell *matCellDef="let service">
+                            <div class="d-flex align-items-center">
+                                <mat-icon [matTooltip]="service.description" class="reduce-icon-size">info</mat-icon>
+                                {{ service.shortDesc }}
+                                <span class="small" *ngIf="service.version">(v{{ service.version }})</span>
+                            </div>
+                        </td>
+                    </ng-container>
+
+                    <!-- URLs Column -->
+                    <ng-container matColumnDef="urls">
+                        <th mat-header-cell *matHeaderCellDef> URLs </th>
+                        <td mat-cell *matCellDef="let service">
+                            <ng-container *ngFor="let url of service.serviceUrls; let i = index">
+                                <a [href]="url" target="_blank">{{ url }}</a>
+                                <br *ngIf="service.serviceUrls.length > 1 && i < service.serviceUrls.length - 1" />
+                            </ng-container>
+                        </td>
+                    </ng-container>
+
+                    <!-- Fixed: Use displayedApiColumns instead of displayedColumns -->
+                    <tr mat-header-row *matHeaderRowDef="displayedApiColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedApiColumns;"></tr>
+
+                </table>
+
+                <!-- Paginator with proper data source binding -->
+                <mat-paginator 
+                    [pageSizeOptions]="[5, 10, 15]" 
+                    [pageSize]="5"
+                    showFirstLastButtons
+                    [length]="topology.apiServices.service.length"
+                    [aria-label]="'Pagination for ' + topology.topology + ' API services'"
+                    *ngIf="topology.apiServices.service.length > 0" >
+                </mat-paginator>
+            </div>
+
+            <mat-grid-list *ngIf="topology.apiServicesViewVersion === 'v2'" cols="4" rowHeight="130px">
+                <mat-grid-tile *ngFor="let service of topology.apiServices.service" [colspan]="1" [rowspan]="1">
+                    <span *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]"
+                        (click)="openApiServiceInformationModal(service)">
+                        <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"
+                            (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())" />
+                    </span>
+                    <span *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]"
+                        (click)="openApiServiceDialog(service)">
                         {{service.shortDesc}}
-                    </a>
+                    </span>
                     <mat-grid-tile-footer class="tile-shortDesc">
-                        <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
+                        <h3>{{service.shortDesc}} <span class="small"
+                                *ngIf="service.version">(v{{service.version}})</span></h3>
                     </mat-grid-tile-footer>
                     <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
                         <h3>{{service.description}}</h3>
                     </mat-grid-tile-footer>
-                </div>
-
-                <!-- Services with more than 1 service URL -->
-                <div *ngIf="service.serviceUrls.length > 1" (click)="openGroupServiceInformationModal(service)">
-                    <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
-                    <mat-grid-tile-footer class="tile-shortDesc">
-                        <h3>{{service.shortDesc}} ({{service.serviceUrls.length}})</h3>
-                    </mat-grid-tile-footer>
-                </div>
-
-            </mat-grid-tile>
-        </mat-grid-list>
-
-        <!-- API services -->
-
-        <h5 *ngIf="topology.apiServices.service.length > 0">API Services</h5>
-
-        <table *ngIf="topology.apiServicesViewVersion === 'v1'" class="table table-hover" [mfData]="topology.apiServices.service" #api="mfDataTable" [mfRowsOnPage]="5">
-            <colgroup>
-                <col width="30%">
-                <col width="70%">
-            </colgroup>
-            <thead>
-                <tr *ngIf="topology.apiServices.service.length === 0"><th colspan="2">No API services found</th></tr>
-                <tr *ngIf="topology.apiServices.service.length > 0"><th colspan="2">API services</th></tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let service of api.data">
-                    <td>
-                        <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
-                        title="{{service.description}}"
-                        data-toggle="tooltip"></span>
-                        {{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span>
-                    </td>
-                    <td>
-                        <ng-container *ngFor="let serviceUrl of service.serviceUrls">
-                            <a href="{{serviceUrl}}">{{serviceUrl}}</a>
-                            <br *ngIf="service.serviceUrls.length > 1" />
-                        </ng-container>
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="4">
-                      <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <mat-grid-list *ngIf="topology.apiServicesViewVersion === 'v2'" cols="4" rowHeight="130px">
-            <mat-grid-tile *ngFor="let service of topology.apiServices.service" [colspan]="1" [rowspan]="1">
-                <span *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]" (click)="openApiServiceInformationModal(service)">
-                    <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())"/>
-                </span>
-                <span *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]" (click)="openApiServiceInformationModal(service)">
-                    {{service.shortDesc}}
-                </span>
-                <mat-grid-tile-footer class="tile-shortDesc">
-                    <h3>{{service.shortDesc}} <span class="small" *ngIf="service.version">(v{{service.version}})</span></h3>
-                </mat-grid-tile-footer>
-                <mat-grid-tile-footer class="tile-longDesc" style="height:100px;">
-                    <h3>{{service.description}}</h3>
-                </mat-grid-tile-footer>
-            </mat-grid-tile>
-        </mat-grid-list>
-    </div>
-</ng-container>
-<hr />
+                </mat-grid-tile>
+            </mat-grid-list>
+        </div>
+    </ng-container>
+    <hr />
 </div>
-
-<bs-modal #apiServiceInformationModal>
-    <bs-modal-header [showDismiss]="true" *ngIf="selectedApiService">
-        <h4 class="modal-title">{{selectedApiService.shortDesc}}</h4>
-    </bs-modal-header>
-    <bs-modal-body *ngIf="selectedApiService">
-        <div class="panel panel-default table-responsive">
-            <table class="table table-sm">
-                <colgroup>
-                   <col width="25%">
-                   <col width="75%">
-               </colgroup>
-               <tr>
-                   <td style="font-weight: bold;">Knox Service Name</td>
-                   <td>{{selectedApiService.serviceName}} <span class="small" *ngIf="selectedApiService.version">(v{{selectedApiService.version}})</span></td>
-               </tr>
-               <tr>
-                   <td style="font-weight: bold;">Description</td>
-                   <td>{{selectedApiService.description}}</td>
-               </tr>
-               <tr>
-                   <td style="font-weight: bold;">Sample(s)</td>
-                   <td>
-                     <table class="table table-sm">
-                       <div *ngIf="selectedApiService.samples && selectedApiService.samples.sample.length > 0">
-                         <ng-container *ngFor="let sample of selectedApiService.samples.sample">
-                           <tr><td style="font-weight: bold;">{{sample.description}}</td></tr>
-                           <tr style="margin-bottom: 15px"><td>&nbsp;&nbsp;{{sample.value}}</tr>
-                         </ng-container>
-                       </div>
-                       <div *ngIf="!selectedApiService.samples || selectedApiService.samples.sample.length < 1">
-                         <tr><td style="font-weight: bold;">There is no any sample found in service metadata</td></tr>
-                         <tr>
-                           <td>&nbsp;You may check out the service's documentation and find out how to use its REST API. The service's URL is <a href="{{selectedApiService.serviceUrls[0]}}" target="_blank">{{selectedApiService.serviceUrls[0]}}</a></td>
-                         </tr>
-                       </div>
-                     </table>
-                   </td>
-               </tr>
-           </table>
-       </div>
-       
-    </bs-modal-body>
-    <bs-modal-footer>
-        <button type="button" class="btn btn-primary btn-sm" (click)="apiServiceInformationModal.close()">Close</button>
-    </bs-modal-footer>
-</bs-modal>
-
-
-<bs-modal #groupServiceInformationModal cssClass="groupServiceInformationModal" [animation]="true">
-    <bs-modal-header [showDismiss]="true" *ngIf="selectedGroupService">
-        <h4 class="modal-title">{{selectedGroupService.shortDesc}} <span class="small" *ngIf="selectedGroupService.version">(v{{selectedGroupService.version}})</span></h4>
-    </bs-modal-header>
-     <bs-modal-body *ngIf="selectedGroupService">
-         <span>
-             {{selectedGroupService.description}}
-         </span>
-         <br/><br/>
-         <span align="center">
-            <input type="text" placeholder="Search by hostname, port..." (input)="filterServiceUrls($event.target.value)" style="width: 50%">
-         </span>
-
-        <mat-grid-list cols="4" rowHeight="130px">
-            <mat-grid-tile *ngFor="let serviceUrl of filteredServiceUrls" [colspan]="1" [rowspan]="1">
-                <a href="{{serviceUrl}}" target="_blank" *ngIf="!this['enableServiceText_' + selectedGroupService.serviceName.toLowerCase()]">
-                    <img src="assets/service-logos/{{selectedGroupService.serviceName.toLowerCase()}}.png" height="50px" (error)="enableServiceText('enableServiceText_' + selectedGroupService.serviceName.toLowerCase())"/>
-                </a>
-                <a href="{{serviceUrl}}" target="_blank" *ngIf="this['enableServiceText_' + selectedGroupService.serviceName.toLowerCase()]">
-                    {{selectedGroupService.shortDesc}}
-                </a>
-                <mat-grid-tile-footer class="tile-shortDesc">
-                    <h3>{{selectedGroupService.shortDesc}} {{getServiceUrlHostAndPort(serviceUrl)}}</h3>
-                </mat-grid-tile-footer>
-            </mat-grid-tile>
-        </mat-grid-list>
-     </bs-modal-body>
-    <bs-modal-footer>
-        <button type="button" class="btn btn-primary btn-sm" (click)="groupServiceInformationModal.close()">Close</button>
-    </bs-modal-footer>
-</bs-modal>
