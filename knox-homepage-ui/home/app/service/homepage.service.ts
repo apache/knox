@@ -21,9 +21,9 @@ import Swal from 'sweetalert2';
 
 import 'rxjs/add/operator/toPromise';
 
-import {GeneralProxyInformation} from './generalProxyInformation/general.proxy.information';
-import {TopologyInformation} from './topologies/topology.information';
-import {SessionInformation} from './sessionInformation/session.information';
+import {GeneralProxyInformation} from '../model/general.proxy.information';
+import {TopologyInformation} from '../model/topology.information';
+import {SessionInformation} from '../model/session.information';
 
 @Injectable()
 export class HomepageService {
