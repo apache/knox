@@ -17,36 +17,11 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.flink;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
-import org.junit.Test;
-
-public class FlinkServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
-  @Test
-  public void testServiceModelMetadata() {
-    final Map<String, String> serviceConfig = Collections.emptyMap();
-    final Map<String, String> roleConfig = new HashMap<>();
-    roleConfig.put(FlinkServiceModelGenerator.SSL_ENABLED, "true");
-    roleConfig.put(FlinkServiceModelGenerator.WEB_PORT, "8082");
-
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
-  }
+public class FlinkServiceModelGeneratorTest extends FlinkDashboardServiceModelGeneratorTest {
 
   @Override
   protected String getServiceType() {
     return FlinkServiceModelGenerator.SERVICE_TYPE;
   }
 
-  @Override
-  protected String getRoleType() {
-    return FlinkServiceModelGenerator.ROLE_TYPE;
-  }
-
-  @Override
-  protected FlinkServiceModelGenerator newGenerator() {
-    return new FlinkServiceModelGenerator();
-  }
 }

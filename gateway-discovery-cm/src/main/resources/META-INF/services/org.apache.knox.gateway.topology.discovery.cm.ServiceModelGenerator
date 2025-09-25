@@ -18,7 +18,9 @@
 
 org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.atlas.AtlasAPIServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.flink.FlinkDashboardServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.flink.FlinkServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.flink.FlinkSqlGatewayServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hbase.HBaseUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hbase.WebHBaseServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator

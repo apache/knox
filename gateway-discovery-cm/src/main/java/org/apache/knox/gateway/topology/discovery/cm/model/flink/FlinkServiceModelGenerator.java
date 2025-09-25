@@ -17,59 +17,13 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.flink;
 
-import java.util.Locale;
 
-import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
-import org.apache.knox.gateway.topology.discovery.cm.ServiceModel.Type;
-import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGenerator;
-
-import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiService;
-import com.cloudera.api.swagger.model.ApiServiceConfig;
-
-public class FlinkServiceModelGenerator extends AbstractServiceModelGenerator {
-
+public class FlinkServiceModelGenerator extends FlinkDashboardServiceModelGenerator {
   static final String SERVICE = "FLINK";
-  static final String SERVICE_TYPE = "FLINK";
-  static final String ROLE_TYPE = "FLINK_HISTORY_SERVER";
-
-  static final String SSL_ENABLED = "ssl_enabled";
-  static final String WEB_PORT = "historyserver_web_port";
 
   @Override
   public String getService() {
     return SERVICE;
-  }
-
-  @Override
-  public String getServiceType() {
-    return SERVICE_TYPE;
-  }
-
-  @Override
-  public String getRoleType() {
-    return ROLE_TYPE;
-  }
-
-  @Override
-  public Type getModelType() {
-    return ServiceModel.Type.UI;
-  }
-
-  @Override
-  public ServiceModel generateService(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
-    final String hostname = role.getHostRef().getHostname();
-    final String port = getRoleConfigValue(roleConfig, WEB_PORT);
-    final boolean sslEnabled = Boolean.parseBoolean(getRoleConfigValue(roleConfig, SSL_ENABLED));
-    final String scheme = sslEnabled ? "https" : "http";
-
-    final ServiceModel model = createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s", scheme, hostname, port));
-    model.addRoleProperty(getRoleType(), SSL_ENABLED, Boolean.toString(sslEnabled));
-    model.addRoleProperty(getRoleType(), WEB_PORT, port);
-
-    return model;
   }
 
 }
