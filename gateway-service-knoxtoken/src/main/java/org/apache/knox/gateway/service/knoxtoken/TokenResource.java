@@ -65,6 +65,9 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.util.ByteUtils;
+
+import de.thetaphi.forbiddenapis.SuppressForbidden;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -992,7 +995,7 @@ public class TokenResource {
     if (clientCertRequired) {
       X509Certificate cert = extractCertificate(request);
       if (cert != null) {
-        if (!allowedDNs.contains(cert.getSubjectDN().getName().replaceAll("\\s+", ""))) {
+        if (!allowedDNs.contains(cert.getSubjectX500Principal().getName().replaceAll("\\s+", ""))) {
           response = Response.status(Response.Status.FORBIDDEN)
                          .entity("{ \"Unable to get token - untrusted client cert.\" }")
                          .build();
@@ -1100,6 +1103,7 @@ public class TokenResource {
     return Boolean.parseBoolean(request.getParameter(KNOX_TOKEN_INCLUDE_GROUPS));
   }
 
+  @SuppressForbidden
   protected Set<String> groups() {
     Subject subject = Subject.getSubject(AccessController.getContext());
     Set<String> groups = subject.getPrincipals(GroupPrincipal.class).stream()
