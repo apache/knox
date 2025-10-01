@@ -221,6 +221,7 @@
         <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
         <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+        <com.sun.activation.version>1.2.2</com.sun.activation.version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <javax.inject.version>2.4.0</javax.inject.version>
         <javax.json.version>1.1.3</javax.json.version>
@@ -229,7 +230,6 @@
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jaxws-ri.version>2.3.3</jaxws-ri.version>
         <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
-        <jakarta.activation.version>1.2.2</jakarta.activation.version>
         <java-support.version>7.5.1</java-support.version>
         <javassist.version>3.27.0-GA</javassist.version>
         <jboss-logging.version>3.4.1.Final</jboss-logging.version>
@@ -1505,13 +1505,7 @@
             <dependency>
                 <groupId>com.sun.activation</groupId>
                 <artifactId>jakarta.activation</artifactId>
-                <version>${jakarta.activation.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>jakarta.activation</groupId>
-                <artifactId>jakarta.activation-api</artifactId>
-                <version>${jakarta.activation.version}</version>
+                <version>${com.sun.activation.version}</version>
             </dependency>
 
             <dependency>
