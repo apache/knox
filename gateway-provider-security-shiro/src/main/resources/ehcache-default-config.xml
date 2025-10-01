@@ -1,0 +1,56 @@
+<!--
+Copyright Terracotta, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<config xmlns="http://www.ehcache.org/v3">
+
+    <persistence directory="${java.io.tmpdir}/shiro-ehcache"/>
+
+    <cache alias="shiro-activeSessionCache">
+        <key-type serializer="org.ehcache.impl.serialization.CompactJavaSerializer">
+            java.lang.Object
+        </key-type>
+        <value-type serializer="org.ehcache.impl.serialization.CompactJavaSerializer">
+            java.lang.Object
+        </value-type>
+
+        <resources>
+            <heap unit="entries">10000</heap>
+            <disk unit="GB">1</disk>
+        </resources>
+    </cache>
+
+    <cache alias="org.apache.shiro.realm.text.PropertiesRealm-0-accounts">
+        <key-type serializer="org.ehcache.impl.serialization.CompactJavaSerializer">
+            java.lang.Object
+        </key-type>
+        <value-type serializer="org.ehcache.impl.serialization.CompactJavaSerializer">
+            java.lang.Object
+        </value-type>
+
+        <resources>
+            <heap unit="entries">1000</heap>
+            <disk unit="GB">1</disk>
+        </resources>
+    </cache>
+
+    <cache-template name="defaultCacheConfiguration">
+        <expiry>
+            <tti unit="seconds">120</tti>
+        </expiry>
+        <heap unit="entries">10000</heap>
+    </cache-template>
+
+</config>

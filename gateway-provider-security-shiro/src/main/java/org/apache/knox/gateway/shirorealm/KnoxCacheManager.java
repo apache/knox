@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.shirorealm;
 
 import org.apache.knox.gateway.ShiroMessages;
+import org.apache.knox.gateway.ehcache.EhcacheShiro;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.shiro.ShiroException;
 import org.apache.shiro.cache.Cache;
@@ -32,7 +33,6 @@ import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.impl.config.persistence.CacheManagerPersistenceConfiguration;
-import org.ehcache.integrations.shiro.EhcacheShiro;
 import org.ehcache.spi.service.ServiceCreationConfiguration;
 import org.ehcache.xml.XmlConfiguration;
 
@@ -48,7 +48,7 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
   private static final ShiroMessages LOG = MessagesFactory.get(ShiroMessages.class);
 
   private org.ehcache.CacheManager manager;
-  private String cacheManagerConfigFile = "classpath:org/ehcache/integrations/shiro/ehcache.xml";
+  private String cacheManagerConfigFile = "classpath:ehcache-default-config.xml";
   private boolean cacheManagerImplicitlyCreated;
   private XmlConfiguration cacheConfiguration;
   private static final String DEFAULT_FOLDER_NAME = "ehcache-shiro";
@@ -178,7 +178,6 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
     if (loader == null) {
       loader = this.getClass().getClassLoader();
     }
-
     return loader.getResource(URL);
   }
 
