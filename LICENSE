@@ -201,6 +201,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   This product bundles various third-party components also under the
+   Apache Software License 2.0.
+
+   Ehcache-shiro (https://github.com/ehcache/ehcache-shiro)
+   ./gateway-provider-security-shiro/src/main/java/org/apache/knox/gateway/ehcache/EhcacheIterator.java
+   ./gateway-provider-security-shiro/src/main/java/org/apache/knox/gateway/ehcache/EhcacheCollectionWrapper.java
+   ./gateway-provider-security-shiro/src/main/java/org/apache/knox/gateway/ehcache/EhcacheSetWrapper.java
+   ./gateway-provider-security-shiro/src/main/java/org/apache/knox/gateway/ehcache/EhcacheShiro.java
+   ./gateway-provider-security-shiro/src/main/resources/ehcache-default-config.xml
 
 Apache Knox Subcomponents (binary distributions):
 
