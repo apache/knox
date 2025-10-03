@@ -18,11 +18,11 @@ package org.apache.knox.gateway.util;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.mockito.Mockito;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -40,7 +40,6 @@ import static org.junit.Assert.assertFalse;
 
 import static org.apache.knox.gateway.util.AuthFilterUtils.PROXYUSER_PREFIX;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
 
 public class KnoxImpersonationProviderTest {
 
@@ -121,15 +120,17 @@ public class KnoxImpersonationProviderTest {
         String impersonatedUser = "impersonatedUser";
         String[] proxyGroups = {"virtual_group_1"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
@@ -140,12 +141,14 @@ public class KnoxImpersonationProviderTest {
         method.setAccessible(true);
         method.invoke(provider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
 
+        EasyMock.reset(realUserUGI, userGroupInformation);
         String[] proxyGroups2 = {"virtual.group_2"};
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups2);
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups2).anyTimes();
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         method.invoke(provider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
@@ -188,15 +191,16 @@ public class KnoxImpersonationProviderTest {
 
         String[] proxyGroups = {"virtual_group_1"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
@@ -207,12 +211,14 @@ public class KnoxImpersonationProviderTest {
         method.setAccessible(true);
         method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
 
+        EasyMock.reset(realUserUGI, userGroupInformation);
         String[] proxyGroups2 = {"virtual.group_2"};
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups2);
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups2).anyTimes();
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         method.invoke(gProvider, userGroupInformation, InetAddress.getByName("2.2.2.2"), Collections.emptyList());
@@ -224,14 +230,15 @@ public class KnoxImpersonationProviderTest {
         String impersonatedUser = "impersonatedUser";
         String[] proxyGroups = {"virtual group_3"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+        EasyMock.replay(realUserUGI, userGroupInformation);
         provider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"));
     }
 
@@ -264,15 +271,17 @@ public class KnoxImpersonationProviderTest {
 
         String[] proxyGroups = {"virtual_group_1"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
@@ -315,15 +324,17 @@ public class KnoxImpersonationProviderTest {
 
         String[] proxyGroups = {"somegroup"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
@@ -371,15 +382,17 @@ public class KnoxImpersonationProviderTest {
 
         String[] proxyGroups = {"virtual_group_1"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(proxyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(proxyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Use reflection to call the checkProxyGroupAuthorization method directly
         java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
@@ -414,15 +427,17 @@ public class KnoxImpersonationProviderTest {
         // User has no groups in their subject
         String[] emptyGroups = {};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(emptyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(emptyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn("impersonatedUser").anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Create a list of groups to provide to the authorize method
         List<String> providedGroups = new ArrayList<>();
@@ -456,15 +471,17 @@ public class KnoxImpersonationProviderTest {
         // User has no groups in their subject
         String[] emptyGroups = {};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(emptyGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(emptyGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn("impersonatedUser");
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn("impersonatedUser").anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Create a list of groups to provide to the authorize method
         // These groups do not have permission to impersonate
@@ -510,15 +527,17 @@ public class KnoxImpersonationProviderTest {
         // User has virtual_group_1 in their subject
         String[] subjectGroups = {"virtual_group_1"};
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(subjectGroups);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(subjectGroups).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Create a list of groups to provide to the authorize method
         // These include virtual_group_2 which is also authorized
@@ -551,8 +570,10 @@ public class KnoxImpersonationProviderTest {
         testProvider.init("hadoop.proxygroup");
 
         // Create mocks for testing
-        UserGroupInformation userToImpersonate = Mockito.mock(UserGroupInformation.class);
-        when(userToImpersonate.getUserName()).thenReturn("impersonatedUser");
+        UserGroupInformation userToImpersonate = EasyMock.createNiceMock(UserGroupInformation.class);
+        EasyMock.expect(userToImpersonate.getUserName()).andReturn("impersonatedUser").anyTimes();
+
+        EasyMock.replay(userToImpersonate);
 
         // Set up the method to test via reflection
         java.lang.reflect.Method method = KnoxImpersonationProvider.class.getDeclaredMethod(
@@ -618,14 +639,16 @@ public class KnoxImpersonationProviderTest {
         String proxyUser = "testuser";
         String impersonatedUser = "impersonatedUser";
 
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getGroupNames()).thenReturn(new String[0]); // No groups in subject
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(new String[0]).anyTimes(); // No groups in subject
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Create a list of groups to provide to the authorize method
         List<String> providedGroups = new ArrayList<>();
@@ -660,14 +683,16 @@ public class KnoxImpersonationProviderTest {
         testProvider.init("hadoop.proxyuser");
 
         // Create mocks for testing
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(proxyUser);
-        when(realUserUGI.getUserName()).thenReturn(proxyUser);
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(proxyUser).anyTimes();
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(proxyUser).anyTimes();
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // This should not throw an exception since the proxy user configuration is valid
         testProvider.authorize(userGroupInformation, InetAddress.getByName("2.2.2.2"));
@@ -704,15 +729,17 @@ public class KnoxImpersonationProviderTest {
         testProvider.init("hadoop.proxyuser");
 
         // Create mocks for testing
-        UserGroupInformation realUserUGI = Mockito.mock(UserGroupInformation.class);
-        UserGroupInformation userGroupInformation = Mockito.mock(UserGroupInformation.class);
+        UserGroupInformation realUserUGI = EasyMock.createNiceMock(UserGroupInformation.class);
+        UserGroupInformation userGroupInformation = EasyMock.createNiceMock(UserGroupInformation.class);
 
-        when(realUserUGI.getShortUserName()).thenReturn(unauthorizedUser); // Use unauthorized user
-        when(realUserUGI.getUserName()).thenReturn(unauthorizedUser);
-        when(realUserUGI.getGroupNames()).thenReturn(new String[0]); // No groups in subject
+        EasyMock.expect(realUserUGI.getShortUserName()).andReturn(unauthorizedUser).anyTimes(); // Use unauthorized user
+        EasyMock.expect(realUserUGI.getUserName()).andReturn(unauthorizedUser).anyTimes();
+        EasyMock.expect(realUserUGI.getGroupNames()).andReturn(new String[0]).anyTimes(); // No groups in subject
 
-        when(userGroupInformation.getRealUser()).thenReturn(realUserUGI);
-        when(userGroupInformation.getUserName()).thenReturn(impersonatedUser);
+        EasyMock.expect(userGroupInformation.getRealUser()).andReturn(realUserUGI).anyTimes();
+        EasyMock.expect(userGroupInformation.getUserName()).andReturn(impersonatedUser).anyTimes();
+
+        EasyMock.replay(realUserUGI, userGroupInformation);
 
         // Create a list of groups to provide to the authorize method
         List<String> providedGroups = new ArrayList<>();
