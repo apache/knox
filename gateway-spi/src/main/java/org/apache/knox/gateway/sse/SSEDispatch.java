@@ -35,6 +35,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dispatch.AsyncDispatch;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.dispatch.DefaultHttpAsyncClientFactory;
@@ -54,8 +55,11 @@ public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
 
     protected final HttpAsyncClient asyncClient;
     private static final String TEXT_EVENT_STREAM_VALUE = "text/event-stream";
+    private final boolean asyncSupported;
 
     public SSEDispatch(FilterConfig filterConfig) {
+        GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+        this.asyncSupported = gatewayConfig.isAsyncSupported();
         HttpAsyncClientFactory asyncClientFactory = new DefaultHttpAsyncClientFactory();
         this.asyncClient = asyncClientFactory.createAsyncHttpClient(filterConfig);
 
@@ -96,6 +100,10 @@ public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
     }
 
     private void doHttpMethod(HttpUriRequest httpMethod, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
+        if(!asyncSupported) {
+            this.handleAsyncNotSupportedResponse(outboundResponse);
+            return;
+        }
         this.addAcceptHeader(httpMethod);
         this.copyRequestHeaderFields(httpMethod, inboundRequest);
         this.executeRequestWrapper(httpMethod, inboundRequest, outboundResponse);
@@ -133,6 +141,12 @@ public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
         outboundResponse.setStatus(statusCode);
         LOG.dispatchResponseStatusCode(statusCode);
         auditor.audit(Action.DISPATCH, url.toString(), ResourceType.URI, ActionOutcome.FAILURE, RES.responseStatus(statusCode));
+    }
+
+    private void handleAsyncNotSupportedResponse(HttpServletResponse outboundResponse) throws IOException {
+        LOG.asyncSupportNotEnabled();
+        outboundResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Async support is not enabled. SSE requests cannot be processed.");
     }
 
     private void prepareServletResponse(HttpServletResponse outboundResponse, int statusCode) {

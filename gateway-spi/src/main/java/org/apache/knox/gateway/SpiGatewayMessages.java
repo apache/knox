@@ -147,4 +147,7 @@ public interface SpiGatewayMessages {
 
   @Message( level = MessageLevel.ERROR, text = "Failed to send error to client" )
   void failedToSendErrorToClient(@StackTrace(level=MessageLevel.ERROR) Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Async support is not enabled. SSEDispatch request failed." )
+  void asyncSupportNotEnabled();
 }

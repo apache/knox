@@ -67,7 +67,7 @@ public class SSEDispatchTest {
 
     @Test
     public void testCreateAndDestroyClient() throws Exception {
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         assertNotNull(sseDispatch.getAsyncClient());
 
         sseDispatch.destroy();
@@ -77,7 +77,7 @@ public class SSEDispatchTest {
     @Test
     public void testGet2xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
@@ -107,7 +107,7 @@ public class SSEDispatchTest {
     @Test
     public void testGet4xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_BAD_REQUEST);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -130,7 +130,7 @@ public class SSEDispatchTest {
     @Test
     public void testGet5xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -153,7 +153,7 @@ public class SSEDispatchTest {
     @Test
     public void testPost2xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
@@ -184,7 +184,7 @@ public class SSEDispatchTest {
     @Test
     public void testPost4xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_NOT_FOUND);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -207,7 +207,7 @@ public class SSEDispatchTest {
     @Test
     public void testPost5xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -230,7 +230,7 @@ public class SSEDispatchTest {
     @Test
     public void testPut2xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
@@ -261,7 +261,7 @@ public class SSEDispatchTest {
     @Test
     public void testPut4xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_NOT_FOUND);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -284,7 +284,7 @@ public class SSEDispatchTest {
     @Test
     public void testPut5xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -307,7 +307,7 @@ public class SSEDispatchTest {
     @Test
     public void testPatch2xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
@@ -338,7 +338,7 @@ public class SSEDispatchTest {
     @Test
     public void testPatch4xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_NOT_FOUND);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -361,7 +361,7 @@ public class SSEDispatchTest {
     @Test
     public void testPatch5xx() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
@@ -384,7 +384,7 @@ public class SSEDispatchTest {
     @Test
     public void testServerNotAvailable() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        SSEDispatch sseDispatch = this.createDispatch();
+        SSEDispatch sseDispatch = this.createDispatch(true);
         HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
         outboundResponse.sendError(HttpServletResponse.SC_BAD_GATEWAY, "Service connection error");
         EasyMock.expectLastCall().once();
@@ -397,6 +397,23 @@ public class SSEDispatchTest {
 
         latch.await(1L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest);
+    }
+
+    @Test
+    public void testAsyncNotSupported() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        SSEDispatch sseDispatch = this.createDispatch(false);
+        HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+        outboundResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Async support is not enabled. SSE requests cannot be processed.");
+        EasyMock.expectLastCall().once();
+
+        replay(outboundResponse);
+
+        sseDispatch.doGet(new URI("http://localhost:11223/sse"), null, outboundResponse);
+
+        latch.await(1L, TimeUnit.SECONDS);
+        EasyMock.verify(outboundResponse);
     }
 
     private HttpServletRequest getHttpServletRequest(AsyncContext asyncContext) throws Exception {
@@ -451,7 +468,7 @@ public class SSEDispatchTest {
         EasyMock.expectLastCall().times(2);
     }
 
-    private SSEDispatch createDispatch() throws Exception {
+    private SSEDispatch createDispatch(boolean asyncSupported) throws Exception {
         KeystoreService keystoreService = createMock(KeystoreService.class);
         expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).once();
 
@@ -461,6 +478,7 @@ public class SSEDispatchTest {
         expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
         expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
         expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
+        expect(gatewayConfig.isAsyncSupported()).andReturn(asyncSupported).once();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
