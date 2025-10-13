@@ -254,7 +254,7 @@
         <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
         <metrics.version>4.1.16</metrics.version>
         <mina.version>2.0.27</mina.version>
-        <netty.version>4.1.123.Final</netty.version>
+        <netty.version>4.1.127.Final</netty.version>
         <nimbus-jose-jwt.version>10.0.2</nimbus-jose-jwt.version>
         <nodejs.version>v16.10.0</nodejs.version>
         <okhttp.version>4.12.0</okhttp.version>
@@ -1407,6 +1407,30 @@
                 <version>${netty.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-common</artifactId>
+                <version>${netty.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-buffer</artifactId>
+                <version>${netty.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport</artifactId>
+                <version>${netty.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty.version}</version>
+                <scope>runtime</scope>
             </dependency>
 
             <dependency>
