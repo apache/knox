@@ -1,5 +1,7 @@
 (It is very **important** that you created an Apache Knox JIRA for this change and that the PR title/commit message includes the Apache Knox JIRA ID!)
 
+[KNOX-1234](url) - A short description of the change
+
 ## What changes were proposed in this pull request?
 
 (Please fill in changes proposed in this fix)
