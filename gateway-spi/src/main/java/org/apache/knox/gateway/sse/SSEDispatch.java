@@ -53,18 +53,20 @@ import java.nio.charset.StandardCharsets;
 
 public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
 
-    protected final HttpAsyncClient asyncClient;
+    protected HttpAsyncClient asyncClient;
     private static final String TEXT_EVENT_STREAM_VALUE = "text/event-stream";
     private final boolean asyncSupported;
 
     public SSEDispatch(FilterConfig filterConfig) {
         GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
         this.asyncSupported = gatewayConfig.isAsyncSupported();
-        HttpAsyncClientFactory asyncClientFactory = new DefaultHttpAsyncClientFactory();
-        this.asyncClient = asyncClientFactory.createAsyncHttpClient(filterConfig);
+        if(asyncSupported) {
+            HttpAsyncClientFactory asyncClientFactory = new DefaultHttpAsyncClientFactory();
+            this.asyncClient = asyncClientFactory.createAsyncHttpClient(filterConfig);
 
-        if (asyncClient instanceof CloseableHttpAsyncClient) {
-            ((CloseableHttpAsyncClient) this.asyncClient).start();
+            if (asyncClient instanceof CloseableHttpAsyncClient) {
+                ((CloseableHttpAsyncClient) this.asyncClient).start();
+            }
         }
     }
 
