@@ -279,7 +279,7 @@ public class RemoteAuthFilter implements Filter {
     if (httpURLConnection == null) {
       URL url = new URL(remoteAuthUrl);
       connection = (HttpURLConnection) url.openConnection();
-      if (trustStore != null) {
+      if (trustStore != null && connection instanceof HttpsURLConnection) {
         try {
           ((HttpsURLConnection) connection).setSSLSocketFactory(createSSLSocketFactory(trustStore));
         } catch (Exception e) {
