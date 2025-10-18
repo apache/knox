@@ -246,7 +246,7 @@
         <kotlin-stdlib.version>1.9.10</kotlin-stdlib.version>
         <lang-tag.version>1.5</lang-tag.version>
         <libpam4j.version>1.11</libpam4j.version>
-        <log4j2.version>2.17.1</log4j2.version>
+        <log4j2.version>2.20.0</log4j2.version>
         <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
@@ -273,7 +273,7 @@
         <shiro.version>1.13.0</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
-        <slf4j.version>1.7.30</slf4j.version>
+        <slf4j.version>2.0.13</slf4j.version>
         <spotbugs.version>4.2.0</spotbugs.version>
         <spotbugs-maven-plugin.version>4.1.4</spotbugs-maven-plugin.version>
         <spring.version>5.3.21</spring.version>
@@ -2110,7 +2110,7 @@
 
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
                 <version>${log4j2.version}</version>
             </dependency>
             <dependency>
