@@ -44,7 +44,6 @@ public class PreAuthResourceTest {
 
   private static final String USER_NAME = "test-username";
   private ServletContext context;
-  private HttpServletRequest request;
   private HttpServletResponse response;
   private final Subject subject = new Subject();
 
@@ -53,15 +52,15 @@ public class PreAuthResourceTest {
     subject.getPrincipals().add(new PrimaryPrincipal(USER_NAME));
   }
 
-  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix) {
-    configureCommonExpectations(actorIdHeaderName, groupsHeaderPrefix, Collections.emptySet());
+  private void configureCommonExpectations(String actorIdHeaderName) {
+    configureCommonExpectations(actorIdHeaderName, null, Collections.emptySet());
   }
 
   private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups) {
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_ID_HEADER_NAME)).andReturn(actorIdHeaderName).anyTimes();
     EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_GROUPS_HEADER_PREFIX)).andReturn(groupsHeaderPrefix).anyTimes();
-    request = EasyMock.createNiceMock(HttpServletRequest.class);
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     response = EasyMock.createNiceMock(HttpServletResponse.class);
 
     if (SubjectUtils.getPrimaryPrincipalName(subject) != null) {
@@ -75,12 +74,13 @@ public class PreAuthResourceTest {
       final int groupStringSize = calculateGroupStringSize(groups);
       final int expectedGroupHeaderCount = groupStringSize / 1000 + 1;
       final String expectedGroupsHeaderPrefix = (groupsHeaderPrefix == null ? PreAuthResource.DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX : groupsHeaderPrefix)
-          + "-";
+              + "-";
       for (int i = 1; i <= expectedGroupHeaderCount; i++) {
         response.addHeader(EasyMock.eq(expectedGroupsHeaderPrefix + i), EasyMock.anyString());
         EasyMock.expectLastCall();
       }
     }
+
     EasyMock.replay(context, request, response);
   }
 
@@ -94,17 +94,17 @@ public class PreAuthResourceTest {
   @Test
   public void testSubjectWithoutPrimaryPrincipalReturnsUnauthorized() throws Exception {
     subject.getPrincipals().clear();
-    configureCommonExpectations(null, null);
+    configureCommonExpectations(null);
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
     final Response response = executeResourceWithSubject(preAuthResource);
-    assertEquals(response.getStatus(), HttpServletResponse.SC_UNAUTHORIZED);
+    assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
   }
 
   @Test
   public void testPopulatingDefaultActorIdHeaderNoGroups() throws Exception {
-    configureCommonExpectations(null, null);
+    configureCommonExpectations(null);
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
@@ -114,7 +114,7 @@ public class PreAuthResourceTest {
 
   @Test
   public void testPopulatingCustomActorIdHeaderNoGroups() throws Exception {
-    configureCommonExpectations("customActorId", null);
+    configureCommonExpectations("customActorId");
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;

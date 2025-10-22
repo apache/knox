@@ -22,7 +22,9 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
+import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.util.GroupUtils;
 import org.apache.knox.gateway.util.StringUtils;
 
 import javax.security.auth.Subject;
@@ -40,9 +42,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.List;
-import java.util.Collection;
 import java.util.Locale;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -62,17 +62,19 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
   private boolean shouldIncludePrincipalAndGroups;
   private String actorIdHeaderName = DEFAULT_AUTH_ACTOR_ID_HEADER_NAME;
   private String actorGroupsHeaderPrefix = DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX;
+  private int groupHeaderLengthLimit = Integer.parseInt(DEFAULT_GROUP_HEADER_LENGTH_LIMIT);
+  private int groupHeaderSizeLimit = Integer.parseInt(DEFAULT_GROUP_HEADER_SIZE_LIMIT);
   private String groupFilterPattern = DEFAULT_GROUP_FILTER_PATTERN;
 
   static final String DEFAULT_AUTH_ACTOR_ID_HEADER_NAME = "X-Knox-Actor-ID";
   static final String DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX = "X-Knox-Actor-Groups";
+  static final String DEFAULT_GROUP_HEADER_LENGTH_LIMIT = "1000";
+  static final String DEFAULT_GROUP_HEADER_SIZE_LIMIT = "-1"; // turned off by default, to be backward compatible
   static final String DEFAULT_GROUP_FILTER_PATTERN = ".*";
   static final String DEFAULT_ARE_USERS_GROUPS_HEADER_INCLUDED = "false";
 
-  protected static final int MAX_HEADER_LENGTH = 1000;
   protected static final String ACTOR_GROUPS_HEADER_FORMAT = "%s-%d";
   protected Pattern groupPattern = Pattern.compile(DEFAULT_GROUP_FILTER_PATTERN);
-
 
   private Set<String> convertCommaDelimitedHeadersToSet(String headers) {
     return headers == null ?  Collections.emptySet(): new HashSet<>(Arrays.asList(headers.split("\\s*,\\s*")));
@@ -126,8 +128,8 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
     if (setCookieHeader.isPresent()) {
       final String[] setCookieHeaderParts = setCookieHeader.get().split(":");
       responseExcludeSetCookieHeaderDirectives = setCookieHeaderParts.length > 1
-          ? new HashSet<>(Arrays.asList(setCookieHeaderParts[1].split(";"))).stream().map(e -> e.trim()).collect(Collectors.toSet())
-          : EXCLUDE_SET_COOKIES_DEFAULT;
+              ? new HashSet<>(Arrays.asList(setCookieHeaderParts[1].split(";"))).stream().map(e -> e.trim()).collect(Collectors.toSet())
+              : EXCLUDE_SET_COOKIES_DEFAULT;
     } else {
       /* Exclude headers list is defined but we don't have set-cookie in the list,
       by default prevent these cookies from leaking */
@@ -163,6 +165,16 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
   }
 
   @Configure
+  public void setGroupHeaderLengthLimit(@Default(DEFAULT_GROUP_HEADER_LENGTH_LIMIT) int groupHeaderLengthLimit) {
+    this.groupHeaderLengthLimit = groupHeaderLengthLimit;
+  }
+
+  @Configure
+  public void setGroupHeaderSizeLimit(@Default(DEFAULT_GROUP_HEADER_SIZE_LIMIT) int groupHeaderSizeLimit) {
+    this.groupHeaderSizeLimit = groupHeaderSizeLimit;
+  }
+
+  @Configure
   public void setGroupFilterPattern(@Default(DEFAULT_GROUP_FILTER_PATTERN) String groupFilterPattern) {
     this.groupFilterPattern = groupFilterPattern;
     groupPattern = Pattern.compile(this.groupFilterPattern);
@@ -189,7 +201,7 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
   }
 
   private Map<String, String> addPrincipalAndGroups() {
-    final Map<String, String> headers = new ConcurrentHashMap();
+    final Map<String, String> headers = new ConcurrentHashMap<>();
     final Subject subject = SubjectUtils.getCurrentSubject();
 
     final String primaryPrincipalName = subject == null ? null : SubjectUtils.getPrimaryPrincipalName(subject);
@@ -202,37 +214,17 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
 
     // Populate actor groups headers
     final Set<String> matchingGroupNames = subject == null ? Collections.emptySet()
-            : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupPattern.matcher(group.getName()).matches()).map(group -> group.getName())
+            : SubjectUtils.getGroupPrincipals(subject).stream()
+            .filter(group -> groupPattern.matcher(group.getName()).matches())
+            .map(GroupPrincipal::getName)
             .collect(Collectors.toSet());
     if (!matchingGroupNames.isEmpty()) {
-      final List<String> groupStrings = getGroupStrings(matchingGroupNames);
+      final List<String> groupStrings = GroupUtils.getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
         headers.put(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, actorGroupsHeaderPrefix, i + 1), groupStrings.get(i));
       }
     }
     return headers;
-  }
-
-  private List<String> getGroupStrings(final Collection<String> groupNames) {
-    if (groupNames.isEmpty()) {
-      return Collections.emptyList();
-    }
-    List<String> groupStrings = new ArrayList<>();
-    StringBuilder sb = new StringBuilder();
-    for (String groupName : groupNames) {
-      if (sb.length() + groupName.length() > MAX_HEADER_LENGTH) {
-        groupStrings.add(sb.toString());
-        sb = new StringBuilder();
-      }
-      if (sb.length() > 0) {
-        sb.append(',');
-      }
-      sb.append(groupName);
-    }
-    if (sb.length() > 0) {
-      groupStrings.add(sb.toString());
-    }
-    return groupStrings;
   }
 
   @Override

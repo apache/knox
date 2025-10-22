@@ -19,13 +19,12 @@ package org.apache.knox.gateway.service.auth;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.util.GroupUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -39,7 +38,9 @@ import static javax.ws.rs.core.Response.status;
 public abstract class AbstractAuthResource {
   public static final String AUTH_ACTOR_ID_HEADER_NAME = "preauth.auth.header.actor.id.name";
   public static final String AUTH_ACTOR_GROUPS_HEADER_PREFIX = "preauth.auth.header.actor.groups.prefix";
-  public static final String GROUP_FILTER_PATTERN = "preauth.group.filter.pattern";
+  public static final String GROUP_HEADER_LENGTH_LIMIT = "preauth.auth.header.groups.length.limit";
+  public static final String GROUP_HEADER_SIZE_LIMIT = "preauth.auth.header.groups.size.limit";
+  private static final String GROUP_FILTER_PATTERN = "preauth.group.filter.pattern";
 
   static final AuthMessages LOG = MessagesFactory.get(AuthMessages.class);
 
@@ -47,16 +48,21 @@ public abstract class AbstractAuthResource {
   static final String DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX = "X-Knox-Actor-Groups";
   static final Pattern DEFAULT_GROUP_FILTER_PATTERN = Pattern.compile(".*");
 
-  protected static final int MAX_HEADER_LENGTH = 1000;
-  protected static final String ACTOR_GROUPS_HEADER_FORMAT = "%s-%d";
+  private static final String DEFAULT_GROUP_HEADER_LENGTH_LIMIT = "1000";
+  private static final String DEFAULT_GROUP_HEADER_SIZE_LIMIT = "-1"; // turned off by default, to be backward compatible
+  private static final String ACTOR_GROUPS_HEADER_FORMAT = "%s-%d";
 
   protected String authHeaderActorIDName;
   protected String authHeaderActorGroupsPrefix;
+  private int groupHeaderLengthLimit;
+  private int groupHeaderSizeLimit;
   protected Pattern groupFilterPattern;
 
   protected void initialize() {
     authHeaderActorIDName = getInitParameter(AUTH_ACTOR_ID_HEADER_NAME, DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
     authHeaderActorGroupsPrefix = getInitParameter(AUTH_ACTOR_GROUPS_HEADER_PREFIX, DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX);
+    groupHeaderLengthLimit = Integer.parseInt(getInitParameter(GROUP_HEADER_LENGTH_LIMIT, DEFAULT_GROUP_HEADER_LENGTH_LIMIT));
+    groupHeaderSizeLimit = Integer.parseInt(getInitParameter(GROUP_HEADER_SIZE_LIMIT, DEFAULT_GROUP_HEADER_SIZE_LIMIT));
     final String groupFilterPatternString = getInitParameter(GROUP_FILTER_PATTERN, null);
     groupFilterPattern = groupFilterPatternString == null ? DEFAULT_GROUP_FILTER_PATTERN : Pattern.compile(groupFilterPatternString);
   }
@@ -84,37 +90,15 @@ public abstract class AbstractAuthResource {
 
     // Populate actor groups headers
     final Set<String> matchingGroupNames = subject == null ? Collections.emptySet()
-        : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupFilterPattern.matcher(group.getName()).matches()).map(group -> group.getName())
-        .collect(Collectors.toSet());
+            : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupFilterPattern.matcher(group.getName()).matches()).map(group -> group.getName())
+            .collect(Collectors.toSet());
     if (!matchingGroupNames.isEmpty()) {
-      final List<String> groupStrings = getGroupStrings(matchingGroupNames);
+      final List<String> groupStrings = GroupUtils.getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
         getResponse().addHeader(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1), groupStrings.get(i));
       }
     }
     return ok().build();
-  }
-
-  private List<String> getGroupStrings(Collection<String> groupNames) {
-    if (groupNames.isEmpty()) {
-      return Collections.emptyList();
-    }
-    List<String> groupStrings = new ArrayList<>();
-    StringBuilder sb = new StringBuilder();
-    for (String groupName : groupNames) {
-      if (sb.length() + groupName.length() > MAX_HEADER_LENGTH) {
-        groupStrings.add(sb.toString());
-        sb = new StringBuilder();
-      }
-      if (sb.length() > 0) {
-        sb.append(',');
-      }
-      sb.append(groupName);
-    }
-    if (sb.length() > 0) {
-      groupStrings.add(sb.toString());
-    }
-    return groupStrings;
   }
 
 }
