@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,10 +32,13 @@ public class GroupUtils {
             return Collections.emptyList();
         }
 
+        // Defensive copy to isolate from concurrent modifications
+        final List<String> safeGroupNames = new ArrayList<>(groupNames);
+
         if (sizeLimitBytes > 0) {
-            return getGroupStringsBySize(groupNames, sizeLimitBytes);
+            return getGroupStringsBySize(safeGroupNames, sizeLimitBytes);
         } else {
-            return getGroupStringsByLength(groupNames, lengthLimit);
+            return getGroupStringsByLength(safeGroupNames, lengthLimit);
         }
     }
 
@@ -48,7 +53,7 @@ public class GroupUtils {
             int projectedSize = currentSize + commaBytes + groupBytes;
 
             if (projectedSize > sizeLimitBytes) {
-                groupStrings.add(sb.toString());
+                saveGroups(groupStrings, sb);
                 sb = new StringBuilder();
                 currentSize = 0;
             }
@@ -59,10 +64,17 @@ public class GroupUtils {
         }
 
         if (sb.length() > 0) {
-            groupStrings.add(sb.toString());
+            saveGroups(groupStrings, sb);
         }
 
         return groupStrings;
+    }
+
+    private static void saveGroups(final List<String> groupStrings, final StringBuilder sb) {
+        final String groups = sb.toString();
+        if (StringUtils.isNotBlank(groups)) {
+            groupStrings.add(groups);
+        }
     }
 
     private static int addCommaIfNeeded(final StringBuilder sb, int currentSize) {
@@ -81,7 +93,7 @@ public class GroupUtils {
         for (String groupName : groupNames) {
             int commaChars = sb.length() > 0 ? 1 : 0;
             if (sb.length() + groupName.length() + commaChars > lengthLimit) {
-                groupStrings.add(sb.toString());
+                saveGroups(groupStrings, sb);
                 sb = new StringBuilder();
             }
             addCommaIfNeeded(sb, 0);
@@ -89,7 +101,7 @@ public class GroupUtils {
         }
 
         if (sb.length() > 0) {
-            groupStrings.add(sb.toString());
+            saveGroups(groupStrings, sb);
         }
 
         return groupStrings;

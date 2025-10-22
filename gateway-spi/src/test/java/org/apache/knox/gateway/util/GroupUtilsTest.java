@@ -23,9 +23,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -103,4 +111,56 @@ public class GroupUtilsTest {
         final List<String> result = GroupUtils.getGroupStrings(Collections.emptyList(), 1000, 4096);
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    public void testShouldNotReturnEmptyElements() {
+        final List<String> input = Arrays.asList("longGroupName1", "longGroupName2", "longGroupName3");
+        final List<String> result = GroupUtils.getGroupStrings(input, 10, 1); // note the size limit is set to 1
+        assertEquals("Should not return a list with empty elements", 3, result.size());
+    }
+
+    @Test
+    public void testConcurrentGroupStringCalls() throws Exception {
+        final int THREAD_COUNT = 20;
+        final int ITERATIONS = 1000;
+        final ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+        final List<Future<List<String>>> futures = new ArrayList<>();
+
+        final List<String> input = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            input.add("group_" + i);
+        }
+
+        for (int t = 0; t < THREAD_COUNT; t++) {
+            futures.add(executor.submit(() -> {
+                for (int i = 0; i < ITERATIONS; i++) {
+                    List<String> result = GroupUtils.getGroupStrings(input, 50, 512);
+                    assertNotNull(result);
+                    assertFalse(result.isEmpty());
+
+                    Set<String> allGroups = new HashSet<>();
+                    for (String chunk : result) {
+                        int bytes = chunk.getBytes(StandardCharsets.UTF_8).length;
+                        assertTrue("Chunk exceeds 512 bytes: " + bytes, bytes <= 512);
+
+                        for (String g : chunk.split(",")) {
+                            assertTrue("Duplicate group found: " + g, allGroups.add(g));
+                        }
+                    }
+
+                    assertEquals("Missing or extra groups in result", input.size(), allGroups.size());
+                    assertTrue("Not all expected groups are present", allGroups.containsAll(input));
+                }
+                return null;
+            }));
+        }
+
+        for (Future<List<String>> f : futures) {
+            f.get(10, TimeUnit.SECONDS);
+        }
+
+        executor.shutdown();
+        assertTrue(executor.awaitTermination(3, TimeUnit.SECONDS));
+    }
+
 }

@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.auth;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.util.GroupUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
@@ -33,7 +34,6 @@ import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
-import static org.apache.knox.gateway.util.GroupUtils.getGroupStrings;
 
 public abstract class AbstractAuthResource {
   public static final String AUTH_ACTOR_ID_HEADER_NAME = "preauth.auth.header.actor.id.name";
@@ -93,7 +93,7 @@ public abstract class AbstractAuthResource {
             : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupFilterPattern.matcher(group.getName()).matches()).map(group -> group.getName())
             .collect(Collectors.toSet());
     if (!matchingGroupNames.isEmpty()) {
-      final List<String> groupStrings = getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
+      final List<String> groupStrings = GroupUtils.getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
         getResponse().addHeader(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1), groupStrings.get(i));
       }

@@ -24,6 +24,7 @@ import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.config.Default;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.util.GroupUtils;
 import org.apache.knox.gateway.util.StringUtils;
 
 import javax.security.auth.Subject;
@@ -45,8 +46,6 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static org.apache.knox.gateway.util.GroupUtils.getGroupStrings;
 
 /**
  * Extends DefaultDispatch to:
@@ -76,7 +75,6 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
 
   protected static final String ACTOR_GROUPS_HEADER_FORMAT = "%s-%d";
   protected Pattern groupPattern = Pattern.compile(DEFAULT_GROUP_FILTER_PATTERN);
-
 
   private Set<String> convertCommaDelimitedHeadersToSet(String headers) {
     return headers == null ?  Collections.emptySet(): new HashSet<>(Arrays.asList(headers.split("\\s*,\\s*")));
@@ -221,7 +219,7 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
             .map(GroupPrincipal::getName)
             .collect(Collectors.toSet());
     if (!matchingGroupNames.isEmpty()) {
-      final List<String> groupStrings = getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
+      final List<String> groupStrings = GroupUtils.getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
         headers.put(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, actorGroupsHeaderPrefix, i + 1), groupStrings.get(i));
       }
