@@ -8,12 +8,11 @@
       "es2017",
       "dom"
     ],
-    "mapRoot": "./",
-    "module": "es6",
+    "module": "ES2022",
     "moduleResolution": "bundler",
     "outDir": "../dist/out-tsc",
     "sourceMap": true,
-    "target": "es5",
+    "target": "ES2022",
     "typeRoots": [
       "../node_modules/@types"
     ]
