@@ -1197,4 +1197,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public String getStrictTransportOption() {
     return "max-age=3001";
   }
+
+  @Override
+  public boolean isTopologyAsyncSupported(String topology) {
+    return false;
+  }
 }

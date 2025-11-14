@@ -110,6 +110,7 @@ public class SSEHaDispatchTest {
         expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
         expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
         expect(gatewayConfig.isAsyncSupported()).andReturn(true).anyTimes();
+        expect(gatewayConfig.isTopologyAsyncSupported("SSE")).andReturn(false).anyTimes();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
@@ -117,6 +118,7 @@ public class SSEHaDispatchTest {
         ServletContext servletContext = createMock(ServletContext.class);
         expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
         expect(servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices).atLeastOnce();
+        expect(servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("SSE").atLeastOnce();
 
         FilterConfig filterConfig = createMock(FilterConfig.class);
         expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();
@@ -688,6 +690,7 @@ public class SSEHaDispatchTest {
         expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
         expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
         expect(gatewayConfig.isAsyncSupported()).andReturn(true).anyTimes();
+        expect(gatewayConfig.isTopologyAsyncSupported("SSE")).andReturn(false).once();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
@@ -695,6 +698,7 @@ public class SSEHaDispatchTest {
         ServletContext servletContext = createMock(ServletContext.class);
         expect(servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).atLeastOnce();
         expect(servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices).atLeastOnce();
+        expect(servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn("SSE").atLeastOnce();
 
         FilterConfig filterConfig = createMock(FilterConfig.class);
         expect(filterConfig.getServletContext()).andReturn(servletContext).atLeastOnce();

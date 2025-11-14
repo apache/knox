@@ -356,6 +356,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String GATEWAY_SERVLET_ASYNC_SUPPORTED = GATEWAY_CONFIG_FILE_PREFIX + ".servlet.async.supported";
   private static final boolean GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT = false;
+  private static final String GATEWAY_SERVLET_ASYNC_SUPPORTED_TOPOLOGIES = GATEWAY_SERVLET_ASYNC_SUPPORTED + ".topologies";
 
   private static final String GATEWAY_HEALTH_CHECK_TOPOLOGIES = GATEWAY_CONFIG_FILE_PREFIX + ".health.check.topologies";
 
@@ -1566,6 +1567,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean isAsyncSupported() {
     return getBoolean(GATEWAY_SERVLET_ASYNC_SUPPORTED, GATEWAY_SERVLET_ASYNC_SUPPORTED_DEFAULT);
+  }
+
+  @Override
+  public boolean isTopologyAsyncSupported(String topology) {
+      String topologies = get(GATEWAY_SERVLET_ASYNC_SUPPORTED_TOPOLOGIES);
+      if (StringUtils.isBlank(topologies)) {
+          return false;
+      }
+      return Arrays.stream(topologies.split(",")).anyMatch(t -> t.trim().equalsIgnoreCase(topology));
   }
 
   @Override

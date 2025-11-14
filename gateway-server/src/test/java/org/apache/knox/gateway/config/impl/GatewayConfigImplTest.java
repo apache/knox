@@ -514,4 +514,24 @@ public class GatewayConfigImplTest {
     assertThat(config.getConcurrentSessionVerifierExpiredTokensCleaningPeriod(), is(1000L));
   }
 
+    @Test
+    public void testIsTopologyAsyncSupported() {
+      GatewayConfigImpl config = new GatewayConfigImpl();
+
+      config.set("gateway.servlet.async.supported.topologies", "");
+      assertThat(config.isTopologyAsyncSupported("sandbox"), is(false));
+      config.set("gateway.servlet.async.supported.topologies", "sandbox");
+      assertThat(config.isTopologyAsyncSupported("sandbox"), is(true));
+      config.set("gateway.servlet.async.supported.topologies", " sandbox ");
+      assertThat(config.isTopologyAsyncSupported("sandbox"), is(true));
+      config.set("gateway.servlet.async.supported.topologies", "sandbox2");
+      assertThat(config.isTopologyAsyncSupported("sandbox"), is(false));
+      config.set("gateway.servlet.async.supported.topologies", "sandbox,health");
+      assertThat(config.isTopologyAsyncSupported("sandbox"), is(true));
+      assertThat(config.isTopologyAsyncSupported("health"), is(true));
+      config.set("gateway.servlet.async.supported.topologies", "sandbox2,health");
+      assertThat(config.isTopologyAsyncSupported("sandbox"), is(false));
+      assertThat(config.isTopologyAsyncSupported("sandbox2"), is(true));
+      assertThat(config.isTopologyAsyncSupported("health"), is(true));
+    }
 }

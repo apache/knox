@@ -40,6 +40,7 @@ import org.apache.knox.gateway.dispatch.AsyncDispatch;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 import org.apache.knox.gateway.dispatch.DefaultHttpAsyncClientFactory;
 import org.apache.knox.gateway.dispatch.HttpAsyncClientFactory;
+import org.apache.knox.gateway.services.GatewayServices;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.FilterConfig;
@@ -59,7 +60,8 @@ public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
 
     public SSEDispatch(FilterConfig filterConfig) {
         GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-        this.asyncSupported = gatewayConfig.isAsyncSupported();
+        String topologyName = (String) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+        this.asyncSupported = gatewayConfig.isAsyncSupported() || gatewayConfig.isTopologyAsyncSupported(topologyName);
         if(asyncSupported) {
             HttpAsyncClientFactory asyncClientFactory = new DefaultHttpAsyncClientFactory();
             this.asyncClient = asyncClientFactory.createAsyncHttpClient(filterConfig);
