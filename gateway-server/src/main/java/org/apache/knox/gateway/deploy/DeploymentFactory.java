@@ -374,13 +374,14 @@ public abstract class DeploymentFactory {
       GatewayConfig gatewayConfig) {
     WebAppDescriptor wad = context.getWebAppDescriptor();
     String topoName = context.getTopology().getName();
+    boolean asyncSupported = gatewayConfig.isAsyncSupported() || gatewayConfig.isTopologyAsyncSupported(topoName);
     if( applications == null ) {
       String servletName = topoName + SERVLET_NAME_SUFFIX;
-      wad.createServlet().asyncSupported(gatewayConfig.isAsyncSupported()).servletName(servletName).servletClass(GatewayServlet.class.getName());
+      wad.createServlet().asyncSupported(asyncSupported).servletName(servletName).servletClass(GatewayServlet.class.getName());
       wad.createServletMapping().servletName( servletName ).urlPattern( "/*" );
     } else {
       String filterName = topoName + FILTER_NAME_SUFFIX;
-      wad.createFilter().asyncSupported(gatewayConfig.isAsyncSupported()).filterName(filterName).filterClass(GatewayServlet.class.getName());
+      wad.createFilter().asyncSupported(asyncSupported).filterName(filterName).filterClass(GatewayServlet.class.getName());
       wad.createFilterMapping().filterName( filterName ).urlPattern( "/*" );
     }
     if (gatewayServices != null) {
