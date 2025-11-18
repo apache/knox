@@ -14,22 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { RouterModule } from '@angular/router';
+import {Service} from './service';
 
-import { HomepageService } from './service/homepage.service';
-
-@NgModule({
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    HttpClientXsrfModule,
-    MatGridListModule,
-    RouterModule.forRoot([]),
-  ],
-  providers: [HomepageService]
-})
-export class AppModule {}
+export class TopologyInformation {
+    topology: string;
+    pinned: boolean;
+    apiServicesViewVersion: string;
+    apiServices: {
+        service: Service[];
+    };
+    uiServices: {
+        service: Service[];
+    };
+}
