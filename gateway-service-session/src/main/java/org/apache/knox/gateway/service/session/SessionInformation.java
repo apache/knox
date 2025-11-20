@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.service.session;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "sessioninfo")
 public class SessionInformation {

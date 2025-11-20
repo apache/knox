@@ -34,6 +34,7 @@ import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.Version;
 import org.apache.knox.gateway.util.ServiceDefinitionsLoader;
 import org.apache.knox.gateway.util.Urls;
+import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -44,9 +45,9 @@ import org.jboss.shrinkwrap.descriptor.api.webapp30.WebAppDescriptor;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.FilterType;
 import org.jboss.shrinkwrap.descriptor.api.webcommon30.ServletType;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import java.beans.Statement;
 import java.io.File;
 import java.io.IOException;
@@ -86,11 +87,12 @@ public abstract class DeploymentFactory {
 
   private static JAXBContext getJAXBContext() {
     Map<String,String> properties = new HashMap<>(2);
-    properties.put( "eclipselink-oxm-xml", "org/apache/knox/gateway/topology/topology_binding-xml.xml");
-    properties.put( "eclipselink.media-type", "application/xml" );
+    properties.put( JAXBContextProperties.OXM_METADATA_SOURCE, "org/apache/knox/gateway/topology/topology_binding-xml.xml");
+    properties.put( JAXBContextProperties.MEDIA_TYPE, "application/xml" );
 
     try {
       return JAXBContext.newInstance(Topology.class.getPackage().getName(), Topology.class.getClassLoader(), properties);
+      //return JAXBContext.newInstance(Topology.class);
     } catch (JAXBException e) {
       throw new IllegalStateException(e);
     }

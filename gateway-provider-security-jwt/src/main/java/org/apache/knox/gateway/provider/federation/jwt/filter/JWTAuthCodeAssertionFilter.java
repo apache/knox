@@ -28,6 +28,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.services.ServiceType;
@@ -64,6 +65,7 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
             : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
   }
 
+  @SuppressForbidden
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
                        FilterChain chain) throws IOException {

@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
-import javax.activation.MimeType;
+import jakarta.activation.MimeType;
 import java.util.List;
 
 public interface UrlRewriteFilterDescriptor {

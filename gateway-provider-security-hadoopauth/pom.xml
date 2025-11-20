@@ -45,10 +45,7 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-spi</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-spi-common</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-util-common</artifactId>
@@ -69,14 +66,28 @@
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.jboss.shrinkwrap</groupId>
-            <artifactId>shrinkwrap-api</artifactId>
-        </dependency>
+
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>de.thetaphi</groupId>
+            <artifactId>forbiddenapis</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi-common</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -86,9 +97,12 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
+            <groupId>org.jboss.shrinkwrap</groupId>
+            <artifactId>shrinkwrap-api</artifactId>
+            <scope>test</scope>
         </dependency>
+
+
 
         <dependency>
             <groupId>org.apache.knox</groupId>

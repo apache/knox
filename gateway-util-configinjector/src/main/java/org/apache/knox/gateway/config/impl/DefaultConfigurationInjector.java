@@ -89,8 +89,10 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
         }
       } else {
         try {
-          if( !field.isAccessible() ) {
-            field.setAccessible( true );
+          // In JDK 17, setAccessible is restricted for non-reflection code and may throw InaccessibleObjectException.
+          // Use canAccess to check accessibility, and handle exceptions accordingly.
+          if (!field.canAccess(target)) {
+            field.setAccessible(true); // This may still fail if running with strong encapsulation.
           }
           field.set( target, value );
         } catch( Exception e ) {
@@ -128,7 +130,7 @@ public class DefaultConfigurationInjector implements ConfigurationInjector {
         }
         args[ i ] = argValue;
       }
-      if( !method.isAccessible() ) {
+      if( !method.canAccess(target) ) {
         method.setAccessible( true );
       }
       try {
