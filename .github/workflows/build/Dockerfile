@@ -39,7 +39,7 @@ RUN mkdir /knox/knoxshell-temp-artifacts
 ADD settings.xml /usr/share/maven/ref/
 
 # Skipping tests here for faster turnaround.
-RUN cd knox && mvn -settings /usr/share/maven/ref/settings.xml clean -Ppackage,release install -DskipTests && tar -xvzf target/*/knox-*.tar.gz -C knox-temp-artifacts && tar -xvzf /knox/target/*/knoxshell-*.tar.gz -C knoxshell-temp-artifacts
+RUN cd knox && mvn -settings /usr/share/maven/ref/settings.xml clean -Ppackage,release install -Dforbiddenapis.skip=true -Denforcer.skip -Dpmd.failOnViolation=false -DskipTests=true -Dcheckstyle.skip=true -Dspotbugs.skip=true -Dpmd.skip=true -Drat.skip -DskipTests && tar -xvzf target/*/knox-*.tar.gz -C knox-temp-artifacts && tar -xvzf /knox/target/*/knoxshell-*.tar.gz -C knoxshell-temp-artifacts
 
 # move runtime to new location
 # See https://github.com/docker/compose/issues/4581#issuecomment-321386605
