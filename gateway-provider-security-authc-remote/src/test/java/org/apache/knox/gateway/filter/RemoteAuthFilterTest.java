@@ -19,6 +19,7 @@ package org.apache.knox.gateway.filter;
 
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -42,7 +43,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.AccessController;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -514,7 +514,7 @@ public class RemoteAuthFilterTest {
         public void doFilter(ServletRequest request, ServletResponse response) {
             doFilterCalled = true;
 
-            subject = Subject.getSubject( AccessController.getContext() );
+            subject = SubjectUtils.getCurrentSubject();
         }
 
         public Subject getSubject() {

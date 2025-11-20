@@ -418,7 +418,7 @@ public class GatewayFilter implements Filter {
           if( clazz == null ) {
             clazz = getClazz();
           }
-          Filter f = clazz.newInstance();
+          Filter f = clazz.getDeclaredConstructor().newInstance();
           f.init(this);
           instance = f;
         } catch( Exception e ) {

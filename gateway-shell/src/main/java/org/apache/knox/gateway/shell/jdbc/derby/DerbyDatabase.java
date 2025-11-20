@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.shell.jdbc.derby;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -112,12 +113,12 @@ public class DerbyDatabase implements Database {
   private void loadDriver(boolean networkServer) throws DerbyDatabaseException {
     final String driverToLoad = networkServer ? NETWORK_SERVER_DRIVER : EMBEDDED_DRIVER;
     try {
-      Class.forName(driverToLoad).newInstance();
+      Class.forName(driverToLoad).getDeclaredConstructor().newInstance();
     } catch (ClassNotFoundException e) {
       throw new DerbyDatabaseException("Unable to load the JDBC driver " + driverToLoad + ". Check your CLASSPATH.", e);
     } catch (InstantiationException e) {
       throw new DerbyDatabaseException("Unable to instantiate the JDBC driver " + driverToLoad, e);
-    } catch (IllegalAccessException e) {
+    } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       throw new DerbyDatabaseException("Not allowed to access the JDBC driver " + driverToLoad, e);
     }
   }

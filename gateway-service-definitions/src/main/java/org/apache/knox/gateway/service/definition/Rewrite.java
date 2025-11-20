@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.service.definition;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlType;
 
 @XmlType(name = "rewrite")
 public class Rewrite {
