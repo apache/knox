@@ -40,6 +40,7 @@ import java.security.KeyPairGenerator;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.cert.X509Certificate;
+import javax.security.auth.x500.X500Principal;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.AbstractMap;
@@ -82,6 +83,7 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -160,6 +162,7 @@ public class TokenServiceResourceTest {
     configureCommonExpectations(contextExpectations, null, serverManagedTssEnabled);
   }
 
+  @SuppressForbidden
   private void configureCommonExpectations(Map<String, String> contextExpectations, String expectedSubjectDN, Boolean serverManagedTssEnabled) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     contextExpectations.forEach((key, value) -> EasyMock.expect(context.getInitParameter(key)).andReturn(value).anyTimes());
@@ -217,6 +220,7 @@ public class TokenServiceResourceTest {
     if (StringUtils.isNotBlank(expectedSubjectDN)) {
       X509Certificate trustedCertMock = EasyMock.createMock(X509Certificate.class);
       EasyMock.expect(trustedCertMock.getSubjectDN()).andReturn(new PrimaryPrincipal(expectedSubjectDN)).anyTimes();
+      EasyMock.expect(trustedCertMock.getSubjectX500Principal()).andReturn(new X500Principal(expectedSubjectDN)).anyTimes();
       ArrayList<X509Certificate> certArrayList = new ArrayList<>();
       certArrayList.add(trustedCertMock);
       X509Certificate[] certs = {};

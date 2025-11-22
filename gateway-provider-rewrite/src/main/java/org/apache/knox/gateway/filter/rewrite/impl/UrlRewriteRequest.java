@@ -36,7 +36,7 @@ import org.apache.knox.gateway.util.urltemplate.Resolver;
 import org.apache.knox.gateway.util.urltemplate.Template;
 import org.eclipse.jetty.http.HttpHeader;
 
-import javax.activation.MimeType;
+import jakarta.activation.MimeType;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;

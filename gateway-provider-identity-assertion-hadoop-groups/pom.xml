@@ -39,10 +39,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-spi-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-identity-assertion-common</artifactId>
         </dependency>
 
@@ -75,6 +71,11 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi-common</artifactId>
             <scope>test</scope>
         </dependency>
 

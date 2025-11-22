@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.knox.gateway.GatewayFilter;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
@@ -547,6 +548,7 @@ public class HadoopAuthFilterTest {
     boolean doFilterCalled;
     Subject subject;
 
+    @SuppressForbidden
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException {

@@ -37,6 +37,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.MediaType;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.FileUtils;
@@ -225,6 +226,7 @@ public class GatewaySslFuncTest {
                 new TrustAllHosts() ) )
         .build();
     HttpGet request = new HttpGet( serviceUrl );
+    request.addHeader("Accept", MediaType.APPLICATION_XML);
     CloseableHttpResponse response = client.execute( request, context );
     assertThat( the( new StreamSource( response.getEntity().getContent() ) ), hasXPath( "/ServerVersion/version" ) );
     response.close();
@@ -261,6 +263,7 @@ public class GatewaySslFuncTest {
                 new String[]{ "TLS_DHE_RSA_WITH_AES_128_CBC_SHA" },
                 new TrustAllHosts() ) ).build();
     request = new HttpGet( serviceUrl );
+    request.addHeader("Accept", MediaType.APPLICATION_XML);
     response = client.execute( request, context );
     assertThat( the( new StreamSource( response.getEntity().getContent() ) ), hasXPath( "/ServerVersion/version" ) );
     response.close();

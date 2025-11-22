@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 8, 11 ]
+        java: [ 17 ]
       fail-fast: false
     name: CI - Java ${{ matrix.java }}
     steps:

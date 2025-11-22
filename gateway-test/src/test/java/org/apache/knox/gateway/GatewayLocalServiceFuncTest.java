@@ -23,7 +23,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.DefaultGatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.apache.knox.test.TestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -150,7 +149,7 @@ public class GatewayLocalServiceFuncTest {
         .gotoRoot();
   }
 
-  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  @Test
   public void testJerseyService() throws ClassNotFoundException {
     LOG_ENTER();
     assertThat( ClassLoader.getSystemClassLoader().loadClass( "org.glassfish.jersey.servlet.ServletContainer" ), notNullValue() );

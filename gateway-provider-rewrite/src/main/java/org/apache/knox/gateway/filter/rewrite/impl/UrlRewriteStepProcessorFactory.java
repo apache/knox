@@ -20,6 +20,7 @@ package org.apache.knox.gateway.filter.rewrite.impl;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteStepDescriptor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStepProcessor;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ public abstract class UrlRewriteStepProcessorFactory {
   private UrlRewriteStepProcessorFactory() {
   }
 
-  public static UrlRewriteStepProcessor create( UrlRewriteStepDescriptor descriptor ) throws IllegalAccessException, InstantiationException {
+  public static UrlRewriteStepProcessor create( UrlRewriteStepDescriptor descriptor ) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
     UrlRewriteStepProcessor processor;
     Map<String,Class<? extends UrlRewriteStepProcessor>> typeMap;
     typeMap = MAP.get( descriptor.getClass() );
@@ -50,7 +51,7 @@ public abstract class UrlRewriteStepProcessorFactory {
       if( processorClass == null ) {
         throw new IllegalArgumentException( type );
       } else {
-        processor = processorClass.newInstance();
+        processor = processorClass.getDeclaredConstructor().newInstance();
       }
     }
     return processor;

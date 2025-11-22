@@ -43,6 +43,10 @@ import org.apache.knox.gateway.util.Tokens;
  */
 public class ZookeeperTokenStateService extends AliasBasedTokenStateService implements RemoteTokenStateChangeListener {
 
+  // Constants for token aliases - needed for test compatibility
+  public static final String TOKEN_MAX_LIFETIME_POSTFIX = AliasBasedTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX;
+  public static final String TOKEN_META_POSTFIX = AliasBasedTokenStateService.TOKEN_META_POSTFIX;
+
   private final GatewayServices gatewayServices;
   private final AliasServiceFactory aliasServiceFactory;
 
@@ -58,14 +62,31 @@ public class ZookeeperTokenStateService extends AliasBasedTokenStateService impl
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     log.deprecatedServiceUsage(this.getClass().getCanonicalName());
-    final ZookeeperRemoteAliasService zookeeperAliasService = (ZookeeperRemoteAliasService) aliasServiceFactory.create(gatewayServices, ALIAS_SERVICE, config, options,
+
+    final Object createdService = aliasServiceFactory.create(gatewayServices, ALIAS_SERVICE, config, options,
         ZookeeperRemoteAliasService.class.getName());
+
+    if (createdService == null) {
+      throw new ServiceLifecycleException("aliasServiceFactory.create() returned null - cannot create ZookeeperRemoteAliasService");
+    }
+
+    if (!(createdService instanceof ZookeeperRemoteAliasService)) {
+      throw new ServiceLifecycleException("aliasServiceFactory.create() returned unexpected type: " + createdService.getClass().getName() +
+          ", expected: ZookeeperRemoteAliasService");
+    }
+
+    final ZookeeperRemoteAliasService zookeeperAliasService = (ZookeeperRemoteAliasService) createdService;
+
+
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE, "true");
     options.put(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS, "false");
+
+
     zookeeperAliasService.registerRemoteTokenStateChangeListener(this);
     zookeeperAliasService.init(config, options);
     super.setAliasService(zookeeperAliasService);
     super.init(config, options);
+
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_CREATE_TOKENS_SUB_NODE);
     options.remove(ZookeeperRemoteAliasService.OPTION_NAME_SHOULD_USE_LOCAL_ALIAS);
   }

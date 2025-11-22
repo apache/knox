@@ -21,6 +21,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFunctionDescriptorFactory;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteFunctionProcessor;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public abstract class UrlRewriteFunctionProcessorFactory {
   }
 
   public static UrlRewriteFunctionProcessor create( String name, UrlRewriteFunctionDescriptor descriptor )
-      throws IllegalAccessException, InstantiationException {
+          throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
     UrlRewriteFunctionProcessor processor;
     if( descriptor == null ) {
       descriptor = UrlRewriteFunctionDescriptorFactory.create( name );
@@ -54,7 +55,7 @@ public abstract class UrlRewriteFunctionProcessorFactory {
       if( processorClass == null ) {
         throw new IllegalArgumentException( name );
       } else {
-        processor = processorClass.newInstance();
+        processor = processorClass.getDeclaredConstructor().newInstance();
       }
     }
     return processor;

@@ -42,6 +42,8 @@ import java.util.Map;
 public class DefaultServiceRegistryService implements ServiceRegistry, Service {
   private static GatewayMessages LOG = MessagesFactory.get( GatewayMessages.class );
 
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
   protected char[] chars = { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
   'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
   'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K',
@@ -71,9 +73,8 @@ public class DefaultServiceRegistryService implements ServiceRegistry, Service {
 
   private String generateRegCode(int length) {
     StringBuilder sb = new StringBuilder();
-    SecureRandom r = new SecureRandom();
     for (int i = 0; i < length; i++) {
-      sb.append(chars[r.nextInt(chars.length)]);
+      sb.append(chars[SECURE_RANDOM.nextInt(chars.length)]);
     }
     return sb.toString();
   }
