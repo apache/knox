@@ -217,8 +217,9 @@
         <hadoop.version>3.4.1</hadoop.version>
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
-        <httpclient.version>4.5.13</httpclient.version>
+        <httpclient.version>5.4.3</httpclient.version>
         <httpcore.version>4.4.14</httpcore.version>
+        <httpcore5.version>5.3.6</httpcore5.version>
         <jackson.version>2.18.2</jackson.version>
         <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
         <jansi.version>1.18</jansi.version>
@@ -279,7 +280,7 @@
         <slf4j.version>2.0.13</slf4j.version>
         <spotbugs.version>4.9.3</spotbugs.version>
         <spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
-        <spring.version>5.3.21</spring.version>
+        <spring.version>6.2.11</spring.version>
         <spring-vault.version>2.3.4</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2.1</stax2-api.version>
@@ -1672,14 +1673,14 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
                 <version>${httpclient.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpcore</artifactId>
-                <version>${httpcore.version}</version>
+                <groupId>org.apache.httpcomponents.core5</groupId>
+                <artifactId>httpcore5</artifactId>
+                <version>${httpcore5.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
