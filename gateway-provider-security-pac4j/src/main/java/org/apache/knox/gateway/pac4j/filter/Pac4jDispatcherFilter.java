@@ -40,6 +40,7 @@ import org.pac4j.config.client.PropertiesConfigFactory;
 import org.pac4j.config.client.PropertiesConstants;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
+import org.pac4j.core.context.FrameworkParameters;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
@@ -47,7 +48,7 @@ import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordA
 import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.jee.filter.CallbackFilter;
 import org.pac4j.jee.filter.SecurityFilter;
-import org.pac4j.oidc.client.AzureAdClient;
+import org.pac4j.oidc.client.AzureAd2Client;
 import org.pac4j.saml.client.SAML2Client;
 
 import javax.servlet.Filter;
@@ -186,7 +187,7 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
        add the callback parameter to know it's a callback,
        Azure AD does not honor query param so we add callback param as path element.
     */
-    if (AzureAdClient.class.getSimpleName().equals(clientNameParameter) || (
+    if (AzureAd2Client.class.getSimpleName().equals(clientNameParameter) || (
         !StringUtils.isBlank(oidcType) && PAC4J_OICD_TYPE_AZURE
             .equals(oidcType))) {
       pac4jCallbackUrl = pac4jCallbackUrl + URL_PATH_SEPARATOR + PAC4J_CALLBACK_PARAMETER;
@@ -252,12 +253,12 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
 
     if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
       /* NOTE: this is a final variable, and will be used by all requests in Knox */
-      sessionStore = JEESessionStore.INSTANCE;
+      sessionStore = new JEESessionStore();
     } else {
       sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix, sessionStoreConfigs);
     }
 
-    config.setSessionStore(sessionStore);
+    config.setSessionStoreFactory((FrameworkParameters parameters) -> sessionStore);
 
     SessionInvalidators.KNOX_SSO_INVALIDATOR.registerSessionInvalidator(this);
 

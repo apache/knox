@@ -30,11 +30,13 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pac4j.core.config.Config;
+import org.pac4j.core.context.FrameworkParameters;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.JEEFrameworkParameters;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -89,7 +91,8 @@ public class Pac4jIdentityAdapter implements Filter {
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
     final JEEContext context = new JEEContext(request, response);
     Config pac4jConfig = ((Config)request.getAttribute(PAC4J_CONFIG));
-    SessionStore sessionStore = pac4jConfig.getSessionStore();
+    FrameworkParameters frameworkParameters = new JEEFrameworkParameters(request, response);
+    SessionStore sessionStore = pac4jConfig.getSessionStoreFactory().newSessionStore(frameworkParameters);
     final ProfileManager manager = new ProfileManager(context, sessionStore);
     final Optional<UserProfile> optional = manager.getProfile();
     if (optional.isPresent()) {
