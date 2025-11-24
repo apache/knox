@@ -126,6 +126,8 @@
 
             // remove pac4j cookies
             response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jCsrfToken", p4j_domainName, pac4jPath));
+            response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jCsrfTokenExpirationDate", p4j_domainName, pac4jPath));
+            response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jPreviousCsrfToken", p4j_domainName, pac4jPath));
             response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jRequestedUrl", p4j_domainName, pac4jPath));
             response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jUserProfiles", p4j_domainName, pac4jPath));
             response.addHeader("Set-Cookie", removeCookie("pac4j.session.pac4jUserProfiles", p4j_domainName, pac4jPath+"/websso"));
