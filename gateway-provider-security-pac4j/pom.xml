@@ -101,6 +101,10 @@
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-javaee</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.pac4j</groupId>
             <artifactId>pac4j-oauth</artifactId>
         </dependency>
         <dependency>
@@ -109,7 +113,7 @@
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-saml-opensamlv3</artifactId>
+            <artifactId>pac4j-saml</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>ch.qos.logback</groupId>
@@ -135,13 +139,7 @@
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>
-            <artifactId>jee-pac4j</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.pac4j</groupId>
-                    <artifactId>pac4j-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>javaee-pac4j</artifactId>
         </dependency>
         <dependency>
             <groupId>net.shibboleth.utilities</groupId>

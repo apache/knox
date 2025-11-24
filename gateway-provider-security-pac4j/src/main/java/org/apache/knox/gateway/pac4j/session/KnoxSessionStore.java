@@ -27,20 +27,19 @@ import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.pac4j.core.context.ContextHelper;
+import org.pac4j.core.context.WebContextHelper;
 import org.pac4j.core.context.Cookie;
-import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.profile.CommonProfile;
-import org.pac4j.core.util.JavaSerializationHelper;
+import org.pac4j.core.util.serializer.JavaSerializer;
 import org.pac4j.core.util.Pac4jConstants;
+import org.pac4j.jee.context.JEEContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +65,7 @@ import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_C
  *
  * @since 0.8.0
  */
-public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
+public class KnoxSessionStore implements SessionStore {
 
     private static final Logger logger = LogManager.getLogger(KnoxSessionStore.class);
 
@@ -74,7 +73,7 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
     public static final String PAC4J_SESSION_PREFIX = "pac4j.session.";
 
-    private final JavaSerializationHelper javaSerializationHelper;
+    private final JavaSerializer javaSerializer;
 
     private final CryptoService cryptoService;
 
@@ -85,14 +84,14 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
     final Map<String, String> sessionStoreConfigs;
 
     public KnoxSessionStore(final CryptoService cryptoService, final String clusterName, final String domainSuffix) {
-        this(cryptoService, clusterName, domainSuffix, new HashMap());
+        this(cryptoService, clusterName, domainSuffix, new HashMap<>());
     }
 
     public KnoxSessionStore(final CryptoService cryptoService,
         final String clusterName,
         final String domainSuffix,
         final Map<String, String> sessionStoreConfigs) {
-        javaSerializationHelper = new JavaSerializationHelper();
+        this.javaSerializer = new JavaSerializer();
         this.cryptoService = cryptoService;
         this.clusterName = clusterName;
         this.domainSuffix = domainSuffix;
@@ -101,11 +100,11 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
 
     @Override
-    public String getOrCreateSessionId(WebContext context) {
-        return null;
+    public Optional<String> getSessionId(WebContext context, boolean createSession) {
+        return Optional.empty();
     }
 
-    private Serializable uncompressDecryptBase64(final String v) {
+    private Object uncompressDecryptBase64(final String v) {
         if (v != null && !v.isEmpty()) {
             byte[] bytes = Base64.decodeBase64(v);
             EncryptionResult result = EncryptionResult.fromByteArray(bytes);
@@ -116,7 +115,7 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
                 result.salt);
             if (clear != null) {
                 try {
-                    return javaSerializationHelper.deserializeFromBytes(unCompress(clear));
+                    return javaSerializer.deserializeFromBytes(unCompress(clear));
                 } catch (IOException e) {
                     throw new TechnicalException(e);
                 }
@@ -127,7 +126,7 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
 
     @Override
     public Optional<Object> get(WebContext context, String key) {
-        final Cookie cookie = ContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
+        final Cookie cookie = WebContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
         Object value = null;
         if (cookie != null) {
             value = uncompressDecryptBase64(cookie.getValue());
@@ -141,13 +140,13 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
             || (o instanceof Map<?,?> && ((Map<?,?>)o).isEmpty())) {
             return null;
         } else {
-            byte[] bytes = javaSerializationHelper.serializeToBytes((Serializable) o);
+            byte[] bytes = javaSerializer.serializeToBytes(o);
 
             /* compress the data  */
             try {
                 bytes = compress(bytes);
 
-                if(bytes.length > 3000) {
+                if (bytes.length > 3000) {
                     logger.warn("Cookie too big, it might not be properly set");
                 }
 
@@ -186,7 +185,7 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
             throw new TechnicalException(e);
         }
         setCookieHeader.setSecure(true);
-        if(ContextHelper.isHttpsOrSecure(context)) {
+        if (WebContextHelper.isHttpsOrSecure(context)) {
             setCookieHeader.setHttpOnly(true);
         }
 
@@ -293,7 +292,7 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
     }
 
     @Override
-    public Optional<SessionStore<C>> buildFromTrackableSession(WebContext arg0, Object arg1) {
+    public Optional<SessionStore> buildFromTrackableSession(WebContext arg0, Object arg1) {
         return Optional.empty();
     }
 
@@ -303,7 +302,7 @@ public class KnoxSessionStore<C extends WebContext> implements SessionStore<C> {
     }
 
     @Override
-    public Optional getTrackableSession(WebContext arg0) {
+    public Optional<Object> getTrackableSession(WebContext arg0) {
         return Optional.empty();
     }
 
