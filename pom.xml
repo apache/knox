@@ -385,7 +385,7 @@
                 </repository>
                 <repository>
                     <id>shib-release</id>
-                    <url>https://build.shibboleth.net/nexus/content/groups/public</url>
+                    <url>https://build.shibboleth.net/maven/releases</url>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>

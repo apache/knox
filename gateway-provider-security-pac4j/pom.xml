@@ -28,6 +28,19 @@
     <name>gateway-provider-security-pac4j</name>
     <description>An extension of the gateway integrating pac4j as an authentication provider.</description>
 
+    <repositories>
+        <repository>
+            <id>shib-release</id>
+            <url>https://build.shibboleth.net/maven/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.knox</groupId>
