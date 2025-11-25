@@ -205,7 +205,6 @@
         <fastinfoset.version>1.2.18</fastinfoset.version>
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
         <forbiddenapis.version>3.9</forbiddenapis.version>
-        <fastinfoset.version>1.2.18</fastinfoset.version>
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <gethostname4j.version>1.0.0</gethostname4j.version>  <!-- See here: https://github.com/mattsheppard/gethostname4j -->
@@ -217,7 +216,8 @@
         <hadoop.version>3.4.1</hadoop.version>
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
-        <httpclient.version>5.4.3</httpclient.version>
+        <httpclient.version>4.5.13</httpclient.version>
+        <httpclient5.version>5.4.3</httpclient5.version>
         <httpcore.version>4.4.14</httpcore.version>
         <httpcore5.version>5.3.6</httpcore5.version>
         <jackson.version>2.18.2</jackson.version>
@@ -281,7 +281,7 @@
         <spotbugs.version>4.9.3</spotbugs.version>
         <spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
         <spring.version>6.2.11</spring.version>
-        <spring-vault.version>2.3.4</spring-vault.version>
+        <spring-vault.version>3.2.0</spring-vault.version>
         <stax-ex.version>1.8.3</stax-ex.version>
         <stax2-api.version>4.2.1</stax2-api.version>
         <system-stubs-junit4.version>1.1.0</system-stubs-junit4.version>
@@ -1583,21 +1583,9 @@
             </dependency>
 
             <dependency>
-                <groupId>jakarta.xml.bind</groupId>
-                <artifactId>jakarta.xml.bind-api</artifactId>
-                <version>${jakarta.xml.bind.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.jvnet.staxex</groupId>
                 <artifactId>stax-ex</artifactId>
                 <version>${stax-ex.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.sun.xml.fastinfoset</groupId>
-                <artifactId>FastInfoset</artifactId>
-                <version>${fastinfoset.version}</version>
             </dependency>
 
             <!--
@@ -1675,12 +1663,22 @@
             <dependency>
                 <groupId>org.apache.httpcomponents.client5</groupId>
                 <artifactId>httpclient5</artifactId>
-                <version>${httpclient.version}</version>
+                <version>${httpclient5.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents.core5</groupId>
                 <artifactId>httpcore5</artifactId>
                 <version>${httpcore5.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>${httpcore.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -2655,10 +2653,8 @@
 
             <dependency>
                 <groupId>org.springframework.vault</groupId>
-                <artifactId>spring-vault-dependencies</artifactId>
+                <artifactId>spring-vault-core</artifactId>
                 <version>${spring-vault.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
             </dependency>
 
             <dependency>
