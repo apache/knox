@@ -103,8 +103,7 @@ public class ConfigurableEncryptor {
 
   public EncryptionResult encrypt(byte[] plain) throws Exception {
     byte[] salt = new byte[saltSize];
-    SecureRandom rnd = new SecureRandom();
-    rnd.nextBytes(salt);
+    SecureRandom.getInstanceStrong().nextBytes(salt);
 
     SecretKey tmp = getKeyFromPassword(new String(passPhrase), salt);
     SecretKey secret = new SecretKeySpec(tmp.getEncoded(), alg);

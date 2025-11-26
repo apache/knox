@@ -77,7 +77,7 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
 
   private void loadDriver() throws Exception {
     try {
-      Class.forName(driver).newInstance();
+      Class.forName(driver).getDeclaredConstructor().newInstance();
     } catch (ClassNotFoundException e) {
       System.out.println(String.format(Locale.US, "Unable to load the JDBC driver %s. Check your CLASSPATH.", driver));
       throw e;

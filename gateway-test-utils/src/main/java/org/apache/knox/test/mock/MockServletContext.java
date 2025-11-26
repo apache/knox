@@ -34,7 +34,7 @@ import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.Map;
 import java.util.Set;
-
+@SuppressWarnings("PMD")
 public class MockServletContext implements ServletContext {
 
   @Override

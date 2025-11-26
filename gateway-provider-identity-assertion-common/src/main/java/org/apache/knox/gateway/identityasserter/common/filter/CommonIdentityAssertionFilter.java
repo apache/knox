@@ -45,6 +45,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.IdentityAsserterMessages;
@@ -221,6 +222,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
      * to the identity to be asserted as appropriate and create the provider specific
      * assertion token. Add the assertion token to the request.
      */
+    @SuppressForbidden
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {

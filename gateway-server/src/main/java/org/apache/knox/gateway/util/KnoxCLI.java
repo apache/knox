@@ -933,7 +933,7 @@ public class KnoxCLI extends Configured implements Tool {
          if (!X509CertificateUtil.isSelfSignedCertificate(certificate)) {
            // The relevant certificate exists and is not self-signed: --force is required
            return true;
-         } else if (!((X509Certificate) certificate).getSubjectDN().getName().matches(".*?,\\s*OU=Test,\\s*O=Hadoop,\\s*L=Test,\\s*ST=Test,\\s*C=US")) {
+         } else if (!((X509Certificate) certificate).getSubjectX500Principal().getName().matches(".*?,\\s*OU=Test,\\s*O=Hadoop,\\s*L=Test,\\s*ST=Test,\\s*C=US")) {
            // The subject name of certificate does not end with "OU=Test,O=Hadoop,L=Test,ST=Test,C=US": --force is required
            return true;
          }

@@ -18,7 +18,7 @@ package org.apache.knox.gateway.service.config.remote.config;
 
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryConfig;
 
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElement;
 
 class RemoteConfigurationRegistry implements RemoteConfigurationRegistryConfig {
 

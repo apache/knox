@@ -21,8 +21,8 @@ import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteStreamFilter;
 import org.apache.knox.gateway.util.MimeTypes;
 import org.apache.knox.gateway.util.urltemplate.Resolver;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
