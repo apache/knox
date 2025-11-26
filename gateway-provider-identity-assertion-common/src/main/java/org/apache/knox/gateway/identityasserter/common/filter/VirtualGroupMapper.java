@@ -88,6 +88,8 @@ public class VirtualGroupMapper {
         if (req instanceof HttpServletRequest) {
             interpreter.addFunction("request-attribute", Arity.UNARY, params ->
                     ensureNotNull(req.getAttribute((String)params.get(0))));
+            interpreter.addFunction("request-parameter", Arity.UNARY, params ->
+                    ensureNotNull(req.getParameter((String)params.get(0))));
             interpreter.addFunction("request-header", Arity.UNARY, params ->
                     ensureNotNull(((HttpServletRequest) req).getHeader((String)params.get(0))));
             interpreter.addFunction("session", Arity.UNARY, params ->
