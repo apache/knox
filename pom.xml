@@ -2610,12 +2610,6 @@
                 <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-storage-impl</artifactId>
                 <version>${opensaml.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.hibernate</groupId>
-                        <artifactId>hibernate-core</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.javassist</groupId>
