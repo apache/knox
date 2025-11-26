@@ -19,8 +19,8 @@ package org.apache.knox.gateway.util;
 
 import org.junit.Test;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

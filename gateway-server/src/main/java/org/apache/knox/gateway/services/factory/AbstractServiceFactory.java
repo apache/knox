@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -53,9 +54,10 @@ public abstract class AbstractServiceFactory implements ServiceFactory {
       if (service == null && StringUtils.isNotBlank(implementation)) {
         // no known service implementation created, try to create the custom one
         try {
-          service = (Service) Class.forName(implementation).newInstance();
+          service = (Service) Class.forName(implementation).getDeclaredConstructor().newInstance();
           logServiceUsage(implementation, serviceType);
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
+                 InvocationTargetException e) {
           throw new ServiceLifecycleException("Error while instantiating " + serviceType.getShortName() + " service implementation " + implementation, e);
         }
       }

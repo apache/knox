@@ -21,8 +21,8 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescrip
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.knox.gateway.util.MimeTypeMap;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 import java.util.ArrayList;
 import java.util.List;
 

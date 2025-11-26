@@ -19,8 +19,8 @@ package org.apache.knox.gateway.service.definition;
 
 import org.junit.Test;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 import java.net.URL;
 import java.util.List;
 

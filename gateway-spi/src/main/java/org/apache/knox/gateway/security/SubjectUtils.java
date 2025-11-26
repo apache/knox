@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.security;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
+
 import javax.security.auth.Subject;
 
 import java.security.AccessController;
@@ -30,6 +32,11 @@ import java.util.Set;
  */
 public class SubjectUtils {
 
+  /*
+   * There is no option in JDK 17 other then suppressing.
+   * For JDK 18+ use Subject.current() instead.
+   */
+  @SuppressForbidden
   public static Subject getCurrentSubject() {
     return Subject.getSubject( AccessController.getContext() );
   }

@@ -26,7 +26,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 import javax.xml.XMLConstants;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;

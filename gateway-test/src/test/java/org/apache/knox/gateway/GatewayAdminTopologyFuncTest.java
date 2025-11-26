@@ -349,10 +349,11 @@ public class GatewayAdminTopologyFuncTest {
         .when().get(serviceUrl);
 
     given()
-        //.log().all()
+        .log().all()
         .auth().preemptive().basic(username, password)
+        .header("Accept", MediaType.APPLICATION_XML)
         .then()
-        //.log().all()
+        .log().all()
         .statusCode(HttpStatus.SC_OK)
         .contentType(MediaType.APPLICATION_XML)
         .when().get(serviceUrl);

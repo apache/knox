@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
@@ -175,6 +176,7 @@ public class CommonJWTFilterTest {
     boolean doFilterCalled;
     Subject subject;
 
+    @SuppressForbidden
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException {

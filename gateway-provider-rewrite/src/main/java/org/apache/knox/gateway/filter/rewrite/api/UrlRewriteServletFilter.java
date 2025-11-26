@@ -22,7 +22,7 @@ import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRequest;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteResponse;
 import org.apache.knox.gateway.util.MimeTypes;
 
-import javax.activation.MimeType;
+import jakarta.activation.MimeType;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;

@@ -29,6 +29,11 @@
     <name>gateway-test-utils</name>
     <description>A collection of common utilities used for testing.</description>
 
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.hamcrest</groupId>
