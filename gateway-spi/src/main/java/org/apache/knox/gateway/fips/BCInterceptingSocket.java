@@ -20,7 +20,6 @@ package org.apache.knox.gateway.fips;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -239,37 +238,19 @@ public class BCInterceptingSocket extends Socket {
         delegate.setPerformancePreferences(connectionTime, latency, bandwidth);
     }
 
-    /**
-     * This method is only available in JDK9+ therefor reflection is used to call it.
-     */
-    @SuppressWarnings({"PMD.MissingOverride", "unchecked"})
+    @Override
     public Set<SocketOption<?>> supportedOptions() {
-        return invokeDelegateMethod("supportedOptions", new Class<?>[]{});
+        return delegate.supportedOptions();
     }
 
-    /**
-     * This method is only available in JDK9+ therefor reflection is used to call it.
-     */
-    @SuppressWarnings({"PMD.MissingOverride", "unchecked"})
+    @Override
     public <T> T getOption(SocketOption<T> name) throws IOException {
-        return invokeDelegateMethod("getOption", new Class<?>[]{SocketOption.class}, name);
+        return delegate.getOption(name);
     }
 
 
-    /**
-     * This method is only available in JDK9+ therefor reflection is used to call it.
-     */
-    @SuppressWarnings("PMD.MissingOverride")
+    @Override
     public <T> Socket setOption(SocketOption<T> name, T value) throws IOException {
-        return invokeDelegateMethod("setOption", new Class<?>[]{SocketOption.class, Object.class}, name, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T invokeDelegateMethod(String methodName, Class<?>[] parameterTypes, Object... args) {
-        try {
-            return (T) delegate.getClass().getMethod(methodName, parameterTypes).invoke(delegate, args);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new UnsupportedOperationException("Socket option not supported", e);
-        }
+        return delegate.setOption(name, value);
     }
 }
