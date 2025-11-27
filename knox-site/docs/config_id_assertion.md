@@ -423,6 +423,17 @@ Number of arguments: 1
 Example
 
     (request-attribute 'sourceRequestUrl')
+
+###### request-parameter ######
+Returns the value of the specified request parameter as a String. If the given key doesn't exist empty string is returned.
+
+Number of arguments: 1
+
+    (request-parameter aString)
+
+Example
+
+    (request-parameter 'sample.request.param')
     
 ###### session ######
 

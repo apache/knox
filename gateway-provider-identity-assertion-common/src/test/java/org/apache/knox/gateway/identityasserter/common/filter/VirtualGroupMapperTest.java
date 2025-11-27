@@ -19,6 +19,7 @@ package org.apache.knox.gateway.identityasserter.common.filter;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
@@ -27,11 +28,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.knox.gateway.plang.AbstractSyntaxTree;
 import org.apache.knox.gateway.plang.Parser;
+import org.easymock.EasyMock;
 import org.junit.Test;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 @SuppressWarnings("PMD.NonStaticInitializer")
 public class VirtualGroupMapperTest {
@@ -117,8 +123,37 @@ public class VirtualGroupMapperTest {
         assertEquals(0, virtualGroups("user4", emptyList()).size());
     }
 
+    @Test
+    public void testRequestParameterContainsParam() {
+        testRequestParameter(true);
+    }
+
+    @Test
+    public void testRequestParameterNotContainsParam() {
+        testRequestParameter(false);
+    }
+
+    private void testRequestParameter(boolean containsParam) {
+        final String groupName = "non_rejected_request";
+        final String requestParamName = "impala.doas.user";
+        mapper = new VirtualGroupMapper(new HashMap<String, AbstractSyntaxTree>(){{
+            put(groupName, parser.parse(String.format(Locale.US, "(= (strlen (request-parameter '%s')) 0)", requestParamName)));
+        }});
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        if (containsParam) {
+            EasyMock.expect(request.getParameter(requestParamName)).andReturn("impala").anyTimes();
+        }
+        EasyMock.replay(request);
+        final Set<String> expectedGroups = containsParam ? emptySet() : setOf(groupName);
+        assertEquals(expectedGroups, virtualGroups("user1", emptyList(), request));
+    }
+
     private Set<String> virtualGroups(String user1, List<String> ldapGroups) {
-        return mapper.mapGroups(user1, new HashSet<>(ldapGroups), null);
+        return virtualGroups(user1, ldapGroups, null);
+    }
+
+    private Set<String> virtualGroups(String user1, List<String> ldapGroups, ServletRequest request) {
+        return mapper.mapGroups(user1, new HashSet<>(ldapGroups), request);
     }
 
     private static Set<String> setOf(String... strings) {
