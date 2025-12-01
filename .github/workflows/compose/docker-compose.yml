@@ -39,3 +39,15 @@ services:
       - ./knoxshell:/knoxshell
     depends_on:
       - ldap
+
+  tests:
+    image: python:3.9-slim
+    working_dir: /tests
+    volumes:
+      - ../tests:/tests
+    environment:
+      - KNOX_GATEWAY_URL=https://knox:8443/
+    command: >
+      bash -c "pip install -r requirements.txt && python -m unittest discover -p 'test_*.py'"
+    depends_on:
+      - knox

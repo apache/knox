@@ -39,7 +39,7 @@ jobs:
       - name: Build Docker Images
         run: |
           export knoxurl=${KNOX_URL}
-          export branch=${BRANCH}
+          export branch=${BRANCH:-master}
           docker compose -f ./.github/workflows/compose/docker-compose.yml build
 
       - name: Start Knox and LDAP Services
@@ -48,10 +48,12 @@ jobs:
       - name: Wait for services to stabilize
         run: sleep 30  # Adjust as needed for services startup time
 
-      - name: Run Knox Tests
+      - name: Run Knox Integration Tests
         run: |
-          # Example: Run integration or custom tests here
-          # docker compose -f ./.github/workflows/compose/docker-compose.yml exec -T knox bash -c "cd /knoxshell && ./run-tests.sh"
+          # Run the tests service defined in docker-compose.yml
+          # --exit-code-from tests implies --abort-on-container-exit which stops all containers when tests exit
+          # but we might want to keep logs or inspect state, so usually this is fine for CI.
+          docker compose -f ./.github/workflows/compose/docker-compose.yml up --exit-code-from tests tests
 
       - name: Tear Down Docker Compose
         if: always()
