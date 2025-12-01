@@ -1,0 +1,33 @@
+2025-12-01 22:44:31,227  INFO  knox.gateway (GatewayServer.java:logSysProp(233)) - System Property: user.name=root
+2025-12-01 22:44:31,235  INFO  knox.gateway (GatewayServer.java:logSysProp(233)) - System Property: user.dir=/
+2025-12-01 22:44:31,237  INFO  knox.gateway (GatewayServer.java:logSysProp(233)) - System Property: java.runtime.name=OpenJDK Runtime Environment
+2025-12-01 22:44:31,238  INFO  knox.gateway (GatewayServer.java:logSysProp(233)) - System Property: java.runtime.version=17.0.15+6
+2025-12-01 22:44:31,239  INFO  knox.gateway (GatewayServer.java:logSysProp(233)) - System Property: java.home=/opt/java/openjdk
+2025-12-01 22:44:31,402  INFO  knox.gateway (GatewayConfigImpl.java:loadConfigResource(555)) - Loading configuration resource jar:file:/knox-runtime/bin/../lib/gateway-server-3.0.0-SNAPSHOT.jar!/conf/gateway-default.xml
+2025-12-01 22:44:31,471  INFO  knox.gateway (GatewayConfigImpl.java:loadConfigFile(543)) - Loading configuration file /knox-runtime/conf/gateway-site.xml
+2025-12-01 22:44:31,472  INFO  knox.gateway (GatewayConfigImpl.java:initGatewayHomeDir(483)) - Using /knox-runtime/bin/.. as GATEWAY_HOME via system property.
+2025-12-01 22:44:31,472  INFO  knox.gateway (GatewayConfigImpl.java:init(476)) - Cookie scoping feature enabled: false
+2025-12-01 22:44:31,481  INFO  knox.gateway (AbstractServiceFactory.java:logServiceUsage(105)) - Using default implementation for MasterService
+2025-12-01 22:44:31,491  ERROR knox.gateway (CMFMasterService.java:initializeFromMaster(174)) - Failed to initialize master service from persistent master master: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 1
+2025-12-01 22:44:31,492  FATAL knox.gateway (GatewayServer.java:main(191)) - Failed to start gateway: org.apache.knox.gateway.services.ServiceLifecycleException: Unable to load the persisted master secret.
+org.apache.knox.gateway.services.ServiceLifecycleException: Unable to load the persisted master secret.
+	at org.apache.knox.gateway.services.security.impl.CMFMasterService.setupMasterSecret(CMFMasterService.java:72) ~[gateway-spi-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.services.security.impl.CMFMasterService.setupMasterSecret(CMFMasterService.java:59) ~[gateway-spi-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.services.security.impl.DefaultMasterService.init(DefaultMasterService.java:43) ~[gateway-server-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.services.GatewayServiceFactory.create(GatewayServiceFactory.java:48) ~[gateway-server-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.services.GatewayServiceFactory.create(GatewayServiceFactory.java:33) ~[gateway-server-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.services.DefaultGatewayServices.init(DefaultGatewayServices.java:44) ~[gateway-server-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.GatewayServer.main(GatewayServer.java:182) [gateway-server-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.apache.knox.gateway.launcher.Invoker.invokeMainMethod(Invoker.java:68) [gateway.jar:?]
+	at org.apache.knox.gateway.launcher.Invoker.invoke(Invoker.java:39) [gateway.jar:?]
+	at org.apache.knox.gateway.launcher.Command.run(Command.java:103) [gateway.jar:?]
+	at org.apache.knox.gateway.launcher.Launcher.run(Launcher.java:75) [gateway.jar:?]
+	at org.apache.knox.gateway.launcher.Launcher.main(Launcher.java:52) [gateway.jar:?]
+Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 1
+	at org.apache.knox.gateway.services.security.impl.CMFMasterService.initializeFromMaster(CMFMasterService.java:170) ~[gateway-spi-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	at org.apache.knox.gateway.services.security.impl.CMFMasterService.setupMasterSecret(CMFMasterService.java:70) ~[gateway-spi-3.0.0-SNAPSHOT.jar:3.0.0-SNAPSHOT]
+	... 15 more

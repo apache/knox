@@ -1,0 +1,12 @@
+<topology>
+    <gateway>
+        <provider>
+            <role>authentication</role>
+            <name>Anonymous</name>
+            <enabled>true</enabled>
+        </provider>
+    </gateway>
+    <service>
+        <role>HEALTH</role>
+    </service>
+</topology>

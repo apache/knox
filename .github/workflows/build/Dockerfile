@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM maven:3.8.4-openjdk-8
+FROM maven:3.9.9-eclipse-temurin-17
 
 MAINTAINER moresandeep
 
@@ -56,6 +56,8 @@ RUN rm -rf /knox
 ADD master /knox-runtime/data/security/master
 # Enable websockets
 ADD gateway-site.xml /knox-runtime/conf/gateway-site.xml
+ADD conf/topologies/knoxtoken.xml /knox-runtime/conf/topologies/knoxtoken.xml
+ADD conf/topologies/health.xml /knox-runtime/conf/topologies/health.xml
 
 RUN chown -R gateway /knox-runtime/
 

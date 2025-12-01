@@ -1,0 +1,30 @@
+*********************************************************************
+KnoxShell README
+*********************************************************************
+Client Details 
+The KnoxShell release artifact provides a small footprint client environment
+that removes all unnecessary server dependencies, configuration, binary scripts,
+etc. It is comprised a couple different things that empower different sorts of users.
+
+ - A set of SDK type classes for providing access to Hadoop resources over HTTP
+ - A Groovy based DSL for scripting access to Hadoop resources based on the underlying SDK classes
+ - A KnoxShell Token based Sessions to provide a CLI SSO session for executing multiple scripts
+
+Directory layout:
+
+-rw-r--r--@  1 larry  staff  71714 Mar 14 14:06 LICENSE
+-rw-r--r--@  1 larry  staff    164 Mar 14 14:06 NOTICE
+-rw-r--r--@  1 larry  staff  71714 Mar 15 20:04 README
+drwxr-xr-x@ 12 larry  staff    408 Mar 15 21:24 bin
+drwxr--r--@  3 larry  staff    102 Mar 14 14:06 conf
+drwxr-xr-x+  3 larry  staff    102 Mar 15 12:41 logs
+drwxr-xr-x@ 18 larry  staff    612 Mar 14 14:18 samples
+
+Directory   Description
+bin         contains the main knoxshell jar and related shell scripts
+conf        only contains log4j config
+logs        contains the knoxshell.log file
+samples     has numerous examples to help you get started
+
+See the Client Details section in the Apache Knox Users Guide for more information and
+a set of Quick Start instructions.

@@ -34,7 +34,7 @@ services:
       - "8443:8443"
     command: /gateway.sh
     volumes:
-      - ./topologies:/knox-runtime/conf/topologies
+#      - ./topologies:/knox-runtime/conf/topologies
       - ./logs:/knox-runtime/logs
       - ./knoxshell:/knoxshell
     depends_on:
