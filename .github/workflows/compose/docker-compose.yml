@@ -19,10 +19,17 @@ services:
   knox-dev:
     build:
       context: ../build
+      dockerfile: Dockerfile
+    image: moresandeep/knox-dev:master
+
+  knox-dev-local:
+    build:
+      context: ../build
+      dockerfile: Dockerfile.local
       args:
         knoxurl: ${knoxurl:-https://github.com/apache/knox.git}
         branch: ${branch:-master}
-    image: moresandeep/knox-dev:master
+    image: moresandeep/knox-dev:local
 
   ldap:
     image: moresandeep/knox-dev:master

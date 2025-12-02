@@ -1,72 +1,31 @@
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to you under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-FROM maven:3.9.9-eclipse-temurin-17
+FROM eclipse-temurin:17-jre
 
 MAINTAINER moresandeep
 
-# Install dependencies
-RUN apt-get update
-
-RUN apt-get install -y git
-
 RUN useradd -ms /bin/bash gateway
 
-# Clone our dev branch
-ARG knoxurl
-ARG branch
-
-RUN git clone -b $branch $knoxurl knox
-
-RUN mkdir /knox/knox-temp-artifacts
-RUN mkdir /knox/knoxshell-temp-artifacts
-
-# Update maven settings to ignore jcenter repo
-#ADD settings.xml /home/gateway/.m2/settings.xml
-#RUN mv /home/gateway/.m2/settings.xml ~/.m2/settings.xml
-ADD settings.xml /usr/share/maven/ref/
-
-# Skipping tests here for faster turnaround.
-RUN cd knox && mvn -settings /usr/share/maven/ref/settings.xml clean -Ppackage,release install -Dforbiddenapis.skip=true -Denforcer.skip -Dpmd.failOnViolation=false -DskipTests=true -Dcheckstyle.skip=true -Dspotbugs.skip=true -Dpmd.skip=true -Drat.skip -DskipTests && tar -xvzf target/*/knox-*.tar.gz -C knox-temp-artifacts && tar -xvzf /knox/target/*/knoxshell-*.tar.gz -C knoxshell-temp-artifacts
-
-# move runtime to new location
-# See https://github.com/docker/compose/issues/4581#issuecomment-321386605
-# for KnoxShell dance
+# Create directories
 RUN mkdir /knox-runtime
-RUN mkdir /knoxshell
 RUN mkdir /knox-runtime/knoxshell
-RUN mv /knox/knox-temp-artifacts/*/* /knox-runtime
-RUN mv /knox/knoxshell-temp-artifacts/*/* /knox-runtime/knoxshell
 
-# delete build artifacts
-RUN rm -rf /knox
+# Copy artifacts
+COPY knox-temp-artifacts /knox-temp-artifacts-staging
+COPY knoxshell-temp-artifacts /knoxshell-temp-artifacts-staging
 
+# Move runtime to new location
+RUN mv /knox-temp-artifacts-staging/*/* /knox-runtime/ && \
+    mv /knoxshell-temp-artifacts-staging/*/* /knox-runtime/knoxshell/ && \
+    rm -rf /knox-temp-artifacts-staging /knoxshell-temp-artifacts-staging
+
+# Add configuration
 ADD master /knox-runtime/data/security/master
-# Enable websockets
 ADD gateway-site.xml /knox-runtime/conf/gateway-site.xml
 ADD conf/topologies/knoxtoken.xml /knox-runtime/conf/topologies/knoxtoken.xml
 ADD conf/topologies/health.xml /knox-runtime/conf/topologies/health.xml
 
 RUN chown -R gateway /knox-runtime/
 
-# Cleanup 
-RUN rm -rf /home/gateway/.m2/repository
-
 ADD ldap.sh /ldap.sh
 ADD gateway.sh /gateway.sh
 
-RUN chmod +x /ldap.sh
-RUN chmod +x /gateway.sh
-
+RUN chmod +x /ldap.sh /gateway.sh
