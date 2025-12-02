@@ -48,7 +48,7 @@ services:
     command: >
       bash -c "pip install -r requirements.txt 
       && echo 'Waiting for knox...' 
-      && sleep 10 
+      && sleep 30 
       && python -m unittest discover -p 'test_*.py'"
     depends_on:
       - knox
