@@ -493,6 +493,7 @@
                     <excludeSubProjects>false</excludeSubProjects>
                     <excludes>
                         <exclude>.git/**</exclude>
+                        <exclude>.github/**</exclude>
                         <exclude>.pc/**</exclude>
                         <exclude>debian/**</exclude>
                         <exclude>.gitignore/**</exclude>
