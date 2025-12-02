@@ -38,6 +38,7 @@ velocity.log
 *.patch
 .checkstyle
 **/package-lock.json
+.github/workflows/compose/logs/*
 
 # other IDEs and editors
 .vscode

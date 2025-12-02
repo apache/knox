@@ -30,13 +30,11 @@ services:
 
   knox:
     image: moresandeep/knox-dev:master
-    ports:
-      - "8443:8443"
     command: /gateway.sh
     volumes:
 #      - ./topologies:/knox-runtime/conf/topologies
       - ./logs:/knox-runtime/logs
-      - ./knoxshell:/knoxshell
+#      - ./knoxshell:/knoxshell
     depends_on:
       - ldap
 
@@ -48,6 +46,11 @@ services:
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >
-      bash -c "pip install -r requirements.txt && python -m unittest discover -p 'test_*.py'"
+      bash -c "pip install -r requirements.txt 
+      && echo 'Waiting for knox...' 
+      && sleep 10 
+      && python -m unittest discover -p 'test_*.py'"
     depends_on:
       - knox
+
+
