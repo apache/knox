@@ -23,6 +23,7 @@ on:
 
 jobs:
   build-and-test:
+    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'skip-tests')
     runs-on: ubuntu-latest
 
     env:

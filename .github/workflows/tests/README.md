@@ -101,6 +101,10 @@ The tests run in a dedicated Docker container defined in `../compose/docker-comp
 3. It waits for the `knox` service to be ready.
 4. It runs `python -m unittest discover -p 'test_*.py'` to find and execute all test files.
 
+## Skipping Tests on Pull Requests
+
+If you want to skip the integration tests for a specific Pull Request (e.g., documentation changes), add the label **`skip-tests`** to the PR.
+
 ## Running Tests Locally
 
 You can run these tests locally using Docker Compose from the `.github/workflows/compose` directory:
