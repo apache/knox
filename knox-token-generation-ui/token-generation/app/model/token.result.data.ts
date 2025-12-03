@@ -14,4 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'zone.js';
+
+export class TokenResultData {
+    accessToken: string;
+    accessPasscode: string;
+    expiry: string;
+    user: string;
+    homepageURL: string;
+    targetURL: string;
+}

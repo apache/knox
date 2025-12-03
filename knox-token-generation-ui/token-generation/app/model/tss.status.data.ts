@@ -14,4 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'zone.js';
+
+export class TssStatusData {
+    tokenManagementEnabled: boolean;
+    maximumLifetimeText: string;
+    maximumLifetimeSeconds: number;
+    lifespanInputEnabled: boolean;
+    impersonationEnabled: boolean;
+    configuredTssBackend: string;
+    allowedTssForTokengen: boolean;
+    actualTssBackend: string;
+}

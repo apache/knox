@@ -14,17 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import Swal from 'sweetalert2';
-import { TokenResultData, TssStatusData } from './token-generation.models';
-import { TokenGenService } from './token-generation.service';
+import { TokenResultData } from '../model/token.result.data';
+import { TssStatusData } from '../model/tss.status.data';
+import { TokenGenService } from '../service/token-generation.service';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-token-generation',
-  templateUrl: './token-generation.component.html',
-  providers: []
+    selector: 'app-token-generation',
+    templateUrl: './token-generation.component.html',
+    styleUrls: ['./token-generation.component.css'],
+    providers: [TokenGenService],
+    standalone: true,
+    imports: [CommonModule, ReactiveFormsModule, MatIconModule]
 })
 export class TokenGenerationComponent implements OnInit {
   tssStatusMessageLevel: 'info' | 'warning' | 'error';
@@ -33,27 +39,27 @@ export class TokenGenerationComponent implements OnInit {
   hasResult: boolean;
 
   // Data coming from the form
-  tokenGenFrom = new FormGroup({
-    comment : new FormControl('', Validators.maxLength(255)),
-    lifespanDays : new FormControl(0, [
+  tokenGenFrom = new UntypedFormGroup({
+    comment : new UntypedFormControl('', Validators.maxLength(255)),
+    lifespanDays : new UntypedFormControl(0, [
       Validators.min(0),
       Validators.max(3650),
       Validators.required,
       Validators.pattern('^[0-9]*$')
     ]),
-    lifespanHours : new FormControl(1, [
+    lifespanHours : new UntypedFormControl(1, [
       Validators.min(0),
       Validators.max(23),
       Validators.required,
       Validators.pattern('^[0-9]*$')
     ]),
-    lifespanMins : new FormControl(0, [
+    lifespanMins : new UntypedFormControl(0, [
       Validators.min(0),
       Validators.max(59),
       Validators.required,
       Validators.pattern('^[0-9]*$')
     ]),
-    impersonation : new FormControl('', Validators.maxLength(255))
+    impersonation : new UntypedFormControl('', Validators.maxLength(255))
   }, this.allZeroValidator());
 
   get comment() { return this.tokenGenFrom.get('comment'); }
@@ -166,7 +172,7 @@ export class TokenGenerationComponent implements OnInit {
   }
 
   private allZeroValidator(): ValidatorFn {
-    return (formGroup: FormGroup) => {
+    return (formGroup: UntypedFormGroup) => {
       if (
         formGroup.get('lifespanDays').value === 0 &&
         formGroup.get('lifespanHours').value === 0 &&
