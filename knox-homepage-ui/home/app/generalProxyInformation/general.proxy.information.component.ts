@@ -16,13 +16,16 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {HomepageService} from '../homepage.service';
-import {GeneralProxyInformation} from './general.proxy.information';
+import {HomepageService} from '../service/homepage.service';
+import {GeneralProxyInformation} from '../model/general.proxy.information';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
     selector: 'app-general-proxy-information',
     templateUrl: './general.proxy.information.component.html',
-    providers: [HomepageService]
+    providers: [HomepageService],
+    imports: [CommonModule, MatIconModule]
 })
 
 export class GeneralProxyInformationComponent implements OnInit {

@@ -17,11 +17,20 @@
  */
 
 /* You can add global styles to this file, and also import other style files */
-
+@import 'assets/sticky-footer.css';
 .navbar-static-top {
     min-height: 110px;
 }
 
 .clickable {
     cursor: pointer;
+}
+
+html, body {
+  font-size: 14px;
+}
+
+a {
+  color: #337ab7;
+  text-decoration: none;
 }

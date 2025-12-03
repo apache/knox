@@ -13,7 +13,11 @@
   limitations under the License.
 -->
 <div>
-     <h4 (click)="toggleBoolean('showGeneralProxyInformation')"><span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showGeneralProxyInformation'] ? 'minus' : 'plus')"></span>&nbsp;General Proxy Information</h4>
+     <h4 (click)="toggleBoolean('showGeneralProxyInformation')" class="d-flex align-items-center">
+        <mat-icon *ngIf="this['showGeneralProxyInformation']">remove</mat-icon>
+        <mat-icon *ngIf="!this['showGeneralProxyInformation']">add</mat-icon>
+        General Proxy Information
+    </h4>
 </div>
 <div class="table-responsive" *ngIf="this['showGeneralProxyInformation']">
     <table class="table table-striped table-hover">

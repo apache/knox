@@ -14,12 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Service} from './service';
+import {Pipe, PipeTransform} from '@angular/core';
+import {DomSanitizer} from '@angular/platform-browser';
 
-export class TopologyInformation {
-    topology: string;
-    pinned: boolean;
-    apiServicesViewVersion: string;
-    apiServices: Service[];
-    uiServices: Service[];
+@Pipe({ name: 'safeHtml' })
+export class SafeHtmlPipe implements PipeTransform {
+  constructor(private sanitizer: DomSanitizer) {}
+
+  transform(value) {
+    return this.sanitizer.bypassSecurityTrustHtml(value);
+  }
 }

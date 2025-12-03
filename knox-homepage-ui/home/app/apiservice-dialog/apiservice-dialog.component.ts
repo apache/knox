@@ -14,22 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
+import { Component, Inject } from '@angular/core';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
 import { MatGridListModule } from '@angular/material/grid-list';
-import { RouterModule } from '@angular/router';
+import { MatListModule } from '@angular/material/list';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
 
-import { HomepageService } from './service/homepage.service';
-
-@NgModule({
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    HttpClientXsrfModule,
-    MatGridListModule,
-    RouterModule.forRoot([]),
-  ],
-  providers: [HomepageService]
+@Component({
+  selector: 'app-apiservice-dialog',
+  imports: [MatDialogModule, MatButtonModule, MatGridListModule, MatListModule, CommonModule],
+  templateUrl: './apiservice-dialog.component.html',
+  styleUrl: './apiservice-dialog.component.css'
 })
-export class AppModule {}
+export class ApiserviceDialogComponent {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<ApiserviceDialogComponent>
+  ) {
+  }
+}

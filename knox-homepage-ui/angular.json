@@ -36,12 +36,16 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "target/classes/home/app",
+            "outputPath": {
+              "base": "target/classes/home/app",
+              "browser": ""
+            },
             "index": "home/index.html",
-            "main": "home/main.ts",
-            "polyfills": "home/polyfills.ts",
+            "polyfills": [
+              "home/polyfills.ts"
+            ],
             "tsConfig": "home/tsconfig.json",
             "assets": [
               "home/favicon.ico",
@@ -52,13 +56,12 @@
               "home/styles.css"
             ],
             "scripts": [
-              "node_modules/jquery/dist/jquery.min.js",
-              "node_modules/bootstrap/dist/js/bootstrap.js"
-            ]
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "browser": "home/main.ts"
           },
           "configurations": {
             "production": {
-              "buildOptimizer": false,
               "aot": false,
               "fileReplacements": [
                 {
@@ -69,10 +72,8 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "aot": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -81,21 +82,21 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "home:build:production"
+              "buildTarget": "home:build:production"
             },
             "development": {
-              "browserTarget": "home:build:development"
+              "buildTarget": "home:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "home:build"
+            "buildTarget": "home:build"
           }
         },
         "lint": {
@@ -109,12 +110,5 @@
         }
       }
     }
-  },
-  "defaultProject": "home",
-  "cli": {
-    "schematicCollections": [
-      "@angular-eslint/schematics",
-      "@angular-eslint/schematics"
-    ]
   }
 }

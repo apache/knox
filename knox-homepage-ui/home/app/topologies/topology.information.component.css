@@ -29,12 +29,70 @@ mat-grid-tile-footer figcaption h3 {
   word-wrap: break-word;
 }
 
+.tile-longDesc h3 {
+  display: -webkit-box;
+  line-clamp: 5;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .tile-shortDesc:hover + .tile-longDesc {
   opacity: 1;
   transition: all 0.3s linear;
   visibility: visible;
 }
 
-/deep/ .groupServiceInformationModal {
-    width: 80%;
+::ng-deep .mat-mdc-tooltip {
+    background-color: lightgray;
+}
+
+::ng-deep .mat-mdc-paginator {
+    padding: 8px 12px;
+    min-height: 48px;
+    font-size: 13px;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-icon-button {
+    width: 36px;
+    height: 36px;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-select {
+    margin: 0 8px;
+    min-width: 56px;
+}
+
+::ng-deep div.mat-mdc-select-panel {
+  background-color: white !important;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-select .mat-mdc-select-value {
+    color: #333;
+    font-size: 13px;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-select .mat-mdc-select-arrow {
+    color: #666;
+}
+
+::ng-deep .mat-mdc-paginator .mat-mdc-select-trigger {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+::ng-deep .mdc-notched-outline > * {
+  border: none !important;
+}
+
+.reduce-icon-size {
+   transform: scale(0.65);
+}
+
+hr {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border: 0;
+    border-top: 1px solid #868686;
 }
