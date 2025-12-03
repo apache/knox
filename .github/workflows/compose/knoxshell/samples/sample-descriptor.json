@@ -1,8 +1,0 @@
-{
-  "provider-config-ref":"default-providers",
-  "services":[
-    {"name":"NAMENODE"},
-    {"name":"WEBHDFS"},
-    {"name":"RESOURCEMANAGER"}
-  ]
-}
