@@ -25,3 +25,12 @@
 .clickable {
     cursor: pointer;
 }
+
+html, body {
+  font-size: 14px;
+}
+
+a {
+  color: #337ab7;
+  text-decoration: none;
+}

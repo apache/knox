@@ -21,34 +21,38 @@
 </div>
 <div *ngIf="this['showTopologies']">
     <ng-container *ngFor="let topology of topologies">
-        <div class="d-flex align-items-center">
-            <mat-icon *ngIf="this['showTopology_' + topology.topology]" (click)="toggleBoolean('showTopology_' + topology.topology)" class="reduce-icon-size">remove</mat-icon>
-            <mat-icon *ngIf="!this['showTopology_' + topology.topology]" (click)="toggleBoolean('showTopology_' + topology.topology)" class="reduce-icon-size">add</mat-icon>
+        <div class="d-flex align-items-center" (click)="toggleBoolean('showTopology_' + topology.topology)">
+            <mat-icon *ngIf="this['showTopology_' + topology.topology]" class="reduce-icon-size">remove</mat-icon>
+            <mat-icon *ngIf="!this['showTopology_' + topology.topology]" class="reduce-icon-size">add</mat-icon>
             <strong>{{topology.topology}}</strong>
 
-            <mat-icon *ngIf="topology.pinned" matTooltip="You may unpin this topology in gateway-site.xml by removing it from the list declared in 'knox.homepage.pinned.topologies'" class="reduce-icon-size">push_pin</mat-icon>
-            <mat-icon *ngIf="!topology.pinned" matTooltip="You may pin this topology in gateway-site.xml using the 'knox.homepage.pinned.topologies' property" class="reduce-icon-size">settings</mat-icon>
+            <mat-icon *ngIf="topology.pinned"
+                matTooltip="You may unpin this topology in gateway-site.xml by removing it from the list declared in 'knox.homepage.pinned.topologies'"
+                class="reduce-icon-size">push_pin</mat-icon>
+            <mat-icon *ngIf="!topology.pinned"
+                matTooltip="You may pin this topology in gateway-site.xml using the 'knox.homepage.pinned.topologies' property"
+                class="reduce-icon-size">settings</mat-icon>
         </div>
 
         <div class="table-responsive ps-3" *ngIf="this['showTopology_' + topology.topology]">
- 
+
             <h5 *ngIf="topology.uiServices.service.length > 0" class="pt-2">UI Services</h5>
 
             <!-- UI services -->
             <mat-grid-list cols="4" rowHeight="130px" *ngIf="topology.uiServices.service.length > 0">
-                <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1">
+                <mat-grid-tile *ngFor="let service of topology.uiServices.service" [colspan]="1" [rowspan]="1" (click)="service.serviceUrls.length > 1
+            ? openGroupServiceDialog(service)
+            : openSingleService(service.serviceUrls[0])">
 
                     <!-- Services with 1 service URL -->
                     <div *ngIf="service.serviceUrls.length === 1">
-                        <a href="{{service.serviceUrls[0]}}" target="_blank"
-                            *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                        <span *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
                             <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"
                                 (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())" />
-                        </a>
-                        <a href="{{service.serviceUrls[0]}}" target="_blank"
-                            *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
+                        </span>
+                        <span *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
                             {{service.shortDesc}}
-                        </a>
+                        </span>
                         <mat-grid-tile-footer class="tile-shortDesc">
                             <h3>{{service.shortDesc}} <span class="small"
                                     *ngIf="service.version">(v{{service.version}})</span></h3>
@@ -82,7 +86,8 @@
                 </ng-container>
 
                 <!-- Material Table -->
-                <table mat-table [dataSource]="getApiServicesDataSource(topology)" class="mat-elevation-z8" *ngIf="topology.apiServices.service.length > 0">
+                <table mat-table [dataSource]="getApiServicesDataSource(topology)" class="mat-elevation-z8"
+                    *ngIf="topology.apiServices.service.length > 0">
 
                     <!-- Description Column -->
                     <ng-container matColumnDef="description">
@@ -114,25 +119,21 @@
                 </table>
 
                 <!-- Paginator with proper data source binding -->
-                <mat-paginator 
-                    [pageSizeOptions]="[5, 10, 15]" 
-                    [pageSize]="5"
-                    showFirstLastButtons
+                <mat-paginator [pageSizeOptions]="[5, 10, 15]" [pageSize]="5" showFirstLastButtons
                     [length]="topology.apiServices.service.length"
                     [aria-label]="'Pagination for ' + topology.topology + ' API services'"
-                    *ngIf="topology.apiServices.service.length > 0" >
+                    *ngIf="topology.apiServices.service.length > 0">
                 </mat-paginator>
             </div>
 
             <mat-grid-list *ngIf="topology.apiServicesViewVersion === 'v2'" cols="4" rowHeight="130px">
-                <mat-grid-tile *ngFor="let service of topology.apiServices.service" [colspan]="1" [rowspan]="1">
-                    <span *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]"
-                        (click)="openApiServiceInformationModal(service)">
+                <mat-grid-tile *ngFor="let service of topology.apiServices.service" [colspan]="1" [rowspan]="1"
+                    (click)="openApiServiceDialog(service)">
+                    <span *ngIf="!this['enableServiceText_' + service.serviceName.toLowerCase()]">
                         <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"
                             (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())" />
                     </span>
-                    <span *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]"
-                        (click)="openApiServiceDialog(service)">
+                    <span *ngIf="this['enableServiceText_' + service.serviceName.toLowerCase()]">
                         {{service.shortDesc}}
                     </span>
                     <mat-grid-tile-footer class="tile-shortDesc">

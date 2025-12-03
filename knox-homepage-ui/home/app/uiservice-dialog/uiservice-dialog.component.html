@@ -12,12 +12,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<h2 mat-dialog-title *ngIf="data">
+<h2 mat-dialog-title *ngIf="data" class="dialog-title">
   {{ data.shortDesc }}
   <span class="small" *ngIf="data.version">(v{{ data.version }})</span>
 </h2>
 
-<mat-dialog-content *ngIf="data">
+<mat-dialog-content *ngIf="data" class="dialog-content pt-2">
   <p>{{ data.description }}</p>
 
   <mat-form-field appearance="outline" class="search-field">
@@ -47,5 +47,7 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close color="primary">Close</button>
+    <button mat-flat-button mat-dialog-close class="close-button">
+    Close
+  </button>
 </mat-dialog-actions>

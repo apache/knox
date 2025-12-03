@@ -29,6 +29,14 @@ mat-grid-tile-footer figcaption h3 {
   word-wrap: break-word;
 }
 
+.tile-longDesc h3 {
+  display: -webkit-box;
+  line-clamp: 5;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .tile-shortDesc:hover + .tile-longDesc {
   opacity: 1;
   transition: all 0.3s linear;
@@ -55,6 +63,10 @@ mat-grid-tile-footer figcaption h3 {
     min-width: 56px;
 }
 
+::ng-deep div.mat-mdc-select-panel {
+  background-color: white !important;
+}
+
 ::ng-deep .mat-mdc-paginator .mat-mdc-select .mat-mdc-select-value {
     color: #333;
     font-size: 13px;
@@ -76,4 +88,11 @@ mat-grid-tile-footer figcaption h3 {
 
 .reduce-icon-size {
    transform: scale(0.65);
+}
+
+hr {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    border: 0;
+    border-top: 1px solid #868686;
 }

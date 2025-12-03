@@ -12,9 +12,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<h2 mat-dialog-title>
+<h3 mat-dialog-title class="dialog-title">
   {{ data?.shortDesc }}
-</h2>
+</h3>
 
 <mat-dialog-content>
   <div class="info-section">
@@ -47,7 +47,7 @@
           <div class="no-samples">
             <p><strong>No samples found in service metadata.</strong></p>
             <p>
-              Check the service documentation: 
+              Check the service documentation:
               <a [href]="data.serviceUrls[0]" target="_blank">
                 {{ data.serviceUrls[0] }}
               </a>
@@ -60,5 +60,7 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close color="primary">Close</button>
+  <button mat-flat-button mat-dialog-close class="close-button">
+    Close
+  </button>
 </mat-dialog-actions>

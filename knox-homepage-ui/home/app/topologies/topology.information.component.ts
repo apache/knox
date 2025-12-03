@@ -202,15 +202,22 @@ export class TopologyInformationsComponent implements OnInit {
 
     openApiServiceDialog(service: any): void {
         this.dialog.open(ApiserviceDialogComponent, {
-            width: '600px',
+            width: '70vw',
+            maxWidth: 'none',
             data: service
         });
     }
 
     openGroupServiceDialog(service: any): void {
         this.dialog.open(UiserviceDialogComponent, {
-            width: '800px',
+            width: '70vw',
+            maxWidth: 'none',
             data: service
         });
+    }
+
+    openSingleService(url: string): void {
+        if (!url) { return; }
+        window.open(url, '_blank');
     }
 }
