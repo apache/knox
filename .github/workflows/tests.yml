@@ -1,0 +1,82 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Apache Knox Docker Compose Tests
+
+on:
+  pull_request:
+    branches:
+      - '**'  # triggers for all PRs
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      KNOX_URL: "https://github.com/apache/knox.git"
+      BRANCH: "${{ github.head_ref }}"  # PR branch being tested
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: |
+          mvn clean -Ppackage,release install -T 1C \
+          -Dmaven.test.skip=true -Dpmd.skip=true -Dcpd.skip=true -Dcheckstyle.skip=true \
+          -Dspotbugs.skip=true -Drat.skip=true -Dforbiddenapis.skip=true -Denforcer.skip=true \
+          -Djacoco.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true \
+          -Dshellcheck.skip=true -Dxml.skip=true \
+          -s .github/workflows/build/settings.xml
+
+      - name: Extract Artifacts
+        run: |
+          mkdir -p .github/workflows/build/knox-temp-artifacts .github/workflows/build/knoxshell-temp-artifacts
+          # Extract artifacts to the build directory where Dockerfile expects them
+          tar -xvzf target/*/knox-*.tar.gz -C .github/workflows/build/knox-temp-artifacts
+          tar -xvzf target/*/knoxshell-*.tar.gz -C .github/workflows/build/knoxshell-temp-artifacts
+
+      - name: Set up Docker Compose
+        run: docker compose version
+
+      - name: Build Docker Images
+        run: |
+          export knoxurl=${KNOX_URL}
+          export branch=${BRANCH:-master}
+          # Build only knox-dev which is the runtime image using artifacts
+          docker compose -f ./.github/workflows/compose/docker-compose.yml build knox-dev
+
+      - name: Start Knox and LDAP Services
+        run: docker compose -f ./.github/workflows/compose/docker-compose.yml up -d
+
+      - name: Wait for services to stabilize
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run Knox Integration Tests
+        run: |
+          # Run the tests service defined in docker-compose.yml
+          docker compose -f ./.github/workflows/compose/docker-compose.yml up --exit-code-from tests tests
+
+      - name: Tear Down Docker Compose
+        if: always()
+        run: docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes

@@ -1,0 +1,2 @@
+This sample assumes that Knox is deployed on Sandbox.
+Use sandbox-with-knox-inside.xml as deployment configuration.

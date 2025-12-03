@@ -1,0 +1,41 @@
+*********************************************************************
+Samples README
+*********************************************************************
+The purpose of the samples within this directory is to demonstrate the capabilities
+of the Apache Knox Gateway to provide access to the numerous APIs that are available
+from the service components of a Hadoop cluster.
+
+Depending on exactly how your Knox installation was done, there will be some number of
+steps required in order fully install and configure the samples for use in your environment.
+
+Please see the following section from the Apache Knox Users Guide: 
+
+Gateway Samples 
+
+The purpose of the samples within the {GATEWAY_HOME}/samples directory is to demonstrate the capabilities
+of the Apache Knox Gateway to provide access to the numerous APIs that are available from the service
+components of a Hadoop cluster.
+
+Depending on exactly how your Knox installation was done, there will be some number of steps required in
+order fully install and configure the samples for use.
+
+This section will help describe the assumptions of the samples and the steps to get them to work in a couple
+of different deployment scenarios.
+
+Assumptions of the Samples 
+
+The samples were initially written with the intent of working out of the box for the various Hadoop demo
+environments that are deployed as a single node cluster inside of a VM. The following assumptions were made
+from that context and should be understood in order to get the samples to work in other deployment scenarios:
+
+* That there is a valid java JDK on the PATH for executing the samples
+* The Knox Demo LDAP server is running on localhost and port 33389 which is the default port for the
+ApacheDS LDAP server.
+* That the LDAP directory in use has a set of demo users provisioned with the convention of username
+and username“-password” as the password. Most of the samples have some variation of this pattern with
+“guest” and “guest-password”.
+* That the Knox Gateway instance is running on the same machine which you will be running the samples
+from - therefore “localhost” and that the default port of “8443” is being used.
+* Finally, that there is a properly provisioned sandbox.xml topology in the
+{GATEWAY_HOME}/conf/topologies directory that is configured to point to the actual host and ports of
+running service components.
