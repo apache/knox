@@ -14,24 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Pipe, PipeTransform} from '@angular/core';
-import {DomSanitizer} from '@angular/platform-browser';
-import {TokenGenService} from './token-generation.service';
-import {SessionInformation} from './token-generation.models';
-
-@Pipe({ name: 'safeHtml' })
-export class SafeHtmlPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
-
-  transform(value) {
-    return this.sanitizer.bypassSecurityTrustHtml(value);
-  }
-}
+import {Component, OnInit } from '@angular/core';
+import {TokenGenService} from '../service/token-generation.service';
+import { SessionInformation } from '../model/session.information';
+import { SafeHtmlPipe } from '../util/safehtml';
 
 @Component({
     selector: 'app-session-information',
     templateUrl: './session.information.component.html',
-    providers: [TokenGenService]
+    providers: [TokenGenService],
+    imports: [SafeHtmlPipe]
 })
 
 export class SessionInformationComponent implements OnInit {

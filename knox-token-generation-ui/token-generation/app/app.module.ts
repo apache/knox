@@ -16,21 +16,12 @@
  */
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
-import { TokenGenerationComponent } from './token-generation.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { TokenGenService } from './token-generation.service';
-import { SessionInformationComponent } from './session.information.component';
-import { SafeHtmlPipe } from './session.information.component';
+import { TokenGenService } from './service/token-generation.service';
 
 @NgModule({
-    imports: [BrowserModule,
-        HttpClientModule,
-        ReactiveFormsModule
-    ],
-    declarations: [TokenGenerationComponent, SessionInformationComponent, SafeHtmlPipe],
-    providers: [TokenGenService],
-    bootstrap: [TokenGenerationComponent, SessionInformationComponent]
+    imports: [BrowserModule, ReactiveFormsModule],
+    providers: [TokenGenService]
 })
 export class AppModule {
 }

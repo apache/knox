@@ -17,7 +17,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import Swal from 'sweetalert2';
-import { TokenData, TokenRequestParams, TokenResultData, TssStatusData, SessionInformation } from './token-generation.models';
+import { TokenData } from '../model/token.data';
+import { TokenRequestParams } from '../model/token.request.params';
+import { TssStatusData } from '../model/tss.status.data';
+import { SessionInformation } from '../model/session.information';
+import { TokenResultData } from '../model/token.result.data';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class TokenGenService {
@@ -45,8 +50,7 @@ export class TokenGenService {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
 
-        return this.http.get<any>(this.tssStatusRequestURL, { headers: headers })
-        .toPromise()
+        return firstValueFrom(this.http.get<any>(this.tssStatusRequestURL, { headers: headers }))
         .then(responseData => {
                 /**
                  * The data needs to be returned this way, because if the return type would be set to <TssStatusData> and the responseData
@@ -78,8 +82,7 @@ export class TokenGenService {
     isTokenHashKeyPresent(): Promise<boolean> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
-        return this.http.get(this.metadataInfoUrl, { headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.metadataInfoUrl, { headers: headers}))
             .then(response => {
                 return response['generalProxyInfo']?.['enableTokenManagement'] === 'true';
             })
@@ -95,8 +98,7 @@ export class TokenGenService {
     getSessionInformation(): Promise<SessionInformation> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
-        return this.http.get(this.sessionUrl, { headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.sessionUrl, { headers: headers}))
             .then(response => response['sessioninfo'] as SessionInformation)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenGenService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
@@ -124,8 +126,7 @@ export class TokenGenService {
             httpParams = httpParams.append('doAs', params.impersonation);
         }
 
-        return this.http.get<TokenData>(this.tokenURL, { params: httpParams, headers: headers })
-        .toPromise()
+        return firstValueFrom(this.http.get<TokenData>(this.tokenURL, { params: httpParams, headers: headers }))
         .then(tokenData => {
             let decodedToken = this.b64DecodeUnicode(tokenData.access_token.split('.')[1]);
             let jwtJson = JSON.parse(decodedToken);

@@ -14,4 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'zone.js';
+export interface TokenData {
+    access_token: string;
+    target_url: string;
+    homepage_url: string;
+    expires_in: number;
+    passcode: string;
+ }
