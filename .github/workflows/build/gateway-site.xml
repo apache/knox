@@ -20,7 +20,7 @@ limitations under the License.
 
     <property>
         <name>gateway.service.alias.impl</name>
-        <value>org.apache.knox.gateway.services.security.impl.RemoteAliasService</value>
+        <value>org.apache.knox.gateway.services.security.impl.DefaultAliasService</value>
     </property>
     <property>
         <name>gateway.port</name>
@@ -40,30 +40,6 @@ limitations under the License.
         <description>The directory within GATEWAY_HOME that contains gateway topology files and deployments.</description>
     </property>
 
-    <property>
-        <name>gateway.hadoop.kerberos.secured</name>
-        <value>false</value>
-        <description>Boolean flag indicating whether the Hadoop cluster protected by Gateway is secured with Kerberos</description>
-    </property>
-
-    <property>
-        <name>java.security.krb5.conf</name>
-        <value>/etc/knox/conf/krb5.conf</value>
-        <description>Absolute path to krb5.conf file</description>
-    </property>
-
-    <property>
-        <name>java.security.auth.login.config</name>
-        <value>/etc/knox/conf/krb5JAASLogin.conf</value>
-        <description>Absolute path to JAAS login config file</description>
-    </property>
-
-    <property>
-        <name>sun.security.krb5.debug</name>
-        <value>false</value>
-        <description>Boolean flag indicating whether to enable debug messages for krb5 authentication</description>
-    </property>
-
     <!-- @since 0.10 Websocket configs -->
     <property>
         <name>gateway.websocket.feature.enabled</name>
@@ -77,17 +53,6 @@ limitations under the License.
         <description>Enable/Disable cookie scoping feature.</description>
     </property>
 
-    <property>
-        <name>gateway.cluster.config.monitor.ambari.enabled</name>
-        <value>false</value>
-        <description>Enable/disable Ambari cluster configuration monitoring.</description>
-    </property>
-
-    <property>
-        <name>gateway.cluster.config.monitor.ambari.interval</name>
-        <value>60</value>
-        <description>The interval (in seconds) for polling Ambari for cluster configuration changes.</description>
-    </property>
     <!-- @since 2.0.0 WebShell configs -->
     <!-- must have websocket enabled to use webshell --> 
     <property>
@@ -99,13 +64,6 @@ limitations under the License.
         <name>gateway.webshell.max.concurrent.sessions</name>
         <value>20</value>
         <description>Maximum number of total concurrent webshell sessions</description>
-    </property>
-    <property>
-        <name>gateway.webshell.audit.logging.enabled</name>
-        <value>false</value>
-        <description>[Experimental Feature] Enable/Disable webshell command audit logging.
-            NOTE: Turning this on might log secrets that might be part of
-            command line arguments, please consider this before turning this on.</description>
     </property>
     <property>
         <name>gateway.webshell.read.buffer.size</name>

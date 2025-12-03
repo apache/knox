@@ -13,7 +13,7 @@ This directory contains Python integration tests that run as part of the GitHub 
    Create a new Python file in this directory (`.github/workflows/tests/`). The filename **must** start with `test_` (e.g., `test_auth.py`) to be automatically discovered by the test runner.
 
 2. **Implement Test Logic**:
-   Use the `unittest` framework to structure your tests.
+   Use the `unittest` framework to structure your tests. You can include multiple test methods in a single class, and multiple classes in a single file. Each method starting with `test_` will be executed as a separate test case.
 
    ```python
    # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -60,10 +60,37 @@ This directory contains Python integration tests that run as part of the GitHub 
            # Assertions
            self.assertEqual(response.status_code, 200)
            # Add more assertions as needed
+
+       def test_another_endpoint(self):
+           """
+           Another test case in the same class.
+           """
+           # ... implementation ...
+           pass
    ```
 
 3. **Add Dependencies**:
    If your test requires additional Python libraries (other than `requests`), add them to `requirements.txt` in this directory.
+
+## Organizing Tests in Subdirectories
+
+You can organize tests into subdirectories (e.g., `tests/auth/`, `tests/proxy/`). For the test runner to discover them:
+
+1. The subdirectory **must** contain an `__init__.py` file (it can be empty).
+2. The test files inside must still match the `test_*.py` pattern.
+
+**Example structure:**
+
+```text
+tests/
+├── test_health.py
+├── auth/
+│   ├── __init__.py
+│   └── test_auth.py
+└── proxy/
+    ├── __init__.py
+    └── test_proxy.py
+```
 
 ## How It Works
 
