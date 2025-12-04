@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 
 public class CSVCommand extends AbstractKnoxShellCommand {
   private static final String USAGE = ":csv [withHeaders] file-url||$variable-name [assign resulting-variable-name]";

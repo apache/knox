@@ -28,7 +28,7 @@ import java.util.Map;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 
 public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand {
 

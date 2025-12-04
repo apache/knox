@@ -27,7 +27,7 @@ import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 
 public class DataSourceCommand extends AbstractSQLCommandSupport {
   private static final String USAGE = ":ds (add|remove|select) [ds-name, connection-str, driver classname, authntype(none|basic)]";

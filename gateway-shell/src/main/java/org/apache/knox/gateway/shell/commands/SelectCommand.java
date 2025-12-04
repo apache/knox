@@ -35,7 +35,7 @@ import javax.swing.JTextArea;
 import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 
 public class SelectCommand extends AbstractSQLCommandSupport implements KeyListener {
   private static final String USAGE = ":sql [assign resulting-variable-name]";
