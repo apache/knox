@@ -37,7 +37,7 @@ class TestKnoxAuthService(unittest.TestCase):
         if not self.base_url.endswith("/"):
             self.base_url += "/"
         # The topology name is likely 'knoxldap' based on the filename knoxldap.xml
-        self.topology_url = self.base_url + "gateway/knoxldap/auth/api/v1/pre"
+        self.topology_url = self.base_url + "gateway/knoxldap/auth/api/v1/extauthz"
 
     def test_auth_service_guest(self):
         """
