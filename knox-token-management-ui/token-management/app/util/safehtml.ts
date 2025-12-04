@@ -14,19 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { MatGridListModule } from '@angular/material/grid-list';
-import { RouterModule } from '@angular/router';
+import {Pipe, PipeTransform} from '@angular/core';
+import {DomSanitizer} from '@angular/platform-browser';
 
-import { HomepageService } from './service/homepage.service';
+@Pipe({ name: 'safeHtml' })
+export class SafeHtmlPipe implements PipeTransform {
+  constructor(private sanitizer: DomSanitizer) {}
 
-@NgModule({
-  imports: [
-    BrowserModule,
-    MatGridListModule,
-    RouterModule.forRoot([]),
-  ],
-  providers: [HomepageService]
-})
-export class AppModule {}
+  transform(value) {
+    return this.sanitizer.bypassSecurityTrustHtml(value);
+  }
+}

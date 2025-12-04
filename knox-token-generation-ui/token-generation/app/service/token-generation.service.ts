@@ -16,7 +16,7 @@
 */
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/dist/sweetalert2.esm.all.js';
 import { TokenData } from '../model/token.data';
 import { TokenRequestParams } from '../model/token.request.params';
 import { TssStatusData } from '../model/tss.status.data';

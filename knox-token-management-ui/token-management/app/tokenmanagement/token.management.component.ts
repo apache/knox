@@ -14,21 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {TokenManagementService} from './token.management.service';
-import {KnoxToken} from './knox.token';
-import {MatTableDataSource} from '@angular/material/table';
-import {MatPaginator} from '@angular/material/paginator';
-import {MatSort} from '@angular/material/sort';
-import {MatSlideToggleChange} from '@angular/material/slide-toggle';
-import {SelectionModel} from '@angular/cdk/collections';
-import Swal from 'sweetalert2';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { TokenManagementService } from '../service/token.management.service';
+import { KnoxToken } from '../model/knox.token';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { MatSlideToggleChange } from '@angular/material/slide-toggle';
+import { SelectionModel } from '@angular/cdk/collections';
+import Swal from 'sweetalert2/dist/sweetalert2.esm.all.js';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatTableModule } from '@angular/material/table';
+import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
     selector: 'app-token-management',
     templateUrl: './token.management.component.html',
-    styleUrls: ['../assets/token-management-ui.css'],
-    providers: [TokenManagementService]
+    styleUrls: ['./token.management.component.css'],
+    providers: [TokenManagementService],
+    imports: [CommonModule, MatSlideToggleModule, MatFormFieldModule, MatSortModule, MatPaginatorModule, FormsModule,
+        MatTableModule, MatInputModule, MatCheckboxModule, MatIconModule, MatButtonModule],
+    standalone: true
 })
 
 export class TokenManagementComponent implements OnInit {
@@ -59,37 +73,38 @@ export class TokenManagementComponent implements OnInit {
     constructor(private tokenManagementService: TokenManagementService) {
         this.showDisabledKnoxSsoCookies = true;
         let isMatch: (record: KnoxToken, filter: String) => boolean = (record, filter) => {
-          let normalizedFilter = filter.trim().toLocaleLowerCase();
-          let matchesTokenId = record.tokenId.toLocaleLowerCase().includes(normalizedFilter);
-          let matchesComment = record.metadata.comment && record.metadata.comment.toLocaleLowerCase().includes(normalizedFilter);
-          let matchesUserName = record.metadata.userName.toLocaleLowerCase().includes(normalizedFilter);
-          let matchesCreatedBy = record.metadata.createdBy && record.metadata.createdBy.toLocaleLowerCase().includes(normalizedFilter);
-          let matchesCustomMetadata = false;
-          if (record.metadata.customMetadataMap) {
-            for (let entry of Array.from(Object.entries(record.metadata.customMetadataMap))) {
-	          if (entry[0].toLocaleLowerCase().includes(normalizedFilter) || entry[1].toLocaleLowerCase().includes(normalizedFilter)) {
-                  matchesCustomMetadata = true;
-                  break;
-              }
+            let normalizedFilter = filter.trim().toLocaleLowerCase();
+            let matchesTokenId = record.tokenId.toLocaleLowerCase().includes(normalizedFilter);
+            let matchesComment = record.metadata.comment && record.metadata.comment.toLocaleLowerCase().includes(normalizedFilter);
+            let matchesUserName = record.metadata.userName.toLocaleLowerCase().includes(normalizedFilter);
+            let matchesCreatedBy = record.metadata.createdBy && record.metadata.createdBy.toLocaleLowerCase().includes(normalizedFilter);
+            let matchesCustomMetadata = false;
+            if (record.metadata.customMetadataMap) {
+                for (let entry of Array.from(Object.entries(record.metadata.customMetadataMap))) {
+                    if (entry[0].toLocaleLowerCase().includes(normalizedFilter)
+                        || entry[1].toLocaleLowerCase().includes(normalizedFilter)) {
+                        matchesCustomMetadata = true;
+                        break;
+                    }
+                }
+            } else {
+                matchesCustomMetadata = true; // nothing to match
             }
-          } else {
-            matchesCustomMetadata = true; // nothing to match
-          }
 
-          return matchesTokenId || matchesComment || matchesCustomMetadata || matchesUserName || matchesCreatedBy;
+            return matchesTokenId || matchesComment || matchesCustomMetadata || matchesUserName || matchesCreatedBy;
         };
 
         this.knoxTokens.filterPredicate = function (record, filter) {
-	      return isMatch(record, filter);
+            return isMatch(record, filter);
         };
 
         this.knoxTokens.sortingDataAccessor = (item, property) => {
-           switch(property) {
-             case 'metadata.comment': return item.metadata.comment;
-             case 'metadata.username': return item.metadata.userName;
-             case 'metadata.createdBy': return item.metadata.createdBy;
-             default: return item[property];
-           }
+            switch (property) {
+                case 'metadata.comment': return item.metadata.comment;
+                case 'metadata.username': return item.metadata.userName;
+                case 'metadata.createdBy': return item.metadata.createdBy;
+                default: return item[property];
+            }
         };
     }
 
@@ -116,13 +131,13 @@ export class TokenManagementComponent implements OnInit {
 
         this.tokenManagementService.getSessionInformation()
             .then(sessionInformation => {
-              this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
-              this.currentKnoxSsoCookieTokenId = sessionInformation.currentKnoxSsoCookieTokenId;
-              this.setUserName(sessionInformation.user);
+                this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
+                this.currentKnoxSsoCookieTokenId = sessionInformation.currentKnoxSsoCookieTokenId;
+                this.setUserName(sessionInformation.user);
             });
     }
 
-    isTokenHashKeyPresent(): boolean{
+    isTokenHashKeyPresent(): boolean {
         return this.tokenHashKeyPresent;
     }
 
@@ -145,7 +160,7 @@ export class TokenManagementComponent implements OnInit {
     }
 
     private isMyToken(token: KnoxToken): boolean {
-	    return token.metadata.userName === this.userName || (token.metadata.createdBy && token.metadata.createdBy === this.userName);
+        return token.metadata.userName === this.userName || (token.metadata.createdBy && token.metadata.createdBy === this.userName);
     }
 
     private isDisabledKnoxSsoCookie(token: KnoxToken): boolean {
@@ -160,31 +175,34 @@ export class TokenManagementComponent implements OnInit {
     }
 
     private actualizeTokensToDisplay(): void {
-	    let tokensToDisplay = this.allKnoxTokens;
+        if(!this.allKnoxTokens) {
+            return;
+        }
+        let tokensToDisplay = this.allKnoxTokens;
 
         if (!this.showDisabledKnoxSsoCookies) {
             tokensToDisplay = tokensToDisplay.filter(token => !this.isDisabledKnoxSsoCookie(token));
         }
 
         if (this.showMyTokensOnly) {
-             tokensToDisplay = tokensToDisplay.filter(token => this.isMyToken(token));
-         }
+            tokensToDisplay = tokensToDisplay.filter(token => this.isMyToken(token));
+        }
 
-         this.knoxTokens.data = tokensToDisplay;
+        this.knoxTokens.data = tokensToDisplay;
 
-         setTimeout(() => {
+        setTimeout(() => {
             this.knoxTokens.paginator = this.paginator;
             this.knoxTokens.sort = this.sort;
-         });
+        });
     }
 
     disableToken(tokenId: string) {
-        this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.setEnabledDisabledFlag(false, tokenId).then(() => this.fetchKnoxTokens());
     }
 
     disableSelectedTokens(): void {
         this.tokenManagementService.setEnabledDisabledFlagsInBatch(false, this.getSelectedTokenIds())
-            .then((response: string) => this.fetchKnoxTokens());
+            .then(() => this.fetchKnoxTokens());
     }
 
     private getSelectedTokenIds(): string[] {
@@ -194,20 +212,20 @@ export class TokenManagementComponent implements OnInit {
     }
 
     enableToken(tokenId: string) {
-        this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.setEnabledDisabledFlag(true, tokenId).then(() => this.fetchKnoxTokens());
     }
 
     enableSelectedTokens(): void {
         this.tokenManagementService.setEnabledDisabledFlagsInBatch(true, this.getSelectedTokenIds())
-            .then((response: string) => this.fetchKnoxTokens());
+            .then(() => this.fetchKnoxTokens());
     }
 
     revokeToken(tokenId: string) {
-        this.tokenManagementService.revokeToken(tokenId).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.revokeToken(tokenId).then(() => this.fetchKnoxTokens());
     }
 
     revokeSelectedTokens() {
-        this.tokenManagementService.revokeTokensInBatch(this.getSelectedTokenIds()).then((response: string) => this.fetchKnoxTokens());
+        this.tokenManagementService.revokeTokensInBatch(this.getSelectedTokenIds()).then(() => this.fetchKnoxTokens());
     }
 
     gotoTokenGenerationPage() {
@@ -227,20 +245,20 @@ export class TokenManagementComponent implements OnInit {
     }
 
     getCustomMetadataArray(knoxToken: KnoxToken): [string, string][] {
-      let mdMap = new Map();
-      if (knoxToken.metadata.customMetadataMap) {
-        mdMap = new Map(Object.entries(knoxToken.metadata.customMetadataMap));
-      }
+        let mdMap = new Map();
+        if (knoxToken.metadata.customMetadataMap) {
+            mdMap = new Map(Object.entries(knoxToken.metadata.customMetadataMap));
+        }
 
-      return Array.from(mdMap);
+        return Array.from(mdMap);
     }
 
     isKnoxSsoCookie(knoxToken: KnoxToken): boolean {
-      return 'KNOXSSO_COOKIE' === knoxToken.metadata.type;
+        return 'KNOXSSO_COOKIE' === knoxToken.metadata.type;
     }
 
     isDisabledKnoxSSoCookie(knoxToken: KnoxToken): boolean {
-      return this.isKnoxSsoCookie(knoxToken) && !knoxToken.metadata.enabled;
+        return this.isKnoxSsoCookie(knoxToken) && !knoxToken.metadata.enabled;
     }
 
     applyFilter(filterValue: string) {
@@ -251,9 +269,9 @@ export class TokenManagementComponent implements OnInit {
 
     /** Whether the number of selected elements matches the total number of rows. */
     isAllSelected(): boolean {
-      const numSelected = this.selection.selected.length;
-      const numRows = this.knoxTokens.filteredData.length;
-      return numSelected === numRows;
+        const numSelected = this.selection.selected.length;
+        const numRows = this.knoxTokens.filteredData.length;
+        return numSelected === numRows;
     }
 
     /** Selects all rows if they are not all selected; otherwise clear selection. */
@@ -262,7 +280,7 @@ export class TokenManagementComponent implements OnInit {
             this.selection.clear();
         } else {
             this.knoxTokens.filteredData.forEach(row => {
-	            if (!this.isDisabledKnoxSsoCookie(row)) {
+                if (!this.isDisabledKnoxSsoCookie(row)) {
                     this.selection.select(row);
                 }
             });
@@ -276,15 +294,15 @@ export class TokenManagementComponent implements OnInit {
     }
 
     showHideBatchOperations() {
-	    if (this.selection.isEmpty()) {
-		    this.showDisableSelectedTokensButton = false;
+        if (this.selection.isEmpty()) {
+            this.showDisableSelectedTokensButton = false;
             this.showEnableSelectedTokensButton = false;
             this.showRevokeSelectedTokensButton = false;
-	    } else {
+        } else {
             this.showDisableSelectedTokensButton = this.selectionHasZeroExpiredToken(); // expired tokens must not be disabled
             this.showEnableSelectedTokensButton = this.selectionHasZeroExpiredToken();  // expired tokens must not be enabled
             this.showRevokeSelectedTokensButton = this.selectionHasZeroKnoxSsoCookie(); // KnoxSSO cookies must not be revoked
-	    }
+        }
     }
 
     private selectionHasZeroKnoxSsoCookie(): boolean {
