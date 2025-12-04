@@ -36,3 +36,13 @@
   overflow: auto;
   max-height: 500px;
 }
+
+.select-column {
+  width: 70px;
+  max-width: 70px;
+  min-width: 70px;
+}
+
+.reduce-icon-size {
+   transform: scale(0.65);
+}

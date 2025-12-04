@@ -14,49 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {NgModule} from '@angular/core';
-import {BrowserModule} from '@angular/platform-browser';
-import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
-import {MatGridListModule} from '@angular/material/grid-list';
-import {BsModalModule} from 'ng2-bs3-modal';
-import {MatTableModule, MatTableDataSource} from '@angular/material/table';
-import {MatSortModule} from '@angular/material/sort';
-import {MatPaginatorModule} from '@angular/material/paginator';
-import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
-import {MatInputModule} from '@angular/material/input';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle';
-import {MatCheckboxModule} from '@angular/material/checkbox';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-
-
-import {TokenManagementComponent} from './token.management.component';
-import {TokenManagementService} from './token.management.service';
-import {SessionInformationComponent} from './session.information.component';
-import {SafeHtmlPipe} from './session.information.component';
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { ReactiveFormsModule } from '@angular/forms';
+import { TokenManagementService } from './service/token.management.service';
 
 @NgModule({
-    imports: [BrowserModule,
-        BrowserAnimationsModule,
-        HttpClientModule,
-        HttpClientXsrfModule,
-        MatGridListModule,
-        BsModalModule,
-        FormsModule,
-        ReactiveFormsModule
-    ],
-    exports: [MatTableModule,
-        MatTableDataSource,
-        MatSortModule,
-        MatPaginatorModule,
-        MatProgressSpinnerModule,
-        MatInputModule,
-        MatSlideToggleModule,
-        MatCheckboxModule
-    ],
-    declarations: [TokenManagementComponent, SessionInformationComponent, SafeHtmlPipe],
-    providers: [TokenManagementService],
-    bootstrap: [TokenManagementComponent, SessionInformationComponent]
+    imports: [BrowserModule, ReactiveFormsModule],
+    providers: [TokenManagementService]
 })
 export class AppModule {
 }
+

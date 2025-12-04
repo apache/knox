@@ -23,11 +23,7 @@
     "@angular/router": "^20.3.2",
     "bootstrap": "^5.3.8",
     "core-js": "^3.46.0",
-    "js-yaml": "^3.13.1",
-    "rxjs": "^7.8.2",
     "sweetalert2": "^11.26.3",
-    "ts-helpers": "^1.1.1",
-    "vkbeautify": "^0.99.3",
     "zone.js": "^0.15.1"
   },
   "devDependencies": {
@@ -41,8 +37,6 @@
     "@angular/compiler-cli": "^20.3.2",
     "@angular/language-service": "^20.3.2",
     "@eslint/js": "^9.39.0",
-    "@types/jasmine": "~5.1.0",
-    "@types/jasminewd2": "^2.0.8",
     "@types/node": "^24.5.2",
     "eslint": "^9.39.0",
     "ts-node": "~10.9.0",

@@ -19,10 +19,8 @@ import { environment } from './environments/environment';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
 import { MatGridListModule } from '@angular/material/grid-list';
-
-// Standalone components you're bootstrapping
+import { provideHttpClient } from '@angular/common/http';
 import { SessionInformationComponent } from './app/sessionInformation/session.information.component';
 import { GeneralProxyInformationComponent } from './app/generalProxyInformation/general.proxy.information.component';
 import { TopologyInformationsComponent } from './app/topologies/topology.information.component';
@@ -33,7 +31,6 @@ if (environment.production) {
   enableProdMode();
 }
 
-// Bootstrap multiple standalone components
 const bootstrapComponents = [
   SessionInformationComponent,
   GeneralProxyInformationComponent,
@@ -43,7 +40,8 @@ const bootstrapComponents = [
 bootstrapComponents.forEach(component => {
   bootstrapApplication(component, {
     providers: [
-      importProvidersFrom(HttpClientModule, HttpClientXsrfModule, MatGridListModule),
+      importProvidersFrom(MatGridListModule),
+      provideHttpClient(),
       provideRouter([]),
       {
         provide: APP_BASE_HREF,

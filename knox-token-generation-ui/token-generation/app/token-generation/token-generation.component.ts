@@ -17,7 +17,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2/dist/sweetalert2.esm.all.js';
 import { TokenResultData } from '../model/token.result.data';
 import { TssStatusData } from '../model/tss.status.data';
 import { TokenGenService } from '../service/token-generation.service';
