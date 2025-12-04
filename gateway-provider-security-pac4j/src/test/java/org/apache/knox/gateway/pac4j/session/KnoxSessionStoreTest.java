@@ -24,9 +24,9 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
-import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.Pac4jConstants;
+import org.pac4j.jee.context.JEEContext;
 import org.pac4j.saml.profile.SAML2Profile;
 
 import javax.servlet.http.HttpServletResponse;

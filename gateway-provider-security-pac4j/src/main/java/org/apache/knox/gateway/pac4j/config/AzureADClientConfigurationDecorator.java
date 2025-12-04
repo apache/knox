@@ -22,17 +22,17 @@ import java.util.Map;
 
 import org.pac4j.core.client.Client;
 import org.pac4j.core.http.callback.PathParameterCallbackUrlResolver;
-import org.pac4j.oidc.client.AzureAdClient;
+import org.pac4j.oidc.client.AzureAd2Client;
 
 public class AzureADClientConfigurationDecorator implements ClientConfigurationDecorator {
-  private static final String AZURE_AD_CLIENT_CLASS_NAME = AzureAdClient.class.getSimpleName();
+  private static final String AZURE_AD_CLIENT_CLASS_NAME = AzureAd2Client.class.getSimpleName();
 
   @Override
   public void decorateClients(List<Client> clients, Map<String, String> properties) {
     for (Client client : clients) {
       if (AZURE_AD_CLIENT_CLASS_NAME.equalsIgnoreCase(client.getName())) {
         // special handling for Azure AD, use path separators instead of query params
-        ((AzureAdClient) client).setCallbackUrlResolver(new PathParameterCallbackUrlResolver());
+        ((AzureAd2Client) client).setCallbackUrlResolver(new PathParameterCallbackUrlResolver());
       }
     }
   }

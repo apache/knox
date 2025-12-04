@@ -83,7 +83,7 @@ public class SAML2ClientConfigurationDecorator implements ClientConfigurationDec
   private void setKeyStoreType(Map<String, String> properties, final SAML2Client saml2Client) {
     final String keyStoreType = properties.get(KEYSTORE_TYPE);
     if (StringUtils.isNotBlank(keyStoreType)) {
-      saml2Client.getConfiguration().setKeystoreType(keyStoreType);
+      saml2Client.getConfiguration().setKeyStoreType(keyStoreType);
       log.pac4jSamlKeystoreType(keyStoreType);
     }
   }

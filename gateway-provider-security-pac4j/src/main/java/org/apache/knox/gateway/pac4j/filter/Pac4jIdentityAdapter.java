@@ -30,9 +30,13 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pac4j.core.config.Config;
-import org.pac4j.core.context.JEEContext;
-import org.pac4j.core.profile.CommonProfile;
+import org.pac4j.core.context.FrameworkParameters;
+import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.ProfileManager;
+import org.pac4j.core.profile.UserProfile;
+import org.pac4j.core.util.Pac4jConstants;
+import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.JEEFrameworkParameters;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -46,6 +50,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 
 /**
@@ -84,13 +89,17 @@ public class Pac4jIdentityAdapter implements Filter {
 
     final HttpServletRequest request = (HttpServletRequest) servletRequest;
     final HttpServletResponse response = (HttpServletResponse) servletResponse;
-    final JEEContext context = new JEEContext(request, response, ((Config)request.getAttribute(PAC4J_CONFIG)).getSessionStore());
-    final ProfileManager<CommonProfile> manager = new ProfileManager<>(context);
-    final Optional<CommonProfile> optional = manager.get(true);
+    final JEEContext context = new JEEContext(request, response);
+    Config pac4jConfig = ((Config)request.getAttribute(PAC4J_CONFIG));
+    FrameworkParameters frameworkParameters = new JEEFrameworkParameters(request, response);
+    SessionStore sessionStore = pac4jConfig.getSessionStoreFactory().newSessionStore(frameworkParameters);
+    final ProfileManager manager = new ProfileManager(context, sessionStore);
+    final Optional<UserProfile> optional = manager.getProfile();
     if (optional.isPresent()) {
-      CommonProfile profile = optional.get();
+      UserProfile profile = optional.get();
       logger.debug("User authenticated as: {}", profile);
-      manager.remove(true);
+      sessionStore.set(context, Pac4jConstants.USER_PROFILES, new LinkedHashMap<String, UserProfile>());
+      context.setRequestAttribute(Pac4jConstants.USER_PROFILES, new LinkedHashMap<String, UserProfile>());
       String id = null;
       if (idAttribute != null) {
         Object attribute = profile.getAttribute(idAttribute);

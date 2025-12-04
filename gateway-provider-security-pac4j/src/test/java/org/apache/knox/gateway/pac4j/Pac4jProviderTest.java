@@ -38,7 +38,6 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -112,19 +111,21 @@ public class Pac4jProviderTest {
         assertEquals(302, response.getStatus());
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location").get(0));
 
-        List<Cookie> cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        Optional<String> requestedUrlSetCookie = response.getHeaders().get("Set-Cookie").stream()
-            .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL))
-                .findFirst();
+        Optional<String> pac4jCsrfToken = findFirstCookieByName(response, Pac4jConstants.CSRF_TOKEN);
+        assertTrue(pac4jCsrfToken.isPresent());
+        assertTrue(pac4jCsrfToken.get().contains("Secure;"));
+
+        assertTrue(findFirstCookieByName(response, Cookies.PREVIOUS_CSRF_TOKEN).isPresent());
+        assertTrue(findFirstCookieByName(response, Cookies.CSRF_TOKEN_EXPIRATION_DATE).isPresent());
+
+        Optional<String> requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
 
-        assertEquals(1, response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.CSRF_TOKEN)).count());
+        assertEquals(1, countCookiesByName(response, Cookies.CSRF_TOKEN));
 
         // step 2: send credentials to the callback url (callback from the identity provider)
         request = new MockHttpServletRequest();
-        request.setCookies(new Cookie[]{this.setCookieParser(requestedUrlSetCookie.get())});
+        request.setCookies(new Cookie[]{setCookieParser(requestedUrlSetCookie.get())});
         request.setRequestURL(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS);
         request.addParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER, "true");
         request.addParameter(Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER, CLIENT_CLASS);
@@ -137,18 +138,16 @@ public class Pac4jProviderTest {
         assertEquals(302, response.getStatus());
         assertEquals(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL, response.getHeaders().get("Location").get(0));
 
-        Optional<String> userProfilesSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES))
-                .findFirst();
-        requestedUrlSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL + "=null;"))
-                .findFirst();
+        Optional<String> userProfilesSetCookie = findFirstCookieByName(response, Cookies.USER_PROFILES);
         assertTrue(userProfilesSetCookie.isPresent());
+
+        requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
+        assertTrue(cookieValueIsNull(requestedUrlSetCookie.get()));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
-        request.setCookies(new Cookie[]{this.setCookieParser(requestedUrlSetCookie.get()), this.setCookieParser(userProfilesSetCookie.get())});
+        request.setCookies(new Cookie[]{setCookieParser(requestedUrlSetCookie.get()), setCookieParser(userProfilesSetCookie.get())});
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
@@ -157,8 +156,7 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
 
-        assertEquals(1, response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES + "=null;")).count());
+        assertEquals(1, countCookiesWithNullValueByName(response, Cookies.USER_PROFILES));
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
@@ -215,19 +213,18 @@ public class Pac4jProviderTest {
         assertEquals(302, response.getStatus());
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location").get(0));
 
-        List<Cookie> cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        Optional<String> requestedUrlSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL))
-                .findFirst();
+        Optional<String> pac4jCsrfToken = findFirstCookieByName(response, Pac4jConstants.CSRF_TOKEN);
+        assertTrue(pac4jCsrfToken.isPresent());
+        assertTrue(pac4jCsrfToken.get().contains("Secure;"));
+
+        Optional<String> requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
 
-        assertEquals(1, response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.CSRF_TOKEN)).count());
+        assertEquals(1, countCookiesByName(response, Cookies.CSRF_TOKEN));
 
         // step 2: send credentials to the callback url (callback from the identity provider)
         request = new MockHttpServletRequest();
-        request.setCookies(new Cookie[]{this.setCookieParser(requestedUrlSetCookie.get())});
+        request.setCookies(new Cookie[]{setCookieParser(requestedUrlSetCookie.get())});
         request.setRequestURL(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS);
         request.addParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER, "true");
         request.addParameter(Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER, CLIENT_CLASS);
@@ -240,18 +237,16 @@ public class Pac4jProviderTest {
         assertEquals(302, response.getStatus());
         assertEquals(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL, response.getHeaders().get("Location").get(0));
 
-        Optional<String> userProfilesSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES))
-                .findFirst();
-        requestedUrlSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL + "=null;"))
-                .findFirst();
+        Optional<String> userProfilesSetCookie = findFirstCookieByName(response, Cookies.USER_PROFILES);
         assertTrue(userProfilesSetCookie.isPresent());
+
+        requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
+        assertTrue(cookieValueIsNull(requestedUrlSetCookie.get()));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
-        request.setCookies(new Cookie[]{this.setCookieParser(requestedUrlSetCookie.get()), this.setCookieParser(userProfilesSetCookie.get())});
+        request.setCookies(new Cookie[]{setCookieParser(requestedUrlSetCookie.get()), setCookieParser(userProfilesSetCookie.get())});
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
@@ -260,8 +255,7 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
 
-        assertEquals(1, response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES + "=null;")).count());
+        assertEquals(1, countCookiesWithNullValueByName(response, Cookies.USER_PROFILES));
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
@@ -318,19 +312,18 @@ public class Pac4jProviderTest {
         assertEquals(302, response.getStatus());
         assertEquals(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS, response.getHeaders().get("Location").get(0));
 
-        List<Cookie> cookies = response.getCookies();
-        assertEquals(1, cookies.size());
-        Optional<String> requestedUrlSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL))
-                .findFirst();
+        Optional<String> pac4jCsrfToken = findFirstCookieByName(response, Pac4jConstants.CSRF_TOKEN);
+        assertTrue(pac4jCsrfToken.isPresent());
+        assertTrue(pac4jCsrfToken.get().contains("Secure;"));
+
+        Optional<String> requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
 
-        assertEquals(1, response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.CSRF_TOKEN)).count());
+        assertEquals(1, countCookiesByName(response, Cookies.CSRF_TOKEN));
 
         // step 2: send credentials to the callback url (callback from the identity provider)
         request = new MockHttpServletRequest();
-        request.setCookies(new Cookie[]{this.setCookieParser(requestedUrlSetCookie.get())});
+        request.setCookies(new Cookie[]{setCookieParser(requestedUrlSetCookie.get())});
         request.setRequestURL(PAC4J_CALLBACK_URL + "?" + Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER + "=true&" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER + "=" + CLIENT_CLASS);
         request.addParameter(Pac4jDispatcherFilter.PAC4J_CALLBACK_PARAMETER, "true");
         request.addParameter(Pac4jConstants.DEFAULT_CLIENT_NAME_PARAMETER, CLIENT_CLASS);
@@ -343,18 +336,16 @@ public class Pac4jProviderTest {
         assertEquals(302, response.getStatus());
         assertEquals(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL, response.getHeaders().get("Location").get(0));
 
-        Optional<String> userProfilesSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES))
-                .findFirst();
-        requestedUrlSetCookie = response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL + "=null;"))
-                .findFirst();
+        Optional<String> userProfilesSetCookie = findFirstCookieByName(response, Cookies.USER_PROFILES);
         assertTrue(userProfilesSetCookie.isPresent());
+
+        requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
+        assertTrue(cookieValueIsNull(requestedUrlSetCookie.get()));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
-        request.setCookies(new Cookie[]{this.setCookieParser(requestedUrlSetCookie.get()), this.setCookieParser(userProfilesSetCookie.get())});
+        request.setCookies(new Cookie[]{setCookieParser(requestedUrlSetCookie.get()), setCookieParser(userProfilesSetCookie.get())});
         request.setRequestURL(KNOXSSO_SERVICE_URL + "?" + ORIGINAL_URL + "=" + HADOOP_SERVICE_URL);
         request.setServerName(LOCALHOST);
         response = new MockHttpServletResponse();
@@ -363,8 +354,7 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
 
-        assertEquals(1, response.getHeaders().get("Set-Cookie").stream()
-                .filter(c -> c.startsWith(KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES + "=null;")).count());
+        assertEquals(1, countCookiesWithNullValueByName(response, Cookies.USER_PROFILES));
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
@@ -401,16 +391,16 @@ public class Pac4jProviderTest {
         EasyMock.verify(aliasService);
     }
 
-    private Cookie setCookieParser(String setCookie) {
+    private static Cookie setCookieParser(String setCookie) {
         String[] cookieParts = setCookie.split(";");
         String[] nameValuePairs = cookieParts[0].trim().split("=", 2);
 
         return new Cookie(nameValuePairs[0].trim(), nameValuePairs[1].trim());
     }
 
-    private class FilterConfigStub implements FilterConfig {
-        private ServletContext context;
-        private Properties properties = new Properties();
+    private static class FilterConfigStub implements FilterConfig {
+        private final ServletContext context;
+        private final Properties properties = new Properties();
 
         FilterConfigStub(ServletContext context) {
             this.context = context;
@@ -441,4 +431,35 @@ public class Pac4jProviderTest {
             return (Enumeration<String>) properties.propertyNames();
         }
     }
+
+    private static Optional<String> findFirstCookieByName(MockHttpServletResponse response, String name) {
+        return response.getHeaders().get("Set-Cookie").stream()
+        .filter(c -> c.startsWith(name+"="))
+        .findFirst();
+    }
+
+    private static long countCookiesByName(MockHttpServletResponse response, String name) {
+        return response.getHeaders().get("Set-Cookie").stream()
+        .filter(c -> c.startsWith(name+"="))
+        .count();
+    }
+
+    private static long countCookiesWithNullValueByName(MockHttpServletResponse response, String name) {
+        return response.getHeaders().get("Set-Cookie").stream()
+        .filter(c -> c.startsWith(name+"=null;"))
+        .count();
+    }
+
+    private static boolean cookieValueIsNull(String setCookieHeader) {
+        return setCookieParser(setCookieHeader).getValue().equals("null");
+    }
+
+    private static class Cookies {
+        static final String REQUESTED_URL = KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.REQUESTED_URL;
+        static final String CSRF_TOKEN_EXPIRATION_DATE = KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.CSRF_TOKEN_EXPIRATION_DATE;
+        static final String PREVIOUS_CSRF_TOKEN = KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.PREVIOUS_CSRF_TOKEN;
+        static final String CSRF_TOKEN = KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.CSRF_TOKEN;
+        static final String USER_PROFILES = KnoxSessionStore.PAC4J_SESSION_PREFIX + Pac4jConstants.USER_PROFILES;
+    }
+
 }

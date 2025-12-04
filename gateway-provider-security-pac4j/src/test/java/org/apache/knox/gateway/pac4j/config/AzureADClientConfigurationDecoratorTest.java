@@ -23,15 +23,15 @@ import java.util.Collections;
 
 import org.junit.Test;
 import org.pac4j.core.http.callback.PathParameterCallbackUrlResolver;
-import org.pac4j.oidc.client.AzureAdClient;
-import org.pac4j.oidc.config.AzureAdOidcConfiguration;
+import org.pac4j.oidc.client.AzureAd2Client;
+import org.pac4j.oidc.config.AzureAd2OidcConfiguration;
 
 public class AzureADClientConfigurationDecoratorTest {
 
   @Test
   public void testAzureADClientConfigurationDecoration() throws Exception {
-    final AzureAdOidcConfiguration azureAdConfig = new AzureAdOidcConfiguration();
-    final AzureAdClient client = new AzureAdClient(azureAdConfig);
+    final AzureAd2OidcConfiguration azureAdConfig = new AzureAd2OidcConfiguration();
+    final AzureAd2Client client = new AzureAd2Client(azureAdConfig);
     final AzureADClientConfigurationDecorator azureConfigDecorator = new AzureADClientConfigurationDecorator();
     azureConfigDecorator.decorateClients(Collections.singletonList(client), null);
     assertTrue(client.getCallbackUrlResolver() instanceof PathParameterCallbackUrlResolver);
