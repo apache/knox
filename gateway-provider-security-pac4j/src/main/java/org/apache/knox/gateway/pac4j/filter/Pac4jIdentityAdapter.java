@@ -98,7 +98,6 @@ public class Pac4jIdentityAdapter implements Filter {
     if (optional.isPresent()) {
       UserProfile profile = optional.get();
       logger.debug("User authenticated as: {}", profile);
-      //manager.removeProfiles(); would only work if session existed, but our session store does not support sessions
       sessionStore.set(context, Pac4jConstants.USER_PROFILES, new LinkedHashMap<String, UserProfile>());
       context.setRequestAttribute(Pac4jConstants.USER_PROFILES, new LinkedHashMap<String, UserProfile>());
       String id = null;
