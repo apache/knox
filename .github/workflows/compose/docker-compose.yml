@@ -13,30 +13,30 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-version: '3'
-
 services:
   knox-dev:
     build:
       context: ../build
       dockerfile: Dockerfile
-    image: moresandeep/knox-dev:master
+    image: apache/knox-dev:master
 
   knox-dev-local:
-    build:
+    build: &build_local
       context: ../build
       dockerfile: Dockerfile.local
       args:
         knoxurl: ${knoxurl:-https://github.com/apache/knox.git}
         branch: ${branch:-master}
-    image: moresandeep/knox-dev:local
+    image: apache/knox-dev:local
 
   ldap:
-    image: moresandeep/knox-dev:master
+    build: *build_local # Build LDAP service if not already built
+    image: apache/knox-dev:local
     command: /ldap.sh
 
   knox:
-    image: moresandeep/knox-dev:master
+    build: *build_local # Build Knox service if not already built
+    image: apache/knox-dev:local
     command: /gateway.sh
     volumes:
 #      - ./topologies:/knox-runtime/conf/topologies
