@@ -14,24 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Pipe, PipeTransform} from '@angular/core';
-import {DomSanitizer} from '@angular/platform-browser';
-import {TokenGenService} from './token-generation.service';
-import {SessionInformation} from './token-generation.models';
-
-@Pipe({ name: 'safeHtml' })
-export class SafeHtmlPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
-
-  transform(value) {
-    return this.sanitizer.bypassSecurityTrustHtml(value);
-  }
-}
+import { Component, OnInit } from '@angular/core';
+import { TokenManagementService } from '../service/token.management.service';
+import { SessionInformation } from '../model/session.information';
+import { SafeHtmlPipe } from '../util/safehtml';
 
 @Component({
     selector: 'app-session-information',
     templateUrl: './session.information.component.html',
-    providers: [TokenGenService]
+    providers: [TokenManagementService],
+    imports: [ SafeHtmlPipe ]
 })
 
 export class SessionInformationComponent implements OnInit {
@@ -39,16 +31,16 @@ export class SessionInformationComponent implements OnInit {
     sessionInformation: SessionInformation;
     logoutSupported = true;
 
-    constructor(private tokenGenerationService: TokenGenService) {
+    constructor(private tokenManagementService: TokenManagementService) {
         this['showSessionInformation'] = true;
     }
 
     getUser() {
         if (this.sessionInformation) {
-          return this.sessionInformation.user;
+            return this.sessionInformation.user;
         } else {
-          console.debug('SessionInformationComponent --> getUser() --> dr.who');
-          return 'dr.who';
+            console.debug('SessionInformationComponent --> getUser() --> dr.who');
+            return 'dr.who';
         }
     }
 
@@ -62,12 +54,12 @@ export class SessionInformationComponent implements OnInit {
 
     ngOnInit(): void {
         console.debug('SessionInformationComponent --> ngOnInit() --> ');
-        this.tokenGenerationService.getSessionInformation()
+        this.tokenManagementService.getSessionInformation()
             .then(sessionInformation => this.setSessionInformation(sessionInformation));
     }
 
     private setSessionInformation(sessionInformation: SessionInformation) {
-	    this.sessionInformation = sessionInformation;
+        this.sessionInformation = sessionInformation;
         console.debug('SessionInformationComponent --> setSessionInformation() --> ' + this.sessionInformation.user);
     }
 

@@ -14,24 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, Pipe, PipeTransform} from '@angular/core';
-import {DomSanitizer} from '@angular/platform-browser';
-import {TokenManagementService} from './token.management.service';
-import {SessionInformation} from './session.information';
-
-@Pipe({ name: 'safeHtml' })
-export class SafeHtmlPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
-
-  transform(value) {
-    return this.sanitizer.bypassSecurityTrustHtml(value);
-  }
-}
+import {Component, OnInit } from '@angular/core';
+import {TokenGenService} from '../service/token-generation.service';
+import { SessionInformation } from '../model/session.information';
+import { SafeHtmlPipe } from '../util/safehtml';
 
 @Component({
     selector: 'app-session-information',
     templateUrl: './session.information.component.html',
-    providers: [TokenManagementService]
+    providers: [TokenGenService],
+    imports: [SafeHtmlPipe]
 })
 
 export class SessionInformationComponent implements OnInit {
@@ -39,7 +31,7 @@ export class SessionInformationComponent implements OnInit {
     sessionInformation: SessionInformation;
     logoutSupported = true;
 
-    constructor(private tokenManagementService: TokenManagementService) {
+    constructor(private tokenGenerationService: TokenGenService) {
         this['showSessionInformation'] = true;
     }
 
@@ -62,7 +54,7 @@ export class SessionInformationComponent implements OnInit {
 
     ngOnInit(): void {
         console.debug('SessionInformationComponent --> ngOnInit() --> ');
-        this.tokenManagementService.getSessionInformation()
+        this.tokenGenerationService.getSessionInformation()
             .then(sessionInformation => this.setSessionInformation(sessionInformation));
     }
 

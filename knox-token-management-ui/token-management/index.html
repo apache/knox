@@ -14,43 +14,42 @@
 -->
 <!doctype html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Apache Knox Token Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Custom styles for this template -->
-    <link href="assets/sticky-footer.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	<script>
-	  window['base-href'] = window.location.pathname;
-	  console.log(window['base-href']);
-	</script>
+    <script>
+        window['base-href'] = window.location.pathname.replace('index.html', '');
+    </script>
 </head>
-<body>
-<div class="navbar-wrapper">
-    <div class="container-fluid">
-        <nav class="navbar navbar-inverse navbar-static-top">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                            data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="#"> <img style="max-width:200px; margin-top: -9px;" src="assets/knox-logo-transparent.gif" alt="Apache Knox Home"></a>
-                </div>
-                <app-session-information></app-session-information>
-            </div>
-        </nav>
-    </div>
 
-    <div class="container-fluid">
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid align-items-start">
+            <a class="navbar-brand p-0 me-3 d-flex" href="#">
+                <img src="assets/knox-logo-transparent.gif" alt="Apache Knox Home"
+                    style="max-width:200px; margin-top:-5px;">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="ms-auto d-flex flex-column pt-0">
+                    <app-session-information></app-session-information>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid mt-4">
         <app-token-management></app-token-management>
     </div>
-</div>
+    </div>
 </body>
+
 </html>
