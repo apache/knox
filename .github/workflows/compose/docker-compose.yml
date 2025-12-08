@@ -56,7 +56,7 @@ services:
       bash -c "pip install -r requirements.txt 
       && echo 'Waiting for knox...' 
       && sleep 30 
-      && python -m unittest discover -p 'test_*.py'"
+      && pytest --junitxml=test-results.xml"
     depends_on:
       - knox
 
