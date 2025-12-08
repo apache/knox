@@ -107,12 +107,15 @@ If you want to skip the integration tests for a specific Pull Request (e.g., doc
 
 ## Running Tests Locally
 
-You can run these tests locally using Docker Compose from the `.github/workflows/compose` directory:
+You can run these tests locally using Docker Compose from the Knox source directory:
 
 ```bash
-cd .github/workflows/compose
-docker-compose up --build --abort-on-container-exit
+docker compose -f ./.github/workflows/compose/docker-compose.yml up --exit-code-from tests tests
 ```
 
-This will start the Knox environment and run the tests. The `tests` container will exit once tests are complete.
+This will build knox image and start the Knox environment and run the tests. The `tests` container will exit once tests are complete.
+To shut down the environment 
 
+```bash
+docker compose -f ./.github/workflows/compose/docker-compose.yml down
+```
