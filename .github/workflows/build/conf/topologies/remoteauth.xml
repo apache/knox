@@ -23,12 +23,16 @@ limitations under the License.
             <enabled>true</enabled>
             <param>
                 <name>remote.auth.url</name>
-                <value>https://knox:8443/gateway/knoxldap/auth/api/v1/pre</value>
+                <value>https://localhost:8443/gateway/knoxldap/auth/api/v1/pre</value>
             </param>
             <param>
                 <name>remote.auth.include.headers</name>
                 <value>Authorization</value>
             </param>
+            <param>                                                                             
+                <name>remote.auth.expire.after</name>                                                    
+                <value>5</value>                                                                                                                                                           
+            </param> 
             <param>
                 <name>remote.auth.user.header</name>
                 <value>x-knox-actor-username</value>
