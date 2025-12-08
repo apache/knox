@@ -37,7 +37,11 @@
                 <configuration>
                     <filesets>
                         <fileset>
-                            <directory>node_modules</directory>
+                            <directory>${project.basedir}</directory>
+                            <includes>
+                                <include>package-lock.json</include>
+                                <include>node_modules/**</include>
+                            </includes>
                         </fileset>
                     </filesets>
                 </configuration>
