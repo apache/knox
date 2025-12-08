@@ -31,8 +31,8 @@ import org.apache.knox.gateway.shell.manager.Manager;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
-import org.codehaus.groovy.tools.shell.AnsiDetector;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.AnsiDetector;
+import org.apache.groovy.groovysh.Groovysh;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 

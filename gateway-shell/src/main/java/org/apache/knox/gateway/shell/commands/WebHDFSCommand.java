@@ -38,7 +38,7 @@ import org.apache.knox.gateway.shell.hdfs.Hdfs;
 import org.apache.knox.gateway.shell.hdfs.Status.Response;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.util.JsonUtils;
-import org.codehaus.groovy.tools.shell.Groovysh;
+import org.apache.groovy.groovysh.Groovysh;
 
 public class WebHDFSCommand extends AbstractKnoxShellCommand {
   private static final String DESC = "POSIX style commands for Hadoop Filesystems";
