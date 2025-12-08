@@ -151,5 +151,13 @@ limitations under the License.
         <value>LIVYSERVER</value>
         <description>Add service name to x-forward-context header for the list of services defined above.</description>
     </property>
+    <property>
+        <name>gateway.strict.transport.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.strict.transport.option</name>
+        <value>max-age=300; includeSubDomains</value>
+    </property>
 
 </configuration>
