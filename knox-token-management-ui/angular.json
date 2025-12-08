@@ -51,7 +51,7 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "token-management/styles.css"
+              "token-management/styles.scss"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",

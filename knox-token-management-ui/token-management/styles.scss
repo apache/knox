@@ -16,9 +16,15 @@
  * limitations under the License.
  */
 
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
 
-@import '@angular/material/prebuilt-themes/deeppurple-amber.css';
+:root {
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette
+    )
+  ));
+}
 
 .navbar-static-top {
     min-height: 110px;
@@ -30,4 +36,26 @@
 
 html, body {
   font-size: 14px;
+}
+
+.mat-mdc-table {
+  background-color: white !important;
+}
+
+.mat-mdc-paginator {
+  background-color: white !important;
+}
+
+.mat-mdc-button, 
+.mat-mdc-button-base {
+  border-radius: 0 !important;
+}
+
+.mat-mdc-outlined-button {
+  border-color: rgb(182, 182, 182) !important;
+}
+
+.mat-mdc-outlined-button>.mat-icon {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
 }

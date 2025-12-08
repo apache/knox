@@ -15,7 +15,7 @@
 <div>
 
     <div>
-        <button mat-stroked-button color="success" (click)="gotoTokenGenerationPage();" [disabled]="!isTokenHashKeyPresent()">Generate New Token</button>
+        <button mat-stroked-button color="success" (click)="gotoTokenGenerationPage();" [disabled]="!isTokenHashKeyPresent()" class="me-1">Generate New Token</button>
         <button mat-stroked-button type="button" title="Refresh Knox Tokens" (click)="fetchKnoxTokens();"
             [disabled]="!isTokenHashKeyPresent()">
                 <mat-icon>refresh</mat-icon>
@@ -141,10 +141,10 @@
                     style="text-align: center; justify-content: center;">Actions</mat-header-cell>
                 <mat-cell *matCellDef="let knoxToken">
                     <button mat-stroked-button *ngIf="knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)"
-                        (click)="disableToken(knoxToken.tokenId);">Disable</button>
+                        (click)="disableToken(knoxToken.tokenId);"class="me-1">Disable</button>
                     <button mat-stroked-button
                         *ngIf="!isKnoxSsoCookie(knoxToken) && !knoxToken.metadata.enabled && !isTokenExpired(knoxToken.expirationLong)"
-                        (click)="enableToken(knoxToken.tokenId);">Enable</button>
+                        (click)="enableToken(knoxToken.tokenId);" class="me-1">Enable</button>
                     <button mat-stroked-button *ngIf="!isKnoxSsoCookie(knoxToken)"
                         (click)="revokeToken(knoxToken.tokenId);">Revoke</button>
                     <p *ngIf="isDisabledKnoxSsoCookie(knoxToken)" style="color:orange">Previously Disabled SSO Cookie!
@@ -161,11 +161,11 @@
     </div>
 
     <div>
-        <button mat-stroked-button *ngIf="showDisableSelectedTokensButton" type="button" (click)="disableSelectedTokens();">&nbsp;Disable
+        <button mat-stroked-button *ngIf="showDisableSelectedTokensButton" type="button" (click)="disableSelectedTokens();" class="me-1">&nbsp;Disable
             Selected Tokens&nbsp;&nbsp;</button>
-        <button mat-stroked-button *ngIf="showEnableSelectedTokensButton" type="button" (click)="enableSelectedTokens();">&nbsp;Enable
+        <button mat-stroked-button *ngIf="showEnableSelectedTokensButton" type="button" (click)="enableSelectedTokens();" class="me-1">&nbsp;Enable
             Selected Tokens&nbsp;&nbsp;</button>
-        <button mat-stroked-button *ngIf="showRevokeSelectedTokensButton" type="button" (click)="revokeSelectedTokens();">&nbsp;Revoke
+        <button mat-stroked-button *ngIf="showRevokeSelectedTokensButton" type="button" (click)="revokeSelectedTokens();" class="me-1">&nbsp;Revoke
             Selected Tokens&nbsp;</button>
     </div>
 
