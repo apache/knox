@@ -117,5 +117,5 @@ This will build knox image and start the Knox environment and run the tests. The
 To shut down the environment 
 
 ```bash
-docker compose -f ./.github/workflows/compose/docker-compose.yml down
+docker compose -f ./.github/workflows/compose/docker-compose.yml down 
 ```
