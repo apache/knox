@@ -50,6 +50,7 @@ services:
     working_dir: /tests
     volumes:
       - ../tests:/tests
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >

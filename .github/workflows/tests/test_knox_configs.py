@@ -35,7 +35,7 @@ class TestKnoxConfigs(unittest.TestCase):
             self.base_url += "/"
         self.non_existent_path = self.base_url + "gateway/not-exists"
 
-    def test_auth_service_guest(self):
+    def test_global_hsts_header(self):
         """
         Verifies header is present with the correct value
         """
