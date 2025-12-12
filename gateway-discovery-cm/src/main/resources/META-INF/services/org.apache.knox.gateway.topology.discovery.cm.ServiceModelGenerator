@@ -61,5 +61,5 @@ org.apache.knox.gateway.topology.discovery.cm.model.ozone.OzoneServiceModelGener
 org.apache.knox.gateway.topology.discovery.cm.model.ozone.ReconServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.ozone.SCMServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.ozone.OzoneHttpfsServiceModelGenerator
-
-
+org.apache.knox.gateway.topology.discovery.cm.model.opensearch.OpenSearchApiCoordinatorServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.opensearch.OpenSearchApiMasterServiceModelGenerator
