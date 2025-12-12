@@ -39,6 +39,7 @@ import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.model.opensearch.OpenSearchApiMasterServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
 import java.net.SocketException;
@@ -317,7 +318,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
         ServiceRoleDetails serviceRoleDetails = new ServiceRoleDetails(service, serviceConfig, role, roleConfigs);
         log.discoveringServiceRole(role.getName(), role.getType());
 
-        Set<ServiceModel> modelsForRole = generateServiceModels(client, serviceRoleDetails, coreSettingsConfig, modelGenerators);
+        Set<ServiceModel> modelsForRole = generateServiceModels(client, serviceRoleDetails, coreSettingsConfig, modelGenerators, roleConfigList);
 
         log.discoveredServiceRole(role.getName(), role.getType());
 
@@ -331,11 +332,17 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return serviceModels;
   }
 
-  private Set<ServiceModel> generateServiceModels(DiscoveryApiClient client, ServiceRoleDetails serviceRoleDetails, ApiServiceConfig coreSettingsConfig, List<ServiceModelGenerator> modelGenerators) throws ApiException {
+  private Set<ServiceModel> generateServiceModels(DiscoveryApiClient client, ServiceRoleDetails serviceRoleDetails,
+                                                  ApiServiceConfig coreSettingsConfig, List<ServiceModelGenerator> modelGenerators,
+                                                  ApiRoleConfigList roleConfigList) throws ApiException {
     Set<ServiceModel> serviceModels = new HashSet<>();
 
     if (modelGenerators != null) {
       for (ServiceModelGenerator serviceModelGenerator : modelGenerators) {
+        if (OpenSearchApiMasterServiceModelGenerator.shouldSkipGeneratorWhenOpenSearchMaster(serviceModelGenerator, roleConfigList)) {
+          continue;
+        }
+
         ServiceModel serviceModel = generateServiceModel(client, serviceRoleDetails, coreSettingsConfig, serviceModelGenerator);
         if (serviceModel != null) {
           serviceModels.add(serviceModel);
@@ -348,9 +355,9 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
   private static ServiceModel generateServiceModel(DiscoveryApiClient client, ServiceRoleDetails sd,
                                                    ApiServiceConfig coreSettingsConfig, ServiceModelGenerator serviceModelGenerator) throws ApiException {
+    serviceModelGenerator.setApiClient(client);
     ServiceModelGeneratorHandleResponse response = serviceModelGenerator.handles(sd.getService(), sd.getServiceConfig(), sd.getRole(), sd.getRoleConfig());
     if (response.handled()) {
-      serviceModelGenerator.setApiClient(client);
       return serviceModelGenerator.generateService(sd.getService(), sd.getServiceConfig(), sd.getRole(), sd.getRoleConfig(), coreSettingsConfig);
     } else if (!response.getConfigurationIssues().isEmpty()) {
       log.serviceRoleHasConfigurationIssues(sd.getRole().getName(), String.join(";", response.getConfigurationIssues()));

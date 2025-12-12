@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiHostRef;
@@ -30,15 +31,24 @@ import java.util.Map;
 
 public class AbstractCMDiscoveryTest {
   protected static ApiService createApiServiceMock(final String serviceType) {
-    return createApiServiceMock(serviceType + "-1", serviceType);
+    ApiClusterRef clusterRefMock = createApiClusterRefMock("Cluster 1");
+    return createApiServiceMock(serviceType + "-1", serviceType, clusterRefMock);
   }
 
-  protected static ApiService createApiServiceMock(final String serviceName, final String serviceType) {
+  protected static ApiService createApiServiceMock(final String serviceName, final String serviceType, final ApiClusterRef clusterRef) {
     ApiService service = EasyMock.createNiceMock(ApiService.class);
     EasyMock.expect(service.getName()).andReturn(serviceName).anyTimes();
     EasyMock.expect(service.getType()).andReturn(serviceType).anyTimes();
+    EasyMock.expect(service.getClusterRef()).andReturn(clusterRef).anyTimes();
     EasyMock.replay(service);
     return service;
+  }
+
+  protected static ApiClusterRef createApiClusterRefMock(final String clusterName) {
+    ApiClusterRef clusterRef = EasyMock.createNiceMock(ApiClusterRef.class);
+    EasyMock.expect(clusterRef.getClusterName()).andReturn(clusterName).anyTimes();
+    EasyMock.replay(clusterRef);
+    return clusterRef;
   }
 
   protected static ApiServiceConfig createApiServiceConfigMock(Map<String, String> configProps) {
