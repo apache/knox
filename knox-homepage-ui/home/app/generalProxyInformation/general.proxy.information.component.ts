@@ -34,7 +34,7 @@ export class GeneralProxyInformationComponent implements OnInit {
     profile: JSON;
 
     constructor(private homepageService: HomepageService, private route: ActivatedRoute) {
-        this['showGeneralProxyInformation'] = false;
+        this['showGeneralProxyInformation'] = true;
         this['showKnoxVersion'] = true;
         this['showKnoxHostname'] = true;
         this['showPublicCerts'] = true;

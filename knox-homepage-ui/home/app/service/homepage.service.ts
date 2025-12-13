@@ -65,7 +65,7 @@ export class HomepageService {
 
     getProfile(profileName: string): Promise<JSON> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-        let url = `${this.apiUrl}/profiles/${profileName}`;
+        let url = `${this.apiUrl}profiles/${profileName}`;
         return firstValueFrom(this.http.get(url, { headers }))
             .catch(err => this.handleError(err));
     }

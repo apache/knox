@@ -160,7 +160,7 @@ body {
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
   border-radius: 3px;
-  *zoom: 1;
+  zoom: 1;
 }
 .wrap:before,
 .wrap:after {
@@ -305,7 +305,7 @@ body {
   background-image: linear-gradient(to bottom, #1b4607, #3ea211);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff1b4607', endColorstr='#ff3ea211', GradientType=0);
-  *background-color: #358b0f;
+  background-color: #358b0f;
   filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .toggle-xa .toggle-slide .toggle-off {
@@ -324,7 +324,7 @@ body {
   background-image: linear-gradient(to bottom, #b3b3b3, #e6e6e6);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffb3b3b3', endColorstr='#ffe6e6e6', GradientType=0);
-  *background-color: #a6a6a6;
+  background-color: #a6a6a6;
   filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .toggle-xa .toggle-slide .toggle-blob {
@@ -340,7 +340,7 @@ body {
   background-image: linear-gradient(to bottom, #ffffff, #cccccc);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffcccccc', GradientType=0);
-  *background-color: #cccccc;
+  background-color: #cccccc;
   filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 

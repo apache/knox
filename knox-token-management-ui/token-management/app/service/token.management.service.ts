@@ -15,13 +15,11 @@
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
-import Swal from 'sweetalert2';
-
-import 'rxjs/add/operator/toPromise';
-
-import {KnoxToken} from './knox.token';
-import {SessionInformation} from './session.information';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import Swal from 'sweetalert2/dist/sweetalert2.esm.all.js';
+import { firstValueFrom } from 'rxjs';
+import { KnoxToken } from '../model/knox.token';
+import { SessionInformation } from '../model/session.information';
 
 @Injectable()
 export class TokenManagementService {
@@ -46,8 +44,7 @@ export class TokenManagementService {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
         let url = canSeeAllTokens ? this.getAllKnoxTokensUrl : (this.getKnoxTokensUrl + userName);
-        return this.http.get(url, { headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(url, { headers: headers}))
             .then(response => response['tokens'] as KnoxToken[])
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> getKnoxTokens() --> ' + this.getKnoxTokensUrl + '\n  error: ' + err.message);
@@ -63,8 +60,7 @@ export class TokenManagementService {
         let xheaders = new HttpHeaders();
         xheaders = this.addJsonHeaders(xheaders);
         let urlToUse = enable ? this.enableKnoxTokenUrl : this.disableKnoxTokenUrl;
-        return this.http.put(urlToUse, tokenId, {headers: xheaders, responseType: 'text'})
-            .toPromise()
+        return firstValueFrom(this.http.put(urlToUse, tokenId, {headers: xheaders, responseType: 'text'}))
             .then(response => response)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> setEnabledDisabledFlag() --> ' + urlToUse
@@ -81,8 +77,7 @@ export class TokenManagementService {
         let xheaders = new HttpHeaders();
         xheaders = this.addJsonHeaders(xheaders);
         let urlToUse = enable ? this.enableKnoxTokensBatchUrl : this.disableKnoxTokensBatchUrl;
-        return this.http.put(urlToUse, JSON.stringify(tokenIds), {headers: xheaders, responseType: 'text'})
-            .toPromise()
+        return firstValueFrom(this.http.put(urlToUse, JSON.stringify(tokenIds), {headers: xheaders, responseType: 'text'}))
             .then(response => response)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> setEnabledDisabledFlagsInBatch() --> ' + urlToUse
@@ -115,9 +110,8 @@ export class TokenManagementService {
     revokeTokensInBatch(tokenIds: string[]) {
         let xheaders = new HttpHeaders();
         xheaders = this.addJsonHeaders(xheaders);
-        return this.http.request('DELETE', this.revokeKnoxTokensBatchUrl,
-                                 {headers: xheaders, body: JSON.stringify(tokenIds), responseType: 'text'})
-            .toPromise()
+        return firstValueFrom(this.http.request('DELETE', this.revokeKnoxTokensBatchUrl,
+                                         {headers: xheaders, body: JSON.stringify(tokenIds), responseType: 'text'}))
             .then(response => response)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> revokeTokensInBatch() --> ' + this.revokeKnoxTokensBatchUrl
@@ -133,8 +127,7 @@ export class TokenManagementService {
     isTokenHashKeyPresent(): Promise<boolean> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        return this.http.get(this.metadataInfoUrl, { headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.metadataInfoUrl, { headers: headers}))
             .then(response => {
                 return response['generalProxyInfo']?.['enableTokenManagement'] === 'true';
             })
@@ -152,8 +145,7 @@ export class TokenManagementService {
     getSessionInformation(): Promise<SessionInformation> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        return this.http.get(this.sessionUrl, { headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.sessionUrl, { headers: headers}))
             .then(response => response['sessioninfo'] as SessionInformation)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
@@ -168,8 +160,7 @@ export class TokenManagementService {
     getImpersonationEnabled(): Promise<string> {
         let headers = new HttpHeaders();
         headers = this.addJsonHeaders(headers);
-        return this.http.get(this.getTssStatusUrl, { headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.getTssStatusUrl, { headers: headers}))
             .then(response => response['impersonationEnabled'] as string)
             .catch((err: HttpErrorResponse) => {
                 console.debug('TokenManagementService --> getImpersonationEnabled() --> ' + this.getTssStatusUrl
