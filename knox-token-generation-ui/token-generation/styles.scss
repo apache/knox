@@ -15,8 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@use '@angular/material' as mat;
 
-/* You can add global styles to this file, and also import other style files */
+:root {
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette
+    )
+  ));
+}
 
 .navbar-static-top {
     min-height: 110px;
@@ -33,4 +40,13 @@ html, body {
 a {
     color: #3ea211;
     text-decoration: none;
+}
+
+.mat-mdc-button, 
+.mat-mdc-button-base {
+  border-radius: 0 !important;
+}
+
+.mat-mdc-outlined-button {
+  border-color: rgb(182, 182, 182) !important;
 }

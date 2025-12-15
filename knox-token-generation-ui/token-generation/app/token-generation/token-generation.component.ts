@@ -23,6 +23,10 @@ import { TssStatusData } from '../model/tss.status.data';
 import { TokenGenService } from '../service/token-generation.service';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import {MatFormFieldModule} from '@angular/material/form-field';
 
 @Component({
     selector: 'app-token-generation',
@@ -30,7 +34,7 @@ import { MatIconModule } from '@angular/material/icon';
     styleUrls: ['./token-generation.component.css'],
     providers: [TokenGenService],
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, MatIconModule]
+    imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatButtonModule, MatInputModule, FormsModule, MatFormFieldModule]
 })
 export class TokenGenerationComponent implements OnInit {
   tssStatusMessageLevel: 'info' | 'warning' | 'error';

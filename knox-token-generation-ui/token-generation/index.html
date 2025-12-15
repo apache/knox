@@ -24,13 +24,30 @@
         window['base-href'] = window.location.pathname.replace('index.html', '');
     </script>
 </head>
-<body class="login">
-    <div style="background: #222; padding-right: 15px; padding-left: 15px; margin-right: 1.75%; margin-left: 1.75%; position: relative; min-height: 110px; font-size:14px;">
-        <app-session-information></app-session-information>
-        <a class="navbar-brand" href="#"> <img style="max-width:200px;" src="assets/knox-logo-transparent.gif" alt="Apache Knox Home"></a>
-    </div>
 
-    <app-token-generation></app-token-generation>
-</div>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid align-items-start">
+            <a class="navbar-brand p-0 me-3 d-flex" href="#">
+                <img src="assets/knox-logo-transparent.gif" alt="Apache Knox Home"
+                    style="max-width:200px; margin-top:-5px;">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="ms-auto d-flex flex-column pt-0">
+                    <app-session-information></app-session-information>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container-fluid mt-4">
+        <app-token-generation></app-token-generation>
+    </div>
+    </div>
 </body>
 </html>

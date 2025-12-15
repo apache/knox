@@ -12,7 +12,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 4.5px">
+<div class="m-2">
     <form [formGroup]="tokenGenFrom">
         <fieldset>
             <div class="fields">
@@ -26,38 +26,43 @@
                     token as an authorization bearer token. Copy the JWT token from the resulting text area and protect
                     it
                     securely from others as this token represents your identity and is active until expired.</label>
-                <label class="icon-label"><mat-icon class="reduce-icon-size">mode_comment</mat-icon> Comment:</label>
-                <input class="mb-2" formControlName="comment" (keydown.enter)="generateToken()" type="text" tabindex="1"
-                    autofocus size="255" maxlength="255">
-                <label class="icon-label" *ngIf="comment.invalid" style="color: red;"><mat-icon
-                        class="reduce-icon-size">warning</mat-icon>Invalid comment!</label>
-
                 <label class="icon-label"><mat-icon class="reduce-icon-size">info</mat-icon> Configured maximum
                     lifetime: {{tssStatus.maximumLifetimeText}} <mat-icon class="reduce-icon-size"
                         *ngIf="'Unlimited lifetime' === tssStatus.maximumLifetimeText">priority_high</mat-icon></label>
                 <div *ngIf="tssStatus.lifespanInputEnabled">
-                    <label class="icon-label"><mat-icon class="reduce-icon-size">access_time_filled</mat-icon> Lifetime
-                        (days, hours, mins):</label>
-                    <table>
-                        <tr>
-                            <td><input formControlName="lifespanDays" type="number" step="1" min="0" max="3650"
-                                    value="0" size="3"></td> <!-- 10 years limit -->
-                            <td><input formControlName="lifespanHours" type="number" step="1" min="0" max="23" value="1"
-                                    size="3"></td>
-                            <td><input formControlName="lifespanMins" type="number" step="1" min="0" max="59" value="0"
-                                    size="3"></td>
-                        </tr>
-                    </table>
+                    <mat-form-field class="pe-1" style="width: 6%">
+                        <mat-label>Lifetime Days</mat-label>
+                        <input matInput type="number" formControlName="lifespanDays" type="number" step="1" min="0"
+                            max="3650" value="0">
+                    </mat-form-field>
+                    <mat-form-field class="pe-1" style="width: 6%">
+                        <mat-label>Hours</mat-label>
+                        <input matInput type="number" formControlName="lifespanHours" type="number" step="1" min="0"
+                            max="23" value="1">
+                    </mat-form-field>
+                    <mat-form-field style="width: 6%">
+                        <mat-label>Minutes</mat-label>
+                        <input matInput type="number" formControlName="lifespanMins" type="number" step="1" min="0"
+                            max="59" value="0">
+                    </mat-form-field>
+
                     <label class="icon-label"
                         *ngIf="lifespanDays.invalid || lifespanHours.invalid || lifespanMins.invalid || tokenGenFrom.errors?.allZero"
                         style="color: red;"><mat-icon class="reduce-icon-size">warning</mat-icon>Invalid
                         lifetime!</label>
                 </div>
+                <mat-form-field style="width: 18%;">
+                    <mat-label class="icon-label"><mat-icon>mode_comment</mat-icon> Comment</mat-label>
+                    <input matInput placeholder="Comment" (keydown.enter)="generateToken()" formControlName="comment">
+                </mat-form-field>
+                <label class="icon-label" *ngIf="comment.invalid" style="color: red;"><mat-icon
+                        class="reduce-icon-size">warning</mat-icon>Invalid comment!</label>
 
                 <div *ngIf="tssStatus.impersonationEnabled">
-                    <label class="icon-label"><mat-icon class="reduce-icon-size">person</mat-icon> Generating token for
-                        (impersonation):</label>
-                    <input formControlName="impersonation" type="text" size="50" maxlength="255">
+                    <mat-form-field style="width: 18%;">
+                        <mat-label class="icon-label"><mat-icon>person</mat-icon> Generating token for (impersonation):</mat-label>
+                        <input matInput formControlName="impersonation">
+                    </mat-form-field>
                     <label class="icon-label" *ngIf="impersonation.invalid" style="color: red;"><i
                             class="icon-warning"></i>Invalid doAs!</label>
                 </div>
@@ -68,17 +73,17 @@
                 <mat-icon class="reduce-icon-size" style="color: #ae2817;">warning</mat-icon>
             </span>
 
-            <div style="align-content: center; width: 25%;">
-                <button (click)="generateToken()"
+            <div>
+                <button mat-stroked-button (click)="generateToken()"
                     [disabled]="!tssStatus.tokenManagementEnabled || !tssStatus.allowedTssForTokengen || !tokenGenFrom.valid"
-                    type="button" class="btn btn-primary btn-block" tabindex="2">
+                    color="success">
                     Generate Token
                 </button>
             </div>
         </fieldset>
     </form>
 </div>
-
+<hr>
 <div style="margin-left: 1.75%; margin-right: 1.75%; margin-top: 10px">
     <span *ngIf="hasResult" style="color:black; margin-left: 1.75%; margin-right: 1.75%;">
         <label class="icon-label" (click)="copyTextToClipboard('accessToken')"><mat-icon
@@ -104,7 +109,7 @@
         </div>
 
         <label class="icon-label" (click)="copyTextToClipboard('target_url')"><mat-icon
-                    class="reduce-icon-size">content_copy</mat-icon> Target Base URL:</label>
+                class="reduce-icon-size">content_copy</mat-icon> Target Base URL:</label>
         <div class="tokenResultDisplay">
             <span id="target_url">{{tokenResultData.targetURL}}</span>
         </div>

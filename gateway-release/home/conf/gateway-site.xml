@@ -64,13 +64,6 @@ limitations under the License.
         <description>Boolean flag indicating whether to enable debug messages for krb5 authentication</description>
     </property>
 
-    <!-- @since 0.10 Websocket configs -->
-    <property>
-        <name>gateway.websocket.feature.enabled</name>
-        <value>false</value>
-        <description>Enable/Disable websocket feature.</description>
-    </property>
-
     <property>
         <name>gateway.scope.cookies.feature.enabled</name>
         <value>false</value>
@@ -207,5 +200,4 @@ limitations under the License.
         <value>LIVYSERVER</value>
         <description>Add service name to x-forward-context header for the list of services defined above.</description>
     </property>
-
 </configuration>

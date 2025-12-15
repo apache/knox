@@ -51,9 +51,7 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "token-generation/assets/styles/app-font.css",
-              "token-generation/assets/styles/knox.css",
-              "token-generation/styles.css"
+              "token-generation/styles.scss"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
