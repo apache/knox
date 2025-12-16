@@ -27,7 +27,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatInputModule } from '@angular/material/input';
@@ -40,8 +40,8 @@ import { MatButtonModule } from '@angular/material/button';
     templateUrl: './token.management.component.html',
     styleUrls: ['./token.management.component.css'],
     providers: [TokenManagementService],
-    imports: [CommonModule, MatSlideToggleModule, MatFormFieldModule, MatSortModule, MatPaginatorModule, FormsModule,
-        MatTableModule, MatInputModule, MatCheckboxModule, MatIconModule, MatButtonModule],
+    imports: [MatSlideToggleModule, MatFormFieldModule, MatSortModule, MatPaginatorModule, FormsModule, MatTableModule, MatInputModule,
+        MatCheckboxModule, MatIconModule, MatButtonModule],
     standalone: true
 })
 
@@ -175,7 +175,7 @@ export class TokenManagementComponent implements OnInit {
     }
 
     private actualizeTokensToDisplay(): void {
-        if(!this.allKnoxTokens) {
+        if (!this.allKnoxTokens) {
             return;
         }
         let tokensToDisplay = this.allKnoxTokens;

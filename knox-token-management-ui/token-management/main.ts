@@ -20,7 +20,7 @@ import { environment } from './environments/environment';
 import { SessionInformationComponent } from './app/sessioninformation/session.information.component.js';
 import { TokenManagementComponent } from './app/tokenmanagement/token.management.component.js';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { enableProdMode, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { APP_BASE_HREF } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
@@ -37,7 +37,7 @@ const bootstrapComponents = [
 bootstrapComponents.forEach(component => {
   bootstrapApplication(component, {
     providers: [
-      importProvidersFrom(),
+      provideZoneChangeDetection(),importProvidersFrom(),
       provideHttpClient(),
       provideRouter([]),
       {

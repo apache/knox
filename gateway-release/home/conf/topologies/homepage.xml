@@ -61,54 +61,25 @@
             <value>false</value>
          </param>
       </provider>
-<!--      <provider>-->
-<!--         <role>identity-assertion</role>-->
-<!--         <name>Default</name>-->
-<!--         <enabled>true</enabled>-->
-<!--         <param>-->
-<!--            <name>hadoop.proxyuser.impersonation.enabled</name>-->
-<!--            <value>false</value>-->
-<!--         </param>-->
-<!--         <param>-->
-<!--            <name>hadoop.proxyuser.changeme.users</name>-->
-<!--            <value>NONE</value>-->
-<!--         </param>-->
-<!--         <param>-->
-<!--            <name>hadoop.proxyuser.changeme.groups</name>-->
-<!--            <value>NONE</value>-->
-<!--         </param>-->
-<!--         <param>-->
-<!--            <name>hadoop.proxyuser.changeme.hosts</name>-->
-<!--            <value>NONE</value>-->
-<!--         </param>-->
-<!--      </provider>-->
       <provider>
          <role>identity-assertion</role>
          <name>Default</name>
          <enabled>true</enabled>
          <param>
-            <name>principal.mapping</name>
-            <value>guest=hdfs;</value>
-         </param>
-         <param>
-            <name>group.principal.mapping</name>
-            <value>*=users;hdfs=admin</value>
-         </param>
-         <param>
             <name>hadoop.proxyuser.impersonation.enabled</name>
-            <value>true</value>
+            <value>false</value>
          </param>
          <param>
-            <name>hadoop.proxyuser.admin.users</name>
-            <value>*</value>
+            <name>hadoop.proxyuser.changeme.users</name>
+            <value>NONE</value>
          </param>
          <param>
-            <name>hadoop.proxyuser.admin.groups</name>
-            <value>*</value>
+            <name>hadoop.proxyuser.changeme.groups</name>
+            <value>NONE</value>
          </param>
          <param>
-            <name>hadoop.proxyuser.admin.hosts</name>
-            <value>*</value>
+            <name>hadoop.proxyuser.changeme.hosts</name>
+            <value>NONE</value>
          </param>
       </provider>
    </gateway>
