@@ -19,11 +19,13 @@ package org.apache.knox.gateway.pac4j.session;
 
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.impl.DefaultCryptoService;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Test;
+import org.pac4j.core.context.Cookie;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.jee.context.JEEContext;
@@ -31,6 +33,7 @@ import org.pac4j.saml.profile.SAML2Profile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,6 +47,7 @@ import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_S
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_ROLES;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT;
 import static org.apache.knox.gateway.pac4j.session.KnoxSessionStore.PAC4J_PASSWORD;
+import static org.apache.knox.gateway.pac4j.session.KnoxSessionStore.PAC4J_SESSION_PREFIX;
 
 public class KnoxSessionStoreTest {
   private static final String CLUSTER_NAME = "knox";
@@ -158,4 +162,20 @@ public class KnoxSessionStoreTest {
     Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups"));
     Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups2"));
   }
+
+  @Test
+  public void testNullCookieValue() throws AliasServiceException {
+    final CryptoService cryptoService = EasyMock.createNiceMock(CryptoService.class);
+    final Map<String, String> sessionStoreConfigs = new HashMap<>();
+
+    final JEEContext mockContext = EasyMock.createNiceMock(JEEContext.class);
+    final String keyWithNullValue = "keyWithNullValue";
+    Cookie cookie = new Cookie(PAC4J_SESSION_PREFIX + keyWithNullValue, "null");
+    EasyMock.expect(mockContext.getRequestCookies()).andReturn(Collections.singletonList(cookie));
+    EasyMock.replay(mockContext);
+
+    final KnoxSessionStore sessionStore = new KnoxSessionStore(cryptoService, CLUSTER_NAME, null, sessionStoreConfigs);
+    Assert.assertTrue(sessionStore.get(mockContext, keyWithNullValue).isEmpty());
+  }
+
 }
