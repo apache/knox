@@ -20,11 +20,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatListModule } from '@angular/material/list';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-apiservice-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatGridListModule, MatListModule, CommonModule],
+  imports: [MatDialogModule, MatButtonModule, MatGridListModule, MatListModule],
   templateUrl: './apiservice-dialog.component.html',
   styleUrl: './apiservice-dialog.component.css'
 })

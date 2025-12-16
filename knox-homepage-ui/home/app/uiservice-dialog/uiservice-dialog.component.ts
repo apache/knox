@@ -21,11 +21,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatGridListModule } from '@angular/material/grid-list';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-uiservice-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatGridListModule, CommonModule],
+  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatGridListModule],
   templateUrl: './uiservice-dialog.component.html',
   styleUrl: './uiservice-dialog.component.css'
 })

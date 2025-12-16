@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { enableProdMode, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { environment } from './environments/environment';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -40,7 +40,7 @@ const bootstrapComponents = [
 bootstrapComponents.forEach(component => {
   bootstrapApplication(component, {
     providers: [
-      importProvidersFrom(MatGridListModule),
+      provideZoneChangeDetection(),importProvidersFrom(MatGridListModule),
       provideHttpClient(),
       provideRouter([]),
       {
