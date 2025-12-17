@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
-import java.security.AccessController;
 import java.text.ParseException;
 import java.util.HashMap;
 
@@ -31,11 +30,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
@@ -78,7 +77,6 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
             : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
   }
 
-  @SuppressForbidden
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
       FilterChain chain) throws IOException, ServletException {
@@ -111,7 +109,7 @@ public class JWTAccessTokenAssertionFilter extends AbstractIdentityAssertionFilt
       // the JWTFederationFilter - once we get here we can assume that it is authorized and we just need
       // to assert the identity via an access token
 
-      Subject subject = Subject.getSubject(AccessController.getContext());
+      Subject subject = SubjectUtils.getCurrentSubject();
       String principalName = getPrincipalName(subject);
       principalName = mapper.mapUserPrincipal(principalName);
 

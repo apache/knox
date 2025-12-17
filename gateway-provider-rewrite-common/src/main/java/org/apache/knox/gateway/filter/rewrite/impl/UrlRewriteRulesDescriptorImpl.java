@@ -91,14 +91,12 @@ public class UrlRewriteRulesDescriptorImpl implements UrlRewriteRulesDescriptor 
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public <T extends UrlRewriteFunctionDescriptor<?>> T addFunction( String name ) {
     T descriptor = newFunction( name );
     addFunction( descriptor );
     return descriptor;
   }
 
-  @SuppressWarnings("unchecked")
   protected <T extends UrlRewriteFunctionDescriptor<?>> T newFunction( String name ) {
     return UrlRewriteFunctionDescriptorFactory.create( name );
   }

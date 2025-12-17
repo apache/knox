@@ -375,11 +375,11 @@ public abstract class AbstractJWTFilter implements Filter {
     return null;
   }
 
+  @SuppressWarnings("rawtypes")
   protected Subject createSubjectFromTokenData(final String principal, final String expectedPrincipalClaimValue) {
     String claimValue =
               (expectedPrincipalClaimValue != null) ? expectedPrincipalClaimValue.toLowerCase(Locale.ROOT) : null;
 
-    @SuppressWarnings("rawtypes")
     HashSet emptySet = new HashSet();
     Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(claimValue != null ? claimValue : principal);

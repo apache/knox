@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.identityasserter.common.filter;
 
 import java.io.IOException;
-import java.security.AccessController;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -51,8 +50,6 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
-
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 
 public abstract class AbstractIdentityAssertionFilter extends
   AbstractIdentityAssertionBase implements Filter {
@@ -89,7 +86,6 @@ public abstract class AbstractIdentityAssertionFilter extends
    */
   public abstract String mapUserPrincipal(String principalName);
 
-  @SuppressForbidden
   protected void continueChainAsPrincipal(HttpServletRequestWrapper request, ServletResponse response,
       FilterChain chain, String mappedPrincipalName, String[] groups) throws IOException,
       ServletException {
@@ -102,7 +98,7 @@ public abstract class AbstractIdentityAssertionFilter extends
         boolean groupsMapped;
 
         // look up the current Java Subject and assosciated group principals
-        Subject currentSubject = Subject.getSubject(AccessController.getContext());
+        Subject currentSubject = SubjectUtils.getCurrentSubject();
         if (currentSubject == null) {
           LOG.subjectNotAvailable();
           throw new IllegalStateException("Required Subject Missing");

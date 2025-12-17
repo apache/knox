@@ -111,7 +111,6 @@ public class GatewayFilter implements Filter {
     }
   }
 
-  @SuppressWarnings("unchecked")
   public void doFilter( ServletRequest servletRequest, ServletResponse servletResponse ) throws IOException, ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest)servletRequest;
     HttpServletResponse httpResponse = (HttpServletResponse)servletResponse;

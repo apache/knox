@@ -24,7 +24,6 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  * See https://github.com/apache/commons-lang/pull/308 (at the time of this
  * class being written the PR is not merged)
  */
-@SuppressWarnings("serial")
 public class NoClassNameMultiLineToStringStyle extends ToStringStyle {
 
   public NoClassNameMultiLineToStringStyle() {

@@ -142,7 +142,6 @@ public class HadoopGroupProviderFilterTest {
    * {@link LdapGroupsMapping} and in case of bad config we get empty groups
    * (Hadoop way).
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Test
   public void badConfigTest() throws ServletException {
 

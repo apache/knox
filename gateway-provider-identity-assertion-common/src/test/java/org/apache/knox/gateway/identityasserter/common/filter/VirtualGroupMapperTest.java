@@ -39,7 +39,6 @@ import org.junit.Test;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
-@SuppressWarnings("PMD.NonStaticInitializer")
 public class VirtualGroupMapperTest {
     private Parser parser = new Parser();
     private VirtualGroupMapper mapper;

@@ -521,7 +521,6 @@ public class PollingConfigurationAnalyzer implements Runnable {
     return relevantEvents;
   }
 
-  @SuppressWarnings("unchecked")
   private boolean isStartEvent(ApiEvent event) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String command = getAttribute(attributeMap, COMMAND);

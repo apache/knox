@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.deploy;
 
-@SuppressWarnings("serial")
 public class DeploymentException extends RuntimeException {
 
   public DeploymentException(String message, Exception e) {
