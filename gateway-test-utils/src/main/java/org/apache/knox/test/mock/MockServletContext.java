@@ -34,7 +34,6 @@ import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.Map;
 import java.util.Set;
-@SuppressWarnings("PMD")
 public class MockServletContext implements ServletContext {
 
   @Override
@@ -98,19 +97,16 @@ public class MockServletContext implements ServletContext {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public Servlet getServlet( String s ) throws ServletException {
     return null;
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public Enumeration<Servlet> getServlets() {
     return null;
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public Enumeration<String> getServletNames() {
     return null;
   }
@@ -120,7 +116,6 @@ public class MockServletContext implements ServletContext {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public void log( Exception e, String s ) {
   }
 

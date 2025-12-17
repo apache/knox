@@ -37,7 +37,7 @@ public class KnoxPamRealmTest {
   public void setService() {
     KnoxPamRealm realm = new KnoxPamRealm();
     realm.setService("knox-pam-os-service");
-    assertEquals(realm.getService(), "knox-pam-os-service");
+    assertEquals("knox-pam-os-service", realm.getService());
   }
 
   @Test

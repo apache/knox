@@ -438,8 +438,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
    * An exception indicating that cookies are present, but none of them contain a
    * valid JWT.
    */
-  @SuppressWarnings("serial")
-  private class NoValidCookiesException extends Exception {
+  private static class NoValidCookiesException extends Exception {
     NoValidCookiesException() {
       super("None of the presented cookies are valid.");
     }

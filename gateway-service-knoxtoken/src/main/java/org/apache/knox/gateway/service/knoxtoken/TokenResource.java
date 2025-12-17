@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.service.knoxtoken;
 
 import java.nio.charset.StandardCharsets;
-import java.security.AccessController;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -65,8 +64,6 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.util.ByteUtils;
-
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -1103,9 +1100,8 @@ public class TokenResource {
     return Boolean.parseBoolean(request.getParameter(KNOX_TOKEN_INCLUDE_GROUPS));
   }
 
-  @SuppressForbidden
   protected Set<String> groups() {
-    Subject subject = Subject.getSubject(AccessController.getContext());
+    Subject subject = SubjectUtils.getCurrentSubject();
     Set<String> groups = subject.getPrincipals(GroupPrincipal.class).stream()
             .map(GroupPrincipal::getName)
             .collect(Collectors.toSet());

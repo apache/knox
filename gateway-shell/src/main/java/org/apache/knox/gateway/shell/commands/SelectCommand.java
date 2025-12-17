@@ -100,7 +100,6 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
     }
 
     String dsName = (String) getVariables().get(KNOXDATASOURCE);
-    @SuppressWarnings("unchecked")
     Map<String, KnoxDataSource> dataSources = getDataSources();
     KnoxDataSource ds = null;
     if (dsName == null || dsName.isEmpty()) {

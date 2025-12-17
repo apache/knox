@@ -41,7 +41,6 @@ import org.junit.Test;
 
 import com.nimbusds.jwt.SignedJWT;
 
-@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
   @Before

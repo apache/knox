@@ -33,13 +33,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.knox.gateway.GatewayFilter;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.Topology;
@@ -59,7 +59,6 @@ import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.AccessController;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -548,12 +547,11 @@ public class HadoopAuthFilterTest {
     boolean doFilterCalled;
     Subject subject;
 
-    @SuppressForbidden
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException {
       doFilterCalled = true;
-      subject = Subject.getSubject( AccessController.getContext() );
+      subject = SubjectUtils.getCurrentSubject();
     }
   }
 

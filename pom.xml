@@ -704,7 +704,7 @@
                     <!-- if the used Java version is too new, don't fail, just do nothing: -->
                     <failOnUnsupportedJava>false</failOnUnsupportedJava>
                     <!-- prevent failing if a module doesn't have all signature dependencies like commons-io -->
-                    <failOnUnresolvableSignatures>false</failOnUnresolvableSignatures>
+                    <ignoreSignaturesOfMissingClasses>true</ignoreSignaturesOfMissingClasses>
                     <bundledSignatures>
                         <!--
                           This will automatically choose the right

@@ -46,11 +46,10 @@ import static org.junit.Assert.fail;
 
 public class HadoopAuthDeploymentContributorTest {
 
-  @SuppressWarnings("rawtypes")
   @Test
   public void testServiceLoader() {
-    ServiceLoader loader = ServiceLoader.load( ProviderDeploymentContributor.class );
-    Iterator iterator = loader.iterator();
+    ServiceLoader<ProviderDeploymentContributor> loader = ServiceLoader.load( ProviderDeploymentContributor.class );
+    Iterator<ProviderDeploymentContributor> iterator = loader.iterator();
     assertThat( "Service iterator empty.", iterator.hasNext() );
     while( iterator.hasNext() ) {
       Object object = iterator.next();

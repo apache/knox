@@ -16,10 +16,10 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.util.UUID;
 
 import static org.easymock.EasyMock.anyObject;
@@ -176,12 +175,11 @@ public class CommonJWTFilterTest {
     boolean doFilterCalled;
     Subject subject;
 
-    @SuppressForbidden
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException {
       doFilterCalled = true;
-      subject = Subject.getSubject( AccessController.getContext() );
+      subject = SubjectUtils.getCurrentSubject();
     }
   }
 

@@ -18,7 +18,6 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.io.IOException;
-import java.security.AccessController;
 import java.util.HashMap;
 
 import javax.security.auth.Subject;
@@ -28,9 +27,9 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionFilter;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
@@ -65,11 +64,10 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
             : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
   }
 
-  @SuppressForbidden
   @Override
   public void doFilter(ServletRequest request, ServletResponse response,
                        FilterChain chain) throws IOException {
-    Subject subject = Subject.getSubject(AccessController.getContext());
+    Subject subject = SubjectUtils.getCurrentSubject();
     String principalName = getPrincipalName(subject);
     principalName = mapper.mapUserPrincipal(principalName);
     JWT authCode;
