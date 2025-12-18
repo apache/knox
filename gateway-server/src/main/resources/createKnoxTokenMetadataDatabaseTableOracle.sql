@@ -13,10 +13,10 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-CREATE TABLE IF NOT EXISTS KNOX_TOKENS (
-   token_id varchar(128) NOT NULL,
-   issue_time bigint NOT NULL,
-   expiration bigint NOT NULL,
-   max_lifetime bigint NOT NULL,
-   PRIMARY KEY (token_id)
+CREATE TABLE IF NOT EXISTS KNOX_TOKEN_METADATA (
+   token_id varchar2(128) NOT NULL,
+   md_name varchar2(32) NOT NULL,
+   md_value varchar2(256) NOT NULL,
+   PRIMARY KEY (token_id, md_name),
+   CONSTRAINT fk_token_id FOREIGN KEY(token_id) REFERENCES KNOX_TOKENS(token_id) ON DELETE CASCADE
 )

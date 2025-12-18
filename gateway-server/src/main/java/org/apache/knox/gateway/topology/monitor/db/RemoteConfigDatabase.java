@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
 
-import org.apache.knox.gateway.util.JDBCUtils;
+import org.apache.knox.gateway.database.JDBCUtils;
 
 public class RemoteConfigDatabase {
   private static final String KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTable.sql";
@@ -50,8 +50,8 @@ public class RemoteConfigDatabase {
   }
 
   private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
-    if (!JDBCUtils.isTableExists(tableName, dataSource)) {
-      JDBCUtils.createTable(createSqlFileName, dataSource, this.getClass().getClassLoader());
+    if (!JDBCUtils.tableExists(tableName, dataSource)) {
+      JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, this.getClass().getClassLoader());
     }
   }
 

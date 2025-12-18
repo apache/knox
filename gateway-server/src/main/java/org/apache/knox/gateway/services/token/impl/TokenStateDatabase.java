@@ -17,8 +17,13 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.knox.gateway.database.DatabaseType;
+import org.apache.knox.gateway.database.JDBCUtils;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,16 +34,10 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import javax.sql.DataSource;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.knox.gateway.services.security.token.KnoxToken;
-import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.apache.knox.gateway.util.JDBCUtils;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class TokenStateDatabase {
-  private static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";
-  private static final String TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTable.sql";
   static final String TOKENS_TABLE_NAME = "KNOX_TOKENS";
   static final String TOKEN_METADATA_TABLE_NAME = "KNOX_TOKEN_METADATA";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
@@ -61,15 +60,16 @@ public class TokenStateDatabase {
 
   private final DataSource dataSource;
 
-  TokenStateDatabase(DataSource dataSource) throws Exception {
+  TokenStateDatabase(DataSource dataSource, String dbType) throws Exception {
     this.dataSource = dataSource;
-    createTableIfNotExists(TOKENS_TABLE_NAME, TOKENS_TABLE_CREATE_SQL_FILE_NAME);
-    createTableIfNotExists(TOKEN_METADATA_TABLE_NAME, TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME);
+    DatabaseType databaseType = DatabaseType.fromString(dbType);
+    createTableIfNotExists(TOKENS_TABLE_NAME, databaseType.tokensTableSql());
+    createTableIfNotExists(TOKEN_METADATA_TABLE_NAME, databaseType.metadataTableSql());
   }
 
   private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
-    if (!JDBCUtils.isTableExists(tableName, dataSource)) {
-      JDBCUtils.createTable(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
+    if (!JDBCUtils.tableExists(tableName, dataSource)) {
+      JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
     }
   }
 

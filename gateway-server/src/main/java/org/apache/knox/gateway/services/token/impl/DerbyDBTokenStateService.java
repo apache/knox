@@ -19,9 +19,9 @@ package org.apache.knox.gateway.services.token.impl;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_DATABASE_NAME;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_DATABASE_TYPE;
 import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
-import static org.apache.knox.gateway.util.JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME;
-import static org.apache.knox.gateway.util.JDBCUtils.DATABASE_USER_ALIAS_NAME;
-import static org.apache.knox.gateway.util.JDBCUtils.DERBY_DB_TYPE;
+import static org.apache.knox.gateway.database.AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME;
+import static org.apache.knox.gateway.database.AbstractDataSource.DATABASE_USER_ALIAS_NAME;
+import static org.apache.knox.gateway.database.DatabaseType.DERBY;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,7 +54,7 @@ public class DerbyDBTokenStateService extends JDBCTokenStateService {
     try {
       derbyDatabaseFolder = Paths.get(config.getGatewaySecurityDir(), DB_NAME);
       startDerby();
-      ((Configuration) config).set(GATEWAY_DATABASE_TYPE, DERBY_DB_TYPE);
+      ((Configuration) config).set(GATEWAY_DATABASE_TYPE, DERBY.type());
       ((Configuration) config).set(GATEWAY_DATABASE_NAME, derbyDatabaseFolder.toString());
       getAliasService().addAliasForCluster(NO_CLUSTER_NAME, DATABASE_USER_ALIAS_NAME, getDatabaseUserName());
       getAliasService().addAliasForCluster(NO_CLUSTER_NAME, DATABASE_PASSWORD_ALIAS_NAME, getDatabasePassword());

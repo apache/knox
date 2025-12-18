@@ -16,14 +16,9 @@
  */
 package org.apache.knox.gateway.topology.monitor;
 
-import java.io.File;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.database.DataSourceFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -33,7 +28,12 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.monitor.db.DbRemoteConfigurationMonitorService;
 import org.apache.knox.gateway.topology.monitor.db.LocalDirectory;
 import org.apache.knox.gateway.topology.monitor.db.RemoteConfigDatabase;
-import org.apache.knox.gateway.util.JDBCUtils;
+
+import java.io.File;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 
 public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFactory {
@@ -59,7 +59,7 @@ public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFac
 
     private DbRemoteConfigurationMonitorService createDbBasedMonitor(GatewayConfig config, AliasService aliasService) throws ServiceLifecycleException {
         try {
-            RemoteConfigDatabase db = new RemoteConfigDatabase(JDBCUtils.getDataSource(config, aliasService));
+            RemoteConfigDatabase db = new RemoteConfigDatabase(DataSourceFactory.getDataSource(config, aliasService));
             LocalDirectory descriptorDir = new LocalDirectory(new File(config.getGatewayDescriptorsDir()));
             LocalDirectory providerDir = new LocalDirectory(new File(config.getGatewayProvidersConfigDir()));
             return new DbRemoteConfigurationMonitorService(

@@ -14,9 +14,9 @@
 --  the License.
 
 CREATE TABLE IF NOT EXISTS KNOX_TOKENS (
-   token_id varchar(128) NOT NULL,
-   issue_time bigint NOT NULL,
-   expiration bigint NOT NULL,
-   max_lifetime bigint NOT NULL,
+   token_id varchar2(128) NOT NULL,
+   issue_time number NOT NULL,
+   expiration number NOT NULL,
+   max_lifetime number NOT NULL,
    PRIMARY KEY (token_id)
 )

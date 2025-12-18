@@ -17,11 +17,23 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.knox.gateway.util.JDBCUtils.HSQL;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.database.AbstractDataSource;
+import org.apache.knox.gateway.database.DatabaseType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
+import org.easymock.EasyMock;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -38,22 +50,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.digest.HmacAlgorithms;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.token.KnoxToken;
-import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
-import org.apache.knox.gateway.util.JDBCUtils;
-import org.easymock.EasyMock;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JDBCTokenStateServiceTest {
 
@@ -74,12 +74,12 @@ public class JDBCTokenStateServiceTest {
   @BeforeClass
   public static void setUp() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(HSQL).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.HSQL.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(CONNECTION_URL).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(DB_NAME).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn(USERNAME.toCharArray()).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(PASSWORD.toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn(USERNAME.toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(PASSWORD.toCharArray()).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
     jdbcTokenStateService = new JDBCTokenStateService();
     jdbcTokenStateService.setAliasService(aliasService);

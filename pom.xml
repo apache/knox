@@ -267,6 +267,7 @@
         <mysql.version>8.0.28</mysql.version>
         <mariadb.connector.version>3.3.0</mariadb.connector.version>
         <okio.version>3.6.0</okio.version>
+        <oracle.version>23.26.0.0.0</oracle.version>
         <protobuf.version>3.25.8</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
@@ -2447,6 +2448,11 @@
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle.database.jdbc</groupId>
+                <artifactId>ojdbc11</artifactId>
+                <version>${oracle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mariadb.jdbc</groupId>
