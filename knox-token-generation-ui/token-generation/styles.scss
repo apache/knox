@@ -15,24 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
-.example-container {
-  display: flex;
-  flex-direction: column;
-  min-width: 300px;
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette
+    )
+  ));
 }
 
-.example-header {
-  min-height: 64px;
-  padding: 8px 24px 0;
+.navbar-static-top {
+    min-height: 110px;
 }
 
-.mat-form-field {
+.clickable {
+    cursor: pointer;
+}
+
+html, body {
   font-size: 14px;
-  width: 100%;
 }
 
-.mat-table {
-  overflow: auto;
-  max-height: 500px;
+a {
+    color: #3ea211;
+    text-decoration: none;
+}
+
+.mat-mdc-button, 
+.mat-mdc-button-base {
+  border-radius: 0 !important;
+}
+
+.mat-mdc-outlined-button {
+  border-color: rgb(182, 182, 182) !important;
 }

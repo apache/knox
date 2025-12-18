@@ -18,14 +18,14 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {HomepageService} from '../service/homepage.service';
 import {GeneralProxyInformation} from '../model/general.proxy.information';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
     selector: 'app-general-proxy-information',
     templateUrl: './general.proxy.information.component.html',
     providers: [HomepageService],
-    imports: [CommonModule, MatIconModule]
+    imports: [MatIconModule]
 })
 
 export class GeneralProxyInformationComponent implements OnInit {
@@ -34,7 +34,7 @@ export class GeneralProxyInformationComponent implements OnInit {
     profile: JSON;
 
     constructor(private homepageService: HomepageService, private route: ActivatedRoute) {
-        this['showGeneralProxyInformation'] = false;
+        this['showGeneralProxyInformation'] = true;
         this['showKnoxVersion'] = true;
         this['showKnoxHostname'] = true;
         this['showPublicCerts'] = true;

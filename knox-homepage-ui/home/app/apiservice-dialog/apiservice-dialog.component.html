@@ -1,16 +1,16 @@
 <!--
-  Licensed to the Apache Software Foundation (ASF) under one or more
-  contributor license agreements.  See the NOTICE file distributed with
-  this work for additional information regarding copyright ownership.
-  The ASF licenses this file to You under the Apache License, Version 2.0
-  (the "License"); you may not use this file except in compliance with
-  the License.  You may obtain a copy of the License at
-      http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 <h3 mat-dialog-title class="dialog-title">
   {{ data?.shortDesc }}
@@ -22,7 +22,9 @@
       <div class="info-label"><strong>Knox Service Name</strong></div>
       <div class="info-value">
         {{ data?.serviceName }}
-        <span class="small" *ngIf="data?.version">(v{{ data?.version }})</span>
+        @if (data?.version) {
+          <span class="small">(v{{ data?.version }})</span>
+        }
       </div>
     </div>
 
@@ -34,16 +36,16 @@
     <div class="info-row">
       <div class="info-label"><strong>Sample(s)</strong></div>
       <div class="info-value">
-        <ng-container *ngIf="data.samples?.sample?.length > 0; else noSamples">
+        @if (data.samples?.sample?.length > 0) {
           <div class="samples-container">
-            <div *ngFor="let sample of data.samples.sample" class="sample-item">
-              <div class="sample-desc"><strong>{{ sample.description }}</strong></div>
-              <div class="sample-value">{{ sample.value }}</div>
-            </div>
+            @for (sample of data.samples.sample; track sample) {
+              <div class="sample-item">
+                <div class="sample-desc"><strong>{{ sample.description }}</strong></div>
+                <div class="sample-value">{{ sample.value }}</div>
+              </div>
+            }
           </div>
-        </ng-container>
-
-        <ng-template #noSamples>
+        } @else {
           <div class="no-samples">
             <p><strong>No samples found in service metadata.</strong></p>
             <p>
@@ -53,7 +55,8 @@
               </a>
             </p>
           </div>
-        </ng-template>
+        }
+
       </div>
     </div>
   </div>

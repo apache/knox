@@ -36,12 +36,14 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "target/classes/token-management/app",
+            "outputPath": {
+              "base": "target/classes/token-management/app",
+              "browser": ""
+            },
             "index": "token-management/index.html",
-            "main": "token-management/main.ts",
-            "polyfills": "token-management/polyfills.ts",
+            "polyfills": ["token-management/polyfills.ts"],
             "tsConfig": "token-management/tsconfig.json",
             "assets": [
               "token-management/favicon.ico",
@@ -49,16 +51,16 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "token-management/styles.css"
+              "token-management/styles.scss"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
               "node_modules/bootstrap/dist/js/bootstrap.js"
-            ]
+            ],
+            "browser": "token-management/main.ts"
           },
           "configurations": {
             "production": {
-              "buildOptimizer": false,
               "aot": false,
               "fileReplacements": [
                 {
@@ -69,10 +71,8 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "aot": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -81,21 +81,21 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "token-management:build:production"
+              "buildTarget": "token-management:build:production"
             },
             "development": {
-              "browserTarget": "token-management:build:development"
+              "buildTarget": "token-management:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "token-management:build"
+            "buildTarget": "token-management:build"
           }
         },
         "lint": {
@@ -109,12 +109,5 @@
         }
       }
     }
-  },
-  "defaultProject": "token-management",
-  "cli": {
-    "schematicCollections": [
-      "@angular-eslint/schematics",
-      "@angular-eslint/schematics"
-    ]
   }
 }

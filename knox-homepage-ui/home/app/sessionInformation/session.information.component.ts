@@ -17,14 +17,14 @@
 import {Component, OnInit} from '@angular/core';
 import {HomepageService} from '../service/homepage.service';
 import {SessionInformation} from '../model/session.information';
-import { CommonModule } from '@angular/common';
+
 import { SafeHtmlPipe } from '../util/safehtml';
 
 @Component({
     selector: 'app-session-information',
     templateUrl: './session.information.component.html',
     providers: [HomepageService],
-    imports: [CommonModule, SafeHtmlPipe]
+    imports: [SafeHtmlPipe]
 })
 
 export class SessionInformationComponent implements OnInit {

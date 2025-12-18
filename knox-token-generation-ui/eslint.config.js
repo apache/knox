@@ -16,7 +16,7 @@ export default [
         languageOptions: {
             parser: tsParser,
             parserOptions: {
-                project: ["home/tsconfig.json"],
+                project: ["./token-generation/tsconfig.json"],
                 tsconfigRootDir: import.meta.dirname,
             },
             globals: {
@@ -24,6 +24,7 @@ export default [
                 window: "readonly",
                 document: "readonly",
                 setTimeout: "readonly",
+                atob: "readonly"
             },
         },
         plugins: {

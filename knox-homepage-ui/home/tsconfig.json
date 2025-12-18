@@ -4,10 +4,6 @@
     "declaration": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": [
-      "es2017",
-      "dom"
-    ],
     "module": "ES2022",
     "moduleResolution": "bundler",
     "outDir": "../dist/out-tsc",

@@ -16,13 +16,34 @@
  */
 import './polyfills.ts';
 
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-import {enableProdMode} from '@angular/core';
-import {environment} from './environments/environment';
-import {AppModule} from './app/app.module';
+import { environment } from './environments/environment';
+import { SessionInformationComponent } from './app/sessioninformation/session.information.component.js';
+import { TokenManagementComponent } from './app/tokenmanagement/token.management.component.js';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { enableProdMode, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { APP_BASE_HREF } from '@angular/common';
+import { provideHttpClient } from '@angular/common/http';
 
 if (environment.production) {
-    enableProdMode();
+  enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule);
+const bootstrapComponents = [
+  SessionInformationComponent,
+  TokenManagementComponent
+];
+
+bootstrapComponents.forEach(component => {
+  bootstrapApplication(component, {
+    providers: [
+      provideZoneChangeDetection(),importProvidersFrom(),
+      provideHttpClient(),
+      provideRouter([]),
+      {
+        provide: APP_BASE_HREF,
+        useValue: window['base-href'] || '/'
+      }
+    ]
+  }).catch(err => console.error(err));
+});

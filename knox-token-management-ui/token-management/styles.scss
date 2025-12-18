@@ -16,27 +16,46 @@
  * limitations under the License.
  */
 
-/* Sticky footer styles
--------------------------------------------------- */
-html {
-    position: relative;
-    min-height: 100%;
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette
+    )
+  ));
 }
 
-body {
-    /* Margin bottom by footer height */
-    margin-bottom: 60px;
+.navbar-static-top {
+    min-height: 110px;
 }
 
-.footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    /* Set the fixed height of the footer here */
-    height: 60px;
-    background-color: #f5f5f5;
+.clickable {
+    cursor: pointer;
 }
 
-.jumbotron {
-    padding: 0.5em 0.6em;
+html, body {
+  font-size: 14px;
+}
+
+.mat-mdc-table {
+  background-color: white !important;
+}
+
+.mat-mdc-paginator {
+  background-color: white !important;
+}
+
+.mat-mdc-button, 
+.mat-mdc-button-base {
+  border-radius: 0 !important;
+}
+
+.mat-mdc-outlined-button {
+  border-color: rgb(182, 182, 182) !important;
+}
+
+.mat-mdc-outlined-button>.mat-icon {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
 }

@@ -24,7 +24,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HomepageService } from '../service/homepage.service';
 import { TopologyInformation } from '../model/topology.information';
 import { Service } from '../model/service';
-import { CommonModule } from '@angular/common';
+
 import { MatGridListModule } from '@angular/material/grid-list';
 import { ApiserviceDialogComponent } from '../apiservice-dialog/apiservice-dialog.component';
 import { UiserviceDialogComponent } from '../uiservice-dialog/uiservice-dialog.component';
@@ -33,7 +33,7 @@ import { UiserviceDialogComponent } from '../uiservice-dialog/uiservice-dialog.c
     templateUrl: './topology.information.component.html',
     styleUrls: ['./topology.information.component.css'],
     providers: [HomepageService],
-    imports: [CommonModule, MatGridListModule, MatTooltipModule, MatIconModule, MatTableModule, MatPaginatorModule]
+    imports: [MatGridListModule, MatTooltipModule, MatIconModule, MatTableModule, MatPaginatorModule]
 })
 
 export class TopologyInformationsComponent implements OnInit {
