@@ -126,15 +126,15 @@ export class TokenManagementComponent implements OnInit {
                 if (!tokenHashKeyPresent) {
                     this.showMissingKnoxTokenHashKeyPopup();
                 }
+
+                this.tokenManagementService.getSessionInformation()
+                    .then(sessionInformation => {
+                        this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
+                        this.currentKnoxSsoCookieTokenId = sessionInformation.currentKnoxSsoCookieTokenId;
+                        this.setUserName(sessionInformation.user);
+                    });
             }
         );
-
-        this.tokenManagementService.getSessionInformation()
-            .then(sessionInformation => {
-                this.canSeeAllTokens = sessionInformation.canSeeAllTokens;
-                this.currentKnoxSsoCookieTokenId = sessionInformation.currentKnoxSsoCookieTokenId;
-                this.setUserName(sessionInformation.user);
-            });
     }
 
     isTokenHashKeyPresent(): boolean {
