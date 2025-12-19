@@ -52,7 +52,7 @@ public class RemoteConfigDatabaseTest {
 
   @Before
   public void setUp() throws Exception {
-    db = new RemoteConfigDatabase(dataSource);
+    db = new RemoteConfigDatabase(dataSource, "hsql");
   }
 
   @After

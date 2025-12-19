@@ -17,26 +17,11 @@
  */
 package org.apache.knox.gateway.services.factory;
 
-import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
-import static org.easymock.EasyMock.anyString;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.hamcrest.CoreMatchers.isA;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.database.AbstractDataSource;
+import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -48,12 +33,28 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
-import org.apache.knox.gateway.util.JDBCUtils;
 import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
+import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.hamcrest.CoreMatchers.isA;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 class ServiceFactoryTest {
 
@@ -81,15 +82,15 @@ class ServiceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     if (expectDbCredentialLookup) {
       try {
-        aliasService.addAliasForCluster(NO_CLUSTER_NAME, JDBCUtils.DATABASE_USER_ALIAS_NAME, DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME);
+        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSource.DATABASE_USER_ALIAS_NAME, DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME);
         EasyMock.expectLastCall().anyTimes();
-        aliasService.addAliasForCluster(NO_CLUSTER_NAME, JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME, masterSecret);
+        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME, masterSecret);
         EasyMock.expectLastCall().anyTimes();
-        expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_USER_ALIAS_NAME)).andReturn(DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME.toCharArray()).anyTimes();
-        expect(aliasService.getPasswordFromAliasForGateway(JDBCUtils.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(masterSecret.toCharArray()).anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn(DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME.toCharArray()).anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(masterSecret.toCharArray()).anyTimes();
 
         // prepare GatewayConfig
-        expect(gatewayConfig.getDatabaseType()).andReturn(JDBCUtils.DERBY_DB_TYPE).anyTimes();
+        expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
         tempDbFolder = TestUtils.createTempDir(this.getClass().getName());
         expect(gatewayConfig.getGatewaySecurityDir()).andReturn(tempDbFolder.getAbsolutePath()).anyTimes();
         expect(gatewayConfig.getDatabaseName()).andReturn(Paths.get(tempDbFolder.getAbsolutePath(), DerbyDBTokenStateService.DB_NAME).toString()).anyTimes();

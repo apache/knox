@@ -13,10 +13,10 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-CREATE TABLE IF NOT EXISTS KNOX_PROVIDERS (
-   name varchar(256) NOT NULL,
-   content TEXT NOT NULL,
+CREATE TABLE KNOX_DESCRIPTORS (
+   name varchar2(256) NOT NULL,
+   content CLOB NOT NULL,
    last_modified_time TIMESTAMP NOT NULL,
-   deleted boolean DEFAULT false NOT NULL,
+   deleted NUMBER(1) DEFAULT false NOT NULL,
    PRIMARY KEY (name)
 )
