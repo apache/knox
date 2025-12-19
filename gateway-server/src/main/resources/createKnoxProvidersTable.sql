@@ -13,7 +13,7 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-CREATE TABLE IF NOT EXISTS KNOX_PROVIDERS ( -- IF NOT EXISTS syntax is not supported by Derby
+CREATE TABLE IF NOT EXISTS KNOX_PROVIDERS (
    name varchar(256) NOT NULL,
    content TEXT NOT NULL,
    last_modified_time TIMESTAMP NOT NULL,

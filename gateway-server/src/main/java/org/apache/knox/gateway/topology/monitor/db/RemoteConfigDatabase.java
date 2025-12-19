@@ -26,24 +26,24 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
 
+import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.database.JDBCUtils;
 
 public class RemoteConfigDatabase {
-  private static final String KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTable.sql";
-  private static final String KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTable.sql";
   private static final String KNOX_PROVIDERS_TABLE_NAME = "KNOX_PROVIDERS";
   private static final String KNOX_DESCRIPTORS_TABLE_NAME = "KNOX_DESCRIPTORS";
   private final DataSource dataSource;
 
-  public RemoteConfigDatabase(DataSource dataSource) {
+  public RemoteConfigDatabase(DataSource dataSource, String dbType) {
     this.dataSource = dataSource;
-    ensureTablesExist();
+    DatabaseType databaseType = DatabaseType.fromString(dbType);
+    ensureTablesExist(databaseType);
   }
 
-  private void ensureTablesExist() {
+  private void ensureTablesExist(DatabaseType databaseType ) {
     try {
-      createTableIfNotExists(KNOX_PROVIDERS_TABLE_NAME, KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME);
-      createTableIfNotExists(KNOX_DESCRIPTORS_TABLE_NAME, KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME);
+      createTableIfNotExists(KNOX_PROVIDERS_TABLE_NAME, databaseType.providersTableSql());
+      createTableIfNotExists(KNOX_DESCRIPTORS_TABLE_NAME, databaseType.descriptorsTableSql());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

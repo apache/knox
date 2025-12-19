@@ -18,21 +18,55 @@
 package org.apache.knox.gateway.database;
 
 public enum DatabaseType {
-    POSTGRESQL("postgresql", AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME, AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME),
-    MYSQL("mysql", AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME, AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME),
-    MARIADB("mariadb", AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME, AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME),
-    HSQL("hsql", AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME, AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME),
-    DERBY("derbydb", AbstractDataSource.DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME, AbstractDataSource.DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME),
-    ORACLE("oracle", AbstractDataSource.ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME, AbstractDataSource.ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME);
+    POSTGRESQL("postgresql",
+            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+    ),
+    MYSQL("mysql",
+            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+    ),
+    MARIADB("mariadb",
+            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+    ),
+    HSQL("hsql",
+            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+    ),
+    DERBY("derbydb",
+            AbstractDataSource.DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.DERBY_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+    ),
+    ORACLE("oracle",
+            AbstractDataSource.ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.ORACLE_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSource.ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+    );
 
     private final String type;
     private final String tokensTableSql;
     private final String metadataTableSql;
+    private final String providersTableSql;
+    private final String descriptorsTableSql;
 
-    DatabaseType(String type, String tokensTableSql, String metadataTableSql) {
+    DatabaseType(String type, String tokensTableSql, String metadataTableSql,  String providersTableSql, String descriptorsTableSql) {
         this.type = type;
         this.tokensTableSql = tokensTableSql;
         this.metadataTableSql = metadataTableSql;
+        this.providersTableSql = providersTableSql;
+        this.descriptorsTableSql = descriptorsTableSql;
     }
 
     public String type() {
@@ -45,6 +79,14 @@ public enum DatabaseType {
 
     public String metadataTableSql() {
         return metadataTableSql;
+    }
+
+    public String providersTableSql() {
+        return providersTableSql;
+    }
+
+    public String descriptorsTableSql() {
+        return descriptorsTableSql;
     }
 
     public static DatabaseType fromString(String dbType) {

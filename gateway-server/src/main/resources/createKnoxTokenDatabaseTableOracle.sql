@@ -13,7 +13,7 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-CREATE TABLE IF NOT EXISTS KNOX_TOKENS (
+CREATE TABLE KNOX_TOKENS (
    token_id varchar2(128) NOT NULL,
    issue_time number NOT NULL,
    expiration number NOT NULL,

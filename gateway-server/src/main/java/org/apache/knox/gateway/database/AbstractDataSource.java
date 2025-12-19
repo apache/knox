@@ -33,6 +33,13 @@ public abstract class AbstractDataSource {
     public static final String DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTableDerby.sql";
     public static final String DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTableDerby.sql";
 
+    public static final String KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTable.sql";
+    public static final String KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTable.sql";
+    public static final String ORACLE_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTableOracle.sql";
+    public static final String ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTableOracle.sql";
+    public static final String DERBY_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTableDerby.sql";
+    public static final String DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTableDerby.sql";
+
     public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
     public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
     public static final String DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME = "gateway_database_ssl_truststore_password";
