@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
@@ -37,6 +38,8 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
     super(shell, ":datasources", ":ds", DESC, USAGE, DESC);
   }
 
+  Logger logger = Logger.getLogger(getClass().getName());
+  
   @SuppressWarnings({"unchecked", "PMD.CloseResource"})
   @Override
   public Object execute(List<String> args) {
@@ -63,12 +66,12 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       if (getVariables().get(KNOXDATASOURCE) != null) {
         if (args.get(1) != null) {
           if (((String)getVariables().get(KNOXDATASOURCE)).equals(args.get(1))) {
-            System.out.println("unselecting datasource.");
+            logger.info("unselecting datasource.");
             getVariables().put(KNOXDATASOURCE, "");
           }
         }
         else {
-          System.out.println("Missing datasource name to remove.");
+          logger.info("Missing datasource name to remove.");
         }
       }
       getVariables().put(KNOXDATASOURCES, dataSources);

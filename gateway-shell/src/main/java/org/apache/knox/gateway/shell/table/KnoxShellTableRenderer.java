@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +34,8 @@ class KnoxShellTableRenderer {
   private static char CELL_DASH_CHAR = '-';
 
   private final KnoxShellTable tableToRender;
+
+  Logger logger = Logger.getLogger(getClass().getName());
 
   KnoxShellTableRenderer(KnoxShellTable tableToRender) {
     this.tableToRender = tableToRender;
@@ -69,7 +72,7 @@ class KnoxShellTableRenderer {
       try {
         KnoxShellTableFileUtils.persistToFile(filePath, content);
       } catch (IOException e) {
-        System.out.println("Persistence of CSV file has failed. " + e.getMessage());
+        logger.info("Persistence of CSV file has failed. " + e.getMessage());
         e.printStackTrace();
       }
     }
