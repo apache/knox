@@ -58,6 +58,8 @@ limitations under the License.
         <exclude name="SimplifiableTestAssertion" />
         <exclude name="DoubleBraceInitialization" />
         <exclude name="UseCollectionIsEmpty" />
+        <exclude name="ImplicitFunctionalInterface" />
+        <exclude name="UnnecessaryWarningSuppression" />
     </rule>
 
     <!--<rule ref="category/java/codestyle.xml" />-->
@@ -98,6 +100,8 @@ limitations under the License.
         <exclude name="CloneMethodReturnTypeMustMatchClassName" />
         <exclude name="CloseResource" />
         <exclude name="CompareObjectsWithEquals" />
+        <exclude name="ReplaceJavaUtilCalendar" />
+        <exclude name="ReplaceJavaUtilDate" />
     </rule>
     <rule ref="category/java/multithreading.xml">
         <exclude name="AvoidSynchronizedAtMethodLevel" />

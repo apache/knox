@@ -93,19 +93,10 @@ public class KnoxTokenWorkerThread implements Runnable {
 
   private void executeAction(final KnoxSession gatewayKnoxSession, final KnoxSession tokenBasedKnoxSession) {
     try {
-      switch (this.action) {
-      case ACQUIRE:
-        knoxTokenCache.saveKnoxToken(acquireKnoxToken(gatewayKnoxSession));
-        break;
-      case RENEW:
-        renewKnoxToken(gatewayKnoxSession);
-        break;
-      case USE_TOKEN:
-        useKnoxToken(tokenBasedKnoxSession);
-        break;
-      default:
-        // NOP
-        break;
+      switch (action) {
+        case ACQUIRE -> knoxTokenCache.saveKnoxToken(acquireKnoxToken(gatewayKnoxSession));
+        case RENEW -> renewKnoxToken(gatewayKnoxSession);
+        case USE_TOKEN -> useKnoxToken(tokenBasedKnoxSession);
       }
     } catch (Exception e) {
       LOG.failedToExecuteKnoxTokenAction(action, e.getMessage(), e);

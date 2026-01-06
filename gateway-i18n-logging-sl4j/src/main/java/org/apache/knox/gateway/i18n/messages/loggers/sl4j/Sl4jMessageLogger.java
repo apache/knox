@@ -31,15 +31,13 @@ public class Sl4jMessageLogger implements MessageLogger {
 
   @Override
   public boolean isLoggable( MessageLevel level ) {
-    switch( level ) {
-      case FATAL: return logger.isErrorEnabled();
-      case ERROR: return logger.isErrorEnabled();
-      case WARN: return logger.isWarnEnabled();
-      case INFO: return logger.isInfoEnabled();
-      case DEBUG: return logger.isDebugEnabled();
-      case TRACE: return logger.isTraceEnabled();
-      default: return false;
-    }
+      return switch (level) {
+          case FATAL, ERROR -> logger.isErrorEnabled();
+          case WARN -> logger.isWarnEnabled();
+          case INFO -> logger.isInfoEnabled();
+          case DEBUG -> logger.isDebugEnabled();
+          case TRACE -> logger.isTraceEnabled();
+      };
   }
 
   @Override

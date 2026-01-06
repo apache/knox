@@ -446,6 +446,7 @@ public class KnoxShellTable {
     return table;
   }
 
+  @SuppressWarnings("PMD.OverrideBothEqualsAndHashCodeOnComparable")
   private static class RowIndex implements Comparable<RowIndex> {
     Comparable value;
     int index;

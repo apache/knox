@@ -47,14 +47,10 @@ public class InboundUrlFunctionProcessor
       if( parameters == null || parameters.isEmpty()) {
         return Collections.emptyList();
       } else {
-        switch( context.getDirection() ) {
-          case IN:
-            return Collections.emptyList();
-          case OUT:
-            return context.getParameters().resolve( UrlRewriteResponse.INBOUND_QUERY_PARAM_PREFIX + parameters.get( 0 ));
-          default:
-            return Collections.emptyList();
-        }
+          return switch (context.getDirection()) {
+              case IN -> Collections.emptyList();
+              case OUT -> context.getParameters().resolve(UrlRewriteResponse.INBOUND_QUERY_PARAM_PREFIX + parameters.get(0));
+          };
       }
   }
 }

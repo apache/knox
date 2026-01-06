@@ -1656,6 +1656,7 @@ public class ClouderaManagerServiceDiscoveryTest {
       super(gatewayConfig, sdConfig, aliasService);
     }
 
+    @SuppressWarnings("PMD.UselessPureMethodCall")
     @Override
     public <T> ApiResponse<T> execute(Call call, Type returnType) throws ApiException {
       if (executeCount.get() == 0) {

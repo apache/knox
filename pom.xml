@@ -254,7 +254,7 @@
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
-        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
+        <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
         <metrics.version>4.1.16</metrics.version>
         <mina.version>2.2.4</mina.version>
         <netty.version>4.1.127.Final</netty.version>

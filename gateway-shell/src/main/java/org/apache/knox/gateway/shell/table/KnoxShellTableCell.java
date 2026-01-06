@@ -19,6 +19,7 @@ package org.apache.knox.gateway.shell.table;
 
 import java.util.List;
 
+@SuppressWarnings("PMD.OverrideBothEqualsAndHashCodeOnComparable")
 class KnoxShellTableCell<T extends Comparable<T>> implements Comparable<KnoxShellTableCell<T>>{
   int rowIndex;
   int colIndex;

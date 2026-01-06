@@ -104,24 +104,12 @@ public abstract class AbstractAliasRequest extends AbstractRequest<AliasResponse
   }
 
   protected HttpRequestBase createRequest() {
-    HttpRequestBase request;
-
-    switch (getRequestType()) {
-      case POST:
-        request = new HttpPost(requestURI);
-        break;
-      case PUT:
-        request = new HttpPut(requestURI);
-        break;
-      case DELETE:
-        request = new HttpDelete(requestURI);
-        break;
-      case GET:
-      default:
-        request = new HttpGet(requestURI);
-        break;
-    }
-    return request;
+      return switch (getRequestType()) {
+          case POST -> new HttpPost(requestURI);
+          case PUT -> new HttpPut(requestURI);
+          case DELETE -> new HttpDelete(requestURI);
+          default -> new HttpGet(requestURI);
+      };
   }
 
   protected AliasResponse createResponse(HttpResponse response) {

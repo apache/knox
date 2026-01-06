@@ -184,13 +184,11 @@ public class TokenMigrationTool {
       log("Archiving token aliases in the " + cluster + " credential store...");
       final long start = System.currentTimeMillis();
       final Map<String, String> tokenAliasesToArchive = new HashMap<>();
-      tokenDataMap.entrySet().forEach(tokenDataMapEntry -> {
-        String tokenId = tokenDataMapEntry.getKey();
-        tokenDataMapEntry.getValue();
-        tokenAliasesToArchive.put(tokenId, String.valueOf(tokenDataMapEntry.getValue().expiration));
-        tokenAliasesToArchive.put(tokenId + TOKEN_MAX_LIFETIME_POSTFIX, String.valueOf(tokenDataMapEntry.getValue().maxLifeTime));
-        tokenAliasesToArchive.put(tokenId + TOKEN_ISSUE_TIME_POSTFIX, String.valueOf(tokenDataMapEntry.getValue().issueTime));
-        tokenAliasesToArchive.put(tokenId + TOKEN_META_POSTFIX, tokenDataMapEntry.getValue().metadata.toJSON());
+      tokenDataMap.forEach((tokenId, value) -> {
+          tokenAliasesToArchive.put(tokenId, String.valueOf(value.expiration));
+          tokenAliasesToArchive.put(tokenId + TOKEN_MAX_LIFETIME_POSTFIX, String.valueOf(value.maxLifeTime));
+          tokenAliasesToArchive.put(tokenId + TOKEN_ISSUE_TIME_POSTFIX, String.valueOf(value.issueTime));
+          tokenAliasesToArchive.put(tokenId + TOKEN_META_POSTFIX, value.metadata.toJSON());
       });
       aliasService.addAliasesForCluster(cluster, tokenAliasesToArchive);
       log("Archived token related aliases in the " + cluster + " credential store in " + (System.currentTimeMillis() - start) + " millsieconds ");
