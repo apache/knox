@@ -42,15 +42,14 @@ public class Log4jMessageLogger implements MessageLogger {
   }
 
   private static Level toLevel(final MessageLevel level ) {
-    switch( level ) {
-      case FATAL: return Level.FATAL;
-      case ERROR: return Level.ERROR;
-      case WARN: return Level.WARN;
-      case INFO: return Level.INFO;
-      case DEBUG: return Level.DEBUG;
-      case TRACE: return Level.TRACE;
-      default: return Level.OFF;
-    }
+      return switch (level) {
+          case FATAL -> Level.FATAL;
+          case ERROR -> Level.ERROR;
+          case WARN -> Level.WARN;
+          case INFO -> Level.INFO;
+          case DEBUG -> Level.DEBUG;
+          case TRACE -> Level.TRACE;
+      };
   }
 
 }

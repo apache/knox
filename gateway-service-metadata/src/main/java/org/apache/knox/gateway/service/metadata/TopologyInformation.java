@@ -23,6 +23,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+@SuppressWarnings("PMD.OverrideBothEqualsAndHashCodeOnComparable")
 @XmlRootElement(name = "topology")
 public class TopologyInformation implements Comparable<TopologyInformation>{
 

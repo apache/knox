@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 
+@SuppressWarnings("PMD.OverrideBothEqualsAndHashCodeOnComparable")
 public class KnoxToken implements Comparable<KnoxToken> {
   private static final Comparator<KnoxToken> COMPARATOR = Comparator
           .comparingLong((KnoxToken kt) -> kt.issueTime)

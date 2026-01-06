@@ -1689,19 +1689,12 @@ public class TokenServiceResourceTest {
     final TokenResource tr = new TokenResource();
     final String accessToken = getAccessToken(tr);
 
-    Response response;
-    switch (operation) {
-      case Renew:
-        response = requestTokenRenewal(tr, accessToken, caller);
-        break;
-      case Revoke:
-        response = requestTokenRevocation(tr, accessToken, caller);
-        break;
-      default:
-        throw new Exception("Invalid operation: " + operation);
-    }
+    Response response = switch (operation) {
+        case Renew -> requestTokenRenewal(tr, accessToken, caller);
+        case Revoke -> requestTokenRevocation(tr, accessToken, caller);
+    };
 
-    return new AbstractMap.SimpleEntry<>(tss, response);
+      return new AbstractMap.SimpleEntry<>(tss, response);
   }
 
   private String getAccessToken(TokenResource tokenResource) throws KeyLengthException, AliasServiceException, ServiceLifecycleException, ServletException {

@@ -122,8 +122,6 @@ public class KnoxShellTableTest {
 
     table.row().value(null).value("456").value("344444444");
     table.row().value("789").value("012").value("844444444");
-
-    table.toString();
   }
 
   @Test
@@ -172,7 +170,6 @@ public class KnoxShellTableTest {
     table.row().value("789").value("012").value("844444444");
 
     assertNull(table.toString());
-    table.toString();
   }
 
   @Test

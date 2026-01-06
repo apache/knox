@@ -26,6 +26,7 @@ import java.sql.SQLException;
 
 public class DataSourceFactory {
 
+    @SuppressWarnings("PMD.ExhaustiveSwitchHasDefault")
     public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
         DatabaseType dbType = DatabaseType.fromString(gatewayConfig.getDatabaseType());
         AbstractDataSource dsFactory;

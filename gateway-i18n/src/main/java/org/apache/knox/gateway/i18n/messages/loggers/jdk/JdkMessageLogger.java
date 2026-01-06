@@ -50,15 +50,13 @@ final class JdkMessageLogger implements MessageLogger {
   }
 
   private static Level toLevel( final MessageLevel level ) {
-    switch( level ) {
-      case FATAL: return Level.SEVERE;
-      case ERROR: return Level.SEVERE;
-      case WARN: return Level.WARNING;
-      case INFO: return Level.INFO;
-      case DEBUG: return Level.FINE;
-      case TRACE: return Level.FINEST;
-      default: return Level.OFF;
-    }
+      return switch (level) {
+          case FATAL, ERROR -> Level.SEVERE;
+          case WARN -> Level.WARNING;
+          case INFO -> Level.INFO;
+          case DEBUG -> Level.FINE;
+          case TRACE -> Level.FINEST;
+      };
   }
 
 }
