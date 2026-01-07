@@ -72,7 +72,7 @@ export class ValidationUtils {
         if (value) {
             try {
                 parsed = JSON.parse(value);
-            } catch (e) {
+            } catch (_e) {
                 // just return undefined
             }
         }

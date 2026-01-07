@@ -14,8 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
+@use '@angular/material' as mat;
 
-import {AppModule} from './app.module';
-
-platformBrowserDynamic().bootstrapModule(AppModule);
+:root {
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette
+    )
+  ));
+}

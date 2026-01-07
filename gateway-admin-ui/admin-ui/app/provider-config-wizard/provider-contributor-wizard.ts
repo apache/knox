@@ -16,7 +16,7 @@
  */
 
 
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {ProviderConfig} from '../model/provider-config';
 
 export interface ProviderContributorWizard {
 

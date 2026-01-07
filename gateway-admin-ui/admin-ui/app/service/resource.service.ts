@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
-import 'rxjs/add/operator/toPromise';
-import {Subject} from 'rxjs/Subject';
-import {Resource} from './resource';
-import {ProviderConfig} from '../resource-detail/provider-config';
-import {Descriptor} from '../resource-detail/descriptor';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Subject, firstValueFrom } from 'rxjs';
+import {Resource} from '../model/resource';
+import {ProviderConfig} from '../model/provider-config';
+import {Descriptor} from '../model/descriptor';
+import * as yaml from 'js-yaml';
 
-@Injectable()
+@Injectable({providedIn: 'root'})
 export class ResourceService {
     discoveryTypes: Array<string>;
 
@@ -39,11 +39,6 @@ export class ResourceService {
     selectedResourceSource = new Subject<Resource>();
     selectedResource$ = this.selectedResourceSource.asObservable();
 
-    changedResourceSource = new Subject<string>();
-    changedResource$ = this.changedResourceSource.asObservable();
-
-    changedProviderConfigurationSource = new Subject<Array<ProviderConfig>>();
-    changedProviderConfiguration$ = this.changedProviderConfigurationSource.asObservable();
 
     constructor(private http: HttpClient) {
         this.initSupportedDiscoveryTypes();
@@ -51,7 +46,6 @@ export class ResourceService {
 
     initSupportedDiscoveryTypes(): void {
         if (this.discoveryTypes == null || this.discoveryTypes.length === 0) {
-            let headers = this.addJsonHeaders(new HttpHeaders());
             this.getServiceDiscoveryResources()
             .then(response => this.discoveryTypes = response.knoxServiceDiscoveries.knoxServiceDiscovery.map(sd => sd.type))
             .catch((err: HttpErrorResponse) => {
@@ -67,7 +61,7 @@ export class ResourceService {
 
     getServiceDiscoveryResources(): Promise<any> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-        return this.http.get(this.serviceDiscoveriesUrl, {headers: headers}).toPromise();
+        return firstValueFrom(this.http.get(this.serviceDiscoveriesUrl, {headers: headers}));
     }
 
     getResources(resType: string): Promise<Resource[]> {
@@ -89,61 +83,53 @@ export class ResourceService {
 
     getProviderConfigResources(): Promise<Resource[]> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-        return this.http.get(this.providersUrl, {headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.providersUrl, {headers: headers}))
             .then(response => response['items'] as Resource[])
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> getProviderConfigResources() --> error: HTTP ' + err.status + ' ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
     getDescriptorResources(): Promise<Resource[]> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-        return this.http.get(this.descriptorsUrl, {headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.descriptorsUrl, {headers: headers}))
             .then(response => response['items'] as Resource[])
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> getDescriptorResources() --> error: HTTP ' + err.status + ' ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
     getTopologyResources(): Promise<Resource[]> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-        return this.http.get(this.topologiesUrl, {headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.topologiesUrl, {headers: headers}))
             .then(response => response['topologies'].topology as Resource[])
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> getTopologyResources() --> error: HTTP ' + err.status + ' ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
     getServiceDefinitionResources(): Promise<Resource[]> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-        return this.http.get(this.serviceDefinitionsUrl + '?serviceOnly=true', {headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.get(this.serviceDefinitionsUrl + '?serviceOnly=true', {headers: headers}))
             .then(response => response['serviceDefinitions'].serviceDefinition as Resource[])
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> getServiceDefinitionResources() --> error: HTTP ' + err.status + ' ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
@@ -154,11 +140,9 @@ export class ResourceService {
                 href = this.serviceDefinitionsUrl + '/' + res.service['name'] + '/' + res.service['role'] + '/' + res.service['version']
                     + '?serviceOnly=true';
             }
-            let headers = new HttpHeaders();
-            headers = (resType === 'Topologies' || resType === 'Service Definitions') ? this.addXmlHeaders(headers)
-                : this.addHeaders(headers, res.name);
-            return this.http.get(href, {headers: headers, responseType: 'text'})
-                .toPromise()
+            let headers = (resType === 'Topologies' || resType === 'Service Definitions') ? this.addXmlHeaders(new HttpHeaders())
+                : this.addHeaders(new HttpHeaders(), res.name);
+            return firstValueFrom(this.http.get(href, {headers: headers, responseType: 'text'}))
                 .then(response => {
                     console.debug('ResourceService --> Loading resource ' + res.name + ' :\n' + response);
                     return response;
@@ -167,9 +151,8 @@ export class ResourceService {
                     console.debug('ResourceService --> getResource() ' + res.name + '\n  error: ' + err.status + ' ' + err.message);
                     if (err.status === 401) {
                         window.location.assign(document.location.pathname);
-                    } else {
-                        return this.handleError(err);
                     }
+                    return this.handleError(err);
                 });
         } else {
             return Promise.resolve(null);
@@ -178,52 +161,41 @@ export class ResourceService {
 
     saveResource(resource: Resource, content: string): Promise<string> {
         let headers = this.addHeaders(new HttpHeaders(), resource.name);
-
         console.debug('ResourceService --> Persisting ' + resource.name + '\n' + content);
-
-        return this.http.put(resource.href, content, {headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.put(resource.href, content, {headers: headers, responseType: 'text'}))
             .then(() => content)
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> saveResource() ' + resource.name + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
     createResource(resType: string, resource: Resource, content: string): Promise<string> {
         let headers = this.addHeaders(new HttpHeaders(), resource.name);
-
         let url = ((resType === 'Descriptors') ? this.descriptorsUrl : this.providersUrl) + '/' + resource.name;
-        return this.http.put(url, content, {headers: headers})
-            .toPromise()
+        return firstValueFrom(this.http.put(url, content, {headers: headers, responseType: 'text'}))
             .then(() => content)
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> createResource() --> ' + resource.name + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
     deleteResource(href: string): Promise<string> {
         let headers = this.addJsonHeaders(new HttpHeaders());
-
-        return this.http.delete(href, {headers: headers})
-            .toPromise()
-            .then(response => response)
+        return firstValueFrom(this.http.delete(href, {headers: headers, responseType: 'text'}))
             .catch((err: HttpErrorResponse) => {
                 console.debug('ResourceService --> deleteResource() --> ' + href + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 
@@ -278,8 +250,7 @@ export class ResourceService {
                 break;
             }
             case 'yaml': {
-                let yaml = require('js-yaml');
-                serialized = '---\n' + yaml.safeDump(tmp);
+                serialized = '---\n' + yaml.dump(tmp);
                 break;
             }
         }
@@ -300,7 +271,6 @@ export class ResourceService {
                 break;
             }
             case 'yaml': {
-                let yaml = require('js-yaml');
                 serialized = '---\n' + yaml.dump(tmp);
                 break;
             }
@@ -361,13 +331,6 @@ export class ResourceService {
         this.selectedResourceSource.next(value);
     }
 
-    resourceChanged(value: string) {
-        this.changedResourceSource.next(value);
-    }
-
-    providerConfigurationChanged(pc: Array<ProviderConfig>) {
-        this.changedProviderConfigurationSource.next(pc);
-    }
 
     public getResourceDisplayName(res: Resource): string {
         if (res) {
@@ -385,13 +348,6 @@ export class ResourceService {
         return Promise.reject(error);
     }
 
-    private logHeaders(headers: HttpHeaders) {
-        let debugMsg = 'ResourceService --> Request headers:\n';
-        headers.keys().forEach(key => {
-            debugMsg += '  ' + key + '=' + headers.get(key) + '\n';
-        });
-        console.debug(debugMsg);
-    }
 
 }
 

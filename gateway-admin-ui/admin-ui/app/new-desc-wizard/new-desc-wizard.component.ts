@@ -15,20 +15,22 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {BsModalComponent} from 'ng2-bs3-modal';
+import {FormsModule} from '@angular/forms';
 
 import {ProviderConfigSelectorComponent} from '../provider-config-selector/provider-config-selector.component';
-import {Descriptor} from '../resource-detail/descriptor';
-import {ResourceService} from '../resource/resource.service';
-import {Resource} from '../resource/resource';
-import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
+import {Descriptor} from '../model/descriptor';
+import {ResourceService} from '../service/resource.service';
+import {Resource} from '../model/resource';
+import {ResourceTypesService} from '../service/resourcetypes.service';
 import {ValidationUtils} from '../utils/validation-utils';
-import {HttpErrorResponse} from '@angular/common/http';
+import {ModalComponent} from '../utils/modal.component';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'app-new-desc-wizard',
     templateUrl: './new-desc-wizard.component.html',
-    styleUrls: ['./new-desc-wizard.component.css']
+    styleUrls: ['./new-desc-wizard.component.css'],
+    imports: [FormsModule, ProviderConfigSelectorComponent, ModalComponent]
 })
 export class NewDescWizardComponent implements OnInit {
 
@@ -80,7 +82,7 @@ export class NewDescWizardComponent implements OnInit {
         'ZEPPELINWS'];
 
     @ViewChild('newDescriptorModal')
-    childModal: BsModalComponent;
+    childModal: ModalComponent;
 
     @ViewChild('choosePC')
     chooseProviderConfigModal: ProviderConfigSelectorComponent;
@@ -102,9 +104,9 @@ export class NewDescWizardComponent implements OnInit {
         this.descriptor = new Descriptor();
     }
 
-    open(size?: string) {
+    open() {
         this.reset();
-        this.childModal.open(size ? size : 'lg');
+        this.childModal.open('lg');
     }
 
     reset() {
@@ -157,7 +159,7 @@ export class NewDescWizardComponent implements OnInit {
                         }
                     }
                 });
-                this.childModal.close(); // close the dialog if there was no error
+                this.childModal.dismiss();
             }).catch((err: HttpErrorResponse) => {
                 this.existingReadOnlyTopology = (err.status === 409);
                 console.error('Error creating ' + this.descriptorName + ' : ' + err.message);

@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
-import Swal from 'sweetalert2';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import {firstValueFrom} from 'rxjs';
+import Swal from 'sweetalert2/dist/sweetalert2.esm.all.js';
 
-import 'rxjs/add/operator/toPromise';
-import {SessionInformation} from './session.information';
+import {SessionInformation} from '../model/session-information';
 
-@Injectable()
+@Injectable({providedIn: 'root'})
 export class SessionInformationService {
     pathParts = window.location.pathname.split('/');
     topologyContext = '/' + this.pathParts[1] + '/' + this.pathParts[2] + '/';
@@ -30,18 +30,15 @@ export class SessionInformationService {
     constructor(private http: HttpClient) {}
 
     getSessionInformation(): Promise<SessionInformation> {
-        let headers = new HttpHeaders();
-        headers = this.addJsonHeaders(headers);
-        return this.http.get(this.sessionUrl, { headers: headers})
-            .toPromise()
+        let headers = this.addJsonHeaders(new HttpHeaders());
+        return firstValueFrom(this.http.get(this.sessionUrl, {headers: headers}))
             .then(response => response['sessioninfo'] as SessionInformation)
             .catch((err: HttpErrorResponse) => {
                 console.debug('HomepageService --> getSessionInformation() --> ' + this.sessionUrl + '\n  error: ' + err.message);
                 if (err.status === 401) {
                     window.location.assign(document.location.pathname);
-                } else {
-                    return this.handleError(err);
                 }
+                return this.handleError(err);
             });
     }
 

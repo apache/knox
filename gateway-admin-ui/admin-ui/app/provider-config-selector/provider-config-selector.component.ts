@@ -14,23 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ResourceService} from '../resource/resource.service';
-import {Resource} from '../resource/resource';
-import {BsModalComponent} from 'ng2-bs3-modal';
-import {Descriptor} from '../resource-detail/descriptor';
-import {HttpErrorResponse} from '@angular/common/http';
+import {Component, ViewChild} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {ResourceService} from '../service/resource.service';
+import {Resource} from '../model/resource';
+import {Descriptor} from '../model/descriptor';
+import {ModalComponent} from '../utils/modal.component';
+import { HttpErrorResponse } from '@angular/common/http';
 
 
 @Component({
     selector: 'app-provider-config-selector',
     templateUrl: './provider-config-selector.component.html',
-    styleUrls: ['./provider-config-selector.component.css']
+    styleUrls: ['./provider-config-selector.component.css'],
+    imports: [FormsModule, ModalComponent]
 })
 export class ProviderConfigSelectorComponent {
 
     @ViewChild('chooseProviderConfigModal')
-    private childModal: BsModalComponent;
+    private childModal: ModalComponent;
 
     private providerConfigs: Resource[];
 
@@ -42,16 +44,15 @@ export class ProviderConfigSelectorComponent {
     constructor(private resourceService: ResourceService) {
     }
 
-    open(desc: Descriptor, size?: string) {
+    open(desc: Descriptor) {
         this.descriptor = desc;
-        this.selectedName = desc.providerConfig; // Set the default selection based on the current ref in the descriptor
+        this.selectedName = desc.providerConfig;
 
-        // Load the available provider configs every time this modal is open
         this.resourceService.getResources('Provider Configurations')
             .then(result => this.providerConfigs = result)
             .catch((err: HttpErrorResponse) => console.debug('Error access provider configurations: ' + err));
 
-        this.childModal.open(size);
+        this.childModal.open('sm');
     }
 
     onClose() {

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Service} from '../resource/service';
+import {Service} from './service';
 
 export class Descriptor {
     discoveryType: string;

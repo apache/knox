@@ -16,28 +16,30 @@
  */
 
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
-import {ResourceService} from '../resource/resource.service';
-import {BsModalComponent} from 'ng2-bs3-modal';
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {FormsModule} from '@angular/forms';
+import {ResourceTypesService} from '../service/resourcetypes.service';
+import {ResourceService} from '../service/resource.service';
+import {ProviderConfig} from '../model/provider-config';
 import {AuthenticationWizard} from './authentication-wizard';
 import {CategoryWizard} from './category-wizard';
 import {AuthorizationWizard} from './authorization-wizard';
 import {IdentityAssertionWizard} from './identity-assertion-wizard';
 import {HaWizard} from './ha-wizard';
-import {Resource} from '../resource/resource';
+import {Resource} from '../model/resource';
 import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 import {OrderedParamContainer} from './ordered-param-container';
 import {HostMapProviderWizard} from './hostmap-provider-wizard';
 import {ProviderContributorWizard} from './provider-contributor-wizard';
 import {WebAppSecurityWizard} from './webappsec-wizard';
 import {ValidationUtils} from '../utils/validation-utils';
-import {HttpErrorResponse} from '@angular/common/http';
+import {ModalComponent} from '../utils/modal.component';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'app-provider-config-wizard',
     templateUrl: './provider-config-wizard.component.html',
-    styleUrls: ['./provider-config-wizard.component.css']
+    styleUrls: ['./provider-config-wizard.component.css'],
+    imports: [FormsModule, ModalComponent]
 })
 export class ProviderConfigWizardComponent implements OnInit {
     private static CATEGORY_STEP = 1;
@@ -70,7 +72,7 @@ export class ProviderConfigWizardComponent implements OnInit {
         ]);
 
     @ViewChild('newProviderConfigModal')
-    childModal: BsModalComponent;
+    childModal: ModalComponent;
 
     private step = 0;
 
@@ -105,9 +107,9 @@ export class ProviderConfigWizardComponent implements OnInit {
         this.selectedCategory = ProviderConfigWizardComponent.CATEGORY_AUTHENTICATION; // Default to authentication
     }
 
-    open(size?: string) {
+    open() {
         this.reset();
-        this.childModal.open(size ? size : 'lg');
+        this.childModal.open('lg');
     }
 
     reset() {
@@ -226,7 +228,7 @@ export class ProviderConfigWizardComponent implements OnInit {
                         }
                     }
                 });
-                this.childModal.close(); // close the dialog if there was no error
+                this.childModal.dismiss();
             }).catch((err: HttpErrorResponse) => {
                 this.existingReadOnlyProvider = (err.status === 409);
                 console.error('Error creating ' + newResource + ' : ' + err.message);

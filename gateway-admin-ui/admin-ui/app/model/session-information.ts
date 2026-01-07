@@ -14,28 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import {ProviderConfigSelectorComponent} from './provider-config-selector.component';
-
-describe('ProviderConfigSelectorComponent', () => {
-    let component: ProviderConfigSelectorComponent;
-    let fixture: ComponentFixture<ProviderConfigSelectorComponent>;
-
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            declarations: [ProviderConfigSelectorComponent]
-        })
-            .compileComponents();
-    }));
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ProviderConfigSelectorComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-});
+export class SessionInformation {
+    user: string;
+    bannerText: string;
+}

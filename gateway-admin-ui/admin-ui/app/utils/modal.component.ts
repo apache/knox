@@ -14,30 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component} from '@angular/core';
-import {ResourcetypesComponent} from './resourcetypes/resourcetypes.component';
-import {ResourceComponent} from './resource/resource.component';
-import {ResourceDetailComponent} from './resource-detail/resource-detail.component';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 
 @Component({
-    selector: 'app-resource-management',
+    selector: 'app-modal',
     template: `
-        <div class="container-fluid" style="padding-top: 15px;">
-            <div class="row">
-                <div class="col-md-2 col-lg-2">
-                    <app-resourcetypes></app-resourcetypes>
-                </div>
-                <div class="col-md-3 col-lg-3">
-                    <app-resource></app-resource>
-                </div>
-                <div class="col-md-7 col-lg-7">
-                    <app-resource-detail></app-resource-detail>
+        <div class="modal" [class.show]="visible" [style.display]="visible ? 'block' : 'none'" tabindex="-1">
+            <div class="modal-dialog" [class.modal-sm]="size === 'sm'" [class.modal-lg]="size === 'lg'">
+                <div class="modal-content">
+                    <ng-content></ng-content>
                 </div>
             </div>
         </div>
-    `,
-    imports: [ResourcetypesComponent, ResourceComponent, ResourceDetailComponent]
+        @if (visible) {
+            <div class="modal-backdrop fade show"></div>
+        }
+    `
 })
+export class ModalComponent {
+    @Input() size: string = 'md';
+    @Output() onClose = new EventEmitter<void>();
 
-export class AppComponent {
+    visible = false;
+
+    open(size?: string) {
+        if (size) {
+            this.size = size;
+        }
+        this.visible = true;
+    }
+
+    close() {
+        this.visible = false;
+        this.onClose.emit();
+    }
+
+    dismiss() {
+        this.visible = false;
+    }
 }

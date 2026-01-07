@@ -16,10 +16,12 @@
  */
 import {Component, OnInit, Pipe, PipeTransform} from '@angular/core';
 import {DomSanitizer} from '@angular/platform-browser';
-import {SessionInformationService} from './session.information.service';
-import {SessionInformation} from './session.information';
+import {SessionInformationService} from '../service/session.information.service';
+import {SessionInformation} from '../model/session-information';
 
-@Pipe({ name: 'safeHtml' })
+@Pipe({
+    name: 'safeHtml'
+})
 export class SafeHtmlPipe implements PipeTransform {
   constructor(private sanitizer: DomSanitizer) {}
 
@@ -31,13 +33,12 @@ export class SafeHtmlPipe implements PipeTransform {
 @Component({
     selector: 'app-session-information',
     templateUrl: './session.information.component.html',
-    providers: [SessionInformationService]
+    imports: [SafeHtmlPipe]
 })
 
 export class SessionInformationComponent implements OnInit {
 
     sessionInformation: SessionInformation;
-    logoutSupported = true;
 
     constructor(private sessionInformationService: SessionInformationService) {
         this['showSessionInformation'] = true;

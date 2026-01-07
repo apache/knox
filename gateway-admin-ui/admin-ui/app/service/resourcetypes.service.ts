@@ -14,28 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import {Injectable} from '@angular/core';
+import { Subject } from 'rxjs';
 
-import {ProviderConfigWizardComponent} from './provider-config-wizard.component';
+@Injectable({providedIn: 'root'})
+export class ResourceTypesService {
 
-describe('ProviderConfigWizardComponent', () => {
-    let component: ProviderConfigWizardComponent;
-    let fixture: ComponentFixture<ProviderConfigWizardComponent>;
+    resourceTypes = ['Provider Configurations', 'Descriptors', 'Topologies', 'Service Definitions'];
+    selectedResourceTypeSource = new Subject<string>();
+    public selectedResourceType$ = this.selectedResourceTypeSource.asObservable();
 
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            declarations: [ProviderConfigWizardComponent]
-        })
-            .compileComponents();
-    }));
+    constructor() {
+    }
 
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ProviderConfigWizardComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
+    getResourceTypes(): string[] {
+        return this.resourceTypes;
+    }
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-});
+    selectResourceType(resType: string) {
+        this.selectedResourceTypeSource.next(resType);
+    }
+}

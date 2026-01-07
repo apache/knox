@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {Topology} from './topology';
-import {TopologyService} from './topology.service';
+import {DatePipe} from '@angular/common';
+import {Topology} from '../model/topology';
+import {TopologyService} from '../service/topology.service';
 
 
 @Component({
@@ -31,16 +32,18 @@ import {TopologyService} from './topology.service';
                 </tr>
                 </thead>
                 <tbody>
-                <tr *ngFor="let topology of topologies"
-                    [class.selected]="topology === selectedTopology"
-                    (click)="onSelect(topology)">
-                    <td>{{topology.name}}</td>
-                    <td>{{topology.timestamp | date:'medium'}}</td>
-                </tr>
+                @for (topology of topologies; track topology.name) {
+                    <tr [class.selected]="topology === selectedTopology"
+                        (click)="onSelect(topology)">
+                        <td>{{topology.name}}</td>
+                        <td>{{topology.timestamp | date:'medium'}}</td>
+                    </tr>
+                }
                 </tbody>
             </table>
         </div>
-    `
+    `,
+    imports: [DatePipe]
 })
 export class TopologyComponent implements OnInit {
 
@@ -58,7 +61,7 @@ export class TopologyComponent implements OnInit {
 
     ngOnInit(): void {
         this.getTopologies();
-        this.topologyService.changedTopology$.subscribe(value => this.getTopologies());
+        this.topologyService.changedTopology$.subscribe(() => this.getTopologies());
     }
 
     onSelect(topology: Topology): void {
@@ -66,4 +69,3 @@ export class TopologyComponent implements OnInit {
         this.topologyService.selectedTopology(topology);
     }
 }
-

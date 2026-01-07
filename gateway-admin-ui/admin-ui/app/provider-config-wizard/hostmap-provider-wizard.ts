@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import {CategoryWizard} from './category-wizard';
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {ProviderConfig} from '../model/provider-config';
 
 export class HostMapProviderWizard extends CategoryWizard {
     private stepCount = 2;

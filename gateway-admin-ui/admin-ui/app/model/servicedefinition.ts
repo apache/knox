@@ -14,12 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export class Resource {
-    timestamp: number;
-    name: string;
-    uri: string;
-    href: string;
-    content: string;
+export class ServiceDefinition {
     service: string;
+    role: string;
+    version: string;
 }

@@ -1,149 +1,157 @@
-<bs-modal #newDescriptorModal xmlns="http://www.w3.org/1999/html">
-    <bs-modal-header [showDismiss]="true">
+<app-modal #newDescriptorModal size="lg">
+    <div class="modal-header">
         <label class="modal-title">Create a New Descriptor</label>
-    </bs-modal-header>
-    <bs-modal-body>
+        <button type="button" class="btn-close" (click)="newDescriptorModal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
         <div class="panel-body">
 
             <div> <!-- Descriptor Name -->
                 <span>
-          <strong>Name</strong> <input type="text" [(ngModel)]="descriptorName">
+          <strong>Name <span class="required-marker">*</span></strong> <input type="text" [(ngModel)]="descriptorName">
         </span>
-                <span *ngIf="isMissingDescriptorName()" style="color: red">required</span>
-                <span *ngIf="!isMissingDescriptorName() && !isValidDescriptorName()"
-                      style="color: red">invalid</span>
-                <span *ngIf="isExistingReadOnlyTopology()"
-                      style="color: red">Cannot overwrite existing read-only topology</span>
+                @if (!isMissingDescriptorName() && !isValidDescriptorName()) {
+                    <span class="validation-error">Invalid name</span>
+                }
+                @if (isExistingReadOnlyTopology()) {
+                    <span class="validation-error">Cannot overwrite existing read-only topology</span>
+                }
             </div> <!-- Descriptor Name -->
 
             <br>
 
             <div> <!-- Provider Config reference -->
-                <span class="col-md-sm pull-left"><strong>Provider Configuration</strong>&nbsp;</span>
-                <span class="col-md-sm inline-editable" (click)="editModePC=true"
-                      *ngIf="!editModePC">{{descriptor.providerConfig}}</span>
-                <span class="col-md-sm inline-editor inlineEditForm" *ngIf="editModePC">
-            <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
-            <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
-              <span class="glyphicon glyphicon-ok"></span>
-            </button>
-            <button class="btn btn-xs" (click)="editModePC=false">
-              <span class="glyphicon glyphicon-remove"></span>
-            </button>
-          </span>
+                <span class="col-md-sm pull-left"><strong>Provider Configuration <span class="required-marker">*</span></strong>&nbsp;</span>
+                @if (!editModePC) {
+                    <span class="col-md-sm inline-editable" (click)="editModePC=true">{{descriptor.providerConfig}}</span>
+                }
+                @if (editModePC) {
+                    <span class="col-md-sm inline-editor inlineEditForm">
+                        <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
+                        <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
+                          <span class="material-icons">check</span>
+                        </button>
+                        <button class="btn btn-xs" (click)="editModePC=false">
+                          <span class="material-icons">close</span>
+                        </button>
+                    </span>
+                }
                 &nbsp;
-                <button id="chooseProviderConfig"
-                        class="btn btn-xs"
-                        (click)="chooseProviderConfigModal.open(descriptor, 'sm')"
-                        [disabled]="editModePC"
-                        type="submit"
-                        data-toggle="tooltip"
-                        title="Choose Provider Configuration">
-                    <span class="glyphicon glyphicon-edit"></span>
-                </button>
+                <span class="clickable inline-glyph btn btn-xs"
+                      (click)="chooseProviderConfigModal.open(descriptor)"
+                      [class.disabled]="editModePC"
+                      data-toggle="tooltip"
+                      title="Choose Provider Configuration">
+                    <span class="material-icons">edit</span>
+                </span>
                 <app-provider-config-selector #choosePC></app-provider-config-selector>
-                <span *ngIf="isMissingProviderConfig()" style="color: red">required</span>
-                <span *ngIf="!isMissingProviderConfig() && !isValidProviderConfig()"
-                      style="color: red">invalid</span>
+                @if (!isMissingProviderConfig() && !isValidProviderConfig()) {
+                    <span class="validation-error">Invalid provider configuration</span>
+                }
             </div> <!-- Provider Config reference -->
 
             <br>
 
             <!-- Services -->
             <div>
-        <span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showServices'] ? 'minus' : 'plus')"
-              (click)="toggleBoolean('showServices')"></span>
+        <span class="clickable inline-glyph material-icons"
+              (click)="toggleBoolean('showServices')">{{this['showServices'] ? 'expand_more' : 'chevron_right'}}</span>
                 <span (click)="toggleBoolean('showServices')"><strong>Services</strong></span>
             </div>
-            <div class="panel panel-default col-md-12" *ngIf="this['showServices']">
-                <table>
-                    <tr>
-                        <td *ngFor="let col of getServiceDisplayColumns()">
-                            <div *ngFor="let supportedService of col">
-                                <input type="checkbox"
-                                       [checked]="isSelected(supportedService)"
-                                       (click)="toggleServiceSelected(supportedService)">
-                                {{ supportedService }}
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </div> <!-- Services -->
+            @if (this['showServices']) {
+                <div class="panel panel-default col-md-12">
+                    <table class="services-table">
+                        <tr>
+                            @for (col of getServiceDisplayColumns(); track $index) {
+                                <td>
+                                    @for (supportedService of col; track supportedService) {
+                                        <label class="service-checkbox">
+                                            <input type="checkbox"
+                                                   [checked]="isSelected(supportedService)"
+                                                   (click)="toggleServiceSelected(supportedService)">
+                                            <span>{{ supportedService }}</span>
+                                        </label>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    </table>
+                </div> <!-- Services -->
+            }
 
             <br>
 
             <!-- Discovery -->
             <div>
-        <span [class]="'clickable inline-glyph glyhpicon glyphicon-' + (this['showDiscovery'] ? 'minus' : 'plus')"
-              (click)="toggleBoolean('showDiscovery')"></span>
+        <span class="clickable inline-glyph material-icons"
+              (click)="toggleBoolean('showDiscovery')">{{this['showDiscovery'] ? 'expand_more' : 'chevron_right'}}</span>
                 <span (click)="toggleBoolean('showDiscovery')"><strong>Discovery</strong></span>
             </div>
-            <div class="panel panel-default col-md-12" *ngIf="this['showDiscovery']">
-                <div>
-                    <table>
-                        <tr>
-                            <td><strong>Type</strong></td>
-                            <td>
-                              <span>
-                                <select id="select" autofocus required class="md-select form-control"
-                                        [(ngModel)]="descriptor.discoveryType" (change)="descriptor.setDirty()">
-                                  <option *ngFor="let typeOption of resourceService.discoveryTypes"
-                                          class="md-option"
-                                          [value]="typeOption">{{typeOption}}</option>
-                                </select>
-                              </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Address</strong></td>
-                            <td>
-                <span>
-                  <input type="text" [(ngModel)]="descriptor.discoveryAddress">
-                </span>
-                                <span *ngIf="!isValidDiscoveryAddress()"
-                                      style="color: red">invalid</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Cluster</strong></td>
-                            <td>
-                <span>
-                  <input type="text" [(ngModel)]="descriptor.discoveryCluster">
-                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Username</strong></td>
-                            <td>
-                <span>
-                  <input type="text" [(ngModel)]="descriptor.discoveryUser">
-                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Password Alias</strong></td>
-                            <td>
-                <span>
-                  <input type="text" [(ngModel)]="descriptor.discoveryPassAlias">
-                </span>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div> <!-- Discovery -->
+            @if (this['showDiscovery']) {
+                <div class="panel panel-default col-md-12">
+                    <div>
+                        <table>
+                            <tr>
+                                <td><strong>Type</strong></td>
+                                <td>
+                                  <span>
+                                    <select id="select" autofocus required class="md-select form-control"
+                                            [(ngModel)]="descriptor.discoveryType" (change)="descriptor.setDirty()">
+                                      @for (typeOption of resourceService.discoveryTypes; track typeOption) {
+                                          <option class="md-option" [value]="typeOption">{{typeOption}}</option>
+                                      }
+                                    </select>
+                                  </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Address</strong></td>
+                                <td>
+                                    <span>
+                                      <input type="text" [(ngModel)]="descriptor.discoveryAddress">
+                                    </span>
+                                    @if (!isValidDiscoveryAddress()) {
+                                        <span class="validation-error">Invalid address</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cluster</strong></td>
+                                <td>
+                                    <span>
+                                      <input type="text" [(ngModel)]="descriptor.discoveryCluster">
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Username</strong></td>
+                                <td>
+                                    <span>
+                                      <input type="text" [(ngModel)]="descriptor.discoveryUser">
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Password Alias</strong></td>
+                                <td>
+                                    <span>
+                                      <input type="text" [(ngModel)]="descriptor.discoveryPassAlias">
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div> <!-- Discovery -->
+            }
 
         </div>
-    </bs-modal-body>
-    <bs-modal-footer>
-        <button type="button"
-                class="btn btn-default btn-sm"
-                data-dismiss="newDescriptorModal"
-                (click)="newDescriptorModal.dismiss()">Cancel
-        </button>
-        <button type="button"
-                class="btn btn-primary btn-sm"
+    </div>
+    <div class="modal-footer">
+        <span class="pull-left required-footnote">Required field</span>
+        <button type="button" class="btn btn-default btn-sm"
+                (click)="newDescriptorModal.dismiss()">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm"
                 [disabled]="!validate()"
-                (click)="save()">Ok
-        </button>
-    </bs-modal-footer>
-</bs-modal>
+                (click)="save()">Ok</button>
+    </div>
+</app-modal>

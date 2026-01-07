@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {firstValueFrom} from 'rxjs';
 
-import 'rxjs/add/operator/toPromise';
+import {GatewayVersion} from '../model/gateway-version';
 
-import {GatewayVersion} from './gateway-version';
-
-@Injectable()
+@Injectable({providedIn: 'root'})
 export class GatewayVersionService {
     private apiUrl = window.location.pathname.replace(new RegExp('admin-ui/.*'), 'api/v1/');
     private versionUrl = this.apiUrl + 'version';
@@ -29,15 +28,11 @@ export class GatewayVersionService {
     constructor(private http: HttpClient) {
     }
 
-    getVersion(): Promise<GatewayVersion> {
+    async getVersion(): Promise<GatewayVersion> {
         let headers = new HttpHeaders();
         headers = this.addHeaders(headers);
-        return this.http.get(this.versionUrl, {headers: headers})
-            .toPromise()
-            .then(response => {
-                return response['ServerVersion'] as GatewayVersion;
-            })
-            .catch(this.handleError);
+        const response = await firstValueFrom(this.http.get(this.versionUrl, {headers: headers}));
+        return response['ServerVersion'] as GatewayVersion;
     }
 
     addHeaders(headers: HttpHeaders) {

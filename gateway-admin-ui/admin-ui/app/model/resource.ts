@@ -14,28 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import {ResourcetypesComponent} from './resourcetypes.component';
-
-describe('ResourcetypesComponent', () => {
-    let component: ResourcetypesComponent;
-    let fixture: ComponentFixture<ResourcetypesComponent>;
-
-    beforeEach(async(() => {
-        TestBed.configureTestingModule({
-            declarations: [ResourcetypesComponent]
-        })
-            .compileComponents();
-    }));
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(ResourcetypesComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
-    });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-});
+export class Resource {
+    timestamp: number;
+    name: string;
+    href: string;
+    service: string;
+}

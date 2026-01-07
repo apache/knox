@@ -1,18 +1,12 @@
-<div class="table-responsive" style="width:100%; overflow: auto;">
-    <table class="table table-hover">
-        <thead>
-        <tr>
-            <th>Resource Types</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let type of resourceTypes"
-            [class.selected]="type === selectedResourceType"
-            [class.active]="type === selectedResourceType"
-            (click)="onSelect(type)"
-            class="clickable">
-            <td>{{type}}</td>
-        </tr>
-        </tbody>
-    </table>
+<div class="resource-types-panel">
+    <div class="resource-types-header">Resource Types</div>
+    <ul class="resource-types-list">
+        @for (type of resourceTypes; track type) {
+            <li [class.selected]="type === selectedResourceType"
+                (click)="onSelect(type)"
+                class="clickable resource-type-item">
+                {{type}}
+            </li>
+        }
+    </ul>
 </div>

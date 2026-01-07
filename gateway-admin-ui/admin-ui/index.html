@@ -19,46 +19,38 @@
     <title>Apache Knox Manager</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Custom styles for this template -->
-    <link href="assets/sticky-footer.css" rel="stylesheet">
-    <script src="assets/vkbeautify.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="navbar-wrapper">
-    <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark pt-0 top-navbar">
+        <div class="container-fluid align-items-start">
+            <a class="navbar-brand pt-1 pb-0 ps-0 pe-0 me-3 d-flex" href="#">
+                <img src="assets/knox-logo-transparent.gif" alt="Apache Knox Home" style="max-width:200px; margin-top:-5px;">
+            </a>
 
-        <nav class="navbar navbar-inverse navbar-static-top">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                            data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="#"> <img
-                            style="max-width:200px; margin-top: -9px;"
-                            src="assets/knox-logo-transparent.gif" alt="Apache Knox Manager"> </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="ms-auto d-flex flex-column pt-0">
+                    <app-session-information></app-session-information>
                 </div>
-                <app-session-information></app-session-information>
             </div>
-        </nav>
-
-    </div>
+        </div>
+    </nav>
 
     <!-- Content -->
     <app-resource-management></app-resource-management>
 
-    <div class="container-fluid" style="padding-top: 50px !important">
-    </div>
-
     <footer class="footer">
         <div class="container-fluid">
-            <div>Knox Manager
-                <app-gateway-version></app-gateway-version>
-            </div>
+            <span class="footer-title">Knox Manager</span>
+            <app-gateway-version></app-gateway-version>
         </div>
     </footer>
 </body>

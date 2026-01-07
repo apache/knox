@@ -16,10 +16,12 @@
 }
 
 .inline-editable:hover:after {
-    font-family: 'Glyphicons Halflings';
-    content: "\270f";
+    font-family: 'Material Icons';
+    content: "\e254";
+    font-size: 14px;
     position: relative;
-    left: 10px;
+    left: 6px;
+    color: #4caf50;
 }
 
 .inline-editable.editable-empty,
@@ -42,7 +44,6 @@
 .inline-editor.select {
     width: auto;
     display: inline;
-    border-radius: 5px;
 }
 
 .inline-editor.inline-editor-button-group {
@@ -63,5 +64,8 @@
 }
 
 .inline-glyph {
-    vertical-align: 2%;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
 }
+
