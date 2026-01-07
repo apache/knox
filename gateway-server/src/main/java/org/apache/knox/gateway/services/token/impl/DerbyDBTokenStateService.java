@@ -19,8 +19,8 @@ package org.apache.knox.gateway.services.token.impl;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_DATABASE_NAME;
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_DATABASE_TYPE;
 import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
-import static org.apache.knox.gateway.database.AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME;
-import static org.apache.knox.gateway.database.AbstractDataSource.DATABASE_USER_ALIAS_NAME;
+import static org.apache.knox.gateway.database.AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME;
+import static org.apache.knox.gateway.database.AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME;
 import static org.apache.knox.gateway.database.DatabaseType.DERBY;
 
 import java.nio.file.Files;

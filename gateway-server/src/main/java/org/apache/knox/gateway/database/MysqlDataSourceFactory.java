@@ -25,7 +25,7 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class MysqlDataSource extends AbstractDataSource {
+public class MysqlDataSourceFactory extends AbstractDataSourceFactory {
 
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {

@@ -19,40 +19,40 @@ package org.apache.knox.gateway.database;
 
 public enum DatabaseType {
     POSTGRESQL("postgresql",
-            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     ),
     MYSQL("mysql",
-            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     ),
     MARIADB("mariadb",
-            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     ),
     HSQL("hsql",
-            AbstractDataSource.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     ),
     DERBY("derbydb",
-            AbstractDataSource.DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.DERBY_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.DERBY_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     ),
     ORACLE("oracle",
-            AbstractDataSource.ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.ORACLE_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSource.ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.ORACLE_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     );
 
     private final String type;

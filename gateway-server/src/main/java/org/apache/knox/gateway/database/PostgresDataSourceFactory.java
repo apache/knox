@@ -28,7 +28,7 @@ import org.postgresql.ssl.NonValidatingFactory;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class PostgresDataSource extends AbstractDataSource {
+public class PostgresDataSourceFactory extends AbstractDataSourceFactory {
 
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {

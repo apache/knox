@@ -24,7 +24,7 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public abstract class AbstractDataSource {
+public abstract class AbstractDataSourceFactory {
 
     public static final String TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTable.sql";
     public static final String TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTable.sql";

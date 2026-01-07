@@ -17,22 +17,22 @@
  */
 package org.apache.knox.gateway.database;
 
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.mariadb.jdbc.MariaDbDataSource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class MariaDBDataSource extends AbstractDataSource {
+public class DerbyDataSourceFactory extends AbstractDataSourceFactory {
 
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
-        if (gatewayConfig.getDatabaseConnectionUrl() != null) {
-            return new MariaDbDataSource(gatewayConfig.getDatabaseConnectionUrl());
-        } else {
-            throw new IllegalArgumentException("MariaDB Java Datasource requires a connection string!");
-        }
+        final EmbeddedDataSource embeddedDataSource = new EmbeddedDataSource();
+        embeddedDataSource.setDatabaseName(gatewayConfig.getDatabaseName());
+        embeddedDataSource.setUser(getDatabaseUser(aliasService));
+        embeddedDataSource.setPassword(getDatabasePassword(aliasService));
+        return embeddedDataSource;
     }
 }
