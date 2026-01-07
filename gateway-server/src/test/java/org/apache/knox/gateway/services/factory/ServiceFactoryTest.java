@@ -20,7 +20,7 @@ package org.apache.knox.gateway.services.factory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
-import org.apache.knox.gateway.database.AbstractDataSource;
+import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
@@ -82,12 +82,12 @@ class ServiceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     if (expectDbCredentialLookup) {
       try {
-        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSource.DATABASE_USER_ALIAS_NAME, DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME);
+        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME, DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME);
         EasyMock.expectLastCall().anyTimes();
-        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME, masterSecret);
+        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME, masterSecret);
         EasyMock.expectLastCall().anyTimes();
-        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn(DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME.toCharArray()).anyTimes();
-        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(masterSecret.toCharArray()).anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME.toCharArray()).anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(masterSecret.toCharArray()).anyTimes();
 
         // prepare GatewayConfig
         expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();

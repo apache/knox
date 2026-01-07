@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.database;
 
-import org.apache.derby.jdbc.EmbeddedDataSource;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -25,14 +25,32 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class DerbyDataSource extends AbstractDataSource {
+public class OracleDataSourceFactory extends AbstractDataSourceFactory {
+
+    private static final String THIN_DRIVER = "thin";
 
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
-        final EmbeddedDataSource embeddedDataSource = new EmbeddedDataSource();
-        embeddedDataSource.setDatabaseName(gatewayConfig.getDatabaseName());
-        embeddedDataSource.setUser(getDatabaseUser(aliasService));
-        embeddedDataSource.setPassword(getDatabasePassword(aliasService));
-        return embeddedDataSource;
+        final oracle.jdbc.pool.OracleDataSource oracleDataSource = new oracle.jdbc.pool.OracleDataSource();
+        final String dbUser = getDatabaseUser(aliasService);
+        final String dbPassword = getDatabasePassword(aliasService);
+
+        if (gatewayConfig.getDatabaseConnectionUrl() != null) {
+            oracleDataSource.setURL(gatewayConfig.getDatabaseConnectionUrl());
+            if (StringUtils.isNotBlank(dbUser)) {
+                oracleDataSource.setUser(dbUser);
+            }
+            if (StringUtils.isNotBlank(dbPassword)) {
+                oracleDataSource.setPassword(dbPassword);
+            }
+        } else {
+            oracleDataSource.setDriverType(THIN_DRIVER);
+            oracleDataSource.setServiceName(gatewayConfig.getDatabaseName());
+            oracleDataSource.setServerName(gatewayConfig.getDatabaseHost());
+            oracleDataSource.setPortNumber(gatewayConfig.getDatabasePort());
+            oracleDataSource.setUser(dbUser);
+            oracleDataSource.setPassword(dbPassword);
+        }
+        return oracleDataSource;
     }
 }

@@ -20,27 +20,19 @@ package org.apache.knox.gateway.database;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.mariadb.jdbc.MariaDbDataSource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class DataSourceFactory {
+public class MariaDBDataSourceFactory extends AbstractDataSourceFactory {
 
-    @SuppressWarnings("PMD.ExhaustiveSwitchHasDefault")
-    public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
-        DatabaseType dbType = DatabaseType.fromString(gatewayConfig.getDatabaseType());
-        AbstractDataSource dsFactory;
-
-        switch (dbType) {
-            case POSTGRESQL -> dsFactory = new PostgresDataSource();
-            case MYSQL -> dsFactory = new MysqlDataSource();
-            case MARIADB -> dsFactory = new MariaDBDataSource();
-            case DERBY -> dsFactory = new DerbyDataSource();
-            case HSQL -> dsFactory = new HsqlDataSource();
-            case ORACLE -> dsFactory = new OracleDataSource();
-            default -> throw new IllegalArgumentException("Invalid database type: " + gatewayConfig.getDatabaseType());
+    @Override
+    public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
+        if (gatewayConfig.getDatabaseConnectionUrl() != null) {
+            return new MariaDbDataSource(gatewayConfig.getDatabaseConnectionUrl());
+        } else {
+            throw new IllegalArgumentException("MariaDB Java Datasource requires a connection string!");
         }
-
-        return dsFactory.createDataSource(gatewayConfig, aliasService);
     }
 }

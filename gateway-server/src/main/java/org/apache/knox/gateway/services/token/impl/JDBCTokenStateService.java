@@ -19,7 +19,7 @@ package org.apache.knox.gateway.services.token.impl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.database.DataSourceFactory;
+import org.apache.knox.gateway.database.DataSourceProvider;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
@@ -72,7 +72,7 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService i
           throw new ServiceLifecycleException("The required AliasService reference has not been set.");
         }
         try {
-          this.tokenDatabase = new TokenStateDatabase(DataSourceFactory.getDataSource(config, aliasService), config.getDatabaseType());
+          this.tokenDatabase = new TokenStateDatabase(DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
           initialized.set(true);
         } catch (Exception e) {
           throw new ServiceLifecycleException("Error while initiating JDBCTokenStateService: " + e, e);

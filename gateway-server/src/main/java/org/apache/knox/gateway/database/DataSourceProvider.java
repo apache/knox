@@ -20,19 +20,24 @@ package org.apache.knox.gateway.database;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.hsqldb.jdbc.JDBCDataSource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class HsqlDataSource extends AbstractDataSource {
+public class DataSourceProvider {
 
-    @Override
-    public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
-        JDBCDataSource hsqlDatasource = new JDBCDataSource();
-        hsqlDatasource.setUrl(gatewayConfig.getDatabaseConnectionUrl());
-        hsqlDatasource.setUser(getDatabaseUser(aliasService));
-        hsqlDatasource.setPassword(getDatabasePassword(aliasService));
-        return hsqlDatasource;
+    public static DataSource getDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
+        DatabaseType dbType = DatabaseType.fromString(gatewayConfig.getDatabaseType());
+
+        AbstractDataSourceFactory dsFactory = switch (dbType) {
+            case POSTGRESQL -> new PostgresDataSourceFactory();
+            case MYSQL -> new MysqlDataSourceFactory();
+            case MARIADB -> new MariaDBDataSourceFactory();
+            case DERBY -> new DerbyDataSourceFactory();
+            case HSQL -> new HsqlDataSourceFactory();
+            case ORACLE -> new OracleDataSourceFactory();
+        };
+
+        return dsFactory.createDataSource(gatewayConfig, aliasService);
     }
 }

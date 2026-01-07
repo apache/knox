@@ -17,40 +17,22 @@
  */
 package org.apache.knox.gateway.database;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.hsqldb.jdbc.JDBCDataSource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
-public class OracleDataSource extends AbstractDataSource {
-
-    private static final String THIN_DRIVER = "thin";
+public class HsqlDataSourceFactory extends AbstractDataSourceFactory {
 
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
-        final oracle.jdbc.pool.OracleDataSource oracleDataSource = new oracle.jdbc.pool.OracleDataSource();
-        final String dbUser = getDatabaseUser(aliasService);
-        final String dbPassword = getDatabasePassword(aliasService);
-
-        if (gatewayConfig.getDatabaseConnectionUrl() != null) {
-            oracleDataSource.setURL(gatewayConfig.getDatabaseConnectionUrl());
-            if (StringUtils.isNotBlank(dbUser)) {
-                oracleDataSource.setUser(dbUser);
-            }
-            if (StringUtils.isNotBlank(dbPassword)) {
-                oracleDataSource.setPassword(dbPassword);
-            }
-        } else {
-            oracleDataSource.setDriverType(THIN_DRIVER);
-            oracleDataSource.setServiceName(gatewayConfig.getDatabaseName());
-            oracleDataSource.setServerName(gatewayConfig.getDatabaseHost());
-            oracleDataSource.setPortNumber(gatewayConfig.getDatabasePort());
-            oracleDataSource.setUser(dbUser);
-            oracleDataSource.setPassword(dbPassword);
-        }
-        return oracleDataSource;
+        JDBCDataSource hsqlDatasource = new JDBCDataSource();
+        hsqlDatasource.setUrl(gatewayConfig.getDatabaseConnectionUrl());
+        hsqlDatasource.setUser(getDatabaseUser(aliasService));
+        hsqlDatasource.setPassword(getDatabasePassword(aliasService));
+        return hsqlDatasource;
     }
 }

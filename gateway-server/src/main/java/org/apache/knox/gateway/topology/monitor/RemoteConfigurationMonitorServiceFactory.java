@@ -18,7 +18,7 @@ package org.apache.knox.gateway.topology.monitor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.database.DataSourceFactory;
+import org.apache.knox.gateway.database.DataSourceProvider;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -59,7 +59,7 @@ public class RemoteConfigurationMonitorServiceFactory extends AbstractServiceFac
 
     private DbRemoteConfigurationMonitorService createDbBasedMonitor(GatewayConfig config, AliasService aliasService) throws ServiceLifecycleException {
         try {
-            RemoteConfigDatabase db = new RemoteConfigDatabase(DataSourceFactory.getDataSource(config, aliasService), config.getDatabaseType());
+            RemoteConfigDatabase db = new RemoteConfigDatabase(DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
             LocalDirectory descriptorDir = new LocalDirectory(new File(config.getGatewayDescriptorsDir()));
             LocalDirectory providerDir = new LocalDirectory(new File(config.getGatewayProvidersConfigDir()));
             return new DbRemoteConfigurationMonitorService(

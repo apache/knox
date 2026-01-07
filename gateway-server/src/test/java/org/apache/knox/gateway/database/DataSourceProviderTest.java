@@ -34,7 +34,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class DataSourceFactoryTest {
+public class DataSourceProviderTest {
 
   @Test
   public void shouldReturnPostgresDataSource() throws Exception {
@@ -43,7 +43,7 @@ public class DataSourceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    assertTrue(DataSourceFactory.getDataSource(gatewayConfig, aliasService) instanceof PGSimpleDataSource);
+    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, aliasService) instanceof PGSimpleDataSource);
   }
 
   @Test
@@ -52,7 +52,7 @@ public class DataSourceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     setBasicPostgresExpectations(gatewayConfig, aliasService);
     EasyMock.replay(gatewayConfig, aliasService);
-    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertEquals("localhost", dataSource.getServerNames()[0]);
     assertEquals(5432, dataSource.getPortNumbers()[0]);
     assertEquals("sampleDatabase", dataSource.getDatabaseName());
@@ -66,8 +66,8 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
     EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(5432).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
   }
 
   @Test
@@ -81,7 +81,7 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.verifyDatabaseSslServerCertificate()).andReturn(false).anyTimes();
 
     EasyMock.replay(gatewayConfig, aliasService);
-    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertTrue(dataSource.isSsl());
     assertNull(dataSource.getSslRootCert());
     assertEquals(dataSource.getSslfactory(), NonValidatingFactory.class.getCanonicalName());
@@ -98,10 +98,10 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.isDatabaseSslEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(gatewayConfig.verifyDatabaseSslServerCertificate()).andReturn(true).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseSslTruststoreFileName()).andReturn("/sample/file/path").anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
 
     EasyMock.replay(gatewayConfig, aliasService);
-    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertTrue(dataSource.isSsl());
     assertEquals(dataSource.getSslRootCert(), "/sample/file/path");
     EasyMock.verify(gatewayConfig, aliasService);
@@ -112,12 +112,12 @@ public class DataSourceFactoryTest {
     final String connectionUrl = "jdbc:postgresql://postgresql_host:1234/testDb?user=smolnar&password=secret&ssl=true&sslmode=verify-ca&sslrootcert=/var/lib/knox/gateway/conf/postgresql/root.crt";
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.POSTGRESQL.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final PGSimpleDataSource dataSource = (PGSimpleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertEquals("postgresql_host", dataSource.getServerNames()[0]);
     assertEquals(1234, dataSource.getPortNumbers()[0]);
     assertEquals("testDb", dataSource.getDatabaseName());
@@ -135,7 +135,7 @@ public class DataSourceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    assertTrue(DataSourceFactory.getDataSource(gatewayConfig, aliasService) instanceof EmbeddedDataSource);
+    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, aliasService) instanceof EmbeddedDataSource);
   }
 
   @Test
@@ -144,10 +144,10 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    final EmbeddedDataSource dataSource = (EmbeddedDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final EmbeddedDataSource dataSource = (EmbeddedDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertEquals("sampleDatabase", dataSource.getDatabaseName());
     assertEquals("user", dataSource.getUser());
     assertEquals("password", dataSource.getPassword());
@@ -160,7 +160,7 @@ public class DataSourceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    assertTrue(DataSourceFactory.getDataSource(gatewayConfig, aliasService) instanceof MysqlDataSource);
+    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, aliasService) instanceof MysqlDataSource);
   }
 
   @Test
@@ -171,10 +171,10 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
     EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(5432).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    MysqlDataSource dataSource = (MysqlDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    MysqlDataSource dataSource = (MysqlDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertEquals("localhost", dataSource.getServerName());
     assertEquals(5432, dataSource.getPortNumber());
     assertEquals("sampleDatabase", dataSource.getDatabaseName());
@@ -191,7 +191,7 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.MYSQL.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
     EasyMock.replay(gatewayConfig);
-    MysqlDataSource dataSource = (MysqlDataSource) DataSourceFactory.getDataSource(gatewayConfig, null);
+    MysqlDataSource dataSource = (MysqlDataSource) DataSourceProvider.getDataSource(gatewayConfig, null);
     assertEquals(connectionUrl, dataSource.getUrl());
     EasyMock.verify(gatewayConfig);
   }
@@ -202,7 +202,7 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.MARIADB.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn("jdbc:mariadb://localhost:1234").anyTimes();
     EasyMock.replay(gatewayConfig);
-    assertTrue(DataSourceFactory.getDataSource(gatewayConfig, null) instanceof MariaDbDataSource);
+    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, null) instanceof MariaDbDataSource);
   }
 
   @Test
@@ -225,7 +225,7 @@ public class DataSourceFactoryTest {
         EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
       }
       EasyMock.replay(gatewayConfig);
-      DataSourceFactory.getDataSource(gatewayConfig, null);
+      DataSourceProvider.getDataSource(gatewayConfig, null);
     } catch (Exception e) {
       error = true;
       assertEquals(expectedError, e.getMessage());
@@ -240,7 +240,7 @@ public class DataSourceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    assertTrue(DataSourceFactory.getDataSource(gatewayConfig, aliasService) instanceof OracleDataSource);
+    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, aliasService) instanceof OracleDataSource);
   }
 
   @Test
@@ -249,7 +249,7 @@ public class DataSourceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     setBasicOracleExpectations(gatewayConfig, aliasService);
     EasyMock.replay(gatewayConfig, aliasService);
-    final OracleDataSource dataSource = (OracleDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final OracleDataSource dataSource = (OracleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertEquals("localhost", dataSource.getServerName());
     assertEquals(1521, dataSource.getPortNumber());
     assertEquals("sampleDatabase", dataSource.getServiceName());
@@ -261,12 +261,12 @@ public class DataSourceFactoryTest {
     final String connectionUrl = "jdbc:oracle:thin:testuser/testpw@oracle_host:1521/TESTDB";
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.ORACLE.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(connectionUrl).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    final OracleDataSource dataSource = (OracleDataSource) DataSourceFactory.getDataSource(gatewayConfig, aliasService);
+    final OracleDataSource dataSource = (OracleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertNull(dataSource.getUser());
     assertEquals(0, dataSource.getPortNumber());
     assertNull(dataSource.getServerName());
@@ -280,7 +280,7 @@ public class DataSourceFactoryTest {
     EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
     EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(1521).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSource.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
   }
 }
