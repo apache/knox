@@ -720,7 +720,7 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.INFO, text = "Using {0} implementation for {1}")
   void usingServiceImplementation(String implementation, String serviceType);
 
-  @Message(level = MessageLevel.ERROR, text = "Error while initiatalizing {0}: {1}")
+  @Message(level = MessageLevel.ERROR, text = "Error while initializing {0}: {1}")
   void errorInitializingService(String implementation, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
