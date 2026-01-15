@@ -232,7 +232,6 @@
         <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
         <javax.websocket-api.version>1.1</javax.websocket-api.version>
         <jaxws-ri.version>2.3.3</jaxws-ri.version>
-        <jakarta.xml.bind.version>2.3.2</jakarta.xml.bind.version>
         <java-support.version>8.3.1</java-support.version>
         <javassist.version>3.27.0-GA</javassist.version>
         <jboss-logging.version>3.4.1.Final</jboss-logging.version>
