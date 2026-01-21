@@ -24,6 +24,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
 
@@ -76,16 +77,19 @@ public class JDBCKnoxShellTableBuilder extends KnoxShellTableBuilder {
   }
 
   private void loadDriver() throws Exception {
+
+    Logger logger = Logger.getLogger(getClass().getName());
+
     try {
       Class.forName(driver).getDeclaredConstructor().newInstance();
     } catch (ClassNotFoundException e) {
-      System.out.println(String.format(Locale.US, "Unable to load the JDBC driver %s. Check your CLASSPATH.", driver));
+      logger.info(String.format(Locale.US, "Unable to load the JDBC driver %s. Check your CLASSPATH.", driver));
       throw e;
     } catch (InstantiationException e) {
-      System.out.println(String.format(Locale.US, "Unable to instantiate the JDBC driver %s", driver));
+      logger.info(String.format(Locale.US, "Unable to instantiate the JDBC driver %s", driver));
       throw e;
     } catch (IllegalAccessException e) {
-      System.out.println(String.format(Locale.US, "Not allowed to access the JDBC driver %s", driver));
+      logger.info(String.format(Locale.US, "Not allowed to access the JDBC driver %s", driver));
       throw e;
     }
   }
