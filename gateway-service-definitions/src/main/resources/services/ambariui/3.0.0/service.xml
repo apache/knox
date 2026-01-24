@@ -47,7 +47,7 @@
         </route>
 
         <!-- Admin View route -->
-        <route path="/ambari/views/ADMIN_VIEW/**/INSTANCE/**/main.js">
+        <route path="/ambari/views/ADMIN_VIEW/**/INSTANCE/**">
             <rewrite apply="AMBARIUI/ambari/outbound/proxyroot" to="response.body"/>
         </route>
 
