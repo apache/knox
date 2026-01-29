@@ -23,12 +23,18 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -498,10 +504,65 @@ public class JettySSLServiceTest {
     assertFalse(sslContextFactory.getWantClientAuth());
   }
 
+  @Test
+  public void testBuildSslContextFactoryCiphersAndProtocols() throws Exception {
+    String basedir = System.getProperty("basedir");
+    if (basedir == null) {
+      basedir = new File(".").getCanonicalPath();
+    }
+
+    Path identityKeystorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-keystore.jks");
+    String identityKeystoreType = "jks";
+    char[] identityKeystorePassword = "horton".toCharArray();
+    char[] identityKeyPassphrase = "horton".toCharArray();
+    String identityKeyAlias = "server";
+    Path truststorePath = Paths.get(basedir, "target", "test-classes", "keystores", "server-truststore.jks");
+    String truststoreType = "jks";
+    String truststorePasswordAlias = "trust_store_password";
+
+    List<String> includedCiphers = Arrays.asList("SSL_RSA_WITH_RC4_128_MD5", "SSL_RSA_WITH_RC4_128_SHA");
+    List<String> excludedCiphers = List.of("SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA");
+    List<String> excludedProtocols = List.of("SSLv3");
+    Set<String> includedProtocols = new HashSet<>(Arrays.asList("TLSv1.2", "TLSv1.3"));
+
+    GatewayConfig config = createGatewayConfig(false, false, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, truststorePasswordAlias,
+            includedCiphers, excludedCiphers, includedProtocols, excludedProtocols);
+
+    AliasService aliasService = createMock(AliasService.class);
+    expect(aliasService.getGatewayIdentityKeystorePassword()).andReturn(identityKeystorePassword).atLeastOnce();
+    expect(aliasService.getGatewayIdentityPassphrase()).andReturn(identityKeyPassphrase).atLeastOnce();
+
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+
+    replay(config, aliasService, keystoreService);
+
+    JettySSLService sslService = new JettySSLService();
+    sslService.setAliasService(aliasService);
+    sslService.setKeystoreService(keystoreService);
+
+    SslContextFactory sslContextFactory = (SslContextFactory) sslService.buildSslContextFactory(config);
+    assertArrayEquals(excludedCiphers.toArray(), sslContextFactory.getExcludeCipherSuites());
+    assertArrayEquals(includedCiphers.toArray(), sslContextFactory.getIncludeCipherSuites());
+    assertArrayEquals(excludedProtocols.toArray(), sslContextFactory.getExcludeProtocols());
+    assertArrayEquals(includedProtocols.toArray(), sslContextFactory.getIncludeProtocols());
+
+
+    verify(config, aliasService, keystoreService);
+  }
+
   private GatewayConfig createGatewayConfig(boolean isClientAuthNeeded, boolean isExplicitTruststore,
                                             Path identityKeystorePath, String identityKeystoreType,
                                             String identityKeyAlias, Path truststorePath,
                                             String truststoreType, String trustStorePasswordAlias) {
+    return createGatewayConfig(isClientAuthNeeded, isExplicitTruststore, identityKeystorePath, identityKeystoreType, identityKeyAlias, truststorePath, truststoreType, trustStorePasswordAlias, null, null, null, null);
+  }
+
+  private GatewayConfig createGatewayConfig(boolean isClientAuthNeeded, boolean isExplicitTruststore,
+                                            Path identityKeystorePath, String identityKeystoreType,
+                                            String identityKeyAlias, Path truststorePath,
+                                            String truststoreType, String trustStorePasswordAlias,
+                                            List<String> includedCiphers, List<String> excludedCiphers,
+                                            Set<String> includedProtocols, List<String> excludedProtocols) {
     GatewayConfig config = createMock(GatewayConfig.class);
     expect(config.getIdentityKeystorePath()).andReturn(identityKeystorePath.toString()).atLeastOnce();
     expect(config.getIdentityKeystoreType()).andReturn(identityKeystoreType).atLeastOnce();
@@ -523,10 +584,10 @@ public class JettySSLServiceTest {
 
     expect(config.isClientAuthWanted()).andReturn(false).atLeastOnce();
     expect(config.getTrustAllCerts()).andReturn(false).atLeastOnce();
-    expect(config.getIncludedSSLCiphers()).andReturn(null).atLeastOnce();
-    expect(config.getExcludedSSLCiphers()).andReturn(null).atLeastOnce();
-    expect(config.getIncludedSSLProtocols()).andReturn(null).atLeastOnce();
-    expect(config.getExcludedSSLProtocols()).andReturn(null).atLeastOnce();
+    expect(config.getIncludedSSLCiphers()).andReturn(includedCiphers).atLeastOnce();
+    expect(config.getExcludedSSLCiphers()).andReturn(excludedCiphers).atLeastOnce();
+    expect(config.getIncludedSSLProtocols()).andReturn(includedProtocols).atLeastOnce();
+    expect(config.getExcludedSSLProtocols()).andReturn(excludedProtocols).atLeastOnce();
     expect(config.isSSLRenegotiationAllowed()).andReturn(true).atLeastOnce();
     return config;
   }

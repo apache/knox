@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.io.FilenameUtils;
@@ -668,36 +669,33 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public Set<String> getIncludedSSLProtocols() {
-    final Collection<String> includedSslProtocols = getTrimmedStringCollection(SSL_INCLUDE_PROTOCOLS);
+    final List<String> includedSslProtocols = splitConfigValueToList(SSL_INCLUDE_PROTOCOLS);
     return includedSslProtocols == null ? Collections.emptySet() : new HashSet<>(includedSslProtocols);
   }
 
   @Override
   public List<String> getExcludedSSLProtocols() {
-    List<String> protocols = null;
-    String value = get(SSL_EXCLUDE_PROTOCOLS);
-    if (!"none".equals(value)) {
-      protocols = Arrays.asList(value.split("\\s*,\\s*"));
-    }
-    return protocols;
+    return splitConfigValueToList(SSL_EXCLUDE_PROTOCOLS);
   }
 
   @Override
   public List<String> getIncludedSSLCiphers() {
-    List<String> list = null;
-    String value = get(SSL_INCLUDE_CIPHERS);
-    if (value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim())) {
-      list = Arrays.asList(value.trim().split("\\s*,\\s*"));
-    }
-    return list;
+    return splitConfigValueToList(SSL_INCLUDE_CIPHERS);
   }
 
   @Override
   public List<String> getExcludedSSLCiphers() {
+    return splitConfigValueToList(SSL_EXCLUDE_CIPHERS);
+  }
+
+  private List<String> splitConfigValueToList(String config) {
     List<String> list = null;
-    String value = get(SSL_EXCLUDE_CIPHERS);
+    String value = get(config);
     if (value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim())) {
-      list = Arrays.asList(value.trim().split("\\s*,\\s*"));
+      list = Arrays.stream(value.split("[,:\n]"))
+              .map(String::trim)
+              .filter(part -> !part.isEmpty())
+              .collect(Collectors.toList());
     }
     return list;
   }
