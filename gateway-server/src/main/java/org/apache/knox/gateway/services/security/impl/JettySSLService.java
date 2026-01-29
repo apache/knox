@@ -228,7 +228,7 @@ public class JettySSLService implements SSLService {
     }
 
     final Set<String> sslIncludeProtocols = config.getIncludedSSLProtocols();
-    if (sslIncludeProtocols != null && sslIncludeProtocols.isEmpty()) {
+    if (sslIncludeProtocols != null && !sslIncludeProtocols.isEmpty()) {
       sslContextFactory.setIncludeProtocols(sslIncludeProtocols.toArray(new String[0]));
     }
 
