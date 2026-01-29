@@ -61,7 +61,18 @@ function setVerbose() {
   done
 }
 
-JAVA_VERSION_PATTERNS=( "1.6.0_31/bin/java$" "1.6.0_.*/bin/java$" "1.6.0.*/bin/java$" "1.6\..*/bin/java$" "/bin/java$" )
+JAVA_VERSION_PATTERNS=(
+  "/default/bin/java$"
+  "1.6.0_31/bin/java$"
+  "1.6.0_.*/bin/java$"
+  "1.6.0.*/bin/java$"
+  "1.6\..*/bin/java$"
+  "jdk1\.11.*?/bin/java$"
+  "jdk-11.*?/bin/java$"
+  "jdk1\.17.*?/bin/java$"
+  "jdk-17.*?/bin/java$"
+  "/bin/java$"
+)
 
 function findJava() {
   # Check to make sure any existing JAVA var is valid.
@@ -92,8 +103,7 @@ function findJava() {
   # Use the search patterns to find java.
   if [ "$JAVA" == "" ]; then
     for pattern in "${JAVA_VERSION_PATTERNS[@]}"; do
-      # shellcheck disable=SC2207
-      JAVA=$(find /usr -executable -name java -print 2> /dev/null | grep "$pattern" | head -n 1 )
+      JAVA=$(find -L /usr -executable -name java -print 2> /dev/null | grep "$pattern" | sort | head -n 1 )
       if [ -x "$JAVA" ]; then
         break
       else
