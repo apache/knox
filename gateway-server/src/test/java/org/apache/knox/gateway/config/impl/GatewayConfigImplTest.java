@@ -18,8 +18,10 @@ package org.apache.knox.gateway.config.impl;
 
 import static org.apache.knox.gateway.services.security.impl.RemoteAliasService.REMOTE_ALIAS_SERVICE_TYPE;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -36,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -143,6 +146,30 @@ public class GatewayConfigImplTest {
     config.set( "ssl.include.ciphers", " ONE , TWO , THREE " );
     assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
 
+    config.set( "ssl.include.ciphers", " ONE:TWO:THREE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE:TWO,THREE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE : TWO,THREE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE : TWO\nTHREE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE,TWO \n THREE " );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE,TWO \n THREE :FOUR" );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE", "FOUR")) );
+
+    config.set( "ssl.include.ciphers", " ONE,TWO,,THREE" );
+    assertThat( config.getIncludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.ciphers", " ONE,TWO,,THREE" );
+    assertThat( config.getIncludedSSLCiphers(), not(hasItems("")) );
+
     list = config.getExcludedSSLCiphers();
     assertThat( list, is(nullValue()) );
 
@@ -166,6 +193,130 @@ public class GatewayConfigImplTest {
 
     config.set( "ssl.exclude.ciphers", " ONE , TWO , THREE " );
     assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE:TWO:THREE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE:TWO,THREE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE : TWO,THREE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE : TWO\nTHREE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE,TWO \n THREE " );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE,TWO \n THREE :FOUR" );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE", "FOUR")) );
+
+
+    config.set( "ssl.exclude.ciphers", " ONE,TWO,,THREE" );
+    assertThat( config.getExcludedSSLCiphers(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.ciphers", " ONE,TWO,,THREE" );
+    assertThat( config.getExcludedSSLCiphers(), not(hasItems("")) );
+  }
+
+  @Test
+  public void testSSLProtocols() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    Set<String> list;
+
+    list = config.getIncludedSSLProtocols();
+    assertThat( list, is(empty()) );
+
+    config.set( "ssl.include.protocols", "none" );
+    assertThat( config.getIncludedSSLProtocols(), is(empty()) );
+
+    config.set( "ssl.include.protocols", "" );
+    assertThat( config.getIncludedSSLProtocols(), is(empty()) );
+
+    config.set( "ssl.include.protocols", "ONE" );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE")) );
+
+    config.set( "ssl.include.protocols", " ONE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE")) );
+
+    config.set( "ssl.include.protocols", "ONE,TWO" );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO")) );
+
+    config.set( "ssl.include.protocols", "ONE,TWO,THREE" );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE , TWO , THREE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE:TWO:THREE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE:TWO,THREE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE : TWO,THREE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE : TWO\nTHREE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE,TWO \n THREE " );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE,TWO \n THREE :FOUR" );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE", "FOUR")) );
+
+    config.set( "ssl.include.protocols", " ONE,TWO,,THREE" );
+    assertThat( config.getIncludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.include.protocols", " ONE,TWO,,THREE" );
+    assertThat( config.getIncludedSSLProtocols(), not(hasItems("")) );
+
+    config.set( "ssl.exclude.protocols", "none" );
+    assertThat( config.getExcludedSSLProtocols(), is(nullValue()) );
+
+    config.set( "ssl.exclude.protocols", "" );
+    assertThat( config.getExcludedSSLProtocols(), is(nullValue()) );
+
+    config.set( "ssl.exclude.protocols", "ONE" );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE")) );
+
+    config.set( "ssl.exclude.protocols", "ONE,TWO" );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO")) );
+
+    config.set( "ssl.exclude.protocols", "ONE,TWO,THREE" );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE , TWO , THREE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE:TWO:THREE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE:TWO,THREE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE : TWO,THREE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE : TWO\nTHREE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE,TWO \n THREE " );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE,TWO \n THREE :FOUR" );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE", "FOUR")) );
+
+    config.set( "ssl.exclude.protocols", " ONE,TWO,,THREE" );
+    assertThat( config.getExcludedSSLProtocols(), is(hasItems("ONE","TWO","THREE")) );
+
+    config.set( "ssl.exclude.protocols", " ONE,TWO,,THREE" );
+    assertThat( config.getExcludedSSLProtocols(), not(hasItems("")) );
   }
 
   // KNOX-2772
