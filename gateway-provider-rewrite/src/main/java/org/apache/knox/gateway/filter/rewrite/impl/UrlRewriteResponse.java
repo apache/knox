@@ -187,7 +187,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
       inBuffer.reset();
 
       final InputStream unFilteredStream;
-      if(isGzip || "gzip".equalsIgnoreCase(contentEncoding)) {
+      if(isGzip) {
         unFilteredStream = new GzipCompressorInputStream(inBuffer, true);
         outStream = new GZIPOutputStream(output, STREAM_BUFFER_SIZE);
       } else if ("deflate".equalsIgnoreCase(contentEncoding)) {
