@@ -165,6 +165,33 @@ public class UrlRewriteResponseTest {
     testStreamResponse(content, rewriteResponse, "deflate");
   }
 
+  @Test
+  public void testStreamEmptyGzipResponse() throws IOException {
+    UrlRewriteProcessor rewriter = EasyMock.createNiceMock(UrlRewriteProcessor.class);
+    EasyMock.expect(rewriter.getConfig()).andReturn(null).anyTimes();
+
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(UrlRewriteServletContextListener.PROCESSOR_ATTRIBUTE_NAME)).andReturn(rewriter).anyTimes();
+
+    FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    EasyMock.expect(config.getInitParameter(UrlRewriteServletFilter.RESPONSE_BODY_FILTER_PARAM)).andReturn("test-filter").anyTimes();
+    EasyMock.expect(config.getServletContext()).andReturn(context).anyTimes();
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+
+    // Simulate the GZIP header being present in the response
+    EasyMock.expect(response.getHeader("Content-Encoding")).andReturn("gzip").anyTimes();
+
+    EasyMock.replay(rewriter, context, config, request, response);
+
+    UrlRewriteResponse rewriteResponse = new UrlRewriteResponse(config, request, response);
+
+    // TEST: Passing an empty stream (0 bytes)
+    String content = "";
+    testStreamResponse(content, rewriteResponse, "gzip");
+  }
+
   private void testStreamResponse(String content, UrlRewriteResponse rewriteResponse, String contentType) throws IOException {
     Path inputFile = Files.createTempFile("input", "test");
     Path outputFile = Files.createTempFile("output", "test");
