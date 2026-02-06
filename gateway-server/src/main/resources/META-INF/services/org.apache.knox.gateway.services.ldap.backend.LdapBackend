@@ -1,0 +1,3 @@
+# Built-in LDAP backend implementations
+org.apache.knox.gateway.services.ldap.backend.FileBackend
+org.apache.knox.gateway.services.ldap.backend.LdapProxyBackend

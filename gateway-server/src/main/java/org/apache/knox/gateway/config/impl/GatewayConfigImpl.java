@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1699,5 +1700,66 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getStrictTransportOption() {
     return get(STRICT_TRANSPORT_OPTION, DEFAULT_STRICT_TRANSPORT_OPTION);
+  }
+
+  // LDAP Service Configuration
+  @Override
+  public boolean isLDAPEnabled() {
+    return Boolean.parseBoolean(get(LDAP_ENABLED, "false"));
+  }
+
+  @Override
+  public int getLDAPPort() {
+    return Integer.parseInt(get(LDAP_PORT, "3890"));
+  }
+
+  @Override
+  public String getLDAPBaseDN() {
+    return get(LDAP_BASE_DN, "dc=proxy,dc=com");
+  }
+
+  @Override
+  public String getLDAPBackendType() {
+    return get(LDAP_BACKEND_TYPE, "file");
+  }
+
+  @Override
+  public String getLDAPBackendDataFile() {
+    String configuredPath = get(LDAP_BACKEND_DATA_FILE, null);
+    if (configuredPath != null && !configuredPath.isEmpty()) {
+      // Support ${GATEWAY_DATA_HOME} variable substitution
+      configuredPath = configuredPath.replace("${GATEWAY_DATA_HOME}", getGatewayDataDir());
+      return configuredPath;
+    }
+    // Default to data directory if not configured
+    return getGatewayDataDir() + File.separator + "ldap-users.json";
+  }
+
+  @Override
+  public Set<String> getPropertyNames() {
+    Set<String> names = new HashSet<>();
+    Iterator<Map.Entry<String, String>> iterator = this.iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<String, String> entry = iterator.next();
+      names.add(entry.getKey());
+    }
+    return names;
+  }
+
+  @Override
+  public Map<String, String> getLDAPBackendConfig(String backendType) {
+    Map<String, String> config = new HashMap<>();
+    String prefix = "gateway.ldap.backend." + backendType + ".";
+
+    for (String key : getPropertyNames()) {
+      if (key != null && key.startsWith(prefix)) {
+        String configKey = key.substring(prefix.length());
+        String value = get(key);
+        if (value != null) {
+          config.put(configKey, value);
+        }
+      }
+    }
+    return config;
   }
 }

@@ -37,4 +37,185 @@ limitations under the License.
         <description>The directory within GATEWAY_HOME that contains gateway topology files and deployments.</description>
     </property>
 
+    <!-- LDAP Proxy Service Configuration -->
+    <property>
+        <name>gateway.ldap.enabled</name>
+        <value>true</value>
+        <description>Enable the embedded LDAP service for user and group lookups. Set to true to enable.</description>
+    </property>
+
+    <property>
+        <name>gateway.ldap.port</name>
+        <value>3890</value>
+        <description>Port for the LDAP service to listen on. Default is 3890.</description>
+    </property>
+
+    <property>
+        <name>gateway.ldap.base.dn</name>
+        <value>dc=proxy,dc=com</value>
+        <description>Base DN for LDAP entries in the proxy server. Default is dc=proxy,dc=com.</description>
+    </property>
+
+    <property>
+        <name>gateway.ldap.backend.type</name>
+        <value>ldap</value>
+        <description>Backend type for LDAP service. Currently supported: file, ldap. Future: jdbc, knox.</description>
+    </property>
+
+    <property>
+        <name>gateway.ldap.backend.data.file</name>
+        <value>${GATEWAY_DATA_HOME}/ldap-users.json</value>
+        <description>Path to JSON data file for file-based backend. Supports ${GATEWAY_DATA_HOME} variable.</description>
+    </property>
+
+    <!-- LDAP backend proxy configuration (active when gateway.ldap.backend.type=ldap) -->
+    <property>
+        <name>gateway.ldap.backend.ldap.url</name>
+        <value>ldap://localhost:33389</value>
+        <description>LDAP server URL for proxy backend</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.remoteBaseDn</name>
+        <value>dc=hadoop,dc=apache,dc=org</value>
+        <description>Base DN of the remote LDAP server</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemUsername</name>
+        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+        <description>LDAP bind DN for proxy backend authentication</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemPassword</name>
+        <value>guest-password</value>
+        <description>LDAP bind password for proxy backend authentication</description>
+    </property>
+
+    <!-- Backend-specific configuration using prefixed properties -->
+    <!-- Uncomment and configure based on backend type specified in gateway.ldap.backend.type -->
+
+    <!-- File backend configuration (gateway.ldap.backend.type=file) -->
+    <!--
+    <property>
+        <name>gateway.ldap.backend.file.dataFile</name>
+        <value>${GATEWAY_DATA_HOME}/ldap-users.json</value>
+        <description>Path to JSON file containing user and group data</description>
+    </property>
+    -->
+
+    <!-- LDAP proxy backend configuration (gateway.ldap.backend.type=ldap) -->
+    <!-- This backend proxies to an external LDAP server (e.g., demo LDAP) -->
+    <!--
+    Example 1: Using Knox demo LDAP server (default port 33389)
+    <property>
+        <name>gateway.ldap.backend.ldap.url</name>
+        <value>ldap://localhost:33389</value>
+        <description>LDAP server URL</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.remoteBaseDn</name>
+        <value>dc=hadoop,dc=apache,dc=org</value>
+        <description>Base DN of the remote LDAP server</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemUsername</name>
+        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+        <description>LDAP bind DN for authentication</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemPassword</name>
+        <value>guest-password</value>
+        <description>LDAP bind password</description>
+    </property>
+    Note: Entries from the remote server will be re-created under gateway.ldap.base.dn (e.g., dc=proxy,dc=com)
+    -->
+    <!--
+    Example 2: Using external LDAP with authentication (supports both naming conventions)
+    <property>
+        <name>gateway.ldap.backend.ldap.url</name>
+        <value>ldap://ldap.example.com:389</value>
+        <description>LDAP server URL</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.remoteBaseDn</name>
+        <value>dc=example,dc=com</value>
+        <description>Base DN of the remote LDAP server</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemUsername</name>
+        <value>cn=admin,dc=example,dc=com</value>
+        <description>LDAP bind DN for authentication (or use bindDn)</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemPassword</name>
+        <value>secret</value>
+        <description>LDAP bind password (or use bindPassword)</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.userSearchBase</name>
+        <value>ou=people,dc=example,dc=com</value>
+        <description>Base DN for user searches on remote server (defaults to ou=people,{remoteBaseDn})</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.groupSearchBase</name>
+        <value>ou=groups,dc=example,dc=com</value>
+        <description>Base DN for group searches on remote server (defaults to ou=groups,{remoteBaseDn})</description>
+    </property>
+    -->
+    <!--
+    Alternative: Use host and port instead of URL
+    <property>
+        <name>gateway.ldap.backend.ldap.host</name>
+        <value>localhost</value>
+        <description>LDAP server hostname</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.port</name>
+        <value>33389</value>
+        <description>LDAP server port</description>
+    </property>
+    -->
+
+    <!-- Database backend configuration (gateway.ldap.backend.type=database) -->
+    <!--
+    <property>
+        <name>gateway.ldap.backend.database.jdbc-url</name>
+        <value>jdbc:mysql://localhost:3306/knox</value>
+        <description>JDBC connection URL</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.database.driver</name>
+        <value>com.mysql.cj.jdbc.Driver</value>
+        <description>JDBC driver class name</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.database.username</name>
+        <value>knox_user</value>
+        <description>Database username</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.database.password</name>
+        <value>secret</value>
+        <description>Database password</description>
+    </property>
+    -->
+
+    <!-- Knox Auth backend configuration (gateway.ldap.backend.type=knox-auth) -->
+    <!--
+    <property>
+        <name>gateway.ldap.backend.knox-auth.url</name>
+        <value>https://knox-server/gateway/sandbox/knoxauth/api</value>
+        <description>Knox authentication service URL</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.knox-auth.username</name>
+        <value>admin</value>
+        <description>Knox admin username</description>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.knox-auth.password</name>
+        <value>admin-password</value>
+        <description>Knox admin password</description>
+    </property>
+    -->
+
 </configuration>

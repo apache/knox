@@ -2124,7 +2124,6 @@
                 <artifactId>apacheds-jdbm</artifactId>
                 <version>${apacheds-jdbm.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.directory.server</groupId>
                 <artifactId>apacheds-core</artifactId>
@@ -2167,6 +2166,16 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-ldif-partition</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-jdbm-partition</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.directory.api</groupId>
@@ -2181,6 +2190,11 @@
             <dependency>
                 <groupId>org.apache.directory.api</groupId>
                 <artifactId>api-ldap-model</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-schema-data</artifactId>
                 <version>${apacheds.directory.api.version}</version>
             </dependency>
             <dependency>

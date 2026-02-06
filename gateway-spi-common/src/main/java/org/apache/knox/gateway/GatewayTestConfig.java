@@ -1202,4 +1202,40 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean isTopologyAsyncSupported(String topology) {
     return false;
   }
+
+  // LDAP Service Configuration
+  @Override
+  public boolean isLDAPEnabled() {
+    return false;
+  }
+
+  @Override
+  public int getLDAPPort() {
+    return 3890;
+  }
+
+  @Override
+  public String getLDAPBaseDN() {
+    return "dc=test,dc=com";
+  }
+
+  @Override
+  public String getLDAPBackendType() {
+    return "file";
+  }
+
+  @Override
+  public String getLDAPBackendDataFile() {
+    return getGatewayDataPath().resolve("ldap-users.json").toString();
+  }
+
+  @Override
+  public Set<String> getPropertyNames() {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public Map<String, String> getLDAPBackendConfig(String backendType) {
+    return Collections.emptyMap();
+  }
 }

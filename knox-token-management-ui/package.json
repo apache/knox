@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ng serve  --verbose=true",
     "build": "ng build",
-    "build-prod": "ng build --configuration production",
+    "build-prod": "NODE_OPTIONS='--no-warnings' ng build --configuration production",
     "lint": "eslint token-management"
   },
   "private": true,
