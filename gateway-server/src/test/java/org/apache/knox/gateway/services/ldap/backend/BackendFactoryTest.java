@@ -45,7 +45,7 @@ public class BackendFactoryTest {
         tempFile.deleteOnExit();
 
         // Write minimal valid JSON
-        try (java.io.FileWriter writer = new java.io.FileWriter(tempFile, java.nio.charset.StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter writer = java.nio.file.Files.newBufferedWriter(tempFile.toPath(), java.nio.charset.StandardCharsets.UTF_8)) {
             writer.write("{\"users\":[],\"groups\":[]}\n");
         }
 

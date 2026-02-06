@@ -57,7 +57,7 @@ public class KnoxLDAPServiceTest {
         tempDataDir.deleteOnExit();
 
         tempLdapFile = new File(tempDataDir, "ldap-users.json");
-        try (java.io.FileWriter writer = new java.io.FileWriter(tempLdapFile, java.nio.charset.StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter writer = java.nio.file.Files.newBufferedWriter(tempLdapFile.toPath(), java.nio.charset.StandardCharsets.UTF_8)) {
             writer.write("{\"users\":[],\"groups\":[]}");
         }
         tempLdapFile.deleteOnExit();

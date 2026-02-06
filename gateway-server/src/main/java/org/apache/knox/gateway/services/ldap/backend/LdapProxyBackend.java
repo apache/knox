@@ -58,7 +58,7 @@ public class LdapProxyBackend implements LdapBackend {
     private String userIdentifierAttribute = "uid"; // uid for LDAP, sAMAccountName for AD
     private String userSearchFilter = "({userIdAttr}={username})"; // Will be populated with userIdentifierAttribute
     private String groupMemberAttribute = "memberUid"; // member for AD, memberUid for POSIX
-    private boolean useMemberOf = false; // Use memberOf attribute for group lookup (efficient for AD)
+    private boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
 
     @Override
     public String getName() {

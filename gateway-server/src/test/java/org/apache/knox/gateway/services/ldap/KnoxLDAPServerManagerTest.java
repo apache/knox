@@ -52,7 +52,7 @@ public class KnoxLDAPServerManagerTest {
         tempLdapFile = File.createTempFile("ldap-test", ".json");
         tempLdapFile.deleteOnExit();
 
-        try (java.io.FileWriter writer = new java.io.FileWriter(tempLdapFile, java.nio.charset.StandardCharsets.UTF_8)) {
+        try (java.io.BufferedWriter writer = java.nio.file.Files.newBufferedWriter(tempLdapFile.toPath(), java.nio.charset.StandardCharsets.UTF_8)) {
             writer.write("{\"users\":[{\"dn\":\"uid=admin,ou=people,dc=test,dc=com\",\"uid\":\"admin\",\"cn\":\"Administrator\",\"userPassword\":\"admin-password\"}],\"groups\":[]}");
         }
     }
