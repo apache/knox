@@ -25,8 +25,11 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
 import org.apache.directory.ldap.client.api.LdapConnection;
-import org.apache.directory.ldap.client.api.LdapNetworkConnection;
+import org.apache.directory.ldap.client.api.LdapConnectionConfig;
+import org.apache.directory.ldap.client.api.LdapConnectionPool;
+import org.apache.directory.ldap.client.api.ValidatingPoolableLdapConnectionFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
@@ -59,6 +62,9 @@ public class LdapProxyBackend implements LdapBackend {
     private String userSearchFilter = "({userIdAttr}={username})"; // Will be populated with userIdentifierAttribute
     private String groupMemberAttribute = "memberUid"; // member for AD, memberUid for POSIX
     private boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
+
+    // Connection pool for efficient connection reuse
+    private LdapConnectionPool connectionPool;
 
     @Override
     public String getName() {
@@ -124,6 +130,44 @@ public class LdapProxyBackend implements LdapBackend {
         LOG.ldapBackendLoading(getName(), "Proxying " + proxyBaseDn + " to " + ldapUrl + " (" + remoteBaseDn + ") with " +
                               userIdentifierAttribute + " attribute" +
                               (useMemberOf ? " using memberOf lookups" : " using group searches"));
+
+        // Initialize connection pool
+        initializeConnectionPool(config);
+    }
+
+    /**
+     * Initializes the LDAP connection pool with configurable parameters.
+     * Uses a validating pool to ensure connections remain healthy.
+     *
+     * @param config Configuration map that may contain pool settings
+     * @throws Exception if connection pool initialization fails
+     */
+    private void initializeConnectionPool(Map<String, String> config) throws Exception {
+        // Configure connection settings
+        LdapConnectionConfig connectionConfig = new LdapConnectionConfig();
+        connectionConfig.setLdapHost(host);
+        connectionConfig.setLdapPort(port);
+
+        if (bindDn != null && !bindDn.isEmpty()) {
+            connectionConfig.setName(bindDn);
+            connectionConfig.setCredentials(bindPassword);
+        }
+
+        // Connection pool configuration (with sensible defaults)
+        int maxActive = Integer.parseInt(config.getOrDefault("poolMaxActive", "8"));
+
+        // Create connection factory
+        DefaultLdapConnectionFactory factory = new DefaultLdapConnectionFactory(connectionConfig);
+
+        // Create validating poolable connection factory to test connections
+        ValidatingPoolableLdapConnectionFactory poolFactory = new ValidatingPoolableLdapConnectionFactory(factory);
+
+        // Create the pool with max size
+        connectionPool = new LdapConnectionPool(poolFactory);
+        connectionPool.setMaxTotal(maxActive);
+        connectionPool.setTestOnBorrow(true);
+
+        LOG.ldapBackendLoading(getName(), "Initialized connection pool with maxActive=" + maxActive);
     }
 
     private void parseLdapUrl(String url) {
@@ -159,69 +203,76 @@ public class LdapProxyBackend implements LdapBackend {
         }
     }
 
-    private LdapConnection connect() throws LdapException, IOException {
-        LdapConnection connection = new LdapNetworkConnection(host, port);
-        connection.connect();
+    /**
+     * Gets a connection from the connection pool.
+     * Connections obtained from this method should be released back to the pool
+     * using releaseConnection() when done.
+     *
+     * @return An LDAP connection from the pool
+     * @throws Exception if unable to get a connection from the pool
+     */
+    private LdapConnection getConnection() throws Exception {
+        return connectionPool.getConnection();
+    }
 
-        // Bind if credentials provided, otherwise anonymous
-        if (bindDn != null && !bindDn.isEmpty()) {
-            connection.bind(bindDn, bindPassword);
-        } else {
-            connection.anonymousBind();
+    /**
+     * Releases a connection back to the pool.
+     * This method should be called in a finally block to ensure connections are returned.
+     *
+     * @param connection The connection to release back to the pool
+     */
+    private void releaseConnection(LdapConnection connection) {
+        if (connection != null) {
+            try {
+                connectionPool.releaseConnection(connection);
+            } catch (Exception e) {
+                LOG.ldapServiceStopFailed(e);
+            }
         }
+    }
 
-        return connection;
+    /**
+     * Closes the connection pool and releases all resources.
+     * Should be called when the backend is being shut down.
+     */
+    public void close() {
+        if (connectionPool != null) {
+            try {
+                connectionPool.close();
+            } catch (Exception e) {
+                LOG.ldapServiceStopFailed(e);
+            }
+        }
     }
 
     @Override
     public Entry getUser(String username, SchemaManager schemaManager) throws Exception {
-        try (LdapConnection connection = connect()) {
+        LdapConnection connection = null;
+        try {
+            connection = getConnection();
             // Search for user using configurable attribute
             String filter = userSearchFilter.replace("{username}", username);
             EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "*");
 
             if (cursor.next()) {
                 Entry sourceEntry = cursor.get();
-
-                // Standard proxy approach: return entry with backend DN unchanged
-                // This preserves DN integrity for bind operations and DN references
-                Entry entry = new DefaultEntry(schemaManager);
-                entry.setDn(sourceEntry.getDn());
-
-                // Copy all attributes as-is from backend
-                copyAttribute(sourceEntry, entry, "objectClass");
-                copyAttribute(sourceEntry, entry, userIdentifierAttribute);
-                // Map identifier attribute to uid for consistency if needed
-                if (!"uid".equals(userIdentifierAttribute)) {
-                    Attribute idAttr = sourceEntry.get(userIdentifierAttribute);
-                    if (idAttr != null) {
-                        entry.add("uid", idAttr.getString());
-                    }
-                }
-                copyAttribute(sourceEntry, entry, "cn");
-                copyAttribute(sourceEntry, entry, "sn");
-                copyAttribute(sourceEntry, entry, "mail");
-                copyAttribute(sourceEntry, entry, "description");
-                copyAttribute(sourceEntry, entry, "memberOf");  // Preserve group memberships
-
-                // Get user's groups
-                List<String> groups = getUserGroupsInternal(connection, sourceEntry.getDn().toString(), username);
-                if (!groups.isEmpty()) {
-                    entry.add("description", "Groups: " + String.join(", ", groups));
-                }
-
+                Entry entry = createProxyEntry(sourceEntry, username, connection, schemaManager);
                 cursor.close();
                 return entry;
             }
 
             cursor.close();
+            return null;
+        } finally {
+            releaseConnection(connection);
         }
-        return null;
     }
 
     @Override
     public List<String> getUserGroups(String username) throws Exception {
-        try (LdapConnection connection = connect()) {
+        LdapConnection connection = null;
+        try {
+            connection = getConnection();
             if (useMemberOf) {
                 // Use memberOf attribute for efficient AD lookups
                 return getUserGroupsViaMemberOf(connection, username);
@@ -238,8 +289,10 @@ public class LdapProxyBackend implements LdapBackend {
 
                 cursor.close();
             }
+            return Collections.emptyList();
+        } finally {
+            releaseConnection(connection);
         }
-        return Collections.emptyList();
     }
 
     private List<String> getUserGroupsViaMemberOf(LdapConnection connection, String username) throws LdapException, CursorException, IOException {
@@ -317,8 +370,10 @@ public class LdapProxyBackend implements LdapBackend {
     @Override
     public List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception {
         List<Entry> results = new ArrayList<>();
+        LdapConnection connection = null;
 
-        try (LdapConnection connection = connect()) {
+        try {
+            connection = getConnection();
             String searchValue = filter.contains("*") ? "*" : filter;
             String ldapFilter = "(" + userIdentifierAttribute + "=" + searchValue + ")";
             EntryCursor cursor = connection.search(userSearchBase, ldapFilter, SearchScope.SUBTREE, "*");
@@ -328,41 +383,61 @@ public class LdapProxyBackend implements LdapBackend {
                 Attribute idAttr = sourceEntry.get(userIdentifierAttribute);
                 if (idAttr != null) {
                     String username = idAttr.getString();
-
-                    // Standard proxy approach: return entry with backend DN unchanged
-                    Entry entry = new DefaultEntry(schemaManager);
-                    entry.setDn(sourceEntry.getDn());
-
-                    // Copy all attributes as-is from backend
-                    copyAttribute(sourceEntry, entry, "objectClass");
-                    copyAttribute(sourceEntry, entry, userIdentifierAttribute);
-                    // Map identifier attribute to uid for consistency if needed
-                    if (!"uid".equals(userIdentifierAttribute)) {
-                        Attribute userIdAttr = sourceEntry.get(userIdentifierAttribute);
-                        if (userIdAttr != null) {
-                            entry.add("uid", userIdAttr.getString());
-                        }
-                    }
-                    copyAttribute(sourceEntry, entry, "cn");
-                    copyAttribute(sourceEntry, entry, "sn");
-                    copyAttribute(sourceEntry, entry, "mail");
-                    copyAttribute(sourceEntry, entry, "description");
-                    copyAttribute(sourceEntry, entry, "memberOf");  // Preserve group memberships
-
-                    // Get user's groups using the same connection
-                    List<String> groups = getUserGroupsInternal(connection, sourceEntry.getDn().toString(), username);
-                    if (!groups.isEmpty()) {
-                        entry.add("description", "Groups: " + String.join(", ", groups));
-                    }
-
+                    Entry entry = createProxyEntry(sourceEntry, username, connection, schemaManager);
                     results.add(entry);
                 }
             }
 
             cursor.close();
+            return results;
+        } finally {
+            releaseConnection(connection);
+        }
+    }
+
+    /**
+     * Creates a proxy entry from a backend source entry with all required attributes.
+     * This method standardizes the conversion of backend LDAP entries to proxy entries,
+     * preserving the backend DN and copying all standard user attributes.
+     *
+     * @param sourceEntry The entry from the backend LDAP server
+     * @param username The username for the entry
+     * @param connection The LDAP connection for fetching group information
+     * @param schemaManager The schema manager for creating entries
+     * @return A new Entry with backend DN and all copied attributes
+     * @throws Exception if entry creation or attribute copying fails
+     */
+    private Entry createProxyEntry(Entry sourceEntry, String username, LdapConnection connection, SchemaManager schemaManager) throws Exception {
+        // Standard proxy approach: return entry with backend DN unchanged
+        // This preserves DN integrity for bind operations and DN references
+        Entry entry = new DefaultEntry(schemaManager);
+        entry.setDn(sourceEntry.getDn());
+
+        // Copy all attributes as-is from backend
+        copyAttribute(sourceEntry, entry, "objectClass");
+        copyAttribute(sourceEntry, entry, userIdentifierAttribute);
+
+        // Map identifier attribute to uid for consistency if needed
+        if (!"uid".equals(userIdentifierAttribute)) {
+            Attribute idAttr = sourceEntry.get(userIdentifierAttribute);
+            if (idAttr != null) {
+                entry.add("uid", idAttr.getString());
+            }
         }
 
-        return results;
+        copyAttribute(sourceEntry, entry, "cn");
+        copyAttribute(sourceEntry, entry, "sn");
+        copyAttribute(sourceEntry, entry, "mail");
+        copyAttribute(sourceEntry, entry, "description");
+        copyAttribute(sourceEntry, entry, "memberOf");  // Preserve group memberships
+
+        // Get user's groups
+        List<String> groups = getUserGroupsInternal(connection, sourceEntry.getDn().toString(), username);
+        if (!groups.isEmpty()) {
+            entry.add("description", "Groups: " + String.join(", ", groups));
+        }
+
+        return entry;
     }
 
     private void copyAttribute(Entry source, Entry target, String attributeName) throws LdapException {

@@ -123,6 +123,13 @@ public interface GatewayConfig {
 
   String DEPLOYMENT_PATH_ALIAS = ".path.alias.";
 
+  // LDAP Service Configuration
+  String LDAP_ENABLED = "gateway.ldap.enabled";
+  String LDAP_PORT = "gateway.ldap.port";
+  String LDAP_BASE_DN = "gateway.ldap.base.dn";
+  String LDAP_BACKEND_TYPE = "gateway.ldap.backend.type";
+  String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -1031,13 +1038,6 @@ public interface GatewayConfig {
    * @return the strict transport option if set; otherwise return the default value 'max-age=31536000'
    */
   String getStrictTransportOption();
-
-  // LDAP Service Configuration
-  String LDAP_ENABLED = "gateway.ldap.enabled";
-  String LDAP_PORT = "gateway.ldap.port";
-  String LDAP_BASE_DN = "gateway.ldap.base.dn";
-  String LDAP_BACKEND_TYPE = "gateway.ldap.backend.type";
-  String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
 
   /**
    * @return true if the embedded LDAP service is enabled; otherwise false
