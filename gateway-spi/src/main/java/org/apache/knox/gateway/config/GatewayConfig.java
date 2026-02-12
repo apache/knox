@@ -123,6 +123,13 @@ public interface GatewayConfig {
 
   String DEPLOYMENT_PATH_ALIAS = ".path.alias.";
 
+  // LDAP Service Configuration
+  String LDAP_ENABLED = "gateway.ldap.enabled";
+  String LDAP_PORT = "gateway.ldap.port";
+  String LDAP_BASE_DN = "gateway.ldap.base.dn";
+  String LDAP_BACKEND_TYPE = "gateway.ldap.backend.type";
+  String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -1031,4 +1038,44 @@ public interface GatewayConfig {
    * @return the strict transport option if set; otherwise return the default value 'max-age=31536000'
    */
   String getStrictTransportOption();
+
+  /**
+   * @return true if the embedded LDAP service is enabled; otherwise false
+   */
+  boolean isLDAPEnabled();
+
+  /**
+   * @return the port for the LDAP service to listen on
+   */
+  int getLDAPPort();
+
+  /**
+   * @return the base DN for LDAP entries
+   */
+  String getLDAPBaseDN();
+
+  /**
+   * @return the backend type for LDAP (file, ldap, jdbc, etc.)
+   */
+  String getLDAPBackendType();
+
+  /**
+   * @return the path to the data file for file-based backend
+   */
+  String getLDAPBackendDataFile();
+
+  /**
+   * Get backend-specific configuration properties.
+   * Returns all properties with prefix "gateway.ldap.backend.{backendType}."
+   * with the prefix stripped from the keys.
+   *
+   * @param backendType the backend type (e.g., "file", "ldap", "database")
+   * @return map of configuration key-value pairs for the specified backend
+   */
+  Map<String, String> getLDAPBackendConfig(String backendType);
+
+  /**
+   * @return set of all property names in the configuration
+   */
+  Set<String> getPropertyNames();
 }

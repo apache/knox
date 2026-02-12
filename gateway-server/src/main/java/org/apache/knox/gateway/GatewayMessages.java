@@ -812,4 +812,17 @@ public interface GatewayMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Strict-Transport-Security header enabled with \"{0}\" option" )
   void strictTransportHeaderEnabled(String option);
+
+  // LDAP Service messages
+  @Message(level = MessageLevel.INFO, text = "LDAP service is enabled and will be started on port {0}")
+  void ldapServiceEnabled(int port);
+
+  @Message(level = MessageLevel.INFO, text = "LDAP service is disabled")
+  void ldapServiceDisabled();
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to start LDAP service: {0}")
+  void ldapServiceStartFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR, text = "LDAP service not found or not properly registered")
+  void ldapServiceNotFound();
 }
