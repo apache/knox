@@ -249,6 +249,9 @@
     <match pattern="*://*:*/proxy/{**}">
       <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}?{**}"/>
     </match>
+    <match pattern="/proxy/{path=**}?{**}#{fragment=**}">
+      <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{path}/?{**}#{fragment}"/>
+    </match>
     <match pattern="/proxy/{**}?{**}">
       <rewrite template="{$frontend[url]}/yarnuiv2/proxy/{**}?{**}"/>
     </match>
