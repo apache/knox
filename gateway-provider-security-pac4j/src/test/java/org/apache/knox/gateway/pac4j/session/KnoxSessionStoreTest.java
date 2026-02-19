@@ -46,6 +46,7 @@ import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_S
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_PERMISSIONS_DEFAULT;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_ROLES;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_ROLES_DEFAULT;
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_SECURE_COOKIE;
 import static org.apache.knox.gateway.pac4j.session.KnoxSessionStore.PAC4J_PASSWORD;
 import static org.apache.knox.gateway.pac4j.session.KnoxSessionStore.PAC4J_SESSION_PREFIX;
 
@@ -161,6 +162,65 @@ public class KnoxSessionStoreTest {
     Assert.assertNotNull(samlProfile.getAttribute("permissions"));
     Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups"));
     Assert.assertNotNull(samlProfile.getAttribute("https://knox.apache.org/SAML/Attributes/groups2"));
+  }
+
+  @Test
+  public void testSecureCookieSettings() throws Exception {
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForCluster(CLUSTER_NAME, PAC4J_PASSWORD)).andReturn(PAC4J_PASSWORD.toCharArray()).anyTimes();
+    EasyMock.replay(aliasService);
+
+    final DefaultCryptoService cryptoService = new DefaultCryptoService();
+    cryptoService.setAliasService(aliasService);
+
+    final Map<String, CommonProfile> profile = new HashMap<>();
+    profile.put("SAML2Client", new SAML2Profile());
+
+    // 1. Test when pac4j.session.store.secure.cookie is explicitly set to true
+    runSecureCookieTest(cryptoService, profile, "true", "http://local.com/gateway/knoxsso/", true, "Secure flag should be true when explicitly set");
+
+    // 2. Test when pac4j.session.store.secure.cookie is explicitly set to false
+    runSecureCookieTest(cryptoService, profile, "false", "https://local.com/gateway/knoxsso/", false, "Secure flag should be false when explicitly set");
+
+    // 3. Test default behavior for HTTPS request
+    runSecureCookieTest(cryptoService, profile, null, "https://local.com/gateway/knoxsso/", true, "Secure flag should be true for HTTPS request by default");
+
+    // 4. Test default behavior for HTTP request
+    runSecureCookieTest(cryptoService, profile, null, "http://local.com/gateway/knoxsso/", false, "Secure flag should be false for HTTP request by default");
+  }
+
+  private void runSecureCookieTest(CryptoService cryptoService, Map<String, CommonProfile> profile,
+      String secureCookieValue, String requestUrl, boolean expectSecureFlag, String assertMessage) {
+    final Map<String, String> sessionStoreConfigs = new HashMap<>();
+    if (secureCookieValue != null) {
+      sessionStoreConfigs.put(PAC4J_SESSION_STORE_SECURE_COOKIE, secureCookieValue);
+    }
+
+    final Capture<String> capturedHeader = EasyMock.newCapture();
+    final HttpServletResponse mockResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    mockResponse.addHeader(EasyMock.eq("Set-Cookie"), EasyMock.capture(capturedHeader));
+    EasyMock.replay(mockResponse);
+
+    final JEEContext mockContext = EasyMock.createNiceMock(JEEContext.class);
+    EasyMock.expect(mockContext.getNativeResponse()).andReturn(mockResponse).anyTimes();
+    EasyMock.expect(mockContext.getFullRequestURL()).andReturn(requestUrl).anyTimes();
+    if (requestUrl.startsWith("https")) {
+      EasyMock.expect(mockContext.getScheme()).andReturn("https").anyTimes();
+      EasyMock.expect(mockContext.isSecure()).andReturn(true).anyTimes();
+    } else {
+      EasyMock.expect(mockContext.getScheme()).andReturn("http").anyTimes();
+      EasyMock.expect(mockContext.isSecure()).andReturn(false).anyTimes();
+    }
+    EasyMock.replay(mockContext);
+
+    final KnoxSessionStore sessionStore = new KnoxSessionStore(cryptoService, CLUSTER_NAME, null, sessionStoreConfigs);
+    sessionStore.set(mockContext, Pac4jConstants.USER_PROFILES, profile);
+
+    if (expectSecureFlag) {
+      Assert.assertTrue(assertMessage, capturedHeader.getValue().contains("Secure"));
+    } else {
+      Assert.assertFalse(assertMessage, capturedHeader.getValue().contains("Secure"));
+    }
   }
 
   @Test
