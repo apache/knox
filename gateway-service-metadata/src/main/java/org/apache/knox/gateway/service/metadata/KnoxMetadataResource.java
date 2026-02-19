@@ -63,6 +63,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
@@ -135,9 +136,9 @@ public class KnoxMetadataResource {
   @GET
   @Produces(APPLICATION_OCTET_STREAM)
   @Path("publicCert")
-  public Response getPublicCertification(@QueryParam("type") @DefaultValue("pem") String certType) {
+  public Response getPublicCertification(@QueryParam("type") @DefaultValue("pem") String certType) throws Exception {
     final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    final Certificate[] certificateChain = getPublicCertificates();
+    final Certificate[] certificateChain = config.isSSLEnabled() ? getPublicCertificates() : getSigningkeyCerts(config);
     if (certificateChain != null) {
       if ("pem".equals(certType)) {
         generateCertificatePem(certificateChain, config);
@@ -150,6 +151,12 @@ public class KnoxMetadataResource {
       }
     }
     return generateFailureFileDownloadResponse(Status.SERVICE_UNAVAILABLE, "Could not generate public certificate");
+  }
+
+  private Certificate[] getSigningkeyCerts(final GatewayConfig config) throws Exception {
+    final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    final KeystoreService keystoreService = gatewayServices.getService(ServiceType.KEYSTORE_SERVICE);
+    return keystoreService.getSigningKeystore().getCertificateChain(config.getSigningKeyAlias());
   }
 
   private Response generateSuccessFileDownloadResponse(java.nio.file.Path publicCertFilePath) {
