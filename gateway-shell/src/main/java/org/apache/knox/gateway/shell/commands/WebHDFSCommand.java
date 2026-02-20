@@ -27,6 +27,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -57,6 +58,8 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
   public WebHDFSCommand(Groovysh shell) {
     super(shell, ":filesystem", ":fs", DESC, USAGE, DESC);
   }
+
+  Logger logger = Logger.getLogger(getClass().getName());
 
   @Override
   public Object execute(List<String> args) {
@@ -139,8 +142,8 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       }
     }
     else {
-      System.out.println("Unknown filesystem command");
-      System.out.println(getUsage());
+      logger.info("Unknown filesystem command");
+      logger.info(getUsage());
     }
     return "";
   }
@@ -350,7 +353,7 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
   private String collectClearInput(String prompt) {
     Console c = System.console();
     if (c == null) {
-      System.err.println("No console.");
+      logger.info("No console.");
       System.exit(1);
     }
 
