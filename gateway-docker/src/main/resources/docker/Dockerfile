@@ -16,21 +16,33 @@
 FROM openjdk:8-jre-alpine3.8
 MAINTAINER Apache Knox <dev@knox.apache.org>
 
+USER root
 # Make sure required packages are available
-RUN apk --no-cache add bash procps ca-certificates krb5 && update-ca-certificates
+RUN apk upgrade --no-cache && \
+    apk add --no-cache openssl \
+       procps \
+       ca-certificates \
+       unzip \
+        nss && \
+    apk add --no-cache bash
 
-# Create an knox user
-RUN addgroup -S knox && adduser -S -G knox knox
+# Create knox user and group
+# Using GID 8000 for the knox group to allow arbitrary UIDs with this GID
+RUN groupadd --system -g 8000 knox && adduser --system -u 8000 -g knox -h /home/knox knox
 
 # Dependencies
 ARG RELEASE_FILE
-COPY ${RELEASE_FILE} /home/knox/
+ADD --chown=knox:knox ${RELEASE_FILE} /home/knox/
 
 # Extract the Knox release tar.gz
-RUN cd /home/knox && unzip /home/knox/*.zip && rm -f /home/knox/*.zip && ln -nsf /home/knox/*/ /home/knox/knox
+RUN chmod 644 /home/knox/*.zip && \
+    cd /home/knox && unzip /home/knox/*.zip && rm -f /home/knox/*.zip && ln -nsf /home/knox/*/ /home/knox/knox
 
-# Make sure knox owns its files
-RUN chown -R knox: /home/knox
+# Make sure knox owns its files and make all directories group-accessible for arbitrary UIDs
+RUN chown -R knox:knox /home/knox && \
+    mkdir -p /home/knox/knox/data/security/keystores && \
+    mkdir -p /home/knox/knox/conf && \
+    find /home/knox -type d -exec chmod g+rwx {} \;
 
 # Add the entrypoint script
 ARG ENTRYPOINT
@@ -44,7 +56,9 @@ ADD --chown=knox:knox \
     http://www.awstrust.com/repository/AmazonRootCA2.cer \
     http://www.awstrust.com/repository/AmazonRootCA3.cer \
     http://www.awstrust.com/repository/AmazonRootCA4.cer \
-    http://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem /home/knox/cacrts/
+    http://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem \
+    https://letsencrypt.org/certs/isrgrootx1.pem \
+    https://letsencrypt.org/certs/isrg-root-x2.pem /home/knox/cacrts/
 
 WORKDIR /home/knox/knox
 
@@ -54,5 +68,4 @@ EXPOSE ${EXPOSE_PORT}
 
 # Switch off of the root user
 USER knox
-
 ENTRYPOINT ["./entrypoint.sh"]
