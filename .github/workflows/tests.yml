@@ -97,4 +97,9 @@ jobs:
 
       - name: Tear Down Docker Compose
         if: always()
-        run: docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes
+        run: |
+          docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes
+          IMAGE_TAG="local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}"
+          if docker image inspect "apache/knox-dev:$IMAGE_TAG" >/dev/null 2>&1; then
+            docker rmi "apache/knox-dev:$IMAGE_TAG"
+          fi

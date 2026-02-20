@@ -21,22 +21,22 @@ services:
     image: apache/knox-dev:master
 
   knox-dev-local:
-    build: &build_local
+    build:
       context: ../build
       dockerfile: Dockerfile.local
       args:
         knoxurl: ${knoxurl:-https://github.com/apache/knox.git}
         branch: ${branch:-master}
-    image: apache/knox-dev:local
+    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
 
   ldap:
-    build: *build_local # Build LDAP service if not already built
-    image: apache/knox-dev:local
+    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
     command: /ldap.sh
+    depends_on:
+      - knox-dev-local
 
   knox:
-    build: *build_local # Build Knox service if not already built
-    image: apache/knox-dev:local
+    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
     command: /gateway.sh
     volumes:
 #      - ./topologies:/knox-runtime/conf/topologies
