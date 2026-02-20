@@ -113,6 +113,8 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
   /* A comma seperated list of attributes that needed to be excluded */
   public static final String PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES = "pac4j.session.store.exclude.custom.attributes";
 
+  public static final String PAC4J_SESSION_STORE_SECURE_COOKIE = "pac4j.session.store.secure.cookie";
+
   public static final String PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES_DEFAULT = "";
 
   public static final String PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT = "true";
@@ -235,6 +237,10 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
       /* add cookie samesite IF pac4j.cookie.samesite is provided */
       if(StringUtils.isNotBlank(filterConfig.getInitParameter(PAC4J_COOKIE_SAMESITE))) {
         setSessionStoreConfig(filterConfig, PAC4J_COOKIE_SAMESITE, null);
+      }
+      /* control the Secure flag */
+      if (StringUtils.isNotBlank(filterConfig.getInitParameter(PAC4J_SESSION_STORE_SECURE_COOKIE))) {
+        setSessionStoreConfig(filterConfig, PAC4J_SESSION_STORE_SECURE_COOKIE, null);
       }
       //decorating client configuration (if needed)
       PAC4J_CLIENT_CONFIGURATION_DECORATOR.decorateClients(clients, properties);
