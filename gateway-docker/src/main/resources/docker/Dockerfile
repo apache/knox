@@ -39,10 +39,10 @@ RUN chmod 644 /home/knox/*.zip && \
     cd /home/knox && unzip /home/knox/*.zip && rm -f /home/knox/*.zip && ln -nsf /home/knox/*/ /home/knox/knox
 
 # Make sure knox owns its files and make all directories group-accessible for arbitrary UIDs
-RUN chown -R knox:knox /home/knox && \
-    mkdir -p /home/knox/knox/data/security/keystores && \
+RUN mkdir -p /home/knox/knox/data/security/keystores && \
     mkdir -p /home/knox/knox/conf && \
-    find /home/knox -type d -exec chmod g+rwx {} \;
+    chown -R knox:knox /home/knox && \
+    chmod -R g+rwX /home/knox \
 
 # Add the entrypoint script
 ARG ENTRYPOINT
