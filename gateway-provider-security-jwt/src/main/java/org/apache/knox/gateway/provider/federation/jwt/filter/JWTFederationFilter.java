@@ -262,6 +262,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   private void validateClientID(HttpServletRequest request, String tokenValue) {
     final String clientID = request.getParameter(CLIENT_ID);
+    validateClientID(clientID, tokenValue);
+  }
+
+  private void validateClientID(String clientID, String tokenValue) {
     String tokenId;
     try {
       final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
@@ -299,7 +303,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           } else if (header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT))) {
               // what follows the Basic designator should be the JWT token or the unique token ID being used
               // to request or as an access token
-              parsed = parseFromHTTPBasicCredentials(header);
+              parsed = parseFromHTTPBasicCredentials(header, request);
           }
       }
 
@@ -350,7 +354,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return null;
     }
 
-    private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header) {
+    private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header, final ServletRequest request) {
       Pair<TokenType, String> parsed = null;
       final String base64Credentials = header.substring(BASIC.length()).trim();
       final byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
@@ -360,6 +364,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       String passcode = values[1].isEmpty() ? null : values[1];
       if (TOKEN.equalsIgnoreCase(username) || PASSCODE.equalsIgnoreCase(username)) {
           parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, passcode);
+      } else if (request != null && CLIENT_CREDENTIALS.equals(request.getParameter(GRANT_TYPE))) {
+          // Allow client_credentials flow where client_id/client_secret are provided via HTTP Basic
+          if (passcode != null) {
+            validateClientID(username, passcode);
+            parsed = Pair.of(TokenType.Passcode, passcode);
+          }
       }
 
       return parsed;
