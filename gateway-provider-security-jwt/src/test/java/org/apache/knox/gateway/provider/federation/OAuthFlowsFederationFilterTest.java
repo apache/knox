@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 
-public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBasicCredsFederationFilterTest {
+public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFederationFilterTest {
     @Override
     protected void setTokenOnRequest(HttpServletRequest request, String authUsername, String authPassword) {
         EasyMock.expect((Object)request.getHeader("Authorization")).andReturn("");
@@ -218,5 +218,129 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
     @Override
     @Test
     public void testUnableToParseJWT() throws Exception {
+    }
+
+    @Test
+    public void testGetWireTokenUsingRefreshTokenFlow() throws Exception {
+      final String refreshToken = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
+
+      final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+      EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.REFRESH_TOKEN).anyTimes();
+      EasyMock.expect(request.getParameter(JWTFederationFilter.REFRESH_TOKEN_PARAM)).andReturn(refreshToken).anyTimes();
+      EasyMock.replay(request);
+      
+      handler.init(new TestFilterConfig(getProperties()));
+      final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+      EasyMock.verify(request);
+
+      assertNotNull(wireToken);
+      assertEquals(TokenType.Passcode, wireToken.getLeft());
+      assertEquals(refreshToken, wireToken.getRight());
+    }
+
+    @Test
+    public void testGetWireTokenUsingTokenExchangeFlow() throws Exception {
+      final String subjectToken = "WTJ4cFpXNTBMV2xrTFRFeU16UTE2OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
+
+      final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+      EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
+      EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+      EasyMock.replay(request);
+      
+      handler.init(new TestFilterConfig(getProperties()));
+      final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+      EasyMock.verify(request);
+
+      assertNotNull(wireToken);
+      assertEquals(TokenType.Passcode, wireToken.getLeft());
+      assertEquals(subjectToken, wireToken.getRight());
+    }
+
+    @Test
+    public void testVerifyRefreshTokenFlow() throws Exception {
+        final String topologyName = "jwt-topology";
+        final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650b";
+        final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f96";
+        String passcodeToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJpOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazI=";
+
+        final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+        EasyMock.expect(tokenStateService.getTokenExpiration(tokenId)).andReturn(Long.MAX_VALUE).anyTimes();
+
+        final TokenMetadata tokenMetadata = EasyMock.createNiceMock(TokenMetadata.class);
+        EasyMock.expect(tokenMetadata.isEnabled()).andReturn(true).anyTimes();
+        EasyMock.expect(tokenMetadata.getPasscode()).andReturn(passcodeToken).anyTimes();
+        EasyMock.expect(tokenStateService.getTokenMetadata(EasyMock.anyString())).andReturn(tokenMetadata).anyTimes();
+
+        final Properties filterConfigProps = getProperties();
+        filterConfigProps.put(TokenStateService.CONFIG_SERVER_MANAGED, Boolean.toString(true));
+        filterConfigProps.put(TestFilterConfig.TOPOLOGY_NAME_PROP, topologyName);
+        final FilterConfig filterConfig = new TestFilterConfig(filterConfigProps, tokenStateService);
+        handler.init(filterConfig);
+
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+        EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.REFRESH_TOKEN).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.REFRESH_TOKEN_PARAM)).andReturn(passcodeToken).anyTimes();
+        EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+
+        final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        EasyMock.replay(tokenStateService, tokenMetadata, request, response);
+
+        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
+
+        final TestFilterChain chain = new TestFilterChain();
+        handler.doFilter(request, response, chain);
+
+        EasyMock.verify(response);
+        Assert.assertTrue(chain.doFilterCalled);
+        Assert.assertNotNull(chain.subject);
+    }
+
+    @Test
+    public void testVerifyTokenExchangeFlow() throws Exception {
+        final String topologyName = "jwt-topology";
+        final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650c";
+        final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f97";
+        String passcodeToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJqOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazM=";
+
+        final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+        EasyMock.expect(tokenStateService.getTokenExpiration(tokenId)).andReturn(Long.MAX_VALUE).anyTimes();
+
+        final TokenMetadata tokenMetadata = EasyMock.createNiceMock(TokenMetadata.class);
+        EasyMock.expect(tokenMetadata.isEnabled()).andReturn(true).anyTimes();
+        EasyMock.expect(tokenMetadata.getPasscode()).andReturn(passcodeToken).anyTimes();
+        EasyMock.expect(tokenStateService.getTokenMetadata(EasyMock.anyString())).andReturn(tokenMetadata).anyTimes();
+
+        final Properties filterConfigProps = getProperties();
+        filterConfigProps.put(TokenStateService.CONFIG_SERVER_MANAGED, Boolean.toString(true));
+        filterConfigProps.put(TestFilterConfig.TOPOLOGY_NAME_PROP, topologyName);
+        final FilterConfig filterConfig = new TestFilterConfig(filterConfigProps, tokenStateService);
+        handler.init(filterConfig);
+
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+        EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(passcodeToken).anyTimes();
+        EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+
+        final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        EasyMock.replay(tokenStateService, tokenMetadata, request, response);
+
+        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
+
+        final TestFilterChain chain = new TestFilterChain();
+        handler.doFilter(request, response, chain);
+
+        EasyMock.verify(response);
+        Assert.assertTrue(chain.doFilterCalled);
+        Assert.assertNotNull(chain.subject);
     }
 }

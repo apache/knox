@@ -65,6 +65,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String CLIENT_SECRET = "client_secret";
   public static final String CLIENT_ID = "client_id";
   public static final String MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET = "Client credentials flow with mismatching client_id and client_secret";
+  public static final String REFRESH_TOKEN = "refresh_token";
+  public static final String REFRESH_TOKEN_PARAM = "refresh_token";
+  public static final String TOKEN_EXCHANGE = "token_exchange";
+  public static final String SUBJECT_TOKEN = "subject_token";
 
   public enum TokenType {
     JWT, Passcode;
@@ -304,7 +308,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
 
       if (parsed == null) {
-        parsed = parseFromClientCredentialsFlow(request);
+        parsed = parseFromGrantTypeFlow(request);
       }
 
       if (parsed == null) {
@@ -317,7 +321,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return parsed;
     }
 
-    private Pair<TokenType, String> parseFromClientCredentialsFlow(ServletRequest request) throws IOException {
+    private Pair<TokenType, String> parseFromGrantTypeFlow(ServletRequest request) throws IOException {
       /*
         POST /{tenant}/oauth2/v2.0/token HTTP/1.1
         Host: login.microsoftonline.com:443
@@ -334,18 +338,39 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       if (clientSecretPresentAsQueryString) {
         throw new SecurityException("client_secret must not be sent as a query parameter");
       }
-      return getClientCredentialsFromRequestBody(request);
+      return getTokenFromRequestBody(request);
     }
 
-    private Pair<TokenType, String> getClientCredentialsFromRequestBody(ServletRequest request) {
+    private Pair<TokenType, String> getTokenFromRequestBody(ServletRequest request) {
         final String grantType = request.getParameter(GRANT_TYPE);
         if (CLIENT_CREDENTIALS.equals(grantType)) {
-          // this is indeed a client credentials flow client_id and
-          // client_secret are expected now the client_id will be in
-          // the token as the token_id so we will get that later
+          // client credentials flow: client_id and client_secret are expected
+          // the client_id will be in the token as the token_id
           final String clientSecret = request.getParameter(CLIENT_SECRET);
           validateClientID((HttpServletRequest) request, clientSecret);
           return Pair.of(TokenType.Passcode, clientSecret);
+        } else if (REFRESH_TOKEN.equals(grantType)) {
+          // refresh_token flow: the refresh_token parameter contains the actual token
+          final String refreshToken = request.getParameter(REFRESH_TOKEN_PARAM);
+          if (refreshToken != null) {
+            // determine if it's a JWT or passcode token
+            if (isJWT(refreshToken)) {
+              return Pair.of(TokenType.JWT, refreshToken);
+            } else {
+              return Pair.of(TokenType.Passcode, refreshToken);
+            }
+          }
+        } else if (TOKEN_EXCHANGE.equals(grantType)) {
+          // token_exchange flow: the subject_token parameter contains the token to be exchanged
+          final String subjectToken = request.getParameter(SUBJECT_TOKEN);
+          if (subjectToken != null) {
+            // determine if it's a JWT or passcode token
+            if (isJWT(subjectToken)) {
+              return Pair.of(TokenType.JWT, subjectToken);
+            } else {
+              return Pair.of(TokenType.Passcode, subjectToken);
+            }
+          }
         }
       return null;
     }
