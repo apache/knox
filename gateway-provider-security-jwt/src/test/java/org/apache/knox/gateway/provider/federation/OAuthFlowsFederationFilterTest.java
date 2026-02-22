@@ -230,7 +230,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
       EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.REFRESH_TOKEN).anyTimes();
       EasyMock.expect(request.getParameter(JWTFederationFilter.REFRESH_TOKEN_PARAM)).andReturn(refreshToken).anyTimes();
       EasyMock.replay(request);
-      
+
       handler.init(new TestFilterConfig(getProperties()));
       final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
 
@@ -251,7 +251,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
       EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
       EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
       EasyMock.replay(request);
-      
+
       handler.init(new TestFilterConfig(getProperties()));
       final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
 
