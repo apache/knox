@@ -30,6 +30,8 @@ import org.junit.Test;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -74,6 +76,28 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
       assertNotNull(wireToken);
       assertEquals(TokenType.Passcode, wireToken.getLeft());
       assertEquals(passcode, wireToken.getRight());
+    }
+
+    @Test
+    public void testGetWireTokenUsingClientCredentialsBasicAuth() throws Exception {
+        final String clientId = "client-id-12345";
+        final String passcode = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
+        final String basicCredentials = Base64.getEncoder()
+                .encodeToString((clientId + ":" + passcode).getBytes(StandardCharsets.UTF_8));
+
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(request.getHeader("Authorization")).andReturn("Basic " + basicCredentials).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.replay(request);
+
+        handler.init(new TestFilterConfig(getProperties()));
+        final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+        EasyMock.verify(request);
+
+        assertNotNull(wireToken);
+        assertEquals(TokenType.Passcode, wireToken.getLeft());
+        assertEquals(passcode, wireToken.getRight());
     }
 
     @Test
