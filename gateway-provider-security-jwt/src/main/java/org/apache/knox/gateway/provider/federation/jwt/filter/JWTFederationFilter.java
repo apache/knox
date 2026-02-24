@@ -355,29 +355,21 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           return Pair.of(TokenType.Passcode, clientSecret);
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
-          final String refreshToken = request.getParameter(REFRESH_TOKEN_PARAM);
-          if (refreshToken != null) {
-            // determine if it's a JWT or passcode token
-            if (isJWT(refreshToken)) {
-              return Pair.of(TokenType.JWT, refreshToken);
-            } else {
-              return Pair.of(TokenType.Passcode, refreshToken);
-            }
-          }
+          return getRefreshOrSubjectToken(request, REFRESH_TOKEN_PARAM);
         } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // token_exchange flow: the subject_token parameter contains the token to be exchanged
-          final String subjectToken = request.getParameter(SUBJECT_TOKEN);
-          if (subjectToken != null) {
-            // determine if it's a JWT or passcode token
-            if (isJWT(subjectToken)) {
-              return Pair.of(TokenType.JWT, subjectToken);
-            } else {
-              return Pair.of(TokenType.Passcode, subjectToken);
-            }
-          }
+          return getRefreshOrSubjectToken(request, SUBJECT_TOKEN);
         }
       return null;
     }
+
+  private Pair<TokenType, String> getRefreshOrSubjectToken(final ServletRequest request, final String requestParamName) {
+    final String refreshOrSubjectToken = request.getParameter(requestParamName);
+    if (refreshOrSubjectToken != null) {
+      return isJWT(refreshOrSubjectToken) ? Pair.of(TokenType.JWT, refreshOrSubjectToken) : Pair.of(TokenType.Passcode, refreshOrSubjectToken);
+    }
+    return null;
+  }
 
     private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header, final ServletRequest request) {
       Pair<TokenType, String> parsed = null;
