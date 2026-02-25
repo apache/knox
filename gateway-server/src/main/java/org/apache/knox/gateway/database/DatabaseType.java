@@ -19,8 +19,8 @@ package org.apache.knox.gateway.database;
 
 public enum DatabaseType {
     POSTGRESQL("postgresql",
-            AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.POSTGRES_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.POSTGRES_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
     ),

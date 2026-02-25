@@ -32,6 +32,8 @@ public abstract class AbstractDataSourceFactory {
     public static final String ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTableOracle.sql";
     public static final String DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTableDerby.sql";
     public static final String DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTableDerby.sql";
+    public static final String POSTGRES_TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTablePostgres.sql";
+    public static final String POSTGRES_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTablePostgres.sql";
 
     public static final String KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTable.sql";
     public static final String KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTable.sql";

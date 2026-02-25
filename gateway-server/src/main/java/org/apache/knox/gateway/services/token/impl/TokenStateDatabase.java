@@ -18,13 +18,10 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.database.JDBCUtils;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.postgresql.util.PSQLException;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -41,9 +38,6 @@ import java.util.Set;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class TokenStateDatabase {
-
-  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
-
   static final String TOKENS_TABLE_NAME = "KNOX_TOKENS";
   static final String TOKEN_METADATA_TABLE_NAME = "KNOX_TOKEN_METADATA";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
@@ -66,20 +60,11 @@ public class TokenStateDatabase {
 
   private final DataSource dataSource;
 
-  private static final String POSTGRES_DUPLICATE_OBJECT_STATE = "42710";
-
   TokenStateDatabase(DataSource dataSource, String dbType) throws Exception {
     this.dataSource = dataSource;
     DatabaseType databaseType = DatabaseType.fromString(dbType);
-    try {
-      createTableIfNotExists(TOKENS_TABLE_NAME, databaseType.tokensTableSql());
-      createTableIfNotExists(TOKEN_METADATA_TABLE_NAME, databaseType.metadataTableSql());
-    } catch (PSQLException psqlException) {
-      if (!psqlException.getSQLState().equals(POSTGRES_DUPLICATE_OBJECT_STATE)) {
-        throw psqlException;
-      }
-      LOG.typeAlreadyExistsCaught();
-    }
+    createTableIfNotExists(TOKENS_TABLE_NAME, databaseType.tokensTableSql());
+    createTableIfNotExists(TOKEN_METADATA_TABLE_NAME, databaseType.metadataTableSql());
   }
 
   private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
