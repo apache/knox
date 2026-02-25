@@ -825,7 +825,4 @@ public interface GatewayMessages {
 
   @Message(level = MessageLevel.ERROR, text = "LDAP service not found or not properly registered")
   void ldapServiceNotFound();
-
-  @Message( level = MessageLevel.WARN, text = "Postgres type already exists exception caught. Tables already exist skipping creation." )
-  void typeAlreadyExistsCaught();
 }
