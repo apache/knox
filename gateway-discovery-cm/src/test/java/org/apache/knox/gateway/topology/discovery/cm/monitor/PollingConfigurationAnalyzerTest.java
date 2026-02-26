@@ -26,10 +26,13 @@ import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.ApiClientFactory;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.easymock.EasyMock;
@@ -79,7 +82,7 @@ public class PollingConfigurationAnalyzerTest {
    * KNOX-2350
    */
   @Test
-  public void testEventWithoutCommandOrCommandStatus() {
+  public void testEventWithoutCommandOrCommandStatus() throws AliasServiceException {
     final String clusterName = "Cluster T";
 
     // Simulate an event w/o COMMAND and/or COMMAND_STATUS attributes
@@ -98,7 +101,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the restart of an existing service when no relevant configuration has changed.
    */
   @Test
-  public void testRestartEventWithoutConfigChange() {
+  public void testRestartEventWithoutConfigChange() throws AliasServiceException {
     final String clusterName = "Cluster 2";
 
     // Simulate a service restart event
@@ -115,7 +118,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the restart of an existing service when relevant configuration has changed.
    */
   @Test
-  public void testRestartEventWithConfigChange() {
+  public void testRestartEventWithConfigChange() throws AliasServiceException {
     final String clusterName = "Cluster 2";
 
     // Simulate a service restart event
@@ -132,7 +135,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the start of a new service.
    */
   @Test
-  public void testNewServiceStartEvent() {
+  public void testNewServiceStartEvent() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster N";
 
@@ -152,7 +155,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the start of an existing service when no relevant configuration has changed.
    */
   @Test
-  public void testExistingServiceStartWithoutConfigChange() {
+  public void testExistingServiceStartWithoutConfigChange() throws AliasServiceException {
     final String clusterName = "Cluster E";
 
     // Simulate a service Start event
@@ -169,7 +172,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the start of an existing service when relevant configuration has changed.
    */
   @Test
-  public void testExistingServiceStartWithConfigChange() {
+  public void testExistingServiceStartWithConfigChange() throws AliasServiceException {
     final String clusterName = "Cluster E";
 
     // Simulate a service Start event
@@ -186,7 +189,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the rolling restart of an existing service when no relevant configuration has changed.
    */
   @Test
-  public void testRollingServiceRestartWithoutConfigChange() {
+  public void testRollingServiceRestartWithoutConfigChange() throws AliasServiceException {
     final String clusterName = "Cluster 1";
 
     // Simulate a successful rolling service restart event
@@ -204,7 +207,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the rolling restart of an existing service when relevant configuration has changed.
    */
   @Test
-  public void testRollingServiceRestartWithConfigChange() {
+  public void testRollingServiceRestartWithConfigChange() throws AliasServiceException {
     final String clusterName = "Cluster 1";
 
     // Simulate a successful rolling service restart event
@@ -222,7 +225,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the rolling restart of an entire cluster, for which it should be assumed that configuration has changed.
    */
   @Test
-  public void testRollingClusterRestartEvent() {
+  public void testRollingClusterRestartEvent() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster 6";
 
@@ -243,7 +246,7 @@ public class PollingConfigurationAnalyzerTest {
    * Test the restart waiting for staleness, for which it should be assumed that configuration has changed.
    */
   @Test
-  public void testRestartWaitingForStalenessSuccessEvent() {
+  public void testRestartWaitingForStalenessSuccessEvent() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster 8";
 
@@ -256,7 +259,7 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   @Test
-  public void testRestartWaitingForStalenessSuccessEventProcessedOnlyOnce() {
+  public void testRestartWaitingForStalenessSuccessEventProcessedOnlyOnce() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster 9";
 
@@ -279,7 +282,7 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   @Test
-  public void testClusterConfigMonitorTerminationForNoLongerReferencedClusters() {
+  public void testClusterConfigMonitorTerminationForNoLongerReferencedClusters() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster 7";
 
@@ -359,11 +362,15 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(gws.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(gatewayStatusService).anyTimes();
     EasyMock.replay(ts, ccms, gatewayStatusService, gws);
 
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.replay(aliasService);
+
     try {
       setGatewayServices(gws);
 
       // Create the monitor
-      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache);
+      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache, aliasService);
       pca.setInterval(5);
 
       // Start the polling thread
@@ -394,7 +401,7 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   @Test
-  public void testNotificationSentAfterDownScaleEvent() {
+  public void testNotificationSentAfterDownScaleEvent() throws AliasServiceException {
     final String clusterName = "Cluster T";
 
     final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
@@ -410,7 +417,7 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   @Test
-  public void testNotificationSentAfterUpScaleEvent() {
+  public void testNotificationSentAfterUpScaleEvent() throws AliasServiceException {
     final String clusterName = "Cluster T";
 
     final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
@@ -426,7 +433,7 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   @Test
-  public void shouldNotPerformClusterConfigurationChangeMonitoringIfKnoxGatewayIsNotYetReady() {
+  public void shouldNotPerformClusterConfigurationChangeMonitoringIfKnoxGatewayIsNotYetReady() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster 10";
 
@@ -465,13 +472,13 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   private ChangeListener doTestEvent(final ApiEvent event, final String address, final String clusterName,
-      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, final Map<String, ServiceConfigurationModel> updatedServiceConfigurationModels) {
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, final Map<String, ServiceConfigurationModel> updatedServiceConfigurationModels) throws AliasServiceException {
     return doTestEvent(event, address, clusterName, serviceConfigurationModels, updatedServiceConfigurationModels, null);
   }
 
   private ChangeListener doTestEvent(final ApiEvent event, final String address, final String clusterName,
       final Map<String, ServiceConfigurationModel> serviceConfigurationModels, final Map<String, ServiceConfigurationModel> updatedServiceConfigurationModels,
-      final TestablePollingConfigAnalyzer pollingConfigAnalyzer) {
+      final TestablePollingConfigAnalyzer pollingConfigAnalyzer) throws AliasServiceException {
 
     // Create the monitor, registering a listener so we can verify that change notification works
     final ChangeListener listener = new ChangeListener();
@@ -503,12 +510,12 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
-      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener) {
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener) throws AliasServiceException {
     return buildPollingConfigAnalyzer(address, clusterName, serviceConfigurationModels, listener, true);
   }
 
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
-      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady) {
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady) throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
@@ -532,6 +539,10 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName)).andReturn(serviceConfigurationModels).anyTimes();
     EasyMock.replay(configCache);
 
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.replay(aliasService);
+
     if (isKnoxGatewayReady) {
       // GatewayStatusService mock
       final GatewayStatusService gatewayStatusService = EasyMock.createNiceMock(GatewayStatusService.class);
@@ -545,10 +556,10 @@ public class PollingConfigurationAnalyzerTest {
       setGatewayServices(gws);
     }
 
-    return new TestablePollingConfigAnalyzer(gatewayConfig, configCache, listener);
+    return new TestablePollingConfigAnalyzer(gatewayConfig, configCache, aliasService, listener);
   }
 
-  private void doTestEventWithConfigChange(final ApiEvent event, final String clusterName) {
+  private void doTestEventWithConfigChange(final ApiEvent event, final String clusterName) throws AliasServiceException {
     final String address = "http://host1:1234";
 
     final String failoverPropertyName = "autofailover_enabled";
@@ -579,7 +590,7 @@ public class PollingConfigurationAnalyzerTest {
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
   }
 
-  private void doTestEventWithoutConfigChange(final ApiEvent event, final String clusterName) {
+  private void doTestEventWithoutConfigChange(final ApiEvent event, final String clusterName) throws AliasServiceException {
     final String address = "http://host1:1234";
 
     final String failoverPropertyName = "autofailover_enabled";
@@ -710,13 +721,13 @@ public class PollingConfigurationAnalyzerTest {
     private final Map<String, List<ApiEvent>> restartEvents = new HashMap<>();
     private final Map<String, ServiceConfigurationModel> serviceConfigModels = new HashMap<>();
 
-    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache cache) {
-      this(gatewayConfig, cache, null);
+    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache cache, AliasService aliasService) {
+      this(gatewayConfig, cache,  aliasService, null);
     }
 
-    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache   cache,
-                                  ConfigurationChangeListener listener) {
-      super(gatewayConfig, cache, null, null, listener, 20);
+    TestablePollingConfigAnalyzer(GatewayConfig gatewayConfig, ClusterConfigurationCache cache,
+                                  AliasService aliasService, ConfigurationChangeListener listener) {
+      super(gatewayConfig, cache, aliasService, null, listener, 20);
     }
 
     void addRestartEvent(final String service, final ApiEvent restartEvent) {
