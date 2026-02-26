@@ -62,8 +62,6 @@ function buildAppJavaOpts {
       addAppJavaOpts "${APP_JAVA_LIB_PATH}"
     fi
 
-    addJdk17Properties
-
     # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
 }
 

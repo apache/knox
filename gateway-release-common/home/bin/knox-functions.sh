@@ -169,16 +169,6 @@ function addAppJavaOpts {
     done
 }
 
-function addJdk17Properties {
-    # Add properties to enable Knox to run on JDK 17
-    JAVA_VERSION=$("$JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-    CHECK_VERSION_17="17"
-    if [[ "$JAVA_VERSION" == *"$CHECK_VERSION_17"* ]]; then
-        echo "Java version is $CHECK_VERSION_17. Adding properties to enable Knox to run on JDK 17"
-        addAppJavaOpts "-Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/sun.security.util=ALL-UNNAMED"
-    fi
-}
-
 function buildAppJavaOpts {
     if [ -n "$APP_MEM_OPTS" ]; then
       addAppJavaOpts "${APP_MEM_OPTS}"
@@ -195,8 +185,6 @@ function buildAppJavaOpts {
     if [ -n "$APP_JAVA_LIB_PATH" ]; then
       addAppJavaOpts "${APP_JAVA_LIB_PATH}"
     fi
-
-    addJdk17Properties
 
     # echo "APP_JAVA_OPTS =" "${APP_JAVA_OPTS[@]}"
 }
