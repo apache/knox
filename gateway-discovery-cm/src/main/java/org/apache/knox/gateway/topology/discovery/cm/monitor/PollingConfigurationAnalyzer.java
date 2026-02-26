@@ -47,6 +47,7 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.ApiClientFactory;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
@@ -475,7 +476,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   private DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
     return clients.computeIfAbsent(discoveryConfig.getAddress(),
-                                   c -> new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore));
+                                   c -> ApiClientFactory.getApiClient(gatewayConfig, discoveryConfig, aliasService, truststore));
   }
 
   /**

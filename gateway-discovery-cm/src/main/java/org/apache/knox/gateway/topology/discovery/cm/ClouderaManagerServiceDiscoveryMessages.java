@@ -325,4 +325,7 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.INFO, text = "Role fetch strategy was set to {0}. Will fetch role configuration by each service with page size {1} and client base path is {2}")
   void usingRoleStrategyWithPageSize(String roleFetchConfigValue, long pageSize, String basePath);
 
+  @Message(level = MessageLevel.ERROR, text = "Error while building CM dicovery ApiClient: {0}")
+  void clouderaManagerApiClientBuildError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
 }

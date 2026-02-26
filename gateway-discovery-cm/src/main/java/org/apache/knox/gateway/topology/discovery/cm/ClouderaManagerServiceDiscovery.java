@@ -158,7 +158,7 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       throw new IllegalArgumentException("Missing or invalid discovery address.");
     }
 
-    DiscoveryApiClient client = new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
+    DiscoveryApiClient client = ApiClientFactory.getApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
     client.setDebugging(debug);
     return client;
   }
