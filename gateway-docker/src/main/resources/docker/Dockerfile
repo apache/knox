@@ -13,22 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8-jre-alpine3.8
-MAINTAINER Apache Knox <dev@knox.apache.org>
+FROM eclipse-temurin:17-jdk AS build
+LABEL maintainer="Apache Knox <dev@knox.apache.org>"
+
+ARG TARGETARCH
+RUN echo "Building Apache Knox Gateway for architecture ${TARGETARCH}"
 
 USER root
 # Make sure required packages are available
-RUN apk upgrade --no-cache && \
-    apk add --no-cache openssl \
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+       openssl \
        procps \
        ca-certificates \
        unzip \
-        nss && \
-    apk add --no-cache bash
+       libnss3 \
+       bash && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create knox user and group
 # Using GID 8000 for the knox group to allow arbitrary UIDs with this GID
-RUN groupadd --system -g 8000 knox && adduser --system -u 8000 -g knox -h /home/knox knox
+RUN groupadd --system -g 8000 knox && useradd --system -u 8000 -g knox -d /home/knox -m knox
 
 # Dependencies
 ARG RELEASE_FILE
@@ -42,7 +49,7 @@ RUN chmod 644 /home/knox/*.zip && \
 RUN mkdir -p /home/knox/knox/data/security/keystores && \
     mkdir -p /home/knox/knox/conf && \
     chown -R knox:knox /home/knox && \
-    chmod -R g+rwX /home/knox \
+    chmod -R g+rwX /home/knox
 
 # Add the entrypoint script
 ARG ENTRYPOINT
