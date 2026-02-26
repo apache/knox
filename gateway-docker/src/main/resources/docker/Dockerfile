@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM eclipse-temurin:17-jdk AS build
+FROM dhi.io/eclipse-temurin:17-jdk-debian13-dev AS build
 LABEL maintainer="Apache Knox <dev@knox.apache.org>"
 
 ARG TARGETARCH
@@ -29,7 +29,8 @@ RUN apt-get update && \
        ca-certificates \
        unzip \
        libnss3 \
-       bash && \
+       bash \
+       passwd && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
