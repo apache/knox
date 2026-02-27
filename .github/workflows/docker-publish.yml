@@ -71,7 +71,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: apache/knox/knox-gateway
+          images: apache/knox
           tags: |
             # latest on every master push and on every version tag
             type=raw,value=latest
