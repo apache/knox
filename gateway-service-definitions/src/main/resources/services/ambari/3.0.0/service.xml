@@ -1,0 +1,66 @@
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<service role="AMBARI" name="ambari" version="3.0.0">
+    <metadata>
+        <type>API</type>
+        <context>/ambari/api</context>
+        <shortDesc>Apache Ambari API</shortDesc>
+        <description>The Ambari API facilitates the management and monitoring of the resources of an Apache Hadoop cluster.</description>
+        <samples>
+            <sample>
+                <description>Fetch all Ambari-managed clusters</description>
+                <method>GET</method>
+                <path>v1/clusters</path>
+            </sample>
+            <sample>
+                <description>Get the DATANODE component resource for the HDFS service of the cluster named 'c1'</description>
+                <method>GET</method>
+                <path>v1/clusters/c1/services/HDFS/components/DATANODE</path>
+            </sample>
+            <sample>
+                <description>Create the HDFS service.</description>
+                <method>POST</method>
+                <path>v1/clusters/c1/services/HDFS</path>
+            </sample>
+            <sample>
+                <description>Delete the cluster named 'c1'</description>
+                <method>DELETE</method>
+                <path>v1/clusters/c1</path>
+            </sample>
+            <sample>
+                <description>See the Apache Ambari's REST API documentation here</description>
+                <value>https://github.com/apache/ambari/blob/trunk/ambari-server/docs/api/v1/index.md</value>
+            </sample>
+        </samples>
+    </metadata>
+    <policies>
+        <policy role="webappsec"/>
+        <policy role="authentication" name="Anonymous"/>
+        <policy role="rewrite"/>
+        <policy role="authorization"/>
+    </policies>
+    <routes>
+        <route path="/ambari/api/v1/**">
+            <rewrite apply="AMBARI/ambari/api/outbound" to="response.body"/>
+            <rewrite apply="AMBARI/ambari/api/inbound" to="request.body"/>
+        </route>
+        <route path="/ambari/api/v1/persist/*?*">
+            <rewrite apply="AMBARI/ambari/api/inbound" to="request.body"/>
+        </route>
+    </routes>
+    <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersNoEncodingDispatch"/>
+</service>
