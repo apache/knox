@@ -17,12 +17,7 @@
  */
 package org.apache.knox.gateway.audit.log4j.correlation;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 import org.apache.knox.gateway.audit.api.CorrelationContext;
@@ -88,24 +83,34 @@ public class Log4jCorrelationService implements CorrelationService {
 
   @Override
   public CorrelationContext readExternalizedContext(byte[] externalizedContext) {
-    try (ByteArrayInputStream bais = new ByteArrayInputStream( externalizedContext );
-         ObjectInput oi = new ObjectInputStream( bais )) {
-      return (CorrelationContext) oi.readObject();
-    } catch ( IOException | ClassNotFoundException e ) {
-      throw new IllegalArgumentException( e );
+    if (externalizedContext == null || externalizedContext.length == 0) {
+      return null;
     }
+    String encoded = new String(externalizedContext, StandardCharsets.UTF_8);
+    String[] parts = encoded.split("\\|", -1);
+    if (parts.length != 3) {
+      throw new IllegalArgumentException("Invalid externalized correlation context format");
+    }
+    return new Log4jCorrelationContext(
+        parts[0].isEmpty() ? null : parts[0],
+        parts[1].isEmpty() ? null : parts[1],
+        parts[2].isEmpty() ? null : parts[2]);
   }
 
   @Override
   public byte[] getExternalizedContext() {
-    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-      try(ObjectOutputStream oos = new ObjectOutputStream( baos )) {
-        oos.writeObject(getContext());
-      }
-      return baos.toByteArray();
-    } catch ( IOException e ) {
-      throw new RuntimeException( e );
+    CorrelationContext context = getContext();
+    if (context == null) {
+      return new byte[0];
     }
+    String encoded = nullToEmpty(context.getRequestId()) + "|"
+        + nullToEmpty(context.getParentRequestId()) + "|"
+        + nullToEmpty(context.getRootRequestId());
+    return encoded.getBytes(StandardCharsets.UTF_8);
+  }
+
+  private static String nullToEmpty(String value) {
+    return value == null ? "" : value;
   }
 }
 
