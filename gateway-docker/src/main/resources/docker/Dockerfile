@@ -60,11 +60,11 @@ RUN chmod +x /home/knox/knox/entrypoint.sh
 # Add the Amazon Root CA certificates
 RUN mkdir /home/knox/cacrts
 ADD --chown=knox:knox \
-    http://www.awstrust.com/repository/AmazonRootCA1.cer \
-    http://www.awstrust.com/repository/AmazonRootCA2.cer \
-    http://www.awstrust.com/repository/AmazonRootCA3.cer \
-    http://www.awstrust.com/repository/AmazonRootCA4.cer \
-    http://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem \
+    https://www.amazontrust.com/repository/AmazonRootCA1.cer \
+    https://www.amazontrust.com/repository/AmazonRootCA2.cer \
+    https://www.amazontrust.com/repository/AmazonRootCA3.cer \
+    https://www.amazontrust.com/repository/AmazonRootCA4.cer \
+    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem \
     https://letsencrypt.org/certs/isrgrootx1.pem \
     https://letsencrypt.org/certs/isrg-root-x2.pem /home/knox/cacrts/
 
