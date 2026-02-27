@@ -57,16 +57,15 @@ ARG ENTRYPOINT
 COPY ${ENTRYPOINT} /home/knox/knox/entrypoint.sh
 RUN chmod +x /home/knox/knox/entrypoint.sh
 
-# Add the Amazon Root CA certificates
-RUN mkdir /home/knox/cacrts
-ADD --chown=knox:knox \
-    https://www.amazontrust.com/repository/AmazonRootCA1.cer \
-    https://www.amazontrust.com/repository/AmazonRootCA2.cer \
-    https://www.amazontrust.com/repository/AmazonRootCA3.cer \
-    https://www.amazontrust.com/repository/AmazonRootCA4.cer \
-    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem \
-    https://letsencrypt.org/certs/isrgrootx1.pem \
-    https://letsencrypt.org/certs/isrg-root-x2.pem /home/knox/cacrts/
+# Add the Amazon Root CA and Let's Encrypt production certificates (best-effort)
+RUN mkdir /home/knox/cacrts && \
+    curl -sSLo /home/knox/cacrts/AmazonRootCA1.cer  https://www.amazontrust.com/repository/AmazonRootCA1.cer  || true && \
+    curl -sSLo /home/knox/cacrts/AmazonRootCA2.cer  https://www.amazontrust.com/repository/AmazonRootCA2.cer  || true && \
+    curl -sSLo /home/knox/cacrts/AmazonRootCA3.cer  https://www.amazontrust.com/repository/AmazonRootCA3.cer  || true && \
+    curl -sSLo /home/knox/cacrts/AmazonRootCA4.cer  https://www.amazontrust.com/repository/AmazonRootCA4.cer  || true && \
+    curl -sSLo /home/knox/cacrts/isrgrootx1.pem     https://letsencrypt.org/certs/isrgrootx1.pem               || true && \
+    curl -sSLo /home/knox/cacrts/isrg-root-x2.pem   https://letsencrypt.org/certs/isrg-root-x2.pem             || true && \
+    chown -R knox:knox /home/knox/cacrts
 
 WORKDIR /home/knox/knox
 
