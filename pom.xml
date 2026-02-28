@@ -273,7 +273,7 @@
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
         <pty4j.version>0.12.4</pty4j.version>
         <rest-assured.version>5.5.6</rest-assured.version>
-        <shiro.version>1.13.0</shiro.version>
+        <shiro.version>2.1.0</shiro.version>
         <shiro-ehcache3.version>1.13.0</shiro-ehcache3.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
