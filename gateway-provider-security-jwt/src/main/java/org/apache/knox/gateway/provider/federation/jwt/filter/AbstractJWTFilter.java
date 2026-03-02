@@ -21,6 +21,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.security.auth.Subject;
 import javax.servlet.Filter;
@@ -48,6 +50,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
@@ -122,8 +127,8 @@ public abstract class AbstractJWTFilter implements Filter {
   private List<String> expectedIssuers;
   private String expectedSigAlg;
   protected String expectedPrincipalClaim;
-  protected Set<URI> expectedJWKSUrls = new LinkedHashSet();
-  protected Set<JOSEObjectType> allowedJwsTypes;
+  protected Set<URI> jwksUrls = new LinkedHashSet<>();
+  private JOSEObjectTypeVerifier<SecurityContext> typeVerifier;
 
   private TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
@@ -207,6 +212,38 @@ public abstract class AbstractJWTFilter implements Filter {
       }
     }
     return audList;
+  }
+
+  /**
+   * @param configuredJwksUrls configured JWKS URLs in the form of http(s)://url:port/contxt/.wellknown, http(s)://url2:port/contxt/.wellknown
+   */
+  protected Set<URI> parseJwksUrlsFromConfig(final String configuredJwksUrls) {
+    final Set<URI> jwksUrls = new HashSet<>();
+    if (configuredJwksUrls != null) {
+      Arrays.stream(configuredJwksUrls.split(","))
+              .map(String::trim)
+              .collect(Collectors.toSet())
+              .forEach(jwksUrl -> {
+                try {
+                  jwksUrls.add(new URI(jwksUrl));
+                } catch (URISyntaxException e) {
+                  /* Not valid JWKS url, log and move on */
+                  log.invalidJwksUrl(jwksUrl);
+                }
+              });
+    }
+    return jwksUrls;
+  }
+
+  protected void setJwsTypeVerifier(final FilterConfig filterConfig, final String configName) {
+    final Set<JOSEObjectType> allowedJwsTypes = new HashSet<>();
+    final String allowedTypes = filterConfig.getInitParameter(configName);
+    if (allowedTypes != null) {
+      Stream.of(allowedTypes.trim().split(",")).forEach(allowedType -> allowedJwsTypes.add(new JOSEObjectType(allowedType.trim())));
+    } else {
+      allowedJwsTypes.add(JOSEObjectType.JWT);
+    }
+    typeVerifier = new DefaultJOSEObjectTypeVerifier<>(allowedJwsTypes);
   }
 
   protected boolean tokenIsStillValid(final JWT jwtToken) throws UnknownTokenException {
@@ -573,9 +610,9 @@ public abstract class AbstractJWTFilter implements Filter {
           log.pemVerificationResultMessage(verified);
         }
 
-        if (!verified && expectedJWKSUrls != null && !expectedJWKSUrls.isEmpty()) {
+        if (!verified && jwksUrls != null && !jwksUrls.isEmpty()) {
           attemptedJWKSVerification = true;
-          verified = authority.verifyToken(token, expectedJWKSUrls, expectedSigAlg, allowedJwsTypes);
+          verified = authority.verifyToken(token, jwksUrls, expectedSigAlg, typeVerifier);
           log.jwksVerificationResultMessage(verified);
         }
 

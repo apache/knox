@@ -63,6 +63,8 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   public static final String SSO_EXPECTED_AUDIENCES = "sso.expected.audiences";
   public static final String SSO_AUTHENTICATION_PROVIDER_URL = "sso.authentication.provider.url";
   public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
+  public static final String SSO_VERIFICATION_JWKS_URLS = "sso.token.verification.jwks.urls";
+  public static final String SSO_VERIFICATION_ALLOWED_JWS_TYPES = "sso.token.verification.allowed.jws.types";
   public static final String SSO_IDLE_TIMEOUT_SECONDS = "sso.idle.timeout.seconds";
   public static final String X_FORWARDED_HOST = "X-Forwarded-Host";
   public static final String X_FORWARDED_PORT = "X-Forwarded-Port";
@@ -131,6 +133,10 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     if (verificationPEM != null) {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
+
+    //Token verification: JWKS URL(s) and allowed JWS types
+    jwksUrls = parseJwksUrlsFromConfig(filterConfig.getInitParameter(SSO_VERIFICATION_JWKS_URLS));
+    setJwsTypeVerifier(filterConfig, SSO_VERIFICATION_ALLOWED_JWS_TYPES);
 
     final String unAuthPathString = filterConfig
         .getInitParameter(SSO_UNAUTHENTICATED_PATHS_PARAM);

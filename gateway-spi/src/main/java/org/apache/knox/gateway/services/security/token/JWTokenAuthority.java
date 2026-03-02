@@ -21,9 +21,9 @@ import java.net.URI;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Set;
 
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
-
-import com.nimbusds.jose.JOSEObjectType;
 
 public interface JWTokenAuthority {
 
@@ -33,8 +33,8 @@ public interface JWTokenAuthority {
 
   boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException;
 
-  boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException;
+  boolean verifyToken(JWT token, String jwksUrl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException;
 
-  boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException;
+  boolean verifyToken(JWT token, Set<URI> jwksUrls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException;
 
 }

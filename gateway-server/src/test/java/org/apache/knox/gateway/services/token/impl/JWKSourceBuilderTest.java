@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -28,7 +31,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertTrue;
@@ -74,12 +76,11 @@ public class JWKSourceBuilderTest {
         // Define the JWK URL and algorithm
         String jwksUrl = "https://example.com/.well-known/jwks.json";
         String algorithm = "RS256";
-        Set<JOSEObjectType> allowedJwsTypes = new HashSet<>();
-        allowedJwsTypes.add(JOSEObjectType.JWT);
+        final JOSEObjectTypeVerifier<SecurityContext> typeVerifier = new DefaultJOSEObjectTypeVerifier<>(Set.of(JOSEObjectType.JWT));
         try {
             // This will throw an exception because the URL doesn't exist, but we're only
             // interested in verifying that the correct parameters are passed to JWKSourceBuilder
-            service.verifyToken(token, jwksUrl, algorithm, allowedJwsTypes);
+            service.verifyToken(token, jwksUrl, algorithm, typeVerifier);
             fail("Expected TokenServiceException");
         } catch (TokenServiceException e) {
             // Expected exception because the URL doesn't exist
