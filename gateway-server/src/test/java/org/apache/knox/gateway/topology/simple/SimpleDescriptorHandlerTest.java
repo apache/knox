@@ -832,39 +832,68 @@ public class SimpleDescriptorHandlerTest {
 
     @Test
     public void shouldAllowKnoxServiceWithoutUrlsAndParams() throws Exception {
-      File providerConfig =  File.createTempFile("testKnoxProvider", ".xml");
-      FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG, StandardCharsets.UTF_8);
+        doTestShouldAllowServiceWithoutUrlsAndParams("KNOX");
+    }
 
-      File topologyFile = null;
-      try {
-        final File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
-        final GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
-        EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
+    @Test
+    public void shouldAllowAPIKeyServiceWithoutUrlsAndParams() throws Exception {
+        doTestShouldAllowServiceWithoutUrlsAndParams("APIKEY");
+    }
 
-        final SimpleDescriptorImpl testDescriptor = new SimpleDescriptorImpl();
-        testDescriptor.setProviderConfig(providerConfig.getAbsolutePath());
+    @Test
+    public void shouldAllowClientIDServiceWithoutUrlsAndParams() throws Exception {
+        doTestShouldAllowServiceWithoutUrlsAndParams("CLIENTID");
+    }
 
-        final SimpleDescriptor.Service knoxService = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
-        EasyMock.expect(knoxService.getName()).andReturn("KNOX").anyTimes();
-        EasyMock.expect(knoxService.getURLs()).andReturn(null).anyTimes();
-        EasyMock.expect(knoxService.getParams()).andReturn(null).anyTimes();
-        List<SimpleDescriptor.Service> serviceMocks = Collections.singletonList(knoxService);
-        testDescriptor.setServices(serviceMocks);
-        EasyMock.replay(gc, knoxService);
+    @Test
+    public void shouldAllowHealthServiceWithoutUrlsAndParams() throws Exception {
+        doTestShouldAllowServiceWithoutUrlsAndParams("HEALTH");
+    }
 
-        final Map<String, File> handleResult = SimpleDescriptorHandler.handle(gc, testDescriptor, destDir, destDir);
-        topologyFile = handleResult.get(SimpleDescriptorHandler.RESULT_TOPOLOGY);
-        assertTrue(topologyFile.exists());
-        assertTrue(new TopologyValidator(topologyFile.getAbsolutePath()).validateTopology());
+    @Test
+    public void shouldAllowMetadataServiceWithoutUrlsAndParams() throws Exception {
+        doTestShouldAllowServiceWithoutUrlsAndParams("KNOX-METADATA");
+    }
 
-        final Document topologyXml = XmlUtils.readXml(topologyFile);
-        assertThat(topologyXml, hasXPath("/topology/service/role", is(equalTo("KNOX"))));
-      } finally {
-        providerConfig.delete();
-        if (topologyFile != null) {
-          topologyFile.delete();
+    @Test
+    public void shouldAllowKnoxSessionServiceWithoutUrlsAndParams() throws Exception {
+        doTestShouldAllowServiceWithoutUrlsAndParams("KNOX-SESSION");
+    }
+
+    private void doTestShouldAllowServiceWithoutUrlsAndParams(final String serviceName) throws Exception {
+        File providerConfig =  File.createTempFile("testKnoxProvider", ".xml");
+        FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG, StandardCharsets.UTF_8);
+
+        File topologyFile = null;
+        try {
+            final File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+            final GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
+
+            final SimpleDescriptorImpl testDescriptor = new SimpleDescriptorImpl();
+            testDescriptor.setProviderConfig(providerConfig.getAbsolutePath());
+
+            final SimpleDescriptor.Service knoxService = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
+            EasyMock.expect(knoxService.getName()).andReturn(serviceName).anyTimes();
+            EasyMock.expect(knoxService.getURLs()).andReturn(null).anyTimes();
+            EasyMock.expect(knoxService.getParams()).andReturn(null).anyTimes();
+            List<SimpleDescriptor.Service> serviceMocks = Collections.singletonList(knoxService);
+            testDescriptor.setServices(serviceMocks);
+            EasyMock.replay(gc, knoxService);
+
+            final Map<String, File> handleResult = SimpleDescriptorHandler.handle(gc, testDescriptor, destDir, destDir);
+            topologyFile = handleResult.get(SimpleDescriptorHandler.RESULT_TOPOLOGY);
+            assertTrue(topologyFile.exists());
+            assertTrue(new TopologyValidator(topologyFile.getAbsolutePath()).validateTopology());
+
+            final Document topologyXml = XmlUtils.readXml(topologyFile);
+            assertThat(topologyXml, hasXPath("/topology/service/role", is(equalTo(serviceName))));
+        } finally {
+            providerConfig.delete();
+            if (topologyFile != null) {
+                topologyFile.delete();
+            }
         }
-      }
     }
 
     @Test
