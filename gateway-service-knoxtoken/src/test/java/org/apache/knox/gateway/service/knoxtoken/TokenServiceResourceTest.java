@@ -76,13 +76,14 @@ import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
@@ -2025,12 +2026,12 @@ public class TokenServiceResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) {
      return false;
     }
 
     @Override
-    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
       return false;
     }
   }

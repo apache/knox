@@ -53,6 +53,8 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.apache.http.HttpStatus;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -72,7 +74,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
@@ -931,12 +932,12 @@ public class WebSSOResourceTest {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) {
      return false;
     }
 
     @Override
-    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) {
       return false;
     }
   }

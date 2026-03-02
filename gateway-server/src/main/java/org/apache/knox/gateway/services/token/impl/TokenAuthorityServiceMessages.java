@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.token.impl;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger = "org.apache.knox.gateway.services.token.state")
 public interface TokenAuthorityServiceMessages {
@@ -27,7 +28,7 @@ public interface TokenAuthorityServiceMessages {
   void errorGettingKid(String message);
 
   @Message(level = MessageLevel.ERROR, text = "Failed to verify token using JWKS endpoint {0}, reason: {1}")
-  void jwksVerificationFailed(String jwksUrl, String reason);
+  void jwksVerificationFailed(String jwksUrl, String reason, @StackTrace( level = MessageLevel.ERROR) Exception e);
 
   @Message(level = MessageLevel.WARN, text = "Ignoring typ header verification for token")
   void ignoreTypeHeaderVerification();

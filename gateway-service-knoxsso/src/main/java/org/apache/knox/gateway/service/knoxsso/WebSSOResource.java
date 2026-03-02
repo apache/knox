@@ -46,6 +46,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import com.nimbusds.jose.JOSEObjectType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -80,6 +81,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_DOMAIN_SUFFIX_PARAM = "knoxsso.cookie.domain.suffix";
   private static final String SSO_COOKIE_SAMESITE_PARAM = "knoxsso.cookie.samesite";
   private static final String SSO_COOKIE_TOKEN_TTL_PARAM = "knoxsso.token.ttl";
+  private static final String SSO_COOKIE_TOKEN_TYPE_PARAM = "knoxsso.token.type";
   private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
   private static final String SSO_COOKIE_TOKEN_SIG_ALG = "knoxsso.token.sigalg";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
@@ -103,6 +105,7 @@ public class WebSSOResource {
   private boolean secureOnly = true;
   private int maxAge = -1;
   private long tokenTTL = TOKEN_TTL_DEFAULT;
+  private String tokenType;
   private String whitelist;
   private String domainSuffix;
   private List<String> targetAudiences = new ArrayList<>();
@@ -219,6 +222,8 @@ public class WebSSOResource {
         LOGGER.invalidTokenTTLEncountered(ttl);
       }
     }
+    final String configuredTokenType = context.getInitParameter(SSO_COOKIE_TOKEN_TYPE_PARAM);
+    tokenType = StringUtils.isBlank(configuredTokenType) ? JOSEObjectType.JWT.getType() : configuredTokenType;
   }
 
   @GET
@@ -308,6 +313,7 @@ public class WebSSOResource {
               .setSigningKeystoreAlias(signingKeystoreAlias)
               .setSigningKeystorePassphrase(signingKeystorePassphrase)
               .setManaged(tokenStateService != null)
+              .setType(tokenType)
               .build();
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 

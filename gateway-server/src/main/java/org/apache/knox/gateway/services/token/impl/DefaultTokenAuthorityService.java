@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
@@ -51,7 +50,6 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
@@ -59,7 +57,6 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import com.nimbusds.jwt.proc.JWTClaimsSetVerifier;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -226,26 +223,26 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+  public boolean verifyToken(JWT token, String jwksUrl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
     boolean verified = false;
     try {
-      if (algorithm != null && jwksurl != null) {
+      if (algorithm != null && jwksUrl != null) {
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(algorithm);
         /* Retry one time in case of failure and cache JWKS in case there is outage, TTL is OUTAGE_TTL */
         long outageTTL = config.getJwksOutageCacheTTL();
         long cacheTTL = config.getJwksCacheTimeToLive();
         long cacheTimeOut = config.getJwksCacheRefreshTimeout();
 
-        JWKSource<SecurityContext> jwksSource = cachedJwkSources.get(jwksurl);
+        JWKSource<SecurityContext> jwksSource = cachedJwkSources.get(jwksUrl);
 
         if(jwksSource == null) {
-          jwksSource = JWKSourceBuilder.create(new URL(jwksurl))
+          jwksSource = JWKSourceBuilder.create(new URL(jwksUrl))
                   .cache(cacheTTL, cacheTimeOut)
                   .refreshAheadCache(true)
                   .retrying(true)
                   .outageTolerant(outageTTL)
                   .build();
-            cachedJwkSources.put(jwksurl, jwksSource);
+            cachedJwkSources.put(jwksUrl, jwksSource);
         }
 
         JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwksSource);
@@ -253,15 +250,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         // Create a JWT processor for the access tokens
         ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
         jwtProcessor.setJWSKeySelector(keySelector);
-        JWTClaimsSetVerifier<SecurityContext> claimsVerifier = new DefaultJWTClaimsVerifier<>();
-        jwtProcessor.setJWTClaimsSetVerifier(claimsVerifier);
-        final JOSEObjectTypeVerifier<SecurityContext> objectTypeVerifier = new DefaultJOSEObjectTypeVerifier<>(allowedJwsTypes);
-        /* See if we have a issuer for which we want to ignore type validation */
-        if(!config.getIssuersWithIgnoredTypeHeader().contains(token.getIssuer())) {
-          jwtProcessor.setJWSTypeVerifier(objectTypeVerifier);
-        } else {
-          /* no typ claim found in token, log and move on */
+        jwtProcessor.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier<>(null, null));
+        /* See if we have an issuer for which we want to ignore type validation */
+        if (config.getIssuersWithIgnoredTypeHeader().contains(token.getIssuer())) {
           LOG.ignoreTypeHeaderVerification();
+        } else {
+          jwtProcessor.setJWSTypeVerifier(typeVerifier);
         }
 
         // Process the token
@@ -276,18 +270,18 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   }
 
   @Override
-  public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+  public boolean verifyToken(JWT token, Set<URI> jwksUrls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
     boolean verified = false;
-    for(final URI url : jwksurls) {
+    for(final URI url : jwksUrls) {
       try {
-        verified = this.verifyToken(token, url.toString(), algorithm, allowedJwsTypes);
+        verified = this.verifyToken(token, url.toString(), algorithm, typeVerifier);
         /* if token is verified no need to check further return result */
         if(verified) {
           return verified;
         }
       } catch (TokenServiceException e) {
         /* failed to verify token, log and move on */
-        LOG.jwksVerificationFailed(url.toString(), e.toString());
+        LOG.jwksVerificationFailed(url.toString(), e.toString(), e);
       }
     }
     return verified;

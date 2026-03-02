@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
-import com.nimbusds.jose.JOSEObjectType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -40,17 +39,12 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
@@ -111,25 +105,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       paramName = queryParamName;
     }
 
-    //  JWKSUrl
-    String oidcjwksurl = filterConfig.getInitParameter(JWKS_URL);
-    if (oidcjwksurl != null) {
-      expectedJWKSUrls = parseJwksUrlsFromConfig(oidcjwksurl);
-    }
-
-    /* in case knox.token.jwks.urls property is defined use it */
-    final String oidcjwksurls = filterConfig.getInitParameter(JWKS_URLS);
-    if (oidcjwksurls != null) {
-      expectedJWKSUrls.addAll(parseJwksUrlsFromConfig(oidcjwksurls));
-    }
-
-    allowedJwsTypes = new HashSet<>();
-    final String allowedTypes = filterConfig.getInitParameter(ALLOWED_JWS_TYPES);
-    if (allowedTypes != null) {
-      Stream.of(allowedTypes.trim().split(",")).forEach(allowedType -> allowedJwsTypes.add(new JOSEObjectType(allowedType.trim())));
-    } else {
-      allowedJwsTypes.add(JOSEObjectType.JWT);
-    }
+    //  JWKSUrl(s) and allowed JWS types
+    jwksUrls = parseJwksUrlsFromConfig(filterConfig.getInitParameter(JWKS_URL));
+    jwksUrls.addAll(parseJwksUrlsFromConfig(filterConfig.getInitParameter(JWKS_URLS)));
+    setJwsTypeVerifier(filterConfig, ALLOWED_JWS_TYPES);
 
     //cookie auth support
     final String useCookieParam = filterConfig.getInitParameter(KNOX_TOKEN_USE_COOKIE);
@@ -157,30 +136,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     AuthFilterUtils.addUnauthPaths(unAuthenticatedPaths, unAuthPathString, DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM);
 
     configureExpectedParameters(filterConfig);
-  }
-
-  /**
-   * Helper function to extract URLs from given string
-   * in the form of https://url:port/contxt/.wellknown, https://url2:port/contxt/.wellknown
-   * into expectedJWKSUrl URL set.
-   * @param oidcjwksurls
-   */
-  private Set<URI> parseJwksUrlsFromConfig(final String oidcjwksurls) {
-    final Set<URI> jwksUrlSet = new HashSet<>();
-    final Set<String> jwksurls = Arrays.stream(
-            oidcjwksurls.split(","))
-            .map(String::trim)
-            .collect(Collectors.toSet());
-
-    for (final String jwksurl : jwksurls) {
-        try {
-          jwksUrlSet.add(new URI(jwksurl));
-        } catch (URISyntaxException e) {
-          /* Not valid JWKS url, log and move on */
-          log.invalidJwksUrl(jwksurl);
-        }
-    }
-    return jwksUrlSet;
   }
 
   @Override

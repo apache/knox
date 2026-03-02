@@ -17,13 +17,14 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
@@ -1462,12 +1463,12 @@ public abstract class AbstractJWTFilterTest  {
     }
 
     @Override
-    public boolean verifyToken(JWT token, String jwksurl, String algorithm, Set<JOSEObjectType> allowedJwsTypes) {
+    public boolean verifyToken(JWT token, String jwksurl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) {
      return false;
     }
 
     @Override
-    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, Set<JOSEObjectType> allowedJwsTypes) throws TokenServiceException {
+    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
       return false;
     }
   }
