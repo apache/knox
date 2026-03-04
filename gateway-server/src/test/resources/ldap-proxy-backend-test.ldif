@@ -1,0 +1,87 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: 1
+
+dn: dc=hadoop,dc=apache,dc=org
+objectclass: organization
+objectclass: dcObject
+o: Hadoop at Apache.org
+dc: hadoop
+description: Makers of Hadoop
+
+# entry for the people container
+dn: ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: people
+
+# entry for group container
+dn: ou=groups,dc=hadoop,dc=apache,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+# entry for the end user
+dn: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Guest
+sn: User
+uid: guest
+userPassword:guest-password
+
+dn: cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: group1
+member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+
+dn: cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: group2
+member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+
+dn: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: TestCn1
+sn: Ldap
+uid: ldaptest1
+sAMAccountName: TestSam1
+userPassword: 12345
+mail: ldaptest1@example.com
+description: Test user ldaptest1
+
+dn: uid=ldaptest2,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: TestCn2
+sn: Ldap
+uid: ldaptest2
+sAMAccountName: TestSam2
+userPassword: 12345
+mail: ldaptest2@example.com
+description: Test user ldaptest2
+memberOf: cn=groupMemberOf1,ou=groups,dc=hadoop,dc=apache,dc=org
+memberOf: cn=groupMemberOf2,ou=groups,dc=hadoop,dc=apache,dc=org

@@ -611,5 +611,11 @@
             <artifactId>zookeeper-jute</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
