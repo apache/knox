@@ -58,6 +58,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String CLIENT_CREDENTIALS = "client_credentials";
   public static final String CLIENT_SECRET = "client_secret";
   public static final String CLIENT_ID = "client_id";
+  public static final String INVALID_CLIENT_SECRET = "Error while parsing the received client secret";
   public static final String MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET = "Client credentials flow with mismatching client_id and client_secret";
   public static final String REFRESH_TOKEN = "refresh_token";
   public static final String REFRESH_TOKEN_PARAM = "refresh_token";
@@ -171,7 +172,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     try {
       wireToken = getWireToken(request);
     } catch (SecurityException e) {
-      handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_BAD_REQUEST, null);
+      handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
       throw e;
     }
 
@@ -230,10 +231,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       final String[] base64DecodedTokenIdAndPasscode = decodeBase64(tokenValue).split("::");
       tokenId = decodeBase64(base64DecodedTokenIdAndPasscode[0]);
     } catch (Exception e) {
-      throw new SecurityException("Error while parsing the received client secret", e);
+      throw new SecurityException(INVALID_CLIENT_SECRET, e);
     }
     // if there is no client_id then this is not a client credentials flow
-    if (clientID != null && !tokenId.equals(clientID)) {
+    if (!tokenId.equals(clientID)) {
      throw new SecurityException(MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
     }
   }
