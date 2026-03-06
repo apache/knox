@@ -79,7 +79,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         final String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
         final String passcode = (String) jwt.getJWTClaimsSet().getClaims().get(PASSCODE_CLAIM);
         addTokenState(jwt, issueTime, subject, passcode);
-        setTokenOnRequest(request, TestJWTFederationFilter.PASSCODE, generatePasscodeField(getTokenId(jwt), passcode));
+        setTokenOnRequest(request, getAuthUserName(TestJWTFederationFilter.PASSCODE, jwt), generatePasscodeField(getTokenId(jwt), passcode));
       } catch(ParseException e) {
         Assert.fail(e.getMessage());
       }
@@ -106,10 +106,14 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         final String subject = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.SUBJECT);
         final String passcode = (String) jwt.getJWTClaimsSet().getClaims().get(PASSCODE_CLAIM);
         addTokenState(jwt, issueTime, subject, passcode);
-        setTokenOnRequest(request, authUsername, generatePasscodeField(getTokenId(jwt), passcode));
+        setTokenOnRequest(request, getAuthUserName(authUsername, jwt), generatePasscodeField(getTokenId(jwt), passcode));
       } catch(ParseException e) {
         Assert.fail(e.getMessage());
       }
+    }
+
+    protected String getAuthUserName(final String authUserName, final SignedJWT jwt) throws ParseException {
+        return authUserName;
     }
 
     @Override
@@ -117,7 +121,7 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         setTokenOnRequest(request, TestJWTFederationFilter.PASSCODE, "junk" + getTokenId(jwt));
     }
 
-    private String getTokenId(final SignedJWT jwt) {
+    protected String getTokenId(final SignedJWT jwt) {
         String tokenId = null;
         try {
              tokenId = (String) jwt.getJWTClaimsSet().getClaim(JWTToken.KNOX_ID_CLAIM);
