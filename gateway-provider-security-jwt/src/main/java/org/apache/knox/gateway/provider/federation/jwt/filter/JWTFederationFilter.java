@@ -64,6 +64,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String REFRESH_TOKEN_PARAM = "refresh_token";
   public static final String TOKEN_EXCHANGE = "token_exchange";
   public static final String SUBJECT_TOKEN = "subject_token";
+  public static final String CLIENT_ASSERTION_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+  public static final String CLIENT_ASSERTION_TYPE = "client_assertion_type";
+  public static final String CLIENT_ASSERTION = "client_assertion";
 
   public enum TokenType {
     JWT, Passcode;
@@ -291,6 +294,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         &scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
         &client_secret=sampleCredentials
         &grant_type=client_credentials
+
+        or
+
+        POST /token.oauth2 HTTP/1.1
+        Content-Type: application/x-www-form-urlencoded
+
+        grant_type=client_credentials&
+        client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&
+        client_assertion=eyJhbGciOiJSUzI1NiJ9... <- K8s SA JWT
+        scope=openid profile email
        */
 
       final HttpServletRequest httpRequest = (HttpServletRequest) request;
@@ -303,7 +316,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
     private Pair<TokenType, String> getTokenFromRequestBody(ServletRequest request) {
         final String grantType = request.getParameter(GRANT_TYPE);
+        final String clientAssertionType = request.getParameter(CLIENT_ASSERTION_TYPE);
         if (CLIENT_CREDENTIALS.equals(grantType)) {
+          if (clientAssertionType != null && CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
+            // short lived client assertion token expected
+            return getClientTokenFromParams(request, CLIENT_ASSERTION);
+          }
           // client credentials flow: client_id and client_secret are expected
           // the client_id will be in the token as the token_id
           final String clientSecret = request.getParameter(CLIENT_SECRET);
@@ -311,15 +329,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           return Pair.of(TokenType.Passcode, clientSecret);
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
-          return getRefreshOrSubjectToken(request, REFRESH_TOKEN_PARAM);
+          return getClientTokenFromParams(request, REFRESH_TOKEN_PARAM);
         } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // token_exchange flow: the subject_token parameter contains the token to be exchanged
-          return getRefreshOrSubjectToken(request, SUBJECT_TOKEN);
+          return getClientTokenFromParams(request, SUBJECT_TOKEN);
         }
       return null;
     }
 
-  private Pair<TokenType, String> getRefreshOrSubjectToken(final ServletRequest request, final String requestParamName) {
+  private Pair<TokenType, String> getClientTokenFromParams(final ServletRequest request, final String requestParamName) {
     final String refreshOrSubjectToken = request.getParameter(requestParamName);
     if (refreshOrSubjectToken != null) {
       return isJWT(refreshOrSubjectToken) ? Pair.of(TokenType.JWT, refreshOrSubjectToken) : Pair.of(TokenType.Passcode, refreshOrSubjectToken);
