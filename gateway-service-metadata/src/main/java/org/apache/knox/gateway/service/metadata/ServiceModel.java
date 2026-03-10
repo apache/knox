@@ -243,10 +243,14 @@ public class ServiceModel implements Comparable<ServiceModel> {
   @Override
   public int compareTo(ServiceModel other) {
     int result = getServiceName().compareTo(other.getServiceName());
-    if (result != 0) return result;
+    if (result != 0) {
+      return result;
+    }
 
     result = getVersion().compareTo(other.getVersion());
-    if (result != 0) return result;
+    if (result != 0) {
+      return result;
+    }
 
     return getServiceUrls().toString().compareTo(other.getServiceUrls().toString());
   }
