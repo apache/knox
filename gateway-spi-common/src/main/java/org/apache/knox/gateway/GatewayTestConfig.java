@@ -1238,4 +1238,9 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public Map<String, String> getLDAPBackendConfig(String backendType) {
     return Collections.emptyMap();
   }
+
+  @Override
+  public boolean getGroupUIServicesOnHomepage() {
+    return false;
+  }
 }

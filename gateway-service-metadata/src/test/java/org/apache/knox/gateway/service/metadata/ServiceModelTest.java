@@ -290,6 +290,63 @@ public class ServiceModelTest {
     assertEquals(samples.get(1).getValue(), "curl -iv -X GET \"https://localhost:8443/gateway/sandbox/testContext/sampleStartsWithoutSlashPath/operation\"");
   }
 
+  @Test
+  public void shouldReturnMultipleServiceUrlsWhenServiceHasMultipleUrls() throws Exception {
+    final ServiceModel serviceModel = new ServiceModel();
+    serviceModel.setGatewayPath("gateway");
+    serviceModel.setTopologyName("sandbox");
+    serviceModel.setRequest(setUpHttpRequestMock());
+
+    final Metadata metadata = EasyMock.createNiceMock(Metadata.class);
+    EasyMock.expect(metadata.getContext()).andReturn("/service?host={{HOST}}").anyTimes();
+    EasyMock.expect(metadata.getType()).andReturn("UI").anyTimes();
+    EasyMock.replay(metadata);
+    serviceModel.setServiceMetadata(metadata);
+
+    final List<String> backendUrls = Arrays.asList("https://host1:8080", "https://host2:9090");
+    final Service service = EasyMock.createNiceMock(Service.class);
+    EasyMock.expect(service.getRole()).andReturn("SAMPLE").anyTimes();
+    EasyMock.expect(service.getUrls()).andReturn(backendUrls).anyTimes();
+    EasyMock.replay(service);
+    serviceModel.setService(service);
+
+    List<String> resolvedUrls = serviceModel.getServiceUrls();
+    assertEquals("Should return 2 unique resolved URLs", 2, resolvedUrls.size());
+    assertEquals("https://localhost:8443/gateway/sandbox/service?host=host1", resolvedUrls.get(0));
+    assertEquals("https://localhost:8443/gateway/sandbox/service?host=host2", resolvedUrls.get(1));
+  }
+
+  @Test
+  public void shouldPrioritizeExplicitServiceUrlOverMultipleServiceUrls() throws Exception {
+    final ServiceModel serviceModel = new ServiceModel();
+    serviceModel.setGatewayPath("gateway");
+    serviceModel.setTopologyName("sandbox");
+    serviceModel.setRequest(setUpHttpRequestMock());
+
+    final Metadata metadata = EasyMock.createNiceMock(Metadata.class);
+    final String context = "/testContext?backend={{BACKEND_HOST}}";
+    EasyMock.expect(metadata.getContext()).andReturn(context).anyTimes();
+    EasyMock.expect(metadata.getType()).andReturn("UI").anyTimes();
+    EasyMock.replay(metadata);
+    serviceModel.setServiceMetadata(metadata);
+
+    final Service service = EasyMock.createNiceMock(Service.class);
+    EasyMock.expect(service.getRole()).andReturn("SERVICE").anyTimes();
+    EasyMock.expect(service.getUrls()).andReturn(Arrays.asList("https://host1:1111", "https://host2:2222")).anyTimes();
+    EasyMock.replay(service);
+    serviceModel.setService(service);
+
+    final String explicitUrl = "https://explicit-host:9999";
+    serviceModel.setServiceUrl(explicitUrl);
+
+    List<String> resolvedUrls = serviceModel.getServiceUrls();
+    assertEquals("Should only return 1 URL when serviceUrl is explicitly set", 1, resolvedUrls.size());
+    String expectedUrl = String.format(Locale.ROOT, SERVICE_URL_TEMPLATE,
+            SERVER_SCHEME, SERVER_NAME, SERVER_PORT, "gateway", "sandbox",
+            context.replace("{{BACKEND_HOST}}", explicitUrl));
+    assertEquals(expectedUrl, resolvedUrls.get(0));
+  }
+
   private String getFirstServiceUrl(ServiceModel serviceModel) {
     return serviceModel.getServiceUrls().isEmpty() ? "" : serviceModel.getServiceUrls().get(0);
   }

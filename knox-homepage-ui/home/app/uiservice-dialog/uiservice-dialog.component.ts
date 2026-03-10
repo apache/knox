@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -33,7 +33,8 @@ export class UiserviceDialogComponent {
   enableServiceText = false;
   filteredServiceUrls: string[] = [];
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: any,
+              public dialogRef: MatDialogRef<UiserviceDialogComponent>) {
     this.filteredServiceUrls = [...(data?.serviceUrls || [])];
   }
 
@@ -52,5 +53,9 @@ export class UiserviceDialogComponent {
       console.error(e);
       return '';
     }
+  }
+
+  onClose(): void {
+    this.dialogRef.close();
   }
 }

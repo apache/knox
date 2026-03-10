@@ -66,6 +66,7 @@ public class ServiceModel implements Comparable<ServiceModel> {
   private String gatewayPath;
   private Service service;
   private Metadata serviceMetadata;
+  private String serviceUrl;
 
   public void setRequest(HttpServletRequest request) {
     this.request = request;
@@ -85,6 +86,10 @@ public class ServiceModel implements Comparable<ServiceModel> {
 
   public void setServiceMetadata(Metadata serviceMetadata) {
     this.serviceMetadata = serviceMetadata;
+  }
+
+  public void setServiceUrl(String serviceUrl) {
+    this.serviceUrl = serviceUrl;
   }
 
   @XmlElement
@@ -135,13 +140,17 @@ public class ServiceModel implements Comparable<ServiceModel> {
     } else if (IMPALA_SERVICE_NAME.equals(getServiceName())) {
       resolvedServiceUrls.add(format(ROOT, IMPALA_SERVICE_URL_TEMPLATE, request.getServerName(), request.getServerPort(), gatewayPath, topologyName));
     } else {
-      if (service != null && service.getUrls() != null && !service.getUrls().isEmpty()) {
-        this.service.getUrls().forEach(serviceUrl -> {
-          resolvedServiceUrls.add(getServiceUrl(context, serviceUrl));
-        });
+      if(serviceUrl != null) {
+        resolvedServiceUrls.add(getServiceUrl(context, serviceUrl));
       } else {
-        // fall back to the service URL fetched from the 'service' instance, if any
-        resolvedServiceUrls.add(getServiceUrl(context, null));
+        if (service != null && service.getUrls() != null && !service.getUrls().isEmpty()) {
+          this.service.getUrls().forEach(serviceUrl -> {
+            resolvedServiceUrls.add(getServiceUrl(context, serviceUrl));
+          });
+        } else {
+          // fall back to the service URL fetched from the 'service' instance, if any
+          resolvedServiceUrls.add(getServiceUrl(context, null));
+        }
       }
     }
     return Arrays.asList(resolvedServiceUrls.toArray(new String[0]));
@@ -233,12 +242,13 @@ public class ServiceModel implements Comparable<ServiceModel> {
 
   @Override
   public int compareTo(ServiceModel other) {
-    final int byServiceName = getServiceName().compareTo(other.getServiceName());
-    if (byServiceName == 0) {
-      final int byVersion = getVersion().compareTo(getVersion());
-      return byVersion == 0 ? Integer.compare(getServiceUrls().size(), other.getServiceUrls().size()) : byVersion;
-    }
-    return byServiceName;
+    int result = getServiceName().compareTo(other.getServiceName());
+    if (result != 0) return result;
+
+    result = getVersion().compareTo(other.getVersion());
+    if (result != 0) return result;
+
+    return getServiceUrls().toString().compareTo(other.getServiceUrls().toString());
   }
 
 }
