@@ -234,14 +234,14 @@ public class KnoxMetadataResource {
           Set<ServiceModel> uiServices = new HashSet<>();
           topology.getServices().stream().filter(service -> !UNREAL_SERVICES.contains(service.getRole())).forEach(service -> {
             if (!service.getUrls().isEmpty()) {
-              final ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service));
-              if (ServiceModel.Type.UI == serviceModel.getType()) {
-                uiServices.add(serviceModel);
-              } else if (ServiceModel.Type.API_AND_UI == serviceModel.getType()) {
-                uiServices.add(serviceModel);
-                apiServices.add(serviceModel);
+              if(config.getGroupUIServicesOnHomepage()) {
+                final ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service), null);
+                addService(apiServices, uiServices, serviceModel);
               } else {
-                apiServices.add(serviceModel);
+                service.getUrls().forEach(serviceUrl -> {
+                  final ServiceModel serviceModel = getServiceModel(request, config.getGatewayPath(), topology.getName(), service, getServiceMetadata(serviceDefinitionRegistry, service), serviceUrl);
+                  addService(apiServices, uiServices, serviceModel);
+                });
               }
             }
           });
@@ -250,6 +250,17 @@ public class KnoxMetadataResource {
       }
     }
     return topologies;
+  }
+
+  private void addService(Set<ServiceModel> apiServices, Set<ServiceModel> uiServices, ServiceModel model) {
+    switch (model.getType()) {
+      case UI -> uiServices.add(model);
+      case API_AND_UI -> {
+        uiServices.add(model);
+        apiServices.add(model);
+      }
+      default -> apiServices.add(model);
+    }
   }
 
   boolean isPinnedTopology(String topologyName, GatewayConfig config) {
@@ -267,13 +278,14 @@ public class KnoxMetadataResource {
     return serviceDefinition.isPresent() ? serviceDefinition.get().getService().getMetadata() : null;
   }
 
-  private ServiceModel getServiceModel(HttpServletRequest request, String gatewayPath, String topologyName, Service service, Metadata serviceMetadata) {
+  private ServiceModel getServiceModel(HttpServletRequest request, String gatewayPath, String topologyName, Service service, Metadata serviceMetadata, String serviceUrl) {
     final ServiceModel serviceModel = new ServiceModel();
     serviceModel.setRequest(request);
     serviceModel.setGatewayPath(gatewayPath);
     serviceModel.setTopologyName(topologyName);
     serviceModel.setService(service);
     serviceModel.setServiceMetadata(serviceMetadata);
+    serviceModel.setServiceUrl(serviceUrl);
     return serviceModel;
   }
 

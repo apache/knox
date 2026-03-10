@@ -55,7 +55,7 @@ limitations under the License.
               <mat-grid-list cols="4" rowHeight="130px">
                 @for (service of topology.uiServices.service; track service) {
 <mat-grid-tile [colspan]="1" [rowspan]="1" (click)="service.serviceUrls.length > 1
-            ? openGroupServiceDialog(service)
+            ? openGroupServiceDialog($event, service)
             : openSingleService(service.serviceUrls[0])">
                     <!-- Services with 1 service URL -->
                     @if (service.serviceUrls.length === 1) {
@@ -84,7 +84,7 @@ limitations under the License.
                     }
                     <!-- Services with more than 1 service URL -->
                     @if (service.serviceUrls.length > 1) {
-                      <div (click)="openGroupServiceDialog(service)">
+                      <div (click)="openGroupServiceDialog($event, service)">
                         <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"
                           (error)="enableServiceText('enableServiceText_' + service.serviceName.toLowerCase())" />
                         <mat-grid-tile-footer class="tile-shortDesc">
@@ -154,7 +154,7 @@ limitations under the License.
               <mat-grid-list cols="4" rowHeight="130px">
                 @for (service of topology.apiServices.service; track service) {
                   <mat-grid-tile [colspan]="1" [rowspan]="1"
-                    (click)="openApiServiceDialog(service)">
+                    (click)="openApiServiceDialog($event, service)">
                     @if (!this['enableServiceText_' + service.serviceName.toLowerCase()]) {
                       <span>
                         <img src="assets/service-logos/{{service.serviceName.toLowerCase()}}.png" height="50px"

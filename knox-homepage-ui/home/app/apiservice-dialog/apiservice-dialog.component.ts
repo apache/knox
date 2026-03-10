@@ -32,6 +32,9 @@ export class ApiserviceDialogComponent {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<ApiserviceDialogComponent>
-  ) {
+  ) {}
+
+  onClose(): void {
+    this.dialogRef.close();
   }
 }

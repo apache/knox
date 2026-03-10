@@ -120,6 +120,7 @@ public interface GatewayConfig {
   int DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS = 3;
 
   String DEFAULT_API_SERVICES_VIEW_VERSION = "v1";
+  boolean DEFAULT_GROUP_UI_SERVICES = false;
 
   String DEPLOYMENT_PATH_ALIAS = ".path.alias.";
 
@@ -1078,4 +1079,6 @@ public interface GatewayConfig {
    * @return set of all property names in the configuration
    */
   Set<String> getPropertyNames();
+
+  boolean getGroupUIServicesOnHomepage();
 }

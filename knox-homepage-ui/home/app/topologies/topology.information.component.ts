@@ -200,7 +200,8 @@ export class TopologyInformationsComponent implements OnInit {
         }
     }
 
-    openApiServiceDialog(service: any): void {
+    openApiServiceDialog(event: Event, service: any): void {
+        event.stopPropagation();
         this.dialog.open(ApiserviceDialogComponent, {
             width: '70vw',
             maxWidth: 'none',
@@ -208,7 +209,8 @@ export class TopologyInformationsComponent implements OnInit {
         });
     }
 
-    openGroupServiceDialog(service: any): void {
+    openGroupServiceDialog(event: Event, service: any): void {
+        event.stopPropagation();
         this.dialog.open(UiserviceDialogComponent, {
             width: '70vw',
             maxWidth: 'none',
