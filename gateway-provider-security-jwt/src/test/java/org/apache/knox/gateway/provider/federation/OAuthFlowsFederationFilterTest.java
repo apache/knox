@@ -35,10 +35,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 
 public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFederationFilterTest {
@@ -63,6 +65,36 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
         EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ID)).andReturn(clientId).anyTimes();
         EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_SECRET)).andReturn(clientSecret).anyTimes();
+        if (excludeQueryString) {
+            EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+        }
+    }
+
+    private void ensureJWTClientCredentials(final HttpServletRequest request, final boolean excludeQueryString) {
+        /*
+        {
+        "alg": "RS256",
+        "kid": "vRZD8cQzbRThdVFzIZljIEgrMIzRa8WU1JDP5gSoQ90"
+        }
+        {
+         "iss": "kubernetes/serviceaccount",
+         "kubernetes.io/serviceaccount/namespace": "poc",
+         "kubernetes.io/serviceaccount/secret.name": "webhdfs-sa-token",
+         "kubernetes.io/serviceaccount/service-account.name": "webhdfs-sa",
+         "kubernetes.io/serviceaccount/service-account.uid": "5cefd6ad-a213-4fdc-bccf-3cdbfd2cabb2",
+         "sub": "system:serviceaccount:poc:webhdfs-sa"
+        }
+        */
+        SignedJWT token = null;
+        try {
+            token = super.getJWT("kubernetes/serviceaccount", "system:serviceaccount:poc:webhdfs-sa",
+                    new Date(new Date().getTime() + 5000));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION_TYPE)).andReturn(JWTFederationFilter.CLIENT_ASSERTION_JWT_BEARER).anyTimes();
+        EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION)).andReturn(token.serialize()).anyTimes();
         if (excludeQueryString) {
             EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
         }
@@ -111,6 +143,37 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     }
 
     @Test
+    public void testGetWireJWTUsingClientCredentialsFlow() throws Exception {
+        /*
+        {
+        "alg": "RS256",
+        "kid": "vRZD8cQzbRThdVFzIZljIEgrMIzRa8WU1JDP5gSoQ90"
+        }
+        {
+         "iss": "kubernetes/serviceaccount",
+         "kubernetes.io/serviceaccount/namespace": "poc",
+         "kubernetes.io/serviceaccount/secret.name": "webhdfs-sa-token",
+         "kubernetes.io/serviceaccount/service-account.name": "webhdfs-sa",
+         "kubernetes.io/serviceaccount/service-account.uid": "5cefd6ad-a213-4fdc-bccf-3cdbfd2cabb2",
+         "sub": "system:serviceaccount:poc:webhdfs-sa"
+        }
+        */
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        ensureJWTClientCredentials(request, true);
+        EasyMock.replay(request);
+
+        handler.init(new TestFilterConfig(getProperties()));
+        final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+        EasyMock.verify(request);
+
+        assertNotNull(wireToken);
+        assertEquals(TokenType.JWT, wireToken.getLeft());
+        assertNotNull(wireToken.getRight());
+        assertTrue(handler.isJWT(wireToken.getRight()));
+    }
+
+    @Test
     public void testGetWireTokenUsingClientCredentialsBasicAuth() throws Exception {
         final String clientId = "client-id-12345";
         final String passcode = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
@@ -152,7 +215,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         handler.doFilter(request, response, chain);
 
         EasyMock.verify(response);
-        Assert.assertTrue(chain.doFilterCalled);
+        assertTrue(chain.doFilterCalled);
         Assert.assertNotNull(chain.subject);
     }
 
@@ -345,7 +408,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         handler.doFilter(request, response, chain);
 
         EasyMock.verify(response);
-        Assert.assertTrue(chain.doFilterCalled);
+        assertTrue(chain.doFilterCalled);
         Assert.assertNotNull(chain.subject);
     }
 }
