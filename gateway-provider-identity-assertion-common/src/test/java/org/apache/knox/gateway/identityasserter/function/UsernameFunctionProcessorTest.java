@@ -25,15 +25,13 @@ import org.apache.knox.gateway.identityasserter.common.function.UsernameFunction
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.util.urltemplate.Parser;
 import org.apache.knox.test.TestUtils;
-import org.apache.knox.test.log.NoOpLogger;
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
 import org.apache.http.auth.BasicUserPrincipal;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee9.servlet.FilterHolder;
+import org.eclipse.jetty.ee9.servlet.ServletHolder;
+import org.eclipse.jetty.ee9.servlet.ServletTester;
 import org.eclipse.jetty.http.HttpTester;
-import org.eclipse.jetty.servlet.ServletTester;
-import org.eclipse.jetty.util.log.Log;
 import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Test;
@@ -80,8 +78,6 @@ public class UsernameFunctionProcessorTest {
 
   private void testSetup(String username, Map<String,String> initParams ) throws Exception {
     String descriptorUrl = getTestResource( "rewrite.xml" ).toExternalForm();
-
-    Log.setLog( new NoOpLogger() );
 
     server = new ServletTester();
     server.setContextPath( "/" );

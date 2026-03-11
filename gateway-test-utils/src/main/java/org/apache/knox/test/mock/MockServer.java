@@ -21,8 +21,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee9.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee9.servlet.ServletHolder;
 
 import jakarta.servlet.Servlet;
 import java.util.LinkedList;
@@ -67,7 +67,7 @@ public class MockServer {
   }
 
   public void start() throws Exception {
-    Handler context = createHandler();
+    ServletContextHandler context = createHandler();
     jetty = new Server(0);
     jetty.setHandler( context );
     jetty.start();

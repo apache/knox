@@ -1480,6 +1480,27 @@
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.eclipse.jetty.ee9</groupId>
+                <artifactId>jetty-ee9-annotations</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee9</groupId>
+                <artifactId>jetty-ee9-apache-jsp</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee9</groupId>
+                <artifactId>jetty-ee9-servlets</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.ee9</groupId>
+                <artifactId>jetty-ee9-webapp</artifactId>
+                <version>${jetty.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.eclipse.jetty.ee9.websocket</groupId>
                 <artifactId>jetty-ee9-websocket-jakarta-server</artifactId>
                 <version>${jetty.version}</version>
@@ -1495,14 +1516,8 @@
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-apache-jsp</artifactId>
-                <version>${jetty.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-webapp</artifactId>
+                <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+                <artifactId>jetty-ee9-websocket-servlet</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
 

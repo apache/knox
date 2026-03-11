@@ -134,15 +134,5 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-servlet</artifactId>
-            <classifier>tests</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-http</artifactId>
-            <classifier>tests</classifier>
-        </dependency>
     </dependencies>
 </project>

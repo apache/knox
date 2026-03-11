@@ -67,7 +67,6 @@ public class WebHdfsHaFuncTest {
    @Before
    public void setup() throws Exception {
       LOG_ENTER();
-      //Log.setLog(new NoOpLogger());
       masterServer = new MockServer("master", true);
       standbyServer = new MockServer("standby", true);
       GatewayTestConfig config = new GatewayTestConfig();

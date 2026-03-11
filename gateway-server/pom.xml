@@ -332,10 +332,6 @@
             <groupId>org.eclipse.jetty.ee9</groupId>
             <artifactId>jetty-ee9-apache-jsp</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>apache-jstl</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
@@ -357,8 +353,8 @@
         </dependency>
 
         <dependency>
-           <groupId>org.eclipse.jetty.websocket</groupId>
-           <artifactId>websocket-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+            <artifactId>jetty-ee9-websocket-servlet</artifactId>
         </dependency>
 
         <dependency>
@@ -379,11 +375,6 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-            <artifactId>jetty-ee9-websocket-jakarta-client</artifactId>
         </dependency>
 
         <dependency>
