@@ -18,12 +18,10 @@
 package org.apache.knox.gateway.trace;
 
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.eclipse.jetty.util.Callback;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Set;
 
 public class KnoxErrorHandler extends ErrorHandler {
@@ -35,10 +33,9 @@ public class KnoxErrorHandler extends ErrorHandler {
   }
 
   @Override
-  public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, ServletException {
-    HttpServletResponse traceResponse = new TraceResponse( response, bodyFilter );
-    super.handle( target, baseRequest, request, traceResponse );
+  public boolean handle(Request request, Response response, Callback callback) throws Exception {
+    Response newResponse = new TraceResponse(request, response, bodyFilter);
+    return super.handle(request, newResponse, callback);
   }
 
 }

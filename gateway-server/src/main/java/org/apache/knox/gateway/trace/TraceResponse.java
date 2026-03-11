@@ -21,57 +21,66 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletResponseWrapper;
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
+
+
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
 
-class TraceResponse extends HttpServletResponseWrapper {
+class TraceResponse extends Response.Wrapper {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
   private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
 
-  private ServletOutputStream output;
-  private Set<Integer> filter;
+  private final TraceOutput output;
+  private final Set<Integer> filter;
 
-  TraceResponse( HttpServletResponse response, Set<Integer> filter ) {
-    super( response );
+  TraceResponse(Request request, Response wrapped, Set<Integer> filter ) {
+    super(request, wrapped);
     this.filter = filter;
+    this.output = new TraceOutput();
+    if (log.isTraceEnabled()) {
+      traceResponseDetails();
+    }
   }
 
   @Override
-  public synchronized ServletOutputStream getOutputStream() throws IOException {
+  public void write(boolean last, ByteBuffer content, Callback callback) {
     if( log.isTraceEnabled() ) {
-      traceResponseDetails();
-      if( output == null && ( filter == null || filter.isEmpty() || filter.contains( getStatus() ) ) ) {
-        output = new TraceOutput( super.getOutputStream() );
+      if (filter == null || filter.isEmpty() || filter.contains(getStatus())) {
+        ByteBuffer view = (content != null) ? content.slice() : null;
+        output.extractContent(view, last);
       }
-      return output;
-    } else {
-      return super.getOutputStream();
     }
+    super.write(last, content, callback);
   }
 
   private void traceResponseDetails() {
     StringBuilder sb = new StringBuilder();
     TraceUtil.appendCorrelationContext( sb );
     sb.append( "|Response=" )
-        .append( getStatus() );
+    .append( getStatus() );
     appendHeaders( sb );
     log.trace( sb.toString() );
   }
 
   private void appendHeaders( StringBuilder sb ) {
     if( headLog.isTraceEnabled() ) {
-      Collection<String> names = getHeaderNames();
-      for( String name : names ) {
-        for( String value : getHeaders( name ) ) {
-          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", name, value ) );
+      HttpFields responseHeaders = getHeaders();
+      if (responseHeaders != null) {
+        for (HttpField header: responseHeaders) {
+          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", header.getName(), header.getValue()));
         }
       }
     }
   }
+
 }
 
 

@@ -60,6 +60,7 @@ import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.knox.gateway.websockets.GatewayWebsocketHandler;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.FormFields;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -784,9 +785,9 @@ public class GatewayServer {
   void createJetty() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, AliasServiceException {
     jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
 
-    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
+    jetty.setAttribute(FormFields.MAX_LENGTH_ATTRIBUTE, config.getJettyMaxFormContentSize());
     log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
-    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
+    jetty.setAttribute(FormFields.MAX_FIELDS_ATTRIBUTE, config.getJettyMaxFormKeys());
     log.setMaxFormKeys(config.getJettyMaxFormKeys());
 
     // Add a handler for the 404 responses when a topology is being redeployed (i.e., is inactive)

@@ -17,16 +17,14 @@
  */
 package org.apache.knox.gateway.trace;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Set;
 
-public class TraceHandler extends HandlerWrapper {
+public class TraceHandler extends Handler.Wrapper {
 
   static final String HTTP_LOGGER = "org.apache.knox.gateway.http";
   static final String HTTP_REQUEST_LOGGER = HTTP_LOGGER + ".request";
@@ -44,11 +42,10 @@ public class TraceHandler extends HandlerWrapper {
   }
 
   @Override
-  public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, ServletException {
-    HttpServletRequest newRequest = new TraceRequest( request );
-    HttpServletResponse newResponse = new TraceResponse( response, bodyFilter );
-    super.handle( target, baseRequest, newRequest, newResponse );
+  public boolean handle(Request request, Response response, Callback callback) throws Exception {
+    Request newRequest = new TraceRequest(request);
+    Response newResponse = new TraceResponse(request, response, bodyFilter);
+    return super.handle(newRequest, newResponse, callback);
   }
 
 }

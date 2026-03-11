@@ -17,59 +17,41 @@
  */
 package org.apache.knox.gateway.trace;
 
-import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import jakarta.servlet.ServletOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-class TraceOutput extends SynchronousServletOutputStreamAdapter {
+class TraceOutput {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
   private static final Logger bodyLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
 
-  private ServletOutputStream delegate;
-
   private static final int BUFFER_LIMIT = 1024;
-  private StringBuilder buffer = new StringBuilder( BUFFER_LIMIT );
+  private final StringBuilder buffer = new StringBuilder( BUFFER_LIMIT );
 
-  TraceOutput( ServletOutputStream delegate ) {
-    this.delegate = delegate;
-  }
-
-  @Override
-  public synchronized void write( int b ) throws IOException {
-    if( b >= 0 ) {
-      buffer.append( (char)b );
-      if( buffer.length() == BUFFER_LIMIT ) {
-        traceBody();
+  public synchronized void extractContent(ByteBuffer view, boolean last) {
+    if (view != null && view.hasRemaining()) {
+      while (view.hasRemaining() && buffer.length() < BUFFER_LIMIT) {
+        String s = StandardCharsets.UTF_8.decode(view).toString();
+        buffer.append(s);
       }
     }
-    delegate.write( b );
+    if (buffer.length() >= BUFFER_LIMIT || last) {
+      traceBody();
+    }
   }
 
-  @Override
-  public void flush() throws IOException {
-    traceBody();
-    delegate.flush();
-  }
-
-  @Override
-  public void close() throws IOException {
-    traceBody();
-    delegate.close();
-  }
-
-  private synchronized void traceBody() {
-    if( buffer.length() > 0 ) {
+  private void traceBody() {
+    if (!buffer.isEmpty()) {
       String body = buffer.toString();
-      buffer.setLength( 0 );
+      buffer.setLength(0);
       StringBuilder sb = new StringBuilder();
-      TraceUtil.appendCorrelationContext( sb );
-      sb.append( String.format(Locale.ROOT, "|ResponseBody[%d]%n\t%s", body.length(), body ) );
+      TraceUtil.appendCorrelationContext(sb);
+      sb.append(String.format(Locale.ROOT, "|ResponseBody[%d]%n\t%s", body.length(), body));
       if( bodyLog.isTraceEnabled() ) {
-        log.trace( sb.toString() );
+        log.trace(sb.toString());
       }
     }
   }

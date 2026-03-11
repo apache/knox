@@ -16,16 +16,13 @@
  */
 package org.apache.knox.gateway.filter;
 
-import com.google.common.net.HttpHeaders;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
-public class HSTSHandler extends HandlerWrapper {
+public class HSTSHandler extends Handler.Wrapper {
 
     private final String option;
 
@@ -34,8 +31,8 @@ public class HSTSHandler extends HandlerWrapper {
     }
 
     @Override
-    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        response.setHeader(HttpHeaders.STRICT_TRANSPORT_SECURITY, option);
-        super.handle(target, baseRequest, request, response);
+    public boolean handle(Request request, Response response, Callback callback) throws Exception {
+       response.getHeaders().put(HttpHeader.STRICT_TRANSPORT_SECURITY, option);
+       return super.handle(request, response, callback);
     }
 }

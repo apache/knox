@@ -20,46 +20,56 @@ package org.apache.knox.gateway.trace;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
-import java.io.IOException;
-import java.util.Enumeration;
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.io.Content;
+import org.eclipse.jetty.server.Request;
+
+import java.nio.ByteBuffer;
 import java.util.Locale;
 
-class TraceRequest extends HttpServletRequestWrapper {
+class TraceRequest extends Request.Wrapper {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
   private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_REQUEST_HEADER_LOGGER );
 
-  private ServletInputStream input;
+  private TraceInput delegate;
 
-  TraceRequest( HttpServletRequest request ) {
-    super( request );
-    if( log.isTraceEnabled() ) {
+  TraceRequest(Request request) {
+    super(request);
+    if (log.isTraceEnabled()) {
+      delegate = new TraceInput();
       traceRequestDetails();
     }
   }
 
   @Override
-  public synchronized ServletInputStream getInputStream() throws IOException {
-    if( log.isTraceEnabled() ) {
-      if( input == null ) {
-        input = new TraceInput( super.getInputStream() );
+  public void demand(Runnable demandCallback) {
+    super.demand(demandCallback);
+  }
+
+  @Override
+  public Content.Chunk read() {
+    Content.Chunk chunk = super.read();
+    if (chunk != null && log.isTraceEnabled()) {
+      if (Content.Chunk.isFailure(chunk)) {
+        // Log that the request failed if you want
+        return chunk;
       }
-      return input;
-    } else {
-      return super.getInputStream();
+      ByteBuffer data = chunk.getByteBuffer();
+      // Use slice() so the tracer doesn't interfere with the data
+      delegate.extractContent(data != null ? data.slice() : null, chunk.isLast());
     }
+    return chunk;
   }
 
   private void traceRequestDetails() {
     StringBuilder sb = new StringBuilder();
     TraceUtil.appendCorrelationContext( sb );
     sb.append("|Request=")
-        .append(getMethod())
-        .append(' ')
-        .append(getRequestURI());
-    String qs = getQueryString();
+    .append(getMethod())
+    .append(' ')
+    .append(getHttpURI().getPath());
+    String qs = getHttpURI().getQuery();
     if( qs != null ) {
       sb.append('?').append(qs);
     }
@@ -67,15 +77,12 @@ class TraceRequest extends HttpServletRequestWrapper {
     log.trace(sb.toString());
   }
 
-  private void appendHeaders( StringBuilder sb ) {
-    if( headLog.isTraceEnabled() ) {
-      Enumeration<String> names = getHeaderNames();
-      while( names.hasMoreElements() ) {
-        String name = names.nextElement();
-        Enumeration<String> values = getHeaders( name );
-        while( values.hasMoreElements() ) {
-          String value = values.nextElement();
-          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", name, value ) );
+  private void appendHeaders(StringBuilder sb) {
+    if (headLog.isTraceEnabled()) {
+      HttpFields requestHeaders = getHeaders();
+      if (requestHeaders != null) {
+        for (HttpField header: requestHeaders) {
+          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", header.getName(), header.getValue()));
         }
       }
     }
