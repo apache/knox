@@ -185,9 +185,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   // backward compatibility.
   // LET'S NOT CONTINUE THIS PATTERN BUT LEAVE THEM FOR NOW.
   private static final String SSL_ENABLED = "ssl.enabled";
-  private static final String SSL_INCLUDE_PROTOCOLS = "ssl.include.protocols";
+  static final String SSL_INCLUDE_PROTOCOLS = "ssl.include.protocols";
   private static final String SSL_EXCLUDE_PROTOCOLS = "ssl.exclude.protocols";
-  private static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
+  static final String SSL_INCLUDE_CIPHERS = "ssl.include.ciphers";
   private static final String SSL_EXCLUDE_CIPHERS = "ssl.exclude.ciphers";
   private static final String SSL_RENEGOTIATION = "ssl.renegotiation";
   // END BACKWARD COMPATIBLE BLOCK
@@ -305,8 +305,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_ROLE_TYPES = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.excluded.role.types";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.api.version";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.role.fetch.strategy";
-  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_PROTOCOLS = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.ssl.protocols";
-  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_CIPHERS = GATEWAY_CONFIG_FILE_PREFIX +  ".cloudera.manager.service.discovery.ssl.ciphers";
+  static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_PROTOCOLS = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.ssl.protocols";
+  static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_CIPHERS = GATEWAY_CONFIG_FILE_PREFIX +  ".cloudera.manager.service.discovery.ssl.ciphers";
 
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT = 10000;
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 10000;
