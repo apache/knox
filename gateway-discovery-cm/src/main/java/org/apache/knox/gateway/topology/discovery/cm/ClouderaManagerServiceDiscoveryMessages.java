@@ -271,6 +271,12 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.WARN, text = "Failed to create persistence directory {0}")
   void failedToCreatePersistenceDirectory(String path);
 
+  @Message(level = MessageLevel.DEBUG, text = "Using {0} SSL ciphers (configured = {1}) in CM discovery client.")
+  void usingSslCiphers(String ciphers, boolean configured);
+
+  @Message(level = MessageLevel.DEBUG, text = "Using {0} SSL protocols (configured = {1}) in CM discovery client.")
+  void usingSslProtocols(String protocols, boolean configured);
+
   @Message(level = MessageLevel.ERROR, text = "Failed to configure truststore")
   void failedToConfigureTruststore();
 

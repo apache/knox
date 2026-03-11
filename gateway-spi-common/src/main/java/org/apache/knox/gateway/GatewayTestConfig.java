@@ -903,6 +903,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public Set<String> getClouderaManagerClientSSLProtocols() {
+    return Set.of();
+  }
+
+  @Override
+  public List<String> getClouderaManagerClientSSLCiphers() {
+    return List.of();
+  }
+
+  @Override
   public boolean isServerManagedTokenStateEnabled() {
     return false;
   }

@@ -685,4 +685,48 @@ public class GatewayConfigImplTest {
       assertThat(config.isTopologyAsyncSupported("sandbox2"), is(true));
       assertThat(config.isTopologyAsyncSupported("health"), is(true));
     }
+
+  @Test
+  public void testCmSslProtocolsConfigured() {
+    final GatewayConfigImpl conf = new GatewayConfigImpl();
+    conf.set(GatewayConfigImpl.CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_PROTOCOLS, "TLSv1.2,TLSv1.3");
+    final Set<String> result = conf.getClouderaManagerClientSSLProtocols();
+    assertEquals(Set.of("TLSv1.2", "TLSv1.3"), result);
+  }
+
+  @Test
+  public void testCmSslProtocolsFallbackToGatewayIncludedProtocols() {
+    final GatewayConfigImpl conf = new GatewayConfigImpl();
+    conf.set(GatewayConfigImpl.SSL_INCLUDE_PROTOCOLS, "TLSv1.2");
+    final Set<String> result = conf.getClouderaManagerClientSSLProtocols();
+    assertEquals(Set.of("TLSv1.2"), result);
+  }
+
+  @Test
+  public void testCmSslProtocolsWithoutDefaults() {
+    final Set<String> result = new GatewayConfigImpl().getClouderaManagerClientSSLProtocols();
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testCmSslCiphersConfigured() {
+    final GatewayConfigImpl conf = new GatewayConfigImpl();
+    conf.set(GatewayConfigImpl.CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_CIPHERS, "TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384");
+    final List<String> result = conf.getClouderaManagerClientSSLCiphers();
+    assertEquals(List.of("TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384"), result);
+  }
+
+  @Test
+  public void testCmSslCiphersFallbackToGatewayIncludedCiphers() {
+    final GatewayConfigImpl conf = new GatewayConfigImpl();
+    conf.set(GatewayConfigImpl.SSL_INCLUDE_CIPHERS, "TLS_AES_128_GCM_SHA256");
+    final List<String> result = conf.getClouderaManagerClientSSLCiphers();
+    assertEquals(List.of("TLS_AES_128_GCM_SHA256"), result);
+  }
+
+  @Test
+  public void testCmSslCiphersWithoutDefaults() {
+    final List<String> result = new GatewayConfigImpl().getClouderaManagerClientSSLCiphers();
+    assertNull(result);
+  }
 }

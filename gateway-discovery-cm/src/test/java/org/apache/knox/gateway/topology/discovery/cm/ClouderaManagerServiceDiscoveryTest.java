@@ -1422,8 +1422,8 @@ public class ClouderaManagerServiceDiscoveryTest {
       EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryMaximumRetryAttempts()).andReturn(GatewayConfig.DEFAULT_CM_SERVICE_DISCOVERY_MAX_RETRY_ATTEMPTS).anyTimes();
       EasyMock.expect(gwConf.getClusterMonitorPollingInterval(ClouderaManagerClusterConfigurationMonitor.getType())).andReturn(10).anyTimes();
     }
-    EasyMock.expect(gwConf.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
-    EasyMock.expect(gwConf.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerClientSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerClientSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(apiVersion).anyTimes();
     EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryRoleFetchStrategy()).andReturn(roleFetchStrategy).anyTimes();
     if (excludedServiceType == null) {
