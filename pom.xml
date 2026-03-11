@@ -229,7 +229,7 @@
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
         <jakarta.json.version>2.0.1</jakarta.json.version>
         <jakarta.json-api.version>2.1.3</jakarta.json-api.version>
-        <jakarta.servlet-api.version>5.0.0</jakarta.servlet-api.version>
+        <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
         <jakarta.websocket-api.version>2.1.1</jakarta.websocket-api.version>
         <jakarta.ws.rs-api.version>3.0.0</jakarta.ws.rs-api.version>
         <jakarta.xml.bind.version>4.0.5</jakarta.xml.bind.version>
@@ -1475,49 +1475,49 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-servlet</artifactId>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-servlet</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-annotations</artifactId>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-annotations</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-apache-jsp</artifactId>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-apache-jsp</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-servlets</artifactId>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-servlets</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9</groupId>
-                <artifactId>jetty-ee9-webapp</artifactId>
+                <groupId>org.eclipse.jetty.ee10</groupId>
+                <artifactId>jetty-ee10-webapp</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-                <artifactId>jetty-ee9-websocket-jakarta-server</artifactId>
+                <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+                <artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-                <artifactId>jetty-ee9-websocket-jakarta-client</artifactId>
+                <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+                <artifactId>jetty-ee10-websocket-jakarta-client</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-                <artifactId>jetty-ee9-websocket-jetty-server</artifactId>
+                <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+                <artifactId>jetty-ee10-websocket-jetty-server</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-                <artifactId>jetty-ee9-websocket-servlet</artifactId>
+                <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+                <artifactId>jetty-ee10-websocket-servlet</artifactId>
                 <version>${jetty.version}</version>
             </dependency>
 

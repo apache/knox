@@ -56,13 +56,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-annotations</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-annotations</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.eclipse.jetty.ee9</groupId>
-                    <artifactId>jetty-ee9-webapp</artifactId>
+                    <groupId>org.eclipse.jetty.ee10</groupId>
+                    <artifactId>jetty-ee10-webapp</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.eclipse.jetty</groupId>
@@ -116,8 +116,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-security</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-security</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
@@ -134,20 +134,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.eclipse.jetty.ee9</groupId>
-                    <artifactId>jetty-ee9-security</artifactId>
+                    <groupId>org.eclipse.jetty</groupId>
+                    <artifactId>jetty-security</artifactId>
                 </exclusion>
             </exclusions>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-webapp</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-webapp</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
@@ -155,8 +155,8 @@
                     <artifactId>jetty-xml</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.eclipse.jetty.ee9</groupId>
-                    <artifactId>jetty-ee9-servlet</artifactId>
+                    <groupId>org.eclipse.jetty.ee10</groupId>
+                    <artifactId>jetty-ee10-servlet</artifactId>
                 </exclusion>
             </exclusions>
             <scope>test</scope>

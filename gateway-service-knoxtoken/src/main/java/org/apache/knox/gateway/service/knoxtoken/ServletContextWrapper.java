@@ -110,28 +110,8 @@ class ServletContextWrapper implements ServletContext {
     }
 
     @Override
-    public Servlet getServlet(String name) throws ServletException {
-        return delegate.getServlet(name);
-    }
-
-    @Override
-    public Enumeration<Servlet> getServlets() {
-        return delegate.getServlets();
-    }
-
-    @Override
-    public Enumeration<String> getServletNames() {
-        return delegate.getServletNames();
-    }
-
-    @Override
     public void log(String msg) {
         delegate.log(msg);
-    }
-
-    @Override
-    public void log(Exception exception, String msg) {
-        delegate.log(msg, exception);
     }
 
     @Override
@@ -229,6 +209,11 @@ class ServletContextWrapper implements ServletContext {
     @Override
     public ServletRegistration.Dynamic addServlet(String servletName, Class<? extends Servlet> servletClass) {
         return delegate.addServlet(servletName, servletClass);
+    }
+
+    @Override
+    public ServletRegistration.Dynamic addJspFile(String s, String s1) {
+        return null;
     }
 
     @Override
@@ -334,5 +319,35 @@ class ServletContextWrapper implements ServletContext {
     @Override
     public String getVirtualServerName() {
         return delegate.getVirtualServerName();
+    }
+
+    @Override
+    public int getSessionTimeout() {
+        return 0;
+    }
+
+    @Override
+    public void setSessionTimeout(int i) {
+
+    }
+
+    @Override
+    public String getRequestCharacterEncoding() {
+        return "";
+    }
+
+    @Override
+    public void setRequestCharacterEncoding(String s) {
+
+    }
+
+    @Override
+    public String getResponseCharacterEncoding() {
+        return "";
+    }
+
+    @Override
+    public void setResponseCharacterEncoding(String s) {
+
     }
 }

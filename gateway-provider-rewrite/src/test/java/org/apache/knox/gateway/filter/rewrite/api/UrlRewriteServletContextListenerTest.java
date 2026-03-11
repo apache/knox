@@ -19,9 +19,9 @@ package org.apache.knox.gateway.filter.rewrite.api;
 
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
-import org.eclipse.jetty.ee9.servlet.FilterHolder;
-import org.eclipse.jetty.ee9.servlet.ServletHolder;
-import org.eclipse.jetty.ee9.servlet.ServletTester;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletTester;
 import org.junit.After;
 import org.junit.Before;
 

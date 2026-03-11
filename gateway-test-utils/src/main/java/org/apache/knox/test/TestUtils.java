@@ -27,7 +27,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.eclipse.jetty.http.HttpTester;
-import org.eclipse.jetty.ee9.servlet.ServletTester;
+import org.eclipse.jetty.ee10.servlet.ServletTester;
 
 import java.io.File;
 import java.io.FileNotFoundException;

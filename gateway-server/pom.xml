@@ -159,16 +159,16 @@
             <artifactId>jetty-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-webapp</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-webapp</artifactId>
         </dependency>
         
         <dependency>
@@ -325,12 +325,12 @@
         The need to be late in the classpath for some reason otherwise class loading issues occur.
         -->
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-annotations</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9</groupId>
-            <artifactId>jetty-ee9-apache-jsp</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-apache-jsp</artifactId>
         </dependency>
 
         <dependency>
@@ -348,13 +348,13 @@
             <artifactId>jetty-websocket-jetty-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-            <artifactId>jetty-ee9-websocket-jetty-server</artifactId>
+            <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+            <artifactId>jetty-ee10-websocket-jetty-server</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-            <artifactId>jetty-ee9-websocket-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+            <artifactId>jetty-ee10-websocket-servlet</artifactId>
         </dependency>
 
         <dependency>
@@ -363,13 +363,13 @@
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-            <artifactId>jetty-ee9-websocket-jakarta-server</artifactId>
+            <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+            <artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
-            <artifactId>jetty-ee9-websocket-jakarta-client</artifactId>
+            <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+            <artifactId>jetty-ee10-websocket-jakarta-client</artifactId>
         </dependency>
 
         <dependency>
