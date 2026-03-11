@@ -788,6 +788,10 @@ public interface GatewayConfig {
 
   String getClouderaManagerServiceDiscoveryRoleFetchStrategy();
 
+  Set<String> getClouderaManagerClientSSLProtocols();
+
+  List<String> getClouderaManagerClientSSLCiphers();
+
   /**
    * @return true, if state for tokens issued by the Knox Token service should be managed by Knox.
    */

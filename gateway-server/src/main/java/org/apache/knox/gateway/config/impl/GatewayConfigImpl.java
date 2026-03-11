@@ -305,6 +305,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_EXCLUDED_ROLE_TYPES = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.excluded.role.types";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.api.version";
   private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.role.fetch.strategy";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_PROTOCOLS = GATEWAY_CONFIG_FILE_PREFIX + ".cloudera.manager.service.discovery.ssl.protocols";
+  private static final String CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_CIPHERS = GATEWAY_CONFIG_FILE_PREFIX +  ".cloudera.manager.service.discovery.ssl.ciphers";
 
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_CONNECT_TIMEOUT_DEFAULT = 10000;
   private static final long CLOUDERA_MANAGER_SERVICE_DISCOVERY_READ_TIMEOUT_DEFAULT = 10000;
@@ -1363,6 +1365,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     return get(CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY, CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE);
   }
 
+  @Override
+  public Set<String> getClouderaManagerClientSSLProtocols() {
+    final List<String> cmClientSSLProtocols = splitConfigValueToList(CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_PROTOCOLS);
+    return  cmClientSSLProtocols == null || cmClientSSLProtocols.isEmpty() ? getIncludedSSLProtocols() : new HashSet<>(cmClientSSLProtocols);
+  }
+
+  @Override
+  public List<String> getClouderaManagerClientSSLCiphers() {
+    final List<String> cmClientSSLCiphers = splitConfigValueToList(CLOUDERA_MANAGER_SERVICE_DISCOVERY_SSL_CIPHERS);
+    return cmClientSSLCiphers == null || cmClientSSLCiphers.isEmpty() ? getIncludedSSLCiphers() : cmClientSSLCiphers;
+  }
 
   @Override
   public boolean isServerManagedTokenStateEnabled() {

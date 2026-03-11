@@ -177,25 +177,31 @@ public class DiscoveryApiClient extends ApiClient {
 
     if (truststoreSSLContext != null && trustManager != null) {
       final ConnectionSpec.Builder connectionSpecBuilder = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS);
-      final List<String> includedSslCiphers = gatewayConfig.getIncludedSSLCiphers();
-      if (includedSslCiphers == null || includedSslCiphers.isEmpty()) {
-        connectionSpecBuilder.cipherSuites(truststoreSSLContext.getSupportedSSLParameters().getCipherSuites());
-      } else {
-        connectionSpecBuilder.cipherSuites(includedSslCiphers.toArray(new String[0]));
-      }
-      final Set<String> includedSslProtocols = gatewayConfig.getIncludedSSLProtocols();
-      if (includedSslProtocols.isEmpty()) {
-        connectionSpecBuilder.tlsVersions(truststoreSSLContext.getSupportedSSLParameters().getProtocols());
-      } else {
-        connectionSpecBuilder.tlsVersions(includedSslProtocols.toArray(new String[0]));
-      }
-      OkHttpClient.Builder builder = getHttpClient().newBuilder();
-      builder.connectionSpecs(Arrays.asList(connectionSpecBuilder.build()));
+      configureSslCiphers(gatewayConfig, truststoreSSLContext, connectionSpecBuilder);
+      configureSslProtocols(gatewayConfig, connectionSpecBuilder, truststoreSSLContext);
+      final OkHttpClient.Builder builder = getHttpClient().newBuilder();
+      builder.connectionSpecs(List.of(connectionSpecBuilder.build()));
       builder.sslSocketFactory(truststoreSSLContext.getSocketFactory(), trustManager);
       setHttpClient(builder.build());
     } else {
       log.failedToConfigureTruststore();
     }
+  }
+
+  private void configureSslCiphers(GatewayConfig gatewayConfig, SSLContext truststoreSSLContext, ConnectionSpec.Builder connectionSpecBuilder) {
+    final List<String> configuredSslCiphers = gatewayConfig.getClouderaManagerClientSSLCiphers();
+    final boolean isConfigured = configuredSslCiphers != null && !configuredSslCiphers.isEmpty();
+    final String[] sslCiphers = isConfigured ? configuredSslCiphers.toArray(new String[0]) : truststoreSSLContext.getSupportedSSLParameters().getCipherSuites();
+    log.usingSslCiphers(Arrays.toString(sslCiphers), isConfigured);
+    connectionSpecBuilder.cipherSuites(sslCiphers);
+  }
+
+  private void configureSslProtocols(GatewayConfig gatewayConfig, ConnectionSpec.Builder connectionSpecBuilder, SSLContext truststoreSSLContext) {
+    final Set<String> configuredSslProtocols = gatewayConfig.getClouderaManagerClientSSLProtocols();
+    final boolean isConfigured = configuredSslProtocols != null && !configuredSslProtocols.isEmpty();
+    final String[] sslProtocols = isConfigured ? configuredSslProtocols.toArray(new String[0]) : truststoreSSLContext.getSupportedSSLParameters().getProtocols();
+    log.usingSslProtocols(Arrays.toString(sslProtocols), isConfigured);
+    connectionSpecBuilder.cipherSuites(sslProtocols);
   }
 
 }
