@@ -64,8 +64,8 @@ public class ApiClientFactoryTest {
         EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryConnectTimeoutMillis()).andReturn(1L).anyTimes();
         EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryReadTimeoutMillis()).andReturn(1L).anyTimes();
         EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryWriteTimeoutMillis()).andReturn(1L).anyTimes();
-        EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
-        EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+        EasyMock.expect(gatewayConfig.getClouderaManagerClientSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+        EasyMock.expect(gatewayConfig.getClouderaManagerClientSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
         final ServiceDiscoveryConfig serviceDiscoveryConfig = EasyMock.createMock(ServiceDiscoveryConfig.class);
         EasyMock.expect(serviceDiscoveryConfig.getAddress()).andReturn("myCmHost").anyTimes();
         EasyMock.expect(serviceDiscoveryConfig.getUser()).andReturn("myCmUser").anyTimes();
