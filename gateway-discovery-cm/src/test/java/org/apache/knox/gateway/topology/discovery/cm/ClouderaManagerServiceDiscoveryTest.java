@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.topology.discovery.cm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
@@ -37,7 +38,10 @@ import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
 import okhttp3.Call;
+import okhttp3.CipherSuite;
+import okhttp3.ConnectionSpec;
 import okhttp3.Interceptor;
+import okhttp3.TlsVersion;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -73,6 +77,7 @@ import org.junit.Test;
 import javax.security.auth.Subject;
 import java.lang.reflect.Type;
 import java.net.SocketTimeoutException;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,6 +85,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClouderaManagerServiceDiscoveryTest {
@@ -150,8 +156,12 @@ public class ClouderaManagerServiceDiscoveryTest {
 
   @Test
   public void testApiClientInterceptorsWhenKerberosIsDisabledAndPasswordIsNotSet() {
+    final String cmClientCipher = "TLS_AES_256_GCM_SHA384";
+    final String cmClientTlsVersion = "TLSv1.2";
     GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerClientSSLCiphers()).andReturn(List.of(cmClientCipher)).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerClientSSLProtocols()).andReturn(Set.of(cmClientTlsVersion)).anyTimes();
     EasyMock.replay(gwConf);
 
     ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
@@ -159,7 +169,10 @@ public class ClouderaManagerServiceDiscoveryTest {
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.replay(aliasService);
 
-    ApiClient apiClient = new TestDiscoveryApiClient(gwConf, sdConfig, aliasService);
+    KeyStore trustStore = EasyMock.createNiceMock(KeyStore.class);
+    EasyMock.replay(trustStore);
+
+    ApiClient apiClient = new TestDiscoveryApiClient(gwConf, sdConfig, aliasService, trustStore);
 
     HttpBasicAuth authentication = getBasicAuthentication(apiClient);
     assertNotNull(authentication);
@@ -168,6 +181,26 @@ public class ClouderaManagerServiceDiscoveryTest {
 
     List<Interceptor> interceptors = apiClient.getHttpClient().interceptors();
     assertEquals(0, interceptors.size());
+    final List<ConnectionSpec> connectionSpecs = apiClient.getHttpClient().connectionSpecs();
+    assertEquals(1, connectionSpecs.size());
+
+    assertTrue(connectionSpecs.get(0).isTls());
+
+    assertNotNull(connectionSpecs.get(0).cipherSuites());
+    assertFalse(connectionSpecs.get(0).cipherSuites().isEmpty());
+    assertTrue(containsCipherSuite(connectionSpecs.get(0).cipherSuites(), cmClientCipher));
+
+    assertNotNull(connectionSpecs.get(0).tlsVersions());
+    assertFalse(connectionSpecs.get(0).tlsVersions().isEmpty());
+    assertTrue(containsTlsVersion(connectionSpecs.get(0).tlsVersions(), cmClientTlsVersion));
+  }
+
+  private boolean containsCipherSuite(List<CipherSuite> cipherSuites, String cipherSuiteNameToCheck) {
+    return cipherSuites.stream().anyMatch(cipherSuite -> cipherSuite.javaName().equals(cipherSuiteNameToCheck));
+  }
+
+  private boolean containsTlsVersion(List<TlsVersion> tlsVersions, String tlsVersionNameToCheck) {
+    return tlsVersions.stream().anyMatch(tlsVersion -> tlsVersion.javaName().equals(tlsVersionNameToCheck));
   }
 
   @Test
@@ -1627,7 +1660,11 @@ public class ClouderaManagerServiceDiscoveryTest {
     protected AtomicInteger executeCount = new AtomicInteger(0);
 
     TestDiscoveryApiClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig sdConfig, AliasService aliasService) {
-      super(gatewayConfig, sdConfig, aliasService, null);
+      this(gatewayConfig, sdConfig, aliasService, null);
+    }
+
+    TestDiscoveryApiClient(GatewayConfig gatewayConfig, ServiceDiscoveryConfig sdConfig, AliasService aliasService, KeyStore trustStore) {
+      super(gatewayConfig, sdConfig, aliasService, trustStore);
     }
 
     void addResponse(Type type, ApiResponse<?> response) {
