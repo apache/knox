@@ -21,8 +21,6 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
-import org.apache.directory.api.ldap.schema.loader.JarLdifSchemaLoader;
-import org.apache.directory.api.ldap.schema.manager.impl.DefaultSchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
@@ -92,10 +90,8 @@ public class KnoxLDAPServerManager {
         directoryService = new DefaultDirectoryService();
         directoryService.setInstanceLayout(new InstanceLayout(workDir));
 
-        // Create and load schema manager manually
-        JarLdifSchemaLoader loader = new JarLdifSchemaLoader();
-        SchemaManager schemaManager = new DefaultSchemaManager(loader);
-        schemaManager.loadAllEnabled();
+        // Create SchemaManager
+        SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();
         directoryService.setSchemaManager(schemaManager);
 
         // Initialize schema partition
