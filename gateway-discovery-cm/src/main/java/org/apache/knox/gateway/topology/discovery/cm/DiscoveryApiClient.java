@@ -178,7 +178,7 @@ public class DiscoveryApiClient extends ApiClient {
     if (truststoreSSLContext != null && trustManager != null) {
       final ConnectionSpec.Builder connectionSpecBuilder = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS);
       configureSslCiphers(gatewayConfig, truststoreSSLContext, connectionSpecBuilder);
-      configureSslProtocols(gatewayConfig, connectionSpecBuilder, truststoreSSLContext);
+      configureSslProtocols(gatewayConfig, truststoreSSLContext, connectionSpecBuilder);
       final OkHttpClient.Builder builder = getHttpClient().newBuilder();
       builder.connectionSpecs(List.of(connectionSpecBuilder.build()));
       builder.sslSocketFactory(truststoreSSLContext.getSocketFactory(), trustManager);
@@ -196,12 +196,12 @@ public class DiscoveryApiClient extends ApiClient {
     connectionSpecBuilder.cipherSuites(sslCiphers);
   }
 
-  private void configureSslProtocols(GatewayConfig gatewayConfig, ConnectionSpec.Builder connectionSpecBuilder, SSLContext truststoreSSLContext) {
+  private void configureSslProtocols(GatewayConfig gatewayConfig, SSLContext truststoreSSLContext, ConnectionSpec.Builder connectionSpecBuilder) {
     final Set<String> configuredSslProtocols = gatewayConfig.getClouderaManagerClientSSLProtocols();
     final boolean isConfigured = configuredSslProtocols != null && !configuredSslProtocols.isEmpty();
     final String[] sslProtocols = isConfigured ? configuredSslProtocols.toArray(new String[0]) : truststoreSSLContext.getSupportedSSLParameters().getProtocols();
     log.usingSslProtocols(Arrays.toString(sslProtocols), isConfigured);
-    connectionSpecBuilder.cipherSuites(sslProtocols);
+    connectionSpecBuilder.tlsVersions(sslProtocols);
   }
 
 }
