@@ -22,6 +22,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -54,10 +55,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
-  public static final String GRANT_TYPE = "grant_type";
-  public static final String CLIENT_CREDENTIALS = "client_credentials";
-  public static final String CLIENT_SECRET = "client_secret";
-  public static final String CLIENT_ID = "client_id";
+  public static final String GRANT_TYPE = CommonTokenConstants.GRANT_TYPE;
+  public static final String CLIENT_CREDENTIALS = CommonTokenConstants.CLIENT_CREDENTIALS;
+  public static final String CLIENT_SECRET = CommonTokenConstants.CLIENT_CREDENTIALS;
+  public static final String CLIENT_ID = CommonTokenConstants.CLIENT_ID;
   public static final String INVALID_CLIENT_SECRET = "Error while parsing the received client secret";
   public static final String MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET = "Client credentials flow with mismatching client_id and client_secret";
   public static final String REFRESH_TOKEN = "refresh_token";
