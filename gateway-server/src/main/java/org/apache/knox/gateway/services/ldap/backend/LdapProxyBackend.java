@@ -64,13 +64,13 @@ public class LdapProxyBackend implements LdapBackend {
     private String groupMemberAttribute = "memberUid"; // member for AD, memberUid for POSIX
     private boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
 
-    private List<String> proxyEntityAttributeTypes = List.of(
+    private List<String> proxyEntryAttributeTypes = List.of(
             // "uid" will always be filled
             "cn",
             "dn",
             "mail",
             "description");
-    private final String proxyEntityGroupMembershipAttributeType = "memberOf";
+    private final String proxyEntryGroupMembershipAttributeType = "memberOf";
 
     // Connection pool for efficient connection reuse
     private LdapConnectionPool connectionPool;
@@ -438,16 +438,16 @@ public class LdapProxyBackend implements LdapBackend {
             }
         }
 
-        for (String attributeType : proxyEntityAttributeTypes) {
+        for (String attributeType : proxyEntryAttributeTypes) {
             copyAttribute(sourceEntry, entry, attributeType);
         }
 
         if (useMemberOf) {
-            copyAttribute(sourceEntry, entry, proxyEntityGroupMembershipAttributeType);
+            copyAttribute(sourceEntry, entry, proxyEntryGroupMembershipAttributeType);
         } else {
             List<Entry> groups = getUserGroupsInternal(connection, sourceEntry.getDn().toString(), username);
             for (Entry groupEntry : groups) {
-                entry.add(proxyEntityGroupMembershipAttributeType, groupEntry.getDn().getName());
+                entry.add(proxyEntryGroupMembershipAttributeType, groupEntry.getDn().getName());
             }
         }
 
@@ -461,8 +461,9 @@ public class LdapProxyBackend implements LdapBackend {
             for (org.apache.directory.api.ldap.model.entry.Value value : attr) {
                 try {
                     target.add(attributeName, value.getString());
-                } catch (Exception e) {
+                } catch (LdapException e) {
                     LOG.ldapAttributeCopyError(e);
+                    throw e;
                 }
             }
         }
