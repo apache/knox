@@ -42,7 +42,6 @@ public class LoginCommand extends AbstractKnoxShellCommand {
 
   @Override
   public Object execute(List<String> args) {
-    // FIXED: Prevent IndexOutOfBounds if user types :login without a URL
     if (args == null || args.isEmpty()) {
       terminal.writer().println("Error: Knox Gateway URL required.");
       terminal.writer().println(getUsage());

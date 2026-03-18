@@ -36,7 +36,6 @@ public class CSVCommand extends AbstractKnoxShellCommand {
 
   @Override
   public Object execute(List<String> args) {
-    // FIXED: Prevent shell crash if user types :csv with no arguments
     if (args == null || args.isEmpty()) {
       terminal.writer().println("Usage: " + USAGE);
       terminal.writer().flush();

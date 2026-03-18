@@ -28,10 +28,7 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 
 public abstract class AbstractKnoxShellCommand {
-  static final String KNOXSQLHISTORY = "__knoxsqlhistory";
-  protected static final String KNOXDATASOURCES = "__knoxdatasources";
 
-  // NEW FIELDS: Holding the modern execution context
   protected final GroovyEngine engine;
   protected final Terminal terminal;
   private final String name;
@@ -146,7 +143,7 @@ public abstract class AbstractKnoxShellCommand {
 
       @Override
       public byte[] bytes() {
-        return new String(collectedPassword).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return new String(collectedPassword).getBytes(StandardCharsets.UTF_8);
       }
       @Override
       public String type() {
