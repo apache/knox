@@ -21,38 +21,94 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.KnoxSession;
-import org.apache.groovy.groovysh.CommandSupport;
-import org.apache.groovy.groovysh.Groovysh;
 
-public class LoginCommand extends CommandSupport {
+import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
-  public LoginCommand(Groovysh shell) {
-    super(shell, ":login", ":lgn");
+public class LoginCommand extends AbstractKnoxShellCommand {
+
+  // REFACTORED CONSTRUCTOR
+  public LoginCommand(GroovyEngine engine, Terminal terminal) {
+    // Pass identifiers and docs up to AbstractKnoxShellCommand
+    super(engine, terminal, ":login", ":lgn",
+    "Establishes a Knox session",
+    "Usage: :login <url>",
+    "Establishes a Knox session using terminal credentials");
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Object execute(List<String> args) {
-    KnoxSession session = null;
-    KnoxLoginDialog dlg = new KnoxLoginDialog();
-    try {
-      dlg.collect();
-      if (dlg.ok) {
-        session = KnoxSession.login(args.get(0), dlg.username, new String(dlg.pass));
-        getVariables().put("__knoxsession", session);
-      }
-    } catch (CredentialCollectionException | URISyntaxException e) {
-      e.printStackTrace();
+    // FIXED: Prevent IndexOutOfBounds if user types :login without a URL
+    if (args == null || args.isEmpty()) {
+      terminal.writer().println("Error: Knox Gateway URL required.");
+      terminal.writer().println(getUsage());
+      terminal.writer().flush();
+      return null;
     }
-    return "Session established for: " + args.get(0);
+
+    String url = args.get(0);
+    KnoxSession session = null;
+
+    try {
+      // REPLACED KnoxLoginDialog with JLine 3 native prompting
+      LineReader reader = LineReaderBuilder.builder()
+      .terminal(terminal)
+      .build();
+
+      // 1. Prompt for Username (Clear text)
+      String username = reader.readLine("Username: ");
+      if (username == null || username.trim().isEmpty()) {
+        terminal.writer().println("Login cancelled: Username cannot be empty.");
+        terminal.writer().flush();
+        return null;
+      }
+
+      // 2. Prompt for Password (Masked with '*')
+      // JLine 3 intercepts keystrokes and prints the mask char instead of the actual key
+      String password = reader.readLine("Password: ", '*');
+
+      if (password != null) {
+        // Create the session
+        session = KnoxSession.login(url, username, password);
+
+        // Inject the session into the Groovy 5 environment
+        engine.put("__knoxsession", session);
+
+        terminal.writer().println("Session established for: " + url);
+        terminal.writer().flush();
+      } else {
+        terminal.writer().println("Login cancelled.");
+        terminal.writer().flush();
+      }
+
+    } catch (URISyntaxException e) {
+      terminal.writer().println("Invalid URL syntax: " + e.getMessage());
+      terminal.writer().flush();
+    } catch (Exception e) {
+      terminal.writer().println("Failed to establish session: " + e.getMessage());
+      e.printStackTrace(terminal.writer());
+      terminal.writer().flush();
+    }
+
+    return session; // Returning the session object
   }
 
   public static void main(String[] args) {
-    LoginCommand cmd = new LoginCommand(new Groovysh());
-    List<String> args2 = new ArrayList<>();
-    args2.add("https://localhost:8443/gateway");
-    cmd.execute(args2);
+    try {
+      // Test using JLine 3 Terminal
+      Terminal terminal = TerminalBuilder.builder().system(true).build();
+      GroovyEngine engine = new GroovyEngine();
+      LoginCommand cmd = new LoginCommand(engine, terminal);
+
+      List<String> args2 = new ArrayList<>();
+      args2.add("https://localhost:8443/gateway/sandbox");
+      cmd.execute(args2);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

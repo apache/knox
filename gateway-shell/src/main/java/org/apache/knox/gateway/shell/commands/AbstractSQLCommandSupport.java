@@ -28,7 +28,9 @@ import java.util.Map;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.KnoxSession;
 import org.apache.knox.gateway.shell.jdbc.JDBCUtils;
-import org.apache.groovy.groovysh.Groovysh;
+
+import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.terminal.Terminal;
 
 public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand {
 
@@ -36,24 +38,23 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
   protected static final String KNOXDATASOURCE = "__knoxdatasource";
   private static final Object KNOXDATASOURCE_CONNECTIONS = "__knoxdatasourceconnections";
 
-  public AbstractSQLCommandSupport(Groovysh shell, String name, String shortcut) {
-    super(shell, name, shortcut);
+  public AbstractSQLCommandSupport(GroovyEngine engine, Terminal terminal, String name, String shortcut) {
+    super(engine, terminal, name, shortcut);
   }
 
-  public AbstractSQLCommandSupport(Groovysh shell, String name, String shortcut, String desc, String usage,
-      String help) {
-    super(shell, name, shortcut, desc, usage, help);
+  public AbstractSQLCommandSupport(GroovyEngine engine, Terminal terminal, String name, String shortcut, String desc, String usage,
+                                   String help) {
+    super(engine, terminal, name, shortcut, desc, usage, help);
   }
 
   @SuppressWarnings("unchecked")
   protected Connection getConnectionFromSession(KnoxDataSource ds) {
-    HashMap<String, Connection> connections =
-        (HashMap<String, Connection>) getVariables()
-        .getOrDefault(KNOXDATASOURCE_CONNECTIONS,
-            new HashMap<String, Connection>());
-
-    Connection conn = connections.get(ds.getName());
-    return conn;
+    //GroovyEngine bindings lack getOrDefault, so we check for null manually
+    HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get((String)KNOXDATASOURCE_CONNECTIONS);
+    if (connections == null) {
+      connections = new HashMap<>();
+    }
+    return connections.get(ds.getName());
   }
 
   @SuppressWarnings("unchecked")
@@ -62,45 +63,46 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     if (conn == null) {
       if (user != null && pass != null) {
         conn = JDBCUtils.createConnection(ds.getConnectStr(), user, pass);
-      }
-      else {
+      } else {
         conn = JDBCUtils.createConnection(ds.getConnectStr(), null, null);
-
       }
-      HashMap<String, Connection> connections =
-          (HashMap<String, Connection>) getVariables()
-          .getOrDefault(KNOXDATASOURCE_CONNECTIONS,
-              new HashMap<String, Connection>());
+
+      HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get((String) KNOXDATASOURCE_CONNECTIONS);
+      if (connections == null) {
+        connections = new HashMap<>();
+      }
       connections.put(ds.getName(), conn);
-      getVariables().put(KNOXDATASOURCE_CONNECTIONS, connections);
+      engine.put((String) KNOXDATASOURCE_CONNECTIONS, connections);
     }
     return conn;
   }
 
+  @SuppressWarnings("unchecked")
   protected void persistSQLHistory() {
-    Map<String, List<String>> sqlHistories =
-        (Map<String, List<String>>) getVariables().get(KNOXSQLHISTORY);
+    Map<String, List<String>> sqlHistories = (Map<String, List<String>>) engine.get(KNOXSQLHISTORY);
     KnoxSession.persistSQLHistory(sqlHistories);
   }
 
+  @SuppressWarnings("unchecked")
   protected void persistDataSources() {
-    Map<String, KnoxDataSource> datasources =
-        (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
+    Map<String, KnoxDataSource> datasources = (Map<String, KnoxDataSource>) engine.get(KNOXDATASOURCES);
     KnoxSession.persistDataSources(datasources);
   }
 
+  @SuppressWarnings("unchecked")
   protected List<String> getSQLHistory(String dataSourceName) {
     List<String> sqlHistory = null;
-    Map<String, List<String>> sqlHistories =
-        (Map<String, List<String>>) getVariables().get(KNOXSQLHISTORY);
+    Map<String, List<String>> sqlHistories = (Map<String, List<String>>) engine.get(KNOXSQLHISTORY);
+
     if (sqlHistories == null) {
       // check for persisted histories for known datasources
       sqlHistories = loadSQLHistories();
       if (sqlHistories == null || sqlHistories.isEmpty()) {
         sqlHistories = new HashMap<>();
-        getVariables().put(KNOXSQLHISTORY, sqlHistories);
+        engine.put(KNOXSQLHISTORY, sqlHistories);
       }
     }
+
     // get the history for the specific datasource
     sqlHistory = sqlHistories.get(dataSourceName);
     if (sqlHistory == null) {
@@ -120,10 +122,13 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     try {
       sqlHistories = KnoxSession.loadSQLHistories();
       if (sqlHistories != null) {
-        getVariables().put(KNOXSQLHISTORY, sqlHistories);
+        engine.put(KNOXSQLHISTORY, sqlHistories);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      // Route errors through JLine terminal
+      terminal.writer().println("Error loading SQL history: " + e.getMessage());
+      e.printStackTrace(terminal.writer());
+      terminal.writer().flush();
     }
     return sqlHistories;
   }
@@ -133,10 +138,13 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     try {
       datasources = KnoxSession.loadDataSources();
       if (datasources != null) {
-        getVariables().put(KNOXDATASOURCES, datasources);
+        engine.put(KNOXDATASOURCES, datasources);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      //Route errors through JLine terminal
+      terminal.writer().println("Error loading Data Sources: " + e.getMessage());
+      e.printStackTrace(terminal.writer());
+      terminal.writer().flush();
     }
     return datasources;
   }
@@ -167,22 +175,25 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
     persistSQLHistory();
   }
 
+  @SuppressWarnings("unchecked")
   protected void removeFromSQLHistory(String dsName) {
-    Map<String, List<String>> sqlHistories =
-        (Map<String, List<String>>) getVariables().get(KNOXSQLHISTORY);
-    sqlHistories.remove(dsName);
-    persistSQLHistory();
+    Map<String, List<String>> sqlHistories = (Map<String, List<String>>) engine.get(KNOXSQLHISTORY);
+    if (sqlHistories != null) { // Can be null
+      sqlHistories.remove(dsName);
+      persistSQLHistory();
+    }
   }
 
+  @SuppressWarnings("unchecked")
   protected Map<String, KnoxDataSource> getDataSources() {
-    Map<String, KnoxDataSource> datasources = (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
+    Map<String, KnoxDataSource> datasources = (Map<String, KnoxDataSource>) engine.get(KNOXDATASOURCES);
     if (datasources == null) {
       datasources = loadDataSources();
       if (datasources != null) {
-        getVariables().put(KNOXDATASOURCES, datasources);
-      }
-      else {
+        engine.put(KNOXDATASOURCES, datasources);
+      } else {
         datasources = new HashMap<>();
+        engine.put(KNOXDATASOURCES, datasources); // ADDED: Store the empty map to prevent repeated loading attempts
       }
     }
     return datasources;
@@ -191,18 +202,18 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
   @SuppressWarnings("unchecked")
   public void closeConnections() {
     // close all JDBC connections in the session - called by shutdown hook
-    HashMap<String, Connection> connections =
-        (HashMap<String, Connection>) getVariables()
-        .getOrDefault(KNOXDATASOURCE_CONNECTIONS,
-            new HashMap<String, Connection>());
-    connections.values().forEach(connection->{
-      try {
-        if (!connection.isClosed()) {
-          connection.close();
+    HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get((String) KNOXDATASOURCE_CONNECTIONS);
+    if (connections == null) {
+      connections = new HashMap<>();
+    }
+    connections.values().forEach(connection -> {
+        try {
+          if (!connection.isClosed()) {
+            connection.close();
+          }
+        } catch (SQLException e) {
+          // nop
         }
-      } catch (SQLException e) {
-        // nop
-      }
-    });
+      });
   }
 }

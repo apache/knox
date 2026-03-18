@@ -19,7 +19,7 @@ package org.apache.knox.gateway.shell;
 
 import groovy.ui.GroovyMain;
 
-import org.apache.knox.gateway.shell.commands.AbstractSQLCommandSupport;
+import org.apache.knox.gateway.shell.commands.AbstractKnoxShellCommand;
 import org.apache.knox.gateway.shell.commands.CSVCommand;
 import org.apache.knox.gateway.shell.commands.DataSourceCommand;
 import org.apache.knox.gateway.shell.commands.SelectCommand;
@@ -31,13 +31,24 @@ import org.apache.knox.gateway.shell.manager.Manager;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
-import org.apache.groovy.groovysh.AnsiDetector;
-import org.apache.groovy.groovysh.Groovysh;
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 
+import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.reader.Completer;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class Shell {
@@ -56,48 +67,127 @@ public class Shell {
       KnoxShellTable.class.getName()
   };
 
-  static {
-    AnsiConsole.systemInstall();
-    Ansi.setDetector( new AnsiDetector() );
-    System.setProperty( "groovysh.prompt", "knox" );
-  }
-
-  @SuppressWarnings("PMD.DoNotUseThreads") // we need to define a Thread to be able to register a shutdown hook
-  public static void main( String... args ) throws Exception {
-    if( args.length > 0 ) {
+  @SuppressWarnings("PMD.DoNotUseThreads")
+  public static void main(String... args) throws Exception {
+    if (args.length > 0) {
       if (NON_INTERACTIVE_COMMANDS.contains(args[0])) {
-          final String[] arguments = new String[args.length == 1 ? 1:3];
-          arguments[0] = args[0];
-          if (args.length > 1) {
-            arguments[1] = "--gateway";
-            arguments[2] = args[1];
-          }
-          KnoxSh.main(arguments);
+        final String[] arguments = new String[args.length == 1 ? 1 : 3];
+        arguments[0] = args[0];
+        if (args.length > 1) {
+          arguments[1] = "--gateway";
+          arguments[2] = args[1];
+        }
+        KnoxSh.main(arguments);
       } else {
-          GroovyMain.main( args );
+        // Execute Groovy scripts headlessly
+        GroovyMain.main(args);
       }
     } else {
-      Groovysh shell = new Groovysh();
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          System.out.println("Closing any open connections ...");
-          AbstractSQLCommandSupport sqlcmd = (AbstractSQLCommandSupport) shell.getRegistry().getProperty(":ds");
-          sqlcmd.closeConnections();
-          sqlcmd = (AbstractSQLCommandSupport) shell.getRegistry().getProperty(":sql");
-          sqlcmd.closeConnections();
-        }
-      });
-      for( String name : IMPORTS ) {
-        shell.execute( "import " + name );
-      }
-      // register custom groovysh commands
-      shell.register(new SelectCommand(shell));
-      shell.register(new DataSourceCommand(shell));
-      shell.register(new CSVCommand(shell));
-      shell.register(new WebHDFSCommand(shell));
-      shell.run( null );
+      // Boot the Interactive JLine 3 REPL
+      startInteractiveShell();
     }
   }
 
+  private static void startInteractiveShell() throws Exception {
+    // 1. Build Terminal and Engine
+    Terminal terminal = TerminalBuilder.builder().system(true).name("KnoxShell").build();
+    GroovyEngine engine = new GroovyEngine();
+
+    // 2. Pre-load Knox imports
+    for (String name : IMPORTS) {
+      engine.execute("import " + name);
+    }
+
+    // 3. Instantiate and Map Custom Commands
+    Map<String, AbstractKnoxShellCommand> registry = new HashMap<>();
+    SelectCommand selectCmd = new SelectCommand(engine, terminal);
+    DataSourceCommand dsCmd = new DataSourceCommand(engine, terminal);
+    CSVCommand csvCmd = new CSVCommand(engine, terminal);
+    WebHDFSCommand hdfsCmd = new WebHDFSCommand(engine, terminal);
+
+    registerCommand(registry, selectCmd);
+    registerCommand(registry, dsCmd);
+    registerCommand(registry, csvCmd);
+    registerCommand(registry, hdfsCmd);
+
+    // 4. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      System.out.println("\nClosing any open connections...");
+      dsCmd.closeConnections();
+      selectCmd.closeConnections();
+    }));
+
+    // 5. Setup Tab Completers
+    // StringsCompleter automatically suggests our custom commands (e.g., ":sql", ":fs")
+    Completer knoxCompleter = new StringsCompleter(registry.keySet());
+    Completer groovyCompleter = engine.getScriptCompleter();
+    Completer finalCompleter = new AggregateCompleter(knoxCompleter, groovyCompleter);
+
+    // 6. Build the LineReader
+    LineReader reader = LineReaderBuilder.builder()
+    .terminal(terminal)
+    .completer(finalCompleter)
+    .variable(LineReader.HISTORY_FILE, Paths.get(System.getProperty("user.home"), ".knoxshell_history"))
+    .build();
+
+    terminal.writer().println("Apache Knox Shell");
+    terminal.writer().println("Type ':help' for help, ':exit' or ':quit' to quit.");
+    terminal.writer().flush();
+
+    // 7. The REPL Loop
+    while (true) {
+      try {
+        String line = reader.readLine("knox> ");
+        if (line == null) break;
+
+        String trimmed = line.trim();
+        if (trimmed.isEmpty()) continue;
+
+        if (trimmed.equalsIgnoreCase(":exit") || trimmed.equalsIgnoreCase(":quit")) {
+          break;
+        }
+
+        // Route custom Knox commands
+        String[] parts = trimmed.split("\\s+");
+        String commandName = parts[0];
+
+        if (registry.containsKey(commandName)) {
+          AbstractKnoxShellCommand cmd = registry.get(commandName);
+
+          // Extract arguments to pass to the command
+          List<String> cmdArgs = new ArrayList<>();
+          if (parts.length > 1) {
+            cmdArgs.addAll(Arrays.asList(parts).subList(1, parts.length));
+          }
+
+          Object res = cmd.execute(cmdArgs);
+          if (res != null) {
+            terminal.writer().println(res.toString());
+          }
+        } else {
+          // Fallback to evaluating standard Groovy script logic
+          Object result = engine.execute(line);
+          if (result != null) {
+            terminal.writer().println("==> " + result);
+          }
+        }
+
+        terminal.writer().flush();
+
+      } catch (UserInterruptException | EndOfFileException e) {
+        // Ctrl+C or Ctrl+D cleanly exits the shell
+        break;
+      } catch (Exception e) {
+        terminal.writer().println("Error: " + e.getMessage());
+        terminal.writer().flush();
+      }
+    }
+  }
+
+  private static void registerCommand(Map<String, AbstractKnoxShellCommand> registry, AbstractKnoxShellCommand cmd) {
+    registry.put(cmd.getName(), cmd);
+    if (cmd.getShortcut() != null && !cmd.getShortcut().isEmpty()) {
+      registry.put(cmd.getShortcut(), cmd);
+    }
+  }
 }

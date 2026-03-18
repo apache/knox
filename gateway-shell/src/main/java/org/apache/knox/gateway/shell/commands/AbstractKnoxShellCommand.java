@@ -17,46 +17,68 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
-import org.apache.groovy.groovysh.CommandSupport;
-import org.apache.groovy.groovysh.Groovysh;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
 
-public abstract class AbstractKnoxShellCommand extends CommandSupport {
+public abstract class AbstractKnoxShellCommand {
   static final String KNOXSQLHISTORY = "__knoxsqlhistory";
   protected static final String KNOXDATASOURCES = "__knoxdatasources";
+
+  // NEW FIELDS: Holding the modern execution context
+  protected final GroovyEngine engine;
+  protected final Terminal terminal;
+  private final String name;
+  private final String shortcut;
+
   private String description;
   private String usage;
   private String help;
 
-  public AbstractKnoxShellCommand(Groovysh shell, String name, String shortcut) {
-    super(shell, name, shortcut);
+  // REFACTORED CONSTRUCTOR: Injects JLine 3 dependencies
+  public AbstractKnoxShellCommand(GroovyEngine engine, Terminal terminal, String name, String shortcut) {
+    this.engine = engine;
+    this.terminal = terminal;
+    this.name = name;
+    this.shortcut = shortcut;
   }
 
-  public AbstractKnoxShellCommand(Groovysh shell, String name, String shortcut,
-      String desc, String usage, String help) {
-    super(shell, name, shortcut);
+  // REFACTORED CONSTRUCTOR: Overload with help docs
+  public AbstractKnoxShellCommand(GroovyEngine engine, Terminal terminal, String name, String shortcut,
+                                  String desc, String usage, String help) {
+    this.engine = engine;
+    this.terminal = terminal;
+    this.name = name;
+    this.shortcut = shortcut;
     this.description = desc;
     this.usage = usage;
     this.help = help;
   }
 
-  @Override
+  // NEW METHODS: Exposing the command identifiers since CommandSupport is gone
+  public String getName() { return name; }
+  public String getShortcut() { return shortcut; }
+
   public String getDescription() {
-      return description;
+    return description;
   }
 
-  @Override
   public String getUsage() {
     return usage;
   }
 
-  @Override
   public String getHelp() {
     return help;
   }
+
+  // NEW ABSTRACT METHOD: Enforces the execution contract for subclasses
+  public abstract Object execute(List<String> args) throws Exception;
 
   protected String getBindingVariableNameForResultingTable(List<String> args) {
     String variableName = null;
@@ -74,8 +96,72 @@ public abstract class AbstractKnoxShellCommand extends CommandSupport {
   }
 
   protected CredentialCollector login() throws CredentialCollectionException {
-    KnoxLoginDialog dlg = new KnoxLoginDialog();
-    dlg.collect();
-    return dlg;
+    LineReader reader = LineReaderBuilder.builder()
+    .terminal(terminal)
+    .build();
+
+    String collectedUsername;
+    char[] collectedPassword;
+
+    try {
+      // 1. Prompt for Username in clear text
+      collectedUsername = reader.readLine("Username: ");
+      if (collectedUsername == null || collectedUsername.trim().isEmpty()) {
+        throw new CredentialCollectionException("Login cancelled: Username cannot be empty.");
+      }
+
+      // 2. Prompt for Password using the '*' mask character
+      String passStr = reader.readLine("Password: ", '*');
+      collectedPassword = (passStr != null) ? passStr.toCharArray() : new char[0];
+
+    } catch (org.jline.reader.UserInterruptException e) {
+      throw new CredentialCollectionException("Login cancelled by user (Ctrl+C).");
+    } catch (Exception e) {
+      throw new CredentialCollectionException("Failed to read credentials from terminal", e);
+    }
+
+    // 3. Return an anonymous implementation of CredentialCollector
+    // so we don't break the contract expected by child classes
+    return new CredentialCollector() {
+      @Override
+      public void collect() throws CredentialCollectionException {
+        // We already collected the credentials in the parent method,
+        // so this can safely remain a no-op if child classes call it again.
+      }
+
+      @Override
+      public String name() {
+        return collectedUsername;
+      }
+
+      @Override
+      public char[] chars() {
+        return collectedPassword;
+      }
+
+      @Override
+      public String string() {
+        return new String(collectedPassword);
+      }
+
+      @Override
+      public byte[] bytes() {
+        return new String(collectedPassword).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+      }
+      @Override
+      public String type() {
+        return "";
+      }
+
+      @Override
+      public void setPrompt(String prompt) {
+
+      }
+
+      @Override
+      public void setName(String name) {
+
+      }
+    };
   }
 }

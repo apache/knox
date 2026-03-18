@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,6 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,160 +24,130 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.Box;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-
 import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.apache.groovy.groovysh.Groovysh;
 
-public class SelectCommand extends AbstractSQLCommandSupport implements KeyListener {
+// Replacing Swing/AWT and Groovysh
+import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+
+// REMOVED: "implements KeyListener" - JLine 3 handles this natively!
+public class SelectCommand extends AbstractSQLCommandSupport {
   private static final String USAGE = ":sql [assign resulting-variable-name]";
   private static final String DESC = "Build table from SQL ResultSet";
 
   private static final String KNOXDATASOURCE = "__knoxdatasource";
-  private JTextArea sqlField;
-  private List<String> sqlHistory;
-  private int historyIndex = -1;
 
-  public SelectCommand(Groovysh shell) {
-    super(shell, ":SQL", ":sql", DESC, USAGE, DESC);
-  }
-
-  @Override
-  public void keyPressed(KeyEvent event) {
-    int code = event.getKeyCode();
-    boolean setFromHistory = false;
-    if (sqlHistory != null && !sqlHistory.isEmpty()) {
-      if (historyIndex == -1) {
-        historyIndex = sqlHistory.size() + 1;
-      }
-      if (code == KeyEvent.VK_KP_UP ||
-          code == KeyEvent.VK_UP) {
-        if (historyIndex > 0) {
-          historyIndex -= 1;
-        }
-        setFromHistory = true;
-      }
-      else if (code == KeyEvent.VK_KP_DOWN ||
-          code == KeyEvent.VK_DOWN) {
-        if (historyIndex < sqlHistory.size() - 1) {
-          historyIndex += 1;
-          setFromHistory = true;
-        }
-      }
-      if (setFromHistory) {
-        sqlField.setText(sqlHistory.get(historyIndex));
-        sqlField.invalidate();
-      }
-    }
-  }
-
-  @Override
-  public void keyReleased(KeyEvent event) {
-  }
-
-  @Override
-  public void keyTyped(KeyEvent event) {
+  public SelectCommand(GroovyEngine engine, Terminal terminal) {
+    super(engine, terminal, ":SQL", ":sql", DESC, USAGE, DESC);
   }
 
   @SuppressWarnings({"unchecked", "PMD.CloseResource"})
   @Override
   public Object execute(List<String> args) {
-    boolean ok = false;
-    String sql = "";
     String bindVariableName = null;
     KnoxShellTable table = null;
 
-    if (!args.isEmpty()) {
+    if (args != null && !args.isEmpty()) {
       bindVariableName = getBindingVariableNameForResultingTable(args);
     }
 
-    String dsName = (String) getVariables().get(KNOXDATASOURCE);
+    String dsName = (String) engine.get(KNOXDATASOURCE);
     Map<String, KnoxDataSource> dataSources = getDataSources();
     KnoxDataSource ds = null;
+
     if (dsName == null || dsName.isEmpty()) {
       if (dataSources == null || dataSources.isEmpty()) {
-        return "please configure a datasource with ':datasources add {name} {connectStr} {driver} {authntype: none|basic}'.";
-      }
-      else if (dataSources.size() == 1) {
+        return "Please configure a datasource with ':datasources add {name} {connectStr} {driver} {authntype: none|basic}'.";
+      } else if (dataSources.size() == 1) {
         dsName = (String) dataSources.keySet().toArray()[0];
-      }
-      else {
-        return "mulitple datasources configured. please disambiguate with ':datasources select {name}'.";
+      } else {
+        return "Multiple datasources configured. Please disambiguate with ':datasources select {name}'.";
       }
     }
-
-    sqlHistory = getSQLHistory(dsName);
-    historyIndex = (sqlHistory != null && !sqlHistory.isEmpty()) ? sqlHistory.size() - 1 : -1;
 
     ds = dataSources.get(dsName);
     if (ds != null) {
-      JLabel jl = new JLabel("Query: ");
-      sqlField = new JTextArea(5,40);
-      sqlField.addKeyListener(this);
-      sqlField.setLineWrap(true);
-      JScrollPane scrollPane = new JScrollPane(sqlField);
-      Box box = Box.createHorizontalBox();
-      box.add(jl);
-      box.add(scrollPane);
+      String sql = promptForSQL(dsName);
 
-      // JDK-5018574 : Unable to set focus to another component in JOptionPane
-      SwingUtils.workAroundFocusIssue(sqlField);
-
-      int x = JOptionPane.showConfirmDialog(null, box,
-          "SQL Query Input", JOptionPane.OK_CANCEL_OPTION);
-
-      if (x == JOptionPane.OK_OPTION) {
-        ok = true;
-        sql = sqlField.getText();
-        addToSQLHistory(dsName, sql);
-        historyIndex = -1;
+      if (sql == null || sql.trim().isEmpty()) {
+        return "Query cancelled or empty.";
       }
 
-      //KnoxShellTable.builder().jdbc().connect("jdbc:derby:codejava/webdb1").driver("org.apache.derby.jdbc.EmbeddedDriver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
+      addToSQLHistory(dsName, sql);
+
       try {
-        if (ok) {
-          System.out.println(sql);
-          try {
-            Connection conn = getConnectionFromSession(ds);
-            if (conn == null || conn.isClosed()) {
-              String username = null;
-              char[] pass = null;
-              if (ds.getAuthnType().equalsIgnoreCase("basic")) {
-                CredentialCollector dlg = login();
-                username = dlg.name();
-                pass = dlg.chars();
-              }
-              conn = getConnection(ds, username, new String(pass));
-            }
-            try (Statement statement = conn.createStatement()) {
-              if (statement.execute(sql)) {
-                try (ResultSet resultSet = statement.getResultSet()) {
-                  table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
-                }
-              }
-            }
+        terminal.writer().println("Executing: " + sql);
+        terminal.writer().flush();
+
+        Connection conn = getConnectionFromSession(ds);
+        if (conn == null || conn.isClosed()) {
+          String username = null;
+          char[] pass = null;
+          if ("basic".equalsIgnoreCase(ds.getAuthnType())) {
+            CredentialCollector dlg = login();
+            username = dlg.name();
+            pass = dlg.chars();
           }
-          catch (SQLException e) {
-            System.out.println("SQL Exception encountered... " + e.getMessage());
+          // NullPointerException prevention for pass
+          String passStr = (pass == null) ? null : new String(pass);
+          conn = getConnection(ds, username, passStr);
+        }
+
+        try (Statement statement = conn.createStatement()) {
+          if (statement.execute(sql)) {
+            try (ResultSet resultSet = statement.getResultSet()) {
+              table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
+            }
           }
         }
+      } catch (SQLException e) {
+        terminal.writer().println("SQL Exception encountered: " + e.getMessage());
+        terminal.writer().flush();
+      } catch (Exception e) {
+        e.printStackTrace(terminal.writer());
+        terminal.writer().flush();
       }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
+    } else {
+      return "Please select a datasource via ':datasources select {name}'.";
     }
-    else {
-      return "please select a datasource via ':datasources select {name}'.";
-    }
+
     if (table != null && bindVariableName != null) {
-      getVariables().put(bindVariableName, table);
+      engine.put(bindVariableName, table); // REFACTORED: Use engine.put()
+      terminal.writer().println("Assigned resulting table to variable: " + bindVariableName);
+      terminal.writer().flush();
     }
+
     return table;
+  }
+
+  /**
+   * Replaces the old Swing JOptionPane and KeyListener with a native JLine 3 prompt.
+   */
+  private String promptForSQL(String dsName) {
+    try {
+      // Build a temporary LineReader just for the SQL prompt
+      LineReader sqlReader = LineReaderBuilder.builder()
+      .terminal(terminal)
+      .build();
+
+      // Load the specific SQL history for this datasource into JLine
+      List<String> sqlHistory = getSQLHistory(dsName);
+      if (sqlHistory != null) {
+        for (String pastQuery : sqlHistory) {
+          sqlReader.getHistory().add(pastQuery);
+        }
+      }
+
+      // Prompt the user in the terminal (Up/Down arrows automatically cycle through the history we just added!)
+      return sqlReader.readLine("SQL (" + dsName + ")> ");
+
+    } catch (org.jline.reader.UserInterruptException | org.jline.reader.EndOfFileException e) {
+      // User hit Ctrl+C or Ctrl+D to cancel the prompt
+      return null;
+    }
   }
 }
