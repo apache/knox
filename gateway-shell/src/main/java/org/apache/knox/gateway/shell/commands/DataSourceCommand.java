@@ -27,61 +27,86 @@ import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.apache.groovy.groovysh.Groovysh;
+
+// NEW IMPORTS: Replacing Groovysh
+import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 public class DataSourceCommand extends AbstractSQLCommandSupport {
-  private static final String USAGE = ":ds (add|remove|select) [ds-name, connection-str, driver classname, authntype(none|basic)]";
+  private static final String USAGE = ":ds (add|remove|list|select) [ds-name] [connection-str] [driver-classname] [authntype(none|basic)]";
   private static final String DESC = "Datasource management commands. Persisted datasources maintain connection details across sessions";
 
-  public DataSourceCommand(Groovysh shell) {
-    super(shell, ":datasources", ":ds", DESC, USAGE, DESC);
+  // REFACTORED CONSTRUCTOR
+  public DataSourceCommand(GroovyEngine engine, Terminal terminal) {
+    super(engine, terminal, ":datasources", ":ds", DESC, USAGE, DESC);
   }
 
   @SuppressWarnings({"unchecked", "PMD.CloseResource"})
   @Override
   public Object execute(List<String> args) {
-    Map<String, KnoxDataSource> dataSources =
-        getDataSources();
-    if (args.isEmpty()) {
-      args.add("list");
-    }
-    if (args.get(0).equalsIgnoreCase("add")) {
-      KnoxDataSource ds = new KnoxDataSource(args.get(1),
-          args.get(2),
-          args.get(3),
-          args.get(4));
+    Map<String, KnoxDataSource> dataSources = getDataSources();
+
+    // FIXED: Safely default to "list" without mutating the potentially immutable args list
+    String action = (args == null || args.isEmpty()) ? "list" : args.get(0);
+
+    if (action.equalsIgnoreCase("add")) {
+      // FIXED: Prevent IndexOutOfBoundsException
+      if (args.size() < 5) {
+        terminal.writer().println("Error: Missing arguments for 'add'.");
+        terminal.writer().println("Usage: :ds add ds-name connection-str driver-classname authntype");
+        terminal.writer().flush();
+        return null;
+      }
+      KnoxDataSource ds = new KnoxDataSource(args.get(1), args.get(2), args.get(3), args.get(4));
       dataSources.put(ds.getName(), ds);
-      getVariables().put(KNOXDATASOURCES, dataSources);
+      engine.put(KNOXDATASOURCES, dataSources); // REFACTORED: Use engine.put
       persistDataSources();
     }
-    else if (args.get(0).equalsIgnoreCase("remove")) {
+    else if (action.equalsIgnoreCase("remove")) {
       if (dataSources == null || dataSources.isEmpty()) {
         return "No datasources to remove.";
       }
-      // if the removed datasource is currently selected, unselect it
-      dataSources.remove(args.get(1));
-      if (getVariables().get(KNOXDATASOURCE) != null) {
-        if (args.get(1) != null) {
-          if (((String)getVariables().get(KNOXDATASOURCE)).equals(args.get(1))) {
-            System.out.println("unselecting datasource.");
-            getVariables().put(KNOXDATASOURCE, "");
-          }
-        }
-        else {
-          System.out.println("Missing datasource name to remove.");
+      // FIXED: Prevent IndexOutOfBoundsException
+      if (args.size() < 2) {
+        terminal.writer().println("Error: Missing datasource name to remove.");
+        terminal.writer().flush();
+        return null;
+      }
+
+      String dsName = args.get(1);
+      dataSources.remove(dsName);
+
+      // REFACTORED: Use engine.get() and engine.put()
+      if (engine.get(KNOXDATASOURCE) != null) {
+        if (((String) engine.get(KNOXDATASOURCE)).equals(dsName)) {
+          terminal.writer().println("Unselecting datasource.");
+          terminal.writer().flush();
+          engine.put(KNOXDATASOURCE, "");
         }
       }
-      getVariables().put(KNOXDATASOURCES, dataSources);
+      engine.put(KNOXDATASOURCES, dataSources);
       persistDataSources();
     }
-    else if (args.get(0).equalsIgnoreCase("list")) {
+    else if (action.equalsIgnoreCase("list")) {
       // valid command no additional work needed though
     }
-    else if(args.get(0).equalsIgnoreCase("select")) {
+    else if (action.equalsIgnoreCase("select")) {
       if (dataSources == null || dataSources.isEmpty()) {
         return "No datasources to select from.";
       }
+      // FIXED: Prevent IndexOutOfBoundsException
+      if (args.size() < 2) {
+        terminal.writer().println("Error: Missing datasource name to select.");
+        terminal.writer().flush();
+        return null;
+      }
+
       KnoxDataSource dsValue = dataSources.get(args.get(1));
+      if (dsValue == null) {
+        return "Error: Datasource '" + args.get(1) + "' not found.";
+      }
+
       Connection conn = getConnectionFromSession(dsValue);
       try {
         if (conn == null || conn.isClosed()) {
@@ -92,25 +117,34 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
             try {
               dlg = login();
             } catch (CredentialCollectionException e) {
-              e.printStackTrace();
-              return "Error: Credential collection failure.";
+              terminal.writer().println("Error: Credential collection failure.");
+              e.printStackTrace(terminal.writer());
+              terminal.writer().flush();
+              return null;
             }
             username = dlg.name();
             pass = dlg.chars();
           }
           try {
-            getConnection(dsValue, username, new String(pass));
+            // FIXED: Prevent NullPointerException if pass is null
+            String passStr = (pass == null) ? null : new String(pass);
+            getConnection(dsValue, username, passStr);
           } catch (Exception e) {
-            e.printStackTrace();
-            return "Error: Connection creation failure.";
+            terminal.writer().println("Error: Connection creation failure.");
+            e.printStackTrace(terminal.writer());
+            terminal.writer().flush();
+            return null;
           }
         }
       } catch (SQLException e) {
-        e.printStackTrace();
+        e.printStackTrace(terminal.writer());
+        terminal.writer().flush();
       }
+
       if (dataSources.containsKey(args.get(1))) {
-        getVariables().put(KNOXDATASOURCE, args.get(1));
+        engine.put(KNOXDATASOURCE, args.get(1)); // REFACTORED: Use engine.put
       }
+
       KnoxShellTable datasource = new KnoxShellTable();
       datasource.title("Knox DataSource Selected");
       datasource.header("Name").header("Connect String").header("Driver").header("Authn Type");
@@ -118,7 +152,7 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       return datasource;
     }
     else {
-      return "ERROR: unknown datasources command.";
+      return "ERROR: unknown datasources command: " + action;
     }
 
     return buildTable();
@@ -128,11 +162,13 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
     KnoxShellTable datasource = new KnoxShellTable();
     datasource.title("Knox DataSources");
     datasource.header("Name").header("Connect String").header("Driver").header("Authn Type");
+
     @SuppressWarnings("unchecked")
     Map<String, KnoxDataSource> dataSources =
-        (Map<String, KnoxDataSource>) getVariables().get(KNOXDATASOURCES);
+    (Map<String, KnoxDataSource>) engine.get(KNOXDATASOURCES); // REFACTORED: Use engine.get
+
     if (dataSources != null && !dataSources.isEmpty()) {
-      for(KnoxDataSource dsValue : dataSources.values()) {
+      for (KnoxDataSource dsValue : dataSources.values()) {
         datasource.row().value(dsValue.getName()).value(dsValue.getConnectStr()).value(dsValue.getDriver()).value(dsValue.getAuthnType());
       }
     }
@@ -140,8 +176,19 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
   }
 
   public static void main(String[] args) {
-    DataSourceCommand cmd = new DataSourceCommand(new Groovysh());
-    List<String> args2 = new ArrayList<>();
-    cmd.execute(args2);
+    try {
+      Terminal terminal = TerminalBuilder.builder().system(true).build();
+      GroovyEngine engine = new GroovyEngine();
+      DataSourceCommand cmd = new DataSourceCommand(engine, terminal);
+
+      List<String> args2 = new ArrayList<>();
+      Object res = cmd.execute(args2);
+      if (res != null) {
+        terminal.writer().println(res);
+        terminal.writer().flush();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
