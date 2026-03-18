@@ -28,7 +28,6 @@ import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 
-// NEW IMPORTS: Replacing Groovysh
 import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -42,16 +41,14 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
     super(engine, terminal, ":datasources", ":ds", DESC, USAGE, DESC);
   }
 
-  @SuppressWarnings({"unchecked", "PMD.CloseResource"})
+  @SuppressWarnings({"PMD.CloseResource"})
   @Override
   public Object execute(List<String> args) {
     Map<String, KnoxDataSource> dataSources = getDataSources();
 
-    // FIXED: Safely default to "list" without mutating the potentially immutable args list
     String action = (args == null || args.isEmpty()) ? "list" : args.get(0);
 
-    if (action.equalsIgnoreCase("add")) {
-      // FIXED: Prevent IndexOutOfBoundsException
+    if ("add".equalsIgnoreCase(action)) {
       if (args.size() < 5) {
         terminal.writer().println("Error: Missing arguments for 'add'.");
         terminal.writer().println("Usage: :ds add ds-name connection-str driver-classname authntype");
@@ -63,11 +60,10 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       engine.put(KNOXDATASOURCES, dataSources); // REFACTORED: Use engine.put
       persistDataSources();
     }
-    else if (action.equalsIgnoreCase("remove")) {
+    else if ("remove".equalsIgnoreCase(action)) {
       if (dataSources == null || dataSources.isEmpty()) {
         return "No datasources to remove.";
       }
-      // FIXED: Prevent IndexOutOfBoundsException
       if (args.size() < 2) {
         terminal.writer().println("Error: Missing datasource name to remove.");
         terminal.writer().flush();
@@ -77,9 +73,8 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       String dsName = args.get(1);
       dataSources.remove(dsName);
 
-      // REFACTORED: Use engine.get() and engine.put()
       if (engine.get(KNOXDATASOURCE) != null) {
-        if (((String) engine.get(KNOXDATASOURCE)).equals(dsName)) {
+        if ((engine.get(KNOXDATASOURCE)).equals(dsName)) {
           terminal.writer().println("Unselecting datasource.");
           terminal.writer().flush();
           engine.put(KNOXDATASOURCE, "");
@@ -87,15 +82,12 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       }
       engine.put(KNOXDATASOURCES, dataSources);
       persistDataSources();
-    }
-    else if (action.equalsIgnoreCase("list")) {
+    } else if ("list".equalsIgnoreCase(action)) {
       // valid command no additional work needed though
-    }
-    else if (action.equalsIgnoreCase("select")) {
+    } else if ("select".equalsIgnoreCase(action)) {
       if (dataSources == null || dataSources.isEmpty()) {
         return "No datasources to select from.";
       }
-      // FIXED: Prevent IndexOutOfBoundsException
       if (args.size() < 2) {
         terminal.writer().println("Error: Missing datasource name to select.");
         terminal.writer().flush();
@@ -126,7 +118,6 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
             pass = dlg.chars();
           }
           try {
-            // FIXED: Prevent NullPointerException if pass is null
             String passStr = (pass == null) ? null : new String(pass);
             getConnection(dsValue, username, passStr);
           } catch (Exception e) {
@@ -150,8 +141,7 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       datasource.header("Name").header("Connect String").header("Driver").header("Authn Type");
       datasource.row().value(dsValue.getName()).value(dsValue.getConnectStr()).value(dsValue.getDriver()).value(dsValue.getAuthnType());
       return datasource;
-    }
-    else {
+    } else {
       return "ERROR: unknown datasources command: " + action;
     }
 

@@ -58,6 +58,7 @@
                                     <excludes>
                                         <exclude>schema/**</exclude>
                                         <exclude>**/*.ldif</exclude>
+                                        <exclude>META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat</exclude>
                                     </excludes>
                                 </filter>
                                 <filter>

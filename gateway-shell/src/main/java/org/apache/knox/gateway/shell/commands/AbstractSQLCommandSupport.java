@@ -34,13 +34,11 @@ import org.jline.terminal.Terminal;
 
 public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand {
 
+
   protected static final String KNOXDATASOURCES = "__knoxdatasources";
   protected static final String KNOXDATASOURCE = "__knoxdatasource";
-  private static final Object KNOXDATASOURCE_CONNECTIONS = "__knoxdatasourceconnections";
-
-  public AbstractSQLCommandSupport(GroovyEngine engine, Terminal terminal, String name, String shortcut) {
-    super(engine, terminal, name, shortcut);
-  }
+  private static final String KNOXSQLHISTORY = "__knoxsqlhistory";
+  private static final String KNOXDATASOURCE_CONNECTIONS = "__knoxdatasourceconnections";
 
   public AbstractSQLCommandSupport(GroovyEngine engine, Terminal terminal, String name, String shortcut, String desc, String usage,
                                    String help) {
@@ -50,7 +48,7 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
   @SuppressWarnings("unchecked")
   protected Connection getConnectionFromSession(KnoxDataSource ds) {
     //GroovyEngine bindings lack getOrDefault, so we check for null manually
-    HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get((String)KNOXDATASOURCE_CONNECTIONS);
+    HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get(KNOXDATASOURCE_CONNECTIONS);
     if (connections == null) {
       connections = new HashMap<>();
     }
@@ -58,7 +56,7 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
   }
 
   @SuppressWarnings("unchecked")
-  protected Connection getConnection(KnoxDataSource ds, String user, String pass) throws SQLException, Exception {
+  protected Connection getConnection(KnoxDataSource ds, String user, String pass) throws SQLException {
     Connection conn = getConnectionFromSession(ds);
     if (conn == null) {
       if (user != null && pass != null) {
@@ -67,12 +65,12 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
         conn = JDBCUtils.createConnection(ds.getConnectStr(), null, null);
       }
 
-      HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get((String) KNOXDATASOURCE_CONNECTIONS);
+      HashMap<String, Connection> connections = (HashMap<String, Connection>) engine.get(KNOXDATASOURCE_CONNECTIONS);
       if (connections == null) {
         connections = new HashMap<>();
       }
       connections.put(ds.getName(), conn);
-      engine.put((String) KNOXDATASOURCE_CONNECTIONS, connections);
+      engine.put(KNOXDATASOURCE_CONNECTIONS, connections);
     }
     return conn;
   }

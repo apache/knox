@@ -143,8 +143,42 @@ public class Shell {
         String trimmed = line.trim();
         if (trimmed.isEmpty()) continue;
 
-        if (trimmed.equalsIgnoreCase(":exit") || trimmed.equalsIgnoreCase(":quit")) {
+        // --- BUILT-IN COMMANDS ---
+        if (":exit".equalsIgnoreCase(trimmed) || ":quit".equalsIgnoreCase(trimmed)) {
           break;
+        }
+
+        if (trimmed.startsWith(":help") || trimmed.startsWith(":h")) {
+          String[] helpParts = trimmed.split("\\s+");
+
+          if (helpParts.length > 1) {
+            // Detailed help for a specific command (e.g., ":help :fs")
+            String targetCmd = helpParts[1];
+            if (registry.containsKey(targetCmd)) {
+              AbstractKnoxShellCommand cmd = registry.get(targetCmd);
+              terminal.writer().println(cmd.getDescription());
+              terminal.writer().println(cmd.getUsage());
+            } else {
+              terminal.writer().println("Unknown command: " + targetCmd);
+            }
+          } else {
+            // General help menu
+            terminal.writer().println("Available Custom Knox Commands:");
+
+            // Use a Stream to get distinct commands (ignores duplicate alias keys)
+            registry.values().stream().distinct().forEach(cmd -> {
+              String names = cmd.getName() + (cmd.getShortcut() != null ? ", " + cmd.getShortcut() : "");
+              String desc = cmd.getDescription() != null ? cmd.getDescription() : "";
+              terminal.writer().printf("  %-25s %s%n", names, desc);
+            });
+
+            terminal.writer().println();
+            terminal.writer().printf("  %-25s %s%n", ":help, :h", "Displays this help message or specific command usage");
+            terminal.writer().printf("  %-25s %s%n", ":exit, :quit", "Exits the shell");
+            terminal.writer().println("\nNote: Any other input is evaluated natively as Groovy code.");
+          }
+          terminal.writer().flush();
+          continue; // Skip the rest of the loop
         }
 
         // Route custom Knox commands
