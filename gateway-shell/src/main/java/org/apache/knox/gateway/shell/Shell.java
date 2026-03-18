@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -169,12 +170,12 @@ public class Shell {
             registry.values().stream().distinct().forEach(cmd -> {
               String names = cmd.getName() + (cmd.getShortcut() != null ? ", " + cmd.getShortcut() : "");
               String desc = cmd.getDescription() != null ? cmd.getDescription() : "";
-              terminal.writer().printf("  %-25s %s%n", names, desc);
+              terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", names, desc);
             });
 
             terminal.writer().println();
-            terminal.writer().printf("  %-25s %s%n", ":help, :h", "Displays this help message or specific command usage");
-            terminal.writer().printf("  %-25s %s%n", ":exit, :quit", "Exits the shell");
+            terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":help, :h", "Displays this help message or specific command usage");
+            terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":exit, :quit", "Exits the shell");
             terminal.writer().println("\nNote: Any other input is evaluated natively as Groovy code.");
           }
           terminal.writer().flush();
