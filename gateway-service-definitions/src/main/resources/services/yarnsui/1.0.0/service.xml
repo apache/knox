@@ -16,36 +16,34 @@
    limitations under the License.
 -->
 
-<service role="YARNSUI" name="yarnsui" version="1.0.0">
+<service role="YARN-SCHEDULER-UI" name="yarn-scheduler-ui" version="1.0.0">
     <metadata>
         <type>UI</type>
-        <context>/yarnsui/</context>
+        <context>/yarn-scheduler-ui/</context>
         <shortDesc>YARN Scheduler UI</shortDesc>
-        <description>YARN Scheduler UI</description>
+        <description>A modern React-based web interface for managing and configuring the YARN Capacity Scheduler.</description>
     </metadata>
     <routes>
-        <route path="/yarnsui/">
-            <rewrite apply="YARNSUI/yarnsui/inbound/root" to="request.url"/>
-            <rewrite apply="YARNSUI/yarnsui/outbound/headers/location/filter" to="response.headers"/>
-            <rewrite apply="YARNSUI/yarnsui/outbound/index" to="response.body" />
+        <route path="/yarn-scheduler-ui/">
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/root" to="request.url"/>
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/index" to="response.body" />
         </route>
 
-        <route path="/yarnsui/**">
-            <rewrite apply="YARNSUI/yarnsui/inbound/path" to="request.url"/>
-            <rewrite apply="YARNSUI/yarnsui/outbound/headers/location/filter" to="response.headers"/>
-            <rewrite apply="YARNSUI/yarnsui/outbound/index" to="response.body"/>
+        <route path="/yarn-scheduler-ui/**">
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/path" to="request.url"/>
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/index" to="response.body"/>
         </route>
 
-        <route path="/yarnsui/ws/v1/cluster/**?**">
-            <rewrite apply="YARNSUI/yarnsui/inbound/ws-cluster-query" to="request.url"/>
+        <route path="/yarn-scheduler-ui/ws/v1/cluster/**?**">
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/ws-cluster-query" to="request.url"/>
         </route>
 
-        <route path="/yarnsui/ws/v1/cluster/**">
-            <rewrite apply="YARNSUI/yarnsui/inbound/ws-cluster" to="request.url"/>
+        <route path="/yarn-scheduler-ui/ws/v1/cluster/**">
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/ws-cluster" to="request.url"/>
         </route>
 
-        <route path="/yarnsui/conf?**">
-            <rewrite apply="YARNSUI/yarnsui/inbound/conf-query" to="request.url"/>
+        <route path="/yarn-scheduler-ui/conf?**">
+            <rewrite apply="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/conf-query" to="request.url"/>
         </route>
     </routes>
 

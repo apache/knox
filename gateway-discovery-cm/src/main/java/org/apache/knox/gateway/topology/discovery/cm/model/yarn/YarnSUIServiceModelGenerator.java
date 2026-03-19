@@ -17,7 +17,7 @@
 package org.apache.knox.gateway.topology.discovery.cm.model.yarn;
 
 public class YarnSUIServiceModelGenerator extends YarnUIServiceModelGenerator {
-  private static final String SERVICE = "YARNSUI";
+  private static final String SERVICE = "YARN-SCHEDULER-UI";
 
   @Override
   public String getService() {

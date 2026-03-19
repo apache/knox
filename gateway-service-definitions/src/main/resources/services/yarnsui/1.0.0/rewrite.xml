@@ -16,86 +16,88 @@
    limitations under the License.
 -->
 <rules>
-  <rule dir="IN" name="YARNSUI/yarnsui/inbound/root" pattern="*://*:*/**/yarnsui/">
-    <rewrite template="{$serviceUrl[YARNSUI]}/scheduler-ui/"/>
+  <rule dir="IN" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/root" pattern="*://*:*/**/yarn-scheduler-ui/">
+    <!-- Based path to display the homepage-->
+    <rewrite template="{$serviceUrl[YARN-SCHEDULER-UI]}/scheduler-ui/"/>
   </rule>
 
-  <rule dir="IN" name="YARNSUI/yarnsui/inbound/path" pattern="*://*:*/**/yarnsui/{**}">
-    <rewrite template="{$serviceUrl[YARNSUI]}/scheduler-ui/{**}"/>
+  <rule dir="IN" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/path" pattern="*://*:*/**/yarn-scheduler-ui/{**}">
+    <!-- Taking the OUT rewritten rules back. Path only to request from /scheduler-ui/-->
+    <rewrite template="{$serviceUrl[YARN-SCHEDULER-UI]}/scheduler-ui/{**}"/>
   </rule>
 
-  <rule dir="IN" name="YARNSUI/yarnsui/inbound/query" pattern="*://*:*/**/yarnsui/{**}?{**}">
-    <rewrite template="{$serviceUrl[YARNSUI]}/scheduler-ui/{**}?{**}"/>
+  <rule dir="IN" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/query" pattern="*://*:*/**/yarn-scheduler-ui/{**}?{**}">
+    <!-- Taking the OUT rewritten rules back. Query only to request from /scheduler-ui/-->
+    <rewrite template="{$serviceUrl[YARN-SCHEDULER-UI]}/scheduler-ui/{**}?{**}"/>
   </rule>
 
-  <rule dir="IN" name="YARNSUI/yarnsui/inbound/ws-cluster" pattern="*://*:*/**/yarnsui/ws/v1/cluster/{**}">
-    <rewrite template="{$serviceUrl[YARNSUI]}/ws/v1/cluster/{**}"/>
+  <rule dir="IN" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/ws-cluster" pattern="*://*:*/**/yarn-scheduler-ui/ws/v1/cluster/{**}">
+    <!-- Taking the OUT rewritten rules back. Path only to request to RM Rest API-->
+    <rewrite template="{$serviceUrl[YARN-SCHEDULER-UI]}/ws/v1/cluster/{**}"/>
   </rule>
 
-  <rule dir="IN" name="YARNSUI/yarnsui/inbound/ws-cluster-query" pattern="*://*:*/**/yarnsui/ws/v1/cluster/{**}?{**}">
-    <rewrite template="{$serviceUrl[YARNSUI]}/ws/v1/cluster/{**}?{**}"/>
+  <rule dir="IN" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/ws-cluster-query" pattern="*://*:*/**/yarn-scheduler-ui/ws/v1/cluster/{**}?{**}">
+    <!-- Taking the OUT rewritten rules back. Query only to request to RM Rest API-->
+    <rewrite template="{$serviceUrl[YARN-SCHEDULER-UI]}/ws/v1/cluster/{**}?{**}"/>
   </rule>
 
-  <rule dir="IN" name="YARNSUI/yarnsui/inbound/conf-query" pattern="*://*:*/**/yarnsui/conf?{**}">
-    <rewrite template="{$serviceUrl[YARNSUI]}/conf?{**}"/>
+  <rule dir="IN" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/inbound/conf-query" pattern="*://*:*/**/yarn-scheduler-ui/conf?{**}">
+    <!---This is for Scheduler UI calling conf?name=hadoop.security.authentication and conf?name=yarn.webapp.scheduler-ui.read-only.enable-->
+    <rewrite template="{$serviceUrl[YARN-SCHEDULER-UI]}/conf?{**}"/>
   </rule>
 
-  <rule dir="OUT" name="YARNSUI/yarnsui/outbound/site-base">
-    <rewrite template="{$frontend[path]}/yarnsui/"/>
+  <rule dir="OUT" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/site-base">
+    <!-- Rewriting any UI path to put behind knox proxy -->
+    <rewrite template="{$frontend[path]}/yarn-scheduler-ui/"/>
   </rule>
 
-  <rule dir="OUT" name="YARNSUI/yarnsui/outbound/api-cluster">
-    <rewrite template="{$frontend[path]}/yarnsui/ws/v1/cluster"/>
+  <rule dir="OUT" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/api-cluster">
+    <!-- Rewriting any RestAPI path to put behind knox proxy -->
+    <rewrite template="{$frontend[path]}/yarn-scheduler-ui/ws/v1/cluster"/>
   </rule>
 
-  <rule dir="OUT" name="YARNSUI/yarnsui/outbound/assets">
+  <rule dir="OUT" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/assets">
+    <!-- Rewriting relative path link in HTML to put behind KNOX proxy,
+      E.g.from /assets/root-DBfchZlr.css to /gateway/cdp-proxy/yarn-scheduler-ui/assets/root-DBfchZlr.css
+    -->
     <match pattern="/scheduler-ui/{**}">
-      <rewrite template="{$frontend[path]}/yarnsui/{**}"/>
+      <rewrite template="{$frontend[path]}/yarn-scheduler-ui/{**}"/>
     </match>
   </rule>
 
-  <rule flow="OR" dir="OUT" name="YARNSUI/yarnsui/outbound/api-cluster/wildcard">
+  <rule flow="OR" dir="OUT" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/api-cluster/wildcard">
+    <!-- Rewriting Javascript RestAPI link behind KNOX proxy
+        E.g. from ws/v1/cluster/scheduler-conf to /gateway/cdp-proxy/yarn-scheduler-ui/ws/v1/cluster/scheduler-conf
+    -->
     <match pattern="/ws/v1/cluster/{**}?{**}">
-      <rewrite template="{$frontend[path]}/yarnsui/ws/v1/cluster/{**}?{**}"/>
+      <rewrite template="{$frontend[path]}/yarn-scheduler-ui/ws/v1/cluster/{**}?{**}"/>
     </match>
 
     <match pattern="/ws/v1/cluster/{**}">
-      <rewrite template="{$frontend[path]}/yarnsui/ws/v1/cluster/{**}"/>
+      <rewrite template="{$frontend[path]}/yarn-scheduler-ui/ws/v1/cluster/{**}"/>
     </match>
   </rule>
 
-  <rule dir="OUT" name="YARNSUI/yarnsui/outbound/conf">
-    <rewrite template="{$frontend[path]}/yarnsui/conf"/>
+  <rule dir="OUT" name="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/conf">
+    <!--Putting the /conf endpoint behind KNOX proxy -->
+    <rewrite template="{$frontend[path]}/yarn-scheduler-ui/conf"/>
   </rule>
 
-  <filter name="YARNSUI/yarnsui/outbound/index">
+  <filter name="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/index">
+    <!--Filter out the link to put back behind knox proxy -->
     <content type="*/html">
-      <apply path="/scheduler-ui" rule="YARNSUI/yarnsui/outbound/site-base"/>
-      <apply path="/scheduler-ui/.*" rule="YARNSUI/yarnsui/outbound/assets"/>
+      <apply path="/scheduler-ui" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/site-base"/>
+      <apply path="/scheduler-ui/.*" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/assets"/>
     </content>
     <content type="application/javascript">
-      <apply path="/scheduler-ui" rule="YARNSUI/yarnsui/outbound/site-base"/>
-      <apply path="/ws/v1/cluster" rule="YARNSUI/yarnsui/outbound/api-cluster"/>
-      <apply path="/ws/v1/cluster/.*" rule="YARNSUI/yarnsui/outbound/api-cluster/wildcard"/>
-      <apply path="/conf" rule="YARNSUI/yarnsui/outbound/conf"/>
+      <apply path="/scheduler-ui" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/site-base"/>
+      <apply path="/ws/v1/cluster" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/api-cluster"/>
+      <apply path="/ws/v1/cluster/.*" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/api-cluster/wildcard"/>
+      <apply path="/conf" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/conf"/>
     </content>
     <content type="text/css">
-      <apply path="/scheduler-ui/" rule="YARNSUI/yarnsui/outbound/site-base"/>
+      <apply path="/scheduler-ui/" rule="YARN-SCHEDULER-UI/yarn-scheduler-ui/outbound/site-base"/>
     </content>
   </filter>
 
-  <rule flow="OR" dir="OUT" name="YARNSUI/yarnsui/outbound/headers/location">
-    <match pattern="{scheme}://{host}:{port}/scheduler-ui">
-      <rewrite template="{$frontend[url]}/yarnsui"/>
-    </match>
-    <match pattern="{scheme}://{host}:{port}/scheduler-ui/{**}">
-      <rewrite template="{$frontend[url]}/yarnsui/{**}"/>
-    </match>
-  </rule>
-
-  <filter name="YARNSUI/yarnsui/outbound/headers/location/filter">
-    <content type="application/x-http-headers">
-      <apply path="Location" rule="YARNSUI/yarnsui/outbound/headers/location"/>
-    </content>
-  </filter>
 </rules>
