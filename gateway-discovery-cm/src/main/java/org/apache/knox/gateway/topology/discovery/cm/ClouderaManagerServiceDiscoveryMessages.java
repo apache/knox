@@ -90,18 +90,18 @@ public interface ClouderaManagerServiceDiscoveryMessages {
 
   @Message(level = MessageLevel.ERROR,
            text = "Encountered an error during cluster ({0}) discovery: {1}")
-  void clusterDiscoveryError(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void clusterDiscoveryError(String clusterName, @StackTrace(level = MessageLevel.INFO) Exception e);
 
   @Message(level = MessageLevel.INFO, text = "Sleeping {0} second(s) before retrying Cloudera Manager service discovery for the {1}. time")
   void retryDiscovery(long retrySleep, int retryAttempt);
 
   @Message(level = MessageLevel.ERROR,
            text = "Failed to access the service configurations for cluster ({0}) discovery: {1}")
-  void failedToAccessServiceConfigs(String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedToAccessServiceConfigs(String clusterName, @StackTrace(level = MessageLevel.INFO) Exception e);
 
   @Message(level = MessageLevel.ERROR,
       text = "Failed to access the service role configurations ({0} / {1}) for cluster ({2}) discovery: {3}")
-  void failedToAccessServiceRoleConfigs(String serviceName, String roleName, String clusterName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void failedToAccessServiceRoleConfigs(String serviceName, String roleName, String clusterName, @StackTrace(level = MessageLevel.INFO) Exception e);
 
   @Message(level = MessageLevel.DEBUG,
           text = "Fetching service role configurations for service {0} for cluster ({1}) at offset {2} and limit {3}")
@@ -153,7 +153,7 @@ public interface ClouderaManagerServiceDiscoveryMessages {
 
   @Message(level = MessageLevel.ERROR,
            text = "Unable to access the ClouderaManager Configuration Change Monitor: {0}")
-  void errorAccessingConfigurationChangeMonitor(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+  void errorAccessingConfigurationChangeMonitor(@StackTrace(level = MessageLevel.INFO) Exception e);
 
   @Message(level = MessageLevel.INFO, text = "Starting ClouderaManager cluster configuration monitor")
   void startingClouderaManagerConfigMonitor();
