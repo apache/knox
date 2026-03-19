@@ -32,7 +32,51 @@
 
         <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
     <script type="text/javascript" src="js/knoxauth.js"></script>
-    
+
+        <!-- Knox Theme Configuration -->
+        <script type="text/javascript" src="theme-config.js"></script>
+
+        <!-- Knox Theme Loader (Inline & Blocking to prevent FOUC) -->
+        <script type="text/javascript">
+           (function() {
+               // Load theme based on: deployment lock > URL parameter > localStorage > deployment default
+               var urlParams = new URLSearchParams(window.location.search);
+               var theme;
+
+               // Check if theme is locked (admin-enforced theme)
+               if (typeof KNOX_THEME_LOCKED !== 'undefined' && KNOX_THEME_LOCKED === true) {
+                   // Theme is locked, use deployment default only
+                   theme = KNOX_DEFAULT_THEME || 'default';
+               } else {
+                   // Normal mode: URL parameter > localStorage > deployment default
+                   theme = urlParams.get('theme');
+
+                   // If theme parameter exists, save to localStorage for persistence
+                   if (theme) {
+                       try {
+                           localStorage.setItem('knox-auth-theme', theme);
+                       } catch (e) {
+                           // LocalStorage may be disabled, continue without saving
+                       }
+                   } else {
+                       // Try to load from localStorage, fallback to deployment default
+                       try {
+                           theme = localStorage.getItem('knox-auth-theme') || KNOX_DEFAULT_THEME || 'default';
+                       } catch (e) {
+                           // LocalStorage may be disabled, use deployment default
+                           theme = KNOX_DEFAULT_THEME || 'default';
+                       }
+                   }
+               }
+
+               // Load theme CSS if specified and not default
+               // Use document.write to load synchronously and prevent FOUC
+               if (theme && theme !== 'default') {
+                   document.write('<link rel="stylesheet" type="text/css" href="styles/themes/' + theme + '/theme.css" id="knox-theme">');
+               }
+           })();
+        </script>
+
         <script type="text/javascript">
            $(function() {
                 var updateBoxPosition = function() {
@@ -64,9 +108,9 @@
                     <span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
                         <i class="icon-warning-sign" style="color:#ae2817;"></i>
                     </span>
-                    <button type="button" class="btn btn-primary btn-block" id="signIn" tabindex="4" onkeypress="keypressed(event)" onclick="login();">
-                        Sign In
-                        <i id="signInLoading" class="icon-spinner icon-spin pull-right icon-sign-in"></i>
+                    <button type="button" class="btn btn-primary btn-block" id="signIn" tabindex="4" onkeypress="keypressed(event)" onclick="login();" style="position: relative; text-align: center;">
+                        <span>Sign In</span>
+                        <i id="signInLoading" class="icon-spinner icon-spin icon-sign-in"></i>
                     </button>
                 </fieldset>
             </form>
