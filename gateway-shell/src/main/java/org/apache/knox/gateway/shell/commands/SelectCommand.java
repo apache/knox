@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,23 +31,69 @@ import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 
-public class SelectCommand extends AbstractSQLCommandSupport {
+import javax.swing.Box;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
+public class SelectCommand extends AbstractSQLCommandSupport implements KeyListener {
   private static final String USAGE = ":sql [assign resulting-variable-name]";
   private static final String DESC = "Build table from SQL ResultSet";
 
   private static final String KNOXDATASOURCE = "__knoxdatasource";
+  private JTextArea sqlField;
+  private List<String> sqlHistory;
+  private int historyIndex = -1;
 
   public SelectCommand(GroovyEngine engine, Terminal terminal) {
     super(engine, terminal, ":SQL", ":sql", DESC, USAGE, DESC);
   }
 
-  @SuppressWarnings({"unchecked", "PMD.CloseResource"})
+  @Override
+  public void keyPressed(KeyEvent event) {
+    int code = event.getKeyCode();
+    boolean setFromHistory = false;
+    if (sqlHistory != null && !sqlHistory.isEmpty()) {
+      if (historyIndex == -1) {
+        historyIndex = sqlHistory.size() + 1;
+      }
+      if (code == KeyEvent.VK_KP_UP ||
+      code == KeyEvent.VK_UP) {
+        if (historyIndex > 0) {
+          historyIndex -= 1;
+        }
+        setFromHistory = true;
+      }
+      else if (code == KeyEvent.VK_KP_DOWN ||
+      code == KeyEvent.VK_DOWN) {
+        if (historyIndex < sqlHistory.size() - 1) {
+          historyIndex += 1;
+          setFromHistory = true;
+        }
+      }
+      if (setFromHistory) {
+        sqlField.setText(sqlHistory.get(historyIndex));
+        sqlField.invalidate();
+      }
+    }
+  }
+
+  @Override
+  public void keyReleased(KeyEvent event) {
+  }
+
+  @Override
+  public void keyTyped(KeyEvent event) {
+  }
+
+  @SuppressWarnings({"PMD.CloseResource"})
   @Override
   public Object execute(List<String> args) {
+    boolean ok = false;
+    String sql = "";
     String bindVariableName = null;
     KnoxShellTable table = null;
 
@@ -55,7 +103,7 @@ public class SelectCommand extends AbstractSQLCommandSupport {
 
     String dsName = (String) engine.get(KNOXDATASOURCE);
     Map<String, KnoxDataSource> dataSources = getDataSources();
-    KnoxDataSource ds = null;
+    KnoxDataSource ds;
 
     if (dsName == null || dsName.isEmpty()) {
       if (dataSources == null || dataSources.isEmpty()) {
@@ -68,43 +116,62 @@ public class SelectCommand extends AbstractSQLCommandSupport {
     }
 
     ds = dataSources.get(dsName);
-    if (ds != null) {
-      String sql = promptForSQL(dsName);
+    sqlHistory = getSQLHistory(dsName);
+    historyIndex = (sqlHistory != null && !sqlHistory.isEmpty()) ? sqlHistory.size() - 1 : -1;
 
-      if (sql == null || sql.trim().isEmpty()) {
-        return "Query cancelled or empty.";
+    if (ds != null) {
+      JLabel jl = new JLabel("Query: ");
+      sqlField = new JTextArea(5,40);
+      sqlField.addKeyListener(this);
+      sqlField.setLineWrap(true);
+      JScrollPane scrollPane = new JScrollPane(sqlField);
+      Box box = Box.createHorizontalBox();
+      box.add(jl);
+      box.add(scrollPane);
+
+      // JDK-5018574 : Unable to set focus to another component in JOptionPane
+      SwingUtils.workAroundFocusIssue(sqlField);
+
+      int x = JOptionPane.showConfirmDialog(null, box,
+      "SQL Query Input", JOptionPane.OK_CANCEL_OPTION);
+
+      if (x == JOptionPane.OK_OPTION) {
+        ok = true;
+        sql = sqlField.getText();
+        addToSQLHistory(dsName, sql);
+        historyIndex = -1;
       }
 
-      addToSQLHistory(dsName, sql);
 
+      //KnoxShellTable.builder().jdbc().connect("jdbc:derby:codejava/webdb1").driver("org.apache.derby.jdbc.EmbeddedDriver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
       try {
-        terminal.writer().println("Executing: " + sql);
-        terminal.writer().flush();
-
-        Connection conn = getConnectionFromSession(ds);
-        if (conn == null || conn.isClosed()) {
-          String username = null;
-          char[] pass = null;
-          if ("basic".equalsIgnoreCase(ds.getAuthnType())) {
-            CredentialCollector dlg = login();
-            username = dlg.name();
-            pass = dlg.chars();
-          }
-          // NullPointerException prevention for pass
-          String passStr = (pass == null) ? null : new String(pass);
-          conn = getConnection(ds, username, passStr);
-        }
-
-        try (Statement statement = conn.createStatement()) {
-          if (statement.execute(sql)) {
-            try (ResultSet resultSet = statement.getResultSet()) {
-              table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
+        if (ok) {
+          System.out.println(sql);
+          try {
+            Connection conn = getConnectionFromSession(ds);
+            if (conn == null || conn.isClosed()) {
+              String username = null;
+              char[] pass = null;
+              if (ds.getAuthnType().equalsIgnoreCase("basic")) {
+                CredentialCollector dlg = login();
+                username = dlg.name();
+                pass = dlg.chars();
+              }
+              String passStr = (pass == null) ? null : new String(pass);
+              conn = getConnection(ds, username, passStr);
             }
+            try (Statement statement = conn.createStatement()) {
+              if (statement.execute(sql)) {
+                try (ResultSet resultSet = statement.getResultSet()) {
+                  table = KnoxShellTable.builder().jdbc().resultSet(resultSet);
+                }
+              }
+            }
+          } catch (SQLException e) {
+            terminal.writer().println("SQL Exception encountered: " + e.getMessage());
+            terminal.writer().flush();
           }
         }
-      } catch (SQLException e) {
-        terminal.writer().println("SQL Exception encountered: " + e.getMessage());
-        terminal.writer().flush();
       } catch (Exception e) {
         e.printStackTrace(terminal.writer());
         terminal.writer().flush();
@@ -122,30 +189,4 @@ public class SelectCommand extends AbstractSQLCommandSupport {
     return table;
   }
 
-  /**
-   * Replaces the old Swing JOptionPane and KeyListener with a native JLine 3 prompt.
-   */
-  private String promptForSQL(String dsName) {
-    try {
-      // Build a temporary LineReader just for the SQL prompt
-      LineReader sqlReader = LineReaderBuilder.builder()
-      .terminal(terminal)
-      .build();
-
-      // Load the specific SQL history for this datasource into JLine
-      List<String> sqlHistory = getSQLHistory(dsName);
-      if (sqlHistory != null) {
-        for (String pastQuery : sqlHistory) {
-          sqlReader.getHistory().add(pastQuery);
-        }
-      }
-
-      // Prompt the user in the terminal (Up/Down arrows automatically cycle through the history we just added!)
-      return sqlReader.readLine("SQL (" + dsName + ")> ");
-
-    } catch (org.jline.reader.UserInterruptException | org.jline.reader.EndOfFileException e) {
-      // User hit Ctrl+C or Ctrl+D to cancel the prompt
-      return null;
-    }
-  }
 }

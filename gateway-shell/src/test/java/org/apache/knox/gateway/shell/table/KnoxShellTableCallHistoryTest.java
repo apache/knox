@@ -135,7 +135,7 @@ public class KnoxShellTableCallHistoryTest {
     table.rollback();
     assertNotNull(table);
     assertEquals(14, table.rows.size());
-    assertEquals("14", table.values(0).get(13));
+    assertEquals("14", table.values(0).get(13)); // selected the first column (ZIP) where the last element - index 13 - is 14
   }
 
   private void recordCallHistory(long id, int steps) {

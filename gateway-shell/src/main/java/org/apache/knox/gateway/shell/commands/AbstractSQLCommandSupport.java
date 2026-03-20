@@ -176,7 +176,7 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
   @SuppressWarnings("unchecked")
   protected void removeFromSQLHistory(String dsName) {
     Map<String, List<String>> sqlHistories = (Map<String, List<String>>) engine.get(KNOXSQLHISTORY);
-    if (sqlHistories != null) { // Can be null
+    if (sqlHistories != null) {
       sqlHistories.remove(dsName);
       persistSQLHistory();
     }
@@ -191,7 +191,6 @@ public abstract class AbstractSQLCommandSupport extends AbstractKnoxShellCommand
         engine.put(KNOXDATASOURCES, datasources);
       } else {
         datasources = new HashMap<>();
-        engine.put(KNOXDATASOURCES, datasources); // ADDED: Store the empty map to prevent repeated loading attempts
       }
     }
     return datasources;

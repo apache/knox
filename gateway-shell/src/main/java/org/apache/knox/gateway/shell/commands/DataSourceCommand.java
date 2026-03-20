@@ -70,6 +70,7 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       }
 
       String dsName = args.get(1);
+      // if the removed datasource is currently selected, unselect it
       dataSources.remove(dsName);
 
       if (engine.get(KNOXDATASOURCE) != null) {

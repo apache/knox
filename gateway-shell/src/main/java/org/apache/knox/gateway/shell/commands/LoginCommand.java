@@ -32,7 +32,6 @@ import org.jline.terminal.TerminalBuilder;
 public class LoginCommand extends AbstractKnoxShellCommand {
 
   public LoginCommand(GroovyEngine engine, Terminal terminal) {
-    // Pass identifiers and docs up to AbstractKnoxShellCommand
     super(engine, terminal, ":login", ":lgn",
     "Establishes a Knox session",
     "Usage: :login <url>",
@@ -91,12 +90,11 @@ public class LoginCommand extends AbstractKnoxShellCommand {
       terminal.writer().flush();
     }
 
-    return session; // Returning the session object
+    return session;
   }
 
   public static void main(String[] args) {
     try {
-      // Test using JLine 3 Terminal
       Terminal terminal = TerminalBuilder.builder().system(true).build();
       GroovyEngine engine = new GroovyEngine();
       LoginCommand cmd = new LoginCommand(engine, terminal);
