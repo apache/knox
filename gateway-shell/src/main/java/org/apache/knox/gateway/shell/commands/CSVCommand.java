@@ -44,7 +44,6 @@ public class CSVCommand extends AbstractKnoxShellCommand {
     KnoxShellTable table = null;
     String bindVariableName = getBindingVariableNameForResultingTable(args);
 
-    // FIXED: Moved to local variables to prevent state leaking between executions
     boolean withHeaders = false;
     String url;
 
@@ -64,6 +63,7 @@ public class CSVCommand extends AbstractKnoxShellCommand {
     try {
       if (withHeaders) {
         if (url.startsWith("$")) {
+          // a knoxshell variable is a csv file as a string
           String csvString = (String) engine.get(url.substring(1));
           table = KnoxShellTable.builder().csv().withHeaders().string(csvString);
         } else {
@@ -71,6 +71,7 @@ public class CSVCommand extends AbstractKnoxShellCommand {
         }
       } else {
         if (url.startsWith("$")) {
+          // a knoxshell variable is a csv file as a string
           String csvString = (String) engine.get(url.substring(1));
           table = KnoxShellTable.builder().csv().string(csvString);
         } else {

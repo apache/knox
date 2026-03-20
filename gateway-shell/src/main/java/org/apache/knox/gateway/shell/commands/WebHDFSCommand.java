@@ -85,10 +85,15 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       return listMounts(mounts);
     }
     else if ("ls".equalsIgnoreCase(action)) {
-      if (args.size() < 2) return printError("Usage: :fs ls <target-path>");
-      return listStatus(mounts, args.get(1));
+      if (args == null || args.size() < 2) {
+        return printError("Usage: :fs ls <target-path>");
+      } else {
+        return listStatus(mounts, args.get(1));
+      }
     }
     else if ("put".equalsIgnoreCase(action)) {
+      // Hdfs.put( session ).file( dataFile ).to( dataDir + "/" + dataFile ).now()
+      // :fs put from-path to-path
       if (args.size() < 3) return printError("Usage: :fs put <from-path> <to-path> [permissions]");
       String localFile = args.get(1);
       String path = args.get(2);
@@ -103,19 +108,27 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
       return put(mounts, localFile, path, permission);
     }
     else if ("rm".equalsIgnoreCase(action)) {
+      // Hdfs.rm( session ).file( dataFile ).now()
+      // :fs rm target-path
       if (args.size() < 2) return printError("Usage: :fs rm <target-path>");
       return remove(mounts, args.get(1));
     }
     else if ("cat".equalsIgnoreCase(action)) {
+      // println Hdfs.get( session ).from( dataDir + "/" + dataFile ).now().string
+      // :fs cat target-path
       if (args.size() < 2) return printError("Usage: :fs cat <target-path>");
       return cat(mounts, args.get(1));
     }
     else if ("mkdir".equalsIgnoreCase(action)) {
+      // println Hdfs.mkdir( session ).dir( directoryPath ).perm( "777" ).now().string
+      // :fs mkdir target-path [perms]
       if (args.size() < 2) return printError("Usage: :fs mkdir <target-path> [perms]");
       String perms = (args.size() == 3) ? args.get(2) : null;
       return mkdir(mounts, args.get(1), perms);
     }
     else if ("get".equalsIgnoreCase(action)) {
+      // println Hdfs.get( session ).from( dataDir + "/" + dataFile ).now().string
+      // :fs get from-path [to-path]
       if (args.size() < 2) return printError("Usage: :fs get <from-path> [to-path]");
       String path = args.get(1);
       String mountPoint = determineMountPoint(path);
@@ -273,7 +286,7 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
           return "No session established for mountPoint: " + mountPoint;
         }
       } else {
-        return "No mountpoint found. Use ':fs mount {topologyURL} {mountpoint}'.";
+        return "No mountPoint found. Use ':fs mount {topologyURL} {mountPoint}'.";
       }
     } catch (KnoxShellException | IOException e) {
       e.printStackTrace(terminal.writer());
@@ -366,8 +379,9 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
 
   private String determineMountPoint(String path) {
     if (path != null && path.startsWith("/")) {
+      // does the user supplied path starts at a root
+      // if so check for a mountPoint based on the first element of the path
       String[] pathElements = path.split("/");
-      // Prevent array bounds exception
       if (pathElements.length > 1) {
         return pathElements[1];
       }

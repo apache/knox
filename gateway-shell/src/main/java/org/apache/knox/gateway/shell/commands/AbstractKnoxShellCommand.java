@@ -49,9 +49,13 @@ public abstract class AbstractKnoxShellCommand {
     this.help = help;
   }
 
-  // Exposing the command identifiers since CommandSupport is gone
-  public String getName() { return name; }
-  public String getShortcut() { return shortcut; }
+  public String getName() {
+    return name;
+  }
+
+  public String getShortcut() {
+    return shortcut;
+  }
 
   public String getDescription() {
     return description;
@@ -65,7 +69,6 @@ public abstract class AbstractKnoxShellCommand {
     return help;
   }
 
-  // Enforces the execution contract for subclasses
   public abstract Object execute(List<String> args) throws Exception;
 
   protected String getBindingVariableNameForResultingTable(List<String> args) {
