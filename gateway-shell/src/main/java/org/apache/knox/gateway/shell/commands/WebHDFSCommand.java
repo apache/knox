@@ -59,7 +59,6 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
 
   private Map<String, KnoxSession> sessions = new HashMap<>();
 
-  // REFACTORED CONSTRUCTOR
   public WebHDFSCommand(GroovyEngine engine, Terminal terminal) {
     super(engine, terminal, ":filesystem", ":fs", DESC, USAGE, DESC);
   }

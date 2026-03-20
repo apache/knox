@@ -31,7 +31,6 @@ import org.jline.terminal.TerminalBuilder;
 
 public class LoginCommand extends AbstractKnoxShellCommand {
 
-  // REFACTORED CONSTRUCTOR
   public LoginCommand(GroovyEngine engine, Terminal terminal) {
     // Pass identifiers and docs up to AbstractKnoxShellCommand
     super(engine, terminal, ":login", ":lgn",
@@ -53,7 +52,6 @@ public class LoginCommand extends AbstractKnoxShellCommand {
     KnoxSession session = null;
 
     try {
-      // REPLACED KnoxLoginDialog with JLine 3 native prompting
       LineReader reader = LineReaderBuilder.builder()
       .terminal(terminal)
       .build();

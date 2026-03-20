@@ -38,15 +38,6 @@ public abstract class AbstractKnoxShellCommand {
   private String usage;
   private String help;
 
-  // REFACTORED CONSTRUCTOR: Injects JLine 3 dependencies
-  public AbstractKnoxShellCommand(GroovyEngine engine, Terminal terminal, String name, String shortcut) {
-    this.engine = engine;
-    this.terminal = terminal;
-    this.name = name;
-    this.shortcut = shortcut;
-  }
-
-  // REFACTORED CONSTRUCTOR: Overload with help docs
   public AbstractKnoxShellCommand(GroovyEngine engine, Terminal terminal, String name, String shortcut,
                                   String desc, String usage, String help) {
     this.engine = engine;
@@ -58,7 +49,7 @@ public abstract class AbstractKnoxShellCommand {
     this.help = help;
   }
 
-  // NEW METHODS: Exposing the command identifiers since CommandSupport is gone
+  // Exposing the command identifiers since CommandSupport is gone
   public String getName() { return name; }
   public String getShortcut() { return shortcut; }
 
@@ -74,7 +65,7 @@ public abstract class AbstractKnoxShellCommand {
     return help;
   }
 
-  // NEW ABSTRACT METHOD: Enforces the execution contract for subclasses
+  // Enforces the execution contract for subclasses
   public abstract Object execute(List<String> args) throws Exception;
 
   protected String getBindingVariableNameForResultingTable(List<String> args) {
@@ -152,12 +143,10 @@ public abstract class AbstractKnoxShellCommand {
 
       @Override
       public void setPrompt(String prompt) {
-
       }
 
       @Override
       public void setName(String name) {
-
       }
     };
   }
