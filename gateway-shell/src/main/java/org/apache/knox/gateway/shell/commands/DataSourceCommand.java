@@ -36,7 +36,6 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
   private static final String USAGE = ":ds (add|remove|list|select) [ds-name] [connection-str] [driver-classname] [authntype(none|basic)]";
   private static final String DESC = "Datasource management commands. Persisted datasources maintain connection details across sessions";
 
-  // REFACTORED CONSTRUCTOR
   public DataSourceCommand(GroovyEngine engine, Terminal terminal) {
     super(engine, terminal, ":datasources", ":ds", DESC, USAGE, DESC);
   }
@@ -57,7 +56,7 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       }
       KnoxDataSource ds = new KnoxDataSource(args.get(1), args.get(2), args.get(3), args.get(4));
       dataSources.put(ds.getName(), ds);
-      engine.put(KNOXDATASOURCES, dataSources); // REFACTORED: Use engine.put
+      engine.put(KNOXDATASOURCES, dataSources);
       persistDataSources();
     }
     else if ("remove".equalsIgnoreCase(action)) {
@@ -133,7 +132,7 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       }
 
       if (dataSources.containsKey(args.get(1))) {
-        engine.put(KNOXDATASOURCE, args.get(1)); // REFACTORED: Use engine.put
+        engine.put(KNOXDATASOURCE, args.get(1));
       }
 
       KnoxShellTable datasource = new KnoxShellTable();
@@ -155,7 +154,7 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
 
     @SuppressWarnings("unchecked")
     Map<String, KnoxDataSource> dataSources =
-    (Map<String, KnoxDataSource>) engine.get(KNOXDATASOURCES); // REFACTORED: Use engine.get
+    (Map<String, KnoxDataSource>) engine.get(KNOXDATASOURCES);
 
     if (dataSources != null && !dataSources.isEmpty()) {
       for (KnoxDataSource dsValue : dataSources.values()) {

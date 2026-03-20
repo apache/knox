@@ -29,7 +29,6 @@ public class CSVCommand extends AbstractKnoxShellCommand {
   private static final String USAGE = ":csv [withHeaders] file-url||$variable-name [assign resulting-variable-name]";
   private static final String DESC = "Build table from CSV file located at provided URL or KnoxShell $variable-name";
 
-  // REFACTORED CONSTRUCTOR: Takes engine and terminal instead of shell
   public CSVCommand(GroovyEngine engine, Terminal terminal) {
     super(engine, terminal, ":CSV", ":csv", DESC, USAGE, DESC);
   }
@@ -65,7 +64,6 @@ public class CSVCommand extends AbstractKnoxShellCommand {
     try {
       if (withHeaders) {
         if (url.startsWith("$")) {
-          // REFACTORED: Use engine.get() instead of getVariables().get()
           String csvString = (String) engine.get(url.substring(1));
           table = KnoxShellTable.builder().csv().withHeaders().string(csvString);
         } else {
@@ -73,7 +71,6 @@ public class CSVCommand extends AbstractKnoxShellCommand {
         }
       } else {
         if (url.startsWith("$")) {
-          // REFACTORED: Use engine.get() instead of getVariables().get()
           String csvString = (String) engine.get(url.substring(1));
           table = KnoxShellTable.builder().csv().string(csvString);
         } else {
@@ -81,14 +78,12 @@ public class CSVCommand extends AbstractKnoxShellCommand {
         }
       }
     } catch (IOException e) {
-      // REFACTORED: Print errors nicely via the JLine 3 terminal
       terminal.writer().println("Error parsing CSV: " + e.getMessage());
       e.printStackTrace(terminal.writer());
       terminal.writer().flush();
     }
 
     if (table != null && bindVariableName != null) {
-      // REFACTORED: Use engine.put() instead of getVariables().put()
       engine.put(bindVariableName, table);
       terminal.writer().println("Assigned resulting table to variable: " + bindVariableName);
       terminal.writer().flush();

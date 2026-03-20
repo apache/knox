@@ -28,13 +28,11 @@ import org.apache.knox.gateway.shell.CredentialCollector;
 import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 
-// Replacing Swing/AWT and Groovysh
 import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 
-// REMOVED: "implements KeyListener" - JLine 3 handles this natively!
 public class SelectCommand extends AbstractSQLCommandSupport {
   private static final String USAGE = ":sql [assign resulting-variable-name]";
   private static final String DESC = "Build table from SQL ResultSet";
@@ -116,7 +114,7 @@ public class SelectCommand extends AbstractSQLCommandSupport {
     }
 
     if (table != null && bindVariableName != null) {
-      engine.put(bindVariableName, table); // REFACTORED: Use engine.put()
+      engine.put(bindVariableName, table);
       terminal.writer().println("Assigned resulting table to variable: " + bindVariableName);
       terminal.writer().flush();
     }
