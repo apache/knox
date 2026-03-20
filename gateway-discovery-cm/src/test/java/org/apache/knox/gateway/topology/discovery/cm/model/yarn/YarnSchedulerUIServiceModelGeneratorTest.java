@@ -29,38 +29,38 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class YarnSUIServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
+public class YarnSchedulerUIServiceModelGeneratorTest extends AbstractServiceModelGeneratorTest {
 
     @Test
     public void testServiceModelMetadata() throws Exception {
         final Map<String, String> serviceConfig = Collections.emptyMap();
 
         final Map<String, String> roleConfig = new HashMap<>();
-        roleConfig.put(YarnSUIServiceModelGenerator.RM_HTTP_PORT, "8088");
-        roleConfig.put(YarnSUIServiceModelGenerator.RM_HTTPS_PORT, "8090");
+        roleConfig.put(YarnSchedulerUIServiceModelGenerator.RM_HTTP_PORT, "8088");
+        roleConfig.put(YarnSchedulerUIServiceModelGenerator.RM_HTTPS_PORT, "8090");
 
         validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
     }
 
     @Override
     protected String getServiceType() {
-        return YarnSUIServiceModelGenerator.SERVICE_TYPE;
+        return YarnSchedulerUIServiceModelGenerator.SERVICE_TYPE;
     }
 
     @Override
     protected String getRoleType() {
-        return YarnSUIServiceModelGenerator.ROLE_TYPE;
+        return YarnSchedulerUIServiceModelGenerator.ROLE_TYPE;
     }
 
     @Override
     protected ServiceModelGenerator newGenerator() {
-        return new YarnSUIServiceModelGenerator(){
+        return new YarnSchedulerUIServiceModelGenerator(){
             @Override // To bypass the HDFS ssl_enable check
             protected String generateURL(ApiService service, ApiServiceConfig serviceConfig, ApiRole role,
                                          ApiConfigList roleConfig, ApiServiceConfig coreConfig) {
 
                 String hostname = role.getHostRef().getHostname();
-                String port = getRoleConfigValue(roleConfig, YarnSUIServiceModelGenerator.RM_HTTP_PORT);
+                String port = getRoleConfigValue(roleConfig, YarnSchedulerUIServiceModelGenerator.RM_HTTP_PORT);
 
                 return String.format(Locale.getDefault(), "http://%s:%s", hostname, port);
             }
