@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.SortOrder;
@@ -292,7 +291,7 @@ public class KnoxShellTable {
   /**
    * Trims the String value of whitespace for each of the values in a column
    * given the column name.
-   * @param colIndex
+   * @param colName column name
    * @return table
    */
   public KnoxShellTable trim(String colName) {
@@ -335,8 +334,15 @@ public class KnoxShellTable {
     return new KnoxShellTableBuilder();
   }
 
+  private static final java.util.concurrent.atomic.AtomicLong LAST_TIME_MS =
+  new java.util.concurrent.atomic.AtomicLong(System.currentTimeMillis());
+
   static long getUniqueTableId() {
-    return System.currentTimeMillis() + ThreadLocalRandom.current().nextLong(1000);
+    return LAST_TIME_MS.updateAndGet(lastTime -> {
+      long now = System.currentTimeMillis();
+      // If we are moving too fast, artificially step forward by 1ms to avoid collision
+      return (now > lastTime) ? now : lastTime + 1;
+    });
   }
 
   public List<KnoxShellTableCall> getCallHistoryList() {
