@@ -139,10 +139,14 @@ public class Shell {
     while (true) {
       try {
         String line = reader.readLine("knox> ");
-        if (line == null) break;
+        if (line == null) {
+          break;
+        }
 
         String trimmed = line.trim();
-        if (trimmed.isEmpty()) continue;
+        if (trimmed.isEmpty()) {
+          continue;
+        }
 
         // --- BUILT-IN COMMANDS ---
         if (":exit".equalsIgnoreCase(trimmed) || ":quit".equalsIgnoreCase(trimmed)) {
