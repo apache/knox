@@ -17,6 +17,7 @@
 ##########################################################################
 
 .classpath
+.claude
 .project
 .settings
 dependency-reduced-pom.xml

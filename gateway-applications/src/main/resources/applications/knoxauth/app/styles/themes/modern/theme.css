@@ -1,0 +1,499 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Knox Modern Theme
+ *
+ * This theme provides a modern, clean login page design with:
+ * - Deep purple background
+ * - White container with rounded corners
+ * - Pill-shaped input fields and buttons
+ * - Gradient button styling
+ * - Roboto font family
+ *
+ * Usage: Add ?theme=modern to the login URL
+ * Example: https://knox.example.com/gateway/knoxsso/knoxauth/login.html?theme=modern
+ */
+:root {
+  --border-disabled: var(--color-pewter-100-base);
+  --border-primary: var(--color-pewter-300);
+  --border-primary-active: var(--color-blue-nova-600-base);
+  --border-primary-active-hover: var(--color-blue-nova-700);
+  --border-primary-hover: var(--color-blue-nova-700);
+  --border-primary-pressed: var(--color-blue-nova-400);
+
+  --border-width-1: var(--dimension-dim-1);
+  --border-width-2: var(--dimension-dim-2);
+  --border-width-3: var(--dimension-dim-3);
+  --border-width-none: var(--dimension-dim-0);
+
+  --button-container-primary-focus-ring-color: var(--focus-ring-primary);
+  --button-container-primary-hover-background-gradient-bottom: var(--gradient-blue-nova-700-800-bottom);
+  --button-container-primary-hover-background-gradient-top: var(--gradient-blue-nova-700-800-top);
+  --button-container-primary-pressed-background-gradient-bottom: var(--gradient-blue-nova-600-700-bottom);
+  --button-container-primary-pressed-background-gradient-top: var(--gradient-blue-nova-600-700-top);
+  --button-container-secondary-active-border-color: var(--border-primary-active);
+  --button-container-secondary-active-border-width: var(--border-width-1);
+  --button-container-secondary-active-hover-border-color: var(--border-primary-active-hover);
+  --button-container-secondary-background-color: var(--color-base-white);
+  --button-container-secondary-default-border-color: var(--border-primary);
+  --button-container-secondary-default-border-width: var(--border-width-1);
+  --button-container-secondary-disabled-border-color: var(--border-disabled);
+  --button-container-secondary-focus-ring-color: var(--focus-ring-primary);
+  --button-container-secondary-hover-border-color: var(--border-primary-hover);
+  --button-container-secondary-pressed-border-color: var(--border-primary-pressed);
+
+  --color-base-white: color(srgb 1 1 1);
+  --color-blue-nova-25: color(srgb 0.9764705882352941 0.9764705882352941 1);
+  --color-blue-nova-50: color(srgb 0.9411764705882353 0.9411764705882353 1);
+  --color-blue-nova-100: color(srgb 0.8627450980392157 0.8627450980392157 0.9882352941176471);
+  --color-blue-nova-200: color(srgb 0.7803921568627451 0.7803921568627451 0.9921568627450981);
+  --color-blue-nova-300: color(srgb 0.6745098039215687 0.6745098039215687 0.9882352941176471);
+  --color-blue-nova-400: color(srgb 0.5647058823529412 0.5647058823529412 0.9882352941176471);
+  --color-blue-nova-500: color(srgb 0.45098039215686275 0.45098039215686275 0.9803921568627451);
+  --color-blue-nova-600-base: color(srgb 0.3333333333333333 0.3333333333333333 0.9764705882352941);
+  --color-blue-nova-700: color(srgb 0.23137254901960785 0.1803921568627451 0.8588235294117647);
+  --color-blue-nova-800: color(srgb 0.18823529411764706 0.13333333333333333 0.5647058823529412);
+  --color-blue-nova-900: color(srgb 0.10980392156862745 0.07450980392156863 0.3058823529411765);
+  --color-blue-nova-950: color(srgb 0.07450980392156863 0.050980392156862744 0.19607843137254902);
+  --color-pewter-25: color(srgb 0.9568627450980393 0.9686274509803922 0.9764705882352941);
+  --color-pewter-50: color(srgb 0.8823529411764706 0.9176470588235294 0.9411764705882353);
+  --color-pewter-100-base: color(srgb 0.807843137254902 0.8588235294117647 0.8941176470588236);
+  --color-pewter-200: color(srgb 0.7215686274509804 0.7843137254901961 0.8313725490196079);
+  --color-pewter-300: color(srgb 0.6392156862745098 0.7098039215686275 0.7607843137254902);
+  --color-pewter-400: color(srgb 0.5215686274509804 0.6039215686274509 0.6588235294117647);
+  --color-pewter-500: color(srgb 0.43137254901960786 0.5137254901960784 0.5686274509803921);
+  --color-pewter-600: color(srgb 0.33725490196078434 0.40784313725490196 0.4588235294117647);
+  --color-pewter-700: color(srgb 0.27058823529411763 0.3176470588235294 0.35294117647058826);
+  --color-pewter-800: color(srgb 0.2 0.23529411764705882 0.2627450980392157);
+  --color-pewter-900: color(srgb 0.13725490196078433 0.16862745098039217 0.18823529411764706);
+  --color-pewter-950: color(srgb 0.10196078431372549 0.12549019607843137 0.1411764705882353);
+  --color-pewter-glass-background: color(srgb 0.9568627450980393 0.9686274509803922 0.9764705882352941 / 0.7490196078431373);
+  --color-pewter-glass-overlay: color(srgb 0.9490196078431372 0.9803921568627451 1 / 0.4);
+
+  --dimension-dim-0: 0;
+  --dimension-dim-1: 0.0625rem;
+  --dimension-dim-2: 0.125rem;
+  --dimension-dim-3: 0.1875rem;
+  --dimension-dim-4: 0.25rem;
+  --dimension-dim-12: 0.75rem;
+  --dimension-dim-14: 0.875rem;
+  --dimension-dim-16: 1rem;
+  --dimension-dim-18: 1.125rem;
+  --dimension-dim-20: 1.25rem;
+  --dimension-dim-22: 1.375rem;
+  --dimension-dim-24: 1.5rem;
+  --dimension-dim-32: 2rem;
+
+  --focus-ring-primary: var(--color-blue-nova-300);
+
+  --font-family-roboto: Roboto;
+
+  --font-size-12: var(--dimension-dim-12);
+  --font-size-14: var(--dimension-dim-14);
+  --font-size-16: var(--dimension-dim-16);
+  --font-size-18: var(--dimension-dim-18);
+  --font-size-20: var(--dimension-dim-20);
+  --font-size-24: var(--dimension-dim-24);
+
+  --font-weight-400: 400;
+  --font-weight-500: 500;
+  --font-weight-600: 600;
+
+  --font-styles-body-display-font-size: var(--font-size-24);
+  --font-styles-body-display-font-weight: var(--font-weight-500);
+  --font-styles-body-display-icon-to-text-gap: var(--spacing-4);
+  --font-styles-body-display-line-height: var(--line-height-32);
+  --font-styles-body-standard-font-family: var(--font-family-roboto);
+  --font-styles-body-standard-font-size: var(--font-size-14);
+  --font-styles-body-standard-font-weight: var(--font-weight-400);
+  --font-styles-font-styles-font-variant-ligatures: none;
+  --font-styles-body-standard-bold-font-weight: var(--font-weight-600);
+  --font-styles-body-standard-bold-icon-to-text-gap: var(--spacing-4);
+  --font-styles-body-standard-bold-line-height: var(--line-height-20);
+  --font-styles-body-standard-color: var(--text-primary);
+  --font-styles-body-standard-descriptive: body-standard-descriptive;
+  --font-styles-body-standard-descriptive-color: var(--text-secondary);
+  --font-styles-body-standard-line-height: var(--line-height-20);
+  --font-styles-body-small-font-size: var(--font-size-12);
+  --font-styles-body-small-line-height: var(--line-height-16);
+
+  --gradient-blue-nova-600-700-bottom: var(--color-blue-nova-700);
+  --gradient-blue-nova-600-700-top: var(--color-blue-nova-600-base);
+  --gradient-blue-nova-700-800-bottom: var(--color-blue-nova-800);
+  --gradient-blue-nova-700-800-top: var(--color-blue-nova-700);
+
+  --line-height-16: var(--dimension-dim-16);
+  --line-height-20: var(--dimension-dim-20);
+  --line-height-22: var(--dimension-dim-22);
+  --line-height-24: var(--dimension-dim-24);
+  --line-height-32: var(--dimension-dim-32);
+
+  --spacing-4: var(--dimension-dim-4);
+  --spacing-12: var(--dimension-dim-12);
+  --spacing-14: var(--dimension-dim-14);
+  --spacing-16: var(--dimension-dim-16);
+  --spacing-20: var(--dimension-dim-20);
+  --spacing-24: var(--dimension-dim-24);
+
+
+  --text-primary: var(--color-pewter-950);
+  --text-primary-hover: var(--color-pewter-700);
+  --text-secondary: var(--color-pewter-600);
+  --text-secondary-hover: var(--color-pewter-800);
+}
+
+
+.text {
+  /* @reset */
+
+  font-family: var(--font-styles-body-standard-font-family);
+  font-size: var(--font-styles-body-standard-font-size);
+  font-weight: var(--font-styles-body-standard-font-weight);
+  font-variant-ligatures: var(--font-styles-font-styles-font-variant-ligatures);
+  line-height: var(--font-styles-body-standard-line-height);
+  color: var(--font-styles-body-standard-color);
+
+  text-box-edge: cap alphabetic;
+  text-box-trim: trim-both;
+
+  /* TODO: Remove this Firefox fallback when text-box-trim is supported. */
+  @supports not (text-box-trim: trim-both) {
+    margin-block: -0.217em;
+  }
+
+  /* Apply this class to the parent of Text when you need it to inherit the
+  color. */
+  .inherit > & {
+    color: inherit;
+  }
+
+  & & {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  &.small {
+    font-size: var(--font-styles-body-small-font-size);
+    line-height: var(--font-styles-body-small-line-height);
+  }
+
+  &.large {
+    font-size: var(--font-size-16);
+    line-height: var(--line-height-24);
+  }
+
+  & strong {
+    font-weight: var(--font-styles-body-standard-bold-font-weight);
+  }
+
+  &.descriptive {
+    color: var(--font-styles-body-standard-descriptive-color);
+  }
+
+  &.display {
+    font-size: var(--font-styles-body-display-font-size);
+    font-weight: var(--font-styles-body-display-font-weight);
+    line-height: var(--font-styles-body-display-line-height);
+  }
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(fonts/roboto-400.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(fonts/roboto-600.ttf) format('truetype');
+}
+
+/* Background - Deep purple */
+body.login {
+  background: #120046 !important;
+  font-family: 'Roboto', sans-serif;
+  gap: 32px;
+  padding: 40px;
+  border-radius: 1px;
+}
+
+/* Container - White box with rounded corners, larger width */
+.login #signin-container {
+  width: 400px !important;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  padding: 0;
+}
+
+.login .l-logo {
+  height: 72px;
+  align-self: stretch;
+  flex-grow: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  border-bottom: solid 1px #e1eaf0;
+}
+
+.login .l-logo img {
+  /* Replace with theme-specific logo */
+  content: url('images/modern-theme-logo.png');
+  max-width: 260px;
+  max-height: 28px;
+}
+
+/* Retina display support for high-DPI screens */
+@media only screen and (-webkit-min-device-pixel-ratio: 2),
+       only screen and (min-resolution: 192dpi) {
+  .login .l-logo img {
+    content: url('images/modern-theme-logo@2x.png');
+    width: 260px;
+    height: 28px;
+  }
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 3),
+       only screen and (min-resolution: 288dpi) {
+  .login .l-logo img {
+    content: url('images/modern-theme-logo@3x.png');
+    width: 260px;
+    height: 28px;
+  }
+}
+
+/* Form container - Body section */
+.login form {
+  padding: 40px;
+  margin: 0;
+  background: #ffffff;
+}
+
+/* Remove the dark background from fields container */
+.login .fields {
+  padding: 0;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /*align-items: center;*/
+  text-align: center;
+}
+
+/* Sign in heading */
+.login .fields::before {
+  content: 'Sign in';
+  display: block;
+  width: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  color: #1a2024;
+  margin-bottom: -16px;
+}
+
+/* Labels - Roboto Regular, smaller, darker */
+/*.login label {*/
+/*  color: #1a2024 !important;*/
+/*  font-size: 14px !important;*/
+/*  font-weight: normal !important;*/
+/*  font-family: 'Roboto', sans-serif;*/
+/*  line-height: 1.43;*/
+/*  text-align: left;*/
+/*  display: block;*/
+/*  margin-bottom: 4px;*/
+/*}*/
+
+.login label {
+  width: 90px;
+  height: 10px;
+  flex-grow: 0;
+  font-family: Roboto;
+  font-size: 14px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.43;
+  letter-spacing: normal;
+  text-align: left;
+  color: #1a2024;
+}
+
+/* Hide icons in labels for modern theme */
+.login label i {
+  display: none;
+}
+
+/* Input fields - Pill-shaped, light border */
+.login input[type="text"],
+.login input[type="password"] {
+  height: 32px !important;
+  /*padding: 0 12px !important;*/
+  background: #ffffff !important;
+  border: solid 1px #a3b5c2 !important;
+  border-width: 1px !important;
+  border-radius: 9999px !important;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  color: #1a2024;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.login input[type="text"]:focus,
+.login input[type="password"]:focus {
+  border-color: #3b2edb !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 46, 219, 0.1);
+}
+
+.login input::placeholder {
+  color: #8896a4;
+}
+
+/* Button - Pill-shaped with gradient */
+/*.login form .btn,*/
+/*.login form button[type="button"] {*/
+/*  height: 40px !important;*/
+/*  width: 100%;*/
+/*  padding: 0 20px !important;*/
+/*  margin-top: 0 !important;*/
+/*  background: linear-gradient(to right, #3b2edb, #5555f9) !important;*/
+/*  border: none !important;*/
+/*  border-radius: 9999px !important;*/
+/*  color: #ffffff !important;*/
+/*  font-family: 'Roboto', sans-serif;*/
+/*  font-size: 14px;*/
+/*  font-weight: 600;*/
+/*  line-height: 40px;*/
+/*  text-align: center;*/
+/*  cursor: pointer;*/
+/*  transition: opacity 0.2s ease, transform 0.1s ease;*/
+/*  box-shadow: 0 2px 8px rgba(59, 46, 219, 0.3);*/
+/*}*/
+
+.login form button {
+  height: 40px;
+  align-self: stretch;
+  flex-grow: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  background-image: linear-gradient(to top, #3b2edb, #5555f9);
+}
+
+login form button .text {
+  width: 125px;
+  height: 11px;
+  flex-grow: 0;
+  font-family: Roboto;
+  font-size: 16px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.38;
+  letter-spacing: normal;
+  text-align: center;
+  color: #fff;
+}
+
+.login form .btn:hover,
+.login form button[type="button"]:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 46, 219, 0.4);
+}
+
+.login form .btn:active,
+.login form button[type="button"]:active {
+  transform: translateY(0);
+}
+
+/* Footer section - "Is it your first time?" area */
+.login form::after {
+  content: '';
+  display: block;
+  height: 72px;
+  padding: 0 40px 40px;
+}
+
+/* Error message styling */
+.login #errorBox {
+  background: #fff0f0;
+  border: 1px solid #ffcccc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+  color: #d32f2f !important;
+}
+
+.login #errorBox .errorMsg {
+  color: #d32f2f;
+  font-family: 'Roboto', sans-serif;
+}
+
+.login #errorBox i {
+  color: #d32f2f !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .login #signin-container {
+    width: 90% !important;
+    margin: 20px auto;
+  }
+
+  /*.login form {*/
+  /*  padding: 30px 20px;*/
+  /*}*/
+
+  .login .l-logo {
+    height: 80px;
+    padding: 30px 0;
+  }
+}
+
+/* Loading spinner adjustment */
+.login .icon-sign-in {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+}

@@ -63,6 +63,11 @@ var login = function() {
 	var username = form.username.value;
 	var password = form.password.value;
 	var _login = function() {
+		// Show loading spinner and disable button
+		$('#signInLoading').css('visibility', 'visible');
+		$('#signIn').attr('disabled', 'disabled');
+		$('#errorBox').hide();
+
 		var originalUrl = get("originalUrl");
 		var idpUrl = loginURL + originalUrl;
 		var redirectUrl = originalUrl;
@@ -82,7 +87,7 @@ var login = function() {
 					redirect(redirectUrl);
 				} else {
 					$('#errorBox').show();
-					$('#signInLoading').hide();
+					$('#signInLoading').css('visibility', 'hidden');
 					$('#signIn').removeAttr('disabled');
 					if (request.status == 401) {
 						$('#errorBox .errorMsg').text("The username or password you entered is incorrect.");

@@ -1604,12 +1604,13 @@ body.login {
 }
 
 .icon-sign-in {
-  margin-left: 15px;
   visibility: hidden;
   font-size: 20px;
-  margin-top: 3px;
-  position:relative;
-  right:80px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
 }
 .login form .btn,
 .login input {
