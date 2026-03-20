@@ -55,6 +55,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.shell.jdbc.Database;
 import org.apache.knox.gateway.shell.jdbc.derby.DerbyDatabase;
 import org.easymock.IAnswer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -66,6 +68,16 @@ public class KnoxShellTableTest {
 
   private static final String SYSTEM_PROPERTY_DERBY_STREAM_ERROR_FILE = "derby.stream.error.file";
   private static final String SAMPLE_DERBY_DATABASE_NAME = "sampleDerbyDatabase";
+
+  @Before
+  public void setUp() {
+    KnoxShellTableCallHistory.getInstance().clear();
+  }
+
+  @After
+  public void tearDown() {
+    KnoxShellTableCallHistory.getInstance().clear();
+  }
 
   @Test
   public void testSimpleTableRendering() {

@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,6 +50,17 @@ public class KnoxShellTableCallHistoryTest {
     CALL_LIST.add(new KnoxShellTableCall("org.apache.knox.gateway.shell.table.KnoxShellTableFilter", "name", false, Collections.singletonMap("ZIP", String.class)));
     CALL_LIST.add(new KnoxShellTableCall("org.apache.knox.gateway.shell.table.KnoxShellTableFilter", "greaterThan", true, Collections.singletonMap("5", String.class)));
   }
+
+  @Before
+  public void setUp() {
+    KnoxShellTableCallHistory.getInstance().clear();
+  }
+
+  @After
+  public void tearDown() {
+    KnoxShellTableCallHistory.getInstance().clear();
+  }
+
 
   @Test
   public void shouldReturnEmptyListInCaseThereWasNoCall() throws Exception {
@@ -122,7 +135,7 @@ public class KnoxShellTableCallHistoryTest {
     table.rollback();
     assertNotNull(table);
     assertEquals(14, table.rows.size());
-    assertEquals(table.values(0).get(13), "14"); // selected the first column (ZIP) where the last element - index 13 - is 14
+    assertEquals("14", table.values(0).get(13));
   }
 
   private void recordCallHistory(long id, int steps) {

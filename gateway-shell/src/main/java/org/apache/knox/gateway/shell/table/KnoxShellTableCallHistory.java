@@ -66,6 +66,14 @@ class KnoxShellTableCallHistory {
     callHistory.remove(id);
   }
 
+  /**
+   * Clears the entire call history.
+   * Useful for ensuring clean state between unit tests.
+   */
+  void clear() {
+    callHistory.clear();
+  }
+
   public List<KnoxShellTableCall> getCallHistory(long id) {
     return callHistory.containsKey(id) ? Collections.unmodifiableList(callHistory.get(id)) : Collections.emptyList();
   }
