@@ -20,8 +20,11 @@ package org.apache.knox.gateway.shell.commands;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
@@ -29,6 +32,9 @@ import org.apache.knox.gateway.shell.KnoxDataSource;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
@@ -163,6 +169,47 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
       }
     }
     return datasource;
+  }
+
+  @Override
+  public List<Completer> getCompleters() {
+
+    // 1st Argument Completer: Suggests the sub-commands
+    Completer subCommandCompleter = new StringsCompleter("add", "remove", "select", "list");
+
+    // 2nd Argument Completer: Suggests Data Source names dynamically
+    Completer nameCompleter = (reader, parsedLine, candidates) -> {
+      // parsedLine.words() gives us the exact tokens typed so far (e.g., [":ds", "select", ""])
+      List<String> words = parsedLine.words();
+
+      // Make sure the user has actually typed a sub-command
+      if (words.size() >= 2) {
+        String subCommand = words.get(1); // gets "select", "remove", etc.
+
+        // We only want to suggest existing names if they are selecting or removing
+        if ("select".equalsIgnoreCase(subCommand) || "remove".equalsIgnoreCase(subCommand)) {
+          List<String> activeDataSources = getDataSourcesNames();
+          for (String dsName : activeDataSources) {
+            candidates.add(new Candidate(dsName));
+          }
+        }
+      }
+    };
+
+    // Return them in positional order: [Arg1, Arg2]
+    return Arrays.asList(subCommandCompleter, nameCompleter);
+  }
+
+  private List<String> getDataSourcesNames() {
+    Map<String, KnoxDataSource> dataSources = getDataSources();
+    if (dataSources == null || dataSources.isEmpty()) {
+      return Collections.emptyList();
+    } else {
+      return dataSources.values()
+        .stream()
+        .map(KnoxDataSource::getName)
+        .collect(Collectors.toList());
+    }
   }
 
   public static void main(String[] args) {

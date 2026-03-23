@@ -19,6 +19,7 @@ package org.apache.knox.gateway.shell;
 
 import groovy.ui.GroovyMain;
 
+import org.apache.groovy.groovysh.jline.SystemRegistryImpl;
 import org.apache.knox.gateway.shell.commands.AbstractKnoxShellCommand;
 import org.apache.knox.gateway.shell.commands.CSVCommand;
 import org.apache.knox.gateway.shell.commands.DataSourceCommand;
@@ -33,24 +34,31 @@ import org.apache.knox.gateway.shell.workflow.Workflow;
 import org.apache.knox.gateway.shell.yarn.Yarn;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.console.CommandMethods;
+import org.jline.console.SystemRegistry;
 import org.jline.reader.Completer;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.DefaultParser;
 import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class Shell {
 
@@ -111,20 +119,52 @@ public class Shell {
     registerCommand(registry, csvCmd);
     registerCommand(registry, hdfsCmd);
 
-    // 4. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.out.println("\nClosing any open connections...");
-      dsCmd.closeConnections();
-      selectCmd.closeConnections();
-    }));
+    Map<String, CommandMethods> commandMethods = new HashMap<>();
+    Map<String, String> commandAliases = new HashMap<>();
 
-    // 5. Setup Tab Completers
+
+    registry.forEach((name, cmd) -> {
+      String shortcut = cmd.getShortcut(); // Use your actual getter method here
+      if (shortcut != null && !shortcut.isEmpty()) {
+        commandAliases.put(shortcut, name); // e.g., "ds" -> "datasource"
+      }
+
+      commandMethods.put(name, new CommandMethods(
+      // 1. Execution Logic: CommandInput -> String[]
+      (input) -> {
+        try {
+          // CommandInput.args() includes the command name as the first element
+          String[] allTokens = input.args();
+
+          // Convert to List and skip the first element (the command name)
+          List<String> argsList = (allTokens != null && allTokens.length > 1)
+          ? Arrays.stream(allTokens).skip(1).collect(Collectors.toList())
+          : Collections.emptyList();
+          return cmd.execute(argsList);
+        } catch (Exception e) {
+          e.printStackTrace();
+          return null;
+        }
+      },
+      // 2. Completion Logic: String (command name) -> Completer
+      (line) -> cmd.getCompleters()
+      ));
+    });
+
+    DefaultParser parser = new DefaultParser();
+    Path workDir = Paths.get(System.getProperty("user.dir"));
+    SystemRegistry systemRegistry = new SystemRegistryImpl(parser, terminal, () -> workDir, null);
+    systemRegistry.register("knox", new SimpleCommandRegistry(commandMethods, commandAliases));
+    systemRegistry.setCommandRegistries();
+    SystemRegistry.add(systemRegistry);
+
+    // 4. Setup Tab Completers
     // StringsCompleter automatically suggests our custom commands (e.g., ":sql", ":fs")
     Completer knoxCompleter = new StringsCompleter(registry.keySet());
     Completer groovyCompleter = engine.getScriptCompleter();
     Completer finalCompleter = new AggregateCompleter(knoxCompleter, groovyCompleter);
 
-    // 6. Build the LineReader
+    // 5. Build the LineReader
     LineReader reader = LineReaderBuilder.builder()
     .terminal(terminal)
     .completer(finalCompleter)
@@ -134,6 +174,14 @@ public class Shell {
     terminal.writer().println("Apache Knox Shell");
     terminal.writer().println("Type ':help' for help, ':exit' or ':quit' to quit.");
     terminal.writer().flush();
+
+    // 6. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      System.out.println("\nClosing any open connections...");
+      dsCmd.closeConnections();
+      selectCmd.closeConnections();
+    }));
+
 
     // 7. The REPL Loop
     while (true) {
