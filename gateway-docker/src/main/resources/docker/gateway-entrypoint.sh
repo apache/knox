@@ -84,6 +84,15 @@ then
   /home/knox/knox/bin/knoxcli.sh create-alias ldap-bind-password --value "${LDAP_BIND_PASSWORD}"
 fi
 
+if [[ -n ${KNOX_TOKEN_HASH_KEY} ]]
+then
+  echo "Creating knox.token.hash.key alias using the provided secret (via ENV variable)..."
+  /home/knox/knox/bin/knoxcli.sh create-alias knox.token.hash.key --value "${KNOX_TOKEN_HASH_KEY}"
+else
+  echo "Generating knox.token.hash.key alias ..."
+  /home/knox/knox/bin/knoxcli.sh generate-jwk --saveAlias knox.token.hash.key
+fi
+
 # If keystore dir is empty use default one
 if [[ -z ${KEYSTORE_DIR} ]]
 then
