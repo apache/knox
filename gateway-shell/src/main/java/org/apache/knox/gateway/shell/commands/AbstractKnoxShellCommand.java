@@ -18,13 +18,16 @@
 package org.apache.knox.gateway.shell.commands;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
+import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.terminal.Terminal;
 
 public abstract class AbstractKnoxShellCommand {
@@ -67,6 +70,10 @@ public abstract class AbstractKnoxShellCommand {
 
   public String getHelp() {
     return help;
+  }
+
+  public List<Completer> getCompleters() {
+    return Collections.singletonList(NullCompleter.INSTANCE);
   }
 
   public abstract Object execute(List<String> args) throws Exception;
