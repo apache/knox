@@ -1,0 +1,16 @@
+services:
+  knox:
+    image: alpine
+    command: sh -c "mkdir -p /knox-runtime/knoxshell && echo 'hello' > /knox-runtime/knoxshell/test.txt && sleep 10"
+    volumes:
+      - knoxshell-vol:/knox-runtime/knoxshell
+  tests:
+    image: alpine
+    command: sh -c "sleep 2 && cat /knoxshell/test.txt"
+    volumes:
+      - knoxshell-vol:/knoxshell
+    depends_on:
+      - knox
+
+volumes:
+  knoxshell-vol:
