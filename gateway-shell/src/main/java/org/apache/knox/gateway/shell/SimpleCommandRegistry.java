@@ -72,7 +72,7 @@ public class SimpleCommandRegistry implements CommandRegistry {
 
         // Tell JLine to wire up all shortcuts to the exact same completion logic
         out.addAliases(aliases);
-        out.compile();
+        //out.compile();
         return out;
     }
 

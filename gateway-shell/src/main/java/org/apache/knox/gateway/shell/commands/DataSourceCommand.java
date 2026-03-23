@@ -34,6 +34,8 @@ import org.apache.knox.gateway.shell.table.KnoxShellTable;
 import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -171,34 +173,45 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
     return datasource;
   }
 
-  @Override
-  public List<Completer> getCompleters() {
+    @Override
+    public List<Completer> getCompleters() {
 
-    // 1st Argument Completer: Suggests the sub-commands
-    Completer subCommandCompleter = new StringsCompleter("add", "remove", "select", "list");
+        // Index 0: The command name itself (e.g., :ds).
+        // Because Shell.java routes this blindly, we just need a dummy placeholder
+        // so ArgumentCompleter correctly shifts the subcommands to Index 1.
+        Completer commandPlaceholder = (reader, parsedLine, candidates) -> {
+        };
 
-    // 2nd Argument Completer: Suggests Data Source names dynamically
-    Completer nameCompleter = (reader, parsedLine, candidates) -> {
-      // parsedLine.words() gives us the exact tokens typed so far (e.g., [":ds", "select", ""])
-      List<String> words = parsedLine.words();
+        // Index 1: Subcommands
+        Completer subCommandCompleter = new StringsCompleter("add", "remove", "select", "list");
 
-      // Make sure the user has actually typed a sub-command
-      if (words.size() >= 2) {
-        String subCommand = words.get(1); // gets "select", "remove", etc.
+        // Index 2: Dynamic Data Source Names
+        Completer nameCompleter = (reader, parsedLine, candidates) -> {
+            List<String> words = parsedLine.words();
 
-        // We only want to suggest existing names if they are selecting or removing
-        if ("select".equalsIgnoreCase(subCommand) || "remove".equalsIgnoreCase(subCommand)) {
-          List<String> activeDataSources = getDataSourcesNames();
-          for (String dsName : activeDataSources) {
-            candidates.add(new Candidate(dsName));
-          }
-        }
-      }
-    };
+            // Safety guard against JLine background scans
+            if (words.size() > 1) {
+                String subCommand = words.get(1);
+                if ("select".equalsIgnoreCase(subCommand) || "remove".equalsIgnoreCase(subCommand)) {
+                    List<String> activeDataSources = getDataSourcesNames(); // Your method
+                    for (String dsName : activeDataSources) {
+                        candidates.add(new Candidate(dsName));
+                    }
+                }
+            }
+        };
 
-    // Return them in positional order: [Arg1, Arg2]
-    return Arrays.asList(subCommandCompleter, nameCompleter);
-  }
+        ArgumentCompleter argCompleter = new ArgumentCompleter(
+        commandPlaceholder,
+        subCommandCompleter,
+        nameCompleter,
+        NullCompleter.INSTANCE // Stops suggesting after the DB name
+        );
+
+        // Return as a singleton list so Shell.java can just blindly grab it
+        return Collections.singletonList(argCompleter);
+    }
+
 
   private List<String> getDataSourcesNames() {
     Map<String, KnoxDataSource> dataSources = getDataSources();

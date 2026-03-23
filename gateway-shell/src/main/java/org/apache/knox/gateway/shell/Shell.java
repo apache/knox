@@ -44,7 +44,6 @@ import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.completer.NullCompleter;
-import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
@@ -123,51 +122,61 @@ public class Shell {
     Map<String, String> commandAliases = new HashMap<>();
 
 
-    registry.forEach((name, cmd) -> {
-      String shortcut = cmd.getShortcut(); // Use your actual getter method here
-      if (shortcut != null && !shortcut.isEmpty()) {
-        commandAliases.put(shortcut, name); // e.g., "ds" -> "datasource"
+    registry.forEach((rawName, cmd) -> {
+
+      // 1. THE FIX: Force the JLine registry to know the commands start with a colon
+      String name = rawName.startsWith(":") ? rawName : ":" + rawName;
+
+      String rawShortcut = cmd.getShortcut();
+      if (rawShortcut != null && !rawShortcut.isEmpty()) {
+        String shortcut = rawShortcut.startsWith(":") ? rawShortcut : ":" + rawShortcut;
+        commandAliases.put(shortcut, name);
       }
 
+      // 2. Put them in the map with the colon-prefixed names
       commandMethods.put(name, new CommandMethods(
-      // 1. Execution Logic: CommandInput -> String[]
       (input) -> {
         try {
-          // CommandInput.args() includes the command name as the first element
           String[] allTokens = input.args();
-
-          // Convert to List and skip the first element (the command name)
+          // input.args() includes the command name, so we skip(1) to get the arguments
           List<String> argsList = (allTokens != null && allTokens.length > 1)
           ? Arrays.stream(allTokens).skip(1).collect(Collectors.toList())
           : Collections.emptyList();
+
           return cmd.execute(argsList);
         } catch (Exception e) {
-          e.printStackTrace();
+          input.session().terminal().writer().println("Error: " + e.getMessage());
           return null;
         }
       },
-      // 2. Completion Logic: String (command name) -> Completer
-      (line) -> cmd.getCompleters()
+      (line) -> {
+        List<Completer> completers = cmd.getCompleters();
+        return (completers != null && !completers.isEmpty())
+        ? completers
+        : Collections.singletonList(NullCompleter.INSTANCE);
+      }
       ));
     });
 
     DefaultParser parser = new DefaultParser();
     Path workDir = Paths.get(System.getProperty("user.dir"));
+    SimpleCommandRegistry knoxRegistry = new SimpleCommandRegistry(commandMethods, commandAliases);
     SystemRegistry systemRegistry = new SystemRegistryImpl(parser, terminal, () -> workDir, null);
-    systemRegistry.register("knox", new SimpleCommandRegistry(commandMethods, commandAliases));
-    systemRegistry.setCommandRegistries();
+    systemRegistry.setCommandRegistries(knoxRegistry);
     SystemRegistry.add(systemRegistry);
 
     // 4. Setup Tab Completers
     // StringsCompleter automatically suggests our custom commands (e.g., ":sql", ":fs")
-    Completer knoxCompleter = new StringsCompleter(registry.keySet());
-    Completer groovyCompleter = engine.getScriptCompleter();
-    Completer finalCompleter = new AggregateCompleter(knoxCompleter, groovyCompleter);
+
+    Completer combinedCompleter = new AggregateCompleter(
+      systemRegistry.completer(),
+      engine.getScriptCompleter()
+    );
 
     // 5. Build the LineReader
     LineReader reader = LineReaderBuilder.builder()
     .terminal(terminal)
-    .completer(finalCompleter)
+    .completer(combinedCompleter)
     .variable(LineReader.HISTORY_FILE, Paths.get(System.getProperty("user.home"), ".knoxshell_history"))
     .build();
 
