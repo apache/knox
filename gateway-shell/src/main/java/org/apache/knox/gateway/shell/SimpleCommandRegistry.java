@@ -24,7 +24,10 @@ import org.jline.reader.Completer;
 import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.reader.impl.completer.SystemCompleter;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SimpleCommandRegistry implements CommandRegistry {
 
