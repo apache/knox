@@ -141,7 +141,7 @@
   </rule>
 
   <rule dir="OUT" name="YARN-RM-PROXY/yarn-rm-proxy/outbound/schedulerui">
-    <rewrite template="{$frontend[path]}/yarn-scheduler-ui"/>
+    <rewrite template="{$frontend[path]}/yarn-scheduler-ui/"/>
   </rule>
 
   <filter name="YARNUIV2/yarnuiv2/outbound/links">
