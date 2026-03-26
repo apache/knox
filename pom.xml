@@ -122,7 +122,6 @@
         <module>gateway-service-rm</module>
         <module>gateway-service-storm</module>
         <module>gateway-service-remoteconfig</module>
-        <module>gateway-service-restcatalog</module>
         <module>gateway-service-definitions</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
