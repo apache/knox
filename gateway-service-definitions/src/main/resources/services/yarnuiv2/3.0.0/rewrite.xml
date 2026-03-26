@@ -140,12 +140,17 @@
     <rewrite template="{$frontend[url]}/yarnuiv2/timeline?{host}?{port}"/>
   </rule>
 
+  <rule dir="OUT" name="YARN-RM-PROXY/yarn-rm-proxy/outbound/schedulerui">
+    <rewrite template="{$frontend[path]}/yarn-scheduler-ui"/>
+  </rule>
+
   <filter name="YARNUIV2/yarnuiv2/outbound/links">
     <content type="*/x-javascript">
       <apply path="ui2/#/cluster-overview" rule="YARNUIV2/yarnuiv2/outbound/logohref"/>
     </content>
     <content type="application/javascript">
       <apply path="ui2/#/cluster-overview" rule="YARNUIV2/yarnuiv2/outbound/logohref"/>
+      <apply path="/scheduler-ui" rule="YARN-RM-PROXY/yarn-rm-proxy/outbound/schedulerui"/>
     </content>
     <content type="*/html">
     </content>
