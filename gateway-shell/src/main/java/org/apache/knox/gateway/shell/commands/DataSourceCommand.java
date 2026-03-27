@@ -172,44 +172,46 @@ public class DataSourceCommand extends AbstractSQLCommandSupport {
     return datasource;
   }
 
-    @Override
-    public List<Completer> getCompleters() {
+  @Override
+  public List<Completer> getCompleters() {
 
-        // Index 0: The command name itself (e.g., :ds).
-        // Because Shell.java routes this blindly, we just need a dummy placeholder
-        // so ArgumentCompleter correctly shifts the subcommands to Index 1.
-        Completer commandPlaceholder = (reader, parsedLine, candidates) -> {
-        };
+    // Index 0: The command name itself (e.g., :ds).
+    // Because Shell.java routes this blindly, we just need a dummy placeholder
+    // so ArgumentCompleter correctly shifts the subcommands to Index 1.
+    Completer commandPlaceholder = (reader, parsedLine, candidates) -> {};
 
-        // Index 1: Subcommands
-        Completer subCommandCompleter = new StringsCompleter("add", "remove", "select", "list");
+    // Index 1: Subcommands
+    Completer subCommandCompleter = new StringsCompleter("add", "remove", "select", "list");
 
-        // Index 2: Dynamic Data Source Names
-        Completer nameCompleter = (reader, parsedLine, candidates) -> {
-            List<String> words = parsedLine.words();
+    // Index 2: Dynamic Data Source Names
+    Completer nameCompleter = dataSourceNameCompleter();
 
-            // Safety guard against JLine background scans
-            if (words.size() > 1) {
-                String subCommand = words.get(1);
-                if ("select".equalsIgnoreCase(subCommand) || "remove".equalsIgnoreCase(subCommand)) {
-                    List<String> activeDataSources = getDataSourcesNames(); // Your method
-                    for (String dsName : activeDataSources) {
-                        candidates.add(new Candidate(dsName));
-                    }
-                }
-            }
-        };
+    ArgumentCompleter argCompleter = new ArgumentCompleter(
+    commandPlaceholder,
+    subCommandCompleter,
+    nameCompleter,
+    NullCompleter.INSTANCE // Stops suggesting after the DB name
+    );
 
-        ArgumentCompleter argCompleter = new ArgumentCompleter(
-        commandPlaceholder,
-        subCommandCompleter,
-        nameCompleter,
-        NullCompleter.INSTANCE // Stops suggesting after the DB name
-        );
+    // Return as a singleton list so Shell.java can just blindly grab it
+    return Collections.singletonList(argCompleter);
+  }
 
-        // Return as a singleton list so Shell.java can just blindly grab it
-        return Collections.singletonList(argCompleter);
-    }
+  private Completer dataSourceNameCompleter() {
+      return (reader, parsedLine, candidates) -> {
+          List<String> words = parsedLine.words();
+          // Safety guard against JLine background scans
+          if (words.size() > 1) {
+              String subCommand = words.get(1);
+              if ("select".equalsIgnoreCase(subCommand) || "remove".equalsIgnoreCase(subCommand)) {
+                  List<String> activeDataSources = getDataSourcesNames(); // Your method
+                  for (String dsName : activeDataSources) {
+                      candidates.add(new Candidate(dsName));
+                  }
+              }
+          }
+      };
+  }
 
 
   private List<String> getDataSourcesNames() {
