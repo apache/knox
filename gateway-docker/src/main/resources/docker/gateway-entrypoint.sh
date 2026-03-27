@@ -26,6 +26,9 @@
 # - KEYSTORE_DIR - (optional) a location for generated JKS files, default /home/knox/knox/data/security/keystores
 # - LDAP_PASSWORD_FILE - (optional) the location of a file containing ldap bind password.
 # - LDAP_BIND_PASSWORD - (optional) ldap bind password value (not file location).
+# - DATABASE_CONNECTION_USER - (optional) gateway database user
+# - DATABASE_CONNECTION_PASSWORD - (optional) gateway database password
+# - DATABASE_CONNECTION_TRUSTSTORE_PASSWORD - (optional) gateway database ssl truststore password
 # - CUSTOM_CERT - (optional) the location of a file containing the custom certs
 
 
@@ -43,7 +46,7 @@ importMultipleCerts() {
   # awk command:
   # step 1), if line is in the desired cert, print the line
   # step 2), increment counter when last line of cert is found
-  for N in $(/usr/bin/seq 0 $(($CERTS - 1))); do
+  for N in $(/usr/bin/seq 0 $((CERTS - 1))); do
     ALIAS="${FILE%.*}-$N"
     /bin/cat "$FILE" |
       /usr/bin/awk "n==$N { print }; /END CERTIFICATE/ { n++ }" |
@@ -54,6 +57,22 @@ importMultipleCerts() {
               -storepass "$ALIAS_PASSPHRASE" \
               -noprompt
   done
+}
+
+## Helper function to save an alias
+## Function takes alias name, environment variable value, and optional default value
+saveAlias() {
+  local alias_name=$1
+  local env_var_value=$2
+  local default_value=$3
+
+  if [[ -n ${env_var_value} ]]; then
+    echo "Creating alias ${alias_name} using provided value..."
+    /home/knox/knox/bin/knoxcli.sh create-alias "${alias_name}" --value "${env_var_value}"
+  elif [[ -n ${default_value} ]]; then
+    echo "Creating alias ${alias_name} using default value..."
+    /home/knox/knox/bin/knoxcli.sh create-alias "${alias_name}" --value "${default_value}"
+  fi
 }
 
 export GATEWAY_SERVER_RUN_IN_FOREGROUND=true
@@ -78,10 +97,17 @@ then
   LDAP_BIND_PASSWORD=$(/bin/cat "${LDAP_PASSWORD_FILE}" 2>/dev/null)
 fi
 
-if [[ -n ${LDAP_BIND_PASSWORD} ]]
+saveAlias ldap-bind-password "${LDAP_BIND_PASSWORD}"
+saveAlias gateway_database_user "${DATABASE_CONNECTION_USER}"
+saveAlias gateway_database_password "${DATABASE_CONNECTION_PASSWORD}"
+saveAlias gateway_database_ssl_truststore_password "${DATABASE_CONNECTION_TRUSTSTORE_PASSWORD}"
+
+if [[ -n ${KNOX_TOKEN_HASH_KEY} ]]
 then
-  echo "Using provided LDAP bind password"
-  /home/knox/knox/bin/knoxcli.sh create-alias ldap-bind-password --value "${LDAP_BIND_PASSWORD}"
+  saveAlias knox.token.hash.key "${KNOX_TOKEN_HASH_KEY}"
+else
+  echo "Generating knox.token.hash.key alias ..."
+  /home/knox/knox/bin/knoxcli.sh generate-jwk --saveAlias knox.token.hash.key
 fi
 
 # If keystore dir is empty use default one
@@ -121,8 +147,8 @@ if [[ -n ${ALIAS_PASSPHRASE} ]] && [[ -n ${KNOX_CERT_EXIST} ]] && [[ -n ${KNOX_K
 then
   echo "Using provided key to setup Knox keystore"
   # Create JCEKS aliases for Knox
-  /home/knox/knox/bin/knoxcli.sh create-alias signing.keystore.password --value "${ALIAS_PASSPHRASE}"
-  /home/knox/knox/bin/knoxcli.sh create-alias gateway-identity-keystore-password --value "${ALIAS_PASSPHRASE}"
+  saveAlias signing.keystore.password "${ALIAS_PASSPHRASE}"
+  saveAlias gateway-identity-keystore-password "${ALIAS_PASSPHRASE}"
 
   /usr/bin/openssl pkcs12 -export \
     -in "${KNOX_CERT}" \
@@ -160,7 +186,7 @@ fi
 
 # Add Amazon Root CA 1
 /usr/bin/keytool -importcert \
-  -keystore ${KEYSTORE_DIR}/truststore.jks \
+  -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-1 \
   -file /home/knox/cacrts/AmazonRootCA1.cer \
   -storepass "${ALIAS_PASSPHRASE}" \
@@ -168,7 +194,7 @@ fi
 
 # Add Amazon Root CA 2
 /usr/bin/keytool -importcert \
-  -keystore ${KEYSTORE_DIR}/truststore.jks \
+  -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-2 \
   -file /home/knox/cacrts/AmazonRootCA2.cer \
   -storepass "${ALIAS_PASSPHRASE}" \
@@ -176,7 +202,7 @@ fi
 
 # Add Amazon Root CA 3
 /usr/bin/keytool -importcert \
-  -keystore ${KEYSTORE_DIR}/truststore.jks \
+  -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-3 \
   -file /home/knox/cacrts/AmazonRootCA3.cer \
   -storepass "${ALIAS_PASSPHRASE}" \
@@ -184,7 +210,7 @@ fi
 
 # Add Amazon Root CA 4
 /usr/bin/keytool -importcert \
-  -keystore ${KEYSTORE_DIR}/truststore.jks \
+  -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-4 \
   -file /home/knox/cacrts/AmazonRootCA4.cer \
   -storepass "${ALIAS_PASSPHRASE}" \
@@ -192,7 +218,7 @@ fi
 
 # Add letsencrypt staging root CA
 /usr/bin/keytool -importcert \
-  -keystore ${KEYSTORE_DIR}/truststore.jks \
+  -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias letsencrypt-stg-root \
   -file /home/knox/cacrts/letsencrypt-stg-root-x1.pem \
   -storepass "${ALIAS_PASSPHRASE}" \

@@ -84,4 +84,16 @@ public interface LdapMessages {
     @Message(level = MessageLevel.INFO,
             text = "Cleaning up old lock file: {0}")
     void ldapCleaningLockFile(String lockFile);
+
+    @Message(level = MessageLevel.DEBUG,
+            text = "Backend user found: {0}")
+    void ldapUserEntry(String user);
+
+    @Message(level = MessageLevel.DEBUG,
+            text = "Backend user not found: {0}")
+    void ldapUserNull(String username);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Failed to copy attribute: {0}")
+    void ldapAttributeCopyError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

@@ -22,12 +22,11 @@
         <shortDesc>ICEBERG-REST</shortDesc>
         <description>Apache Iceberg REST Catalog API</description>
     </metadata>
-
     <routes>
         <route path="/iceberg-rest/**"/>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch"
-              ha-classname="org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch">
+    <dispatch classname="org.apache.knox.gateway.service.restcatalog.RestCatalogDispatch"
+              ha-classname="org.apache.knox.gateway.service.restcatalog.RestCatalogHaDispatch">
         <param>
             <name>shouldIncludePrincipalAndGroups</name>
             <value>true</value>

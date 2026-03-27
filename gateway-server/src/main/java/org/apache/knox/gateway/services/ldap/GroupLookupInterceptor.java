@@ -44,6 +44,7 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     private LdapBackend backend;
     private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
     private static final Pattern CN_PATTERN = Pattern.compile(".*\\(cn=([^)]+)\\).*");
+    private static final Pattern SAMAACCOUNTNAME_PATTERN = Pattern.compile(".*\\(sAMAccountName=([^)]+)\\).*");
 
     public GroupLookupInterceptor(DirectoryService directoryService, LdapBackend backend) {
         this.directoryService = directoryService;
@@ -101,6 +102,9 @@ public class GroupLookupInterceptor extends BaseInterceptor {
                         if (backendEntry != null) {
                             // Return backend result directly without caching
                             entries.add(backendEntry);
+                            LOG.ldapUserEntry(backendEntry.toString());
+                        } else {
+                            LOG.ldapUserNull(username);
                         }
                     }
                 } catch (Exception e) {
@@ -127,7 +131,9 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     }
 
     private boolean isUserSearch(String filter) {
-        return UID_PATTERN.matcher(filter).matches() || CN_PATTERN.matcher(filter).matches();
+        return UID_PATTERN.matcher(filter).matches()
+                || CN_PATTERN.matcher(filter).matches()
+                || SAMAACCOUNTNAME_PATTERN.matcher(filter).matches();
     }
 
     private String extractUser(String filter) {
@@ -139,6 +145,11 @@ public class GroupLookupInterceptor extends BaseInterceptor {
         Matcher cnMatcher = CN_PATTERN.matcher(filter);
         if (cnMatcher.matches()) {
             return cnMatcher.group(1);
+        }
+
+        Matcher samaaccountnameMatcher = SAMAACCOUNTNAME_PATTERN.matcher(filter);
+        if (samaaccountnameMatcher.matches()) {
+            return samaaccountnameMatcher.group(1);
         }
 
         return null;
