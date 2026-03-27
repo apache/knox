@@ -102,6 +102,9 @@ saveAlias gateway_database_user "${DATABASE_CONNECTION_USER}"
 saveAlias gateway_database_password "${DATABASE_CONNECTION_PASSWORD}"
 saveAlias gateway_database_ssl_truststore_password "${DATABASE_CONNECTION_TRUSTSTORE_PASSWORD}"
 
+# RemoteAuthProvider truststore password
+saveAlias rap_truststore_password "${RAP_TRUSTSTORE_PASSWORD}"
+
 if [[ -n ${KNOX_TOKEN_HASH_KEY} ]]
 then
   saveAlias knox.token.hash.key "${KNOX_TOKEN_HASH_KEY}"

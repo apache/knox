@@ -19,6 +19,7 @@ package org.apache.knox.gateway.filter;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.RemoteAuthMessages;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -76,7 +77,7 @@ public class RemoteAuthFilter implements Filter {
   static final String DEFAULT_CONFIG_USER_HEADER = "X-Knox-Actor-ID";
   static final String DEFAULT_CONFIG_GROUP_HEADER = "X-Knox-Actor-Groups-*";
   static final String CONFIG_TRUSTSTORE_PATH = REMOTE_AUTH + "truststore.path";
-  static final String CONFIG_TRUSTSTORE_PASSWORD = REMOTE_AUTH + "truststore.password";
+  static final String CONFIG_TRUSTSTORE_PASSWORD_ALIAS = REMOTE_AUTH + "truststore.password.alias";
   static final String CONFIG_TRUSTSTORE_TYPE = REMOTE_AUTH + "truststore.type";
   static final String DEFAULT_TRUSTSTORE_TYPE = "JKS";
   static final String WILDCARD = "*";
@@ -138,7 +139,7 @@ public class RemoteAuthFilter implements Filter {
 
   private void buildTrustStore(FilterConfig filterConfig) throws ServletException {
     String truststorePath = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PATH);
-    String truststorePassword = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PASSWORD);
+    String truststorePasswordAlias = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_PASSWORD_ALIAS);
     String truststoreType = filterConfig.getInitParameter(CONFIG_TRUSTSTORE_TYPE);
     if (truststoreType == null || truststoreType.isEmpty()) {
       truststoreType = DEFAULT_TRUSTSTORE_TYPE;
@@ -150,18 +151,12 @@ public class RemoteAuthFilter implements Filter {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       if (services != null) {
         try {
-          final AliasService aliasService =  services.getService(ServiceType.ALIAS_SERVICE);
+          String truststorePassword = null;
           if (truststorePath != null && !truststorePath.isEmpty()) {
-            if (truststorePassword == null || truststorePassword.isEmpty()) {
-              // let's check for an alias given the intent to specify a truststore path
-              char[] passChars = aliasService.getPasswordFromAliasForCluster(topologyName,
-                      CONFIG_TRUSTSTORE_PASSWORD, false);
-              if (passChars != null) {
-                truststorePassword = new String(passChars);
-              }
-              if (truststorePassword == null || truststorePassword.isEmpty()) {
-                truststorePassword = new String(aliasService.getPasswordFromAliasForGateway(CONFIG_TRUSTSTORE_PASSWORD));
-              }
+            final AliasService aliasService =  services.getService(ServiceType.ALIAS_SERVICE);
+            truststorePassword = getTruststorePassword(aliasService, truststorePasswordAlias, topologyName);
+            if (StringUtils.isBlank(truststorePassword)) {
+              truststorePassword = getTruststorePassword(aliasService, truststorePasswordAlias, AliasService.NO_CLUSTER_NAME);
             }
           }
           KeystoreService keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
@@ -175,6 +170,14 @@ public class RemoteAuthFilter implements Filter {
       // truststore details were explicitly configured but there is no servlet context available for gateway services
       throw new ServletException(TRUSTSTORE_CONFIGURATION_CANNOT_BE_RESOLVED_INTO_A_VALID_TRUSTSTORE);
     }
+  }
+
+  private String getTruststorePassword(final AliasService aliasService, final String truststorePasswordAlias, final String topologyName) throws AliasServiceException {
+    if (StringUtils.isNotBlank(truststorePasswordAlias)) {
+      final char[] truststorePasswordAliasChars = aliasService.getPasswordFromAliasForCluster(topologyName, truststorePasswordAlias, false);
+      return truststorePasswordAliasChars ==  null ? null : new String(truststorePasswordAliasChars);
+    }
+    return null;
   }
 
   private KeyStore getTrustStore(String truststorePath, String truststoreType, String truststorePassword,
