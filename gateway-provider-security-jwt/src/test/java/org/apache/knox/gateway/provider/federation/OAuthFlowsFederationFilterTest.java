@@ -38,6 +38,11 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Properties;
 
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -62,9 +67,9 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     }
 
     private void ensureClientCredentials(final HttpServletRequest request, final String clientId, final String clientSecret, final boolean excludeQueryString) {
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ID)).andReturn(clientId).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_SECRET)).andReturn(clientSecret).anyTimes();
+        EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(request.getParameter(CLIENT_ID)).andReturn(clientId).anyTimes();
+        EasyMock.expect(request.getParameter(CLIENT_SECRET)).andReturn(clientSecret).anyTimes();
         if (excludeQueryString) {
             EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
         }
@@ -92,7 +97,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
         EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION_TYPE)).andReturn(JWTFederationFilter.CLIENT_ASSERTION_JWT_BEARER).anyTimes();
         EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION)).andReturn(token.serialize()).anyTimes();
         if (excludeQueryString) {
@@ -182,7 +187,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
 
         final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
         EasyMock.expect(request.getHeader("Authorization")).andReturn("Basic " + basicCredentials).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
         EasyMock.replay(request);
 
         handler.init(new TestFilterConfig(getProperties()));
@@ -371,7 +376,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
           final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
           EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
           EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
-          EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(grantType).anyTimes();
+          EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
           EasyMock.expect(request.getParameter(tokenParam)).andReturn(tokenValue).anyTimes();
           EasyMock.replay(request);
 
@@ -395,7 +400,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
         EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
         EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(grantType).anyTimes();
+        EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
         EasyMock.expect(request.getParameter(tokenParam)).andReturn(passcodeToken).anyTimes();
         EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
 
