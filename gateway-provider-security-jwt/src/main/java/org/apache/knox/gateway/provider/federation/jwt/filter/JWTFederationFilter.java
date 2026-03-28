@@ -47,6 +47,10 @@ import java.util.Locale;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
@@ -54,10 +58,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
-  public static final String GRANT_TYPE = "grant_type";
-  public static final String CLIENT_CREDENTIALS = "client_credentials";
-  public static final String CLIENT_SECRET = "client_secret";
-  public static final String CLIENT_ID = "client_id";
   public static final String INVALID_CLIENT_SECRET = "Error while parsing the received client secret";
   public static final String MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET = "Client credentials flow with mismatching client_id and client_secret";
   public static final String REFRESH_TOKEN = "refresh_token";
