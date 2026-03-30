@@ -412,22 +412,22 @@ body.login {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   padding: 0 20px;
   border-radius: 9999px;
   background-image: linear-gradient(to top, #3b2edb, #5555f9);
+  border: none !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-login form button .text {
-  width: 125px;
-  height: 11px;
-  flex-grow: 0;
+.login form button span {
   font-family: Roboto;
   font-size: 16px;
   font-weight: normal;
   font-stretch: normal;
   font-style: normal;
-  line-height: 1.38;
+  line-height: normal;
   letter-spacing: normal;
   text-align: center;
   color: #fff;
@@ -438,6 +438,21 @@ login form button .text {
   opacity: 0.9;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 46, 219, 0.4);
+  background-position: 0 0 !important;
+  background-color: #3b2edb !important;
+}
+
+/* Fix disabled state turning green */
+.login form .btn.disabled,
+.login form .btn[disabled],
+.login form button[disabled] {
+  background-image: none !important;
+  background-color: #a3b5c2 !important;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .login form .btn:active,
@@ -489,11 +504,15 @@ login form button .text {
   }
 }
 
-/* Loading spinner adjustment */
+/* Loading spinner adjustment - centered via flexbox gap */
 .login .icon-sign-in {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin: 0;
+  position: relative !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-block;
+  visibility: hidden; /* Hidden by default, toggled via JS */
 }
