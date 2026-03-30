@@ -404,60 +404,91 @@ body.login {
 /*  box-shadow: 0 2px 8px rgba(59, 46, 219, 0.3);*/
 /*}*/
 
-.login form button {
-  height: 40px;
-  align-self: stretch;
-  flex-grow: 0;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  padding: 0 20px;
-  border-radius: 9999px;
-  background-image: linear-gradient(to top, #3b2edb, #5555f9);
+.login form button#signIn {
+  height: 40px !important;
+  align-self: stretch !important;
+  flex-grow: 0 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 0 20px !important;
+  border-radius: 9999px !important;
+  background-image: linear-gradient(to top, #3b2edb, #5555f9) !important;
+  background-color: #3b2edb !important;
   border: none !important;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  filter: none !important;
 }
 
-.login form button span {
-  font-family: Roboto;
-  font-size: 16px;
-  font-weight: normal;
-  font-stretch: normal;
-  font-style: normal;
-  line-height: normal;
-  letter-spacing: normal;
-  text-align: center;
-  color: #fff;
+.login form button#signIn span {
+  font-family: Roboto !important;
+  font-size: 16px !important;
+  font-weight: normal !important;
+  font-stretch: normal !important;
+  font-style: normal !important;
+  line-height: normal !important;
+  letter-spacing: normal !important;
+  text-align: center !important;
+  color: #fff !important;
 }
 
-.login form .btn:hover,
-.login form button[type="button"]:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 46, 219, 0.4);
+.login form .btn#signIn:hover,
+.login form .btn#signIn:focus,
+.login form .btn#signIn:active,
+.login form .btn#signIn.active,
+.login form .btn-primary#signIn:hover,
+.login form .btn-primary#signIn:focus,
+.login form .btn-primary#signIn:active,
+.login form .btn-primary#signIn.active,
+.login form button#signIn[type="button"]:hover,
+.login form button#signIn[type="button"]:focus,
+.login form button#signIn[type="button"]:active {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 46, 219, 0.4) !important;
   background-position: 0 0 !important;
   background-color: #3b2edb !important;
+  background-image: linear-gradient(to top, #3b2edb, #5555f9) !important;
+  border: none !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  outline: none !important;
+  filter: none !important;
 }
 
 /* Fix disabled state turning green */
-.login form .btn.disabled,
-.login form .btn[disabled],
-.login form button[disabled] {
+.login form .btn#signIn.disabled,
+.login form .btn#signIn[disabled],
+.login form .btn#signIn.disabled:hover,
+.login form .btn#signIn[disabled]:hover,
+.login form .btn#signIn.disabled:focus,
+.login form .btn#signIn[disabled]:focus,
+.login form .btn#signIn.disabled:active,
+.login form .btn#signIn[disabled]:active,
+.login form .btn-primary#signIn.disabled,
+.login form .btn-primary#signIn[disabled],
+.login form button#signIn[disabled],
+.login form button#signIn[disabled]:hover,
+.login form button#signIn[disabled]:focus,
+.login form button#signIn[disabled]:active {
   background-image: none !important;
   background-color: #a3b5c2 !important;
-  opacity: 0.6;
-  cursor: not-allowed;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
   transform: none !important;
   box-shadow: none !important;
   border: none !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  filter: none !important;
 }
 
-.login form .btn:active,
-.login form button[type="button"]:active {
-  transform: translateY(0);
+.login form .btn#signIn:active,
+.login form button#signIn[type="button"]:active {
+  transform: translateY(0) !important;
 }
 
 /* Footer section - "Is it your first time?" area */
