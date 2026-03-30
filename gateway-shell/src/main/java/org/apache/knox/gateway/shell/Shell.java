@@ -25,6 +25,7 @@ import org.apache.knox.gateway.shell.commands.CSVCommand;
 import org.apache.knox.gateway.shell.commands.DataSourceCommand;
 import org.apache.knox.gateway.shell.commands.ImportCommand;
 import org.apache.knox.gateway.shell.commands.LoadCommand;
+import org.apache.knox.gateway.shell.commands.PurgeCommand;
 import org.apache.knox.gateway.shell.commands.SelectCommand;
 import org.apache.knox.gateway.shell.commands.ShowCommand;
 import org.apache.knox.gateway.shell.commands.WebHDFSCommand;
@@ -123,6 +124,7 @@ public class Shell {
     WebHDFSCommand hdfsCmd = new WebHDFSCommand(engine, terminal);
     ShowCommand showCmd = new ShowCommand(engine, terminal, importCmd);
     LoadCommand loadCmd = new LoadCommand(engine, terminal);
+    PurgeCommand purgeCommand = new PurgeCommand(engine, terminal, importCmd);
 
     registerCommand(registry, importCmd);
     registerCommand(registry, selectCmd);
@@ -131,6 +133,7 @@ public class Shell {
     registerCommand(registry, hdfsCmd);
     registerCommand(registry, showCmd);
     registerCommand(registry, loadCmd);
+    registerCommand(registry, purgeCommand);
 
     Map<String, CommandMethods> commandMethods = new HashMap<>();
     Map<String, String> commandAliases = new HashMap<>();

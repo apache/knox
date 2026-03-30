@@ -66,6 +66,18 @@ public class ImportCommand extends AbstractKnoxShellCommand {
         return Collections.unmodifiableSet(activeImports);
     }
 
+    /**
+     * Removes an import from the tracked set.
+     * Note: this does not truly "unimport" from the Groovy classloader,
+     * but it removes it from the tracked listing and from future :show output.
+     *
+     * @param fqcn the fully-qualified class or package.* to remove
+     * @return true if the import was present and removed
+     */
+    public boolean removeImport(String fqcn) {
+        return activeImports.remove(fqcn);
+    }
+
     @Override
     public Object execute(List<String> args) {
         if (args == null || args.isEmpty()) {
