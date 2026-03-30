@@ -23,7 +23,10 @@ import org.apache.groovy.groovysh.jline.SystemRegistryImpl;
 import org.apache.knox.gateway.shell.commands.AbstractKnoxShellCommand;
 import org.apache.knox.gateway.shell.commands.CSVCommand;
 import org.apache.knox.gateway.shell.commands.DataSourceCommand;
+import org.apache.knox.gateway.shell.commands.ImportCommand;
+import org.apache.knox.gateway.shell.commands.LoadCommand;
 import org.apache.knox.gateway.shell.commands.SelectCommand;
+import org.apache.knox.gateway.shell.commands.ShowCommand;
 import org.apache.knox.gateway.shell.commands.WebHDFSCommand;
 import org.apache.knox.gateway.shell.hbase.HBase;
 import org.apache.knox.gateway.shell.hdfs.Hdfs;
@@ -106,8 +109,10 @@ public class Shell {
     GroovyEngine engine = new GroovyEngine();
 
     // 2. Pre-load Knox imports
+    ImportCommand importCmd = new ImportCommand(engine, terminal);
     for (String name : IMPORTS) {
       engine.execute("import " + name);
+      importCmd.registerBuiltIn(name);
     }
 
     // 3. Instantiate and Map Custom Commands
@@ -116,11 +121,16 @@ public class Shell {
     DataSourceCommand dsCmd = new DataSourceCommand(engine, terminal);
     CSVCommand csvCmd = new CSVCommand(engine, terminal);
     WebHDFSCommand hdfsCmd = new WebHDFSCommand(engine, terminal);
+    ShowCommand showCmd = new ShowCommand(engine, terminal, importCmd);
+    LoadCommand loadCmd = new LoadCommand(engine, terminal);
 
+    registerCommand(registry, importCmd);
     registerCommand(registry, selectCmd);
     registerCommand(registry, dsCmd);
     registerCommand(registry, csvCmd);
     registerCommand(registry, hdfsCmd);
+    registerCommand(registry, showCmd);
+    registerCommand(registry, loadCmd);
 
     Map<String, CommandMethods> commandMethods = new HashMap<>();
     Map<String, String> commandAliases = new HashMap<>();
