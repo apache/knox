@@ -63,6 +63,8 @@ public class Shell {
 
   private static final List<String> NON_INTERACTIVE_COMMANDS = Arrays.asList("buildTrustStore", "init", "list", "destroy", "knoxline");
 
+  private static final List<String> EXIT_COMMANDS = Arrays.asList(":exit", ":x", ":quit", ":q");
+
   private static final String[] IMPORTS = new String[] {
       KnoxSession.class.getName(),
       HBase.class.getName(),
@@ -181,7 +183,7 @@ public class Shell {
     .build();
 
     terminal.writer().println("Apache Knox Shell");
-    terminal.writer().println("Type ':help' for help, ':exit' or ':quit' to quit.");
+    terminal.writer().println("Type ':help' for help, ':exit' or ':quit' (':x' or ':q') to quit.");
     terminal.writer().flush();
 
     // 6. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
@@ -206,7 +208,7 @@ public class Shell {
         }
 
         // --- BUILT-IN COMMANDS ---
-        if (":exit".equalsIgnoreCase(trimmed) || ":quit".equalsIgnoreCase(trimmed)) {
+        if (EXIT_COMMANDS.stream().anyMatch(trimmed::equalsIgnoreCase)) {
           break;
         }
 
@@ -236,7 +238,7 @@ public class Shell {
 
             terminal.writer().println();
             terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":help, :h", "Displays this help message or specific command usage");
-            terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":exit, :quit", "Exits the shell");
+            terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":exit, :x, :quit, :q", "Exits the shell");
             terminal.writer().println("\nNote: Any other input is evaluated natively as Groovy code.");
           }
           terminal.writer().flush();
