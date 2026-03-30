@@ -65,6 +65,8 @@ public class Shell {
 
   private static final List<String> EXIT_COMMANDS = Arrays.asList(":exit", ":x", ":quit", ":q");
 
+  private static final List<String> HELP_COMMANDS = Arrays.asList(":help", ":h", "?");
+
   private static final String[] IMPORTS = new String[] {
       KnoxSession.class.getName(),
       HBase.class.getName(),
@@ -212,7 +214,7 @@ public class Shell {
           break;
         }
 
-        if (trimmed.startsWith(":help") || trimmed.startsWith(":h")) {
+        if (HELP_COMMANDS.stream().anyMatch(h -> trimmed.equalsIgnoreCase(h) || trimmed.startsWith(h + " "))) {
           String[] helpParts = trimmed.split("\\s+");
 
           if (helpParts.length > 1) {
@@ -237,7 +239,7 @@ public class Shell {
             });
 
             terminal.writer().println();
-            terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":help, :h", "Displays this help message or specific command usage");
+            terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":help, :h, ?", "Displays this help message or specific command usage");
             terminal.writer().printf(Locale.ROOT, "  %-25s %s%n", ":exit, :x, :quit, :q", "Exits the shell");
             terminal.writer().println("\nNote: Any other input is evaluated natively as Groovy code.");
           }
