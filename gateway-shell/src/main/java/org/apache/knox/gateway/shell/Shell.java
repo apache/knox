@@ -140,15 +140,17 @@ public class Shell {
 
 
     registry.forEach((rawName, cmd) -> {
+        if (rawName.equals(cmd.getShortcut())) {
+          return;
+        }
+        String name = rawName.startsWith(":") ? rawName : ":" + rawName;
 
-      // 1. THE FIX: Force the JLine registry to know the commands start with a colon
-      String name = rawName.startsWith(":") ? rawName : ":" + rawName;
-
-      String rawShortcut = cmd.getShortcut();
-      if (rawShortcut != null && !rawShortcut.isEmpty()) {
-        String shortcut = rawShortcut.startsWith(":") ? rawShortcut : ":" + rawShortcut;
-        commandAliases.put(shortcut, name);
-      }
+        String rawShortcut = cmd.getShortcut();
+        String shortcut = null;
+        if (rawShortcut != null && !rawShortcut.isEmpty()) {
+            shortcut = rawShortcut.equals(".") || rawShortcut.startsWith(":") ? rawShortcut : ":" + rawShortcut;
+            commandAliases.put(shortcut, name);
+        }
 
       // 2. Put them in the map with the colon-prefixed names
       commandMethods.put(name, new CommandMethods(
@@ -176,6 +178,9 @@ public class Shell {
     });
 
     DefaultParser parser = new DefaultParser();
+    // Override default regex to allow '.' as a valid command string
+    // Original: "[:]?[a-zA-Z]+[a-zA-Z0-9_-]*"
+    parser.setRegexCommand("(?:\\.|[:]?[a-zA-Z]+[a-zA-Z0-9_-]*)");
     Path workDir = Paths.get(System.getProperty("user.dir"));
     SimpleCommandRegistry knoxRegistry = new SimpleCommandRegistry(commandMethods, commandAliases);
     SystemRegistry systemRegistry = new SystemRegistryImpl(parser, terminal, () -> workDir, null);
@@ -192,13 +197,14 @@ public class Shell {
 
     // 5. Build the LineReader
     LineReader reader = LineReaderBuilder.builder()
+    .parser(parser)
     .terminal(terminal)
     .completer(combinedCompleter)
     .variable(LineReader.HISTORY_FILE, Paths.get(System.getProperty("user.home"), ".knoxshell_history"))
     .build();
 
     terminal.writer().println("Apache Knox Shell");
-    terminal.writer().println("Type ':help' for help, ':exit' or ':quit' (':x' or ':q') to quit.");
+    terminal.writer().println("Type ':help' (':h' or '?') for help, ':exit' or ':quit' (':x' or ':q') to quit.");
     terminal.writer().flush();
 
     // 6. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
