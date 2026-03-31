@@ -158,7 +158,7 @@ public class RemoteAuthFilterTest {
 
         // Trust store config
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PATH)).andReturn(trustStorePath).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD)).andReturn(trustStorePass).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD_ALIAS)).andReturn(trustStorePass).anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_TYPE)).andReturn(trustStoreType).anyTimes();
 
         // Only replay the mocks that won't need additional expectations
@@ -411,7 +411,7 @@ public class RemoteAuthFilterTest {
 
         // Set up aliasService expectations for password resolution
         EasyMock.expect(aliasServiceMock.getPasswordFromAliasForCluster("test-topology",
-                RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD, false))
+                RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD_ALIAS, false))
                 .andReturn("trustpass".toCharArray())
                 .anyTimes();
 
