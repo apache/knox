@@ -18,6 +18,9 @@
 package org.apache.knox.gateway.shell.commands;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.builtins.Completers;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.terminal.Terminal;
 
 import java.io.BufferedReader;
@@ -29,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -127,9 +131,10 @@ public class LoadCommand extends AbstractKnoxShellCommand {
   }
 
   private boolean isUrl(String location) {
-    return location.startsWith("http://")
+    return location!=null &&
+    (location.startsWith("http://")
         || location.startsWith("https://")
-        || location.startsWith("file://");
+        || location.startsWith("file://"));
   }
 
   private String readFromUrl(String urlStr) throws IOException {
@@ -145,4 +150,18 @@ public class LoadCommand extends AbstractKnoxShellCommand {
       return reader.lines().collect(Collectors.joining("\n"));
     }
   }
+
+  @Override
+  public List<Completer> getCompleters() {
+    Completers.FileNameCompleter fileNameCompleter = new Completers.FileNameCompleter();
+    Completer fileCompleter = (reader, parsedLine, candidates) -> {
+      String word = parsedLine.word();
+      if (isUrl(word)) {
+        return;
+      }
+      fileNameCompleter.complete(reader, parsedLine, candidates);
+    };
+    return Arrays.asList(fileCompleter, NullCompleter.INSTANCE);
+  }
+
 }
