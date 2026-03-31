@@ -19,7 +19,7 @@
  * Knox Modern Theme
  *
  * This theme provides a modern, clean login page design with:
- * - Deep purple background
+ * - Grey background
  * - White container with rounded corners
  * - Pill-shaped input fields and buttons
  * - Gradient button styling
@@ -232,9 +232,9 @@
   src: url(fonts/roboto-600.ttf) format('truetype');
 }
 
-/* Background - Deep purple */
+/* Background - Grey */
 body.login {
-  background: #120046 !important;
+  background: #F4F7F9 !important;
   font-family: 'Roboto', sans-serif;
   gap: 32px;
   padding: 40px;
