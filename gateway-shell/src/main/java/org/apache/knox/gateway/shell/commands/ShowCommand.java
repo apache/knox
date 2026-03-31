@@ -18,8 +18,12 @@
 package org.apache.knox.gateway.shell.commands;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.NullCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,8 +41,8 @@ public class ShowCommand extends AbstractKnoxShellCommand {
 
     private static final String NAME     = ":show";
     private static final String SHORTCUT = ":S";
-    private static final String DESC     = "Show variables, classes or imports";
-    private static final String USAGE    = "Usage: :show [variables|imports|all]";
+    private static final String DESC     = "Show variables, imports or both";
+    private static final String USAGE    = "Usage: :show [variables|vars|imports|all]";
     private static final String HELP     = USAGE + "\n"
     + "  variables  - list all bound variables (default)\n"
     + "  imports    - list active import statements\n"
@@ -106,4 +110,11 @@ public class ShowCommand extends AbstractKnoxShellCommand {
             imports.forEach(i -> terminal.writer().println("  import " + i));
         }
     }
+
+    @Override
+    public List<Completer> getCompleters() {
+        Completer subCommandCompleter = new StringsCompleter("variables", "vars", "imports", "all");
+        return Arrays.asList(subCommandCompleter, NullCompleter.INSTANCE);
+    }
+
 }
