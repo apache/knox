@@ -148,7 +148,7 @@ public class Shell {
         String rawShortcut = cmd.getShortcut();
         String shortcut = null;
         if (rawShortcut != null && !rawShortcut.isEmpty()) {
-            shortcut = rawShortcut.equals(".") || rawShortcut.startsWith(":") ? rawShortcut : ":" + rawShortcut;
+            shortcut = (".".equals(rawShortcut) || ":".equals(rawShortcut)) ? rawShortcut : ":" + rawShortcut;
             commandAliases.put(shortcut, name);
         }
 
