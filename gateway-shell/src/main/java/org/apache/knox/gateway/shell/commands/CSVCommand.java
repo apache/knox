@@ -20,32 +20,43 @@ package org.apache.knox.gateway.shell.commands;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.apache.knox.gateway.shell.table.KnoxShellTable;
-import org.apache.groovy.groovysh.Groovysh;
+
+import org.jline.terminal.Terminal;
 
 public class CSVCommand extends AbstractKnoxShellCommand {
   private static final String USAGE = ":csv [withHeaders] file-url||$variable-name [assign resulting-variable-name]";
   private static final String DESC = "Build table from CSV file located at provided URL or KnoxShell $variable-name";
-  private boolean withHeaders;
-  private String url;
 
-  public CSVCommand(Groovysh shell) {
-    super(shell, ":CSV", ":csv", DESC, USAGE, DESC);
+  public CSVCommand(GroovyEngine engine, Terminal terminal) {
+    super(engine, terminal, ":CSV", ":csv", DESC, USAGE, DESC);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Object execute(List<String> args) {
+    if (args == null || args.isEmpty()) {
+      terminal.writer().println("Usage: " + USAGE);
+      terminal.writer().flush();
+      return null;
+    }
+
     KnoxShellTable table = null;
-    String bindVariableName = null;
-    if (!args.isEmpty()) {
-      bindVariableName = getBindingVariableNameForResultingTable(args);
-    }
-    if (args.get(0).contentEquals("withHeaders")) {
+    String bindVariableName = getBindingVariableNameForResultingTable(args);
+
+    boolean withHeaders = false;
+    String url;
+
+    if ("withHeaders".equalsIgnoreCase(args.get(0))) {
       withHeaders = true;
-      url = args.get(1);
-    }
-    else {
+      if (args.size() > 1) {
+        url = args.get(1);
+      } else {
+        terminal.writer().println("Error: Missing file URL or variable name.");
+        terminal.writer().flush();
+        return null;
+      }
+    } else {
       url = args.get(0);
     }
 
@@ -53,30 +64,32 @@ public class CSVCommand extends AbstractKnoxShellCommand {
       if (withHeaders) {
         if (url.startsWith("$")) {
           // a knoxshell variable is a csv file as a string
-          String csvString = (String) getVariables().get(url.substring(1));
+          String csvString = (String) engine.get(url.substring(1));
           table = KnoxShellTable.builder().csv().withHeaders().string(csvString);
-        }
-        else {
+        } else {
           table = KnoxShellTable.builder().csv().withHeaders().url(url);
         }
-      }
-      else {
+      } else {
         if (url.startsWith("$")) {
           // a knoxshell variable is a csv file as a string
-          String csvString = (String) getVariables().get(url.substring(1));
+          String csvString = (String) engine.get(url.substring(1));
           table = KnoxShellTable.builder().csv().string(csvString);
-        }
-        else {
+        } else {
           table = KnoxShellTable.builder().csv().url(url);
         }
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      terminal.writer().println("Error parsing CSV: " + e.getMessage());
+      e.printStackTrace(terminal.writer());
+      terminal.writer().flush();
     }
+
     if (table != null && bindVariableName != null) {
-      getVariables().put(bindVariableName, table);
+      engine.put(bindVariableName, table);
+      terminal.writer().println("Assigned resulting table to variable: " + bindVariableName);
+      terminal.writer().flush();
     }
+
     return table;
   }
-
 }
