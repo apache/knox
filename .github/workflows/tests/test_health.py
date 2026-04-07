@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import os
 import unittest
 import requests
@@ -20,22 +21,46 @@ import urllib3
 # Suppress InsecureRequestWarning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
+def _base_url() -> str:
+    url = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
+    return url if url.endswith("/") else (url + "/")
+
+
 class TestKnoxHealth(unittest.TestCase):
-    def test_admin_api_health(self):
+    def setUp(self):
+        self.base_url = _base_url()
+
+    def test_health_ping_ok_and_hsts(self):
         """
         Basic health check to ensure Knox is up and running.
-        We expect a response 200 to indicate the server is up.
         """
-        url = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
+        url = self.base_url + "gateway/health/v1/ping"
         print(f"Checking connectivity to {url}...")
         try:
-            response = requests.get(url + "health/v1/ping", verify=False, timeout=30)
+            response = requests.get(url, verify=False, timeout=30)
             print(f"Received status code: {response.status_code}")
             self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.text.strip(), "OK")
+
+            hsts_header = "Strict-Transport-Security"
+            self.assertIn(hsts_header, response.headers)
+            self.assertEqual(response.headers[hsts_header], "max-age=300; includeSubDomains")
         except requests.exceptions.ConnectionError:
             self.fail("Failed to connect to Knox on port 8443 - Connection refused")
         except Exception as e:
             self.fail(f"Health check failed with unexpected error: {e}")
+
+    def test_health_metrics_returns_json(self):
+        url = self.base_url + "gateway/health/v1/metrics?pretty=true"
+        response = requests.get(url, verify=False, timeout=30)
+        self.assertEqual(response.status_code, 200)
+
+        content_type = response.headers.get("Content-Type", "")
+        self.assertIn("application/json", content_type)
+
+        payload = json.loads(response.text)
+        self.assertIsInstance(payload, dict)
 
 if __name__ == '__main__':
     unittest.main()
