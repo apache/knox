@@ -50,7 +50,7 @@ importMultipleCerts() {
     ALIAS="${FILE%.*}-$N"
     /bin/cat "$FILE" |
       /usr/bin/awk "n==$N { print }; /END CERTIFICATE/ { n++ }" |
-      /usr/bin/keytool -import \
+      keytool -import \
               -trustcacerts \
               -alias "$ALIAS" \
               -keystore "${KEYSTORE_DIR}"/truststore.jks \
@@ -125,7 +125,7 @@ then
   ALIAS_PASSPHRASE=$(/bin/cat "${KEYSTORE_PASSWORD_FILE}" 2>/dev/null)
 else
    # If keystore password is not provided use master secret as alias passphrase
-   ALIAS_PASSPHRASE=${MASTER_SECRET}
+   ALIAS_PASSPHRASE="${MASTER_SECRET}1234!"
 fi
 
 if [[ -n ${KNOX_CERT} ]] && [[ -f ${KNOX_CERT} ]]
@@ -161,7 +161,7 @@ then
     -name keystore
 
   # Create signing JKS
-  /usr/bin/keytool -importkeystore \
+  keytool -importkeystore \
     -destkeystore "${KEYSTORE_DIR}"/keystore.jks \
     -deststorepass "${ALIAS_PASSPHRASE}" \
     -srckeystore /tmp/keystore.p12 \
@@ -188,7 +188,7 @@ then
 fi
 
 # Add Amazon Root CA 1
-/usr/bin/keytool -importcert \
+keytool -importcert \
   -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-1 \
   -file /home/knox/cacrts/AmazonRootCA1.cer \
@@ -196,7 +196,7 @@ fi
   -noprompt || true
 
 # Add Amazon Root CA 2
-/usr/bin/keytool -importcert \
+keytool -importcert \
   -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-2 \
   -file /home/knox/cacrts/AmazonRootCA2.cer \
@@ -204,7 +204,7 @@ fi
   -noprompt || true
 
 # Add Amazon Root CA 3
-/usr/bin/keytool -importcert \
+keytool -importcert \
   -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-3 \
   -file /home/knox/cacrts/AmazonRootCA3.cer \
@@ -212,7 +212,7 @@ fi
   -noprompt || true
 
 # Add Amazon Root CA 4
-/usr/bin/keytool -importcert \
+keytool -importcert \
   -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias amazon-ca-4 \
   -file /home/knox/cacrts/AmazonRootCA4.cer \
@@ -220,7 +220,7 @@ fi
   -noprompt || true
 
 # Add letsencrypt staging root CA
-/usr/bin/keytool -importcert \
+keytool -importcert \
   -keystore "${KEYSTORE_DIR}"/truststore.jks \
   -alias letsencrypt-stg-root \
   -file /home/knox/cacrts/letsencrypt-stg-root-x1.pem \

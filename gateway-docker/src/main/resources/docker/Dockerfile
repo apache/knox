@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM dhi.io/eclipse-temurin:17-jdk-debian13-dev AS build
+FROM eclipse-temurin:17-jdk AS build
 LABEL maintainer="Apache Knox <dev@knox.apache.org>"
 
 ARG TARGETARCH
@@ -75,4 +75,5 @@ EXPOSE ${EXPOSE_PORT}
 
 # Switch off of the root user
 USER knox
+WORKDIR /home/knox/knox
 ENTRYPOINT ["./entrypoint.sh"]
