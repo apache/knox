@@ -29,14 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class SimpleCommandRegistry implements CommandRegistry {
+public class KnoxShellCommandRegistry implements CommandRegistry {
 
     private final Map<String, CommandMethods> commands;
     private final Map<String, String> aliases;
 
-    public SimpleCommandRegistry(Map<String, CommandMethods> commands, Map<String, String> aliases) {
+    public KnoxShellCommandRegistry(Map<String, CommandMethods> commands, Map<String, String> aliases) {
         this.commands = commands;
         this.aliases = aliases != null ? aliases : Collections.emptyMap();
+    }
+
+    @Override
+    public String name() {
+        return "";
     }
 
     @Override

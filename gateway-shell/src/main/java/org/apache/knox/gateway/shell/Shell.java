@@ -139,16 +139,12 @@ public class Shell {
     Map<String, String> commandAliases = new HashMap<>();
 
 
-    registry.forEach((rawName, cmd) -> {
-        if (rawName.equals(cmd.getShortcut())) {
+    registry.forEach((name, cmd) -> {
+        if (name.equals(cmd.getShortcut())) {
           return;
         }
-        String name = rawName.startsWith(":") ? rawName : ":" + rawName;
-
-        String rawShortcut = cmd.getShortcut();
-        String shortcut = null;
-        if (rawShortcut != null && !rawShortcut.isEmpty()) {
-            shortcut = (".".equals(rawShortcut) || ":".equals(rawShortcut)) ? rawShortcut : ":" + rawShortcut;
+        String shortcut = cmd.getShortcut();
+        if (shortcut != null && !shortcut.isEmpty()) {
             commandAliases.put(shortcut, name);
         }
 
@@ -182,9 +178,9 @@ public class Shell {
     // Original: "[:]?[a-zA-Z]+[a-zA-Z0-9_-]*"
     parser.setRegexCommand("(?:\\.|[:]?[a-zA-Z]+[a-zA-Z0-9_-]*)");
     Path workDir = Paths.get(System.getProperty("user.dir"));
-    SimpleCommandRegistry knoxRegistry = new SimpleCommandRegistry(commandMethods, commandAliases);
+    KnoxShellCommandRegistry knoxShellCommandRegistry = new KnoxShellCommandRegistry(commandMethods, commandAliases);
     SystemRegistry systemRegistry = new SystemRegistryImpl(parser, terminal, () -> workDir, null);
-    systemRegistry.setCommandRegistries(knoxRegistry);
+    systemRegistry.setCommandRegistries(knoxShellCommandRegistry);
     SystemRegistry.add(systemRegistry);
 
     // 4. Setup Tab Completers
@@ -281,7 +277,7 @@ public class Shell {
 
           Object res = cmd.execute(cmdArgs);
           if (res != null) {
-            terminal.writer().println(res.toString());
+            terminal.writer().println(res);
           }
         } else {
           // Fallback to evaluating standard Groovy script logic
