@@ -25,6 +25,7 @@ import java.util.Set;
 
 public class JWTokenAttributes {
   public static final String DEFAULT_ISSUER = "KNOXSSO";
+  public static final String DEFAULT_TYPE = "JWT";
   private final String userName;
   private final List<String> audiences;
   private final String algorithm;

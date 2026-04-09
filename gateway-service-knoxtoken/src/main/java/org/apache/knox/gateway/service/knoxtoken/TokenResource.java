@@ -272,7 +272,9 @@ public class TokenResource {
     this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
             : context.getInitParameter(KNOX_TOKEN_ISSUER);
-    this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
+    this.tokenType = StringUtils.isBlank(context.getInitParameter(TOKEN_TYPE_PARAM))
+            ? JWTokenAttributes.DEFAULT_TYPE
+            : context.getInitParameter(TOKEN_TYPE_PARAM);
 
     tokenTTLAsText = getTokenTTLAsText();
 
