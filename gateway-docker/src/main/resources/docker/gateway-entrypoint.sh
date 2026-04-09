@@ -187,45 +187,40 @@ then
   importMultipleCerts "$CUSTOM_CERT"
 fi
 
-# Add Amazon Root CA 1
-keytool -importcert \
-  -keystore "${KEYSTORE_DIR}"/truststore.jks \
-  -alias amazon-ca-1 \
-  -file /home/knox/cacrts/AmazonRootCA1.cer \
-  -storepass "${ALIAS_PASSPHRASE}" \
-  -noprompt || true
+# This default was set to emulate the existing behaviour
+# Customer should be able to override this by specifying this via Docker environment settings
+if [[ ! -n ${TRUSTSTORE_IMPORTS} ]]
+then
+	TRUSTSTORE_IMPORTS="
+	 amazon-ca-1:/home/knox/cacrts/AmazonRootCA1.cer
+     amazon-ca-2:/home/knox/cacrts/AmazonRootCA2.cer
+     amazon-ca-3:/home/knox/cacrts/AmazonRootCA3.cer
+	 amazon-ca-4:/home/knox/cacrts/AmazonRootCA4.cer
+     letsencrypt-stg-root:/home/knox/cacrts/letsencrypt-stg-root-x1.pem"
+fi
 
-# Add Amazon Root CA 2
-keytool -importcert \
-  -keystore "${KEYSTORE_DIR}"/truststore.jks \
-  -alias amazon-ca-2 \
-  -file /home/knox/cacrts/AmazonRootCA2.cer \
-  -storepass "${ALIAS_PASSPHRASE}" \
-  -noprompt || true
-
-# Add Amazon Root CA 3
-keytool -importcert \
-  -keystore "${KEYSTORE_DIR}"/truststore.jks \
-  -alias amazon-ca-3 \
-  -file /home/knox/cacrts/AmazonRootCA3.cer \
-  -storepass "${ALIAS_PASSPHRASE}" \
-  -noprompt || true
-
-# Add Amazon Root CA 4
-keytool -importcert \
-  -keystore "${KEYSTORE_DIR}"/truststore.jks \
-  -alias amazon-ca-4 \
-  -file /home/knox/cacrts/AmazonRootCA4.cer \
-  -storepass "${ALIAS_PASSPHRASE}" \
-  -noprompt || true
-
-# Add letsencrypt staging root CA
-keytool -importcert \
-  -keystore "${KEYSTORE_DIR}"/truststore.jks \
-  -alias letsencrypt-stg-root \
-  -file /home/knox/cacrts/letsencrypt-stg-root-x1.pem \
-  -storepass "${ALIAS_PASSPHRASE}" \
-  -noprompt || true
+if [[ -n ${TRUSTSTORE_IMPORTS} ]]
+then
+    for certinfo in ${TRUSTSTORE_IMPORTS}
+    do
+        aliasId="`echo ${certinfo} | awk -F: '{ print $1 }'`"
+        certPath="`echo ${certinfo} | awk -F: '{ print $2 }'`"
+        if [[ -n "${aliasId}" ]] && [[ -n "${certPath}" ]] && [[ -f "${certPath}" ]]
+        then
+            echo "INFO: Importing certificate [${certPath}] into truststore"
+            keytool -importcert \
+                -keystore "${KEYSTORE_DIR}"/truststore.jks \
+                -alias "${aliasId}" \
+                -file "${certPath}" \
+                -storepass "${ALIAS_PASSPHRASE}" \
+                -noprompt || true
+        else
+            echo "ERROR: certificate [${certinfo}] not found. Not importing into truststore"
+        fi
+    done
+else
+    echo "INFO: NO truststore imports specified in [env:TRUSTSTORE_IMPORTS]. Using cacerts as it is!"
+fi
 
 export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS} -Djavax.net.ssl.trustStore=${KEYSTORE_DIR}/truststore.jks -Djavax.net.ssl.trustStorePassword=${ALIAS_PASSPHRASE}"
 
