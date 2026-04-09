@@ -121,7 +121,7 @@ public class TokenResource {
   protected static final String BEARER = "Bearer";
   private static final String TOKEN_PARAM_PREFIX = "knox.token.";
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
-  private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
+  public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";

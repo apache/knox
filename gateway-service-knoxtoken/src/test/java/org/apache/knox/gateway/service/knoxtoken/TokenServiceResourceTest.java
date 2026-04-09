@@ -307,6 +307,7 @@ public class TokenServiceResourceTest {
     // Verify the token
     JWT parsedToken = new JWTToken(accessToken);
     assertEquals("alice", parsedToken.getSubject());
+    assertTrue(parsedToken.getHeader().contains("\"typ\":\"JWT\""));
     assertTrue(authority.verifyToken(parsedToken));
   }
 
@@ -515,34 +516,9 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testDefaultTokenType() throws Exception {
-    final Map<String, String> contextExpectations = new HashMap<>();
-    configureCommonExpectations(contextExpectations);
-
-    TokenResource tr = new TokenResource();
-    tr.request = request;
-    tr.context = context;
-    tr.init();
-
-    // Issue a token
-    Response retResponse = tr.doGet();
-
-    assertEquals(200, retResponse.getStatus());
-
-    // Parse the response
-    String retString = retResponse.getEntity().toString();
-    String accessToken = getTagValue(retString, "access_token");
-    assertNotNull(accessToken);
-
-    // Verify the token
-    JWT parsedToken = new JWTToken(accessToken);
-    assertTrue(parsedToken.getHeader().contains("\"typ\":\"JWT\""));
-  }
-
-  @Test
   public void testCustomTokenType() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
-    contextExpectations.put("knox.token.type", "custom-type");
+    contextExpectations.put(TokenResource.TOKEN_TYPE_PARAM, "custom-type");
     configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
