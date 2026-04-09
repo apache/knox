@@ -16,7 +16,7 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, knox_get, knox_post
+from common_utils import collect_actor_group_values, gateway_base_url, knox_get, knox_post
 
 
 class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
@@ -46,6 +46,25 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         actor_id_header = "x-knox-actor-username"
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], "guest")
+
+    def test_preauth_get_with_guest_credentials(self):
+        response = knox_get(
+            self.preauth_url,
+            auth=HTTPBasicAuth("guest", "guest-password"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("x-knox-actor-username"), "guest")
+
+    def test_preauth_get_with_admin_includes_mapped_groups(self):
+        response = knox_get(
+            self.preauth_url,
+            auth=HTTPBasicAuth("admin", "admin-password"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("x-knox-actor-username"), "admin")
+        groups = collect_actor_group_values(response, prefix="x-knox-actor-groups")
+        for name in ("longGroupName1", "longGroupName2"):
+            self.assertIn(name, groups)
 
     def test_extauthz_additional_path_not_ignored_in_knoxldap(self):
         response = knox_get(

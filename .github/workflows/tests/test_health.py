@@ -53,6 +53,30 @@ class TestKnoxHealth(unittest.TestCase):
         payload = json.loads(response.text)
         self.assertIsInstance(payload, dict)
 
+    def test_health_metrics_contains_core_fields(self):
+        """Metrics JSON should expose the same top-level keys as the Java GatewayHealthFuncTest."""
+        url = self.base_url + "gateway/health/v1/metrics?pretty=true"
+        response = knox_get(url)
+        self.assertEqual(response.status_code, 200)
+        payload = json.loads(response.text)
+        expected = {"timers", "histograms", "counters", "gauges", "version", "meters"}
+        self.assertTrue(expected.issubset(payload.keys()), msg=f"Missing keys: {expected - set(payload.keys())}")
+
+    def test_health_metrics_without_pretty_returns_json(self):
+        url = self.base_url + "gateway/health/v1/metrics"
+        response = knox_get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("application/json", response.headers.get("Content-Type", ""))
+        payload = json.loads(response.text)
+        self.assertIsInstance(payload, dict)
+
+    def test_health_ping_content_type_is_plain_text(self):
+        url = self.base_url + "gateway/health/v1/ping"
+        response = knox_get(url)
+        self.assertEqual(response.status_code, 200)
+        content_type = response.headers.get("Content-Type", "")
+        self.assertIn("text/plain", content_type)
+
 if __name__ == '__main__':
     unittest.main()
 
