@@ -21,13 +21,13 @@ from common_utils import assert_hsts_header, gateway_base_url, knox_get
 
 
 class TestKnoxHealth(unittest.TestCase):
+    """Integration checks for the gateway health REST API (ping and metrics)."""
+
     def setUp(self):
         self.base_url = gateway_base_url()
 
     def test_health_ping_ok_and_hsts(self):
-        """
-        Basic health check to ensure Knox is up and running.
-        """
+        """Ping returns 200, body OK, and the gateway sends the expected HSTS header."""
         url = self.base_url + "gateway/health/v1/ping"
         print(f"Checking connectivity to {url}...")
         try:
@@ -43,6 +43,7 @@ class TestKnoxHealth(unittest.TestCase):
             self.fail(f"Health check failed with unexpected error: {e}")
 
     def test_health_metrics_returns_json(self):
+        """Metrics with pretty=true returns 200 and a JSON object with application/json content type."""
         url = self.base_url + "gateway/health/v1/metrics?pretty=true"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
@@ -63,6 +64,7 @@ class TestKnoxHealth(unittest.TestCase):
         self.assertTrue(expected.issubset(payload.keys()), msg=f"Missing keys: {expected - set(payload.keys())}")
 
     def test_health_metrics_without_pretty_returns_json(self):
+        """Metrics without pretty still returns 200 and parseable JSON."""
         url = self.base_url + "gateway/health/v1/metrics"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
@@ -71,6 +73,7 @@ class TestKnoxHealth(unittest.TestCase):
         self.assertIsInstance(payload, dict)
 
     def test_health_ping_content_type_is_plain_text(self):
+        """Ping response declares text/plain Content-Type."""
         url = self.base_url + "gateway/health/v1/ping"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
