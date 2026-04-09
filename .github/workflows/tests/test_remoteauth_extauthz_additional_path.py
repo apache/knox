@@ -12,61 +12,46 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import unittest
 
-import requests
-import urllib3
 from requests.auth import HTTPBasicAuth
 
-# Suppress InsecureRequestWarning since we use verify=False for self-signed certs
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
-def _base_url() -> str:
-    url = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
-    return url if url.endswith("/") else (url + "/")
+from common_utils import gateway_base_url, knox_get
 
 
 class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
     def setUp(self):
-        self.base_url = _base_url()
+        self.base_url = gateway_base_url()
         self.extauthz_url = self.base_url + "gateway/remoteauth/auth/api/v1/extauthz"
 
     def test_extauthz_success(self):
-        response = requests.get(
+        response = knox_get(
             self.extauthz_url,
             auth=HTTPBasicAuth("guest", "guest-password"),
-            verify=False,
-            timeout=30,
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("X-Knox-Actor-ID", response.headers)
         self.assertEqual(response.headers["X-Knox-Actor-ID"], "guest")
 
     def test_extauthz_additional_path_is_ignored(self):
-        response = requests.get(
+        response = knox_get(
             self.extauthz_url + "/some/extra/path",
             auth=HTTPBasicAuth("guest", "guest-password"),
-            verify=False,
-            timeout=30,
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("X-Knox-Actor-ID", response.headers)
         self.assertEqual(response.headers["X-Knox-Actor-ID"], "guest")
 
     def test_extauthz_bad_credentials_unauthorized(self):
-        response = requests.get(
+        response = knox_get(
             self.extauthz_url,
             auth=HTTPBasicAuth("baduser", "badpass"),
-            verify=False,
-            timeout=30,
         )
         self.assertEqual(response.status_code, 401)
 
     def test_extauthz_missing_credentials_server_error(self):
         # No Authorization header: RemoteAuth hits an error path (500), not 401.
-        response = requests.get(self.extauthz_url, verify=False, timeout=30)
+        response = knox_get(self.extauthz_url)
         self.assertEqual(response.status_code, 500)
 
 

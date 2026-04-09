@@ -12,11 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import unittest
-import requests
-import urllib3
 from requests.auth import HTTPBasicAuth
+
+from common_utils import assert_hsts_header, gateway_base_url, knox_get
 
 
 ########################################################
@@ -25,14 +24,9 @@ from requests.auth import HTTPBasicAuth
 # It verifies header is present with the correct value.
 ########################################################
 
-# Suppress InsecureRequestWarning
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 class TestKnoxConfigs(unittest.TestCase):
     def setUp(self):
-        self.base_url = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
-        if not self.base_url.endswith("/"):
-            self.base_url += "/"
+        self.base_url = gateway_base_url()
         self.non_existent_path = self.base_url + "gateway/not-exists"
 
     def test_auth_service_guest(self):
@@ -40,18 +34,14 @@ class TestKnoxConfigs(unittest.TestCase):
         Verifies header is present with the correct value
         """
         print(f"\nTesting global HSTS config for 404 response")
-        response = requests.get(
+        response = knox_get(
             self.non_existent_path,
             auth=HTTPBasicAuth('admin', 'admin-password'),
-            verify=False,
-            timeout=30
         )
 
         print(f"Status Code: {response.status_code}")
         self.assertEqual(response.status_code, 404)
 
-        hsts_header = 'Strict-Transport-Security'
-        self.assertIn(hsts_header, response.headers)
-        self.assertEqual(response.headers[hsts_header], 'max-age=300; includeSubDomains')
-        print(f"Verified {hsts_header}: {response.headers[hsts_header]}")
+        assert_hsts_header(self, response)
+        print(f"Verified Strict-Transport-Security: {response.headers['Strict-Transport-Security']}")
 
