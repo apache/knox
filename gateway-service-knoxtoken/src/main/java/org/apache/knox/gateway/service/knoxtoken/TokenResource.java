@@ -121,7 +121,7 @@ public class TokenResource {
   protected static final String BEARER = "Bearer";
   private static final String TOKEN_PARAM_PREFIX = "knox.token.";
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
-  private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
+  public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
@@ -272,7 +272,9 @@ public class TokenResource {
     this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
             : context.getInitParameter(KNOX_TOKEN_ISSUER);
-    this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
+    this.tokenType = StringUtils.isBlank(context.getInitParameter(TOKEN_TYPE_PARAM))
+            ? JWTokenAttributes.DEFAULT_TYPE
+            : context.getInitParameter(TOKEN_TYPE_PARAM);
 
     tokenTTLAsText = getTokenTTLAsText();
 
