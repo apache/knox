@@ -23,6 +23,11 @@ from common_utils import assert_hsts_header, gateway_base_url, knox_get
 class TestKnoxHealth(unittest.TestCase):
     """Integration checks for the gateway health REST API (ping and metrics)."""
 
+    # Top-level keys expected in /metrics JSON (aligned with Java GatewayHealthFuncTest).
+    _METRICS_TOP_LEVEL_KEYS = frozenset(
+        {"timers", "histograms", "counters", "gauges", "version", "meters"}
+    )
+
     def setUp(self):
         self.base_url = gateway_base_url()
 
@@ -60,23 +65,30 @@ class TestKnoxHealth(unittest.TestCase):
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
         payload = json.loads(response.text)
-        expected = {"timers", "histograms", "counters", "gauges", "version", "meters"}
-        self.assertTrue(expected.issubset(payload.keys()), msg=f"Missing keys: {expected - set(payload.keys())}")
+        self.assertTrue(
+            self._METRICS_TOP_LEVEL_KEYS.issubset(payload.keys()),
+            msg=f"Missing keys: {self._METRICS_TOP_LEVEL_KEYS - set(payload.keys())}",
+        )
 
     def test_health_metrics_without_pretty_returns_json(self):
-        """Metrics without pretty still returns 200 and parseable JSON."""
+        """Metrics without pretty still returns 200, parseable JSON, and the same top-level keys as pretty."""
         url = self.base_url + "gateway/health/v1/metrics"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIn("application/json", response.headers.get("Content-Type", ""))
         payload = json.loads(response.text)
         self.assertIsInstance(payload, dict)
+        self.assertTrue(
+            self._METRICS_TOP_LEVEL_KEYS.issubset(payload.keys()),
+            msg=f"Missing keys: {self._METRICS_TOP_LEVEL_KEYS - set(payload.keys())}",
+        )
 
     def test_health_ping_content_type_is_plain_text(self):
-        """Ping response declares text/plain Content-Type."""
+        """Ping response declares text/plain Content-Type and body OK."""
         url = self.base_url + "gateway/health/v1/ping"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text.strip(), "OK")
         content_type = response.headers.get("Content-Type", "")
         self.assertIn("text/plain", content_type)
 
