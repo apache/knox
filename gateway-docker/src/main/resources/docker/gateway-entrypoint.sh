@@ -86,11 +86,12 @@ fi
 
 if [[ -n ${MASTER_SECRET} ]]
 then
-  echo "Using provided knox master secret"
-  /home/knox/knox/bin/knoxcli.sh create-master --master "${MASTER_SECRET}"
+  echo "Using provided knox master secret [env:MASTER_SECRET}]"
 else
-  /home/knox/knox/bin/knoxcli.sh create-master --master knox
+  echo "Using default knox master secret"
+  MASTER_SECRET="knox"
 fi
+/home/knox/knox/bin/knoxcli.sh create-master --master "${MASTER_SECRET}"
 
 if [[ -n ${LDAP_PASSWORD_FILE} ]]
 then
@@ -125,7 +126,7 @@ then
   ALIAS_PASSPHRASE=$(/bin/cat "${KEYSTORE_PASSWORD_FILE}" 2>/dev/null)
 else
    # If keystore password is not provided use master secret as alias passphrase
-   ALIAS_PASSPHRASE="${MASTER_SECRET}1234!"
+   ALIAS_PASSPHRASE="${MASTER_SECRET}"
 fi
 
 if [[ -n ${KNOX_CERT} ]] && [[ -f ${KNOX_CERT} ]]
