@@ -86,7 +86,7 @@ fi
 
 if [[ -n ${MASTER_SECRET} ]]
 then
-  echo "Using provided knox master secret [env:MASTER_SECRET}]"
+  echo "Using provided knox master secret [env:MASTER_SECRET]"
 else
   echo "Using default knox master secret"
   MASTER_SECRET="knox"
@@ -190,7 +190,7 @@ fi
 
 # This default was set to emulate the existing behaviour
 # Customer should be able to override this by specifying this via Docker environment settings
-if [[ ! -n ${TRUSTSTORE_IMPORTS} ]]
+if [[ -z ${TRUSTSTORE_IMPORTS} ]]
 then
 	TRUSTSTORE_IMPORTS="
 	 amazon-ca-1:/home/knox/cacrts/AmazonRootCA1.cer
@@ -200,28 +200,23 @@ then
      letsencrypt-stg-root:/home/knox/cacrts/letsencrypt-stg-root-x1.pem"
 fi
 
-if [[ -n ${TRUSTSTORE_IMPORTS} ]]
-then
-    for certinfo in ${TRUSTSTORE_IMPORTS}
-    do
-        aliasId="`echo ${certinfo} | awk -F: '{ print $1 }'`"
-        certPath="`echo ${certinfo} | awk -F: '{ print $2 }'`"
-        if [[ -n "${aliasId}" ]] && [[ -n "${certPath}" ]] && [[ -f "${certPath}" ]]
-        then
-            echo "INFO: Importing certificate [${certPath}] into truststore"
-            keytool -importcert \
-                -keystore "${KEYSTORE_DIR}"/truststore.jks \
-                -alias "${aliasId}" \
-                -file "${certPath}" \
-                -storepass "${ALIAS_PASSPHRASE}" \
-                -noprompt || true
-        else
-            echo "ERROR: certificate [${certinfo}] not found. Not importing into truststore"
-        fi
-    done
-else
-    echo "INFO: NO truststore imports specified in [env:TRUSTSTORE_IMPORTS]. Using cacerts as it is!"
-fi
+for certinfo in ${TRUSTSTORE_IMPORTS}
+do
+    aliasId=$(echo "${certinfo}" | awk -F: '{ print $1 }')
+    certPath=$(echo "${certinfo}" | awk -F: '{ print $2 }')
+    if [[ -n "${aliasId}" ]] && [[ -n "${certPath}" ]] && [[ -f "${certPath}" ]]
+    then
+        echo "INFO: Importing certificate [${certPath}] into truststore"
+        keytool -importcert \
+            -keystore "${KEYSTORE_DIR}"/truststore.jks \
+            -alias "${aliasId}" \
+            -file "${certPath}" \
+            -storepass "${ALIAS_PASSPHRASE}" \
+            -noprompt || true
+    else
+        echo "ERROR: certificate [${certinfo}] not found. Not importing into truststore"
+    fi
+done
 
 export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS} -Djavax.net.ssl.trustStore=${KEYSTORE_DIR}/truststore.jks -Djavax.net.ssl.trustStorePassword=${ALIAS_PASSPHRASE}"
 
