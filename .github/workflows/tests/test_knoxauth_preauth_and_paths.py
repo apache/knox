@@ -16,20 +16,24 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, knox_get, knox_post
+from common_utils import collect_actor_group_values, gateway_base_url, knox_get, knox_post
 
 
 class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
+    """KnoxLDAP auth service: preauth behavior and extauthz path handling."""
+
     def setUp(self):
         self.base_url = gateway_base_url()
         self.preauth_url = self.base_url + "gateway/knoxldap/auth/api/v1/pre"
         self.extauthz_url = self.base_url + "gateway/knoxldap/auth/api/v1/extauthz"
 
     def test_preauth_requires_auth(self):
+        """Preauth without credentials must return 401."""
         response = knox_get(self.preauth_url)
         self.assertEqual(response.status_code, 401)
 
     def test_preauth_bad_credentials_unauthorized(self):
+        """Invalid Basic auth must return 401."""
         response = knox_get(
             self.preauth_url,
             auth=HTTPBasicAuth("baduser", "badpass"),
@@ -37,6 +41,7 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_preauth_post_supported(self):
+        """POST preauth with guest credentials returns 200 and x-knox-actor-username."""
         response = knox_post(
             self.preauth_url,
             auth=HTTPBasicAuth("guest", "guest-password"),
@@ -47,7 +52,29 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], "guest")
 
+    def test_preauth_get_with_guest_credentials(self):
+        """GET preauth with guest returns 200 and actor username guest."""
+        response = knox_get(
+            self.preauth_url,
+            auth=HTTPBasicAuth("guest", "guest-password"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("x-knox-actor-username"), "guest")
+
+    def test_preauth_get_with_admin_includes_mapped_groups(self):
+        """GET preauth with admin returns mapped LDAP groups in x-knox-actor-groups* headers."""
+        response = knox_get(
+            self.preauth_url,
+            auth=HTTPBasicAuth("admin", "admin-password"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("x-knox-actor-username"), "admin")
+        groups = collect_actor_group_values(response, prefix="x-knox-actor-groups")
+        for name in ("longGroupName1", "longGroupName2"):
+            self.assertIn(name, groups)
+
     def test_extauthz_additional_path_not_ignored_in_knoxldap(self):
+        """Unknown path under extauthz returns 404; extra segments are not ignored as success."""
         response = knox_get(
             self.extauthz_url + "/does-not-exist",
             auth=HTTPBasicAuth("guest", "guest-password"),
