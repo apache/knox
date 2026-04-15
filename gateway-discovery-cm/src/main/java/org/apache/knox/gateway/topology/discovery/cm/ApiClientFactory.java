@@ -34,7 +34,7 @@ public class ApiClientFactory {
                                                   final AliasService aliasService, final KeyStore truststore) {
         try {
             final char[] trustStorePassword = aliasService.getPasswordFromAliasForGateway(TRUSTSTORE_PASSWORD_ALIAS);
-            if (trustStorePassword != null) {
+            if (trustStorePassword != null && trustStorePassword.length > 0) {
                 System.setProperty(TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, new String(trustStorePassword));
             }
             return new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
