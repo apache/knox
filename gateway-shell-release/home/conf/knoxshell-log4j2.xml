@@ -17,7 +17,7 @@
 -->
 <Configuration>
     <Properties>
-        <Property name="app.log.dir">logs</Property>
+        <Property name="app.log.dir">${sys:launcher.dir}/../logs</Property>
         <Property name="app.log.file">${sys:launcher.name}.log</Property>
     </Properties>
     <Appenders>
