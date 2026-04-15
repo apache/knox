@@ -30,6 +30,11 @@
 # - DATABASE_CONNECTION_PASSWORD - (optional) gateway database password
 # - DATABASE_CONNECTION_TRUSTSTORE_PASSWORD - (optional) gateway database ssl truststore password
 # - CUSTOM_CERT - (optional) the location of a file containing the custom certs
+# - TRUSTSTORE_IMPORTS - (optional) - a string containing  one or more of the following: {aliasIdForImport:PEMEncodedTrustCertificateFileLocation} separated by space(s).
+#   Example:
+#   TRUSTSTORE_IMPORTS="myRootCA:/mountedpath/enterprise_root_cert.pem myBizPartnerCA:/mountedpath/mybiz_partner_cert.pem"
+#   Description:
+#   This will import the specified certificates into the truststore JKS with the provided alias name(s) during the container startup process.
 
 
 set -e
