@@ -188,8 +188,7 @@ public class Shell {
 
     Completer combinedCompleter = new AggregateCompleter(
       systemRegistry.completer(),
-      engine.getScriptCompleter()
-    );
+      new SafeCompleter(engine.getScriptCompleter()));
 
     // 5. Build the LineReader
     LineReader reader = LineReaderBuilder.builder()
