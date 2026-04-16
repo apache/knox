@@ -42,18 +42,14 @@ public class ShowCommand extends AbstractKnoxShellCommand {
     private static final String NAME     = ":show";
     private static final String SHORTCUT = ":S";
     private static final String DESC     = "Show variables, imports or both";
-    private static final String USAGE    = "Usage: :show [variables|vars|imports|all]";
+    private static final String USAGE    = "Usage: :show [variables|imports|all]";
     private static final String HELP     = USAGE + "\n"
     + "  variables  - list all bound variables (default)\n"
     + "  imports    - list active import statements\n"
     + "  all        - list both variables and imports";
 
-    private final ImportCommand importCommand;
-
-
-    public ShowCommand(GroovyEngine engine, Terminal terminal, ImportCommand importCommand) {
+    public ShowCommand(GroovyEngine engine, Terminal terminal) {
         super(engine, terminal, NAME, SHORTCUT, DESC, USAGE, HELP);
-        this.importCommand = importCommand;
     }
 
     @Override
@@ -62,7 +58,6 @@ public class ShowCommand extends AbstractKnoxShellCommand {
 
         switch (what) {
             case "variables":
-            case "vars":
                 showVariables();
                 break;
             case "imports":
@@ -83,7 +78,7 @@ public class ShowCommand extends AbstractKnoxShellCommand {
     }
 
     private void showVariables() {
-        Map<String, String> variables = engine.getVariables();
+        Map<String, Object> variables = engine.find();
         if (variables == null || variables.isEmpty()) {
             terminal.writer().println("No variables defined.");
             return;
@@ -92,17 +87,13 @@ public class ShowCommand extends AbstractKnoxShellCommand {
         terminal.writer().println("Variables:");
         variables.forEach((name, value) -> {
             String type = (value != null) ? value.getClass().getSimpleName() : "null";
-            String display = (value != null) ? value : "null";
+            String display = (value != null) ? value.toString() : "null";
             terminal.writer().printf(Locale.ROOT, "  %-25s (%s) = %s%n", name, type, display);
         });
     }
 
     private void showImports() {
-        if (importCommand == null) {
-            terminal.writer().println("Import tracking not available.");
-            return;
-        }
-        java.util.Set<String> imports = importCommand.getActiveImports();
+        java.util.Set<String> imports = engine.getImports().keySet();
         if (imports.isEmpty()) {
             terminal.writer().println("No imports registered.");
         } else {
@@ -113,7 +104,7 @@ public class ShowCommand extends AbstractKnoxShellCommand {
 
     @Override
     public List<Completer> getCompleters() {
-        Completer subCommandCompleter = new StringsCompleter("variables", "vars", "imports", "all");
+        Completer subCommandCompleter = new StringsCompleter("variables", "imports", "all");
         return Arrays.asList(subCommandCompleter, NullCompleter.INSTANCE);
     }
 

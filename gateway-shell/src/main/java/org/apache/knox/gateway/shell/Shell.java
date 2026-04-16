@@ -110,21 +110,21 @@ public class Shell {
     GroovyEngine engine = new GroovyEngine();
 
     // 2. Pre-load Knox imports
-    ImportCommand importCmd = new ImportCommand(engine, terminal);
     for (String name : IMPORTS) {
       engine.execute("import " + name);
-      importCmd.registerBuiltIn(name);
     }
 
     // 3. Instantiate and Map Custom Commands
     Map<String, AbstractKnoxShellCommand> registry = new HashMap<>();
-    SelectCommand selectCmd = new SelectCommand(engine, terminal);
-    DataSourceCommand dsCmd = new DataSourceCommand(engine, terminal);
     CSVCommand csvCmd = new CSVCommand(engine, terminal);
+    DataSourceCommand dsCmd = new DataSourceCommand(engine, terminal);
+    SelectCommand selectCmd = new SelectCommand(engine, terminal);
     WebHDFSCommand hdfsCmd = new WebHDFSCommand(engine, terminal);
-    ShowCommand showCmd = new ShowCommand(engine, terminal, importCmd);
+
+    ImportCommand importCmd = new ImportCommand(engine, terminal);
     LoadCommand loadCmd = new LoadCommand(engine, terminal);
-    PurgeCommand purgeCommand = new PurgeCommand(engine, terminal, importCmd);
+    PurgeCommand purgeCommand = new PurgeCommand(engine, terminal);
+    ShowCommand showCmd = new ShowCommand(engine, terminal);
 
     registerCommand(registry, importCmd);
     registerCommand(registry, selectCmd);
