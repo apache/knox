@@ -15,7 +15,14 @@
 import unittest
 from requests.auth import HTTPBasicAuth
 
-from common_utils import collect_actor_group_values, gateway_base_url, knox_get
+from common_utils import (
+    collect_actor_group_values,
+    gateway_base_url,
+    knox_get,
+    knox_post,
+    knox_ldap_admin_auth,
+    knox_ldap_guest_auth,
+)
 
 ########################################################
 # This test is verifying the behavior of the RemoteAuthProvider.
@@ -41,7 +48,7 @@ class TestRemoteAuth(unittest.TestCase):
         # knoxldap accepts guest:guest-password
         response = knox_get(
             self.topology_url,
-            auth=HTTPBasicAuth('guest', 'guest-password'),
+            auth=knox_ldap_guest_auth(),
         )
         print(f"Status Code: {response.status_code}")
         print(f"Headers: {response.headers}")
@@ -59,7 +66,7 @@ class TestRemoteAuth(unittest.TestCase):
         print(f"\nTesting remote auth admin against {self.topology_url}")
         response = knox_get(
             self.topology_url,
-            auth=HTTPBasicAuth('admin', 'admin-password'),
+            auth=knox_ldap_admin_auth(),
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['X-Knox-Actor-ID'], 'admin')
@@ -74,6 +81,15 @@ class TestRemoteAuth(unittest.TestCase):
         self.assertIn('longGroupName1', all_groups)
         self.assertIn('longGroupName2', all_groups)
 
+    def test_remote_auth_post_pre_with_guest_succeeds(self):
+        """POST is supported on the preauth resource the same as GET (delegates to knoxldap)."""
+        response = knox_post(
+            self.topology_url,
+            auth=knox_ldap_guest_auth(),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("X-Knox-Actor-ID"), "guest")
+
     def test_remote_auth_failure(self):
         """
         Verify invalid credentials result in 401
@@ -86,6 +102,15 @@ class TestRemoteAuth(unittest.TestCase):
         print(f"Status Code: {response.status_code}")
         # When remote auth fails (knoxldap returns 401), RemoteAuthFilter should return 401
         self.assertEqual(response.status_code, 401)
+
+    def test_remoteauth_pre_without_credentials_is_server_error(self):
+        """
+        No Authorization header: RemoteAuthFilter hits an exception path and returns 500,
+        not 401 (same idea as extauthz without credentials in test_remoteauth_extauthz_additional_path).
+        """
+        response = knox_get(self.topology_url)
+        self.assertEqual(response.status_code, 500)
+
 
 if __name__ == '__main__':
     unittest.main()
