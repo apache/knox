@@ -81,7 +81,7 @@ function main {
 
    checkJava
    buildAppJavaOpts
-   $JAVA "${APP_JAVA_OPTS[@]}" -Dlog4j.configurationFile=conf/knoxshell-log4j2.xml -javaagent:"$APP_BIN_DIR"/../lib/aspectjweaver.jar -cp "$APP_JAR":lib/* -jar "$APP_JAR" "$@" || exit 1
+   $JAVA "${APP_JAVA_OPTS[@]}" -Dlog4j.configurationFile=conf/knoxshell-log4j2.xml -javaagent:"$APP_BIN_DIR"/../lib/aspectjweaver.jar -cp "$APP_JAR":lib/* -cp "$APP_JAR":lib/* org.apache.knox.gateway.launcher.Launcher "$@" || exit 1
 
    return 0
 }
