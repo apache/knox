@@ -34,7 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Loads a Groovy script file or URL into the shell and executes it.
@@ -70,39 +69,52 @@ public class LoadCommand extends AbstractKnoxShellCommand {
       return null;
     }
 
-    // Join args to support paths with spaces (e.g., :load /my path/script.groovy)
-    String location = String.join(" ", args).trim();
+    Object lastResult = null;
 
-    String script;
-    try {
-      script = readScript(location);
-    } catch (Exception e) {
-      terminal.writer().println("Failed to load '" + location + "': " + e.getMessage());
+    // Iterate over arguments to support multi-file loading
+    // (e.g., :load file1.groovy file2.groovy)
+    for (String location : args) {
+      String script;
+      try {
+        script = readScript(location);
+      } catch (Exception e) {
+        terminal.writer().println("Failed to load '" + location + "': " + e.getMessage());
+        terminal.writer().flush();
+        continue; // Skip to the next file instead of aborting the whole command
+      }
+
+      // Legacy feature: strip Unix shebangs (#!/usr/bin/env groovy)
+      if (script.startsWith("#!")) {
+        int newlineIndex = script.indexOf('\n');
+        if (newlineIndex != -1) {
+          script = script.substring(newlineIndex + 1);
+        } else {
+          script = "";
+        }
+      }
+
+      if (script.trim().isEmpty()) {
+        terminal.writer().println("Warning: '" + location + "' is empty, nothing to execute.");
+        terminal.writer().flush();
+        continue;
+      }
+
+      terminal.writer().println("Loading " + location + " ...");
       terminal.writer().flush();
-      return null;
-    }
 
-    if (script.isEmpty()) {
-      terminal.writer().println("Warning: '" + location + "' is empty, nothing to execute.");
-      terminal.writer().flush();
-      return null;
-    }
-
-    terminal.writer().println("Loading " + location + " ...");
-    terminal.writer().flush();
-
-    try {
-      Object result = engine.execute(script);
-      if (result != null) {
-        terminal.writer().println("==> " + result);
+      try {
+        lastResult = engine.execute(script);
+        if (lastResult != null) {
+          terminal.writer().println("==> " + lastResult);
+          terminal.writer().flush();
+        }
+      } catch (Exception e) {
+        terminal.writer().println("Error executing script '" + location + "': " + e.getMessage());
         terminal.writer().flush();
       }
-      return result;
-    } catch (Exception e) {
-      terminal.writer().println("Error executing script: " + e.getMessage());
-      terminal.writer().flush();
-      return null;
     }
+
+    return lastResult;
   }
 
   private String readScript(String location) throws IOException {
@@ -127,7 +139,9 @@ public class LoadCommand extends AbstractKnoxShellCommand {
       throw new IOException("Path is a directory, not a file: " + path.toAbsolutePath());
     }
 
-    return Files.readString(path);
+    try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+      return readAndSkipShebang(reader);
+    }
   }
 
   private boolean isUrl(String location) {
@@ -147,8 +161,30 @@ public class LoadCommand extends AbstractKnoxShellCommand {
 
     try (BufferedReader reader = new BufferedReader(
         new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
-      return reader.lines().collect(Collectors.joining("\n"));
+      return readAndSkipShebang(reader);
     }
+  }
+
+  private String readAndSkipShebang(BufferedReader reader) throws IOException {
+    String firstLine = reader.readLine();
+    if (firstLine == null) {
+      return "";
+    }
+
+    StringBuilder scriptBuilder = new StringBuilder();
+
+    // If it's not a shebang, preserve the first line
+    if (!firstLine.startsWith("#!")) {
+      scriptBuilder.append(firstLine).append(System.lineSeparator());
+    }
+
+    // Read the rest of the file
+    String line;
+    while ((line = reader.readLine()) != null) {
+      scriptBuilder.append(line).append(System.lineSeparator());
+    }
+
+    return scriptBuilder.toString();
   }
 
   @Override
