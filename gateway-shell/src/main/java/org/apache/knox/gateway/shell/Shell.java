@@ -292,7 +292,8 @@ public class Shell {
       } catch (UserInterruptException | EndOfFileException e) {
         // Ctrl+C or Ctrl+D cleanly exits the shell
         break;
-      } catch (Exception e) {
+      } catch (Throwable e) {
+        // Shell should not exit (similar to legacy GroovySh)
         terminal.writer().println("Error: " + e.getMessage());
         terminal.writer().flush();
       }
