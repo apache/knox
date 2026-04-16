@@ -249,5 +249,12 @@ done
 
 export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS} -Djavax.net.ssl.trustStore=${KEYSTORE_DIR}/truststore.jks -Djavax.net.ssl.trustStorePassword=${ALIAS_PASSPHRASE}"
 
+# Setup DB for knoxidf demo
+/home/knox/knox/bin/knoxcli.sh create-alias gateway_database_user --value postgres
+/home/knox/knox/bin/knoxcli.sh create-alias gateway_database_password --value myPassword
+
+# Setup Knox token hash key for the demo (so that I can re-use the same clientId everywhere)
+/home/knox/knox/bin/knoxcli.sh create-alias knox.token.hash.key --value B5oxlx9M4h4MhaGakj8k7Q2fbmPzo6h9te8dWTHs5Mg
+
 echo "Starting Knox gateway ..."
 /home/knox/knox/bin/gateway.sh start

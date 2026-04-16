@@ -31,6 +31,9 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.Urls;
+import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import org.eclipse.jetty.http.MimeTypes;
 
 import javax.security.auth.Subject;
@@ -43,14 +46,18 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
@@ -103,6 +110,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private boolean shouldUseOriginalUrlFromHeader = DEFAULT_SHOULD_USE_ORIGINAL_URL_FROM_HEADER;
   private boolean verifyOriginalUrlFromHeaderDomain = DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN;
   private final List<String> verifyOriginalUrlFromHeaderDomainWhitelist = new ArrayList<>();
+  private final AuthorizeRequestMetadataStore authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(120000L);
   private String originalUrlHeaderName;
 
   @Override
@@ -324,7 +332,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    * @param request for getting the original request URL
    * @return url to use as login url for redirect
    */
-  protected String constructLoginURL(HttpServletRequest request) {
+  protected String constructLoginURL(HttpServletRequest request) throws UnsupportedEncodingException {
     String providerURL = null;
     String delimiter = "?";
     if (authenticationProviderUrl == null) {
@@ -334,6 +342,20 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       providerURL = authenticationProviderUrl;
     }
     if (providerURL.contains("?")) {
+      delimiter = "&";
+    }
+
+    final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request);
+    if (!enabledFederatedOpConfigs.isEmpty()) {
+      final String loginSessionId = request.getSession().getId();
+      final Map<String, FederatedOpConfiguration> federatedOpMap = enabledFederatedOpConfigs.stream().
+              collect(Collectors.toMap(FederatedOpConfiguration::getName, config -> config));
+      authorizeRequestMetadataStore.storeFederatedOpConfiguration(loginSessionId, federatedOpMap);
+      authorizeRequestMetadataStore.storeRequestMetadata(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
+      providerURL += delimiter
+              + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, "UTF-8")
+              + "&federatedOpNames=" + URLEncoder.encode(String.join(",", federatedOpMap.keySet()), "UTF-8");
+
       delimiter = "&";
     }
 

@@ -1914,3 +1914,70 @@ input[type="radio"], input[type="checkbox"] {margin-top: 0;}
     margin-top: -2px;
     font-size: 11px;
 }
+
+.or-separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px auto;
+  width: 250px; /* or whatever fits your design */
+  color: #888;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.or-separator::before,
+.or-separator::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #ccc;
+}
+
+.or-separator::before {
+  margin-right: 8px;
+}
+
+.or-separator::after {
+  margin-left: 8px;
+}
+
+#federated-op-container {
+  margin: 20px auto 0; /* auto left/right centers it */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: fit-content; /* shrink to fit content */
+}
+
+.fed-op-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #f7f7f7;
+  border: 1px solid #d0d0d0;
+  cursor: pointer;
+  font-family: sans-serif;
+  font-size: 15px;
+  transition: background 0.2s, transform 0.1s;
+  user-select: none;
+}
+
+.fed-op-btn:hover {
+  background: #ececec;
+}
+
+.fed-op-btn:active {
+  transform: scale(0.97);
+}
+
+.fed-op-icon {
+  font-size: 18px;
+}
+
+.fed-op-label {
+  flex: 1;
+  text-align: left;
+}

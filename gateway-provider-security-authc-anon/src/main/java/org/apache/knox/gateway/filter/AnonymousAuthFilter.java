@@ -76,6 +76,7 @@ public class AnonymousAuthFilter implements Filter {
           new PrivilegedExceptionAction<Object>() {
             @Override
             public Object run() throws Exception {
+              request.getParameter("code");
               chain.doFilter(request, response);
               return null;
             }

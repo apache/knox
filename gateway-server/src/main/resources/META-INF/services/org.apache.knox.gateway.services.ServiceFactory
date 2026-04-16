@@ -17,8 +17,11 @@
 ##########################################################################
 
 org.apache.knox.gateway.services.factory.AliasServiceFactory
+org.apache.knox.gateway.services.factory.ConcurrentSessionVerifierFactory
 org.apache.knox.gateway.services.factory.ClusterConfigurationMonitorServiceFactory
 org.apache.knox.gateway.services.factory.CryptoServiceFactory
+org.apache.knox.gateway.services.factory.FederatedIdentityServiceFactory
+org.apache.knox.gateway.services.factory.GatewayStatusServiceFactory
 org.apache.knox.gateway.services.factory.HostMappingServiceFactory
 org.apache.knox.gateway.services.factory.KeystoreServiceFactory
 org.apache.knox.gateway.services.factory.MasterServiceFactory
@@ -28,8 +31,6 @@ org.apache.knox.gateway.services.factory.ServerInfoServiceFactory
 org.apache.knox.gateway.services.factory.ServiceDefinitionRegistryFactory
 org.apache.knox.gateway.services.factory.ServiceRegistryServiceFactory
 org.apache.knox.gateway.services.factory.SslServiceFactory
-org.apache.knox.gateway.services.factory.TokenServiceFactory
 org.apache.knox.gateway.services.factory.TokenStateServiceFactory
 org.apache.knox.gateway.services.factory.TopologyServiceFactory
-org.apache.knox.gateway.services.factory.ConcurrentSessionVerifierFactory
-org.apache.knox.gateway.services.factory.GatewayStatusServiceFactory
+org.apache.knox.gateway.services.factory.TokenServiceFactory

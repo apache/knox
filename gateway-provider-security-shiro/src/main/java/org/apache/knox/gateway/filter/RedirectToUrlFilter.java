@@ -47,7 +47,7 @@ public class RedirectToUrlFilter extends AbstractGatewayFilter {
 
   @Override
   protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-    if (redirectUrl != null && request.getHeader("Authorization") == null) {
+    if (redirectUrl != null && request.getHeader("Authorization") == null && request.getParameter("fedOpSid") == null) {
       response.sendRedirect(redirectUrl + getOriginalQueryString(request));
     }
     chain.doFilter(request, response);

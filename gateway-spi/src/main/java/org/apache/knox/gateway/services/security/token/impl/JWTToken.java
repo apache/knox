@@ -18,6 +18,7 @@ package org.apache.knox.gateway.services.security.token.impl;
 
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -82,6 +83,7 @@ public class JWTToken implements JWT {
     }
     JWTClaimsSet claims;
     JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
+            .issueTime(Date.from(Instant.ofEpochMilli(jwtAttributes.getIssueTime())))
             .issuer(jwtAttributes.getIssuer())
             .subject(jwtAttributes.getUserName())
             .audience(jwtAttributes.getAudiences());
@@ -114,6 +116,11 @@ public class JWTToken implements JWT {
     builder.claim(KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()));
 
     builder.claim(MANAGED_TOKEN_CLAIM, String.valueOf(jwtAttributes.isManaged()));
+
+    if (jwtAttributes.getCustomAttributes() != null) {
+      jwtAttributes.getCustomAttributes().forEach(builder::claim);
+    }
+
     claims = builder.build();
 
     jwt = new SignedJWT(header, claims);
@@ -146,6 +153,16 @@ public class JWTToken implements JWT {
       log.unableToParseToken(e);
     }
     return c;
+  }
+
+  @Override
+  public JWTClaimsSet getJWTClaimsSet() {
+    try {
+      return jwt.getJWTClaimsSet();
+    } catch (ParseException e) {
+      log.unableToParseToken(e);
+      return null;
+    }
   }
 
   @Override

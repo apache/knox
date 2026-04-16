@@ -19,6 +19,7 @@ package org.apache.hadoop.gateway.provider.federation.jwt.filter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * An adapter class that delegate calls to
@@ -46,7 +47,7 @@ public class SSOCookieFederationFilter
    * @return url to use as login url for redirect
    */
   @Override
-  protected String constructLoginURL(HttpServletRequest request) {
+  protected String constructLoginURL(HttpServletRequest request) throws UnsupportedEncodingException {
     return super.constructLoginURL(request);
   }
 }

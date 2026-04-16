@@ -39,7 +39,8 @@ public enum ServiceType {
   CONCURRENT_SESSION_VERIFIER("ConcurrentSessionVerifier"),
   REMOTE_CONFIGURATION_MONITOR("RemoteConfigurationMonitor"),
   GATEWAY_STATUS_SERVICE("GatewayStatusService"),
-  LDAP_SERVICE("LDAPService");
+  LDAP_SERVICE("LDAPService"),
+  KNOXIDF_FEDERATED_IDENTITY_SERVICE("KnoxIDFFederatedIdentityService");
 
   private final String serviceTypeName;
   private final String shortName;

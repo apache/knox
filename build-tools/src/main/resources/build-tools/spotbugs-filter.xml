@@ -90,4 +90,9 @@ limitations under the License.
     <Class name="org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService" />
     <Bug pattern="OBJECT_DESERIALIZATION" />
   </Match>
+
+  <Match>
+    <Class name="org.apache.knox.gateway.service.knoxidf.AuthConsentServlet" />
+    <Bug pattern="UNVALIDATED_REDIRECT" />
+  </Match>
 </FindBugsFilter>

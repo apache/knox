@@ -18,6 +18,6 @@ package org.apache.knox.gateway.services.security.token;
 
 public enum TokenMetadataType {
 
-  JWT, KNOXSSO_COOKIE, CLIENT_ID, API_KEY;
+  JWT, KNOXSSO_COOKIE, CLIENT_ID, API_KEY, AUTH_CODE;
 
 }

@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.security.token;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class JWTokenAttributesBuilder {
@@ -27,6 +28,7 @@ public class JWTokenAttributesBuilder {
   private String userName;
   private List<String> audiences;
   private String algorithm;
+  private long issueTime;
   private long expires;
   private String signingKeystoreName;
   private String signingKeystoreAlias;
@@ -39,6 +41,7 @@ public class JWTokenAttributesBuilder {
   private String issuer = JWTokenAttributes.DEFAULT_ISSUER;
   private String clientId;
   private String actor;
+  private Map<String, Object> customAttributes;
 
   public JWTokenAttributesBuilder setUserName(String userName) {
     this.userName = userName;
@@ -56,6 +59,11 @@ public class JWTokenAttributesBuilder {
 
   public JWTokenAttributesBuilder setAlgorithm(String algorithm) {
     this.algorithm = algorithm;
+    return this;
+  }
+
+  public JWTokenAttributesBuilder setIssueTime(long issueTime) {
+    this.issueTime = issueTime;
     return this;
   }
 
@@ -119,8 +127,13 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
+  public JWTokenAttributesBuilder setCustomAttributes(Map<String, Object> customAttributes) {
+    this.customAttributes = customAttributes;
+    return this;
+  }
+
   public JWTokenAttributes build() {
-    return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, actor);
+    return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, issueTime, expires, signingKeystoreName, signingKeystoreAlias,
+        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, actor, customAttributes);
   }
 }

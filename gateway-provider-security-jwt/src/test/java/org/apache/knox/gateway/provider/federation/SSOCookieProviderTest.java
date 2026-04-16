@@ -21,6 +21,7 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFe
 import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_VALUE;
 import static org.junit.Assert.fail;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.Instant;
@@ -738,7 +739,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     private int verificationCount;
 
     @Override
-    public String constructLoginURL(HttpServletRequest req) {
+    public String constructLoginURL(HttpServletRequest req) throws UnsupportedEncodingException {
       return super.constructLoginURL(req);
     }
 

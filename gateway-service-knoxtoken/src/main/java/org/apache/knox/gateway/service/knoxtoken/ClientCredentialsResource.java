@@ -33,6 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -98,6 +99,7 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
             map.put(CLIENT_ID, tokenId);
             map.put(CLIENT_SECRET, passcode);
             addExpiryIfNotNever(map);
+            decorateResponseMap(map);
             String jsonResponse = JsonUtils.renderAsJsonString(map);
             return resp.responseBuilder.entity(jsonResponse).build();
         }
@@ -107,5 +109,9 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
         } else {
             return resp.responseBuilder.build();
         }
+    }
+
+    protected void decorateResponseMap(Map<String, Object> responseMap) {
+        //NOP
     }
 }

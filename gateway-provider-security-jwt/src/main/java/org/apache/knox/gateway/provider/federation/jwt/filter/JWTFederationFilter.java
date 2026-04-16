@@ -22,6 +22,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -48,10 +49,11 @@ import java.util.Locale;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.AUTH_CODE;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
@@ -189,6 +191,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           JWT token = new JWTToken(tokenValue);
           if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, token)) {
             Subject subject = createSubjectFromToken(token);
+            request.setAttribute("X-Token-Id", TokenUtils.getTokenId(token));
+            if (token.getClaim("scope") != null) {
+              request.setAttribute("X-Token-Scope", token.getClaim("scope"));
+            }
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
         } catch (ParseException | UnknownTokenException ex) {
@@ -211,6 +217,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
             Subject subject = createSubjectFromTokenIdentifier(tokenId);
+            request.setAttribute("X-Token-Id", tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           } catch (UnknownTokenException e) {
             ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -322,8 +329,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
         final String grantType = unwrappedRequest.getParameter(GRANT_TYPE);
         final String clientAssertionType = unwrappedRequest.getParameter(CLIENT_ASSERTION_TYPE);
-        if (CLIENT_CREDENTIALS.equals(grantType)) {
-          if (clientAssertionType != null && CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
+        if (CLIENT_CREDENTIALS.equals(grantType) || AUTH_CODE.equals(grantType)) {
+          if (CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
             // short lived client assertion token expected
             return getClientTokenFromParams(unwrappedRequest, CLIENT_ASSERTION);
           }
