@@ -22,6 +22,7 @@ import org.jline.terminal.Terminal;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Manages Groovy imports in the current shell session.
@@ -39,8 +40,13 @@ public class ImportCommand extends AbstractKnoxShellCommand {
     private static final String USAGE    = "Usage: :import [<fully-qualified-class-or-package.*>]\n"
     + "  :import                - list active imports\n"
     + "  :import <fqcn>         - add a new import\n"
-    + "  :import <package>.*    - wildcard import";
+    + "  :import static <fqcn>  - add a static import\n"
+    + "  :import <package>.* - wildcard import";
     private static final String HELP     = USAGE;
+
+    // Groovysh 4.x validation: chars, digits, underscore, dot, star, optional semicolon
+    private static final Pattern IMPORTED_ITEM_PATTERN = Pattern.compile("^[a-zA-Z0-9_. *]+;?$");
+
 
     public ImportCommand(GroovyEngine engine, Terminal terminal) {
         super(engine, terminal, NAME, SHORTCUT, DESC, USAGE, HELP);
@@ -55,28 +61,24 @@ public class ImportCommand extends AbstractKnoxShellCommand {
                 terminal.writer().println("No imports registered.");
             } else {
                 terminal.writer().println("Active imports:");
-                imports.keySet().stream()
+                imports.values().stream()
                 .sorted()
-                .forEach(key -> terminal.writer().println("  import " + key));            }
+                .forEach(value -> terminal.writer().println(value));            }
             terminal.writer().flush();
             return null;
         }
 
-        // Join all args in case user typed "import java.util. *" with spaces
-        String target = String.join("", args).trim();
+        // Join with spaces to preserve "static" keyword
+        String target = String.join(" ", args).trim();
 
-        // Strip leading "import " if the user typed ":import import java.util.List"
-        if (target.toLowerCase().startsWith("import ")) {
-            target = target.substring(7).trim();
-        }
-
-        // Basic validation: must contain a dot (package separator)
-        if (!target.contains(".")) {
-            terminal.writer().println("Invalid import: '" + target
-            + "'. Expected a fully-qualified class or package (e.g. java.util.List or java.util.*).");
+        if (!IMPORTED_ITEM_PATTERN.matcher(target).matches()) {
+            terminal.writer().println("Invalid import definition: '" + target + "'");
             terminal.writer().flush();
             return null;
         }
+
+        // Strip Java-style semicolons
+        target = target.replace(";", "");
 
         try {
             engine.execute("import " + target);
