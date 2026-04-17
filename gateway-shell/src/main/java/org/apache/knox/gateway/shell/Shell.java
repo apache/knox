@@ -21,6 +21,7 @@ import groovy.ui.GroovyMain;
 
 import org.apache.groovy.groovysh.jline.SystemRegistryImpl;
 import org.apache.knox.gateway.shell.commands.AbstractKnoxShellCommand;
+import org.apache.knox.gateway.shell.commands.AbstractSQLCommandSupport;
 import org.apache.knox.gateway.shell.commands.CSVCommand;
 import org.apache.knox.gateway.shell.commands.DataSourceCommand;
 import org.apache.knox.gateway.shell.commands.ImportCommand;
@@ -115,41 +116,105 @@ public class Shell {
     }
 
     // 3. Instantiate and Map Custom Commands
+    List<AbstractKnoxShellCommand> commands = createCommands(engine, terminal);
+    Map<String, AbstractKnoxShellCommand> registry = createRegistry(commands);
+
+    Map<String, CommandMethods> commandMethods = createCommandMethods(commands);
+    Map<String, String> commandAliases = createCommandAliases(commands);
+
+    DefaultParser parser = new DefaultParser();
+    // Override default regex to allow '.' as a valid command string
+    // Original: "[:]?[a-zA-Z]+[a-zA-Z0-9_-]*"
+    parser.setRegexCommand("(?:\\.|[:]?[a-zA-Z]+[a-zA-Z0-9_-]*)");
+    Path workDir = Paths.get(System.getProperty("user.dir"));
+    KnoxShellCommandRegistry knoxShellCommandRegistry = new KnoxShellCommandRegistry(commandMethods, commandAliases);
+    SystemRegistry systemRegistry = new SystemRegistryImpl(parser, terminal, () -> workDir, null);
+    systemRegistry.setCommandRegistries(knoxShellCommandRegistry);
+    SystemRegistry.add(systemRegistry);
+
+    // 4. Setup Tab Completers for our custom commands (e.g., ":sql", ":fs")
+    Completer combinedCompleter = new AggregateCompleter(
+    systemRegistry.completer(),
+    new SafeCompleter(engine.getScriptCompleter()));
+
+    // 5. Build the LineReader
+    LineReader reader = LineReaderBuilder.builder()
+    .parser(parser)
+    .terminal(terminal)
+    .completer(combinedCompleter)
+    .variable(LineReader.HISTORY_FILE, Paths.get(System.getProperty("user.home"), ".knoxshell_history"))
+    .build();
+
+    terminal.writer().println("Apache Knox Shell");
+    terminal.writer().println("Type ':help' (':h' or '?') for help, ':exit' or ':quit' (':x' or ':q') to quit.");
+    terminal.writer().flush();
+
+    // 6. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
+    createShutdownHook(commands);
+
+    // 7. The REPL Loop
+    runRepl(reader, terminal, registry, engine);
+  }
+
+  private static List<AbstractKnoxShellCommand> createCommands(GroovyEngine engine, Terminal terminal) {
+    return Arrays.asList(
+    new CSVCommand(engine, terminal),
+    new DataSourceCommand(engine, terminal),
+    new SelectCommand(engine, terminal),
+    new WebHDFSCommand(engine, terminal),
+    new ImportCommand(engine, terminal),
+    new LoadCommand(engine, terminal),
+    new PurgeCommand(engine, terminal),
+    new ShowCommand(engine, terminal)
+    );
+  }
+
+  private static Map<String, AbstractKnoxShellCommand> createRegistry(List<AbstractKnoxShellCommand> commands) {
     Map<String, AbstractKnoxShellCommand> registry = new HashMap<>();
-    CSVCommand csvCmd = new CSVCommand(engine, terminal);
-    DataSourceCommand dsCmd = new DataSourceCommand(engine, terminal);
-    SelectCommand selectCmd = new SelectCommand(engine, terminal);
-    WebHDFSCommand hdfsCmd = new WebHDFSCommand(engine, terminal);
+    if (commands == null || commands.isEmpty()) {
+      return registry;
+    }
 
-    ImportCommand importCmd = new ImportCommand(engine, terminal);
-    LoadCommand loadCmd = new LoadCommand(engine, terminal);
-    PurgeCommand purgeCommand = new PurgeCommand(engine, terminal);
-    ShowCommand showCmd = new ShowCommand(engine, terminal);
+    for (AbstractKnoxShellCommand cmd : commands) {
+      registerCommand(registry, cmd);
+    }
 
-    registerCommand(registry, importCmd);
-    registerCommand(registry, selectCmd);
-    registerCommand(registry, dsCmd);
-    registerCommand(registry, csvCmd);
-    registerCommand(registry, hdfsCmd);
-    registerCommand(registry, showCmd);
-    registerCommand(registry, loadCmd);
-    registerCommand(registry, purgeCommand);
+    return registry;
+  }
 
+
+  private static void createShutdownHook(List<AbstractKnoxShellCommand> commands) {
+    if (commands == null || commands.isEmpty()) {
+      return;
+    }
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      System.out.println("\nClosing any open connections...");
+
+      for (AbstractKnoxShellCommand cmd : commands) {
+        // Check if the command inherits from the SQL base class
+        if (cmd instanceof AbstractSQLCommandSupport) {
+          ((AbstractSQLCommandSupport) cmd).closeConnections();
+        }
+      }
+    }));
+  }
+
+  private static void registerCommand(Map<String, AbstractKnoxShellCommand> registry, AbstractKnoxShellCommand cmd) {
+    registry.put(cmd.getName(), cmd);
+    if (cmd.getShortcut() != null && !cmd.getShortcut().isEmpty()) {
+      registry.put(cmd.getShortcut(), cmd);
+    }
+  }
+
+  private static Map<String, CommandMethods> createCommandMethods(List<AbstractKnoxShellCommand> commands) {
     Map<String, CommandMethods> commandMethods = new HashMap<>();
-    Map<String, String> commandAliases = new HashMap<>();
 
+    if (commands == null || commands.isEmpty()) {
+      return commandMethods;
+    }
 
-    registry.forEach((name, cmd) -> {
-        if (name.equals(cmd.getShortcut())) {
-          return;
-        }
-        String shortcut = cmd.getShortcut();
-        if (shortcut != null && !shortcut.isEmpty()) {
-            commandAliases.put(shortcut, name);
-        }
-
-      // 2. Put them in the map with the colon-prefixed names
-      commandMethods.put(name, new CommandMethods(
+    for (AbstractKnoxShellCommand cmd : commands) {
+      commandMethods.put(cmd.getName(), new CommandMethods(
       (input) -> {
         try {
           String[] allTokens = input.args();
@@ -171,51 +236,34 @@ public class Shell {
         : Collections.singletonList(NullCompleter.INSTANCE);
       }
       ));
-    });
+    }
 
-    DefaultParser parser = new DefaultParser();
-    // Override default regex to allow '.' as a valid command string
-    // Original: "[:]?[a-zA-Z]+[a-zA-Z0-9_-]*"
-    parser.setRegexCommand("(?:\\.|[:]?[a-zA-Z]+[a-zA-Z0-9_-]*)");
-    Path workDir = Paths.get(System.getProperty("user.dir"));
-    KnoxShellCommandRegistry knoxShellCommandRegistry = new KnoxShellCommandRegistry(commandMethods, commandAliases);
-    SystemRegistry systemRegistry = new SystemRegistryImpl(parser, terminal, () -> workDir, null);
-    systemRegistry.setCommandRegistries(knoxShellCommandRegistry);
-    SystemRegistry.add(systemRegistry);
+    return commandMethods;
+  }
 
-    // 4. Setup Tab Completers
-    // StringsCompleter automatically suggests our custom commands (e.g., ":sql", ":fs")
+  private static Map<String, String> createCommandAliases(List<AbstractKnoxShellCommand> commands) {
+    Map<String, String> commandAliases = new HashMap<>();
 
-    Completer combinedCompleter = new AggregateCompleter(
-      systemRegistry.completer(),
-      new SafeCompleter(engine.getScriptCompleter()));
+    if (commands == null || commands.isEmpty()) {
+      return commandAliases;
+    }
 
-    // 5. Build the LineReader
-    LineReader reader = LineReaderBuilder.builder()
-    .parser(parser)
-    .terminal(terminal)
-    .completer(combinedCompleter)
-    .variable(LineReader.HISTORY_FILE, Paths.get(System.getProperty("user.home"), ".knoxshell_history"))
-    .build();
+    for (AbstractKnoxShellCommand cmd : commands) {
+      String shortcut = cmd.getShortcut();
+      if (shortcut != null && !shortcut.isEmpty()) {
+        commandAliases.put(shortcut, cmd.getName());
+      }
+    }
 
-    terminal.writer().println("Apache Knox Shell");
-    terminal.writer().println("Type ':help' (':h' or '?') for help, ':exit' or ':quit' (':x' or ':q') to quit.");
-    terminal.writer().flush();
+    return commandAliases;
+  }
 
-    // 6. Setup Shutdown Hook (Calling closeConnections directly on our object instances)
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.out.println("\nClosing any open connections...");
-      dsCmd.closeConnections();
-      selectCmd.closeConnections();
-    }));
-
-
-    // 7. The REPL Loop
+  private static void runRepl(LineReader reader, Terminal terminal, Map<String, AbstractKnoxShellCommand> registry, GroovyEngine engine) {
     while (true) {
       try {
         String line = reader.readLine("knox> ");
         if (line == null) {
-          break;
+          return;
         }
 
         String trimmed = line.trim();
@@ -225,7 +273,7 @@ public class Shell {
 
         // --- BUILT-IN COMMANDS ---
         if (EXIT_COMMANDS.stream().anyMatch(trimmed::equalsIgnoreCase)) {
-          break;
+          return; // Exits the method, allowing main() to finish cleanly
         }
 
         if (HELP_COMMANDS.stream().anyMatch(h -> trimmed.equalsIgnoreCase(h) || trimmed.startsWith(h + " "))) {
@@ -290,7 +338,7 @@ public class Shell {
 
       } catch (UserInterruptException | EndOfFileException e) {
         // Ctrl+C or Ctrl+D cleanly exits the shell
-        break;
+        return;
       } catch (Throwable e) {
         // Shell should not exit (similar to legacy GroovySh)
         terminal.writer().println("Error: " + e.getMessage());
@@ -299,10 +347,4 @@ public class Shell {
     }
   }
 
-  private static void registerCommand(Map<String, AbstractKnoxShellCommand> registry, AbstractKnoxShellCommand cmd) {
-    registry.put(cmd.getName(), cmd);
-    if (cmd.getShortcut() != null && !cmd.getShortcut().isEmpty()) {
-      registry.put(cmd.getShortcut(), cmd);
-    }
-  }
 }
