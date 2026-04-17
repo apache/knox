@@ -101,11 +101,11 @@ public class Shell {
       }
     } else {
       // Boot the Interactive JLine 3 REPL
-      startInteractiveShell();
+      new Shell().startInteractiveShell();
     }
   }
 
-  private static void startInteractiveShell() throws Exception {
+  private void startInteractiveShell() throws Exception {
     // 1. Build Terminal and Engine
     Terminal terminal = TerminalBuilder.builder().system(true).name("KnoxShell").build();
     GroovyEngine engine = new GroovyEngine();
@@ -156,7 +156,7 @@ public class Shell {
     runRepl(reader, terminal, registry, engine);
   }
 
-  private static List<AbstractKnoxShellCommand> createCommands(GroovyEngine engine, Terminal terminal) {
+  private List<AbstractKnoxShellCommand> createCommands(GroovyEngine engine, Terminal terminal) {
     return Arrays.asList(
     new CSVCommand(engine, terminal),
     new DataSourceCommand(engine, terminal),
@@ -169,7 +169,7 @@ public class Shell {
     );
   }
 
-  private static Map<String, AbstractKnoxShellCommand> createRegistry(List<AbstractKnoxShellCommand> commands) {
+  private Map<String, AbstractKnoxShellCommand> createRegistry(List<AbstractKnoxShellCommand> commands) {
     Map<String, AbstractKnoxShellCommand> registry = new HashMap<>();
     if (commands == null || commands.isEmpty()) {
       return registry;
@@ -182,8 +182,7 @@ public class Shell {
     return registry;
   }
 
-
-  private static void createShutdownHook(List<AbstractKnoxShellCommand> commands) {
+  private void createShutdownHook(List<AbstractKnoxShellCommand> commands) {
     if (commands == null || commands.isEmpty()) {
       return;
     }
@@ -199,14 +198,14 @@ public class Shell {
     }));
   }
 
-  private static void registerCommand(Map<String, AbstractKnoxShellCommand> registry, AbstractKnoxShellCommand cmd) {
+  private void registerCommand(Map<String, AbstractKnoxShellCommand> registry, AbstractKnoxShellCommand cmd) {
     registry.put(cmd.getName(), cmd);
     if (cmd.getShortcut() != null && !cmd.getShortcut().isEmpty()) {
       registry.put(cmd.getShortcut(), cmd);
     }
   }
 
-  private static Map<String, CommandMethods> createCommandMethods(List<AbstractKnoxShellCommand> commands) {
+  private Map<String, CommandMethods> createCommandMethods(List<AbstractKnoxShellCommand> commands) {
     Map<String, CommandMethods> commandMethods = new HashMap<>();
 
     if (commands == null || commands.isEmpty()) {
@@ -241,7 +240,7 @@ public class Shell {
     return commandMethods;
   }
 
-  private static Map<String, String> createCommandAliases(List<AbstractKnoxShellCommand> commands) {
+  private Map<String, String> createCommandAliases(List<AbstractKnoxShellCommand> commands) {
     Map<String, String> commandAliases = new HashMap<>();
 
     if (commands == null || commands.isEmpty()) {
@@ -258,7 +257,7 @@ public class Shell {
     return commandAliases;
   }
 
-  private static void runRepl(LineReader reader, Terminal terminal, Map<String, AbstractKnoxShellCommand> registry, GroovyEngine engine) {
+  private void runRepl(LineReader reader, Terminal terminal, Map<String, AbstractKnoxShellCommand> registry, GroovyEngine engine) {
     while (true) {
       try {
         String line = reader.readLine("knox> ");
