@@ -21,13 +21,12 @@ import static org.apache.knox.gateway.filter.AbstractGatewayFilter.DEFAULT_TOPOL
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -42,7 +41,7 @@ import java.util.Map;
  * Basically Topology Port Mapping for standard port.
  * Backwards compatible to Default Topology Feature.
  */
-public class PortMappingHelperHandler extends HandlerWrapper {
+public class PortMappingHelperHandler extends Handler.Wrapper {
   private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
   private final GatewayConfig config;
   private final String defaultTopologyRedirectContext;
@@ -53,65 +52,61 @@ public class PortMappingHelperHandler extends HandlerWrapper {
   }
 
   /**
-   * Set up context for default topology feature.
+   * Set up context for the default topology feature.
    * @param config GatewayConfig object to read from
-   * @return default topology redirect context as a string
+   * @return default topology redirect context as a string (or {@code null})
    */
   private String getDefaultTopologyRedirectContext(final GatewayConfig config) {
     final String defaultTopologyName = config.getDefaultTopologyName();
 
-    // default topology feature can also be enabled using port mapping feature
+    // The default topology feature can also be enabled using port mapping feature
     // config e.g. gateway.port.mapping.{defaultTopologyName}
-    String defaultTopologyRedirectContext = null;
-    if(defaultTopologyName == null &&
-           config.getGatewayPortMappings().containsValue(config.getGatewayPort())) {
-      for(final Map.Entry<String, Integer> entry: config.getGatewayPortMappings().entrySet()) {
-        if(entry.getValue().equals(config.getGatewayPort())) {
-          defaultTopologyRedirectContext = "/" + config.getGatewayPath() + "/" + entry.getKey();
+    String redirectContext = null;
+    if (defaultTopologyName == null
+    && config.getGatewayPortMappings().containsValue(config.getGatewayPort())) {
+      for (final Map.Entry<String, Integer> entry : config.getGatewayPortMappings().entrySet()) {
+        if (entry.getValue().equals(config.getGatewayPort())) {
+          redirectContext = "/" + config.getGatewayPath() + "/" + entry.getKey();
           break;
         }
       }
     }
 
     if (defaultTopologyName != null) {
-      defaultTopologyRedirectContext = config.getDefaultAppRedirectPath();
-      if (defaultTopologyRedirectContext != null
-          && defaultTopologyRedirectContext.trim().isEmpty()) {
-        defaultTopologyRedirectContext = null;
+      redirectContext = config.getDefaultAppRedirectPath();
+      if (redirectContext != null && redirectContext.trim().isEmpty()) {
+        redirectContext = null;
       }
     }
-    if (defaultTopologyRedirectContext != null) {
-      LOG.defaultTopologySetup(defaultTopologyName, defaultTopologyRedirectContext);
+    if (redirectContext != null) {
+      LOG.defaultTopologySetup(defaultTopologyName, redirectContext);
     }
-    return defaultTopologyRedirectContext;
+    return redirectContext;
   }
 
   @Override
-  public void handle(final String target, final Request baseRequest,
-      final HttpServletRequest request, final HttpServletResponse response)
-      throws IOException, ServletException {
-    final String baseURI = baseRequest.getRequestURI();
-    final int port = baseRequest.getLocalPort();
+  public boolean handle(final Request request, final Response response, final Callback callback)
+  throws Exception {
+    final String requestPath = request.getHttpURI().getPath();
+    final int port = Request.getLocalPort(request);
 
     if (config.isGatewayPortMappingEnabled()
-            && config.getGatewayPortMappings().containsValue(port)) {
+    && config.getGatewayPortMappings().containsValue(port)) {
       // If Port Mapping feature enabled
-      handlePortMapping(target, baseRequest, request, response, port);
-    } else if (defaultTopologyRedirectContext != null &&
-                 !baseURI.startsWith("/" + config.getGatewayPath())) {
+      return handlePortMapping(request, response, callback, port);
+    } else if (defaultTopologyRedirectContext != null
+    && !requestPath.startsWith("/" + config.getGatewayPath())) {
       //Backwards compatibility for default topology feature
-      handleDefaultTopologyMapping(target, baseRequest, request, response);
+      return handleDefaultTopologyMapping(request, response, callback);
     } else {
       // case where topology port mapping is not enabled (or improperly configured)
       // and no default topology is configured
-      super.handle(target, baseRequest, request, response);
+      return super.handle(request, response, callback);
     }
   }
 
-  private void handlePortMapping(final String target, final Request baseRequest,
-                                 final HttpServletRequest request,
-                                 final HttpServletResponse response, final int port)
-      throws IOException, ServletException {
+  private boolean handlePortMapping(final Request request, final Response response,
+                                    final Callback callback, final int port) throws Exception {
     final String topologyName = config.getGatewayPortMappings().entrySet()
                                     .stream()
                                     .filter(e -> e.getValue().equals(port))
@@ -119,37 +114,46 @@ public class PortMappingHelperHandler extends HandlerWrapper {
                                     .findFirst()
                                     .orElse(null);
     final String gatewayTopologyContext = "/" + config.getGatewayPath() + "/" + topologyName;
-    String newTarget = target;
+    final String requestPath = request.getHttpURI().getPath();
 
-    if(!target.contains(gatewayTopologyContext)) {
-      newTarget = gatewayTopologyContext + target;
+    // If the request URI does not already contain /{gatewayPath}/{topologyName},
+    // wrap the request to prepend it.
+    if (!requestPath.contains(gatewayTopologyContext)) {
+      final String newPath = gatewayTopologyContext + requestPath;
+      LOG.topologyPortMappingUpdateRequest(requestPath, newPath);
+
+      Request rewritten = rewritePath(request, newPath);
+      return super.handle(rewritten, response, callback);
     }
 
-    // if the request does not contain /{gatewayName}/{topologyName}
-    if(!baseRequest.getRequestURI().contains(gatewayTopologyContext)) {
-      RequestUpdateHandler.ForwardedRequest newRequest = new RequestUpdateHandler.ForwardedRequest(
-          request, gatewayTopologyContext);
-
-      baseRequest.setPathInfo(gatewayTopologyContext + baseRequest.getPathInfo());
-      baseRequest.setURIPathQuery(gatewayTopologyContext + baseRequest.getRequestURI());
-
-      LOG.topologyPortMappingUpdateRequest(target, newTarget);
-      super.handle(newTarget, baseRequest, newRequest, response);
-    } else {
-      super.handle(newTarget, baseRequest, request, response);
-    }
+    return super.handle(request, response, callback);
   }
 
-  private void handleDefaultTopologyMapping(final String target, final Request baseRequest,
-                                            final HttpServletRequest request,
-                                            final HttpServletResponse response)
-      throws IOException, ServletException {
-    RequestUpdateHandler.ForwardedRequest newRequest = new RequestUpdateHandler.ForwardedRequest(
-        request, defaultTopologyRedirectContext);
+  private boolean handleDefaultTopologyMapping(final Request request, final Response response,
+                                               final Callback callback) throws Exception {
+    final String requestPath = request.getHttpURI().getPath();
+    final String newPath = defaultTopologyRedirectContext + requestPath;
+    LOG.defaultTopologyForward(requestPath, newPath);
 
-    final String newTarget = defaultTopologyRedirectContext + target;
-    LOG.defaultTopologyForward(target, newTarget);
-    request.setAttribute(DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME, "true");
-    super.handle(newTarget, baseRequest, newRequest, response);
+    Request rewritten = rewritePath(request, newPath);
+    rewritten.setAttribute(DEFAULT_TOPOLOGY_FORWARD_ATTRIBUTE_NAME, "true");
+    return super.handle(rewritten, response, callback);
+  }
+
+  /**
+   * Wraps the given request so that its {@link HttpURI} reports the supplied
+   * path instead of the original one. All other URI components (scheme,
+   * authority, query, fragment) are preserved.
+   */
+  private static Request rewritePath(final Request request, final String newPath) {
+    final HttpURI original = request.getHttpURI();
+    final HttpURI rewritten = HttpURI.build(original).path(newPath).asImmutable();
+
+    return new Request.Wrapper(request) {
+      @Override
+      public HttpURI getHttpURI() {
+        return rewritten;
+      }
+    };
   }
 }

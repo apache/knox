@@ -16,112 +16,56 @@
  */
 package org.apache.knox.gateway.filter;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.GatewayServices;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.ScopedHandler;
-
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Locale;
 
 /**
- * This handler will be ONLY registered with a specific connector listening on a
- * port that is configured through a property gateway.port.mapping.{topologyName}
- * in gateway-site.xml
+ * Container for the {@link ForwardedRequest} wrapper used by the port-mapping /
+ * default-topology request rewriting logic (see KNOX-928).
  * <p>
- * The function of this connector is to append the right context path and
- * forward the request to the default port.
- * <p>
- * See KNOX-928
- *
+ * The former Jetty {@code ScopedHandler} implementation was removed as part of
+ * the Jetty 12 migration because {@code ScopedHandler} no longer exists and the
+ * rewriting logic now lives directly inside {@link PortMappingHelperHandler}.
+ * Only the request wrapper is retained here for backwards compatibility with
+ * existing call sites and tests.
  */
-public class RequestUpdateHandler extends ScopedHandler {
-  private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
+public final class RequestUpdateHandler {
 
-  private String redirectContext;
-
-  public RequestUpdateHandler(final GatewayConfig config,
-      final String topologyName, final GatewayServices services) {
-    super();
-
-    if (config == null) {
-      throw new IllegalArgumentException("config==null");
-    }
-    if (services == null) {
-      throw new IllegalArgumentException("services==null");
-    }
-    if (topologyName == null) {
-      throw new IllegalArgumentException("topologyName==null");
-    }
-
-    redirectContext = "/" + config.getGatewayPath() + "/" + topologyName;
-  }
-
-  @Override
-  public void doScope(final String target, final Request baseRequest,
-      final HttpServletRequest request, final HttpServletResponse response)
-      throws IOException, ServletException {
-    nextScope(target, baseRequest, request, response);
-  }
-
-  @Override
-  public void doHandle(final String target, final Request baseRequest,
-      final HttpServletRequest request, final HttpServletResponse response)
-      throws IOException, ServletException {
-
-    RequestUpdateHandler.ForwardedRequest newRequest = new RequestUpdateHandler.ForwardedRequest(
-        request, redirectContext);
-
-    // if the request already has the /{gatewaypath}/{topology} part then skip
-    if (!StringUtils.startsWithIgnoreCase(target, redirectContext)) {
-      baseRequest.setPathInfo(redirectContext + baseRequest.getPathInfo());
-      baseRequest.setURIPathQuery(redirectContext + baseRequest.getRequestURI());
-
-      final String newTarget = redirectContext + target;
-      LOG.topologyPortMappingUpdateRequest(target, newTarget);
-      nextHandle(newTarget, baseRequest, newRequest, response);
-    } else {
-      nextHandle(target, baseRequest, newRequest, response);
-    }
+  private RequestUpdateHandler() {
+    // utility holder for the ForwardedRequest wrapper
   }
 
   /**
-   * A request wrapper class that wraps a request and adds the context path if
-   * needed.
+   * A request wrapper class that wraps a request and prepends a context path
+   * to the request URI.
    */
-  static class ForwardedRequest extends HttpServletRequestWrapper {
+  public static class ForwardedRequest extends HttpServletRequestWrapper {
     private final String contextPath;
     private final String requestURL;
 
-    ForwardedRequest(final HttpServletRequest request, final String contextPath) {
+    public ForwardedRequest(final HttpServletRequest request, final String contextPath) {
       super(request);
       this.contextPath = contextPath;
       this.requestURL = generateRequestURL();
     }
 
     /**
-     * Handle the case where getServerPort returns -1
+     * Handle the case where getServerPort returns -1.
      * @return requestURL
      */
     private String generateRequestURL() {
       if (getRequest().getServerPort() != -1) {
         return String.format(Locale.ROOT, "%s://%s:%s%s",
-            getRequest().getScheme(),
-            getRequest().getServerName(),
-            getRequest().getServerPort(),
-            getRequestURI());
+        getRequest().getScheme(),
+        getRequest().getServerName(),
+        getRequest().getServerPort(),
+        getRequestURI());
       } else {
         return String.format(Locale.ROOT, "%s://%s%s",
-            getRequest().getScheme(),
-            getRequest().getServerName(),
-            getRequestURI());
+        getRequest().getScheme(),
+        getRequest().getServerName(),
+        getRequestURI());
       }
     }
 
