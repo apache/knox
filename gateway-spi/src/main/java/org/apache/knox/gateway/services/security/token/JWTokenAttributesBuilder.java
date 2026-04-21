@@ -37,6 +37,7 @@ public class JWTokenAttributesBuilder {
   private Set<String> groups;
   private String kid;
   private String issuer = JWTokenAttributes.DEFAULT_ISSUER;
+  private String clientId;
 
   public JWTokenAttributesBuilder setUserName(String userName) {
     this.userName = userName;
@@ -107,8 +108,13 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
+  public JWTokenAttributesBuilder setClientId(String clientId) {
+    this.clientId = clientId;
+    return this;
+  }
+
   public JWTokenAttributes build() {
     return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer);
+        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId);
   }
 }

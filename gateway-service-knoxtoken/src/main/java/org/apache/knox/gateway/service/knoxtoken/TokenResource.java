@@ -72,6 +72,7 @@ import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -1091,6 +1092,14 @@ public class TokenResource {
     }
     if (shouldIncludeGroups()) {
       jwtAttributesBuilder.setGroups(groups());
+    }
+
+    final Subject subject = SubjectUtils.getCurrentSubject();
+    if (subject != null) {
+      Set<TokenIdPrincipal> tokenIdPrincipals = subject.getPrincipals(TokenIdPrincipal.class);
+      if (!tokenIdPrincipals.isEmpty()) {
+        jwtAttributesBuilder.setClientId(tokenIdPrincipals.iterator().next().getName());
+      }
     }
 
     jwtAttributes = jwtAttributesBuilder.build();

@@ -42,6 +42,7 @@ public class JWTToken implements JWT {
   public static final String KNOX_KID_CLAIM = "kid";
   public static final String KNOX_JKU_CLAIM = "jku";
   public static final String KNOX_GROUPS_CLAIM = "knox.groups";
+  public static final String CLIENT_ID_CLAIM = "client_id";
 
   SignedJWT jwt;
 
@@ -94,6 +95,9 @@ public class JWTToken implements JWT {
     }
     if (jwtAttributes.getGroups() != null) {
       builder.claim(KNOX_GROUPS_CLAIM, jwtAttributes.getGroups());
+    }
+    if (jwtAttributes.getClientId() != null) {
+      builder.claim(CLIENT_ID_CLAIM, jwtAttributes.getClientId());
     }
 
     // Add a private UUID claim for uniqueness

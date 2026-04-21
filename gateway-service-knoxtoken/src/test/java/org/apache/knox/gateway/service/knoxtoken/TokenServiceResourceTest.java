@@ -1488,6 +1488,37 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testClientCredentialsThirdPartyAppConfig() throws Exception {
+    tryClientCredentialsThirdPartyAppConfig(null, true);
+    tryClientCredentialsThirdPartyAppConfig("true", true);
+    tryClientCredentialsThirdPartyAppConfig("false", false);
+  }
+
+  private void tryClientCredentialsThirdPartyAppConfig(String configValue, boolean expectedValue) throws Exception {
+    try {
+      tss = new PersistentTestTokenStateService();
+      final Map<String, String> contextExpectations = new HashMap<>();
+      if (configValue != null) {
+        contextExpectations.put("clientid.thirdPartyApp", configValue);
+      }
+      configureCommonExpectations(contextExpectations, Boolean.TRUE);
+      final ClientCredentialsResource ccr = new ClientCredentialsResource();
+      ccr.request = request;
+      ccr.context = context;
+      ccr.init();
+
+      final Response response = ccr.doPost();
+      assertEquals(200, response.getStatus());
+
+      final String clientId = getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_ID);
+      final TokenMetadata metadata = tss.getTokenMetadata(clientId);
+      assertEquals(expectedValue, metadata.isThirdPartyApp());
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
+  @Test
   public void testClientCredentialsResponse() throws Exception {
     tryClientCredentialsResource(null);
     tryClientCredentialsResource("30000");

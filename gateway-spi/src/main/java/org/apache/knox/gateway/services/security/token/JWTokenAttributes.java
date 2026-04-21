@@ -39,9 +39,15 @@ public class JWTokenAttributes {
   private final Set<String> groups;
   private final String issuer;
   private String kid;
+  private final String clientId;
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
       char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer) {
+    this(userName, audiences, algorithm, expires, signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, null);
+  }
+
+  JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId) {
     this.userName = userName;
     this.audiences = audiences;
     this.algorithm = algorithm;
@@ -55,6 +61,7 @@ public class JWTokenAttributes {
     this.groups = groups;
     this.kid = kid;
     this.issuer = issuer;
+    this.clientId = clientId;
   }
 
   public String getUserName() {
@@ -123,5 +130,9 @@ public class JWTokenAttributes {
 
   public String getIssuer() {
     return issuer;
+  }
+
+  public String getClientId() {
+    return clientId;
   }
 }

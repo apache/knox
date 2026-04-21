@@ -69,6 +69,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -405,15 +406,24 @@ public abstract class AbstractJWTFilter implements Filter {
       // token id until it is created, the username is always the same
       // in the record. Using the token id makes it a unique username for
       // audit and the like.
-      final String username = metadata.isClientId() ? tokenId : metadata.getUserName();
-
-      return createSubjectFromTokenData(username, null);
+      // However, in case of service-to-service communications, it might
+      // be useful to return the actual userName during the token exchange
+      // step in the client credentials flow (this is controlled by the thirdPartyApp)
+      // flag that was (or wasn't) submitted while the client credentials were created
+      final String userName = (metadata.isClientId() && metadata.isThirdPartyApp()) ? tokenId : metadata.getUserName();
+      final String clientId = (metadata.isClientId() && !metadata.isThirdPartyApp()) ? tokenId : null;
+      return createSubjectFromTokenData(userName, null, clientId);
     }
     return null;
   }
 
   @SuppressWarnings("rawtypes")
   protected Subject createSubjectFromTokenData(final String principal, final String expectedPrincipalClaimValue) {
+    return createSubjectFromTokenData(principal, expectedPrincipalClaimValue, null);
+  }
+
+  @SuppressWarnings("rawtypes")
+  protected Subject createSubjectFromTokenData(final String principal, final String expectedPrincipalClaimValue, final String tokenId) {
     String claimValue =
               (expectedPrincipalClaimValue != null) ? expectedPrincipalClaimValue.toLowerCase(Locale.ROOT) : null;
 
@@ -421,6 +431,9 @@ public abstract class AbstractJWTFilter implements Filter {
     Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(claimValue != null ? claimValue : principal);
     principals.add(p);
+    if (tokenId != null) {
+      principals.add(new TokenIdPrincipal(tokenId));
+    }
 
     // The newly constructed Sets check whether this Subject has been set read-only
     // before permitting subsequent modifications. The newly created Sets also prevent

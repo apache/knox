@@ -224,4 +224,16 @@ public class JWTTokenTest {
     token = new JWTToken(new JWTokenAttributesBuilder().setAlgorithm("RS256").setType(tokenType).build());
     assertEquals(token.getType(), new JOSEObjectType(tokenType));
   }
+
+  @Test
+  public void testClientIdClaim() throws Exception {
+    final String clientId = "test-client-id";
+    JWT token = new JWTToken(new JWTokenAttributesBuilder()
+            .setAlgorithm("RS256")
+            .setUserName("test-user")
+            .setClientId(clientId)
+            .build());
+
+    assertEquals(clientId, token.getClaim(JWTToken.CLIENT_ID_CLAIM));
+  }
 }
