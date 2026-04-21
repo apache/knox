@@ -69,6 +69,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
@@ -499,9 +500,16 @@ public class GatewayServer {
         httpsConfig.setSecurePort( connectorPort );
         httpsConfig.addCustomizer( new SecureRequestCustomizer() );
         SSLService ssl = services.getService(ServiceType.SSL_SERVICE);
-        SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
+        // In Jetty 12 the ServerConnector(Server, SslContextFactory, ConnectionFactory)
+        // convenience constructor was removed. Build an SslConnectionFactory explicitly
+        // and prepend it to the HttpConnectionFactory so that the SSL layer wraps HTTP/1.1.
+        SslContextFactory.Server sslContextFactory =
+            (SslContextFactory.Server) ssl.buildSslContextFactory( config );
         ssl.excludeTopologyFromClientAuth(sslContextFactory, config, topologyName);
-        connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
+        HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );
+        SslConnectionFactory sslConnectionFactory =
+            new SslConnectionFactory( sslContextFactory, httpConnectionFactory.getProtocol() );
+        connector = new ServerConnector( server, sslConnectionFactory, httpConnectionFactory );
       } else {
         connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
       }
