@@ -76,8 +76,8 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.webapp.Configuration;
-import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.ee10.webapp.Configuration;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
@@ -892,8 +892,10 @@ public class GatewayServer {
     String contextPath;
     contextPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName, warPath );
     context.setContextPath( contextPath );
-    SessionCookieConfig sessionCookieConfig = context.getServletContext().getSessionCookieConfig();
-    sessionCookieConfig.setName(KNOXSESSIONCOOKIENAME);
+    // In Jetty 12 the servlet ServletContext.getSessionCookieConfig() is not
+    // reachable until the context is started. The session cookie name is
+    // configured on the SessionHandler directly.
+    context.getSessionHandler().setSessionCookie(KNOXSESSIONCOOKIENAME);
     context.setWar( warFile.getAbsolutePath() );
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
@@ -908,9 +910,11 @@ public class GatewayServer {
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
-    context.setMaxFormContentSize(config.getJettyMaxFormContentSize());
+    // NOTE: In Jetty 12 the max form content size and max form keys are
+    // configured server-wide via FormFields.MAX_LENGTH_ATTRIBUTE and
+    // FormFields.MAX_FIELDS_ATTRIBUTE (see createJetty()). The per-context
+    // setters were removed; server-level settings apply to all WebApps.
     log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
-    context.setMaxFormKeys(config.getJettyMaxFormKeys());
     log.setMaxFormKeys(config.getJettyMaxFormKeys());
     return context;
   }
