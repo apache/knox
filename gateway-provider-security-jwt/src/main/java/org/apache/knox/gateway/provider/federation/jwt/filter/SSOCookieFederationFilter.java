@@ -55,7 +55,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -348,13 +347,11 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request);
     if (!enabledFederatedOpConfigs.isEmpty()) {
       final String loginSessionId = request.getSession().getId();
-      final Map<String, FederatedOpConfiguration> federatedOpMap = enabledFederatedOpConfigs.stream().
-              collect(Collectors.toMap(FederatedOpConfiguration::getName, config -> config));
-      authorizeRequestMetadataStore.storeFederatedOpConfiguration(loginSessionId, federatedOpMap);
       authorizeRequestMetadataStore.storeRequestMetadata(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
+      final List<String> opNames = enabledFederatedOpConfigs.stream().map(FederatedOpConfiguration::getName).collect(Collectors.toList());
       providerURL += delimiter
-              + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, "UTF-8")
-              + "&federatedOpNames=" + URLEncoder.encode(String.join(",", federatedOpMap.keySet()), "UTF-8");
+              + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)
+              + "&federatedOpNames=" + URLEncoder.encode(String.join(",", opNames), StandardCharsets.UTF_8);
 
       delimiter = "&";
     }

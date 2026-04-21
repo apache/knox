@@ -16,8 +16,10 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -36,31 +38,21 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE
 @Path(BASE_RESORCE_PATH + "/.well-known/openid-configuration")
 @Produces(MediaType.APPLICATION_JSON)
 public class DiscoveryResource {
-    private FederatedOpConfiguration federatedOpConfiguration;
 
     @Context
     private ServletContext servletContext;
-
-    @PostConstruct
-    public void init() {
-        this.federatedOpConfiguration = new FederatedOpConfiguration(servletContext);
-    }
 
     @GET
     public Response getConfig(@Context UriInfo uriInfo) {
         final String baseUrl = uriInfo.getBaseUri().toString();
         final Map<String, Object> config = new HashMap<>();
-        config.put("issuer", baseUrl.replaceAll("awc-sso", "awc-token") + "knoxidf");
-        config.put("authorization_endpoint", baseUrl .replaceAll("noauth", "sso")+ AuthorizeResource.RESOURCE_PATH);
-        config.put("token_endpoint", baseUrl
-                .replaceAll("awc-sso", "awc-token")
-                .replaceAll("noauth", "token") + TokenResource.RESOURCE_PATH);
-        config.put("userinfo_endpoint", baseUrl
-                .replaceAll("awc-sso", "awc-token")
-                .replaceAll("noauth", "token") + UserInfoResource.RESOURCE_PATH);
+        config.put("issuer", baseUrl + "knoxidf");
+        config.put("authorization_endpoint", baseUrl + AuthorizeResource.RESOURCE_PATH);
+        config.put("token_endpoint", baseUrl + TokenResource.RESOURCE_PATH);
+        config.put("userinfo_endpoint", baseUrl + UserInfoResource.RESOURCE_PATH);
         config.put("jwks_uri", baseUrl + JwksResource.RESOURCE_PATH);
-        config.put("response_types_supported", new String[]{"code"});
-        config.put("grant_types_supported", new String[]{"authorization_code"});
+        config.put("response_types_supported", new String[]{KnoxIDFConstants.CODE});
+        config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE});
         config.put("id_token_signing_alg_values_supported", new String[]{"RS256"});
         return Response.ok(JsonUtils.renderAsJsonString(config)).build();
     }

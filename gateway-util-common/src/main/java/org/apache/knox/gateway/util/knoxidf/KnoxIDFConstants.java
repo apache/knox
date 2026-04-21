@@ -22,8 +22,6 @@ import java.util.Set;
 
 public interface KnoxIDFConstants {
     String BASE_RESORCE_PATH = "knoxidf/api/v1";
-    String GRANT_TYPE = "grant_type";
-    String CLIENT_CREDENTIALS = "client_credentials";
     String AUTH_CODE = "authorization_code";
     String CLIENT_SECRET = "client_secret";
     String CLIENT_ID = "client_id";
@@ -43,11 +41,4 @@ public interface KnoxIDFConstants {
     String FEDERATED_OP_CONFIG_PREFIX = "federated.op.";
     String FEDERATED_OP_CONFIG_ENABLED = FEDERATED_OP_CONFIG_PREFIX + "enabled";
     String FEDERATED_OP_CONFIG_NAME = FEDERATED_OP_CONFIG_PREFIX + "name";
-    String FEDERATED_OP_CONFIG_CLIENT_ID = FEDERATED_OP_CONFIG_PREFIX + "clientId";
-    String FEDERATED_OP_CONFIG_CLIENT_SECRET = FEDERATED_OP_CONFIG_PREFIX + "clientSecret";
-    String FEDERATED_OP_CONFIG_TOKEN_ENDPOINT = FEDERATED_OP_CONFIG_PREFIX + "token.endpoint";
-    String FEDERATED_OP_CONFIG_AUTH_ENDPOINT = FEDERATED_OP_CONFIG_PREFIX + "authorize.endpoint";
-    String FEDERATED_OP_CONFIG_AUTH_CALLBACK = FEDERATED_OP_CONFIG_PREFIX + "authorize.callback";
-    String FEDERATED_OP_CONFIG_USERINFO_ENDPOINT = FEDERATED_OP_CONFIG_PREFIX + "userinfo.endpoint";
-    String FEDERATED_OP_CONFIG_DISCOVERY_ENDPOINT = FEDERATED_OP_CONFIG_PREFIX + "discovery.endpoint";
 }

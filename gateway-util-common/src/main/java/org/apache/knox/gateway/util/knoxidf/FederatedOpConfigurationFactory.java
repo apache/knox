@@ -18,11 +18,27 @@ package org.apache.knox.gateway.util.knoxidf;
 
 import javax.servlet.ServletContext;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class FederatedOpConfigurationFactory {
 
     public static Map<String, FederatedOpConfiguration> createFederatedOpConfiguration(final ServletContext servletContext) {
-        return Collections.emptyMap();
+        final String enabled = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_ENABLED);
+        if (!Boolean.parseBoolean(enabled)) {
+            return Collections.emptyMap();
+        }
+
+        final String names = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAME);
+        if (names == null || names.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Map<String, FederatedOpConfiguration> configs = new HashMap<>();
+        for (String name : names.split(",")) {
+            String trimmedName = name.trim();
+            configs.put(trimmedName, new FederatedOpConfiguration(servletContext, trimmedName));
+        }
+        return configs;
     }
 }

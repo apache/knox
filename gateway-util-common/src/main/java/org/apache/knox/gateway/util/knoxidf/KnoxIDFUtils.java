@@ -79,11 +79,7 @@ public class KnoxIDFUtils {
 
     public static Set<FederatedOpConfiguration> fetchEnabledFederatedOpConfigs(final HttpServletRequest request) {
         final ServletContext servletContext = request.getServletContext();
-        if (servletContext == null) {
-            return Collections.emptySet();
-        }
-        final FederatedOpConfiguration federatedOpConfiguration = new FederatedOpConfiguration(servletContext);
-        return federatedOpConfiguration.isFederatedOpRedirectEnabled() ? Collections.singleton(federatedOpConfiguration) : Collections.emptySet();
+        return servletContext == null ? Collections.emptySet() : new HashSet<>(FederatedOpConfigurationFactory.createFederatedOpConfiguration(servletContext).values());
     }
 
     public static AuthorizeRequestMetadata buildAuthRequestMetadata(final HttpServletRequest request) {

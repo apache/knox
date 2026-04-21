@@ -19,18 +19,15 @@ package org.apache.knox.gateway.util.knoxidf;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class AuthorizeRequestMetadataStore {
 
     private static AuthorizeRequestMetadataStore instance;
     private final Cache<String, AuthorizeRequestMetadata> authorizeRequestMetadataCache;
-    private final Cache<String, Map<String, FederatedOpConfiguration>> federatedOpConfigurationCache;
 
     private AuthorizeRequestMetadataStore(final long ttl) {
         this.authorizeRequestMetadataCache = Caffeine.newBuilder().expireAfterWrite(ttl * 2, TimeUnit.MILLISECONDS).build();
-        this.federatedOpConfigurationCache = Caffeine.newBuilder().expireAfterWrite(ttl * 2, TimeUnit.MILLISECONDS).build();
     }
 
     public static synchronized AuthorizeRequestMetadataStore getInstance(final long ttl) {
@@ -46,13 +43,5 @@ public class AuthorizeRequestMetadataStore {
 
     public AuthorizeRequestMetadata getRequestMetadata(String state) {
         return authorizeRequestMetadataCache.getIfPresent(state);
-    }
-
-    public void storeFederatedOpConfiguration(String sid, Map<String, FederatedOpConfiguration> federatedOpConfigurationMap) {
-        federatedOpConfigurationCache.put(sid, federatedOpConfigurationMap);
-    }
-
-    public Map<String, FederatedOpConfiguration> getFederatedOpConfiguration(String sid) {
-        return federatedOpConfigurationCache.getIfPresent(sid);
     }
 }

@@ -46,6 +46,7 @@ import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationFactory;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
 import javax.annotation.PostConstruct;
@@ -88,7 +89,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             "given_name", "family_name", "name", "locale");
 
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
-    private FederatedOpConfiguration federatedOpConfiguration;
+    private Map<String, FederatedOpConfiguration> federatedOpConfigurations;
     private AuthorizeRequestMetadataStore authorizeRequestMetadataStore;
 
     @Context
@@ -103,7 +104,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @Override
     public void init() throws ServletException, AliasServiceException, ServiceLifecycleException, KeyLengthException {
         super.init();
-        this.federatedOpConfiguration = new FederatedOpConfiguration(servletContext);
+        this.federatedOpConfigurations = FederatedOpConfigurationFactory.createFederatedOpConfiguration(servletContext);
         this.authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(tokenTTL);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
@@ -186,8 +187,9 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         final String federatedAuthCode = request.getParameter("code");
         final String state = request.getParameter("state");
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.getRequestMetadata(state);
-        final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode);
-        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedTokens.getLeft());
+        final String opName = authorizeRequestMetadata.getSelectedFederatedOpName();
+        final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfigurations.get(opName));
+        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedTokens.getLeft(), opName);
         return getAuthCodeFromKnox(authorizeRequestMetadata, Pair.of(federatedIdentity.getId(), federatedTokens.getRight()));
     }
 
@@ -282,30 +284,30 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         return false;
     }
 
-    private Pair<String, String> exchangeFederatedAuthCodeToTokens(String federatedAuthCode) {
+    private Pair<String, String> exchangeFederatedAuthCodeToTokens(String federatedAuthCode, FederatedOpConfiguration opConfig) {
         String federatedIdToken = null;
         String federatedAccessToken = null;
-        final Response federatedTokenExchangeResponse = fetchFederatedTokens(federatedAuthCode, federatedOpConfiguration.getAuthorizeCallback());
+        final Response federatedTokenExchangeResponse = fetchFederatedTokens(federatedAuthCode, opConfig.getAuthorizeCallback(), opConfig);
         if (federatedTokenExchangeResponse.getStatus() == Response.Status.OK.getStatusCode()) {
             final Map<String, String> federatedTokenExchangeResponseBodyMap = JsonUtils.getMapFromJsonString((String) federatedTokenExchangeResponse.getEntity());
             federatedIdToken = federatedTokenExchangeResponseBodyMap.get("id_token");
-            federatedAccessToken =  federatedTokenExchangeResponseBodyMap.get("access_token");
+            federatedAccessToken = federatedTokenExchangeResponseBodyMap.get("access_token");
             return Pair.of(federatedIdToken, federatedAccessToken);
         } else {
             throw new RuntimeException("Error fetching Federated Tokens from Federated Auth Code: " + federatedTokenExchangeResponse.getEntity());
         }
     }
 
-    private Response fetchFederatedTokens(final String code, final String redirectUri) {
+    private Response fetchFederatedTokens(final String code, final String redirectUri, FederatedOpConfiguration opConfig) {
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("code", code));
         params.add(new BasicNameValuePair("redirect_uri", redirectUri));
         params.add(new BasicNameValuePair("grant_type", "authorization_code"));
-        params.add(new BasicNameValuePair("client_id", federatedOpConfiguration.getClientId()));
-        params.add(new BasicNameValuePair("client_secret", federatedOpConfiguration.getClientSecret()));
+        params.add(new BasicNameValuePair("client_id", opConfig.getClientId()));
+        params.add(new BasicNameValuePair("client_secret", opConfig.getClientSecret()));
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost(federatedOpConfiguration.getTokenEndpoint());
+            HttpPost post = new HttpPost(opConfig.getTokenEndpoint());
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
             post.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 
@@ -319,14 +321,14 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
     }
 
-    private FederatedIdentity resolveFederatedIdentity(String federatedIdToken) throws ParseException {
+    private FederatedIdentity resolveFederatedIdentity(String federatedIdToken, String opName) throws ParseException {
         final JWT jwt = new JWTToken(federatedIdToken);
         final String issuer = jwt.getIssuer();
         final String subject = jwt.getSubject();
-        return federatedIdentityService.findByProviderAndSubject("KEYCLOAK", issuer, subject).orElseGet(() -> persistFederatedIdentity(jwt));
+        return federatedIdentityService.findByProviderAndSubject(opName.toUpperCase(Locale.US), issuer, subject).orElseGet(() -> persistFederatedIdentity(jwt, opName));
     }
 
-    private FederatedIdentity persistFederatedIdentity(final JWT jwt) {
+    private FederatedIdentity persistFederatedIdentity(final JWT jwt, String opName) {
         final Map<String, String> attributes = jwt.getJWTClaimsSet().getClaims().entrySet().stream()
                 .filter(e -> ALLOWED_CLAIMS.contains(e.getKey()))
                 .filter(e -> e.getValue() != null)
@@ -338,7 +340,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 ));
         final FederatedIdentity federatedIdentity = new FederatedIdentity(
                 deriveKnoxSubject(jwt.getSubject(), jwt.getIssuer()),  // internal user id (generated)
-                "KEYCLOAK",                                            // provider
+                opName.toUpperCase(Locale.US),                         // provider
                 jwt.getSubject(),                                      // external subject
                 jwt.getIssuer(),                                       // external issuer
                 Instant.now(),                                         // createdAt

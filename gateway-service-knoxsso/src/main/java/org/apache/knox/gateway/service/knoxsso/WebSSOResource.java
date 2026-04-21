@@ -41,8 +41,10 @@ import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
+import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationFactory;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
 import javax.annotation.PostConstruct;
@@ -65,6 +67,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -117,6 +120,7 @@ public class WebSSOResource {
   private String clusterName;
   private String tokenIssuer;
   private TokenStateService tokenStateService;
+  private final Map<String, FederatedOpConfiguration> federatedOpConfigurations = null;
   private final AuthorizeRequestMetadataStore authorizeRequestMetadataStore =  AuthorizeRequestMetadataStore.getInstance(120000L);
 
   private String sameSiteValue;
@@ -234,8 +238,9 @@ public class WebSSOResource {
   public Response federatedOpLogin() {
     final String loginSessionId = request.getParameter("fedOpSid");
     final String opName = request.getParameter("fedOpName");
-    final Map<String, FederatedOpConfiguration> federatedOpMap = authorizeRequestMetadataStore.getFederatedOpConfiguration(loginSessionId);
-    final FederatedOpConfiguration federatedOpConfiguration = federatedOpMap.get(opName);
+    final AuthorizeRequestMetadata metadata = authorizeRequestMetadataStore.getRequestMetadata(loginSessionId);
+    final FederatedOpConfiguration federatedOpConfiguration = FederatedOpConfigurationFactory.createFederatedOpConfiguration(context).get(opName);
+    metadata.setSelectedFederatedOpName(opName);
     final String federatedOpAuthRedirect = KnoxIDFUtils.buildFederatedOpAuthRedirect(federatedOpConfiguration, loginSessionId);
     return Response.seeOther(java.net.URI.create(federatedOpAuthRedirect)).build();
   }

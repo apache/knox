@@ -30,6 +30,8 @@ public final class AuthorizeRequestMetadata {
     private final String state;
     private final String nonce;
 
+    private String selectedFederatedOpName;
+
     public AuthorizeRequestMetadata(String clientId, String subject, String responseType, String redirectUri, Set<String> requestedScopes, String state, String nonce) {
         this.clientId = clientId;
         this.subject = subject;
@@ -105,4 +107,15 @@ public final class AuthorizeRequestMetadata {
         return String.join(" ", requestedScopes);
     }
 
+    public String getSelectedFederatedOpName() {
+        return selectedFederatedOpName;
+    }
+
+    public void setSelectedFederatedOpName(String selectedFederatedOpName) {
+        this.selectedFederatedOpName = selectedFederatedOpName;
+    }
+
+    public boolean hasSelectedFederatedOpName() {
+        return selectedFederatedOpName != null && !selectedFederatedOpName.isEmpty();
+    }
 }

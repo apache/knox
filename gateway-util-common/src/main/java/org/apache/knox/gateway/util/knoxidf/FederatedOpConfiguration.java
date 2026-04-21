@@ -30,15 +30,20 @@ public class FederatedOpConfiguration {
     private final String authorizeCallback;
 
     public FederatedOpConfiguration(final ServletContext servletContext) {
-        enabled = Boolean.parseBoolean(servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_ENABLED));
-        name = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAME);
-        clientId = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_CLIENT_ID);
-        clientSecret = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_CLIENT_SECRET);
-        tokenEndpoint = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_TOKEN_ENDPOINT);
-        authorizeEndpoint = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_AUTH_ENDPOINT);
-        authorizeCallback = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_AUTH_CALLBACK);
-        userInfoEndpoint = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_USERINFO_ENDPOINT);
-        discoveryEndpoint = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_DISCOVERY_ENDPOINT);
+        this(servletContext, servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAME));
+    }
+
+    public FederatedOpConfiguration(final ServletContext servletContext, final String opName) {
+        this.enabled = Boolean.parseBoolean(servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_ENABLED));
+        this.name = opName;
+        final String prefix = KnoxIDFConstants.FEDERATED_OP_CONFIG_PREFIX + (opName != null ? opName + "." : "");
+        this.clientId = servletContext.getInitParameter(prefix + "clientId");
+        this.clientSecret = servletContext.getInitParameter(prefix + "clientSecret");
+        this.tokenEndpoint = servletContext.getInitParameter(prefix + "token.endpoint");
+        this.authorizeEndpoint = servletContext.getInitParameter(prefix + "authorize.endpoint");
+        this.authorizeCallback = servletContext.getInitParameter(prefix + "authorize.callback");
+        this.userInfoEndpoint = servletContext.getInitParameter(prefix + "userinfo.endpoint");
+        this.discoveryEndpoint = servletContext.getInitParameter(prefix + "discovery.endpoint");
     }
 
     public String getName() {

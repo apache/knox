@@ -379,8 +379,6 @@ public abstract class DeploymentFactory {
 
     final boolean hasKnoxIdf = services!= null && services.entrySet().stream().anyMatch( e -> e.getKey().equalsIgnoreCase("KNOXIDF") );
     if (hasKnoxIdf) {
-      wad.createServlet().servletName("auth-success-redirect").servletClass("org.apache.knox.gateway.service.knoxidf.AuthSuccessRedirectServlet");
-      wad.createServletMapping().servletName("auth-success-redirect").urlPattern("/authSuccess");
       wad.createServlet().servletName("auth-consent-redirect").servletClass("org.apache.knox.gateway.service.knoxidf.AuthConsentServlet");
       wad.createServletMapping().servletName("auth-consent-redirect").urlPattern("/authConsent");
     }
