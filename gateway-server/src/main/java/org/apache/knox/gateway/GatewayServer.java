@@ -78,7 +78,6 @@ import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.ee10.webapp.Configuration;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
@@ -689,12 +688,6 @@ public class GatewayServer {
     // Create Jetty.
     createJetty();
 
-    // Add Annotations processing into the Jetty server to support JSPs
-    Configuration.ClassList classlist = Configuration.ClassList.setServerDefault( jetty );
-    classlist.addBefore(
-        "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
-        "org.eclipse.jetty.annotations.AnnotationConfiguration" );
-
     // Load the current topologies.
     // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
@@ -911,11 +904,11 @@ public class GatewayServer {
     context.setAttribute( GatewayServices.GATEWAY_NAME, config.getGatewayPath());
     // Add support for JSPs.
     context.setAttribute(
-        "org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
-        ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$" );
+        "org.eclipse.jetty.ee10.webapp.ContainerIncludeJarPattern",
+        ".*/jakarta\\.servlet\\.jsp\\.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$");
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
-    context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
+    context.setInitParameter("org.eclipse.jetty.ee10.servlet.Default.dirAllowed", "false");
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
     // NOTE: In Jetty 12 the max form content size and max form keys are
