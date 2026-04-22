@@ -16,9 +16,8 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
-import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.util.JsonUtils;
-import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import javax.annotation.PostConstruct;
@@ -38,9 +37,17 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE
 @Path(BASE_RESORCE_PATH + "/.well-known/openid-configuration")
 @Produces(MediaType.APPLICATION_JSON)
 public class DiscoveryResource {
+    private String currentTopologyName;
+    private String tokenExchangeTopologyName;
 
     @Context
     private ServletContext servletContext;
+
+    @PostConstruct
+    public void init() {
+        tokenExchangeTopologyName = servletContext.getInitParameter("token.exchange.topology.name");
+        currentTopologyName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+    }
 
     @GET
     public Response getConfig(@Context UriInfo uriInfo) {
@@ -48,8 +55,14 @@ public class DiscoveryResource {
         final Map<String, Object> config = new HashMap<>();
         config.put("issuer", baseUrl + "knoxidf");
         config.put("authorization_endpoint", baseUrl + AuthorizeResource.RESOURCE_PATH);
-        config.put("token_endpoint", baseUrl + TokenResource.RESOURCE_PATH);
-        config.put("userinfo_endpoint", baseUrl + UserInfoResource.RESOURCE_PATH);
+        String tokenEndpoint = baseUrl + TokenResource.RESOURCE_PATH;
+        String userInfoEndpoint = baseUrl + UserInfoResource.RESOURCE_PATH;
+        if (tokenExchangeTopologyName != null) {
+            tokenEndpoint = tokenEndpoint.replaceAll(currentTopologyName, tokenExchangeTopologyName);
+            userInfoEndpoint = userInfoEndpoint.replaceAll(currentTopologyName, tokenExchangeTopologyName);
+        }
+        config.put("token_endpoint", tokenEndpoint);
+        config.put("userinfo_endpoint", userInfoEndpoint);
         config.put("jwks_uri", baseUrl + JwksResource.RESOURCE_PATH);
         config.put("response_types_supported", new String[]{KnoxIDFConstants.CODE});
         config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE});
