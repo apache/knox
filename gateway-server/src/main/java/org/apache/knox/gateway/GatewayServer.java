@@ -66,6 +66,7 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -75,6 +76,7 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.ee10.webapp.Configuration;
@@ -1300,15 +1302,15 @@ public class GatewayServer {
     }
 
     @Override
-    public void doError(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public boolean handle(Request request, Response response, Callback callback) throws Exception {
       final int gatewayPrefixLength = ("/" + gatewayPath + "/").length();
-      String pathInfo = baseRequest.getPathInfo();
+      String pathInfo = Request.getPathInContext(request);
       String topologyName = pathInfo.substring(gatewayPrefixLength, pathInfo.indexOf('/', gatewayPrefixLength));
       if (gs.isInactiveTopology(topologyName) && (response.getStatus() == HttpServletResponse.SC_NOT_FOUND)) {
-        request.setAttribute("javax.servlet.error.message", "Service Unavailable"); // The default ErrorHandler references this attribute
+        request.setAttribute(ErrorHandler.ERROR_MESSAGE, "Service Unavailable"); // The default ErrorHandler references this attribute
         response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
       }
-      super.doError(target, baseRequest, request, response);
+      super.handle(request, response, callback);
     }
   }
 
