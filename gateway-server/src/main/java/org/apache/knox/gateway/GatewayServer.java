@@ -749,7 +749,7 @@ public class GatewayServer {
 
     jetty.setHandler(handlers);
     jetty.setRequestLog(new AccessHandler());
-    jetty.addLifeCycleListener(new GatewayServerLifecycleListener(config));
+    jetty.addEventListener(new GatewayServerLifecycleListener(config));
 
     // Start Jetty.
     try {
