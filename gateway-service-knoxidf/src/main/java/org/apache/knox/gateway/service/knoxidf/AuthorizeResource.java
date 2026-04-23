@@ -46,7 +46,7 @@ import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
-import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationFactory;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
 import javax.annotation.PostConstruct;
@@ -89,8 +89,8 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             "given_name", "family_name", "name", "locale");
 
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
-    private Map<String, FederatedOpConfiguration> federatedOpConfigurations;
     private AuthorizeRequestMetadataStore authorizeRequestMetadataStore;
+    private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
 
     @Context
     private HttpServletRequest request;
@@ -104,7 +104,6 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @Override
     public void init() throws ServletException, AliasServiceException, ServiceLifecycleException, KeyLengthException {
         super.init();
-        this.federatedOpConfigurations = FederatedOpConfigurationFactory.createFederatedOpConfiguration(servletContext);
         this.authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(tokenTTL);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
@@ -130,7 +129,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 markConsentAccepted(authorizeRequestMetadata);
             } else {
                 final String consentAuthState = UUID.randomUUID().toString();
-                authorizeRequestMetadataStore.storeRequestMetadata(consentAuthState, authorizeRequestMetadata);
+                authorizeRequestMetadataStore.put(consentAuthState, authorizeRequestMetadata);
                 final String baseUri = servletContext.getContextPath() + "/authConsent";
                 final String scopeParam = URLEncoder.encode(authorizeRequestMetadata.getJoinedRequestedScopes(), StandardCharsets.UTF_8);
                 final String redirect = String.format(Locale.US, "%s?client_id=%s&state=%s&scope=%s", baseUri, clientId, consentAuthState, scopeParam);
@@ -186,10 +185,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         //This is the callback for the federated OP
         final String federatedAuthCode = request.getParameter("code");
         final String state = request.getParameter("state");
-        final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.getRequestMetadata(state);
-        final String opName = authorizeRequestMetadata.getSelectedFederatedOpName();
-        final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfigurations.get(opName));
-        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedTokens.getLeft(), opName);
+        final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
+        //at this point, there has to be exactly 1 federated OP config
+        final FederatedOpConfiguration federatedOpConfiguration = federatedOpConfigurationStore.get(state).stream().findFirst().get();
+        final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
+        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedTokens.getLeft(), federatedOpConfiguration.getName());
         return getAuthCodeFromKnox(authorizeRequestMetadata, Pair.of(federatedIdentity.getId(), federatedTokens.getRight()));
     }
 
@@ -197,7 +197,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @Path("/consentAccepted")
     public Response consentAccepted() throws Exception {
         final String state = request.getParameter("state");
-        final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.getRequestMetadata(state);
+        final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
         if (authorizeRequestMetadata == null) {
             return error("Consent cannot be accepted", "Invalid state");
         }
@@ -287,7 +287,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     private Pair<String, String> exchangeFederatedAuthCodeToTokens(String federatedAuthCode, FederatedOpConfiguration opConfig) {
         String federatedIdToken = null;
         String federatedAccessToken = null;
-        final Response federatedTokenExchangeResponse = fetchFederatedTokens(federatedAuthCode, opConfig.getAuthorizeCallback(), opConfig);
+        final Response federatedTokenExchangeResponse = fetchFederatedTokens(federatedAuthCode, opConfig);
         if (federatedTokenExchangeResponse.getStatus() == Response.Status.OK.getStatusCode()) {
             final Map<String, String> federatedTokenExchangeResponseBodyMap = JsonUtils.getMapFromJsonString((String) federatedTokenExchangeResponse.getEntity());
             federatedIdToken = federatedTokenExchangeResponseBodyMap.get("id_token");
@@ -298,10 +298,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
     }
 
-    private Response fetchFederatedTokens(final String code, final String redirectUri, FederatedOpConfiguration opConfig) {
+    private Response fetchFederatedTokens(final String code, FederatedOpConfiguration opConfig) {
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("code", code));
-        params.add(new BasicNameValuePair("redirect_uri", redirectUri));
+        params.add(new BasicNameValuePair("redirect_uri", opConfig.getAuthorizeCallback()));
         params.add(new BasicNameValuePair("grant_type", "authorization_code"));
         params.add(new BasicNameValuePair("client_id", opConfig.getClientId()));
         params.add(new BasicNameValuePair("client_secret", opConfig.getClientSecret()));

@@ -41,10 +41,8 @@ import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
-import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
-import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
-import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationFactory;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
 import javax.annotation.PostConstruct;
@@ -67,10 +65,11 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -120,8 +119,7 @@ public class WebSSOResource {
   private String clusterName;
   private String tokenIssuer;
   private TokenStateService tokenStateService;
-  private final Map<String, FederatedOpConfiguration> federatedOpConfigurations = null;
-  private final AuthorizeRequestMetadataStore authorizeRequestMetadataStore =  AuthorizeRequestMetadataStore.getInstance(120000L);
+  private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
 
   private String sameSiteValue;
 
@@ -238,11 +236,18 @@ public class WebSSOResource {
   public Response federatedOpLogin() {
     final String loginSessionId = request.getParameter("fedOpSid");
     final String opName = request.getParameter("fedOpName");
-    final AuthorizeRequestMetadata metadata = authorizeRequestMetadataStore.getRequestMetadata(loginSessionId);
-    final FederatedOpConfiguration federatedOpConfiguration = FederatedOpConfigurationFactory.createFederatedOpConfiguration(context).get(opName);
-    metadata.setSelectedFederatedOpName(opName);
-    final String federatedOpAuthRedirect = KnoxIDFUtils.buildFederatedOpAuthRedirect(federatedOpConfiguration, loginSessionId);
-    return Response.seeOther(java.net.URI.create(federatedOpAuthRedirect)).build();
+    final Optional<FederatedOpConfiguration> federatedOpConfig = federatedOpConfigurationStore.get(loginSessionId).stream()
+            .filter(federatedOpConfiguration -> federatedOpConfiguration.getName().equals(opName))
+            .findFirst();
+    if (federatedOpConfig.isPresent()) {
+      final FederatedOpConfiguration federatedOpConfiguration = federatedOpConfig.get();
+      //keep only the selected federated OP in the cache -> we can easily get it in the AuthorizeResource.authCallback endpoint
+      federatedOpConfigurationStore.put(loginSessionId, Set.of(federatedOpConfiguration));
+      final String federatedOpAuthRedirect = KnoxIDFUtils.buildFederatedOpAuthRedirect(federatedOpConfiguration, loginSessionId);
+      return Response.seeOther(java.net.URI.create(federatedOpAuthRedirect)).build();
+    } else {
+      return KnoxIDFUtils.error("invalid_request", "Cannot load federated op config associated with login session");
+    }
   }
 
   @GET

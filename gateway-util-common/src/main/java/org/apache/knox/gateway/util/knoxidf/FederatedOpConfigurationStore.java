@@ -16,17 +16,19 @@
  */
 package org.apache.knox.gateway.util.knoxidf;
 
-public class AuthorizeRequestMetadataStore extends KnoxIDFArtifactStore<AuthorizeRequestMetadata>{
+import java.util.Set;
 
-    private static AuthorizeRequestMetadataStore instance;
+public class FederatedOpConfigurationStore extends KnoxIDFArtifactStore<Set<FederatedOpConfiguration>> {
 
-    private AuthorizeRequestMetadataStore(long ttl) {
+    private static FederatedOpConfigurationStore instance;
+
+    private FederatedOpConfigurationStore(long ttl) {
         super(ttl);
     }
 
-    public static synchronized AuthorizeRequestMetadataStore getInstance(long ttl) {
+    public static synchronized FederatedOpConfigurationStore getInstance(long ttl) {
         if (instance == null) {
-            instance = new AuthorizeRequestMetadataStore(ttl);
+            instance = new FederatedOpConfigurationStore(ttl);
         }
         return instance;
     }

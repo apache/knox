@@ -14,20 +14,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.util.knoxidf;
+package org.apache.knox.gateway.database;
 
-public class AuthorizeRequestMetadataStore extends KnoxIDFArtifactStore<AuthorizeRequestMetadata>{
+import org.apache.knox.gateway.services.token.impl.TokenStateDatabase;
 
-    private static AuthorizeRequestMetadataStore instance;
+import javax.sql.DataSource;
 
-    private AuthorizeRequestMetadataStore(long ttl) {
-        super(ttl);
+public class KnoxDatabase {
+
+    protected final DataSource dataSource;
+
+    public KnoxDatabase(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
-    public static synchronized AuthorizeRequestMetadataStore getInstance(long ttl) {
-        if (instance == null) {
-            instance = new AuthorizeRequestMetadataStore(ttl);
+    protected void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
+        if (!JDBCUtils.tableExists(tableName, dataSource)) {
+            JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
         }
-        return instance;
     }
 }

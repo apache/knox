@@ -14,20 +14,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.util.knoxidf;
+package org.apache.knox.gateway.services.knoxidf.federation;
 
-public class AuthorizeRequestMetadataStore extends KnoxIDFArtifactStore<AuthorizeRequestMetadata>{
+public class FederatedIdentityServiceException extends RuntimeException {
 
-    private static AuthorizeRequestMetadataStore instance;
-
-    private AuthorizeRequestMetadataStore(long ttl) {
-        super(ttl);
+    public FederatedIdentityServiceException(String message) {
+        super(message);
     }
 
-    public static synchronized AuthorizeRequestMetadataStore getInstance(long ttl) {
-        if (instance == null) {
-            instance = new AuthorizeRequestMetadataStore(ttl);
-        }
-        return instance;
+    public FederatedIdentityServiceException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

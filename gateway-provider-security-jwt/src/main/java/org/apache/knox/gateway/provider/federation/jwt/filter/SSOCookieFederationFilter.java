@@ -33,6 +33,7 @@ import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import org.eclipse.jetty.http.MimeTypes;
 
@@ -110,6 +111,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private boolean verifyOriginalUrlFromHeaderDomain = DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN;
   private final List<String> verifyOriginalUrlFromHeaderDomainWhitelist = new ArrayList<>();
   private final AuthorizeRequestMetadataStore authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(120000L);
+  private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
   private String originalUrlHeaderName;
 
   @Override
@@ -347,7 +349,8 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
     final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request);
     if (!enabledFederatedOpConfigs.isEmpty()) {
       final String loginSessionId = request.getSession().getId();
-      authorizeRequestMetadataStore.storeRequestMetadata(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
+      authorizeRequestMetadataStore.put(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
+      federatedOpConfigurationStore.put(loginSessionId, enabledFederatedOpConfigs);
       final List<String> opNames = enabledFederatedOpConfigs.stream().map(FederatedOpConfiguration::getName).collect(Collectors.toList());
       providerURL += delimiter
               + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)

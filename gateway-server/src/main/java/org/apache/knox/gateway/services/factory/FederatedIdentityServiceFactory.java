@@ -16,7 +16,9 @@
  */
 package org.apache.knox.gateway.services.factory;
 
+import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -31,6 +33,7 @@ import java.util.Map;
 
 public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
+    private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
     private static final String DEFAULT_IMPLEMENTATION = EmptyFederatedIdentitityService.class.getName();
 
     @Override
@@ -42,7 +45,14 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
                 service = new EmptyFederatedIdentitityService();
             } else if (matchesImplementation(implementation, JdbcFederatedIdentityService.class)) {
                 try {
-                    service = new JdbcFederatedIdentityService(gatewayConfig, getAliasService(gatewayServices));
+                    try {
+                        service = new JdbcFederatedIdentityService();
+                        ((JdbcFederatedIdentityService) service).setAliasService(getAliasService(gatewayServices));
+                        service.init(gatewayConfig, options);
+                    } catch (ServiceLifecycleException e) {
+                        LOG.errorInitializingService(implementation, e.getMessage(), e);
+                        service =  new EmptyFederatedIdentitityService();
+                    }
                 } catch (Exception e) {
                     throw new ServiceLifecycleException("Error while creating Federated Identity Service: " + e, e);
                 }

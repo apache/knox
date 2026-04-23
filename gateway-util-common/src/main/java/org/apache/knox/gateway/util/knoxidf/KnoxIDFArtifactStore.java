@@ -16,18 +16,24 @@
  */
 package org.apache.knox.gateway.util.knoxidf;
 
-public class AuthorizeRequestMetadataStore extends KnoxIDFArtifactStore<AuthorizeRequestMetadata>{
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
-    private static AuthorizeRequestMetadataStore instance;
+import java.util.concurrent.TimeUnit;
 
-    private AuthorizeRequestMetadataStore(long ttl) {
-        super(ttl);
+public abstract class KnoxIDFArtifactStore<T> {
+
+    private final Cache<String, T> cache;
+
+    protected KnoxIDFArtifactStore(long ttl) {
+        this.cache = Caffeine.newBuilder().expireAfterWrite(ttl * 2, TimeUnit.MILLISECONDS).build();
     }
 
-    public static synchronized AuthorizeRequestMetadataStore getInstance(long ttl) {
-        if (instance == null) {
-            instance = new AuthorizeRequestMetadataStore(ttl);
-        }
-        return instance;
+    public void put(String key, T value) {
+        cache.put(key, value);
+    }
+
+    public T get(String key) {
+        return cache.getIfPresent(key);
     }
 }

@@ -18,59 +18,39 @@ package org.apache.knox.gateway.services.knoxidf.federation;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.DataSourceProvider;
-import org.apache.knox.gateway.database.DatabaseType;
-import org.apache.knox.gateway.database.JDBCUtils;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.token.impl.TokenStateDatabase;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-//TODO: split this class into service + FederatedIdentityDatabase classes
 public class JdbcFederatedIdentityService implements FederatedIdentityService {
-    private static final String FEDERATED_IDENTITY_TABLE_NAME = "federated_identity";
-    private static final String FEDERATED_IDENTITY_ATTRIBUTES_TABLE_NAME = "federated_identity_attr";
+    private static final FederatedIdentityServiceMessages LOG = MessagesFactory.get(FederatedIdentityServiceMessages.class);
 
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final Lock initLock = new ReentrantLock(true);
-    private final DataSource dataSource;
-
-    public JdbcFederatedIdentityService(GatewayConfig config, AliasService aliasService) throws Exception {
-        this.dataSource = DataSourceProvider.getDataSource(config, aliasService);
-    }
-
-    private void ensureTablesExist(DatabaseType databaseType) {
-        try {
-            createTableIfNotExists(FEDERATED_IDENTITY_TABLE_NAME, databaseType.federatedIdentityTableSql());
-            createTableIfNotExists(FEDERATED_IDENTITY_ATTRIBUTES_TABLE_NAME, databaseType.federatedIdentityAttrTableSql());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
-        if (!JDBCUtils.tableExists(tableName, dataSource)) {
-            JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
-        }
-    }
+    private AliasService aliasService; // connection username/pw are stored here
+    private FederatedIdentityDatabase federatedIdentityDatabase;
 
     @Override
     public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
         if (!initialized.get()) {
             initLock.lock();
             try {
-                ensureTablesExist(DatabaseType.fromString(config.getDatabaseType()));
+                if (aliasService == null) {
+                    throw new ServiceLifecycleException("The required AliasService reference has not been set.");
+                }
+                try {
+                    this.federatedIdentityDatabase = new FederatedIdentityDatabase(DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
+                    initialized.set(true);
+                } catch (Exception e) {
+                    throw new ServiceLifecycleException("Error while initiating JDBCTokenStateService: " + e, e);
+                }
             } finally {
                 initLock.unlock();
             }
@@ -85,143 +65,44 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
     public void stop() throws ServiceLifecycleException {
     }
 
+    public void setAliasService(AliasService aliasService) {
+        this.aliasService = aliasService;
+    }
+
+    protected AliasService getAliasService() {
+        return aliasService;
+    }
+
     @Override
     public void addFederatedIdentity(FederatedIdentity identity) {
-        try (Connection c = dataSource.getConnection()) {
-            c.setAutoCommit(false);
-
-            try (PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO federated_identity " +
-                            "(id, user_id, provider, external_subject, external_issuer, created_at) " +
-                            "VALUES (?, ?, ?, ?, ?, ?)")) {
-
-                ps.setString(1, identity.getId());
-                ps.setString(2, identity.getUserId());
-                ps.setString(3, identity.getProvider());
-                ps.setString(4, identity.getExternalSubject());
-                ps.setString(5, identity.getExternalIssuer());
-                ps.setTimestamp(6, Timestamp.from(identity.getCreatedAt()));
-                ps.executeUpdate();
+        try {
+            if (findByProviderAndSubject(identity.getProvider(), identity.getExternalIssuer(), identity.getExternalSubject()).isEmpty()) {
+                federatedIdentityDatabase.addFederatedIdentity(identity);
             }
-
-            try (PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO federated_identity_attr " +
-                            "(identity_id, attr_key, attr_value) VALUES (?, ?, ?)")) {
-
-                for (var e : identity.getAttributes().entrySet()) {
-                    ps.setString(1, identity.getId());
-                    ps.setString(2, e.getKey());
-                    ps.setString(3, e.getValue());
-                    ps.addBatch();
-                }
-                ps.executeBatch();
-            }
-
-            c.commit();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOG.errorSavingFederatedIdentityInDatabase(identity.getId(), e.getMessage(), e);
+            throw new FederatedIdentityServiceException("An error occurred while saving Federated Identity " + identity.getId() + " in the database", e);
         }
     }
 
     @Override
-    public Optional<FederatedIdentity> findByProviderAndSubject(
-            String provider,
-            String issuer,
-            String subject) {
-
-        try (Connection c = dataSource.getConnection()) {
-
-            FederatedIdentity federatedIdentity = null;
-
-            try (PreparedStatement ps = c.prepareStatement("SELECT * FROM federated_identity " +
-                    "WHERE provider = ? AND external_issuer = ? AND external_subject = ?")) {
-                ps.setString(1, provider);
-                ps.setString(2, issuer);
-                ps.setString(3, subject);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        return Optional.empty();
-                    }
-
-                    federatedIdentity = new FederatedIdentity(
-                            rs.getString("id"),
-                            rs.getString("user_id"),
-                            provider,
-                            subject,
-                            issuer,
-                            rs.getTimestamp("created_at").toInstant(), new HashMap<>());
-                }
-            }
-
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT attr_key, attr_value FROM federated_identity_attr WHERE identity_id = ?")) {
-
-                ps.setString(1, federatedIdentity.getId());
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        federatedIdentity.getAttributes().put(
-                                rs.getString(1),
-                                rs.getString(2));
-                    }
-                }
-            }
-
-            return Optional.of(federatedIdentity);
+    public Optional<FederatedIdentity> findByProviderAndSubject(String provider, String issuer, String subject) {
+        try {
+            return federatedIdentityDatabase.findByProviderAndSubject(provider, issuer, subject);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOG.errorFetchingFederatedIdentityFromDatabase(provider, subject, issuer, e.getMessage(), e);
         }
+        return Optional.empty();
     }
 
     @Override
     public Optional<FederatedIdentity> findById(String id) {
-
-        try (Connection c = dataSource.getConnection()) {
-
-            FederatedIdentity federatedIdentity;
-
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT id, user_id, provider, external_subject, external_issuer, created_at " +
-                            "FROM federated_identity WHERE id = ?")) {
-
-                ps.setString(1, id);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        return Optional.empty();
-                    }
-
-                    federatedIdentity = new FederatedIdentity(
-                            rs.getString("id"),
-                            rs.getString("user_id"),
-                            rs.getString("provider"),
-                            rs.getString("external_subject"),
-                            rs.getString("external_issuer"),
-                            rs.getTimestamp("created_at").toInstant(),
-                            new HashMap<>());
-                }
-            }
-
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT attr_key, attr_value FROM federated_identity_attr WHERE identity_id = ?")) {
-
-                ps.setString(1, federatedIdentity.getId());
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        federatedIdentity.getAttributes().put(
-                                rs.getString("attr_key"),
-                                rs.getString("attr_value"));
-                    }
-                }
-            }
-
-            return Optional.of(federatedIdentity);
-
+        try {
+            return federatedIdentityDatabase.findById(id);
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load federated identity by id", e);
+            LOG.errorFetchingFederatedIdentityFromDatabase(id, e.getMessage(), e);
         }
+        return Optional.empty();
     }
 
 }
