@@ -535,7 +535,7 @@ public class GatewayServer {
 
     final Map<String, Handler> contextToHandlerMap = new HashMap<>();
     if(contexts.getHandlers() != null) {
-      Arrays.asList(contexts.getHandlers()).stream()
+          contexts.getHandlers().stream()
           .filter(h -> h instanceof WebAppContext)
           .forEach(h -> contextToHandlerMap
               .put(((WebAppContext) h).getContextPath(), h));
