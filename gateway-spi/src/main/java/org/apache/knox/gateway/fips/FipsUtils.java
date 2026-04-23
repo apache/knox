@@ -17,11 +17,43 @@
  */
 package org.apache.knox.gateway.fips;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
 public class FipsUtils {
 
-    private static final String FIPS_SYSTEM_PROPERTY = "com.safelogic.cryptocomply.fips.approved_only";
+    public static final String FIPS_SYSTEM_PROPERTY = "com.safelogic.cryptocomply.fips.approved_only";
+
+    private static final List<String> FORBIDDEN_ALGORITHMS = Arrays.asList("MD5", "RC4", "ARC4", "ARCFOUR", "SHA-1", "SHA1");
 
     public static boolean isFipsEnabledWithBCProvider() {
         return Boolean.parseBoolean(System.getProperty(FIPS_SYSTEM_PROPERTY));
+    }
+
+    /**
+     * Validates if the given algorithm is allowed in a FIPS environment.
+     *
+     * @param algorithm The algorithm to validate.
+     * @return true if the algorithm is allowed or FIPS is not enabled, false otherwise.
+     */
+    private static boolean isAlgorithmAllowed(String algorithm) {
+        if (!isFipsEnabledWithBCProvider() || algorithm == null || algorithm.isEmpty()) {
+            return true;
+        }
+
+        String upperCaseAlg = algorithm.toUpperCase(Locale.ROOT);
+        for (String forbidden : FORBIDDEN_ALGORITHMS) {
+            if (upperCaseAlg.contains(forbidden)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void validateAlgorithm(String algorithm, String paramName) {
+        if (!isAlgorithmAllowed(algorithm)) {
+            throw new IllegalArgumentException("In a FIPS environment, you are not allowed to use " + algorithm + " as " + paramName);
+        }
     }
 }
