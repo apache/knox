@@ -74,7 +74,6 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -543,9 +542,6 @@ public class GatewayServer {
     }
 
     HandlerCollection handlers = new HandlerCollection();
-    RequestLogHandler logHandler = new RequestLogHandler();
-
-    logHandler.setRequestLog( new AccessHandler() );
 
     TraceHandler traceHandler = new TraceHandler();
     traceHandler.setHandler( contexts );
@@ -589,8 +585,6 @@ public class GatewayServer {
             }
           });
     }
-
-    handlers.addHandler(logHandler);
 
     if(config.isStrictTransportEnabled()) {
       final String strictTransportOption = config.getStrictTransportOption();
@@ -754,6 +748,7 @@ public class GatewayServer {
     }
 
     jetty.setHandler(handlers);
+    jetty.setRequestLog(new AccessHandler());
     jetty.addLifeCycleListener(new GatewayServerLifecycleListener(config));
 
     // Start Jetty.
