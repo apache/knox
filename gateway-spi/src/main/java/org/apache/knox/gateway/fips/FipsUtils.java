@@ -47,7 +47,7 @@ public class FipsUtils {
 
     public static void validateAlgorithm(String algorithm, String paramName) {
         if (!isAlgorithmAllowed(algorithm)) {
-            throw new IllegalArgumentException(String.format(PROHIBITED_ALGORITHM_TEMPLATE, algorithm, paramName));
+            throw new IllegalArgumentException(String.format(Locale.ROOT, PROHIBITED_ALGORITHM_TEMPLATE, algorithm, paramName));
         }
     }
 

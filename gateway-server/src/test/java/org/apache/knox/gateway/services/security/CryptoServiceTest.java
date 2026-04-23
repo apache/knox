@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -268,7 +269,7 @@ public class CryptoServiceTest {
               IllegalArgumentException.class,
               () -> cryptoService.init(config, null)
       );
-      assertEquals(String.format(FipsUtils.PROHIBITED_ALGORITHM_TEMPLATE, algorithm, paramName), e.getMessage());
+      assertEquals(String.format(Locale.ROOT, FipsUtils.PROHIBITED_ALGORITHM_TEMPLATE, algorithm, paramName), e.getMessage());
     } finally {
       config.clear();
     }
