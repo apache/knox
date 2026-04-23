@@ -578,7 +578,7 @@ public class GatewayServer {
 
             if(context !=  null) {
               ((WebAppContext) context).setVirtualHosts(
-                  new String[] { "@" + entry.getKey().toLowerCase(Locale.ROOT) });
+                  List.of("@" + entry.getKey().toLowerCase(Locale.ROOT)));
             } else {
               // no topology found for mapping entry.getKey()
               log.noMappedTopologyFound(entry.getKey());
