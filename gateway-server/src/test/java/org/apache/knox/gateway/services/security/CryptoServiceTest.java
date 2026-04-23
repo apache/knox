@@ -268,7 +268,7 @@ public class CryptoServiceTest {
               IllegalArgumentException.class,
               () -> cryptoService.init(config, null)
       );
-      assertEquals("In a FIPS environment, you are not allowed to use " + algorithm + " as " + paramName, e.getMessage());
+      assertEquals(String.format(FipsUtils.PROHIBITED_ALGORITHM_TEMPLATE, algorithm, paramName), e.getMessage());
     } finally {
       config.clear();
     }

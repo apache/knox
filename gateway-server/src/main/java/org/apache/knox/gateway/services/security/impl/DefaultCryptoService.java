@@ -64,11 +64,7 @@ public class DefaultCryptoService implements CryptoService {
       throw new ServiceLifecycleException("Alias service is not set");
     }
     if (FipsUtils.isFipsEnabledWithBCProvider()) {
-      //invoking the following getters will throw IllegalArgumentException in case a forbidden algorithm is set
-      //so we can use them as a validation at service initialization time
-      config.getCredentialStoreAlgorithm();
-      config.getAlgorithm();
-      config.getPBEAlgorithm();
+      FipsUtils.validateAlgorithms(config);
     }
   }
 
