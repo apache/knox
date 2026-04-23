@@ -53,7 +53,7 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
     public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException, ServletException {
         super.init();
         final String configuredThirdPartyApp = context.getInitParameter(THIRD_PARTY_APP);
-        thirdPartyApp = configuredThirdPartyApp == null || Boolean.parseBoolean(configuredThirdPartyApp);
+        thirdPartyApp = configuredThirdPartyApp == null ? true : Boolean.parseBoolean(configuredThirdPartyApp);
     }
 
     @Override
