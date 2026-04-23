@@ -73,7 +73,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -527,7 +526,7 @@ public class GatewayServer {
     return connectors;
   }
 
-  private static HandlerCollection createHandlers(
+  private static Handler createHandlers(
       final GatewayConfig config,
       final GatewayServices services,
       final ContextHandlerCollection contexts,
@@ -540,8 +539,6 @@ public class GatewayServer {
           .forEach(h -> contextToHandlerMap
               .put(((WebAppContext) h).getContextPath(), h));
     }
-
-    HandlerCollection handlers = new HandlerCollection();
 
     TraceHandler traceHandler = new TraceHandler();
     traceHandler.setHandler( contexts );
@@ -586,24 +583,24 @@ public class GatewayServer {
           });
     }
 
-    if(config.isStrictTransportEnabled()) {
-      final String strictTransportOption = config.getStrictTransportOption();
-      handlers.addHandler(new HSTSHandler(strictTransportOption));
-      log.strictTransportHeaderEnabled(strictTransportOption);
-    }
-
+    Handler rootHandler = portMappingHandler;
     if (config.isWebsocketEnabled()) {
       final GatewayWebsocketHandler websocketHandler = new GatewayWebsocketHandler(
           config, services);
       websocketHandler.setHandler(portMappingHandler);
-
-      handlers.addHandler(websocketHandler);
-
-    } else {
-      handlers.addHandler(portMappingHandler);
+      rootHandler = websocketHandler;
     }
 
-    return handlers;
+    if(config.isStrictTransportEnabled()) {
+      final String strictTransportOption = config.getStrictTransportOption();
+      HSTSHandler hstsHandler = new HSTSHandler(strictTransportOption);
+      hstsHandler.setHandler(rootHandler);
+      rootHandler = hstsHandler;
+      log.strictTransportHeaderEnabled(strictTransportOption);
+    }
+
+
+    return rootHandler;
   }
 
   /**
@@ -718,7 +715,7 @@ public class GatewayServer {
     // log WARN message and continue
     checkMappedTopologiesExist(topologyPortMap, deployedTopologyList);
 
-    final HandlerCollection handlers = createHandlers( config, services, contexts, topologyPortMap);
+    final Handler handlers = createHandlers( config, services, contexts, topologyPortMap);
 
      // Check whether a topology wants dedicated port,
      // if yes then we create a connector that listens on the provided port.
