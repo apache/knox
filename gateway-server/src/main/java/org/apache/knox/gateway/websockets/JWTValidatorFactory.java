@@ -30,9 +30,11 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.CertificateUtils;
-import org.eclipse.jetty.ee10.websocket.server.JettyServerUpgradeRequest;
 import jakarta.servlet.ServletException;
-import java.net.HttpCookie;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
+
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.LinkedHashMap;
@@ -47,7 +49,7 @@ public class JWTValidatorFactory {
     public static final String SSO_VERIFICATION_PEM = "sso.token.verification.pem";
     private static final JWTMessages jwtMessagesLog = MessagesFactory.get(JWTMessages.class);
 
-    public static JWTValidator create(JettyServerUpgradeRequest req, GatewayServices gatewayServices,
+    public static JWTValidator create(ServerUpgradeRequest req, GatewayServices gatewayServices,
                                       GatewayConfig gatewayConfig){
         Map<String,String> params = getParams(gatewayServices);
         String cookieName = params.containsKey(KNOXSSO_COOKIE_NAME)? params.get(KNOXSSO_COOKIE_NAME):DEFAULT_SSO_COOKIE_NAME;
@@ -97,8 +99,8 @@ public class JWTValidatorFactory {
         return params;
     }
 
-    private static JWT extractToken(JettyServerUpgradeRequest req, String cookieName){
-        List<HttpCookie> ssoCookies = req.getCookies();
+    private static JWT extractToken(ServerUpgradeRequest req, String cookieName){
+        List<HttpCookie> ssoCookies = Request.getCookies(req);
         if (ssoCookies != null){
             for (HttpCookie ssoCookie : ssoCookies) {
                 if (cookieName.equals(ssoCookie.getName())) {

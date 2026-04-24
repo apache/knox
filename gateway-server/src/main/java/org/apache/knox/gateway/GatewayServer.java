@@ -1293,7 +1293,7 @@ public class GatewayServer {
         request.setAttribute(ErrorHandler.ERROR_MESSAGE, "Service Unavailable"); // The default ErrorHandler references this attribute
         response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
       }
-      super.handle(request, response, callback);
+      return super.handle(request, response, callback);
     }
   }
 

@@ -30,18 +30,30 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+
+// Jetty 12 Core & WebSocket Imports
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
+import org.eclipse.jetty.websocket.server.WebSocketCreator;
+import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
+import org.eclipse.jetty.websocket.server.WebSocketUpgradeHandler;
+
 import jakarta.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
-import java.util.Arrays;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,8 +68,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @since 0.10
  */
-public class GatewayWebsocketHandler extends WebSocketHandler
-    implements WebSocketCreator {
+public class GatewayWebsocketHandler extends Handler.Wrapper {
 
   private static final WebsocketLogMessages LOG = MessagesFactory
       .get(WebsocketLogMessages.class);
@@ -90,7 +101,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
 
   final GatewayConfig config;
   final GatewayServices services;
-
+  private WebSocketUpgradeHandler wsHandler;
 
   public GatewayWebsocketHandler(final GatewayConfig config,
                                  final GatewayServices services) {
@@ -99,27 +110,109 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     this.services = services;
     pool = Executors.newFixedThreadPool(POOL_SIZE);
     this.concurrentWebshells = new AtomicInteger(0);
+    // Set the internal handler as the one we are wrapping
+    setHandler(wsHandler);
   }
 
   @Override
-  public void configure(final WebSocketServletFactory factory) {
-    factory.setCreator(this);
-    factory.getPolicy()
-        .setMaxTextMessageSize(config.getWebsocketMaxTextMessageSize());
-    factory.getPolicy()
-        .setMaxBinaryMessageSize(config.getWebsocketMaxBinaryMessageSize());
+  protected void doStart() throws Exception {
+    Server server = getServer();
+    if (server == null) {
+      throw new IllegalStateException("GatewayWebsocketHandler must be attached to a Server before starting");
+    }
 
-    factory.getPolicy().setMaxBinaryMessageBufferSize(
-        config.getWebsocketMaxBinaryMessageBufferSize());
-    factory.getPolicy().setMaxTextMessageBufferSize(
-        config.getWebsocketMaxTextMessageBufferSize());
+    // 1. Get or create the global ServerWebSocketContainer (no ContextHandler needed)
+    ServerWebSocketContainer container = ServerWebSocketContainer.ensure(server, null);
+    configureServerWebSocketContainer(container);
 
-    factory.getPolicy()
-        .setInputBufferSize(config.getWebsocketInputBufferSize());
+    // 3. Create the UpgradeHandler.
+    this.wsHandler = new WebSocketUpgradeHandler(container);
 
-    factory.getPolicy()
-        .setAsyncWriteTimeout(config.getWebsocketAsyncWriteTimeout());
-    factory.getPolicy().setIdleTimeout(config.getWebsocketIdleTimeout());
+    // 4. PRESERVE THE CHAIN: This handler currently wraps PortMappingHelperHandler.
+    // We must ensure the internal wsHandler also wraps it, so HTTP traffic flows downwards.
+    this.wsHandler.setHandler(getHandler());
+
+    // Start the internal handler
+    this.wsHandler.start();
+
+    super.doStart();
+  }
+
+  @Override
+  protected void doStop() throws Exception {
+    if (this.wsHandler != null) {
+      this.wsHandler.stop();
+    }
+    super.doStop();
+  }
+
+  @Override
+  public boolean handle(Request request, Response response, Callback callback) throws Exception {
+    // Delegate to the WebSocketUpgradeHandler.
+    // If it detects a WebSocket upgrade, it triggers KnoxWebSocketCreator and returns true.
+    // If it's standard HTTP traffic, it delegates to its wrapped handler (PortMappingHelperHandler).
+    return wsHandler.handle(request, response, callback);
+  }
+
+  private class KnoxWebSocketCreator implements WebSocketCreator {
+    @Override
+    public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
+      try {
+        // 1. Get the raw HTTP URI from the Jetty 12 Request
+        HttpURI httpURI = req.getHttpURI();
+
+        // 2. Translate the scheme to match Jetty 9's behavior (http -> ws, https -> wss)
+        String wsScheme = "https".equalsIgnoreCase(httpURI.getScheme()) ? "wss" : "ws";
+
+        // 3. Reconstruct the java.net.URI for Knox's internal routing methods
+        final URI requestURI = HttpURI.build(httpURI).scheme(wsScheme).toURI();
+
+        // Now Knox's regex will work perfectly!
+        if (isWebshellRequest(requestURI)) {
+          return handleWebshellRequest(req); // Note: Update handleWebshellRequest to accept ServerUpgradeRequest
+        }
+
+        final String backendURL = getMatchedBackendURL(requestURI);
+        LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
+
+        final ClientEndpointConfig clientConfig = getClientEndpointConfig(req, backendURL);
+        clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
+        configureClientIdentity(clientConfig.getUserProperties());
+
+        return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
+
+      } catch (final Exception e) {
+        LOG.failedCreatingWebSocket(e);
+        // In Jetty 12, completing the callback with failure tells the server to reject the upgrade
+        callback.failed(e);
+        return null;
+      }
+    }
+  }
+
+  public void configureServerWebSocketContainer(ServerWebSocketContainer container) {
+    container.setMaxTextMessageSize(config.getWebsocketMaxTextMessageSize());
+    container.setMaxBinaryMessageSize(config.getWebsocketMaxBinaryMessageSize());
+    container.setInputBufferSize(config.getWebsocketInputBufferSize());
+
+    container.setIdleTimeout(Duration.ofMillis(config.getWebsocketIdleTimeout()));
+
+    // 2. Map ALL incoming requests to our custom Knox routing creator
+    // "regex|^/.*" acts as a catch-all interceptor.
+    container.addMapping("regex|^/.*", new KnoxWebSocketCreator());
+
+    //removed in Jetty 12 container.setMaxBinaryMessageBufferSize(config.getWebsocketMaxBinaryMessageBufferSize());
+    //removed in Jetty 12 container.setMaxTextMessageBufferSize(config.getWebsocketMaxTextMessageBufferSize());
+
+    //removed in Jetty 12 container.setAsyncWriteTimeout(config.getWebsocketAsyncWriteTimeout());
+    // handled by the core HTTP connection idle timeouts and
+    // one can apply it directly to the asynchronous write execution
+    // (e.g., using CompletableFuture.orTimeout(duration, TimeUnit) when we call session.sendText(...)).
+
+    // removed, idle timeout is used or specified in send() methods:
+    // container.setAsyncSendTimeout(config.getWebsocketAsyncWriteTimeout());
+
+    //same as setIdleTimeout: container.setDefaultMaxSessionIdleTimeout(config.getWebsocketIdleTimeout());
 
   }
 
@@ -127,7 +220,7 @@ public class GatewayWebsocketHandler extends WebSocketHandler
     return requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH);
   }
 
-  private WebshellWebSocketAdapter handleWebshellRequest(ServletUpgradeRequest req){
+  private WebshellWebSocketAdapter handleWebshellRequest(ServerUpgradeRequest req){
       if (config.isWebShellEnabled()){
         if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
           throw new RuntimeException("Number of allowed concurrent Web Shell sessions exceeded");
@@ -139,32 +232,6 @@ public class GatewayWebsocketHandler extends WebSocketHandler
         throw new RuntimeException("No valid token found for Web Shell connection");
       }
       throw new RuntimeException("Web Shell not enabled");
-  }
-
-
-  @Override
-  public Object createWebSocket(ServletUpgradeRequest req,
-                                ServletUpgradeResponse resp) {
-    try {
-      final URI requestURI = req.getRequestURI();
-
-      if (isWebshellRequest(requestURI)) {
-        return handleWebshellRequest(req);
-      }
-
-      // URL used to connect to websocket backend
-      final String backendURL = getMatchedBackendURL(requestURI);
-      LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
-
-      // Upgrade happens here
-      final ClientEndpointConfig clientConfig = getClientEndpointConfig(req);
-      clientConfig.getUserProperties().put(TRUSTSTORE_USER_PROPERTY, getTruststore());
-      configureClientIdentity(clientConfig.getUserProperties());
-      return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
-    } catch (final Exception e) {
-      LOG.failedCreatingWebSocket(e);
-      throw new RuntimeException(e);
-    }
   }
 
   private KeyStore getTruststore() throws KeystoreServiceException {
@@ -216,26 +283,37 @@ public class GatewayWebsocketHandler extends WebSocketHandler
    * to be passed to the backend.
    * @since 0.14.0
    */
-  private ClientEndpointConfig getClientEndpointConfig(final ServletUpgradeRequest req) {
+  private ClientEndpointConfig getClientEndpointConfig(final ServerUpgradeRequest req, final String backendURL) {
 
     return ClientEndpointConfig.Builder.create()
-        .configurator(new ClientEndpointConfig.Configurator() {
+    .configurator(new ClientEndpointConfig.Configurator() {
 
-          @Override
-          public void beforeRequest(final Map<String, List<String>> headers) {
+      @Override
+      public void beforeRequest(final Map<String, List<String>> headers) {
 
-            /* Add request headers */
-            req.getHeaders().forEach(headers::putIfAbsent);
-            try {
-              final URI backendURL = new URI(getMatchedBackendURL(req.getRequestURI()));
-              headers.put("Host", Arrays.asList(backendURL.getHost() + ":" + backendURL.getPort()));
-            } catch (final URISyntaxException e) {
-              LOG.onError(String.format(Locale.ROOT,
-                  "Error getting backend url, this could cause 'Host does not match SNI' exception. Cause: ",
-                  e.toString()));
-            }
-          }
-        }).build();
+        // 1. Safely iterate over Jetty 12 HttpFields and copy them to the Jakarta map
+        for (HttpField field : req.getHeaders()) {
+          headers.computeIfAbsent(field.getName(), k -> new ArrayList<>())
+          .add(field.getValue());
+        }
+
+        // 2. Properly construct and override the Host header
+        try {
+          final URI backendURI = new URI(backendURL);
+
+          // Handle implicit ports (where getPort() returns -1) to prevent "Host: example.com:-1"
+          int port = backendURI.getPort();
+          String hostValue = backendURI.getHost() + (port != -1 ? ":" + port : "");
+
+          headers.put("Host", Collections.singletonList(hostValue));
+
+        } catch (final URISyntaxException e) {
+          LOG.onError(String.format(Locale.ROOT,
+          "Error getting backend url, this could cause 'Host does not match SNI' exception. Cause: %s",
+          e.toString()));
+        }
+      }
+    }).build();
   }
 
   /**
