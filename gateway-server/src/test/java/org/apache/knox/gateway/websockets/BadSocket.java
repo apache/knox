@@ -17,40 +17,34 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.eclipse.jetty.io.RuntimeIOException;
-import org.eclipse.jetty.util.BufferUtil;
-import org.eclipse.jetty.websocket.api.BatchMode;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
+import java.nio.ByteBuffer;
+import org.eclipse.jetty.websocket.api.Callback;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-
-import java.io.IOException;
 
 /**
  * Simulate a bad socket.
  *
  * @since 0.10
  */
-class BadSocket extends WebSocketAdapter {
+class BadSocket extends Session.Listener.AbstractAutoDemanding {
+
+  private Session session;
+
   @Override
-  public void onWebSocketConnect(final Session session) {
+  public void onWebSocketOpen(final Session session) {
+    super.onWebSocketOpen(session);
+    this.session = session;
   }
 
   @Override
-  public void onWebSocketBinary(byte[] payload, int offset, int len) {
-    if (isNotConnected()) {
+  public void onWebSocketBinary(ByteBuffer payload, Callback callback) {
+    if (session == null || !session.isOpen()) {
+      callback.fail(new IllegalStateException("Session closed"));
       return;
     }
 
-    try {
-      RemoteEndpoint remote = getRemote();
-      remote.sendBytes(BufferUtil.toBuffer(payload, offset, len), null);
-      if (remote.getBatchMode() == BatchMode.ON) {
-        remote.flush();
-      }
-    } catch (IOException x) {
-      throw new RuntimeIOException(x);
-    }
+    // Echo the binary payload back to the client and complete the callback
+    session.sendBinary(payload, callback);
   }
 
   @Override
@@ -60,7 +54,7 @@ class BadSocket extends WebSocketAdapter {
 
   @Override
   public void onWebSocketText(String message) {
-    if (isNotConnected()) {
+    if (session == null || !session.isOpen()) {
       return;
     }
     // Throw an exception on purpose

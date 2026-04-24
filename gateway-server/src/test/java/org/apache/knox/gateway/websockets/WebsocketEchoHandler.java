@@ -17,27 +17,25 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
+import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
 
 /**
- * A Mock websocket handler that just Echos messages
+ * A websocket handler that just Echos messages
  *
  */
-public class WebsocketEchoHandler extends WebSocketHandler implements WebSocketCreator {
-  private final EchoSocket socket = new EchoSocket();
+public class WebsocketEchoHandler extends AbstractWebSocketHandler {
 
-  @Override
-  public void configure(WebSocketServletFactory factory) {
-      factory.getPolicy().setMaxTextMessageSize(2 * 1024 * 1024);
-      factory.setCreator(this);
-  }
+    @Override
+    protected void configure(ServerWebSocketContainer container) {
+        container.setMaxTextMessageSize(2 * 1024 * 1024);
+    }
 
-  @Override
-  public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-      return socket;
-  }
+    @Override
+    public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
+        // Must return a new instance per connection, as Session is stateful
+        return new EchoSocket();
+    }
 }

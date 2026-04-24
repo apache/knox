@@ -33,11 +33,11 @@ import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +94,7 @@ public class WebsocketEchoTestBase {
    */
   public static URI serverUri;
 
-  public static WebSocketHandler handler;
+  public static Handler handler;
 
   private static File topoDir;
   private static Path dataDir;
@@ -185,7 +185,7 @@ public class WebsocketEchoTestBase {
     gatewayServer.addConnector(connector);
 
     /* workaround so we can add our handler later at runtime */
-    HandlerCollection handlers = new HandlerCollection(true);
+    ContextHandlerCollection handlers = new ContextHandlerCollection(true);
 
     /* add some initial handlers */
     ContextHandler context = new ContextHandler();

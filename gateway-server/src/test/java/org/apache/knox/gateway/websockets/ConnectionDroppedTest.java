@@ -31,6 +31,7 @@ import jakarta.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -95,7 +96,7 @@ public class ConnectionDroppedTest {
 
     /* start backend with Echo socket */
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new BadSocket());
+    BadSocket::new);
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
@@ -120,8 +121,9 @@ public class ConnectionDroppedTest {
     proxy.addConnector(proxyConnector);
 
     /* start Knox with WebsocketAdapter to test */
+    final ExecutorService pool = Executors.newFixedThreadPool(10);
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new ProxyWebSocketAdapter(serverUri, Executors.newFixedThreadPool(10), gatewayConfig));
+    () -> new ProxyWebSocketAdapter(serverUri, pool, gatewayConfig));
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");

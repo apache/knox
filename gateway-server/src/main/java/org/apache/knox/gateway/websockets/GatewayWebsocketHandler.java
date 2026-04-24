@@ -167,7 +167,7 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
         // 3. Reconstruct the java.net.URI for Knox's internal routing methods
         final URI requestURI = HttpURI.build(httpURI).scheme(wsScheme).toURI();
 
-        // Now Knox's regex will work perfectly!
+        // Now Knox's regex will work
         if (isWebshellRequest(requestURI)) {
           return handleWebshellRequest(req); // Note: Update handleWebshellRequest to accept ServerUpgradeRequest
         }

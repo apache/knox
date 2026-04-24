@@ -17,23 +17,18 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.eclipse.jetty.io.RuntimeIOException;
-import org.eclipse.jetty.websocket.api.BatchMode;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
+import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.WebSocketContainer;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -101,25 +96,23 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
    * A Mock websocket handler
    *
    */
-  private static class WebsocketServerInitiatedPingHandler extends WebSocketHandler implements WebSocketCreator {
-    private final ServerInitiatingPingSocket socket = new ServerInitiatingPingSocket();
+  private static class WebsocketServerInitiatedPingHandler extends AbstractWebSocketHandler {
 
     @Override
-    public void configure(WebSocketServletFactory factory) {
-      factory.getPolicy().setMaxTextMessageSize(2 * 1024 * 1024);
-      factory.setCreator(this);
+    protected void configure(ServerWebSocketContainer container) {
+      container.setMaxTextMessageSize(2 * 1024 * 1024);
     }
 
     @Override
-    public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-      return socket;
+    public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
+      return new ServerInitiatingPingSocket();
     }
   }
 
   /**
    * A simple socket initiating message on connect
    */
-  private static class ServerInitiatingPingSocket extends WebSocketAdapter {
+  private static class ServerInitiatingPingSocket extends Session.Listener.AbstractAutoDemanding {
 
     @Override
     public void onWebSocketError(Throwable cause) {
@@ -127,25 +120,23 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
     }
 
     @Override
-    public void onWebSocketConnect(Session sess) {
-      super.onWebSocketConnect(sess);
-      try {
-        Thread.sleep(1000);
-      } catch (Exception e) {
-      }
-      final String textMessage = "PingPong";
-      final ByteBuffer binaryMessage = ByteBuffer.wrap(
-                 textMessage.getBytes(StandardCharsets.UTF_8));
+    public void onWebSocketOpen(Session session) {
+      super.onWebSocketOpen(session);
 
       try {
-        RemoteEndpoint remote = getRemote();
-        remote.sendPing(binaryMessage);
-        if (remote.getBatchMode() == BatchMode.ON) {
-          remote.flush();
-        }
-      } catch (IOException x) {
-        throw new RuntimeIOException(x);
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
+
+      final String textMessage = "PingPong";
+      final ByteBuffer binaryMessage = ByteBuffer.wrap(
+      textMessage.getBytes(StandardCharsets.UTF_8));
+
+      // In Jetty 12, we send the ping directly on the session and provide a Callback.
+      // We use Callback.NOOP since the original code didn't do anything on success/failure.
+      // BatchMode and manual flushing are handled automatically by the Jetty engine.
+      session.sendPing(binaryMessage, org.eclipse.jetty.websocket.api.Callback.NOOP);
     }
   }
 }

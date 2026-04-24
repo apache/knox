@@ -43,7 +43,7 @@ import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -154,7 +154,7 @@ public class BadUrlTest {
     gatewayServer.addConnector(connector);
 
     /* workaround so we can add our handler later at runtime */
-    HandlerCollection handlers = new HandlerCollection(true);
+    ContextHandlerCollection handlers = new ContextHandlerCollection(true);
 
     /* add some initial handlers */
     ContextHandler context = new ContextHandler();
