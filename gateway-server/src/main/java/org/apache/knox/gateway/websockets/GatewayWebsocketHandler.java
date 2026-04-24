@@ -31,35 +31,15 @@ import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 
-// Jetty 12 Core & WebSocket Imports
-import org.eclipse.jetty.http.HttpField;
-import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.Callback;
-import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
-import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
-import org.eclipse.jetty.websocket.server.WebSocketCreator;
 import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
 import org.eclipse.jetty.websocket.server.WebSocketUpgradeHandler;
 
-import jakarta.websocket.ClientEndpointConfig;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.KeyStore;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Websocket handler that will handle websocket connection request. This class
@@ -70,35 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GatewayWebsocketHandler extends Handler.Wrapper {
 
-  private static final WebsocketLogMessages LOG = MessagesFactory
-      .get(WebsocketLogMessages.class);
-
-  public static final String WEBSOCKET_PROTOCOL_STRING = "ws://";
-
-  public static final String SECURE_WEBSOCKET_PROTOCOL_STRING = "wss://";
-
-  static final String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
-
-  static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
-
-  static final String TRUSTSTORE_USER_PROPERTY = "org.apache.knox.gateway.websockets.truststore";
-
-  static final String KEYSTORE_USER_PROPERTY = "org.apache.knox.gateway.websockets.keystore";
-
-  static final String KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY = "org.apache.knox.gateway.websockets.keystore.key.passphrase";
-
-  static final String REGEX_WEBSHELL_REQUEST_PATH =
-          "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+/[^/]+/webshell$";
-
-  private static final int POOL_SIZE = 10;
-  private final AtomicInteger concurrentWebshells;
-
-  /**
-   * Manage the threads that are spawned
-   * @since 0.13
-   */
-  private final ExecutorService pool;
-
   final GatewayConfig config;
   final GatewayServices services;
   private WebSocketUpgradeHandler wsHandler;
@@ -108,8 +59,6 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
     super();
     this.config = config;
     this.services = services;
-    pool = Executors.newFixedThreadPool(POOL_SIZE);
-    this.concurrentWebshells = new AtomicInteger(0);
     // Set the internal handler as the one we are wrapping
     setHandler(wsHandler);
   }
@@ -154,42 +103,6 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
     return wsHandler.handle(request, response, callback);
   }
 
-  private class KnoxWebSocketCreator implements WebSocketCreator {
-    @Override
-    public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
-      try {
-        // 1. Get the raw HTTP URI from the Jetty 12 Request
-        HttpURI httpURI = req.getHttpURI();
-
-        // 2. Translate the scheme to match Jetty 9's behavior (http -> ws, https -> wss)
-        String wsScheme = "https".equalsIgnoreCase(httpURI.getScheme()) ? "wss" : "ws";
-
-        // 3. Reconstruct the java.net.URI for Knox's internal routing methods
-        final URI requestURI = HttpURI.build(httpURI).scheme(wsScheme).toURI();
-
-        // Now Knox's regex will work
-        if (isWebshellRequest(requestURI)) {
-          return handleWebshellRequest(req); // Note: Update handleWebshellRequest to accept ServerUpgradeRequest
-        }
-
-        final String backendURL = getMatchedBackendURL(requestURI);
-        LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
-
-        final ClientEndpointConfig clientConfig = getClientEndpointConfig(req, backendURL);
-        clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
-        configureClientIdentity(clientConfig.getUserProperties());
-
-        return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
-
-      } catch (final Exception e) {
-        LOG.failedCreatingWebSocket(e);
-        // In Jetty 12, completing the callback with failure tells the server to reject the upgrade
-        callback.failed(e);
-        return null;
-      }
-    }
-  }
-
   public void configureServerWebSocketContainer(ServerWebSocketContainer container) {
     container.setMaxTextMessageSize(config.getWebsocketMaxTextMessageSize());
     container.setMaxBinaryMessageSize(config.getWebsocketMaxBinaryMessageSize());
@@ -199,7 +112,7 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
 
     // 2. Map ALL incoming requests to our custom Knox routing creator
     // "regex|^/.*" acts as a catch-all interceptor.
-    container.addMapping("regex|^/.*", new KnoxWebSocketCreator());
+    container.addMapping("regex|^/.*", new KnoxWebSocketCreator(config, services));
 
     //removed in Jetty 12 container.setMaxBinaryMessageBufferSize(config.getWebsocketMaxBinaryMessageBufferSize());
     //removed in Jetty 12 container.setMaxTextMessageBufferSize(config.getWebsocketMaxTextMessageBufferSize());
@@ -216,213 +129,4 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
 
   }
 
-  private Boolean isWebshellRequest(URI requestURI){
-    return requestURI.toString().matches(REGEX_WEBSHELL_REQUEST_PATH);
-  }
-
-  private WebshellWebSocketAdapter handleWebshellRequest(ServerUpgradeRequest req){
-      if (config.isWebShellEnabled()){
-        if (concurrentWebshells.get() >= config.getMaximumConcurrentWebshells()){
-          throw new RuntimeException("Number of allowed concurrent Web Shell sessions exceeded");
-        }
-        JWTValidator jwtValidator = JWTValidatorFactory.create(req, services, config);
-        if (jwtValidator.validate()) {
-          return new WebshellWebSocketAdapter(pool, config, jwtValidator, concurrentWebshells);
-        }
-        throw new RuntimeException("No valid token found for Web Shell connection");
-      }
-      throw new RuntimeException("Web Shell not enabled");
-  }
-
-  private KeyStore getTruststore() throws KeystoreServiceException {
-    final KeystoreService ks = this.services
-        .getService(ServiceType.KEYSTORE_SERVICE);
-    KeyStore trustKeystore = null;
-    trustKeystore = ks.getTruststoreForHttpClient();
-    if (trustKeystore == null) {
-      trustKeystore = ks.getKeystoreForGateway();
-    }
-    return trustKeystore;
-  }
-
-  /**
-   * Mirrors DefaultHttpClientFactory#createSSLContext: when two-way SSL is
-   * enabled, select the client identity keystore (single-EKU aware) and add it,
-   * with its key passphrase, to the WebSocket client's user properties so the
-   * outbound TLS handshake can present a client certificate.
-   */
-  void configureClientIdentity(final Map<String, Object> userProperties)
-      throws KeystoreServiceException, AliasServiceException {
-    if (!config.isHttpClientTwoWaySslEnabled()) {
-      return;
-    }
-
-    final KeystoreService ks = this.services.getService(ServiceType.KEYSTORE_SERVICE);
-    final AliasService as = this.services.getService(ServiceType.ALIAS_SERVICE);
-
-    final KeyStore identityKeystore;
-    final char[] identityKeyPassphrase;
-    if (config.isSingleEkuEnabled()) {
-      identityKeystore = ks.getKeystoreForHttpClient();
-      identityKeyPassphrase = as.getHttpClientKeyPassphrase();
-    } else {
-      identityKeystore = ks.getKeystoreForGateway();
-      identityKeyPassphrase = as.getGatewayIdentityPassphrase();
-    }
-
-    if (identityKeystore != null) {
-      userProperties.put(KEYSTORE_USER_PROPERTY, identityKeystore);
-      userProperties.put(KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY, identityKeyPassphrase);
-    } else {
-      LOG.noClientIdentityForTwoWaySsl();
-    }
-  }
-
-  /**
-   * Returns a {@link ClientEndpointConfig} config that contains the headers
-   * to be passed to the backend.
-   * @since 0.14.0
-   */
-  private ClientEndpointConfig getClientEndpointConfig(final ServerUpgradeRequest req, final String backendURL) {
-
-    return ClientEndpointConfig.Builder.create()
-    .configurator(new ClientEndpointConfig.Configurator() {
-
-      @Override
-      public void beforeRequest(final Map<String, List<String>> headers) {
-
-        // 1. Safely iterate over Jetty 12 HttpFields and copy them to the Jakarta map
-        for (HttpField field : req.getHeaders()) {
-          headers.computeIfAbsent(field.getName(), k -> new ArrayList<>())
-          .add(field.getValue());
-        }
-
-        // 2. Properly construct and override the Host header
-        try {
-          final URI backendURI = new URI(backendURL);
-
-          // Handle implicit ports (where getPort() returns -1) to prevent "Host: example.com:-1"
-          int port = backendURI.getPort();
-          String hostValue = backendURI.getHost() + (port != -1 ? ":" + port : "");
-
-          headers.put("Host", Collections.singletonList(hostValue));
-
-        } catch (final URISyntaxException e) {
-          LOG.onError(String.format(Locale.ROOT,
-          "Error getting backend url, this could cause 'Host does not match SNI' exception. Cause: %s",
-          e.toString()));
-        }
-      }
-    }).build();
-  }
-
-  /**
-   * This method looks at the context path and returns the backend websocket
-   * url. If websocket url is found it is used as is, or we default to
-   * ws://{host}:{port} which might or might not be right.
-   * @param requestURI url to match
-   * @return Websocket backend url
-   */
-  protected synchronized String getMatchedBackendURL(final URI requestURI) {
-    final String path = requestURI.getRawPath();
-    final String query = requestURI.getRawQuery();
-
-    final ServiceRegistry serviceRegistryService = services
-        .getService(ServiceType.SERVICE_REGISTRY_SERVICE);
-
-    final ServiceDefinitionRegistry serviceDefinitionService = services
-        .getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
-
-    /* Filter out the /cluster/topology to get the context we want */
-    String[] pathInfo = path.split(REGEX_SPLIT_CONTEXT);
-
-    final ServiceDefEntry entry = serviceDefinitionService
-        .getMatchingService(pathInfo[1]);
-
-    if (entry == null) {
-      throw new RuntimeException(
-          String.format(Locale.ROOT, "Cannot find service for the given path: %s", path));
-    }
-
-    /* Filter out /cluster/topology/service to get endpoint */
-    String[] pathService = path.split(REGEX_SPLIT_SERVICE_PATH);
-
-    /* URL used to connect to websocket backend */
-    String backendURL = urlFromServiceDefinition(serviceRegistryService, entry, path);
-    LOG.debugLog("Url obtained from services definition: " + backendURL);
-
-    StringBuilder backend = new StringBuilder();
-    try {
-      if (StringUtils.containsAny(backendURL, WEBSOCKET_PROTOCOL_STRING, SECURE_WEBSOCKET_PROTOCOL_STRING)) {
-        LOG.debugLog("ws or wss protocol found in service url");
-        URI serviceUri = new URI(backendURL);
-        backend.append(serviceUri);
-        String pathSuffix = generateUrlSuffix(backend.toString(), pathService);
-        backend.append(pathSuffix);
-      } else if (StringUtils.containsAny(requestURI.toString(), WEBSOCKET_PROTOCOL_STRING, SECURE_WEBSOCKET_PROTOCOL_STRING)) {
-        LOG.debugLog("ws or wss protocol found in request url");
-        URL serviceUrl = new URL(backendURL);
-        final String protocol = (serviceUrl.getProtocol().equals("https")) ? "wss" : "ws";
-        backend.append(protocol).append("://");
-        backend.append(serviceUrl.getHost()).append(':');
-        backend.append(serviceUrl.getPort()).append('/');
-        backend.append(serviceUrl.getPath());
-        String pathSuffix = generateUrlSuffix(backend.toString(), pathService);
-        backend.append(pathSuffix);
-      } else {
-        LOG.debugLog("ws or wss protocol not found in service url or request url");
-        URL serviceUrl = new URL(backendURL);
-
-        /* Use http host:port if ws url not configured */
-        final String protocol = (serviceUrl.getProtocol().equals("ws")
-                || serviceUrl.getProtocol().equals("wss")) ? serviceUrl.getProtocol()
-                : "ws";
-        backend.append(protocol).append("://");
-        backend.append(serviceUrl.getHost()).append(':');
-        backend.append(serviceUrl.getPort()).append('/');
-        backend.append(serviceUrl.getPath());
-      }
-      /* in case we have query params */
-      if(!StringUtils.isBlank(query)) {
-        backend.append('?').append(query);
-      }
-      backendURL = backend.toString();
-
-    } catch (MalformedURLException e){
-        LOG.badUrlError(e);
-        throw new RuntimeException(e.toString());
-    } catch (Exception  e1) {
-        LOG.failedCreatingWebSocket(e1);
-        throw new RuntimeException(e1.toString());
-    }
-
-    return backendURL;
-  }
-
-  private static String urlFromServiceDefinition(
-      final ServiceRegistry serviceRegistry, final ServiceDefEntry entry,
-      final String path) {
-
-    final String[] contexts = path.split("/");
-
-    /*
-     * we have a match, if ws:// is present it is returned else http:// is
-     * returned
-     */
-    return serviceRegistry.lookupServiceURL(contexts[2],
-        entry.getName().toUpperCase(Locale.ROOT));
-  }
-
-  private String generateUrlSuffix(String backendPart, String[] pathService) {
-    /* Avoid Zeppelin Regression - as this would require ambari changes and break current knox websocket use case*/
-    if (!StringUtils.endsWith(backendPart, "/ws") && pathService.length > 0
-              &&  pathService[1] != null) {
-      String newPathSuffix = pathService[1];
-      if ((backendPart.endsWith("/")) && (pathService[1].startsWith("/"))) {
-        newPathSuffix = pathService[1].substring(1);
-      }
-      return newPathSuffix;
-    }
-    return "";
-  }
 }
