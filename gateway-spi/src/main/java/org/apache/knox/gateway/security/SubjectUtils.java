@@ -98,4 +98,7 @@ public class SubjectUtils {
     return subject.getPrincipals(GroupPrincipal.class);
   }
 
+  public static Set<TokenIdPrincipal> getTokenIdPrincipals(Subject subject) {
+    return subject.getPrincipals(TokenIdPrincipal.class);
+  }
 }

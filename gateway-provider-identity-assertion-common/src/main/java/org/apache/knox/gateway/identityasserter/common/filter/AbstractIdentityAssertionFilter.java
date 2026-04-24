@@ -50,6 +50,7 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 
 public abstract class AbstractIdentityAssertionFilter extends
   AbstractIdentityAssertionBase implements Filter {
@@ -142,6 +143,10 @@ public abstract class AbstractIdentityAssertionFilter extends
           if (groupsMapped) {
             addMappedGroupsToSubject(mappedPrincipalName, groups, subject);
           }
+
+          final Set<TokenIdPrincipal> tokenIdPrincipals = SubjectUtils.getTokenIdPrincipals(currentSubject);
+          subject.getPrincipals().addAll(tokenIdPrincipals);
+
           doAs(request, response, chain, subject);
         }
         else {
