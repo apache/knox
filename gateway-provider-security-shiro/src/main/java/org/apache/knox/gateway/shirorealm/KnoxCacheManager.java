@@ -151,7 +151,7 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
    * @param xmlConfiguration the XML configuration of the cache manager
    */
   private void resolveLockConflict(XmlConfiguration xmlConfiguration) {
-    Optional<ServiceCreationConfiguration<?>> serviceConfig = xmlConfiguration.getServiceCreationConfigurations().stream()
+    Optional<ServiceCreationConfiguration<?,?>> serviceConfig = xmlConfiguration.getServiceCreationConfigurations().stream()
             .filter(service -> service instanceof CacheManagerPersistenceConfiguration).findFirst();
 
     if (serviceConfig.isPresent()) {
