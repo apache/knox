@@ -258,7 +258,7 @@
         <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
         <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
         <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
-        <metrics.version>4.1.16</metrics.version>
+        <metrics.version>4.2.38</metrics.version>
         <mina.version>2.2.8</mina.version>
         <netty.version>4.1.135.Final</netty.version>
         <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
@@ -2597,7 +2597,7 @@
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-servlets</artifactId>
+                <artifactId>metrics-jakarta-servlets</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
             <dependency>
@@ -2612,7 +2612,12 @@
             </dependency>
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-jetty9</artifactId>
+                <artifactId>metrics-jetty12</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jetty12-ee10</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
             <dependency>
