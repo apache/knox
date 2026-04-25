@@ -32,10 +32,6 @@ import java.util.Locale;
  */
 public final class RequestUpdateHandler {
 
-  private RequestUpdateHandler() {
-    // utility holder for the ForwardedRequest wrapper
-  }
-
   /**
    * A request wrapper class that wraps a request and prepends a context path
    * to the request URI.

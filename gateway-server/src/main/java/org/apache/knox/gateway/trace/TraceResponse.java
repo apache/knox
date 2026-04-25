@@ -19,18 +19,13 @@ package org.apache.knox.gateway.trace;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import jakarta.servlet.ServletOutputStream;
 import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
 
