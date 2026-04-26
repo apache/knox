@@ -21,6 +21,8 @@ import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.server.Response;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class HSTSHandlerTest {
 
     @Test
@@ -29,13 +31,12 @@ public class HSTSHandlerTest {
         HttpFields.Mutable headers = HttpFields.build();
         EasyMock.expect(response.getHeaders()).andReturn(headers).anyTimes();
 
-        response.getHeaders().put("Strict-Transport-Security", "max-age=1000");
-        EasyMock.expectLastCall().once();
         EasyMock.replay(response);
 
         HSTSHandler hstsHandler = new HSTSHandler("max-age=1000");
         hstsHandler.handle(null, response, null);
 
         EasyMock.verify(response);
+        assertEquals("max-age=1000", headers.get("Strict-Transport-Security"));
     }
 }
