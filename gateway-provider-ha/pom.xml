@@ -136,5 +136,10 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
