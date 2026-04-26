@@ -30,8 +30,8 @@ import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.eclipse.jetty.http.HttpField;
-import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.websocket.api.util.WSURI;
 import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
 import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
 import org.eclipse.jetty.websocket.server.WebSocketCreator;
@@ -85,16 +85,10 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
     }
 
     @Override
-    public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
+    public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) throws Exception {
         try {
-            // 1. Get the raw HTTP URI from the Jetty 12 Request
-            HttpURI httpURI = req.getHttpURI();
-
-            // 2. Translate the scheme to match Jetty 9's behavior (http -> ws, https -> wss)
-            String wsScheme = "https".equalsIgnoreCase(httpURI.getScheme()) ? "wss" : "ws";
-
-            // 3. Reconstruct the java.net.URI for Knox's internal routing methods
-            final URI requestURI = HttpURI.build(httpURI).scheme(wsScheme).toURI();
+            // 1. Get the raw HTTP URI from the Jetty 12 Request and convert it to ws URI
+            final URI requestURI = WSURI.toWebsocket(req.getHttpURI().toURI());
 
             // Now Knox's regex will work
             if (isWebshellRequest(requestURI)) {
@@ -111,9 +105,7 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
 
         } catch (final Exception e) {
             LOG.failedCreatingWebSocket(e);
-            // In Jetty 12, completing the callback with failure tells the server to reject the upgrade
-            callback.failed(e);
-            return null;
+            throw e;
         }
     }
 

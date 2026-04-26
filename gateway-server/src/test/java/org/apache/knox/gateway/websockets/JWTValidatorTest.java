@@ -35,8 +35,11 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
 import org.junit.After;
 import org.junit.Assert;
@@ -55,8 +58,10 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -114,12 +119,12 @@ public class JWTValidatorTest {
     }
 
     private void setTokenOnRequest(ServerUpgradeRequest request, SignedJWT jwt){
-        HttpFields mockedHeaders = HttpFields.build()
-        .add(HttpHeader.COOKIE, "hadoop-jwt=garbage")
-        .add(HttpHeader.COOKIE, "hadoop-jwt=ljm" + jwt.serialize())
-        .add(HttpHeader.COOKIE, "hadoop-jwt=" + jwt.serialize())
-        .asImmutable();
-        EasyMock.expect(request.getHeaders()).andReturn(mockedHeaders).anyTimes();
+        List<HttpCookie> mockedCookies = Arrays.asList(
+        HttpCookie.from("hadoop-jwt", "garbage"),
+        HttpCookie.from("hadoop-jwt", "ljm" + jwt.serialize()),
+        HttpCookie.from("hadoop-jwt", jwt.serialize())
+        );
+        EasyMock.expect(request.getAttribute(Request.COOKIE_ATTRIBUTE)).andReturn(mockedCookies).anyTimes();
     }
 
     private static SignedJWT getJWT(final String issuer,
@@ -216,6 +221,9 @@ public class JWTValidatorTest {
         setUpParams(new HashMap<>());
         ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         EasyMock.expect(request.getHeaders()).andReturn(HttpFields.EMPTY).anyTimes();
+        EasyMock.expect(request.getAttribute(Request.COOKIE_ATTRIBUTE))
+        .andReturn(Collections.emptyList())
+        .anyTimes();
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
