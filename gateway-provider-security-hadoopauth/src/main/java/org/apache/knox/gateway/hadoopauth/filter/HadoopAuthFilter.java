@@ -104,7 +104,7 @@ public class HadoopAuthFilter extends
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
   private String topologyName;
 
-  @Override
+  //@Override
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
     GatewayServices services = GatewayServer.getGatewayServices();
     AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
@@ -112,7 +112,7 @@ public class HadoopAuthFilter extends
     return getConfiguration(aliasService, configPrefix, filterConfig);
   }
 
-  @Override
+  //@Override
   public void init(FilterConfig filterConfig) throws ServletException {
     this.topologyName = (String) filterConfig.getInitParameter("clusterName");
     final List<String> initParameterNames = AuthFilterUtils.getInitParameterNamesAsList(filterConfig);
@@ -144,7 +144,7 @@ public class HadoopAuthFilter extends
       ignoreDoAs.addAll(ignoredServices);
     }
 
-    super.init(filterConfig);
+    //super.init(filterConfig);
 
     final String supportJwt = filterConfig.getInitParameter(SUPPORT_JWT);
     final boolean jwtSupported = Boolean.parseBoolean(supportJwt == null ? "false" : supportJwt);
@@ -160,7 +160,7 @@ public class HadoopAuthFilter extends
     AuthFilterUtils.addUnauthPaths(unAuthenticatedPaths, unAuthPathString, DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM);
   }
 
-  @Override
+  //@Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
 
@@ -172,11 +172,11 @@ public class HadoopAuthFilter extends
       LOG.useJwtFilter();
       jwtFilter.doFilter(request, response, filterChain);
     } else {
-      super.doFilter(request, response, filterChain);
+      //super.doFilter(request, response, filterChain);
     }
   }
 
-  @Override
+  //@Override
   protected void doFilter(FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
     if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
@@ -218,7 +218,7 @@ public class HadoopAuthFilter extends
       }
     }
 
-    super.doFilter(filterChain, proxyRequest == null ? request : proxyRequest, response);
+    //super.doFilter(filterChain, proxyRequest == null ? request : proxyRequest, response);
   }
 
   /**
