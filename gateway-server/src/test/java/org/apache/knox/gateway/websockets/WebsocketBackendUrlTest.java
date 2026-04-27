@@ -17,6 +17,13 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.registry.ServiceDefEntry;
+import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
+import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.easymock.EasyMock;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -87,5 +94,46 @@ public class WebsocketBackendUrlTest extends WebsocketEchoTestBase {
     String backendUrl = knoxWebSocketCreator.getMatchedBackendURL(requestURI);
     String expectedBackendUrl = backendServerUri.toString() + pathContext;
     assertThat(backendUrl, is(expectedBackendUrl));
+  }
+
+  @Test
+  public void testMatchedBackendURLDoubleSlashPrevention() throws Exception {
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+    ServiceRegistry serviceRegistry = EasyMock.createNiceMock(ServiceRegistry.class);
+    ServiceDefinitionRegistry serviceDefinitionRegistry = EasyMock.createNiceMock(ServiceDefinitionRegistry.class);
+    ServiceDefEntry serviceDefEntry = EasyMock.createNiceMock(ServiceDefEntry.class);
+
+    EasyMock.expect(services.getService(ServiceType.SERVICE_REGISTRY_SERVICE))
+    .andReturn(serviceRegistry).anyTimes();
+    EasyMock.expect(services.getService(ServiceType.SERVICE_DEFINITION_REGISTRY))
+    .andReturn(serviceDefinitionRegistry).anyTimes();
+
+    EasyMock.expect(serviceDefinitionRegistry.getMatchingService(EasyMock.anyString()))
+    .andReturn(serviceDefEntry).anyTimes();
+    EasyMock.expect(serviceDefEntry.getName())
+    .andReturn("WEBSOCKET").anyTimes();
+
+    // Simulate the backend topology returning an HTTP URL with a path that starts with a slash
+    EasyMock.expect(serviceRegistry.lookupServiceURL(EasyMock.anyString(), EasyMock.anyString()))
+    .andReturn("http://localhost:53170/ws").anyTimes();
+
+    EasyMock.replay(config, services, serviceRegistry, serviceDefinitionRegistry, serviceDefEntry);
+
+    KnoxWebSocketCreator creator = new KnoxWebSocketCreator(config, services);
+    URI requestURI = new URI("ws://localhost:8443/gateway/websocket/123foo456bar/channels");
+    String backendURL = creator.getMatchedBackendURL(requestURI);
+
+    // Assert that the double slash is prevented
+    assertThat(backendURL, is("ws://localhost:53170/ws"));
+
+    // Let's also verify that HTTPS correctly maps to WSS without double slashes
+    EasyMock.reset(serviceRegistry);
+    EasyMock.expect(serviceRegistry.lookupServiceURL(EasyMock.anyString(), EasyMock.anyString()))
+    .andReturn("https://localhost:53170/ws").anyTimes();
+    EasyMock.replay(serviceRegistry);
+
+    backendURL = creator.getMatchedBackendURL(requestURI);
+    assertThat(backendURL, is("wss://localhost:53170/ws"));
   }
 }

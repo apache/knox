@@ -242,8 +242,13 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
                 final String protocol = (serviceUrl.getProtocol().equals("https")) ? "wss" : "ws";
                 backend.append(protocol).append("://");
                 backend.append(serviceUrl.getHost()).append(':');
-                backend.append(serviceUrl.getPort()).append('/');
-                backend.append(serviceUrl.getPath());
+                backend.append(serviceUrl.getPort());
+                // Only append a slash if getPath() doesn't already start with one
+                String serviceUrlPath = serviceUrl.getPath();
+                if (StringUtils.isNotEmpty(serviceUrlPath) && !serviceUrlPath.startsWith("/")) {
+                    backend.append('/');
+                }
+                backend.append(serviceUrlPath);
                 String pathSuffix = generateUrlSuffix(backend.toString(), pathService);
                 backend.append(pathSuffix);
             } else {
@@ -256,8 +261,13 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
                 : "ws";
                 backend.append(protocol).append("://");
                 backend.append(serviceUrl.getHost()).append(':');
-                backend.append(serviceUrl.getPort()).append('/');
-                backend.append(serviceUrl.getPath());
+                backend.append(serviceUrl.getPort());
+                // Only append a slash if getPath() doesn't already start with one
+                String serviceUrlPath = serviceUrl.getPath();
+                if (StringUtils.isNotEmpty(serviceUrlPath) && !serviceUrlPath.startsWith("/")) {
+                    backend.append('/');
+                }
+                backend.append(serviceUrlPath);
             }
             /* in case we have query params */
             if(!StringUtils.isBlank(query)) {

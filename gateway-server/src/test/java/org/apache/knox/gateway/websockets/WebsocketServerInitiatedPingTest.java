@@ -18,7 +18,9 @@
 package org.apache.knox.gateway.websockets;
 
 import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.websocket.api.Frame;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.core.OpCode;
 import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
 import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
 import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
@@ -32,6 +34,7 @@ import jakarta.websocket.WebSocketContainer;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -59,13 +62,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
 
+  private static WebsocketServerInitiatedPingHandler pingHandler;
   public WebsocketServerInitiatedPingTest() {
     super();
   }
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    handler = new WebsocketServerInitiatedPingHandler();
+    pingHandler = new WebsocketServerInitiatedPingHandler();
+    handler = pingHandler;
     WebsocketEchoTestBase.setUpBeforeClass();
     WebsocketEchoTestBase.startServers("ws");
   }
@@ -83,13 +88,15 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    container.connectToServer(client,
-            new URI(serverUri.toString() + "gateway/websocket/123foo456bar/channels"));
+    try (jakarta.websocket.Session session = container.connectToServer(client,
+    new URI(serverUri.toString() + "gateway/websocket/123foo456bar/channels"))) {
+      assertThat(session.isOpen(), is(true));
+      //session.getBasicRemote().sendText("Echo");
+      // Wait for the backend server to receive the automatic PONG from Knox's JSR-356 container
+      String pongPayload = pingHandler.socket.pongFuture.get(10000, TimeUnit.MILLISECONDS);
 
-    //session.getBasicRemote().sendText("Echo");
-    client.messageQueue.awaitMessages(1, 10000, TimeUnit.MILLISECONDS);
-
-    assertThat(client.messageQueue.get(0), is("PingPong"));
+      assertThat(pongPayload, is("PingPong"));
+    }
   }
 
   /**
@@ -97,7 +104,7 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
    *
    */
   private static class WebsocketServerInitiatedPingHandler extends AbstractWebSocketHandler {
-
+    public final ServerInitiatingPingSocket socket = new ServerInitiatingPingSocket();
     @Override
     protected void configure(ServerWebSocketContainer container) {
       container.setMaxTextMessageSize(2 * 1024 * 1024);
@@ -105,7 +112,7 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
 
     @Override
     public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
-      return new ServerInitiatingPingSocket();
+      return socket;
     }
   }
 
@@ -113,6 +120,7 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
    * A simple socket initiating message on connect
    */
   public static class ServerInitiatingPingSocket extends Session.Listener.AbstractAutoDemanding {
+    public final CompletableFuture<String> pongFuture = new CompletableFuture<>();
 
     @Override
     public void onWebSocketError(Throwable cause) {
@@ -137,6 +145,22 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
       // We use Callback.NOOP since the original code didn't do anything on success/failure.
       // BatchMode and manual flushing are handled automatically by the Jetty engine.
       session.sendPing(binaryMessage, org.eclipse.jetty.websocket.api.Callback.NOOP);
+    }
+
+    @Override
+    public void onWebSocketFrame(Frame frame, org.eclipse.jetty.websocket.api.Callback callback) {
+      // Intercept PONG frames returning from Knox
+      if (frame.getOpCode() == OpCode.PONG) {
+        ByteBuffer payload = frame.getPayload();
+        if (payload != null) {
+          byte[] bytes = new byte[payload.remaining()];
+          payload.get(bytes);
+          pongFuture.complete(new String(bytes, StandardCharsets.UTF_8));
+        } else {
+          pongFuture.complete("");
+        }
+      }
+      super.onWebSocketFrame(frame, callback);
     }
   }
 }
