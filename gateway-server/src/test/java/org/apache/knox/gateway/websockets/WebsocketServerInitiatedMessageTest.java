@@ -109,7 +109,7 @@ public class WebsocketServerInitiatedMessageTest extends WebsocketEchoTestBase {
   /**
    * A simple socket initiating message on connect
    */
-  private static class ServerInitiatingMessageSocket extends Session.Listener.AbstractAutoDemanding {
+  public static class ServerInitiatingMessageSocket extends Session.Listener.AbstractAutoDemanding {
 
     @Override
     public void onWebSocketError(Throwable cause) {

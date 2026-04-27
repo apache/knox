@@ -94,7 +94,7 @@ public class WebsocketEchoTestBase {
    */
   public static URI serverUri;
 
-  public static Handler handler;
+  public static Handler.Wrapper handler;
 
   private static File topoDir;
   private static Path dataDir;
@@ -157,8 +157,8 @@ public class WebsocketEchoTestBase {
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
-    context.setHandler(handler);
-    backendServer.setHandler(context);
+    handler.setHandler(context);
+    backendServer.setHandler(handler);
 
     // Start Server
     backendServer.start();

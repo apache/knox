@@ -26,7 +26,7 @@ import org.eclipse.jetty.websocket.api.Session;
  *
  * @since 0.10
  */
-class BadSocket extends Session.Listener.AbstractAutoDemanding {
+public class BadSocket extends Session.Listener.AbstractAutoDemanding {
 
   private Session session;
 
