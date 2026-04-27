@@ -23,7 +23,6 @@ import java.util.Set;
 public interface KnoxIDFConstants {
     String BASE_RESORCE_PATH = "knoxidf/api/v1";
     String AUTH_CODE = "authorization_code";
-    String CLIENT_SECRET = "client_secret";
     String CLIENT_ID = "client_id";
     String REDIRECT_URI = "redirect_uri";
     String RESPONSE_TYPE = "response_type";
@@ -36,9 +35,11 @@ public interface KnoxIDFConstants {
     String CODE_RESPONSE_TYPE = RESPONSE_TYPE + "=" + CODE;
     String NONCE = "nonce";
 
+    String TOKEN_ID_ATTRIBUTE = "X-Token-Id";
+    String SCOPE_ATTRIBUTE = "X-Token-Scope";
+
     String FEDERATED_ID_TOKEN_PREFIX = "fed_id_";
     String FEDERATED_ACCESS_TOKEN_PREFIX = "fed_access_";
     String FEDERATED_OP_CONFIG_PREFIX = "federated.op.";
-    String FEDERATED_OP_CONFIG_ENABLED = FEDERATED_OP_CONFIG_PREFIX + "enabled";
     String FEDERATED_OP_CONFIG_NAMES = FEDERATED_OP_CONFIG_PREFIX + "names";
 }

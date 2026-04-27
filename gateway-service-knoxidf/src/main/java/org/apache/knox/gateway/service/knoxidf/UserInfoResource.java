@@ -42,6 +42,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.SCOPE_ATTRIBUTE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_ID_ATTRIBUTE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 
@@ -82,12 +84,12 @@ public class UserInfoResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserInfo() throws UnknownTokenException, TokenServiceException {
-        final String tokenId = request.getAttribute("X-Token-Id") == null ? null : request.getAttribute("X-Token-Id").toString();
+        final String tokenId = request.getAttribute(TOKEN_ID_ATTRIBUTE) == null ? null : request.getAttribute(TOKEN_ID_ATTRIBUTE).toString();
         if (tokenId == null) {
             return error("invalid_request", "Cannot find tokenId");
         }
 
-        final String scope = request.getAttribute("X-Token-Scope") == null ? "" : request.getAttribute("X-Token-Scope").toString();
+        final String scope = request.getAttribute(SCOPE_ATTRIBUTE) == null ? "" : request.getAttribute(SCOPE_ATTRIBUTE).toString();
         final TokenMetadata tokenMetadata = getReadonlyTokenStateService().getTokenMetadata(tokenId);
         final Map<String, Object> userInfo = new HashMap<>();
 

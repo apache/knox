@@ -47,13 +47,13 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -333,7 +333,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
    * @param request for getting the original request URL
    * @return url to use as login url for redirect
    */
-  protected String constructLoginURL(HttpServletRequest request) throws UnsupportedEncodingException {
+  protected String constructLoginURL(HttpServletRequest request) {
     String providerURL = null;
     String delimiter = "?";
     if (authenticationProviderUrl == null) {
@@ -351,7 +351,10 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       final String loginSessionId = request.getSession().getId();
       authorizeRequestMetadataStore.put(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
       federatedOpConfigurationStore.put(loginSessionId, enabledFederatedOpConfigs);
-      final List<String> opNames = enabledFederatedOpConfigs.stream().map(FederatedOpConfiguration::getName).sorted().collect(Collectors.toList());
+      final List<String> opNames = enabledFederatedOpConfigs.stream()
+              .sorted(Comparator.comparing(FederatedOpConfiguration::getName))
+              .map(FederatedOpConfiguration::getName)
+              .collect(Collectors.toList());
       providerURL += delimiter
               + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)
               + "&federatedOpNames=" + URLEncoder.encode(String.join(",", opNames), StandardCharsets.UTF_8);

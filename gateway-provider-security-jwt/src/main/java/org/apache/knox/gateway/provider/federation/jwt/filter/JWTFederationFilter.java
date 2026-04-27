@@ -30,6 +30,7 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -190,11 +191,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         try {
           JWT token = new JWTToken(tokenValue);
           if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, token)) {
-            Subject subject = createSubjectFromToken(token);
-            request.setAttribute("X-Token-Id", TokenUtils.getTokenId(token));
-            if (token.getClaim("scope") != null) {
-              request.setAttribute("X-Token-Scope", token.getClaim("scope"));
-            }
+            final Subject subject = createSubjectFromToken(token);
+            addKnoxIDFAttributes(request, token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
         } catch (ParseException | UnknownTokenException ex) {
@@ -216,8 +214,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         }
         if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
-            Subject subject = createSubjectFromTokenIdentifier(tokenId);
-            request.setAttribute("X-Token-Id", tokenId);
+            final Subject subject = createSubjectFromTokenIdentifier(tokenId);
+            request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           } catch (UnknownTokenException e) {
             ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -228,6 +226,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // no token provided in header
       log.missingTokenFromHeader(wireToken);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+  }
+
+  private static void addKnoxIDFAttributes(ServletRequest request, JWT token) {
+    request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, TokenUtils.getTokenId(token));
+    final String scope = token.getClaim(KnoxIDFConstants.SCOPE);
+    if (scope != null) {
+      request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, token.getClaim(scope));
     }
   }
 

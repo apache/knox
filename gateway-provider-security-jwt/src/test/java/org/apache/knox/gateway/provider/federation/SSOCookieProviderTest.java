@@ -739,7 +739,7 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     private int verificationCount;
 
     @Override
-    public String constructLoginURL(HttpServletRequest req) throws UnsupportedEncodingException {
+    public String constructLoginURL(HttpServletRequest req) {
       return super.constructLoginURL(req);
     }
 

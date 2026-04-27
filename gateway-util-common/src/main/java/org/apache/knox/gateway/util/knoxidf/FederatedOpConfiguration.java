@@ -18,7 +18,7 @@ package org.apache.knox.gateway.util.knoxidf;
 
 import javax.servlet.ServletContext;
 
-public class FederatedOpConfiguration implements Comparable<FederatedOpConfiguration> {
+public class FederatedOpConfiguration {
     private final boolean enabled;
     private final String name;
     private final String clientId;
@@ -78,8 +78,4 @@ public class FederatedOpConfiguration implements Comparable<FederatedOpConfigura
         return discoveryEndpoint;
     }
 
-    @Override
-    public int compareTo(FederatedOpConfiguration other) {
-        return this.name.compareTo(other.name);
-    }
 }

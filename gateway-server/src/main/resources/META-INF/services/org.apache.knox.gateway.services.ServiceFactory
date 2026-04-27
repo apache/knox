@@ -16,6 +16,8 @@
 # limitations under the License.
 ##########################################################################
 
+# Please keep the alphabetical order of service factories!
+
 org.apache.knox.gateway.services.factory.AliasServiceFactory
 org.apache.knox.gateway.services.factory.ConcurrentSessionVerifierFactory
 org.apache.knox.gateway.services.factory.ClusterConfigurationMonitorServiceFactory
