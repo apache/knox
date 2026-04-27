@@ -351,7 +351,7 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       final String loginSessionId = request.getSession().getId();
       authorizeRequestMetadataStore.put(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
       federatedOpConfigurationStore.put(loginSessionId, enabledFederatedOpConfigs);
-      final List<String> opNames = enabledFederatedOpConfigs.stream().map(FederatedOpConfiguration::getName).collect(Collectors.toList());
+      final List<String> opNames = enabledFederatedOpConfigs.stream().map(FederatedOpConfiguration::getName).sorted().collect(Collectors.toList());
       providerURL += delimiter
               + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)
               + "&federatedOpNames=" + URLEncoder.encode(String.join(",", opNames), StandardCharsets.UTF_8);

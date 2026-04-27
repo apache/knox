@@ -18,7 +18,7 @@ package org.apache.knox.gateway.util.knoxidf;
 
 import javax.servlet.ServletContext;
 
-public class FederatedOpConfiguration {
+public class FederatedOpConfiguration implements Comparable<FederatedOpConfiguration> {
     private final boolean enabled;
     private final String name;
     private final String clientId;
@@ -29,14 +29,10 @@ public class FederatedOpConfiguration {
     private final String discoveryEndpoint;
     private final String authorizeCallback;
 
-    public FederatedOpConfiguration(final ServletContext servletContext) {
-        this(servletContext, servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAME));
-    }
-
     public FederatedOpConfiguration(final ServletContext servletContext, final String opName) {
-        this.enabled = Boolean.parseBoolean(servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_ENABLED));
         this.name = opName;
         final String prefix = KnoxIDFConstants.FEDERATED_OP_CONFIG_PREFIX + (opName != null ? opName + "." : "");
+        this.enabled = Boolean.parseBoolean(servletContext.getInitParameter(prefix + "enabled"));
         this.clientId = servletContext.getInitParameter(prefix + "clientId");
         this.clientSecret = servletContext.getInitParameter(prefix + "clientSecret");
         this.tokenEndpoint = servletContext.getInitParameter(prefix + "token.endpoint");
@@ -50,10 +46,9 @@ public class FederatedOpConfiguration {
         return name;
     }
 
-    public boolean isFederatedOpRedirectEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
-
 
     public String getClientId() {
         return clientId;
@@ -83,4 +78,8 @@ public class FederatedOpConfiguration {
         return discoveryEndpoint;
     }
 
+    @Override
+    public int compareTo(FederatedOpConfiguration other) {
+        return this.name.compareTo(other.name);
+    }
 }

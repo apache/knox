@@ -40,5 +40,5 @@ public interface KnoxIDFConstants {
     String FEDERATED_ACCESS_TOKEN_PREFIX = "fed_access_";
     String FEDERATED_OP_CONFIG_PREFIX = "federated.op.";
     String FEDERATED_OP_CONFIG_ENABLED = FEDERATED_OP_CONFIG_PREFIX + "enabled";
-    String FEDERATED_OP_CONFIG_NAME = FEDERATED_OP_CONFIG_PREFIX + "names";
+    String FEDERATED_OP_CONFIG_NAMES = FEDERATED_OP_CONFIG_PREFIX + "names";
 }

@@ -24,20 +24,18 @@ import java.util.Map;
 public class FederatedOpConfigurationFactory {
 
     public static Map<String, FederatedOpConfiguration> createFederatedOpConfiguration(final ServletContext servletContext) {
-        final String enabled = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_ENABLED);
-        if (!Boolean.parseBoolean(enabled)) {
-            return Collections.emptyMap();
-        }
-
-        final String names = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAME);
+        final String names = servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAMES);
         if (names == null || names.isEmpty()) {
             return Collections.emptyMap();
         }
 
         final Map<String, FederatedOpConfiguration> configs = new HashMap<>();
         for (String name : names.split(",")) {
-            String trimmedName = name.trim();
-            configs.put(trimmedName, new FederatedOpConfiguration(servletContext, trimmedName));
+            final String trimmedName = name.trim();
+            final FederatedOpConfiguration federatedOpConfiguration = new FederatedOpConfiguration(servletContext, trimmedName);
+            if (federatedOpConfiguration.isEnabled()) {
+                configs.put(trimmedName, federatedOpConfiguration);
+            }
         }
         return configs;
     }

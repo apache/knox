@@ -31,6 +31,7 @@ import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.util.ServletRequestUtils;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -80,8 +81,8 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     @POST
     public Response doPost() {
-        final String code = request.getParameter("code");
-        final String redirectUri = request.getParameter("redirect_uri");
+        final String code = getRequestParam("code");
+        final String redirectUri = getRequestParam("redirect_uri");
 
         final Response paramVerificationErrorResponse = verifyParams(code, redirectUri);
         if (paramVerificationErrorResponse == null) {
@@ -104,7 +105,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     protected UserContext buildUserContext(HttpServletRequest request) {
         try {
-            final String code = request.getParameter("code");
+            final String code = getRequestParam("code");
             final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(code);
             final String scope = tokenMetadata.getMetadata("scope");
             final Map<String, Object> userParams = userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope);
@@ -120,7 +121,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
         try {
             super.addArbitraryTokenMetadata(tokenMetadata);
-            final String code = request.getParameter("code");
+            final String code = getRequestParam("code");
             final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
 
             //if the auth code token was a result of a federated OIDC call, we need to save the associated
@@ -144,7 +145,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
     private String generateIdToken(JWT accessToken) throws TokenServiceException {
         try {
-            final String code = request.getParameter("code");
+            final String code = getRequestParam("code");
             final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(code);
             final boolean hasFederatedIdToken = StringUtils.isNotBlank(tokenMetadata.getMetadata("federated_identity_id"));
 
@@ -234,7 +235,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             } else if (!associateRedirectUri.equals(redirectUri)) {
                 throw new AuthTokenValidationError("Invalid redirect_uri: " + redirectUri);
             } else {
-                final String clientId = request.getParameter("client_id");
+                final String clientId = getRequestParam("client_id");
                 if (!associatedClientId.equals(clientId)) {
                     throw new AuthTokenValidationError("Invalid client_id: " + clientId);
                 }
@@ -242,6 +243,14 @@ public class TokenResource extends PasscodeTokenResourceBase {
         } catch (UnknownTokenException e) {
             throw new AuthTokenValidationError("Unknown auth_code");
         }
+    }
+
+    private String getRequestParam(String paramName) {
+        String requestParamValue = request.getParameter(paramName);
+        if (requestParamValue == null) {
+            requestParamValue = ServletRequestUtils.unwrapHttpServletRequest(request).getParameter(paramName);
+        }
+        return requestParamValue;
     }
 
     private static class AuthTokenValidationError extends Exception {
