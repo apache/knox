@@ -184,6 +184,8 @@ public class WebsocketEchoTestBase {
     final ServerConnector connector = new ServerConnector(gatewayServer);
     gatewayServer.addConnector(connector);
 
+    setupGatewayConfig(backendServerUri.toString());
+
     /* workaround so we can add our handler later at runtime */
     ContextHandlerCollection handlers = new ContextHandlerCollection(true);
 
@@ -192,7 +194,12 @@ public class WebsocketEchoTestBase {
     context.setContextPath("/");
     handlers.addHandler(context);
 
-    gatewayServer.setHandler(handlers);
+    /* Setup websocket handler */
+    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
+    gatewayConfig, services);
+    gatewayWebsocketHandler.setHandler(handlers);
+
+    gatewayServer.setHandler(gatewayWebsocketHandler);
 
     // Start Server
     gatewayServer.start();
@@ -203,14 +210,6 @@ public class WebsocketEchoTestBase {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
-    /* Setup websocket handler */
-    setupGatewayConfig(backendServerUri.toString());
-
-    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
-        gatewayConfig, services);
-    handlers.addHandler(gatewayWebsocketHandler);
-    gatewayWebsocketHandler.start();
   }
 
   /**

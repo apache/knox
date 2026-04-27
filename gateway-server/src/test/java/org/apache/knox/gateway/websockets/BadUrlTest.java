@@ -149,6 +149,7 @@ public class BadUrlTest {
   }
 
   private static void startGatewayServer() throws Exception {
+    setupGatewayConfig(BACKEND);
     gatewayServer = new Server();
     final ServerConnector connector = new ServerConnector(gatewayServer);
     gatewayServer.addConnector(connector);
@@ -161,7 +162,12 @@ public class BadUrlTest {
     context.setContextPath("/");
     handlers.addHandler(context);
 
-    gatewayServer.setHandler(handlers);
+    /* Setup websocket handler */
+    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
+    gatewayConfig, services);
+    gatewayWebsocketHandler.setHandler(handlers);
+
+    gatewayServer.setHandler(gatewayWebsocketHandler);
 
     // Start Server
     gatewayServer.start();
@@ -172,14 +178,6 @@ public class BadUrlTest {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
-    /* Setup websocket handler */
-    setupGatewayConfig(BACKEND);
-
-    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
-        gatewayConfig, services);
-    handlers.addHandler(gatewayWebsocketHandler);
-    gatewayWebsocketHandler.start();
   }
 
   /*

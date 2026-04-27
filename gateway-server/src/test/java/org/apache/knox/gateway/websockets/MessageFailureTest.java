@@ -92,6 +92,7 @@ public class MessageFailureTest {
    */
   @Test(timeout = 8000)
   public void testMessageBiggerThanDefault() throws Exception {
+    //Note: default is WebSocketConstants.DEFAULT_MAX_TEXT_MESSAGE_SIZE = 65536
     final String bigMessage = RandomStringUtils.randomAscii(66000);
 
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
@@ -151,6 +152,8 @@ public class MessageFailureTest {
 
   private static void startProxy() throws Exception {
     GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gatewayConfig);
+
     proxy = new Server();
     proxyConnector = new ServerConnector(proxy);
     proxy.addConnector(proxyConnector);

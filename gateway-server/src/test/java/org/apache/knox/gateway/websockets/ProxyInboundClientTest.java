@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import jakarta.websocket.ClientEndpointConfig;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -131,8 +132,8 @@ public class ProxyInboundClientTest {
     });
 
     Assert.assertThat(client, instanceOf(jakarta.websocket.Endpoint.class));
-
-    Session session = container.connectToServer(client, serverUri);
+    ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
+    Session session = container.connectToServer(client, clientConfig, serverUri);
 
     session.getBasicRemote().sendText(textMessage);
 
@@ -188,8 +189,8 @@ public class ProxyInboundClientTest {
     });
 
     Assert.assertThat(client, instanceOf(jakarta.websocket.Endpoint.class));
-
-    Session session = container.connectToServer(client, serverUri);
+    ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
+    Session session = container.connectToServer(client, clientConfig, serverUri);
 
     session.getBasicRemote().sendBinary(binarymessage);
 

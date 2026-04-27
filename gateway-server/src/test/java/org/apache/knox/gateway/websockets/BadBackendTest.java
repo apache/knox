@@ -77,6 +77,7 @@ public class BadBackendTest {
 
   private static void startProxy() throws Exception {
     GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gatewayConfig);
     proxy = new Server();
     proxyConnector = new ServerConnector(proxy);
     proxy.addConnector(proxyConnector);

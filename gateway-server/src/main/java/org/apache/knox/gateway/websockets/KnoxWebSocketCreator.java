@@ -42,10 +42,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,6 +67,17 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
 
     static final String REGEX_WEBSHELL_REQUEST_PATH =
     "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+/[^/]+/webshell$";
+
+    private static final Set<String> IGNORED_HEADERS = new HashSet<>(Arrays.asList(
+    "sec-websocket-key",
+    "sec-websocket-version",
+    "sec-websocket-extensions",
+    "sec-websocket-accept",
+    "sec-websocket-protocol",
+    "upgrade",
+    "connection",
+    "host" // The Jetty client will automatically set the correct Host for the backend
+    ));
 
     private static final int POOL_SIZE = 10;
     private final AtomicInteger concurrentWebshells;
@@ -153,8 +167,11 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
 
                 // 1. Safely iterate over Jetty 12 HttpFields and copy them to the Jakarta map
                 for (HttpField field : req.getHeaders()) {
-                    headers.computeIfAbsent(field.getName(), k -> new ArrayList<>())
-                    .add(field.getValue());
+                    String headerName = field.getName();
+                    if (!IGNORED_HEADERS.contains(headerName.toLowerCase(Locale.ROOT))) {
+                        headers.computeIfAbsent(headerName, k -> new ArrayList<>())
+                        .add(field.getValue());
+                    }
                 }
 
                 // 2. Properly construct and override the Host header

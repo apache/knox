@@ -59,8 +59,6 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
     super();
     this.config = config;
     this.services = services;
-    // Set the internal handler as the one we are wrapping
-    setHandler(wsHandler);
   }
 
   @Override

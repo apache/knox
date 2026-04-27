@@ -26,6 +26,7 @@ import static org.apache.knox.gateway.config.GatewayConfig.DEFAULT_IDENTITY_KEY_
 
 import com.mycila.xmltool.XMLDoc;
 import com.mycila.xmltool.XMLTag;
+import jakarta.websocket.ClientEndpointConfig;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -164,7 +165,7 @@ public class WebsocketMultipleConnectionTest {
         public void onMessage(String message) {
           latch.countDown();
         }
-      }, new URI(serverUri.toString() + "gateway/websocket/ws"));
+      }, ClientEndpointConfig.Builder.create().build(), new URI(serverUri.toString() + "gateway/websocket/ws"));
     }
 
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
@@ -197,8 +198,8 @@ public class WebsocketMultipleConnectionTest {
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
-    context.setHandler(handler);
-    backendServer.setHandler(context);
+    handler.setHandler(context);
+    backendServer.setHandler(handler);
 
     // Start Server
     backendServer.start();
@@ -212,6 +213,7 @@ public class WebsocketMultipleConnectionTest {
   }
 
   private static void startGatewayServer() throws Exception {
+    setupGatewayConfig(backendServerUri.toString());
     /* use default Max threads */
     gatewayServer = new Server(new QueuedThreadPool(254));
     final ServerConnector connector = new ServerConnector(gatewayServer);
@@ -225,7 +227,12 @@ public class WebsocketMultipleConnectionTest {
     context.setContextPath("/");
     handlers.addHandler(context);
 
-    gatewayServer.setHandler(handlers);
+    /* Setup websocket handler */
+    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
+    gatewayConfig, services);
+    gatewayWebsocketHandler.setHandler(handlers);
+
+    gatewayServer.setHandler(gatewayWebsocketHandler);
 
     // Start Server
     gatewayServer.start();
@@ -237,13 +244,6 @@ public class WebsocketMultipleConnectionTest {
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
 
-    /* Setup websocket handler */
-    setupGatewayConfig(backendServerUri.toString());
-
-    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
-        gatewayConfig, services);
-    handlers.addHandler(gatewayWebsocketHandler);
-    gatewayWebsocketHandler.start();
   }
 
   /**
