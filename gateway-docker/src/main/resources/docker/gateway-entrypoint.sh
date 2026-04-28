@@ -42,10 +42,10 @@ set -o pipefail
 
 ## Helper function used to import certs into truststore
 ## Function takes cert file as argument
+## At this time ALIAS_PASSPHRASE is already initialized
 importMultipleCerts() {
   FILE=$1
   local import_failed=0
-  ALIAS_PASSPHRASE=$(/bin/cat "${KEYSTORE_PASSWORD_FILE}")
   # number of certs in the PEM file
   CERTS=$(/bin/grep 'END CERTIFICATE' "$FILE"| /usr/bin/wc -l)
   # For every cert in the PEM file, extract it and import into the JKS keystore
@@ -139,10 +139,11 @@ fi
 
 if [[ -n ${KEYSTORE_PASSWORD_FILE} ]] && [[ -f ${KEYSTORE_PASSWORD_FILE} ]]
 then
-  echo "Using provided keystore password file"
+  echo "Setting ALIAS_PASSPHRASE from provided keystore password file: ${KEYSTORE_PASSWORD_FILE}"
   ALIAS_PASSPHRASE=$(/bin/cat "${KEYSTORE_PASSWORD_FILE}" 2> /dev/null)
 else
    # If keystore password is not provided use master secret as alias passphrase
+   echo "Setting ALIAS_PASSPHRASE to MASTER_SECRET"
    ALIAS_PASSPHRASE="${MASTER_SECRET}"
 fi
 
