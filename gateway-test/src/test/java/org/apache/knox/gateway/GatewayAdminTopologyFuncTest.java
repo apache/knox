@@ -1806,8 +1806,9 @@ public class GatewayAdminTopologyFuncTest {
     String newDescriptorJSON = createDescriptor(clusterName);
 
     // Attempt to PUT the descriptor
-    given().urlEncodingEnabled(false)
-           .auth().preemptive().basic(username, password)
+    // Prevent RestAssured from double-encoding the already encoded path
+    // otherwise we would get a 400 response due to ambiguous URI path encoding
+    given().urlEncodingEnabled(false).auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
            .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()
