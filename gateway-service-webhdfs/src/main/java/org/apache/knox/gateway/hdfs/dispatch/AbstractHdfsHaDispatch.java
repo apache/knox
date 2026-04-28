@@ -27,9 +27,9 @@ import org.apache.knox.gateway.ha.dispatch.ConfigurableHADispatch;
 import org.apache.knox.gateway.hdfs.i18n.WebHdfsMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;

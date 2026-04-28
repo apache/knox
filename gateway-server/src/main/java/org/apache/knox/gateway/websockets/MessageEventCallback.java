@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import javax.websocket.CloseReason;
-import javax.websocket.PongMessage;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.PongMessage;
 
 /**
  * A simple callback interface used when evens happen on the Websocket client socket.

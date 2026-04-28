@@ -20,8 +20,8 @@ import junit.framework.TestCase;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class HSTSHandlerTest extends TestCase {

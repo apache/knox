@@ -26,8 +26,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.junit.Test;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;

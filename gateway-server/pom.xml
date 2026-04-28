@@ -63,12 +63,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
+            <artifactId>jakarta.json</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.json</groupId>
@@ -163,21 +159,21 @@
             <artifactId>jetty-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee9</groupId>
+            <artifactId>jetty-ee9-servlet</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-webapp</artifactId>
+            <groupId>org.eclipse.jetty.ee9</groupId>
+            <artifactId>jetty-ee9-webapp</artifactId>
         </dependency>
         
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
 
         <dependency>
@@ -203,10 +199,12 @@
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-core</artifactId>
+            <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-web</artifactId>
+            <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
@@ -327,12 +325,12 @@
         The need to be late in the classpath for some reason otherwise class loading issues occur.
         -->
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-annotations</artifactId>
+            <groupId>org.eclipse.jetty.ee9</groupId>
+            <artifactId>jetty-ee9-annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>apache-jsp</artifactId>
+            <groupId>org.eclipse.jetty.ee9</groupId>
+            <artifactId>jetty-ee9-apache-jsp</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
@@ -351,11 +349,11 @@
         <!-- Websocket support -->
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-api</artifactId>
+            <artifactId>jetty-websocket-jetty-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
+            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+            <artifactId>jetty-ee9-websocket-jetty-server</artifactId>
         </dependency>
 
         <dependency>
@@ -364,18 +362,18 @@
         </dependency>
 
         <dependency>
-           <groupId>javax.websocket</groupId>
-           <artifactId>javax.websocket-api</artifactId>
+           <groupId>jakarta.websocket</groupId>
+           <artifactId>jakarta.websocket-api</artifactId>
         </dependency>
 
         <dependency>
-           <groupId>org.eclipse.jetty.websocket</groupId>
-           <artifactId>javax-websocket-server-impl</artifactId>
+            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+            <artifactId>jetty-ee9-websocket-jakarta-server</artifactId>
         </dependency>
 
         <dependency>
-           <groupId>org.eclipse.jetty.websocket</groupId>
-           <artifactId>javax-websocket-client-impl</artifactId>
+            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+            <artifactId>jetty-ee9-websocket-jakarta-client</artifactId>
         </dependency>
 
         <dependency>
@@ -384,8 +382,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-client</artifactId>
+            <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+            <artifactId>jetty-ee9-websocket-jakarta-client</artifactId>
         </dependency>
 
         <dependency>

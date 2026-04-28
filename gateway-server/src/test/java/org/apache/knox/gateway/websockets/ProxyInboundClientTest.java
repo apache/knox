@@ -25,12 +25,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.PongMessage;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.PongMessage;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -130,7 +130,7 @@ public class ProxyInboundClientTest {
       }
     });
 
-    Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
+    Assert.assertThat(client, instanceOf(jakarta.websocket.Endpoint.class));
 
     Session session = container.connectToServer(client, serverUri);
 
@@ -187,7 +187,7 @@ public class ProxyInboundClientTest {
       }
     });
 
-    Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
+    Assert.assertThat(client, instanceOf(jakarta.websocket.Endpoint.class));
 
     Session session = container.connectToServer(client, serverUri);
 

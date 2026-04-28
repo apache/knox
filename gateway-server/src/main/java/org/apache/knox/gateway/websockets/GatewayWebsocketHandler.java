@@ -35,7 +35,7 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import javax.websocket.ClientEndpointConfig;
+import jakarta.websocket.ClientEndpointConfig;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;

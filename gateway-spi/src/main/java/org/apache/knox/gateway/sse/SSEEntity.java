@@ -20,7 +20,7 @@ package org.apache.knox.gateway.sse;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.AbstractHttpEntity;
 
-import javax.servlet.AsyncContext;
+import jakarta.servlet.AsyncContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

@@ -21,7 +21,7 @@ import org.apache.knox.gateway.descriptor.FilterDescriptor;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 import java.util.ArrayList;
 import java.util.List;
 

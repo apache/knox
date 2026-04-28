@@ -21,7 +21,7 @@ import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.servlet.ServletOutputStream;
+import jakarta.servlet.ServletOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 

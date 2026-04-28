@@ -22,7 +22,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

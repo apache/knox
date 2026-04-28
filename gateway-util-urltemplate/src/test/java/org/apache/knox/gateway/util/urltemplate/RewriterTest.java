@@ -23,8 +23,8 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;

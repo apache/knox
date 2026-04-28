@@ -26,8 +26,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.easymock.EasyMock;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
@@ -79,7 +79,7 @@ public class ConnectionDroppedTest {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    javax.websocket.Session session = container.connectToServer(client,
+    jakarta.websocket.Session session = container.connectToServer(client,
         proxyUri);
 
     session.getBasicRemote().sendText(message);

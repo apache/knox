@@ -29,9 +29,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.easymock.EasyMock;
 
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.net.URI;
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -77,7 +77,7 @@ public class MessageFailureTest {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    javax.websocket.Session session = container.connectToServer(client,
+    jakarta.websocket.Session session = container.connectToServer(client,
         proxyUri);
     session.getBasicRemote().sendText(bigMessage);
 
@@ -96,7 +96,7 @@ public class MessageFailureTest {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    javax.websocket.Session session = container.connectToServer(client,
+    jakarta.websocket.Session session = container.connectToServer(client,
             proxyUri);
     session.getBasicRemote().sendText(bigMessage);
 
@@ -115,7 +115,7 @@ public class MessageFailureTest {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    javax.websocket.Session session = container.connectToServer(client,
+    jakarta.websocket.Session session = container.connectToServer(client,
         proxyUri);
     session.getBasicRemote().sendText(message);
 

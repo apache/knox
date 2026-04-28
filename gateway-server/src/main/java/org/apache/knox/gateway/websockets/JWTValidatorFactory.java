@@ -31,7 +31,7 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.net.HttpCookie;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;

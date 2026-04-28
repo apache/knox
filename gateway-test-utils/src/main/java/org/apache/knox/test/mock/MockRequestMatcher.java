@@ -25,8 +25,8 @@ import org.apache.http.message.BasicNameValuePair;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;

@@ -26,11 +26,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.WebSocketContainer;
 
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -58,7 +58,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
   private Session frontendSession;
 
   /* Session between the backend (outbound) and Knox */
-  private javax.websocket.Session backendSession;
+  private jakarta.websocket.Session backendSession;
 
   private WebSocketContainer container;
 
@@ -313,7 +313,7 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
       }
 
       @Override
-      public void onMessagePong(javax.websocket.PongMessage message, Object session) {
+      public void onMessagePong(jakarta.websocket.PongMessage message, Object session) {
         LOG.logMessage("[From Backend <---]: PING");
         remoteLock.lock();
         final RemoteEndpoint remote = getRemote();

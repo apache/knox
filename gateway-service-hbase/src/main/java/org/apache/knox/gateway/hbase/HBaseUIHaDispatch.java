@@ -19,8 +19,8 @@ package org.apache.knox.gateway.hbase;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.ha.dispatch.DefaultHaDispatch;

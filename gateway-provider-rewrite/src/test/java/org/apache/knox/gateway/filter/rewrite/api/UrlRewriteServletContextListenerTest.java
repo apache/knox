@@ -25,7 +25,7 @@ import org.eclipse.jetty.servlet.ServletTester;
 import org.junit.After;
 import org.junit.Before;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.EnumSet;

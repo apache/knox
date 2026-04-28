@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.filter;
 
 import jakarta.activation.MimeType;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

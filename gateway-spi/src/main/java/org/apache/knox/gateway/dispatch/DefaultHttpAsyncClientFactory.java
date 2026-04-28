@@ -35,7 +35,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.metrics.MetricsService;
 
 import javax.net.ssl.SSLContext;
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 
 public class DefaultHttpAsyncClientFactory extends DefaultHttpClientFactory implements HttpAsyncClientFactory {
 

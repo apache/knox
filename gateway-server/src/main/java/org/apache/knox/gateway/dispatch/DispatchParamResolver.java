@@ -19,8 +19,8 @@ package org.apache.knox.gateway.dispatch;
 
 import org.apache.knox.gateway.util.urltemplate.Params;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

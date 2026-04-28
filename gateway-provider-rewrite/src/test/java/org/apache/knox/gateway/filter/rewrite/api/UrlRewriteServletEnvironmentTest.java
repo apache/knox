@@ -20,7 +20,7 @@ package org.apache.knox.gateway.filter.rewrite.api;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import java.net.URL;
 

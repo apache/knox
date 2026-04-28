@@ -20,8 +20,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
