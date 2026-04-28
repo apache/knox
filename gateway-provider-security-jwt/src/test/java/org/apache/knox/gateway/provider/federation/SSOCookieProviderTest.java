@@ -17,24 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
-import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_HEADER;
-import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_VALUE;
-import static org.junit.Assert.fail;
-
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.Principal;
-import java.time.Instant;
-import java.util.Properties;
-import java.util.Date;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -45,10 +28,24 @@ import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_HEADER;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.XHR_VALUE;
+import static org.junit.Assert.fail;
 
 public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(SSOCookieProviderTest.class);
