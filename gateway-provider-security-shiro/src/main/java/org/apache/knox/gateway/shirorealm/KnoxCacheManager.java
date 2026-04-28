@@ -109,18 +109,18 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
 
   private org.ehcache.CacheManager ensureCacheManager() throws MalformedURLException {
     if (manager == null) {
-      XmlConfiguration xmlConfiguration = getConfiguration();
-      manager = CacheManagerBuilder.newCacheManager(xmlConfiguration);
+      org.ehcache.config.Configuration currentConfig = getConfiguration();
+      manager = CacheManagerBuilder.newCacheManager(currentConfig);
       try {
         manager.init();
       } catch (StateTransitionException e) {
         if(containsOverlappingFileLockException(e)) {
           LOG.resolvePersistenceDirLockError(e.getMessage());
-          this.resolveLockConflict(xmlConfiguration);
+          currentConfig = this.resolveLockConflict(currentConfig);
           if(manager.getStatus() != Status.UNINITIALIZED) {
             manager.close();
           }
-          manager = CacheManagerBuilder.newCacheManager(xmlConfiguration);
+          manager = CacheManagerBuilder.newCacheManager(currentConfig);
           manager.init();
         } else {
           throw e;
@@ -148,22 +148,25 @@ public class KnoxCacheManager implements org.apache.shiro.cache.CacheManager, In
    * This is necessary when multiple instances of the cache manager are created with the same configuration file,
    * which can lead to lock conflicts.
    *
-   * @param xmlConfiguration the XML configuration of the cache manager
+   * @param configuration the configuration of the cache manager
    */
-  private void resolveLockConflict(XmlConfiguration xmlConfiguration) {
-    Optional<ServiceCreationConfiguration<?,?>> serviceConfig = xmlConfiguration.getServiceCreationConfigurations().stream()
-            .filter(service -> service instanceof CacheManagerPersistenceConfiguration).findFirst();
+  private org.ehcache.config.Configuration resolveLockConflict(org.ehcache.config.Configuration configuration) {
+    Optional<ServiceCreationConfiguration<?,?>> serviceConfig = configuration.getServiceCreationConfigurations().stream()
+    .filter(service -> service instanceof CacheManagerPersistenceConfiguration).findFirst();
 
     if (serviceConfig.isPresent()) {
       CacheManagerPersistenceConfiguration cachePersistenceConfig = (CacheManagerPersistenceConfiguration) serviceConfig.get();
       String path = cachePersistenceConfig.getRootDirectory().getPath();
-      xmlConfiguration.getServiceCreationConfigurations().remove(cachePersistenceConfig);
       String newFolder = DEFAULT_FOLDER_NAME + UUID.randomUUID().toString().substring(0, 4);
       String newRootDirectory = Paths.get(path).getParent().resolve(newFolder).toAbsolutePath().toString();
-      xmlConfiguration.getServiceCreationConfigurations()
-              .add(new CacheManagerPersistenceConfiguration(
-                      new File(newRootDirectory)));
+
+      // Use the derive() API to safely replace the immutable persistence configuration
+      return configuration.derive()
+      .withoutServices(CacheManagerPersistenceConfiguration.class)
+      .withService(new CacheManagerPersistenceConfiguration(new File(newRootDirectory)))
+      .build();
     }
+    return configuration;
   }
 
   private URL getResource() throws MalformedURLException {
