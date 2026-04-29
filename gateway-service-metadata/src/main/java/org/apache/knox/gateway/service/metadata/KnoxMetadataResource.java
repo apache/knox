@@ -69,6 +69,7 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.TruststorePasswordSetter;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
 import com.kstruct.gethostname4j.Hostname;
@@ -173,11 +174,16 @@ public class KnoxMetadataResource {
 
   private Certificate[] getPublicCertificates() {
     try {
-      return X509CertificateUtil.fetchPublicCertsFromServer(request.getRequestURL().toString(), true, null);
+      final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (gatewayServices != null) {
+        final AliasService aliasService = gatewayServices.getService(ServiceType.ALIAS_SERVICE);
+        char[] trustStorePassword = aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS);
+        return X509CertificateUtil.fetchPublicCertsFromServer(request.getRequestURL().toString(), trustStorePassword, true, null);
+      }
     } catch (Exception e) {
       LOG.failedToFetchPublicCert(e.getMessage(), e);
-      return null;
     }
+    return null;
   }
 
   private void generateCertificatePem(Certificate[] certificateChain, GatewayConfig gatewayConfig) {

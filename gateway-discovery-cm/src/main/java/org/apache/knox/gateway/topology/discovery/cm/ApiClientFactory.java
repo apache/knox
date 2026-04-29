@@ -21,28 +21,26 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.util.TruststorePasswordSetter;
 
 import java.security.KeyStore;
 
 public class ApiClientFactory {
 
     private static final ClouderaManagerServiceDiscoveryMessages LOG = MessagesFactory.get(ClouderaManagerServiceDiscoveryMessages.class);
-    static final String TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY = "javax.net.ssl.trustStorePassword";
-    public static final String TRUSTSTORE_PASSWORD_ALIAS = "cm.discovery.trustStorePassword";
 
     public static DiscoveryApiClient getApiClient(final GatewayConfig gatewayConfig, final ServiceDiscoveryConfig discoveryConfig,
                                                   final AliasService aliasService, final KeyStore truststore) {
+        final char[] trustStorePassword;
         try {
-            final char[] trustStorePassword = aliasService.getPasswordFromAliasForGateway(TRUSTSTORE_PASSWORD_ALIAS);
-            if (trustStorePassword != null && trustStorePassword.length > 0) {
-                System.setProperty(TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, new String(trustStorePassword));
-            }
-            return new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
+            trustStorePassword = aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS);
         } catch (AliasServiceException e) {
             LOG.clouderaManagerApiClientBuildError(e);
             throw new ServiceDiscoveryException("Unable to retrieve CM service discovery truststore password", e);
-        } finally {
-            System.clearProperty(TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY);
+        }
+
+        try (TruststorePasswordSetter ignored = new TruststorePasswordSetter(trustStorePassword)) {
+            return new DiscoveryApiClient(gatewayConfig, discoveryConfig, aliasService, truststore);
         }
     }
 }

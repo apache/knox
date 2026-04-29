@@ -232,11 +232,14 @@ public class X509CertificateUtil {
     }
   }
 
-  public static X509Certificate[] fetchPublicCertsFromServer(String serverUrl, boolean forceReturnCert, PrintStream out) throws Exception {
-      final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init((KeyStore) null);
-      final X509TrustManager defaultTrustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
-      final CertificateChainAwareTrustManager trustManagerWithCertificateChain = new CertificateChainAwareTrustManager(defaultTrustManager);
+    public static X509Certificate[] fetchPublicCertsFromServer(String serverUrl, char[] trustStorePassword, boolean forceReturnCert, PrintStream out) throws Exception {
+      CertificateChainAwareTrustManager trustManagerWithCertificateChain;
+      try (TruststorePasswordSetter ignored = new TruststorePasswordSetter(trustStorePassword)) {
+          final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+          trustManagerFactory.init((KeyStore) null);
+          final X509TrustManager defaultTrustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
+          trustManagerWithCertificateChain = new CertificateChainAwareTrustManager(defaultTrustManager);
+      }
       final SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, new TrustManager[] { trustManagerWithCertificateChain }, null);
 

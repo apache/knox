@@ -21,6 +21,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.util.TruststorePasswordSetter;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -77,9 +78,9 @@ public class ApiClientFactoryTest {
         EasyMock.expect(serviceDiscoveryConfig.getPasswordAlias()).andReturn("myCmPasswordAlias").anyTimes();
         final AliasService aliasService = EasyMock.createMock(AliasService.class);
         if (shouldSetSystemProperty) {
-            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(trustStorePassword.toCharArray()).anyTimes();
+            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(trustStorePassword.toCharArray()).anyTimes();
         } else {
-            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
         }
         EasyMock.expect(aliasService.getPasswordFromAliasForGateway("myCmPasswordAlias")).andReturn("myCmPassword".toCharArray()).anyTimes();
         final KeyStore trustStore = EasyMock.createMock(KeyStore.class);
@@ -88,13 +89,13 @@ public class ApiClientFactoryTest {
         ApiClientFactory.getApiClient(gatewayConfig, serviceDiscoveryConfig, aliasService, trustStore);
 
         if (shouldSetSystemProperty && StringUtils.isNotBlank(trustStorePassword)) {
-            Assert.assertEquals(ApiClientFactory.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastSetKey);
+            Assert.assertEquals(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastSetKey);
             Assert.assertEquals(trustStorePassword, testProps.lastSetValue);
-            Assert.assertEquals(ApiClientFactory.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
+            Assert.assertEquals(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
         } else {
             Assert.assertNull(testProps.lastSetKey);
             Assert.assertNull(testProps.lastSetValue);
-            Assert.assertEquals(ApiClientFactory.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
+            Assert.assertEquals(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
         }
     }
 

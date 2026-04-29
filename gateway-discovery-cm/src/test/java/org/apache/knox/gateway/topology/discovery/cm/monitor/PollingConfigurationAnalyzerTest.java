@@ -32,9 +32,9 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
-import org.apache.knox.gateway.topology.discovery.cm.ApiClientFactory;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
+import org.apache.knox.gateway.util.TruststorePasswordSetter;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Test;
@@ -363,7 +363,7 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.replay(ts, ccms, gatewayStatusService, gws);
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
     EasyMock.replay(aliasService);
 
     try {
@@ -540,7 +540,7 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.replay(configCache);
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
     EasyMock.replay(aliasService);
 
     if (isKnoxGatewayReady) {

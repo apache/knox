@@ -64,6 +64,10 @@
             <artifactId>gateway-util-configinjector</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-util-common</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.cloudera.api.swagger</groupId>
             <artifactId>cloudera-manager-api-swagger</artifactId>
         </dependency>
