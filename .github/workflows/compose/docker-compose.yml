@@ -37,27 +37,32 @@ services:
 
   knox:
     image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
-    command: /gateway.sh
+    command: sh -c "cp -a /knox-runtime/knoxshell/. /shared-knoxshell/ && /gateway.sh"
     volumes:
 #      - ./topologies:/knox-runtime/conf/topologies
       - ./logs:/knox-runtime/logs
-#      - ./knoxshell:/knoxshell
+      - knoxshell-vol:/shared-knoxshell
     depends_on:
       - ldap
 
   tests:
-    image: python:3.9-slim
+    image: python:3.9-bullseye
     working_dir: /tests
     volumes:
       - ../tests:/tests
+      - knoxshell-vol:/knoxshell
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >
-      bash -c "pip install -r requirements.txt 
+      bash -c "apt-get update && apt-get install -y openjdk-17-jre
+      && pip install -r requirements.txt 
       && echo 'Waiting for knox...' 
       && sleep 30 
       && pytest --junitxml=test-results.xml"
     depends_on:
       - knox
+
+volumes:
+  knoxshell-vol:
 
 
