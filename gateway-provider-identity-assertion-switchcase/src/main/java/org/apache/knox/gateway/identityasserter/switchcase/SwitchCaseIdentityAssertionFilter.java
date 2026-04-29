@@ -21,8 +21,8 @@ import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAsse
 import org.apache.knox.gateway.security.GroupPrincipal;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 import java.util.Locale;
 import java.util.Set;
 

@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.webshell;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,7 +36,9 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.websockets.JWTValidator;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
+import org.eclipse.jetty.websocket.api.Callback;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.StatusCode;
 
 public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     private Session session;
@@ -61,7 +64,7 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
 
     @SuppressWarnings("PMD.DoNotUseThreads")
     @Override
-    public void onWebSocketConnect(final Session session) {
+    public void onWebSocketOpen(final Session session) {
         this.session = session;
         connectionInfo.connect();
         pool.execute(this::blockingReadFromHost);
@@ -111,18 +114,28 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void transToClient(String message){
-        try {
-            session.getRemote().sendString(message);
-        } catch (IOException e){
+        if (session == null) {
+            LOG.onError("Cannot send message to client; session is null");
+            cleanup();
+            return;
+        }
+        // In Jetty 12 the send is asynchronous: report send failures via the Callback,
+        // preserving the old IOException-based error handling semantics.
+        session.sendText(message, Callback.from(
+        () -> { /* success: nothing to do */ },
+        t -> {
             LOG.onError("Error sending message to client");
             cleanup();
-        }
+        }));
     }
 
     @Override
-    public void onWebSocketBinary(final byte[] payload, final int offset, final int length) {
-        throw new UnsupportedOperationException(
-                "Websocket for binary messages is not supported at this time.");
+    public void onWebSocketBinary(final ByteBuffer payload, final Callback callback) {
+        // Binary is not supported for webshell sessions. Complete the callback so the
+        // Jetty 12 demand loop can surface the error and close the connection cleanly
+        // rather than throwing from the listener (which would leave demand stalled).
+        callback.fail(new UnsupportedOperationException(
+        "Websocket for binary messages is not supported at this time."));
     }
 
     @Override
@@ -166,8 +179,8 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
     }
 
     private void cleanup() {
-        if(session != null && session.isOpen()) {
-            session.close();
+        if (session != null && session.isOpen()) {
+            session.close(StatusCode.NORMAL, null, Callback.NOOP);
             session = null;
         }
         connectionInfo.disconnect();

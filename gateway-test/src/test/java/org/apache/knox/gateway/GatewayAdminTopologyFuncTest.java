@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 import io.restassured.http.ContentType;
 import com.mycila.xmltool.XMLDoc;
@@ -1806,7 +1806,9 @@ public class GatewayAdminTopologyFuncTest {
     String newDescriptorJSON = createDescriptor(clusterName);
 
     // Attempt to PUT the descriptor
-    given().auth().preemptive().basic(username, password)
+    // Prevent RestAssured from double-encoding the already encoded path
+    // otherwise we would get a 400 response due to ambiguous URI path encoding
+    given().urlEncodingEnabled(false).auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
            .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()

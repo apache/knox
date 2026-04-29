@@ -17,33 +17,31 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
+import org.eclipse.jetty.websocket.server.ServerWebSocketContainer;
+
+import java.util.function.Supplier;
 
 /**
- * A Mock websocket handler that just Echos messages
+ * A websocket handler that just Echos messages
  */
-class BigEchoSocketHandler extends WebSocketHandler implements WebSocketCreator {
-  private final WebSocketAdapter socket;
+class BigEchoSocketHandler extends AbstractWebSocketHandler {
+  private final Supplier<Session.Listener> socketSupplier;
 
-  BigEchoSocketHandler(final WebSocketAdapter socket) {
-    this.socket = socket;
+  BigEchoSocketHandler(final Supplier<Session.Listener> socketSupplier) {
+    this.socketSupplier = socketSupplier;
   }
 
   @Override
-  public void configure(WebSocketServletFactory factory) {
-    factory.getPolicy().setMaxTextMessageSize(66000);
-    factory.getPolicy().setMaxTextMessageBufferSize(66000);
-    factory.setCreator(this);
+  protected void configure(ServerWebSocketContainer container) {
+    container.setMaxTextMessageSize(66000);
   }
 
   @Override
-  public Object createWebSocket(ServletUpgradeRequest req,
-                                ServletUpgradeResponse resp) {
-    return socket;
+  public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) {
+    return socketSupplier.get();
   }
 }

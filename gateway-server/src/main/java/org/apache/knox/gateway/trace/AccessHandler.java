@@ -24,6 +24,8 @@ import org.eclipse.jetty.server.RequestLog;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 
+import java.util.concurrent.TimeUnit;
+
 public class AccessHandler extends AbstractLifeCycle implements RequestLog {
   private static final Logger log = LogManager.getLogger( "org.apache.knox.gateway.access" );
 
@@ -32,20 +34,21 @@ public class AccessHandler extends AbstractLifeCycle implements RequestLog {
     if( log.isTraceEnabled() ) {
       StringBuilder sb = new StringBuilder();
       TraceUtil.appendCorrelationContext(sb);
+      long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - request.getBeginNanoTime());
       sb.append('|')
-          .append(request.getRemoteAddr())
-          .append('|')
-          .append(request.getMethod())
-          .append('|')
-          .append(request.getHttpURI())
-          .append('|')
-          .append(request.getContentLength())
-          .append('|')
-          .append(response.getStatus())
-          .append('|')
-          .append(response.getContentCount())
-          .append('|')
-          .append(System.currentTimeMillis() - request.getTimeStamp());
+      .append(Request.getRemoteAddr(request)) // Static helper or request.getConnectionMetaData().getRemoteSocketAddress()
+      .append('|')
+      .append(request.getMethod())
+      .append('|')
+      .append(request.getHttpURI().toString())
+      .append('|')
+      .append(request.getLength()) // .getContentLength() is now .getLength()
+      .append('|')
+      .append(response.getStatus())
+      .append('|')
+      .append(Response.getContentBytesWritten(response)) // Use static helper for bytes written
+      .append('|')
+      .append(durationMillis);
       log.trace(sb);
     }
   }

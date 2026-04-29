@@ -17,16 +17,16 @@
  */
 package org.apache.knox.test.mock;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterRegistration;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
-import javax.servlet.SessionCookieConfig;
-import javax.servlet.SessionTrackingMode;
-import javax.servlet.descriptor.JspConfigDescriptor;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRegistration;
+import jakarta.servlet.SessionCookieConfig;
+import jakarta.servlet.SessionTrackingMode;
+import jakarta.servlet.descriptor.JspConfigDescriptor;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -97,26 +97,7 @@ public class MockServletContext implements ServletContext {
   }
 
   @Override
-  public Servlet getServlet( String s ) throws ServletException {
-    return null;
-  }
-
-  @Override
-  public Enumeration<Servlet> getServlets() {
-    return null;
-  }
-
-  @Override
-  public Enumeration<String> getServletNames() {
-    return null;
-  }
-
-  @Override
   public void log( String s ) {
-  }
-
-  @Override
-  public void log( Exception e, String s ) {
   }
 
   @Override
@@ -183,6 +164,11 @@ public class MockServletContext implements ServletContext {
 
   @Override
   public ServletRegistration.Dynamic addServlet( String s, Class<? extends Servlet> aClass ) {
+    return null;
+  }
+
+  @Override
+  public ServletRegistration.Dynamic addJspFile(String s, String s1) {
     return null;
   }
 
@@ -284,5 +270,35 @@ public class MockServletContext implements ServletContext {
   @Override
   public String getVirtualServerName() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getSessionTimeout() {
+    return 0;
+  }
+
+  @Override
+  public void setSessionTimeout(int i) {
+
+  }
+
+  @Override
+  public String getRequestCharacterEncoding() {
+    return "";
+  }
+
+  @Override
+  public void setRequestCharacterEncoding(String s) {
+
+  }
+
+  @Override
+  public String getResponseCharacterEncoding() {
+    return "";
+  }
+
+  @Override
+  public void setResponseCharacterEncoding(String s) {
+
   }
 }

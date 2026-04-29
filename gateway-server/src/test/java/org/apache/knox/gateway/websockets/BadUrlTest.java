@@ -43,15 +43,15 @@ import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -149,19 +149,25 @@ public class BadUrlTest {
   }
 
   private static void startGatewayServer() throws Exception {
+    setupGatewayConfig(BACKEND);
     gatewayServer = new Server();
     final ServerConnector connector = new ServerConnector(gatewayServer);
     gatewayServer.addConnector(connector);
 
     /* workaround so we can add our handler later at runtime */
-    HandlerCollection handlers = new HandlerCollection(true);
+    ContextHandlerCollection handlers = new ContextHandlerCollection(true);
 
     /* add some initial handlers */
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
     handlers.addHandler(context);
 
-    gatewayServer.setHandler(handlers);
+    /* Setup websocket handler */
+    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
+    gatewayConfig, services);
+    gatewayWebsocketHandler.setHandler(handlers);
+
+    gatewayServer.setHandler(gatewayWebsocketHandler);
 
     // Start Server
     gatewayServer.start();
@@ -172,14 +178,6 @@ public class BadUrlTest {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
-    /* Setup websocket handler */
-    setupGatewayConfig(BACKEND);
-
-    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
-        gatewayConfig, services);
-    handlers.addHandler(gatewayWebsocketHandler);
-    gatewayWebsocketHandler.start();
   }
 
   /*

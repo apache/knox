@@ -19,13 +19,13 @@ package org.apache.knox.gateway.filter.rewrite.api;
 
 import org.apache.knox.test.mock.MockInteraction;
 import org.apache.knox.test.mock.MockServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlet.ServletTester;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletTester;
 import org.junit.After;
 import org.junit.Before;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.EnumSet;

@@ -28,7 +28,7 @@ import org.apache.knox.gateway.util.GroupUtils;
 import org.apache.knox.gateway.util.StringUtils;
 
 import javax.security.auth.Subject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;

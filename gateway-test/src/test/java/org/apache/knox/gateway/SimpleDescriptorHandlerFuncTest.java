@@ -168,9 +168,11 @@ public class SimpleDescriptorHandlerFuncTest {
       EasyMock.replay(testDescriptor);
 
       // Try setting up enough of the GatewayServer to support the test...
-      GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+
       List<InetSocketAddress> gatewayAddress = new ArrayList<>();
       gatewayAddress.add(new InetSocketAddress(0));
+      GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getHttpServerResponseHeaderBuffer()).andReturn(8*1024*1024).anyTimes();
       EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
       EasyMock.expect(config.getGatewayConfDir()).andReturn(testConfDir.getAbsolutePath()).anyTimes();
       EasyMock.expect(config.getGatewayDataDir()).andReturn(testDataDir.getAbsolutePath()).anyTimes();

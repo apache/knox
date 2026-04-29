@@ -17,8 +17,8 @@
  */
 package org.apache.knox.test.mock;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 import java.util.Enumeration;
 
 public class MockFilterConfig implements FilterConfig {

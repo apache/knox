@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.dispatch;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 
 /**
  * KNOX-526. Need to keep this class around for backward compatibility of deployed

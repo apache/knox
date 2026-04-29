@@ -19,7 +19,7 @@ package org.apache.knox.gateway.filter.rewrite.impl;
 
 import org.apache.knox.gateway.filter.GatewayResponseWrapper;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Locale;

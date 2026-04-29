@@ -16,12 +16,12 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import javax.websocket.CloseReason;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.Session;
-import javax.websocket.PongMessage;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.Session;
+import jakarta.websocket.PongMessage;
 
 /**
  * A Websocket client with callback which is not annotation based.
@@ -52,7 +52,7 @@ public class ProxyInboundClient extends Endpoint {
    * @param config  the configuration used to configure this endpoint.
    */
   @Override
-  public void onOpen(final javax.websocket.Session backendSession, final EndpointConfig config) {
+  public void onOpen(final jakarta.websocket.Session backendSession, final EndpointConfig config) {
     this.session = backendSession;
     this.config = config;
 
@@ -105,13 +105,13 @@ public class ProxyInboundClient extends Endpoint {
   }
 
   @Override
-  public void onClose(final javax.websocket.Session backendSession, final CloseReason closeReason) {
+  public void onClose(final jakarta.websocket.Session backendSession, final CloseReason closeReason) {
     callback.onConnectionClose(closeReason);
     this.session = null;
   }
 
   @Override
-  public void onError(final javax.websocket.Session backendSession, final Throwable cause) {
+  public void onError(final jakarta.websocket.Session backendSession, final Throwable cause) {
     callback.onError(cause);
     this.session = null;
   }

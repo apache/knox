@@ -16,8 +16,8 @@
  */
 package org.apache.knox.gateway.servlet;
 
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
 
 public abstract class SynchronousServletInputStreamAdapter extends ServletInputStream {
 

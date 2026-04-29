@@ -19,7 +19,7 @@ package org.apache.knox.gateway.service.admin;
 
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.config.GatewayConfig;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.easymock.EasyMock;
 import org.junit.Test;

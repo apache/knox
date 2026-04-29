@@ -71,10 +71,11 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
@@ -1674,6 +1675,9 @@ public class GatewayBasicFuncTest {
     LOG_EXIT();
   }
 
+  // cannot pass an ambiguous / (encoded as either %2F or %252F) as part of the path section of the URI over HTTP
+  // any more with Servlet 6, see https://github.com/jetty/jetty.project/issues/11890
+  @Ignore //jetty-12-upgrade-ignore
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testEncodedForwardSlash() throws IOException {
     LOG_ENTER();

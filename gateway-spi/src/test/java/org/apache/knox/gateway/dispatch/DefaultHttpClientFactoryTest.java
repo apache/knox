@@ -39,8 +39,8 @@ import org.apache.knox.gateway.services.security.KeystoreService;
 import org.junit.Test;
 
 import javax.net.ssl.SSLContext;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;

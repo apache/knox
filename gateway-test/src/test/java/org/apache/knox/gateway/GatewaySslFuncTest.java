@@ -37,7 +37,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.FileUtils;

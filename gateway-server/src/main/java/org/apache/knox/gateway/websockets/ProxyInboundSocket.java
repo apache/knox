@@ -17,12 +17,12 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import javax.websocket.ClientEndpoint;
-import javax.websocket.CloseReason;
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
 
 /**
  * A Websocket client with callback.
@@ -43,7 +43,7 @@ public class ProxyInboundSocket {
 
   /* Client methods */
   @OnOpen
-  public void onClientOpen(final javax.websocket.Session backendSession) {
+  public void onClientOpen(final jakarta.websocket.Session backendSession) {
 
     callback.onConnectionOpen(backendSession);
 
@@ -61,14 +61,14 @@ public class ProxyInboundSocket {
 
   @OnMessage(maxMessageSize = Integer.MAX_VALUE)
   public void onBackendMessage(final String message,
-      final javax.websocket.Session session) {
+      final jakarta.websocket.Session session) {
     callback.onMessageText(message, session);
 
   }
 
   @OnMessage(maxMessageSize = Integer.MAX_VALUE)
   public void onBackendMessageBinary(final byte[] message, final boolean last,
-      final javax.websocket.Session session) {
+      final jakarta.websocket.Session session) {
 
     callback.onMessageBinary(message, last, session);
 

@@ -22,8 +22,8 @@ import java.util.Enumeration;
 import java.util.List;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;

@@ -26,11 +26,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.easymock.EasyMock;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +80,7 @@ public class ConnectionDroppedTest {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    javax.websocket.Session session = container.connectToServer(client,
+    jakarta.websocket.Session session = container.connectToServer(client,
         proxyUri);
 
     session.getBasicRemote().sendText(message);
@@ -95,7 +96,7 @@ public class ConnectionDroppedTest {
 
     /* start backend with Echo socket */
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new BadSocket());
+    BadSocket::new);
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
@@ -115,13 +116,15 @@ public class ConnectionDroppedTest {
 
   private static void startProxy() throws Exception {
     GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gatewayConfig);
     proxy = new Server();
     proxyConnector = new ServerConnector(proxy);
     proxy.addConnector(proxyConnector);
 
     /* start Knox with WebsocketAdapter to test */
+    final ExecutorService pool = Executors.newFixedThreadPool(10);
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new ProxyWebSocketAdapter(serverUri, Executors.newFixedThreadPool(10), gatewayConfig));
+    () -> new ProxyWebSocketAdapter(serverUri, pool, gatewayConfig));
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");

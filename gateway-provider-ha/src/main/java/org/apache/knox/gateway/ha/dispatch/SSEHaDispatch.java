@@ -34,10 +34,10 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.sse.SSEDispatch;
 import org.apache.knox.gateway.sse.SSEResponse;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;

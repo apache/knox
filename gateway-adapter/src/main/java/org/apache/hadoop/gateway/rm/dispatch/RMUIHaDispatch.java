@@ -16,7 +16,7 @@
  */
 package org.apache.hadoop.gateway.rm.dispatch;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 /**
  * An adapter class that delegate calls to {@link org.apache.knox.gateway.rm.dispatch.RMUIHaDispatch}

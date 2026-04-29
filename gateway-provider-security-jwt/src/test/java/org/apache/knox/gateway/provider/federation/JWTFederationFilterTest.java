@@ -24,10 +24,10 @@ import static org.junit.Assert.assertEquals;
 import java.util.Date;
 import java.util.Properties;
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;

@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.websockets;
 
+import jakarta.websocket.ClientEndpointConfig;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -25,12 +26,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.PongMessage;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.PongMessage;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -130,9 +131,9 @@ public class ProxyInboundClientTest {
       }
     });
 
-    Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
-
-    Session session = container.connectToServer(client, serverUri);
+    Assert.assertThat(client, instanceOf(jakarta.websocket.Endpoint.class));
+    ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
+    Session session = container.connectToServer(client, clientConfig, serverUri);
 
     session.getBasicRemote().sendText(textMessage);
 
@@ -187,9 +188,9 @@ public class ProxyInboundClientTest {
       }
     });
 
-    Assert.assertThat(client, instanceOf(javax.websocket.Endpoint.class));
-
-    Session session = container.connectToServer(client, serverUri);
+    Assert.assertThat(client, instanceOf(jakarta.websocket.Endpoint.class));
+    ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
+    Session session = container.connectToServer(client, clientConfig, serverUri);
 
     session.getBasicRemote().sendBinary(binarymessage);
 

@@ -17,9 +17,9 @@
  */
 package org.apache.knox.gateway.util;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestWrapper;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Provides useful methods to fetch different parts from {@link ServletRequest} and {@link HttpServletRequest} interfaces.

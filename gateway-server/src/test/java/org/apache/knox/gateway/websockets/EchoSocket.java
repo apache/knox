@@ -17,55 +17,51 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import java.io.IOException;
-
-import org.eclipse.jetty.io.RuntimeIOException;
-import org.eclipse.jetty.util.BufferUtil;
-import org.eclipse.jetty.websocket.api.BatchMode;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+import java.nio.ByteBuffer;
+import org.eclipse.jetty.websocket.api.Callback;
+import org.eclipse.jetty.websocket.api.Session;
 
 /**
  * A simple Echo socket
  */
-public class EchoSocket extends WebSocketAdapter {
+public class EchoSocket extends Session.Listener.AbstractAutoDemanding {
+
+  private Session session;
 
   @Override
-  public void onWebSocketBinary(byte[] payload, int offset, int len) {
-    if (isNotConnected()) {
+  public void onWebSocketOpen(Session session) {
+    super.onWebSocketOpen(session);
+    this.session = session;
+  }
+
+  /**
+   * Jetty 12 Native API uses ByteBuffer for binary frames.
+   * The callback must be completed (which happens automatically by passing it to sendBinary)
+   * to signal Jetty to read the next frame.
+   */
+  @Override
+  public void onWebSocketBinary(ByteBuffer payload, Callback callback) {
+    if (session == null || !session.isOpen()) {
+      callback.fail(new IllegalStateException("Session closed"));
       return;
     }
 
-    try {
-      RemoteEndpoint remote = getRemote();
-      remote.sendBytes(BufferUtil.toBuffer(payload, offset, len), null);
-      if (remote.getBatchMode() == BatchMode.ON) {
-        remote.flush();
-      }
-    } catch (IOException x) {
-      throw new RuntimeIOException(x);
+    // Echo the binary payload back to the client
+    session.sendBinary(payload, callback);
+  }
+
+  @Override
+  public void onWebSocketText(String message) {
+    if (session == null || !session.isOpen()) {
+      return;
     }
+
+    // Echo the text message back to the client
+    session.sendText(message, Callback.NOOP);
   }
 
   @Override
   public void onWebSocketError(Throwable cause) {
     throw new RuntimeException(cause);
-  }
-
-  @Override
-  public void onWebSocketText(String message) {
-    if (isNotConnected()) {
-      return;
-    }
-
-    try {
-      RemoteEndpoint remote = getRemote();
-      remote.sendString(message, null);
-      if (remote.getBatchMode() == BatchMode.ON) {
-        remote.flush();
-      }
-    } catch (IOException x) {
-      throw new RuntimeIOException(x);
-    }
   }
 }

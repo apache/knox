@@ -18,8 +18,8 @@ package org.apache.hadoop.gateway.hdfs.dispatch;
 
 import org.apache.http.HttpEntity;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 /**

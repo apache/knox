@@ -19,7 +19,7 @@ package org.apache.knox.gateway.dispatch;
 
 import org.apache.http.client.HttpClient;
 
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 
 public interface HttpClientFactory {
   HttpClient createHttpClient( FilterConfig filterConfig );

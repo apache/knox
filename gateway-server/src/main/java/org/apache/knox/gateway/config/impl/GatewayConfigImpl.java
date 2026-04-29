@@ -52,7 +52,7 @@ import org.apache.knox.gateway.dto.HomePageProfile;
 import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
@@ -1533,12 +1533,12 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public int getJettyMaxFormContentSize() {
-    return getInt(JETTY_MAX_FORM_CONTENT_SIZE, ContextHandler.DEFAULT_MAX_FORM_CONTENT_SIZE);
+    return getInt(JETTY_MAX_FORM_CONTENT_SIZE, ServletContextHandler.DEFAULT_MAX_FORM_CONTENT_SIZE);
   }
 
   @Override
   public int getJettyMaxFormKeys() {
-    return getInt(JETTY_MAX_FORM_KEYS, ContextHandler.DEFAULT_MAX_FORM_KEYS);
+    return getInt(JETTY_MAX_FORM_KEYS, ServletContextHandler.DEFAULT_MAX_FORM_KEYS);
   }
 
   @Override

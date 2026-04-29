@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.jersey;
 
 import org.glassfish.jersey.servlet.spi.FilterUrlMappingsProvider;
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 import java.util.Collections;
 import java.util.List;
 

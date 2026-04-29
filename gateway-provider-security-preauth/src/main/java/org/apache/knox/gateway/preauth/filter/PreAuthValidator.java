@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.preauth.filter;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface PreAuthValidator {
   boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws

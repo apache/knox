@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.preauth.filter;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.util.IpAddressValidator;
 

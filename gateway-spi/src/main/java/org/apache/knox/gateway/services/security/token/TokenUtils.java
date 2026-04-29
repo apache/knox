@@ -27,8 +27,8 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 import java.security.interfaces.RSAPublicKey;
 import java.util.LinkedHashMap;
 

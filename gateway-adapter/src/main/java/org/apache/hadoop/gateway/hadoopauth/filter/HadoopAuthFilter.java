@@ -16,8 +16,8 @@
  */
 package org.apache.hadoop.gateway.hadoopauth.filter;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 import java.util.Properties;
 
 /**
