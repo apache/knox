@@ -32,18 +32,25 @@ public class BackendFactory {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     public static LdapBackend createBackend(String backendName, Map<String, String> config) throws Exception {
-        // Use ServiceLoader to discover all available backends (built-in and external plugins)
-        ServiceLoader<LdapBackend> loader = ServiceLoader.load(LdapBackend.class);
-        for (LdapBackend backend : loader) {
-            if (backend.getName().equalsIgnoreCase(backendName)) {
-                LOG.ldapBackendLoading(backend.getName(), "ServiceLoader");
-                backend.initialize(config);
+        String backendType = config.get("backendType");
+        if (backendType == null) {
+            // No backend type configured found
+            LOG.ldapBackendTypeNotFound(backendName);
+            throw new IllegalArgumentException("No LDAP backend type configured for : " + backendName);
+        }
+
+        // Use ServiceLoader to discover all available backend factories (built-in and external plugins)
+        ServiceLoader<LdapBackendFactory> loader = ServiceLoader.load(LdapBackendFactory.class);
+        for (LdapBackendFactory backendFactory : loader) {
+            if (backendFactory.getType().equalsIgnoreCase(backendType)) {
+                LOG.ldapBackendLoading(backendType, "ServiceLoader");
+                LdapBackend backend = backendFactory.create(backendName, config);
                 return backend;
             }
         }
 
         // No matching backend found
-        LOG.ldapBackendNotFound(backendName);
-        throw new IllegalArgumentException("No LDAP backend found for type: " + backendName);
+        LOG.ldapBackendNotFound(backendType, backendName);
+        throw new IllegalArgumentException("No LDAP backend factory of type " + backendType + " found for : " + backendName);
     }
 }

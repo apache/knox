@@ -25,6 +25,7 @@ import org.junit.After;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -125,8 +126,8 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
         expect(mockConfig.getLDAPPort()).andReturn(3890);
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn("invalid");
-        expect(mockConfig.getLDAPBackendConfig("invalid")).andReturn(new HashMap<>());
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("invalid"));
+        expect(mockConfig.getLDAPInterceptorConfig("invalid")).andReturn(new HashMap<>());
         replay(mockConfig);
 
         ldapService.init(mockConfig, new HashMap<>());
@@ -170,11 +171,13 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
         expect(mockConfig.getLDAPPort()).andReturn(3890);
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn("file");
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend"));
 
         Map<String, String> fileBackendConfig = new HashMap<>();
+        fileBackendConfig.put("interceptorType", "backend");
+        fileBackendConfig.put("backendType", "file");
         fileBackendConfig.put("dataFile", tempLdapFile.getAbsolutePath());
-        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(fileBackendConfig);
+        expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(fileBackendConfig);
     }
 
     private void setupMockConfigForLdapBackend() {
@@ -182,13 +185,15 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
         expect(mockConfig.getLDAPPort()).andReturn(3890);
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn("ldap");
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend"));
 
         Map<String, String> ldapBackendConfig = new HashMap<>();
+        ldapBackendConfig.put("interceptorType", "backend");
+        ldapBackendConfig.put("backendType", "ldap");
         ldapBackendConfig.put("url", "ldap://localhost:33389");
         ldapBackendConfig.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");
         ldapBackendConfig.put("systemUsername", "cn=admin,dc=hadoop,dc=apache,dc=org");
         ldapBackendConfig.put("systemPassword", "admin-password");
-        expect(mockConfig.getLDAPBackendConfig("ldap")).andReturn(ldapBackendConfig);
+        expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(ldapBackendConfig);
     }
 }

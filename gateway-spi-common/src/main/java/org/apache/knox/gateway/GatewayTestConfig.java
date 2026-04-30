@@ -1235,8 +1235,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLDAPBackendType() {
-    return "file";
+  public List<String> getLDAPInterceptorNames() {
+    return List.of("testinterceptor");
   }
 
   @Override
@@ -1250,7 +1250,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Map<String, String> getLDAPBackendConfig(String backendType) {
+  public Map<String, String> getLDAPInterceptorConfig(String backendType) {
     return Collections.emptyMap();
   }
 
