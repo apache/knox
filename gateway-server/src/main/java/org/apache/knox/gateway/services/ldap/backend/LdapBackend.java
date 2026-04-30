@@ -22,7 +22,6 @@ import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Interface for pluggable LDAP backends.
@@ -33,16 +32,21 @@ import java.util.Map;
  * - REST APIs (Knox, Ranger, etc.)
  */
 public interface LdapBackend {
+
     /**
-     * Get the name of this backend implementation
+     * Get the name of this backend
      */
     String getName();
 
     /**
-     * Initialize the backend with configuration
-     * @param config Configuration properties
+     * Get the type of this backend implementation
      */
-    void initialize(Map<String, String> config) throws Exception;
+    String getType();
+
+    /**
+     * Get the base dn of this backend
+     */
+    String getBaseDn();
 
     /**
      * Get a user entry by username

@@ -146,41 +146,49 @@ limitations under the License.
         <value>dc=hadoop,dc=apache,dc=org</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.type</name>
-        <value>ldap</value>
-    </property>
-    <property>
         <name>gateway.ldap.recursive.group.resolution</name>
         <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.names</name>
+        <value>demoldap</value>
     </property>
 
     <!-- LDAP Backend specific configuration (proxying to demo ldap) -->
     <property>
-        <name>gateway.ldap.backend.ldap.url</name>
+        <name>gateway.ldap.interceptor.demoldap.interceptorType</name>
+        <value>backend</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.backendType</name>
+        <value>ldap</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.url</name>
         <value>ldap://ldap:33389</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.ldap.remoteBaseDn</name>
+        <name>gateway.ldap.interceptor.demoldap.remoteBaseDn</name>
         <value>dc=hadoop,dc=apache,dc=org</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.ldap.systemUsername</name>
+        <name>gateway.ldap.interceptor.demoldap.systemUsername</name>
         <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.ldap.systemPassword</name>
+        <name>gateway.ldap.interceptor.demoldap.systemPassword</name>
         <value>guest-password</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.ldap.userSearchBase</name>
+        <name>gateway.ldap.interceptor.demoldap.userSearchBase</name>
         <value>ou=people,dc=hadoop,dc=apache,dc=org</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.ldap.groupSearchBase</name>
+        <name>gateway.ldap.interceptor.demoldap.groupSearchBase</name>
         <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
     </property>
     <property>
-        <name>gateway.ldap.backend.ldap.groupMemberAttribute</name>
+        <name>gateway.ldap.interceptor.demoldap.groupMemberAttribute</name>
         <value>member</value>
     </property>
 

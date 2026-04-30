@@ -54,6 +54,9 @@ import java.util.stream.Collectors;
 public class LdapProxyBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
+    static final String TYPE = "ldap";
+
+    private String name;
     private String ldapUrl;
     private String bindDn;
     private String bindPassword;
@@ -83,13 +86,8 @@ public class LdapProxyBackend implements LdapBackend {
     // Connection pool for efficient connection reuse
     private LdapConnectionPool connectionPool;
 
-    @Override
-    public String getName() {
-        return "ldap";
-    }
-
-    @Override
-    public void initialize(Map<String, String> config) throws Exception {
+    public LdapProxyBackend(String name, Map<String, String> config) {
+        this.name = name;
         // Proxy base DN is for entries created in the proxy LDAP server
         proxyBaseDn = config.get("baseDn");
         if (proxyBaseDn == null || proxyBaseDn.isEmpty()) {
@@ -154,14 +152,28 @@ public class LdapProxyBackend implements LdapBackend {
         initializeConnectionPool(config);
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public String getBaseDn() {
+        return remoteBaseDn;
+    }
+
     /**
      * Initializes the LDAP connection pool with configurable parameters.
      * Uses a validating pool to ensure connections remain healthy.
      *
      * @param config Configuration map that may contain pool settings
-     * @throws Exception if connection pool initialization fails
      */
-    private void initializeConnectionPool(Map<String, String> config) throws Exception {
+    private void initializeConnectionPool(Map<String, String> config) {
         // Configure connection settings
         LdapConnectionConfig connectionConfig = new LdapConnectionConfig();
         connectionConfig.setLdapHost(host);
@@ -186,7 +198,7 @@ public class LdapProxyBackend implements LdapBackend {
         connectionPool.setMaxTotal(maxActive);
         connectionPool.setTestOnBorrow(true);
 
-        LOG.ldapBackendLoading(getName(), "Initialized connection pool with maxActive=" + maxActive);
+        LOG.ldapBackendLoading(getType(), "Initialized connection pool with maxActive=" + maxActive);
     }
 
     private void parseLdapUrl(String url) {

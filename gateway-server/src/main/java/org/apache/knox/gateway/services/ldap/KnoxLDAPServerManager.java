@@ -17,12 +17,22 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.directory.api.ldap.model.cursor.Cursor;
+import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.entry.Value;
+import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.message.SearchRequest;
+import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
+import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
+import org.apache.directory.server.core.api.DnFactory;
 import org.apache.directory.server.core.api.InstanceLayout;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.directory.server.core.api.schema.SchemaPartition;
@@ -32,13 +42,16 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
-import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
+import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Manages the ApacheDS LDAP server instance with pluggable backends
@@ -46,13 +59,16 @@ import java.util.Map;
 public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    private DirectoryService directoryService;
+    @VisibleForTesting
+    DirectoryService directoryService;
     private LdapServer ldapServer;
-    private LdapBackend backend;
+    private GatewayConfig gatewayConfig;
+    private List<Interceptor> interceptors;
     private File workDir;
     private int port;
     private String baseDn;
-    private String remoteBaseDn;
+    // Collection of DNs for the proxied backend LDAP servers
+    private Set<String> baseDns;
 
     /**
      * Initialize the LDAP server with the given configuration
@@ -60,6 +76,8 @@ public class KnoxLDAPServerManager {
      * @param config Gateway configuration
      */
     public void initialize(GatewayConfig config) throws Exception {
+        this.gatewayConfig = config;
+
         // Prepare work directory for LDAP data
         File gatewayDataDir = new File(config.getGatewayDataDir());
         this.workDir = new File(gatewayDataDir, "ldap-server");
@@ -67,27 +85,8 @@ public class KnoxLDAPServerManager {
         // Get configuration
         this.port = config.getLDAPPort();
         this.baseDn = config.getLDAPBaseDN();
-        String backendType = config.getLDAPBackendType();
 
-        // Get backend-specific configuration using prefixed properties
-        Map<String, String> backendConfig = config.getLDAPBackendConfig(backendType);
-
-        // Add common configuration
-        backendConfig.put("baseDn", baseDn);
-
-        // Add legacy dataFile property for backwards compatibility with file backend
-        if ("file".equalsIgnoreCase(backendType) && !backendConfig.containsKey("dataFile")) {
-            backendConfig.put("dataFile", config.getLDAPBackendDataFile());
-        }
-
-        backendConfig.put("recursiveGroupResolution", String.valueOf(config.isLDAPRecursiveGroupResolutionEnabled()));
-        backendConfig.put("recursiveGroupResolutionMaxDepth", String.valueOf(config.getLDAPRecursiveGroupResolutionMaxDepth()));
-
-        // For proxy backends, extract remoteBaseDn if present
-        this.remoteBaseDn = backendConfig.get("remoteBaseDn");
-
-        // Initialize backend
-        backend = BackendFactory.createBackend(backendType, backendConfig);
+        this.interceptors = createInterceptors(config);
 
         // Clean up previous run if it didn't shut down cleanly
         File lockFile = new File(workDir, "run/instance.lock");
@@ -97,6 +96,34 @@ public class KnoxLDAPServerManager {
         }
 
         workDir.mkdirs();
+    }
+
+    private List<Interceptor> createInterceptors(GatewayConfig config) throws Exception {
+        List<String> interceptorNames = config.getLDAPInterceptorNames();
+        List<Interceptor> interceptors = new ArrayList<>(interceptorNames.size());
+        for (String interceptorName : interceptorNames) {
+            // Get backend-specific configuration using prefixed properties
+            Map<String, String> interceptorConfig = config.getLDAPInterceptorConfig(interceptorName);
+
+            // Add common configuration
+            interceptorConfig.put("baseDn", baseDn);
+
+            // Add common LDAP Proxy configurations to backends
+            String interceptorType = interceptorConfig.get("interceptorType");
+            String backendType = interceptorConfig.get("backendType");
+            if ("backend".equalsIgnoreCase(interceptorType)) {
+                interceptorConfig.put("recursiveGroupResolution", String.valueOf(config.isLDAPRecursiveGroupResolutionEnabled()));
+                interceptorConfig.put("recursiveGroupResolutionMaxDepth", String.valueOf(config.getLDAPRecursiveGroupResolutionMaxDepth()));
+                if ("file".equalsIgnoreCase(backendType) &&
+                        !interceptorConfig.containsKey("dataFile")) {
+                    // Add legacy dataFile property for backwards compatibility with file backend
+                    interceptorConfig.put("dataFile", config.getLDAPBackendDataFile());
+                }
+            }
+
+            interceptors.add(InterceptorFactory.createInterceptor(interceptorName, interceptorConfig));
+        }
+        return interceptors;
     }
 
     /**
@@ -134,17 +161,11 @@ public class KnoxLDAPServerManager {
         partition.setPartitionPath(new File(workDir, "proxy").toURI());
         directoryService.addPartition(partition);
 
-        // Create partition for remote base DN if different from proxy base DN
-        // This allows backend entries with remote DNs to be returned in search results
-        if (remoteBaseDn != null && !remoteBaseDn.equals(baseDn)) {
-            JdbmPartition remotePartition = new JdbmPartition(schemaManager, directoryService.getDnFactory());
-            remotePartition.setId("remote");
-            remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
-            remotePartition.setPartitionPath(new File(workDir, "remote").toURI());
-            directoryService.addPartition(remotePartition);
-        }
+        baseDns = new HashSet<>();
+        baseDns.add(baseDn);
+        addRemotePartitions();
 
-        addGroupLookupInterceptor();
+        addInterceptors();
 
         // Allow anonymous access
         directoryService.setAllowAnonymousAccess(true);
@@ -152,8 +173,8 @@ public class KnoxLDAPServerManager {
         // Start the service
         directoryService.startup();
 
-        // Add base entries to the partition
-        createBaseEntries(schemaManager);
+        // Add base entries to the partitions
+        createBaseEntries(baseDns, schemaManager);
 
         // Create LDAP server on configured port
         ldapServer = new LdapServer();
@@ -165,25 +186,51 @@ public class KnoxLDAPServerManager {
         LOG.ldapServiceStarted(port);
     }
 
-    private void addGroupLookupInterceptor() {
-        // Add our interceptor for group lookups and bind proxying
-        // We need to insert it before AuthenticationInterceptor to intercept bind requests
-        final List<Interceptor> interceptors = new ArrayList<>(directoryService.getInterceptors());
+    private void addRemotePartitions() throws LdapException {
+        SchemaManager schemaManager = directoryService.getSchemaManager();
+        DnFactory dnFactory = directoryService.getDnFactory();
+        List<String> interceptorNames = gatewayConfig.getLDAPInterceptorNames();
+        for (String interceptorName : interceptorNames) {
+            // Get backend-specific configuration using prefixed properties
+            Map<String, String> interceptorConfig = gatewayConfig.getLDAPInterceptorConfig(interceptorName);
+
+            String remoteBaseDn = interceptorConfig.get("remoteBaseDn");
+            if (StringUtils.isNotBlank(remoteBaseDn)) {
+                if (!baseDns.contains(remoteBaseDn)) {
+                    //create partition
+                    String id = interceptorName.replaceAll("\\s+", "");
+                    JdbmPartition remotePartition = new JdbmPartition(schemaManager, dnFactory);
+                    remotePartition.setId(id);
+                    remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
+                    remotePartition.setPartitionPath(new File(workDir, id).toURI());
+                    directoryService.addPartition(remotePartition);
+                    baseDns.add(remoteBaseDn);
+                }
+            }
+        }
+    }
+
+    private void addInterceptors() throws LdapException {
+        // Find location of AuthenticationInterceptor.
+        // We need to insert interceptors before AuthenticationInterceptor to intercept bind requests
+        final List<Interceptor> dsInterceptors = new ArrayList<>(directoryService.getInterceptors());
         int authIdx = -1;
-        for (int i = 0; i < interceptors.size(); i++) {
-            if (interceptors.get(i).getName().equalsIgnoreCase("authenticationInterceptor")) {
+        for (int i = 0; i < dsInterceptors.size(); i++) {
+            if (dsInterceptors.get(i).getName().equalsIgnoreCase("authenticationInterceptor")) {
                 authIdx = i;
                 break;
             }
         }
 
-        final GroupLookupInterceptor interceptor = new GroupLookupInterceptor(directoryService, backend);
-        if (authIdx != -1) {
-            interceptors.add(authIdx, interceptor);
-        } else {
-            interceptors.add(interceptor);
+        // Add our configured interceptors for group lookups and bind proxying
+        for (Interceptor interceptor : interceptors) {
+            if (authIdx != -1) {
+                dsInterceptors.add(authIdx, interceptor);
+            } else {
+                dsInterceptors.add(interceptor);
+            }
         }
-        directoryService.setInterceptors(interceptors);
+        directoryService.setInterceptors(dsInterceptors);
     }
 
     /**
@@ -195,6 +242,7 @@ public class KnoxLDAPServerManager {
         if (ldapServer != null) {
             try {
                 ldapServer.stop();
+                ldapServer = null;
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
@@ -203,6 +251,7 @@ public class KnoxLDAPServerManager {
         if (directoryService != null) {
             try {
                 directoryService.shutdown();
+                directoryService = null;
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
@@ -211,13 +260,10 @@ public class KnoxLDAPServerManager {
         LOG.ldapServiceStopped();
     }
 
-    private void createBaseEntries(SchemaManager schemaManager) throws Exception {
-        // Create base entries for proxy base DN
-        createBaseEntriesForDn(schemaManager, baseDn);
-
-        // Create base entries for remote base DN if different
-        if (remoteBaseDn != null && !remoteBaseDn.equals(baseDn)) {
-            createBaseEntriesForDn(schemaManager, remoteBaseDn);
+    private void createBaseEntries(Collection<String> baseDns, SchemaManager schemaManager) throws Exception {
+        // Create base entries for proxy base DN and remote base DNs
+        for (String baseDn : baseDns) {
+            createBaseEntriesForDn(schemaManager, baseDn);
         }
     }
 
@@ -266,7 +312,32 @@ public class KnoxLDAPServerManager {
      * @return List of group names
      */
     public List<String> getUserGroups(String username) throws Exception {
-        return backend.getUserGroups(username);
+        SearchRequest searchRequest = new SearchRequestImpl();
+        searchRequest.setBase(new Dn(directoryService.getSchemaManager(), baseDn));
+        searchRequest.setScope(SearchScope.SUBTREE);
+        searchRequest.setFilter("(uid=" + username + ")");
+        searchRequest.addAttributes("*");
+
+        List<String> groups = new ArrayList<>();
+        try (Cursor<Entry> cursor = directoryService.getAdminSession().search(searchRequest)) {
+            if (cursor.next()) {
+                Entry entry = cursor.get();
+                Attribute memberOf = entry.get("memberOf");
+                if (memberOf != null) {
+                    for (Value value : memberOf) {
+                        String groupDn = value.getString();
+                        if (groupDn.toLowerCase(Locale.ROOT).startsWith("cn=")) {
+                            int commaIdx = groupDn.indexOf(',');
+                            if (commaIdx > 0) {
+                                groups.add(groupDn.substring(3, commaIdx));
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+        return groups;
     }
 
     /**

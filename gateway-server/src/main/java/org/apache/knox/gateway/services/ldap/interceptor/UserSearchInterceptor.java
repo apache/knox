@@ -15,13 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap;
+package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.LdapPrincipal;
@@ -32,27 +31,41 @@ import org.apache.directory.server.core.api.interceptor.context.BindOperationCon
 import org.apache.directory.server.core.api.interceptor.context.LookupOperationContext;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ldap.LdapMessages;
+import org.apache.knox.gateway.services.ldap.LdapUtils;
+import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Interceptor for LDAP operations to proxy user searches to backend when not found locally
+ * Interceptor for LDAP operations to proxy user searches to backends when not found locally
  */
-public class GroupLookupInterceptor extends BaseInterceptor {
+public class UserSearchInterceptor extends BaseInterceptor {
+
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
-    private DirectoryService directoryService;
-    private LdapBackend backend;
     private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
     private static final Pattern CN_PATTERN = Pattern.compile(".*\\(cn=([^)]+)\\).*");
     private static final Pattern SAMAACCOUNTNAME_PATTERN = Pattern.compile(".*\\(sAMAccountName=([^)]+)\\).*");
 
-    public GroupLookupInterceptor(DirectoryService directoryService, LdapBackend backend) {
-        this.directoryService = directoryService;
-        this.backend = backend;
+    private final LdapBackend backend;
+
+    public UserSearchInterceptor(String name, Map<String, String> config) throws Exception {
+        super(name);
+        backend = BackendFactory.createBackend(name, config);
+    }
+
+    public LdapBackend getBackend() {
+        return backend;
+    }
+
+    @Override
+    public void init(DirectoryService directoryService) throws LdapException {
+        super.init(directoryService);
     }
 
     @Override
@@ -78,15 +91,11 @@ public class GroupLookupInterceptor extends BaseInterceptor {
 
         LOG.ldapSearch(baseDn, filter);
 
-        // First try the normal search
+        // First execute the next interceptor in the chain
         EntryFilteringCursor originalResults;
-        try {
-            originalResults = next(ctx);
-        } catch (Exception e) {
-            throw new LdapException(e);
-        }
+        originalResults = next(ctx);
 
-        // Check if this is a user search and if we got no results, try the backend
+        // Check if this is a user search and call the backends
         if (isUserSearch(filter)) {
             String username = extractUser(filter);
 
@@ -98,42 +107,40 @@ public class GroupLookupInterceptor extends BaseInterceptor {
                 }
                 originalResults.close();
             } catch (Exception e) {
-                // If we get an error or no results, try the backend
+                // If we get an error or no results, try the backends
             }
 
-            // If no local results, try backend
-            if (entries.isEmpty() && username != null) {
+            if (username != null) {
                 try {
-                    SchemaManager schemaManager = directoryService.getSchemaManager();
-
                     if (username.contains("*")) {
                         // Wildcard search - use searchUsers
                         LOG.ldapSearch(baseDn, "wildcard user search: " + username);
-                        List<Entry> backendEntries = backend.searchUsers(username, schemaManager);
-
                         // Return backend results directly without caching to avoid deadlock
                         // (caching during an active search can cause ApacheDS locking issues)
-                        entries.addAll(backendEntries);
+                        entries.addAll(backend.searchUsers(username, schemaManager));
                     } else {
-                        // Specific user lookup
-                        LOG.ldapUserLoaded(username);
-                        Entry backendEntry = backend.getUser(username, schemaManager);
+                        // if no results, perform single-user search
+                        if (entries.isEmpty()) {
+                            // Specific user lookup
+                            Entry backendEntry = backend.getUser(username, schemaManager);
+                            LOG.ldapUserLoaded(username);
 
-                        if (backendEntry != null) {
-                            // Return backend result directly without caching
-                            entries.add(backendEntry);
-                            LOG.ldapUserEntry(backendEntry.toString());
-                        } else {
-                            LOG.ldapUserNull(username);
+                            if (backendEntry != null) {
+                                // Return backend result directly without caching
+                                entries.add(backendEntry);
+                                LOG.ldapUserEntry(backendEntry.toString());
+                            } else {
+                                LOG.ldapUserNull(username);
+                            }
                         }
                     }
                 } catch (Exception e) {
-                    LOG.ldapServiceStopFailed(e);
+                    LOG.ldapSearchFailed(baseDn, filter, e);
                 }
             }
 
             // Return cursor with our results - use a simple approach
-            return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, directoryService.getSchemaManager());
+            return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
         }
 
         return originalResults;
