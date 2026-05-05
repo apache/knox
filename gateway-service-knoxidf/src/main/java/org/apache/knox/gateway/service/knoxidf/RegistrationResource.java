@@ -42,7 +42,6 @@ import java.util.Map;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 @Path(RegistrationResource.RESOURCE_PATH)

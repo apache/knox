@@ -26,6 +26,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentitityService;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.JdbcFederatedIdentityService;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.Topology;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,27 +41,48 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
     @Override
     protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
             throws ServiceLifecycleException {
+
+        String implementationToUse = implementation;
+        // If implementation is empty, check if we should auto-enable JdbcFederatedIdentityService
+        if (isEmptyDefaultImplementation(implementationToUse)) {
+            if (isKnoxIdfEnabledInAnyTopology(gatewayServices)) {
+                implementationToUse = JdbcFederatedIdentityService.class.getName();
+            }
+        }
+
         FederatedIdentityService service = null;
-        if (shouldCreateService(implementation)) {
-            if (matchesImplementation(implementation, EmptyFederatedIdentitityService.class, true)) {
+        if (shouldCreateService(implementationToUse)) {
+            if (matchesImplementation(implementationToUse, EmptyFederatedIdentitityService.class, true)) {
                 service = new EmptyFederatedIdentitityService();
-            } else if (matchesImplementation(implementation, JdbcFederatedIdentityService.class)) {
+            } else if (matchesImplementation(implementationToUse, JdbcFederatedIdentityService.class)) {
                 try {
                     try {
                         service = new JdbcFederatedIdentityService();
                         ((JdbcFederatedIdentityService) service).setAliasService(getAliasService(gatewayServices));
                         service.init(gatewayConfig, options);
                     } catch (ServiceLifecycleException e) {
-                        LOG.errorInitializingService(implementation, e.getMessage(), e);
+                        LOG.errorInitializingService(implementationToUse, e.getMessage(), e);
                         service =  new EmptyFederatedIdentitityService();
                     }
                 } catch (Exception e) {
                     throw new ServiceLifecycleException("Error while creating Federated Identity Service: " + e, e);
                 }
             }
-            logServiceUsage(implementation, serviceType);
+            logServiceUsage(service.getClass().getName(), serviceType);
         }
         return service;
+    }
+
+    private boolean isKnoxIdfEnabledInAnyTopology(GatewayServices gatewayServices) {
+        final TopologyService topologyService = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
+        if (topologyService != null) {
+            for (Topology topology : topologyService.getTopologies()) {
+                if (topology.getServices().stream().anyMatch(service -> "KNOXIDF".equals(service.getRole()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
