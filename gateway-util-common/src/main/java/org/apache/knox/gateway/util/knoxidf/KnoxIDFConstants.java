@@ -28,10 +28,14 @@ public interface KnoxIDFConstants {
     String RESPONSE_TYPE = "response_type";
     Set<String> ALLOWED_RESPONSE_TYPES = Sets.newHashSet("code", "id_token", "code id_token");
     String SCOPE = "scope";
-    Set<String> DEFAULT_SCOPES = Sets.newHashSet("openid", "profile", "email");
+    String OFFLINE_ACCESS_SCOPE = "offline_access";
+    Set<String> DEFAULT_SCOPES = Sets.newHashSet("openid", "profile", "email", OFFLINE_ACCESS_SCOPE);
     String OPENID_SCOPE = SCOPE + "=openid";
     String STATE = "state";
     String CODE = "code";
+    String REFRESH_TOKEN = "refresh_token";
+    String REFRESH_TOKEN_TTL= "refresh.token.ttl";
+    long REFRESH_TOKEN_TTL_DEFAULT = 86400000L; // 1 day
     String CODE_RESPONSE_TYPE = RESPONSE_TYPE + "=" + CODE;
     String NONCE = "nonce";
 

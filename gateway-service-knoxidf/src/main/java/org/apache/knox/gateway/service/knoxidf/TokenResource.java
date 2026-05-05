@@ -28,7 +28,9 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenMetadataType;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.ServletRequestUtils;
@@ -43,10 +45,19 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.AUTH_CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN_TTL;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN_TTL_DEFAULT;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.SCOPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 @Path(TokenResource.RESOURCE_PATH)
@@ -62,6 +73,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     private ServletContext servletContext;
 
     private FederatedIdentityService federatedIdentityService;
+    private long refreshTokenTTL;
 
     @Override
     public String getPrefix() {
@@ -76,40 +88,38 @@ public class TokenResource extends PasscodeTokenResourceBase {
         this.userParamsProvider = new LdapUserParamsProvider(servletContext.getInitParameter("user.params.provider.ldap.url"));
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
+        setRefreshTokenTTL();
+    }
+
+    private void setRefreshTokenTTL() {
+        final String configuredRefreshTokenTTL = servletContext.getInitParameter(REFRESH_TOKEN_TTL);
+        if (StringUtils.isNotBlank(configuredRefreshTokenTTL)) {
+            this.refreshTokenTTL = Long.parseLong(configuredRefreshTokenTTL);
+        } else {
+            refreshTokenTTL = REFRESH_TOKEN_TTL_DEFAULT;
+        }
     }
 
     @Override
     @POST
     public Response doPost() {
-        final String code = getRequestParam("code");
-        final String redirectUri = getRequestParam("redirect_uri");
-
-        final Response paramVerificationErrorResponse = verifyParams(code, redirectUri);
-        if (paramVerificationErrorResponse == null) {
-            try {
-                validateAuthCode(code, redirectUri);
-                return getAuthenticationToken();
-            } catch (AuthTokenValidationError e) {
-                return error("Auth code validation error", e.getMessage());
-            } finally {
-                try {
-                    tokenStateService.revokeToken(code);
-                } catch (UnknownTokenException e) {
-                    //NOP: this should have been handled by the above UnknownTokenException already
-                }
-            }
+        final String grantType = getRequestParam("grant_type");
+        if (REFRESH_TOKEN.equals(grantType)) {
+            return handleRefreshToken();
+        } else if (AUTH_CODE.equals(grantType)) {
+            return handleAuthorizationCodeFlow();
         }
-        return paramVerificationErrorResponse;
+        return error("invalid_request", "invalid grant type: " + grantType);
     }
 
     @Override
     protected UserContext buildUserContext(HttpServletRequest request) {
         try {
-            final String code = getRequestParam("code");
+            final String code = getRequestParam(CODE);
             final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(code);
-            final String scope = tokenMetadata.getMetadata("scope");
+            final String scope = tokenMetadata.getMetadata(SCOPE);
             final Map<String, Object> userParams = userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope);
-            userParams.put("scope", scope);
+            userParams.put(SCOPE, scope);
             return new UserContext(tokenMetadata.getUserName(), null, userParams);
         } catch (UnknownTokenException e) {
             //this should not happen as we have just validated the auth code
@@ -121,14 +131,16 @@ public class TokenResource extends PasscodeTokenResourceBase {
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
         try {
             super.addArbitraryTokenMetadata(tokenMetadata);
-            final String code = getRequestParam("code");
-            final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
+            final String code = getRequestParam(CODE);
+            if (StringUtils.isNotBlank(code)) {
+                final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
 
-            //if the auth code token was a result of a federated OIDC call, we need to save the associated
-            //federated identity ID in thw JWT too (so that it can be looked up while fetching user info)
-            final String federatedIdentityId = authCodeTokenMetadata.getMetadata("federated_identity_id");
-            if (StringUtils.isNotBlank(federatedIdentityId)) {
-                tokenMetadata.add("federated_identity_id", federatedIdentityId);
+                //if the auth code token was a result of a federated OIDC call, we need to save the associated
+                //federated identity ID in thw JWT too (so that it can be looked up while fetching user info)
+                final String federatedIdentityId = authCodeTokenMetadata.getMetadata("federated_identity_id");
+                if (StringUtils.isNotBlank(federatedIdentityId)) {
+                    tokenMetadata.add("federated_identity_id", federatedIdentityId);
+                }
             }
         } catch (UnknownTokenException e) {
             //this should not happen as we have just validated the auth code
@@ -139,44 +151,137 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     protected ResponseMap buildResponseMap(JWT token, long expires) throws TokenServiceException {
         final ResponseMap responseMap = super.buildResponseMap(token, expires);
-        responseMap.map.put("id_token", generateIdToken(token));
+
+        final String code = getRequestParam(CODE);
+        TokenMetadata authCodeTokenMetadata = null;
+        if (StringUtils.isNotBlank(code)) {
+            try {
+                authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
+            } catch (UnknownTokenException e) {
+                //NOP
+            }
+        }
+
+        responseMap.map.put("id_token", generateIdToken(token, authCodeTokenMetadata));
+
+        final String refreshToken = generateRefreshToken(token);
+        if (StringUtils.isNotBlank(refreshToken)) {
+            responseMap.map.put(REFRESH_TOKEN, refreshToken);
+        }
+
         return responseMap;
     }
 
-    private String generateIdToken(JWT accessToken) throws TokenServiceException {
+    private Response handleRefreshToken() {
         try {
-            final String code = getRequestParam("code");
-            final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(code);
-            final boolean hasFederatedIdToken = StringUtils.isNotBlank(tokenMetadata.getMetadata("federated_identity_id"));
+            final String refreshTokenParam = getRequestParam(REFRESH_TOKEN);
+            final String refreshTokenId = TokenUtils.getTokenId(refreshTokenParam);
+            final TokenMetadata refreshTokenMetadata = tokenStateService.getTokenMetadata(refreshTokenId);
+            validateRefreshTokenGrant(refreshTokenParam, refreshTokenId, refreshTokenMetadata);
+            // Valid refresh token -> issue new access token and new refresh token (rotation)
+            final String userName = refreshTokenMetadata.getUserName();
+            final String scope = refreshTokenMetadata.getMetadata(SCOPE);
+            final Map<String, Object> userParams = userParamsProvider.getParamsFor(userName, scope);
+            userParams.put(SCOPE, scope);
 
-            if (hasFederatedIdToken) {
-                return generateFederatedIdToken(accessToken, tokenMetadata);
-            } else {
-                return generateLocalIdToken(accessToken, tokenMetadata);
-            }
+            // Revoke old refresh token (rotation)
+            tokenStateService.revokeToken(refreshTokenId);
+
+            // Build new tokens
+            final UserContext userContext = new UserContext(userName, null, userParams);
+            final TokenResponseContext resp = getTokenResponse(userContext);
+            return resp.build();
+        } catch (ParseException e) {
+            return error("invalid_grant", "Malformed refresh_token");
         } catch (UnknownTokenException e) {
-            return null; //should not happen
+            return error("invalid_grant", "Unknown refresh_token");
+        } catch (RefreshTokenValidationError e) {
+            return error("Refresh token validation error", e.getMessage());
+        }
+
+    }
+
+    private void validateRefreshTokenGrant(String refreshTokenParam, String refreshTokenId, TokenMetadata refreshTokenMetadata) throws UnknownTokenException, RefreshTokenValidationError {
+        final String clientId = getRequestParam(CLIENT_ID);
+
+        if (StringUtils.isBlank(refreshTokenParam)) {
+            throw new RefreshTokenValidationError("Invalid request: Missing refresh_token");
+        }
+
+        if (StringUtils.isBlank(clientId)) {
+            throw new RefreshTokenValidationError("Invalid request: Missing client_id");
+        }
+
+        if (refreshTokenMetadata == null || !TokenMetadataType.REFRESH_TOKEN.name().equals(refreshTokenMetadata.getType())) {
+            throw new RefreshTokenValidationError("Invalid grant: invalid refresh_token");
+        }
+
+        if (tokenStateService.getTokenExpiration(refreshTokenId) <= System.currentTimeMillis()) {
+            throw new RefreshTokenValidationError("Invalid grant: Refresh token expired");
+        }
+
+        final String associatedClientId = refreshTokenMetadata.getMetadata("client_id");
+        if (!clientId.equals(associatedClientId)) {
+            throw new RefreshTokenValidationError("Invalid grant: client_id mismatch");
         }
     }
 
-    private String generateLocalIdToken(JWT accessToken, TokenMetadata tokenMetadata) throws TokenServiceException {
-        final JWTokenAttributesBuilder idTokenAttributesBuilder = new JWTokenAttributesBuilder();
-        idTokenAttributesBuilder
-                .setAlgorithm(accessToken.getSignatureAlgorithm().getName())
-                .setUserName(accessToken.getSubject())
-                .setIssueTime(System.currentTimeMillis())
-                .setExpires(Long.parseLong(accessToken.getExpires()))
-                .setIssuer(accessToken.getIssuer());
-        final String associatedClientId = tokenMetadata.getMetadata("client_id");
-        idTokenAttributesBuilder.setAudiences(associatedClientId);
-        final String nonce = tokenMetadata.getMetadata("nonce");
-        if (StringUtils.isNotBlank(nonce)) {
-            idTokenAttributesBuilder.setCustomAttributes(Map.of("nonce", nonce));
-        }
+    private Response handleAuthorizationCodeFlow() {
+        final String code = getRequestParam("code");
+        final String redirectUri = getRequestParam("redirect_uri");
 
-        final JWTokenAuthority ts = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
-        final JWT idToken = ts.issueToken(idTokenAttributesBuilder.build());
-        return idToken.toString();
+        try {
+            validateAuthCode(code, redirectUri);
+            return getAuthenticationToken();
+        } catch (AuthTokenValidationError e) {
+            return error("Auth code validation error", e.getMessage());
+        } finally {
+            try {
+                tokenStateService.revokeToken(code);
+            } catch (UnknownTokenException e) {
+                //NOP: this should have been handled by the above UnknownTokenException already
+            }
+        }
+    }
+
+    private void validateAuthCode(String code, String redirectUri) throws AuthTokenValidationError {
+        try {
+            if (code == null || code.isEmpty()) {
+                throw new AuthTokenValidationError("Invalid request: missing code");
+            }
+
+            if (redirectUri == null || redirectUri.isEmpty()) {
+                throw new AuthTokenValidationError("Invalid request: missing redirect_uri");
+            }
+
+            final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
+            final String associateRedirectUri = authCodeTokenMetadata.getMetadata("redirect_uri");
+            if (!authCodeTokenMetadata.isAuthCode()) {
+                throw new AuthTokenValidationError("Invalid auth_code: not an auth code token");
+            } else if (tokenStateService.getTokenExpiration(code) <= System.currentTimeMillis()) {
+                throw new AuthTokenValidationError("Invalid auth_code: expired");
+            } else if (!associateRedirectUri.equals(redirectUri)) {
+                throw new AuthTokenValidationError("Invalid redirect_uri: " + redirectUri);
+            } else {
+                final String associatedClientId = authCodeTokenMetadata.getMetadata("client_id");
+                final String clientId = getRequestParam("client_id");
+                if (!associatedClientId.equals(clientId)) {
+                    throw new AuthTokenValidationError("Invalid client_id: " + clientId);
+                }
+            }
+        } catch (UnknownTokenException e) {
+            throw new AuthTokenValidationError("Unknown auth_code");
+        }
+    }
+
+    private String generateIdToken(JWT accessToken, TokenMetadata authCodeTokenMetadata) throws TokenServiceException {
+        final boolean hasFederatedIdToken = authCodeTokenMetadata != null && StringUtils.isNotBlank(authCodeTokenMetadata.getMetadata("federated_identity_id"));
+
+        if (hasFederatedIdToken) {
+            return generateFederatedIdToken(accessToken, authCodeTokenMetadata);
+        } else {
+            return generateLocalIdToken(accessToken, authCodeTokenMetadata);
+        }
     }
 
     private String generateFederatedIdToken(JWT accessToken, TokenMetadata tokenMetadata) throws TokenServiceException {
@@ -207,42 +312,76 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
         builder.setCustomAttributes(claims);
 
-        JWTokenAuthority ts = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
-        return ts.issueToken(builder.build()).toString();
+        return issueToken(builder).toString();
     }
 
-    private Response verifyParams(String code, String redirectUri) {
-        if (code == null || code.isEmpty()) {
-            return error("invalid_request", "Missing code");
-        }
+    private String generateLocalIdToken(JWT accessToken, TokenMetadata authCodeTokenMetadata) throws TokenServiceException {
+        final JWTokenAttributesBuilder idTokenAttributesBuilder = new JWTokenAttributesBuilder();
+        idTokenAttributesBuilder
+                .setAlgorithm(accessToken.getSignatureAlgorithm().getName())
+                .setUserName(accessToken.getSubject())
+                .setIssueTime(System.currentTimeMillis())
+                .setExpires(Long.parseLong(accessToken.getExpires()))
+                .setIssuer(accessToken.getIssuer());
 
-        if (redirectUri == null || redirectUri.isEmpty()) {
-            return error("invalid_request", "Missing redirect_uri");
-        }
-
-        return null;
-    }
-
-    private void validateAuthCode(String code, String redirectUri) throws AuthTokenValidationError {
-        try {
-            final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(code);
-            final String associatedClientId = tokenMetadata.getMetadata("client_id");
-            final String associateRedirectUri = tokenMetadata.getMetadata("redirect_uri");
-            if (!tokenMetadata.isAuthCode()) {
-                throw new AuthTokenValidationError("Invalid auth_code: not an auth code token"); //this one or the previous one might be redundant
-            } else if (tokenStateService.getTokenExpiration(code) <= System.currentTimeMillis()) {
-                throw new AuthTokenValidationError("Invalid auth_code: expired");
-            } else if (!associateRedirectUri.equals(redirectUri)) {
-                throw new AuthTokenValidationError("Invalid redirect_uri: " + redirectUri);
-            } else {
-                final String clientId = getRequestParam("client_id");
-                if (!associatedClientId.equals(clientId)) {
-                    throw new AuthTokenValidationError("Invalid client_id: " + clientId);
-                }
+        if (authCodeTokenMetadata != null) {
+            final String associatedClientId = authCodeTokenMetadata.getMetadata("client_id");
+            idTokenAttributesBuilder.setAudiences(associatedClientId);
+            final String nonce = authCodeTokenMetadata.getMetadata("nonce");
+            if (StringUtils.isNotBlank(nonce)) {
+                idTokenAttributesBuilder.setCustomAttributes(Map.of("nonce", nonce));
             }
-        } catch (UnknownTokenException e) {
-            throw new AuthTokenValidationError("Unknown auth_code");
+        } else {
+            // If there is no auth code (e.g. refresh token grant), we use the client_id from the request
+            idTokenAttributesBuilder.setAudiences(getRequestParam("client_id"));
         }
+
+        return issueToken(idTokenAttributesBuilder).toString();
+    }
+
+    private String generateRefreshToken(JWT accessToken) throws TokenServiceException {
+        final String scope = (String) accessToken.getJWTClaimsSet().getClaim("scope");
+        if (StringUtils.isNotBlank(scope) && scope.contains(OFFLINE_ACCESS_SCOPE)) {
+            return issueRefreshToken(accessToken, scope);
+        } else {
+            return null;
+        }
+    }
+
+    private String issueRefreshToken(JWT accessToken, String scope) throws TokenServiceException {
+        final JWTokenAttributesBuilder refreshTokenAttributesBuilder = new JWTokenAttributesBuilder();
+
+        final long issueTime = System.currentTimeMillis();
+        final long expires = issueTime + refreshTokenTTL;
+        final String clientId = getRequestParam("client_id");
+
+        refreshTokenAttributesBuilder.setIssuer(accessToken.getIssuer())
+                .setUserName(accessToken.getSubject())
+                .setAlgorithm(accessToken.getSignatureAlgorithm().getName())
+                .setAudiences(clientId)
+                .setIssueTime(issueTime)
+                .setExpires(expires)
+                .setManaged(tokenStateService != null)
+                .setType(TokenMetadataType.REFRESH_TOKEN.name());
+
+        final JWT refreshToken = issueToken(refreshTokenAttributesBuilder);
+
+        if (tokenStateService != null) {
+            final String tokenId = TokenUtils.getTokenId(refreshToken);
+            tokenStateService.addToken(tokenId, issueTime, expires, tokenStateService.getDefaultMaxLifetimeDuration());
+            final TokenMetadata metadata = new TokenMetadata(refreshToken.getSubject());
+            metadata.setType(TokenMetadataType.REFRESH_TOKEN);
+            metadata.add("client_id", clientId);
+            metadata.add("scope", scope);
+            tokenStateService.addMetadata(tokenId, metadata);
+        }
+
+        return refreshToken.toString();
+    }
+
+    private JWT issueToken(final JWTokenAttributesBuilder builder) throws TokenServiceException {
+        final JWTokenAuthority ts = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
+        return ts.issueToken(builder.build());
     }
 
     private String getRequestParam(String paramName) {
@@ -255,6 +394,12 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
     private static class AuthTokenValidationError extends Exception {
         AuthTokenValidationError(String message) {
+            super(message);
+        }
+    }
+
+    private static class RefreshTokenValidationError extends Exception {
+        RefreshTokenValidationError(String message) {
             super(message);
         }
     }

@@ -65,7 +65,8 @@ public class DiscoveryResource {
         config.put("userinfo_endpoint", userInfoEndpoint);
         config.put("jwks_uri", baseUrl + JwksResource.RESOURCE_PATH);
         config.put("response_types_supported", new String[]{KnoxIDFConstants.CODE});
-        config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE});
+        config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE, KnoxIDFConstants.REFRESH_TOKEN});
+        config.put("scopes_supported", KnoxIDFConstants.DEFAULT_SCOPES);
         config.put("id_token_signing_alg_values_supported", new String[]{"RS256"});
         return Response.ok(JsonUtils.renderAsJsonString(config)).build();
     }

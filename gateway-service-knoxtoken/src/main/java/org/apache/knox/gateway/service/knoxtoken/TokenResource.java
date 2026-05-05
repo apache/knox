@@ -699,7 +699,7 @@ public class TokenResource {
     } else {
       try {
         final String revoker = SubjectUtils.getCurrentEffectivePrincipalName();
-        final String tokenId = getTokenId(token);
+        final String tokenId = TokenUtils.getTokenId(token);
         if (isKnoxSsoCookie(tokenId)) {
           errorStatus = Response.Status.FORBIDDEN;
           error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked.";
@@ -749,22 +749,6 @@ public class TokenResource {
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
     final String tokenCreatedBy = metadata == null ? "" : metadata.getCreatedBy();
     return StringUtils.isNotBlank(revoker) && (revoker.equals(tokenUserName) || revoker.equals(tokenCreatedBy));
-  }
-
-  /*
-   * If the supplied 'token' conforms the UUID string representation, we consider
-   * that as the token ID; otherwise we expect that 'token' is the entire JWT and
-   * we get the token ID from it
-   */
-  private String getTokenId(String token) throws ParseException {
-    try {
-      UUID.fromString(token);
-      return token;
-    } catch (IllegalArgumentException e) {
-      //NOP: the supplied token is not a UUID, we expect the entire JWT
-    }
-    final JWTToken jwt = new JWTToken(token);
-    return TokenUtils.getTokenId(jwt);
   }
 
   @PUT

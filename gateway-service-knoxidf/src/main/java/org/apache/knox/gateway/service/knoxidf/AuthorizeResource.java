@@ -54,6 +54,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -77,6 +78,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 
@@ -109,13 +111,38 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
     }
 
+    @Override
     @GET
-    public Response authorize(@QueryParam("response_type") String responseType,
-                              @QueryParam("client_id") String clientId,
-                              @QueryParam("redirect_uri") String redirectUri,
-                              @QueryParam("scope") String scope,
-                              @QueryParam("state") String state,
-                              @QueryParam("nonce") String nonce) throws Exception {
+    public Response doGet() {
+        return authorize();
+    }
+
+    @Override
+    @POST
+    public Response doPost() {
+        return authorize();
+    }
+
+    public Response authorize() {
+        try {
+            return authorize(
+                    request.getParameter("response_type"),
+                    request.getParameter("client_id"),
+                    request.getParameter("redirect_uri"),
+                    request.getParameter("scope"),
+                    request.getParameter("state"),
+                    request.getParameter("nonce"));
+        } catch (Exception e) {
+            return error("server_error", e.getMessage());
+        }
+    }
+
+    public Response authorize(String responseType,
+                              String clientId,
+                              String redirectUri,
+                              String scope,
+                              String state,
+                              String nonce) throws Exception {
         final String subject = SubjectUtils.getCurrentEffectivePrincipalName();
         final Set<String> requestedScopes = StringUtils.isBlank(scope) ? DEFAULT_SCOPES : new HashSet<>(Arrays.asList(scope.split("\\s+")));
         final AuthorizeRequestMetadata authorizeRequestMetadata = new AuthorizeRequestMetadata(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce);
@@ -223,6 +250,9 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         authCodeTokenMap.put("redirect_uri", authorizeRequestMetadata.getRedirectUri());
         authCodeTokenMap.put("userName", authorizeRequestMetadata.getSubject());
         authCodeTokenMap.put("scope", authorizeRequestMetadata.getJoinedRequestedScopes());
+        if (authorizeRequestMetadata.getRequestedScopes().contains(OFFLINE_ACCESS_SCOPE)) {
+            authCodeTokenMap.put(OFFLINE_ACCESS_SCOPE, "true");
+        }
         if (StringUtils.isNotBlank(authorizeRequestMetadata.getNonce())) {
             authCodeTokenMap.put("nonce", authorizeRequestMetadata.getNonce());
         }
