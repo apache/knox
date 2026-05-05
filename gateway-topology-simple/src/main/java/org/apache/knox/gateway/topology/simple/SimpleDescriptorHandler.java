@@ -99,6 +99,8 @@ public class SimpleDescriptorHandler {
                                                                                   "CLIENTID",
                                                                                   "HEALTH").collect(Collectors.toSet()));
 
+    public static final String ENCRYPT_QUERY_STRING_TEMPLATE = "knox:query-encryption:%s:%s";
+
     public static Map<String, File> handle(GatewayConfig config, File desc, File destDirectory, Service...gatewayServices) throws IOException {
         return handle(config, SimpleDescriptorFactory.parse(desc.getAbsolutePath()), desc.getParentFile(), destDirectory, gatewayServices);
     }
@@ -312,7 +314,7 @@ public class SimpleDescriptorHandler {
                             AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
                             if (aliasService != null) {
                                 // Derive and set the query param encryption password
-                                String queryEncryptionPass = new String(ms.getMasterSecret()) + topologyName;
+                                String queryEncryptionPass = String.format(Locale.ROOT, ENCRYPT_QUERY_STRING_TEMPLATE, new String(ms.getMasterSecret()), topologyName);
                                 aliasService.addAliasForCluster(topologyName, "encryptQueryString", queryEncryptionPass);
                                 result = true;
                             }
