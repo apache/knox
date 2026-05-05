@@ -47,6 +47,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.easymock.EasyMock.anyObject;
@@ -250,8 +251,8 @@ public class SimpleDescriptorHandlerFuncTest {
       assertEquals("Unexpected cluster name for the alias (should be the topology name).",
                    testDescriptor.getName(), capturedCluster.getValue());
       assertEquals("Unexpected alias name.", "encryptQueryString", capturedAlias.getValue());
-      assertEquals("Unexpected alias value (should be master secret + topology name.",
-                   testMasterSecret + testDescriptor.getName(), capturedPwd.getValue());
+      assertEquals("Unexpected alias value.",
+                   String.format(Locale.ROOT, SimpleDescriptorHandler.ENCRYPT_QUERY_STRING_TEMPLATE, testMasterSecret, testDescriptor.getName()), capturedPwd.getValue());
 
       assertEquals(1, NoOpServiceDiscovery.discoveryCalled);
     } catch (Exception e) {
