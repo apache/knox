@@ -264,7 +264,7 @@
         <okhttp.version>4.12.0</okhttp.version>
         <opensaml.version>5.1.6</opensaml.version>
         <pac4j.version>6.3.0</pac4j.version>
-        <postgresql.version>42.4.4</postgresql.version>
+        <postgresql.version>42.7.11</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
         <mariadb.connector.version>3.3.0</mariadb.connector.version>
         <okio.version>3.6.0</okio.version>
