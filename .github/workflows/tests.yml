@@ -82,12 +82,34 @@ jobs:
           # Run the tests service defined in docker-compose.yml
           docker compose -f ./.github/workflows/compose/docker-compose.yml up --exit-code-from tests tests
 
+      - name: Collect Knox Logs and Conf
+        if: always()
+        run: |
+          mkdir -p .github/workflows/artifacts/knox-logs
+          mkdir -p .github/workflows/artifacts/knox-conf
+          docker compose -f ./.github/workflows/compose/docker-compose.yml cp knox:/knox-runtime/logs .github/workflows/artifacts/knox-logs
+          docker compose -f ./.github/workflows/compose/docker-compose.yml cp knox:/knox-runtime/conf .github/workflows/artifacts/knox-conf
+
       - name: Upload Test Results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: .github/workflows/tests/test-results.xml
+
+      - name: Upload Knox Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: knox-logs
+          path: .github/workflows/artifacts/knox-logs
+
+      - name: Upload Knox Conf
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: knox-conf
+          path: .github/workflows/artifacts/knox-conf
 
       - name: Upload Event File
         uses: actions/upload-artifact@v4

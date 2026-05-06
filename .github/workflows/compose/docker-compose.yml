@@ -25,8 +25,8 @@ services:
       context: ../build
       dockerfile: Dockerfile.local
       args:
-        knoxurl: ${knoxurl:-https://github.com/apache/knox.git}
-        branch: ${branch:-master}
+        knoxurl: ${knoxurl:-https://github.com/smolnar82/knox.git}
+        branch: ${branch:-knox_idf_smolnar}
     image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
 
   ldap:

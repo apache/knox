@@ -62,10 +62,10 @@ public class KnoxIDFUtils {
     }
 
     public static Response error(String error, String description) {
-        final Map<String, String> errorMeap = new HashMap<>();
-        errorMeap.put("error", error);
-        errorMeap.put("error_description", description);
-        return Response.status(Response.Status.UNAUTHORIZED).entity(JsonUtils.renderAsJsonString(errorMeap)).build();
+        final Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("error", error);
+        errorMap.put("error_description", description);
+        return Response.status(Response.Status.UNAUTHORIZED).entity(JsonUtils.renderAsJsonString(errorMap)).build();
     }
 
     public static String getRequestParamSafe(final HttpServletRequest request, final String key) {

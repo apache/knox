@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<topology>
+    <gateway>
+      <provider>
+         <role>federation</role>
+         <name>JWTProvider</name>
+         <enabled>true</enabled>
+         <param>
+            <name>knox.token.exp.server-managed</name>
+            <value>true</value>
+         </param>
+      </provider>
+      <provider>
+            <role>identity-assertion</role>
+            <name>Default</name>
+            <enabled>true</enabled>
+      </provider>
+    </gateway>
+
+    <service>
+        <role>KNOXIDF</role>
+        <param>
+           <name>knoxidf.knox.token.ttl</name>
+           <value>86400000</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.limit.per.user</name>
+            <value>-1</value>
+        </param>
+        <param>
+           <name>user.params.provider.ldap.url</name>
+           <value>ldap://ldap:33389</value>
+        </param>
+    </service>
+    <service>
+        <role>KNOXTOKEN</role>
+        <param>
+            <name>knox.token.ttl</name>
+            <value>60000</value>
+        </param>
+        <param>
+            <name>knox.token.limit.per.user</name>
+            <value>-1</value>
+        </param>
+    </service>
+</topology>

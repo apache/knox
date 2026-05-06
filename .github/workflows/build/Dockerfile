@@ -38,6 +38,8 @@ ADD gateway-site.xml /knox-runtime/conf/gateway-site.xml
 ADD conf/topologies/knoxtoken.xml /knox-runtime/conf/topologies/knoxtoken.xml
 ADD conf/topologies/knoxldap.xml /knox-runtime/conf/topologies/knoxldap.xml
 ADD conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
+ADD conf/topologies/knoxidf-ldap.xml /knox-runtime/conf/topologies/knoxidf-ldap.xml
+ADD conf/topologies/knoxidf-token.xml /knox-runtime/conf/topologies/knoxidf-token.xml
 
 ADD conf/topologies/health.xml /knox-runtime/conf/topologies/health.xml
 
