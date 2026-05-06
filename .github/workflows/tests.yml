@@ -97,19 +97,27 @@ jobs:
           name: test-results
           path: .github/workflows/tests/test-results.xml
 
+      - name: Archive Knox Logs
+        if: always()
+        run: tar -cvzf knox-logs.tar.gz -C .github/workflows/artifacts/knox-logs .
+
       - name: Upload Knox Logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: knox-logs
-          path: .github/workflows/artifacts/knox-logs
+          path: knox-logs.tar.gz
+
+      - name: Archive Knox Conf
+        if: always()
+        run: tar -cvzf knox-conf.tar.gz -C .github/workflows/artifacts/knox-conf .
 
       - name: Upload Knox Conf
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: knox-conf
-          path: .github/workflows/artifacts/knox-conf
+          path: knox-conf.tar.gz
 
       - name: Upload Event File
         uses: actions/upload-artifact@v4
