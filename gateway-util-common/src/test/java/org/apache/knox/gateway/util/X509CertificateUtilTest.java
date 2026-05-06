@@ -17,19 +17,25 @@
  */
 package org.apache.knox.gateway.util;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +44,35 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class X509CertificateUtilTest {
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Test
+  public void testWriteCertificatesToKeyStoreBCFKS() throws Exception {
+    Security.addProvider(new BouncyCastleProvider());
+    try {
+      // 1. Generate a self-signed certificate
+      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+      keyPairGenerator.initialize(2048);
+      KeyPair keyPair = keyPairGenerator.generateKeyPair();
+      X509Certificate cert = X509CertificateUtil.generateCertificate("CN=localhost", keyPair, 30, "SHA256withRSA");
+
+      // 2. Write it to a BCFKS keystore
+      File bcfksFile = temporaryFolder.newFile("test.bcfks");
+      X509CertificateUtil.writeCertificatesToBcfks(new Certificate[]{cert}, bcfksFile, "password");
+
+      // 3. Verify the keystore
+      KeyStore keyStore = KeyStore.getInstance("BCFKS");
+      keyStore.load(java.nio.file.Files.newInputStream(bcfksFile.toPath()), "password".toCharArray());
+      Assert.assertTrue(keyStore.containsAlias("gateway-identity1"));
+      Certificate loadedCert = keyStore.getCertificate("gateway-identity1");
+      Assert.assertNotNull(loadedCert);
+      Assert.assertEquals(cert, loadedCert);
+    } finally {
+      Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+    }
+  }
 
   @Test
   public void testFetchPublicCertsFromServer() throws Exception {

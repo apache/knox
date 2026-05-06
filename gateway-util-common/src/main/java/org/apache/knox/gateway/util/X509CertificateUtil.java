@@ -215,6 +215,16 @@ public class X509CertificateUtil {
     writeCertificateToKeyStore(cert, file, "pkcs12");
   }
 
+  public static void writeCertificateToBcfks(Certificate cert, final File file)
+          throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificateToKeyStore(cert, file, "bcfks");
+  }
+
+  public static void writeCertificatesToBcfks(Certificate[] certs, final File file, String keystorePassword)
+          throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificatesToKeyStore(certs, file, "bcfks", keystorePassword);
+  }
+
   /**
    * Tests the X509 certificate to see if it was self-signed.
    * <p>
