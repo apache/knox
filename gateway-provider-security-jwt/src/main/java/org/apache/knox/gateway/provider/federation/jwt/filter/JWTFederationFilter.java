@@ -361,12 +361,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       String passcode = values[1].isEmpty() ? null : values[1];
       if (TOKEN.equalsIgnoreCase(username) || PASSCODE.equalsIgnoreCase(username)) {
           parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, passcode);
-      } else if (request != null && CLIENT_CREDENTIALS.equals(request.getParameter(GRANT_TYPE))) {
-          // Allow client_credentials flow where client_id/client_secret are provided via HTTP Basic
-          if (passcode != null) {
-            validateClientID(username, passcode);
-            parsed = Pair.of(TokenType.Passcode, passcode);
-          }
+      } else if (request != null) {
+          HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
+          if (CLIENT_CREDENTIALS.equals(unwrappedRequest.getParameter(GRANT_TYPE))) {
+            // Allow client_credentials flow where client_id/client_secret are provided via HTTP Basic
+            if (passcode != null) {
+              validateClientID(username, passcode);
+              parsed = Pair.of(TokenType.Passcode, passcode);
+            }
+            }
       }
 
       return parsed;
