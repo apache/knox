@@ -172,7 +172,7 @@ public class X509CertificateUtil {
   /*
    * Writes an arbitrary number of certificates into the given keystore file protected by the given password
    */
-  public static void writeCertificatesToKeyStore(Certificate[] certs, final File file, String type, String keystorePassword)
+  private static void writeCertificatesToKeyStore(Certificate[] certs, final File file, String type, String keystorePassword)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     if (certs != null) {
       KeyStore ks = KeyStore.getInstance(type);
@@ -213,6 +213,16 @@ public class X509CertificateUtil {
   public static void writeCertificateToPkcs12(Certificate cert, final File file)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     writeCertificateToKeyStore(cert, file, "pkcs12");
+  }
+
+  public static void writeCertificateToBcfks(Certificate cert, final File file)
+          throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificateToKeyStore(cert, file, "bcfks");
+  }
+
+  public static void writeCertificatesToBcfks(Certificate[] certs, final File file, String keystorePassword)
+          throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+    writeCertificatesToKeyStore(certs, file, "bcfks", keystorePassword);
   }
 
   /**

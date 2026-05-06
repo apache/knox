@@ -60,7 +60,7 @@ public class X509CertificateUtilTest {
 
       // 2. Write it to a BCFKS keystore
       File bcfksFile = temporaryFolder.newFile("test.bcfks");
-      X509CertificateUtil.writeCertificatesToKeyStore(new Certificate[]{cert}, bcfksFile, "BCFKS", "password");
+      X509CertificateUtil.writeCertificatesToBcfks(new Certificate[]{cert}, bcfksFile, "password");
 
       // 3. Verify the keystore
       KeyStore keyStore = KeyStore.getInstance("BCFKS");

@@ -216,7 +216,7 @@ public class KnoxMetadataResource {
     try {
       if (bcfksFilePath == null || !bcfksFilePath.toFile().exists()) {
         bcfksFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.bcfks");
-        X509CertificateUtil.writeCertificatesToKeyStore(certificateChain, bcfksFilePath.toFile(), "bcfks", null);
+        X509CertificateUtil.writeCertificatesToBcfks(certificateChain, bcfksFilePath.toFile(), null);
       }
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
       LOG.failedToGeneratePublicCert("BCFKS", e.getMessage(), e);
