@@ -88,6 +88,7 @@ public class KnoxMetadataResource {
   private Set<String> pinnedTopologies;
   private java.nio.file.Path pemFilePath;
   private java.nio.file.Path jksFilePath;
+  private java.nio.file.Path bcfksFilePath;
 
   @Context
   private HttpServletRequest request;
@@ -147,6 +148,9 @@ public class KnoxMetadataResource {
       } else if ("jks".equals(certType)) {
         generateCertificateJks(certificateChain, config);
         return generateSuccessFileDownloadResponse(jksFilePath);
+      } else if ("bcfks".equals(certType)) {
+        generateCertificateBcfks(certificateChain, config);
+        return generateSuccessFileDownloadResponse(bcfksFilePath);
       } else {
         return generateFailureFileDownloadResponse(Status.BAD_REQUEST, "Invalid certification type provided!");
       }
@@ -205,6 +209,17 @@ public class KnoxMetadataResource {
       }
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
       LOG.failedToGeneratePublicCert("JKS", e.getMessage(), e);
+    }
+  }
+
+  private void generateCertificateBcfks(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
+    try {
+      if (bcfksFilePath == null || !bcfksFilePath.toFile().exists()) {
+        bcfksFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.bcfks");
+        X509CertificateUtil.writeCertificatesToKeyStore(certificateChain, bcfksFilePath.toFile(), "bcfks", null);
+      }
+    } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+      LOG.failedToGeneratePublicCert("BCFKS", e.getMessage(), e);
     }
   }
 

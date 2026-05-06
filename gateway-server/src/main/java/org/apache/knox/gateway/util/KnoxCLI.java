@@ -756,12 +756,12 @@ public class KnoxCLI extends Configured implements Tool {
 
   public class CertExportCommand extends Command {
 
-    public static final String USAGE = "export-cert [--type PEM|JKS|JCEKS|PKCS12]";
+    public static final String USAGE = "export-cert [--type PEM|JKS|JCEKS|PKCS12|BCFKS]";
     public static final String DESC = "The export-cert command exports the public certificate\n" +
                                       "from the a gateway.jks keystore with the alias of gateway-identity.\n" +
                                       "It will be exported to `{GATEWAY_HOME}/data/security/keystores/` with a name of `gateway-client-trust.<type>`" +
                                       "Using the --type option you can specify which keystore type you need (default: PEM)\n" +
-                                      "NOTE: The password for the JKS, JCEKS and PKCS12 types is `changeit`.\n" +
+                                      "NOTE: The password for the JKS, JCEKS, PKCS12 and BCFKS types is `changeit`.\n" +
                                       "It can be changed using: `keytool -storepasswd -storetype <type> -keystore gateway-client-trust.<type>`";
 
     private GatewayConfig getGatewayConfig() {
@@ -808,6 +808,9 @@ public class KnoxCLI extends Configured implements Tool {
           } else if ("PKCS12".equalsIgnoreCase(type)) {
             X509CertificateUtil.writeCertificateToPkcs12(cert, new File(keyStoreDir + "gateway-client-trust.pkcs12"));
             out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.pkcs12");
+          } else if ("BCFKS".equalsIgnoreCase(type)) {
+            X509CertificateUtil.writeCertificatesToKeyStore(new Certificate[] { cert }, new File(keyStoreDir + "gateway-client-trust.bcfks"), "bcfks", null);
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.bcfks");
           } else {
             out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS|JCEKS|PKCS12] default value is PEM.");
           }

@@ -172,7 +172,7 @@ public class X509CertificateUtil {
   /*
    * Writes an arbitrary number of certificates into the given keystore file protected by the given password
    */
-  private static void writeCertificatesToKeyStore(Certificate[] certs, final File file, String type, String keystorePassword)
+  public static void writeCertificatesToKeyStore(Certificate[] certs, final File file, String type, String keystorePassword)
       throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
     if (certs != null) {
       KeyStore ks = KeyStore.getInstance(type);
