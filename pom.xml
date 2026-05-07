@@ -243,6 +243,7 @@
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.9.0</json-path.version>
         <json-smart.version>2.5.2</json-smart.version>
+        <jsoup.version>1.22.2</jsoup.version>
         <junit.version>4.13.2</junit.version>
         <kotlin-stdlib.version>1.9.10</kotlin-stdlib.version>
         <lang-tag.version>1.5</lang-tag.version>
@@ -288,6 +289,7 @@
         <swagger-maven-plugin.version>3.1.7</swagger-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.15.1</testcontainers.version>
+        <testcontainers-keycloak.version>1.6.1</testcontainers-keycloak.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
         <velocity.version>2.4.1</velocity.version>
         <woodstox-core.version>6.4.0</woodstox-core.version>
@@ -2689,6 +2691,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>uk.co.datumedge</groupId>
                 <artifactId>hamcrest-json</artifactId>
                 <version>${hamcrest-json.version}</version>
@@ -2826,6 +2834,12 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers</artifactId>
                 <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dasniko</groupId>
+                <artifactId>testcontainers-keycloak</artifactId>
+                <version>${testcontainers-keycloak.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

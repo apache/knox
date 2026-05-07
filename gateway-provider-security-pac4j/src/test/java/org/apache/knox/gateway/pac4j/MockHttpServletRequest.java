@@ -106,4 +106,19 @@ public class MockHttpServletRequest extends HttpServletRequestWrapper {
     public Object getAttribute(String name) {
         return attributes.get(name);
     }
+
+    @Override
+    public Map<String, String[]> getParameterMap() {
+        if (parameters == null) {
+            return java.util.Collections.emptyMap();
+        }
+
+        Map<String, String[]> map = new java.util.HashMap<>();
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            map.put(entry.getKey(), new String[]{ entry.getValue() });
+        }
+
+        // The Servlet API specifies that this map is generally immutable
+        return java.util.Collections.unmodifiableMap(map);
+    }
 }
