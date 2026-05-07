@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.pac4j;
 
-import dasniko.testcontainers.keycloak.KeycloakContainer;
 import org.apache.http.Header;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -54,6 +53,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.oidc.client.OidcClient;
+import org.testcontainers.containers.GenericContainer;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -68,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -88,13 +89,24 @@ public class Pac4jProviderOidcClientTest {
     private static final String PAC4J_PASSWORD = "pwdfortest";
     private static final String CLIENT_CLASS = OidcClient.class.getSimpleName();
     private static final String USERNAME = "JaneUser";
+    public static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak";
+    public static final String KEYCLOAK_VERSION = "21.1.2";
 
-    private static KeycloakContainer keycloakContainer;
+    private static GenericContainer<?> keycloakContainer;
 
     @BeforeClass
     public static void setUpClass() {
         try {
-            keycloakContainer = new KeycloakContainer().withRealmImportFile("keycloak/realm-export.json");
+            keycloakContainer = new GenericContainer<>(KEYCLOAK_IMAGE + ":"+ KEYCLOAK_VERSION)
+            .withExposedPorts(8080)
+            .withEnv("KEYCLOAK_ADMIN", "admin")
+            .withEnv("KEYCLOAK_ADMIN_PASSWORD", "admin")
+            .withCopyFileToContainer(
+            org.testcontainers.utility.MountableFile.forClasspathResource("keycloak/realm-export.json"),
+            "/opt/keycloak/data/import/realm.json")
+            .withCommand("start-dev", "--import-realm")
+            .waitingFor(org.testcontainers.containers.wait.strategy.Wait.forHttp("/realms/testrealm/.well-known/openid-configuration").forStatusCode(200));
+
             keycloakContainer.start();
             assertTrue(keycloakContainer.isRunning());
         } catch (Exception e) {
@@ -185,7 +197,8 @@ public class Pac4jProviderOidcClientTest {
         EasyMock.expect(config.getInitParameter("oidc.id")).andReturn("test-client-id").anyTimes();
         EasyMock.expect(config.getInitParameter("oidc.secret")).andReturn("test-client-secret").anyTimes();
 
-        String discoveryUri = keycloakContainer.getAuthServerUrl() + "/realms/testrealm/.well-known/openid-configuration";
+        String authServerUrl = String.format(Locale.ROOT, "http://%s:%d", keycloakContainer.getHost(), keycloakContainer.getMappedPort(8080));
+        String discoveryUri = authServerUrl + "/realms/testrealm/.well-known/openid-configuration";
         EasyMock.expect(config.getInitParameter("oidc.discoveryUri")).andReturn(discoveryUri).anyTimes();
         EasyMock.expect(config.getInitParameter("oidc.clientAuthenticationMethod")).andReturn("client_secret_basic").anyTimes();
         EasyMock.expect(config.getInitParameter("oidc.preferredJwsAlgorithm")).andReturn("RS256").anyTimes();
