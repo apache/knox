@@ -88,11 +88,13 @@ public class TokenMetadataHeaderHandler {
         // Add the default metadata element to be included in the outbound request headers
         metadataForHeaders.add("userName");
 
-        // Parse the configured token metadata elements which should be included as outbound request headers
+        // Parse the configured token metadata elements, if any, which should be included as outbound request headers
         String tokenMetadataHeadersConfig = filterConfig.getInitParameter(TOKEN_METADATA_PARAM);
-        String[] tokenMetadataHeaderNames = tokenMetadataHeadersConfig.split(",");
-        for (String metadataName : tokenMetadataHeaderNames) {
-            metadataForHeaders.add(metadataName.trim());
+        if (tokenMetadataHeadersConfig != null) {
+            String[] tokenMetadataHeaderNames = tokenMetadataHeadersConfig.split(",");
+            for (String metadataName : tokenMetadataHeaderNames) {
+                metadataForHeaders.add(metadataName.trim());
+            }
         }
         return metadataForHeaders;
     }
