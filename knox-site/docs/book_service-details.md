@@ -60,11 +60,11 @@ These are the current Hadoop services with built-in support.
 * [Cloudera Manager](service_cloudera_manager.md)  
 * [Livy](service_livy.md)  
 * [Elasticsearch](service_elasticsearch.md)  
-* [SSL Certificate Trust](service_ssl_certificate_trust.md)  
+* [SSL Certificate Trust](service_ssl_certificate_trust.md)
 * [Service Test](service_service_test.md)
+* [LDAP Server](service_ldap_server.md)
 
 ### Assumptions
-
 This document assumes a few things about your environment in order to simplify the examples.
 
 * The JVM is executable as simply `java`.
