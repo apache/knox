@@ -50,6 +50,7 @@ nav:
   - Client/User Guide:
       - Knox Shell: knoxshell-guide/knoxshell_user_guide.md
       - Discovering Resources: book_client-details.md
+      - LDAP Server: service_ldap_server.md
       - Troubleshooting:
           - General Troubleshooting: book_troubleshooting.md
           - Client-Specific Troubleshooting: client_troubleshooting.md
