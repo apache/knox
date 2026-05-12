@@ -41,6 +41,8 @@ public interface JWT {
 
   String getClaim(String claimName);
 
+  Object getClaimAsObject(String claimName);
+
   String getPrincipal();
 
   String getIssuer();

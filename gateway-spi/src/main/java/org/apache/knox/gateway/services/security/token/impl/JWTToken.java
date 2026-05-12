@@ -43,6 +43,7 @@ public class JWTToken implements JWT {
   public static final String KNOX_JKU_CLAIM = "jku";
   public static final String KNOX_GROUPS_CLAIM = "knox.groups";
   public static final String CLIENT_ID_CLAIM = "client_id";
+  public static final String ACT_CLAIM = "act";
 
   SignedJWT jwt;
 
@@ -98,6 +99,15 @@ public class JWTToken implements JWT {
     }
     if (jwtAttributes.getClientId() != null) {
       builder.claim(CLIENT_ID_CLAIM, jwtAttributes.getClientId());
+    }
+    if (jwtAttributes.getActor() != null) {
+      // RFC 8693 Token Exchange: The "act" (actor) claim provides a means within a JWT to express
+      // that delegation has occurred and identify the acting party to whom authority has been delegated.
+      // The act claim value is a JSON object containing a "sub" claim with the identity of the actor.
+      JWTClaimsSet actClaims = new JWTClaimsSet.Builder()
+          .subject(jwtAttributes.getActor())
+          .build();
+      builder.claim(ACT_CLAIM, actClaims.toJSONObject());
     }
 
     // Add a private UUID claim for uniqueness
@@ -176,6 +186,25 @@ public class JWTToken implements JWT {
 
     try {
       claim = jwt.getJWTClaimsSet().getStringClaim(claimName);
+    } catch (ParseException e) {
+      log.unableToParseToken(e);
+    }
+
+    return claim;
+  }
+
+  /**
+   * Get a claim value as an Object. Useful for nested claims like 'act' which is a JSON object.
+   *
+   * @param claimName The name of the claim to retrieve
+   * @return The claim value as an Object, or null if the claim doesn't exist or cannot be parsed
+   */
+    @Override
+    public Object getClaimAsObject(String claimName) {
+    Object claim = null;
+
+    try {
+      claim = jwt.getJWTClaimsSet().getClaim(claimName);
     } catch (ParseException e) {
       log.unableToParseToken(e);
     }

@@ -40,6 +40,7 @@ public class JWTokenAttributes {
   private final String issuer;
   private String kid;
   private final String clientId;
+  private final String actor;
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
       char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer) {
@@ -48,6 +49,11 @@ public class JWTokenAttributes {
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
       char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId) {
+    this(userName, audiences, algorithm, expires, signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, null);
+  }
+
+  JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId, String actor) {
     this.userName = userName;
     this.audiences = audiences;
     this.algorithm = algorithm;
@@ -62,6 +68,7 @@ public class JWTokenAttributes {
     this.kid = kid;
     this.issuer = issuer;
     this.clientId = clientId;
+    this.actor = actor;
   }
 
   public String getUserName() {
@@ -134,5 +141,9 @@ public class JWTokenAttributes {
 
   public String getClientId() {
     return clientId;
+  }
+
+  public String getActor() {
+    return actor;
   }
 }
