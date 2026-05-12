@@ -79,6 +79,7 @@ nav:
               - Hadoop Auth: config_hadoop_auth_provider.md
             - Services/APIs:
               - Knox SSO: config_knox_sso.md
+              - Knox SSO Logout: knox_sso_logout.md
               - API Key: config_apikey.md
               - Client Credentials: config_client_credentials.md
               - Knox Auth Service: config_knoxauth_service.md
