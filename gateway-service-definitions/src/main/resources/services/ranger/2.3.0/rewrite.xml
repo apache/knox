@@ -49,4 +49,24 @@
     <rule dir="IN" name="RANGER/ranger/inbound/roles/path" pattern="*://*:*/**/ranger/service/roles/{path=**}?{**}">
         <rewrite template="{$serviceUrl[RANGER]}/service/roles/{path=**}?{**}"/>
     </rule>
+
+    <!-- Ranger Admin users -->
+    <rule dir="IN" name="RANGER/ranger/inbound/users" pattern="*://*:*/**/ranger/service/users?{**}">
+            <rewrite template="{$serviceUrl[RANGER]}/service/users?{**}"/>
+    </rule>
+    <rule dir="IN" name="RANGER/ranger/inbound/users/path" pattern="*://*:*/**/ranger/service/users/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/users/{path=**}?{**}"/>
+    </rule>
+    <!-- Ranger Admin keys -->
+    <rule dir="IN" name="RANGER/ranger/inbound/keys/path" pattern="*://*:*/**/ranger/service/keys/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/keys/{path=**}?{**}"/>
+    </rule>
+    <!-- Ranger Admin audit -->
+    <rule dir="IN" name="RANGER/ranger/inbound/audit/path" pattern="*://*:*/**/ranger/service/audit/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/audit/{path=**}?{**}"/>
+    </rule>
+    <!-- Ranger Admin Security Zones -->
+    <rule dir="IN" name="RANGER/ranger/inbound/zones/path" pattern="*://*:*/**/ranger/service/zones/{path=**}?{**}">
+        <rewrite template="{$serviceUrl[RANGER]}/service/zones/{path=**}?{**}"/>
+    </rule>
 </rules>
