@@ -146,6 +146,7 @@ public class TokenResource {
   static final String KNOX_TOKEN_USER_LIMIT_PER_USER = TOKEN_PARAM_PREFIX + "limit.per.user";
   static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = TOKEN_PARAM_PREFIX + "user.limit.exceeded.action";
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
+  private static final String TOKEN_ENABLE_DELEGATED_AUTH = TOKEN_PARAM_PREFIX + "enable.delegated.auth";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -188,6 +189,7 @@ public class TokenResource {
   private int tokenLimitPerUser;
   private boolean includeGroupsInTokenAllowed;
   private String tokenIssuer;
+  private boolean enableDelegatedAuth;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
 
@@ -269,6 +271,9 @@ public class TokenResource {
     includeGroupsInTokenAllowed = includeGroupsInTokenAllowedParam == null
             ? true
             : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
+
+    String enableDelegatedAuthParam = context.getInitParameter(TOKEN_ENABLE_DELEGATED_AUTH);
+    enableDelegatedAuth = enableDelegatedAuthParam != null && Boolean.parseBoolean(enableDelegatedAuthParam);
 
     this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
@@ -1099,6 +1104,17 @@ public class TokenResource {
       Set<TokenIdPrincipal> tokenIdPrincipals = subject.getPrincipals(TokenIdPrincipal.class);
       if (!tokenIdPrincipals.isEmpty()) {
         jwtAttributesBuilder.setClientId(tokenIdPrincipals.iterator().next().getName());
+      }
+
+      // RFC 8693 Token Exchange: Add the "act" claim if delegated auth is enabled and impersonation occurred
+      if (enableDelegatedAuth && SubjectUtils.isImpersonating(subject)) {
+        String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
+        String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
+        if (primaryPrincipalName != null && impersonatedPrincipalName != null && !primaryPrincipalName.equals(impersonatedPrincipalName)) {
+          // The primary principal (the one doing the impersonation) becomes the actor
+          jwtAttributesBuilder.setActor(primaryPrincipalName);
+          log.addingActorClaimToToken(primaryPrincipalName, impersonatedPrincipalName);
+        }
       }
     }
 

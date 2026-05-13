@@ -2093,4 +2093,131 @@ public class TokenServiceResourceTest {
       return false;
     }
   }
+
+  /**
+   * Helper method to setup test configuration for delegated auth tests.
+   */
+  private Map<String, String> createDelegatedAuthContextExpectations(boolean enableDelegatedAuth, boolean enableImpersonation) {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    contextExpectations.put("knox.token.ttl", "60000");
+    if (enableImpersonation) {
+      contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, "true");
+    }
+    if (enableDelegatedAuth) {
+      contextExpectations.put("knox.token.enable.delegated.auth", "true");
+    }
+    return contextExpectations;
+  }
+
+  /**
+   * Helper method to create a Subject with optional impersonation.
+   */
+  private Subject createSubjectWithOptionalImpersonation(String primaryUser, String impersonatedUser) {
+    final Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal(primaryUser));
+    if (impersonatedUser != null && !primaryUser.equals(impersonatedUser)) {
+      subject.getPrincipals().add(new ImpersonatedPrincipal(impersonatedUser));
+    }
+    return subject;
+  }
+
+  /**
+   * Helper method to get a token with the given subject context.
+   */
+  @SuppressForbidden
+  private JWTToken getTokenWithSubject(Subject subject) throws Exception {
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = Subject.doAs(
+        subject,
+        (PrivilegedAction<Response>) tr::doGet);
+
+    assertEquals(200, retResponse.getStatus());
+
+    String retString = retResponse.getEntity().toString();
+    String accessToken = getTagValue(retString, "access_token");
+    assertNotNull(accessToken);
+
+    return new JWTToken(accessToken);
+  }
+
+  /**
+   * Test RFC 8693 Token Exchange delegated authentication with 'act' claim.
+   * When delegated auth is enabled and impersonation is occurring, the token should include
+   * an 'act' claim with the actor (primary principal) identity.
+   */
+  @Test
+  @SuppressForbidden
+  public void testDelegatedAuthWithActClaim() throws Exception {
+    final String primaryUser = "admin";
+    final String impersonatedUser = "alice";
+
+    configureCommonExpectations(createDelegatedAuthContextExpectations(true, true), true);
+    Subject subject = createSubjectWithOptionalImpersonation(primaryUser, impersonatedUser);
+    JWTToken parsedToken = getTokenWithSubject(subject);
+
+    // Verify the subject is the impersonated user
+    assertEquals(impersonatedUser, parsedToken.getSubject());
+
+    // Verify the 'act' claim is present and contains the actor (primary user)
+    Object actClaim = parsedToken.getClaimAsObject(JWTToken.ACT_CLAIM);
+    assertNotNull("RFC 8693 'act' claim should be present when delegated auth is enabled", actClaim);
+
+    // The 'act' claim should be a Map containing a "sub" field with the actor's identity
+    assertTrue("'act' claim should be a Map", actClaim instanceof Map);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> actClaimMap = (Map<String, Object>) actClaim;
+    assertEquals("'act' claim should contain the actor's subject", primaryUser, actClaimMap.get("sub"));
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * Test that 'act' claim is NOT added when delegated auth is disabled.
+   */
+  @Test
+  @SuppressForbidden
+  public void testNoActClaimWhenDelegatedAuthDisabled() throws Exception {
+    final String primaryUser = "admin";
+    final String impersonatedUser = "alice";
+
+    configureCommonExpectations(createDelegatedAuthContextExpectations(false, true), true);
+    Subject subject = createSubjectWithOptionalImpersonation(primaryUser, impersonatedUser);
+    JWTToken parsedToken = getTokenWithSubject(subject);
+
+    // Verify the subject is the impersonated user
+    assertEquals(impersonatedUser, parsedToken.getSubject());
+
+    // Verify the 'act' claim is NOT present when delegated auth is disabled
+    Object actClaim = parsedToken.getClaimAsObject(JWTToken.ACT_CLAIM);
+    assertNull("'act' claim should NOT be present when delegated auth is disabled", actClaim);
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * Test that 'act' claim is NOT added when there is no impersonation.
+   */
+  @Test
+  @SuppressForbidden
+  public void testNoActClaimWithoutImpersonation() throws Exception {
+    final String user = "alice";
+
+    configureCommonExpectations(createDelegatedAuthContextExpectations(true, false), true);
+    Subject subject = createSubjectWithOptionalImpersonation(user, null);
+    JWTToken parsedToken = getTokenWithSubject(subject);
+
+    // Verify the subject
+    assertEquals(user, parsedToken.getSubject());
+
+    // Verify the 'act' claim is NOT present when there's no impersonation
+    Object actClaim = parsedToken.getClaimAsObject(JWTToken.ACT_CLAIM);
+    assertNull("'act' claim should NOT be present when there is no impersonation", actClaim);
+
+    EasyMock.verify(request, context);
+  }
 }
