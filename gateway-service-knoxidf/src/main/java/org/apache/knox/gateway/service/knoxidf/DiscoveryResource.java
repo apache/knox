@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_EXCHANGE_TOPOLOGY_NAME;
 
 @Path(BASE_RESORCE_PATH + "/.well-known/openid-configuration")
 @Produces(MediaType.APPLICATION_JSON)
@@ -45,7 +46,7 @@ public class DiscoveryResource {
 
     @PostConstruct
     public void init() {
-        tokenExchangeTopologyName = servletContext.getInitParameter("token.exchange.topology.name");
+        tokenExchangeTopologyName = servletContext.getInitParameter(TOKEN_EXCHANGE_TOPOLOGY_NAME);
         currentTopologyName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
     }
 

@@ -25,9 +25,11 @@ public interface KnoxIDFConstants {
     String AUTH_CODE = "authorization_code";
     String CLIENT_ID = "client_id";
     String REDIRECT_URI = "redirect_uri";
+    String REDIRECT_URIS = "redirect_uris";
     String RESPONSE_TYPE = "response_type";
     Set<String> ALLOWED_RESPONSE_TYPES = Sets.newHashSet("code", "id_token", "code id_token");
     String SCOPE = "scope";
+    String ALLOWED_SCOPES = "allowed_scopes";
     String OFFLINE_ACCESS_SCOPE = "offline_access";
     Set<String> DEFAULT_SCOPES = Sets.newHashSet("openid", "profile", "email", OFFLINE_ACCESS_SCOPE);
     String OPENID_SCOPE = SCOPE + "=openid";
@@ -48,8 +50,11 @@ public interface KnoxIDFConstants {
     String TOKEN_ID_ATTRIBUTE = "X-Token-Id";
     String SCOPE_ATTRIBUTE = "X-Token-Scope";
 
+    String FEDERATED_IDENTITY_ID = "federated_identity_id";
     String FEDERATED_ID_TOKEN_PREFIX = "fed_id_";
     String FEDERATED_ACCESS_TOKEN_PREFIX = "fed_access_";
     String FEDERATED_OP_CONFIG_PREFIX = "federated.op.";
     String FEDERATED_OP_CONFIG_NAMES = FEDERATED_OP_CONFIG_PREFIX + "names";
+
+    String TOKEN_EXCHANGE_TOPOLOGY_NAME = "token.exchange.topology.name";
 }

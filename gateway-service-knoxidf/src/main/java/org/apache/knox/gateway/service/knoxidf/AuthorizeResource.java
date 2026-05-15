@@ -29,6 +29,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.service.knoxtoken.PasscodeTokenResourceBase;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -75,11 +76,23 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.ALLOWED_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE_METHOD;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.FEDERATED_IDENTITY_ID;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.NONCE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URI;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URIS;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.RESPONSE_TYPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.SCOPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.STATE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 
@@ -124,30 +137,20 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         return authorize();
     }
 
-    public Response authorize() {
-        try {
-            return authorize(
-                    request.getParameter("response_type"),
-                    request.getParameter("client_id"),
-                    request.getParameter("redirect_uri"),
-                    request.getParameter("scope"),
-                    request.getParameter("state"),
-                    request.getParameter("nonce"),
-                    request.getParameter("code_challenge"),
-                    request.getParameter("code_challenge_method"));
-        } catch (Exception e) {
-            return error("server_error", e.getMessage());
-        }
+    private Response authorize() {
+        return authorize(request.getParameter(RESPONSE_TYPE), request.getParameter(CLIENT_ID), request.getParameter(REDIRECT_URI),
+                request.getParameter(SCOPE), request.getParameter(STATE), request.getParameter(NONCE),
+                request.getParameter(CODE_CHALLENGE), request.getParameter(CODE_CHALLENGE_METHOD));
     }
 
     private Response authorize(String responseType,
-                              String clientId,
-                              String redirectUri,
-                              String scope,
-                              String state,
-                              String nonce,
-                              String codeChallenge,
-                              String codeChallengeMethod) throws Exception {
+                               String clientId,
+                               String redirectUri,
+                               String scope,
+                               String state,
+                               String nonce,
+                               String codeChallenge,
+                               String codeChallengeMethod) {
         final String subject = SubjectUtils.getCurrentEffectivePrincipalName();
         final Set<String> requestedScopes = StringUtils.isBlank(scope) ? DEFAULT_SCOPES : new HashSet<>(Arrays.asList(scope.split("\\s+")));
         final AuthorizeRequestMetadata authorizeRequestMetadata = new AuthorizeRequestMetadata(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce, codeChallenge, codeChallengeMethod);
@@ -193,7 +196,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         tokenStateService.addMetadata(authorizeRequestMetadata.getClientId(), consentAcceptedMetadata);
     }
 
-    private Response getAuthCodeFromKnox(final AuthorizeRequestMetadata authorizeRequestMetadata, final Pair<String, String> federatedTokens) throws Exception {
+    private Response getAuthCodeFromKnox(final AuthorizeRequestMetadata authorizeRequestMetadata, final Pair<String, String> federatedTokens) {
         final Response tokenResponse = getAuthenticationToken();
         if (tokenResponse.getStatus() == Response.Status.OK.getStatusCode()) {
             final Map<String, String> tokenResponseMap = JsonUtils.getMapFromJsonString(tokenResponse.getEntity().toString());
@@ -204,10 +207,15 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         return tokenResponse;
     }
 
-    private Response redirectToAuthSuccess(final AuthorizeRequestMetadata authorizeRequestMetadata, final String code) throws UnsupportedEncodingException {
-        final String redirectLocation = authorizeRequestMetadata.getRedirectUri()
-                + "?code=" + URLEncoder.encode(code, UTF_8)
-                + "&state=" + URLEncoder.encode(authorizeRequestMetadata.getState(), UTF_8);
+    private Response redirectToAuthSuccess(final AuthorizeRequestMetadata authorizeRequestMetadata, final String code) {
+        final String redirectLocation;
+        try {
+            redirectLocation = authorizeRequestMetadata.getRedirectUri()
+                    + "?code=" + URLEncoder.encode(code, UTF_8)
+                    + "&state=" + URLEncoder.encode(authorizeRequestMetadata.getState(), UTF_8);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e); //This should never happen with UTF-8
+        }
         return Response.seeOther(URI.create(redirectLocation)).build();
     }
 
@@ -215,8 +223,8 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @Path("/callback")
     public Response authCallback() throws Exception {
         //This is the callback for the federated OP
-        final String federatedAuthCode = request.getParameter("code");
-        final String state = request.getParameter("state");
+        final String federatedAuthCode = request.getParameter(CODE);
+        final String state = request.getParameter(STATE);
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
         //at this point, there has to be exactly 1 federated OP config
         final FederatedOpConfiguration federatedOpConfiguration = federatedOpConfigurationStore.get(state).stream().findFirst().get();
@@ -228,7 +236,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @GET
     @Path("/consentAccepted")
     public Response consentAccepted() throws Exception {
-        final String state = request.getParameter("state");
+        final String state = request.getParameter(STATE);
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
         if (authorizeRequestMetadata == null) {
             return error("Consent cannot be accepted", "Invalid state");
@@ -250,25 +258,25 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         return Response.status(Response.Status.FORBIDDEN).entity("Consent denied!").build();
     }
 
-    private void decorateAuthCodeToken(final String tokenId, final AuthorizeRequestMetadata authorizeRequestMetadata, final Pair<String, String> federatedTokens) throws Exception {
+    private void decorateAuthCodeToken(final String tokenId, final AuthorizeRequestMetadata authorizeRequestMetadata, final Pair<String, String> federatedTokens) {
         final Map<String, String> authCodeTokenMap = new HashMap<>();
         authCodeTokenMap.put(TokenMetadata.TYPE, TokenMetadataType.AUTH_CODE.name());
-        authCodeTokenMap.put("client_id", authorizeRequestMetadata.getClientId());
-        authCodeTokenMap.put("redirect_uri", authorizeRequestMetadata.getRedirectUri());
-        authCodeTokenMap.put("userName", authorizeRequestMetadata.getSubject());
-        authCodeTokenMap.put("scope", authorizeRequestMetadata.getJoinedRequestedScopes());
+        authCodeTokenMap.put(CLIENT_ID, authorizeRequestMetadata.getClientId());
+        authCodeTokenMap.put(REDIRECT_URI, authorizeRequestMetadata.getRedirectUri());
+        authCodeTokenMap.put(TokenMetadata.USER_NAME, authorizeRequestMetadata.getSubject());
+        authCodeTokenMap.put(SCOPE, authorizeRequestMetadata.getJoinedRequestedScopes());
         if (authorizeRequestMetadata.getRequestedScopes().contains(OFFLINE_ACCESS_SCOPE)) {
             authCodeTokenMap.put(OFFLINE_ACCESS_SCOPE, "true");
         }
         if (StringUtils.isNotBlank(authorizeRequestMetadata.getNonce())) {
-            authCodeTokenMap.put("nonce", authorizeRequestMetadata.getNonce());
+            authCodeTokenMap.put(NONCE, authorizeRequestMetadata.getNonce());
         }
         if (StringUtils.isNotBlank(authorizeRequestMetadata.getCodeChallenge())) {
             authCodeTokenMap.put(CODE_CHALLENGE, authorizeRequestMetadata.getCodeChallenge());
             authCodeTokenMap.put(CODE_CHALLENGE_METHOD, StringUtils.defaultIfBlank(authorizeRequestMetadata.getCodeChallengeMethod(), "plain"));
         }
         if (federatedTokens != null) {
-            authCodeTokenMap.put("federated_identity_id", federatedTokens.getLeft());
+            authCodeTokenMap.put(FEDERATED_IDENTITY_ID, federatedTokens.getLeft());
             authCodeTokenMap.putAll(KnoxIDFUtils.splitFederatedToken(federatedTokens.getRight(), false));
         }
         tokenStateService.addMetadata(tokenId, new TokenMetadata(authCodeTokenMap));
@@ -287,7 +295,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             }
 
             // Verify redirect URI
-            final String storedRedirectUris = tokenMetadata.getMetadata("redirect_uris");
+            final String storedRedirectUris = tokenMetadata.getMetadata(REDIRECT_URIS);
             if (StringUtils.isBlank(storedRedirectUris)) {
                 return error("invalid_request", "Missing stored redirect_uris, cannot authorize the request");
             }
@@ -297,7 +305,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             }
 
             // Verify scope(s)
-            final String storedAllowedScopes = tokenMetadata.getMetadata("allowed_scopes");
+            final String storedAllowedScopes = tokenMetadata.getMetadata(ALLOWED_SCOPES);
             if (StringUtils.isBlank(storedAllowedScopes)) {
                 return error("invalid_scope", "Missing stored allowed_scopes, cannot authorize the request");
             }
@@ -341,11 +349,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
 
     private Response fetchFederatedTokens(final String code, FederatedOpConfiguration opConfig) {
         final List<NameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("code", code));
-        params.add(new BasicNameValuePair("redirect_uri", opConfig.getAuthorizeCallback()));
-        params.add(new BasicNameValuePair("grant_type", "authorization_code"));
-        params.add(new BasicNameValuePair("client_id", opConfig.getClientId()));
-        params.add(new BasicNameValuePair("client_secret", opConfig.getClientSecret()));
+        params.add(new BasicNameValuePair(CODE, code));
+        params.add(new BasicNameValuePair(REDIRECT_URI, opConfig.getAuthorizeCallback()));
+        params.add(new BasicNameValuePair(GRANT_TYPE, "authorization_code"));
+        params.add(new BasicNameValuePair(CLIENT_ID, opConfig.getClientId()));
+        params.add(new BasicNameValuePair(CLIENT_SECRET, opConfig.getClientSecret()));
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(opConfig.getTokenEndpoint());

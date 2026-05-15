@@ -55,6 +55,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.AUTH_CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
@@ -62,9 +63,11 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE_METHOD;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_VERIFIER;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.FEDERATED_IDENTITY_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_PLAIN;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_S256;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URI;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN_TTL;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN_TTL_DEFAULT;
@@ -114,7 +117,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     @POST
     public Response doPost() {
-        final String grantType = getRequestParam("grant_type");
+        final String grantType = getRequestParam(GRANT_TYPE);
         if (REFRESH_TOKEN.equals(grantType)) {
             return handleRefreshToken();
         } else if (AUTH_CODE.equals(grantType)) {
@@ -147,10 +150,10 @@ public class TokenResource extends PasscodeTokenResourceBase {
                 final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
 
                 //if the auth code token was a result of a federated OIDC call, we need to save the associated
-                //federated identity ID in thw JWT too (so that it can be looked up while fetching user info)
-                final String federatedIdentityId = authCodeTokenMetadata.getMetadata("federated_identity_id");
+                //federated identity ID in the JWT too (so that it can be looked up while fetching user info)
+                final String federatedIdentityId = authCodeTokenMetadata.getMetadata(FEDERATED_IDENTITY_ID);
                 if (StringUtils.isNotBlank(federatedIdentityId)) {
-                    tokenMetadata.add("federated_identity_id", federatedIdentityId);
+                    tokenMetadata.add(FEDERATED_IDENTITY_ID, federatedIdentityId);
                 }
             }
         } catch (UnknownTokenException e) {
@@ -231,15 +234,15 @@ public class TokenResource extends PasscodeTokenResourceBase {
             throw new RefreshTokenValidationError("Invalid grant: Refresh token expired");
         }
 
-        final String associatedClientId = refreshTokenMetadata.getMetadata("client_id");
+        final String associatedClientId = refreshTokenMetadata.getMetadata(CLIENT_ID);
         if (!clientId.equals(associatedClientId)) {
             throw new RefreshTokenValidationError("Invalid grant: client_id mismatch");
         }
     }
 
     private Response handleAuthorizationCodeFlow() {
-        final String code = getRequestParam("code");
-        final String redirectUri = getRequestParam("redirect_uri");
+        final String code = getRequestParam(CODE);
+        final String redirectUri = getRequestParam(REDIRECT_URI);
 
         try {
             validateAuthCode(code, redirectUri);
@@ -266,7 +269,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             }
 
             final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
-            final String associateRedirectUri = authCodeTokenMetadata.getMetadata("redirect_uri");
+            final String associateRedirectUri = authCodeTokenMetadata.getMetadata(REDIRECT_URI);
             if (!authCodeTokenMetadata.isAuthCode()) {
                 throw new AuthTokenValidationError("Invalid auth_code: not an auth code token");
             } else if (tokenStateService.getTokenExpiration(code) <= System.currentTimeMillis()) {
@@ -274,8 +277,8 @@ public class TokenResource extends PasscodeTokenResourceBase {
             } else if (!associateRedirectUri.equals(redirectUri)) {
                 throw new AuthTokenValidationError("Invalid redirect_uri: " + redirectUri);
             } else {
-                final String associatedClientId = authCodeTokenMetadata.getMetadata("client_id");
-                final String clientId = getRequestParam("client_id");
+                final String associatedClientId = authCodeTokenMetadata.getMetadata(CLIENT_ID);
+                final String clientId = getRequestParam(CLIENT_ID);
                 if (!associatedClientId.equals(clientId)) {
                     throw new AuthTokenValidationError("Invalid client_id: " + clientId);
                 }
@@ -318,7 +321,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     }
 
     private String generateIdToken(JWT accessToken, TokenMetadata authCodeTokenMetadata) throws TokenServiceException {
-        final boolean hasFederatedIdToken = authCodeTokenMetadata != null && StringUtils.isNotBlank(authCodeTokenMetadata.getMetadata("federated_identity_id"));
+        final boolean hasFederatedIdToken = authCodeTokenMetadata != null && StringUtils.isNotBlank(authCodeTokenMetadata.getMetadata(FEDERATED_IDENTITY_ID));
 
         if (hasFederatedIdToken) {
             return generateFederatedIdToken(accessToken, authCodeTokenMetadata);
@@ -328,7 +331,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     }
 
     private String generateFederatedIdToken(JWT accessToken, TokenMetadata tokenMetadata) throws TokenServiceException {
-        final String fedIdentityId = tokenMetadata.getMetadata("federated_identity_id");
+        final String fedIdentityId = tokenMetadata.getMetadata(FEDERATED_IDENTITY_ID);
         final FederatedIdentity federatedIdentity = federatedIdentityService
                 .findById(fedIdentityId)
                 .orElseThrow(() -> new TokenServiceException("Federated identity not found"));
@@ -339,7 +342,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
                 .setIssueTime(System.currentTimeMillis())
                 .setExpires(Long.parseLong(accessToken.getExpires()))
                 .setIssuer(accessToken.getIssuer())
-                .setAudiences(tokenMetadata.getMetadata("client_id"));
+                .setAudiences(tokenMetadata.getMetadata(CLIENT_ID));
 
         final Map<String, Object> claims = new HashMap<>(federatedIdentity.getAttributes());
         claims.keySet().retainAll(AuthorizeResource.ALLOWED_CLAIMS);
@@ -376,14 +379,14 @@ public class TokenResource extends PasscodeTokenResourceBase {
             }
         } else {
             // If there is no auth code (e.g. refresh token grant), we use the client_id from the request
-            idTokenAttributesBuilder.setAudiences(getRequestParam("client_id"));
+            idTokenAttributesBuilder.setAudiences(getRequestParam(CLIENT_ID));
         }
 
         return issueToken(idTokenAttributesBuilder).toString();
     }
 
     private String generateRefreshToken(JWT accessToken) throws TokenServiceException {
-        final String scope = (String) accessToken.getJWTClaimsSet().getClaim("scope");
+        final String scope = (String) accessToken.getJWTClaimsSet().getClaim(SCOPE);
         if (StringUtils.isNotBlank(scope) && scope.contains(OFFLINE_ACCESS_SCOPE)) {
             return issueRefreshToken(accessToken, scope);
         } else {
@@ -396,7 +399,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
         final long issueTime = System.currentTimeMillis();
         final long expires = issueTime + refreshTokenTTL;
-        final String clientId = getRequestParam("client_id");
+        final String clientId = getRequestParam(CLIENT_ID);
 
         refreshTokenAttributesBuilder.setIssuer(accessToken.getIssuer())
                 .setUserName(accessToken.getSubject())
