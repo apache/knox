@@ -76,6 +76,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE_METHOD;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
@@ -130,21 +132,25 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                     request.getParameter("redirect_uri"),
                     request.getParameter("scope"),
                     request.getParameter("state"),
-                    request.getParameter("nonce"));
+                    request.getParameter("nonce"),
+                    request.getParameter("code_challenge"),
+                    request.getParameter("code_challenge_method"));
         } catch (Exception e) {
             return error("server_error", e.getMessage());
         }
     }
 
-    public Response authorize(String responseType,
+    private Response authorize(String responseType,
                               String clientId,
                               String redirectUri,
                               String scope,
                               String state,
-                              String nonce) throws Exception {
+                              String nonce,
+                              String codeChallenge,
+                              String codeChallengeMethod) throws Exception {
         final String subject = SubjectUtils.getCurrentEffectivePrincipalName();
         final Set<String> requestedScopes = StringUtils.isBlank(scope) ? DEFAULT_SCOPES : new HashSet<>(Arrays.asList(scope.split("\\s+")));
-        final AuthorizeRequestMetadata authorizeRequestMetadata = new AuthorizeRequestMetadata(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce);
+        final AuthorizeRequestMetadata authorizeRequestMetadata = new AuthorizeRequestMetadata(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce, codeChallenge, codeChallengeMethod);
         final Response verificationErrorResponse = verifyParams(authorizeRequestMetadata);
         if (verificationErrorResponse != null) {
             return verificationErrorResponse;
@@ -233,7 +239,9 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 authorizeRequestMetadata.getRedirectUri(),
                 authorizeRequestMetadata.getJoinedRequestedScopes(),
                 authorizeRequestMetadata.getState(),
-                authorizeRequestMetadata.getNonce());
+                authorizeRequestMetadata.getNonce(),
+                authorizeRequestMetadata.getCodeChallenge(),
+                authorizeRequestMetadata.getCodeChallengeMethod());
     }
 
     @GET
@@ -254,6 +262,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
         if (StringUtils.isNotBlank(authorizeRequestMetadata.getNonce())) {
             authCodeTokenMap.put("nonce", authorizeRequestMetadata.getNonce());
+        }
+        if (StringUtils.isNotBlank(authorizeRequestMetadata.getCodeChallenge())) {
+            authCodeTokenMap.put(CODE_CHALLENGE, authorizeRequestMetadata.getCodeChallenge());
+            authCodeTokenMap.put(CODE_CHALLENGE_METHOD, StringUtils.defaultIfBlank(authorizeRequestMetadata.getCodeChallengeMethod(), "plain"));
         }
         if (federatedTokens != null) {
             authCodeTokenMap.put("federated_identity_id", federatedTokens.getLeft());

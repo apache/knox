@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import unittest
+import hashlib
+import base64
 from urllib.parse import urlparse, parse_qs
 from requests.auth import HTTPBasicAuth
 
@@ -202,6 +204,141 @@ class TestKnoxIDF(unittest.TestCase):
         display_id = get_token_id_display_text(refresh_token_id)
         self.assertEqual(error_info["status"], "401")
         self.assertIn(f"Unknown token: {display_id}", error_info["message"])
+
+    def test_authorization_code_flow_pkce_s256(self):
+        """
+        Test OIDC Authorization Code Flow with PKCE (S256).
+        """
+        # 1. Register client
+        client_id, client_secret = self._register_test_client()
+
+        # 2. PKCE Setup
+        code_verifier = "thisshouldbealongandrandomstringthatissecure"
+        code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest()).decode().replace('=', '')
+
+        # 3. Authorize
+        auth_url = f"{self.knoxidf_ldap_url}knoxidf/api/v1/authorize"
+        params = {
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": "http://localhost/callback",
+            "scope": "openid",
+            "state": "pkce_state",
+            "auto_consent": "true",
+            "code_challenge": code_challenge,
+            "code_challenge_method": "S256"
+        }
+        response = knox_get(auth_url, params=params, auth=(self.username, self.password), allow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        location = response.headers.get("Location")
+        code = parse_qs(urlparse(location).query)["code"][0]
+
+        # 4. Token Exchange
+        token_url = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
+        data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": "http://localhost/callback",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "code_verifier": code_verifier
+        }
+        response = knox_post(token_url, data=data)
+        self.assertEqual(response.status_code, 200)
+        tokens = response.json()
+        self.assertIn("access_token", tokens)
+
+    def test_authorization_code_flow_pkce_plain(self):
+        """
+        Test OIDC Authorization Code Flow with PKCE (plain).
+        """
+        # 1. Register client
+        client_id, client_secret = self._register_test_client()
+
+        # 2. PKCE Setup
+        code_verifier = "some-plain-verifier"
+        code_challenge = code_verifier
+
+        # 3. Authorize
+        auth_url = f"{self.knoxidf_ldap_url}knoxidf/api/v1/authorize"
+        params = {
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": "http://localhost/callback",
+            "scope": "openid",
+            "state": "pkce_plain_state",
+            "auto_consent": "true",
+            "code_challenge": code_challenge,
+            "code_challenge_method": "plain"
+        }
+        response = knox_get(auth_url, params=params, auth=(self.username, self.password), allow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        location = response.headers.get("Location")
+        code = parse_qs(urlparse(location).query)["code"][0]
+
+        # 4. Token Exchange
+        token_url = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
+        data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": "http://localhost/callback",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "code_verifier": code_verifier
+        }
+        response = knox_post(token_url, data=data)
+        self.assertEqual(response.status_code, 200)
+        tokens = response.json()
+        self.assertIn("access_token", tokens)
+
+    def test_authorization_code_flow_pkce_failure(self):
+        """
+        Test PKCE Failure scenarios.
+        """
+        client_id, client_secret = self._register_test_client()
+        code_verifier = "correct-verifier"
+        code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode()).digest()).decode().replace('=', '')
+
+        # Authorize
+        auth_url = f"{self.knoxidf_ldap_url}knoxidf/api/v1/authorize"
+        params = {
+            "response_type": "code", "client_id": client_id, "redirect_uri": "http://localhost/callback",
+            "scope": "openid", "state": "pkce_fail", "auto_consent": "true",
+            "code_challenge": code_challenge, "code_challenge_method": "S256"
+        }
+        response = knox_get(auth_url, params=params, auth=(self.username, self.password), allow_redirects=False)
+        code = parse_qs(urlparse(response.headers.get("Location")).query)["code"][0]
+
+        token_url = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
+
+        # 1. Invalid verifier
+        data = {
+            "grant_type": "authorization_code", "code": code, "redirect_uri": "http://localhost/callback",
+            "client_id": client_id, "client_secret": client_secret, "code_verifier": "wrong-verifier"
+        }
+        response = knox_post(token_url, data=data)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("Invalid code_verifier", response.json()["error_description"])
+
+        # Note: the code is revoked after first use, so we need a new one for the next test
+        response = knox_get(auth_url, params=params, auth=(self.username, self.password), allow_redirects=False)
+        code = parse_qs(urlparse(response.headers.get("Location")).query)["code"][0]
+
+        # 2. Missing verifier
+        data = {
+            "grant_type": "authorization_code", "code": code, "redirect_uri": "http://localhost/callback",
+            "client_id": client_id, "client_secret": client_secret
+        }
+        response = knox_post(token_url, data=data)
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("Missing code_verifier", response.json()["error_description"])
+
+    def _register_test_client(self):
+        reg_url = f"{self.knoxidf_ldap_url}knoxidf/api/v1/client/register"
+        data = {"redirect_uris": "http://localhost/callback", "allowed_scopes": "openid,profile,email,offline_access"}
+        response = knox_post(reg_url, data=data, auth=HTTPBasicAuth(self.username, self.password))
+        reg_info = response.json()
+        return reg_info["client_id"], reg_info["client_secret"]
 
 if __name__ == '__main__':
     unittest.main()

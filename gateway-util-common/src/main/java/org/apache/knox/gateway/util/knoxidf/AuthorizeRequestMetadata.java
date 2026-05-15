@@ -29,8 +29,14 @@ public final class AuthorizeRequestMetadata {
     private final Set<String> requestedScopes;
     private final String state;
     private final String nonce;
+    private final String codeChallenge;
+    private final String codeChallengeMethod;
 
     public AuthorizeRequestMetadata(String clientId, String subject, String responseType, String redirectUri, Set<String> requestedScopes, String state, String nonce) {
+        this(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce, null, null);
+    }
+
+    public AuthorizeRequestMetadata(String clientId, String subject, String responseType, String redirectUri, Set<String> requestedScopes, String state, String nonce, String codeChallenge, String codeChallengeMethod) {
         this.clientId = clientId;
         this.subject = subject;
         this.responseType = responseType;
@@ -38,6 +44,8 @@ public final class AuthorizeRequestMetadata {
         this.requestedScopes = requestedScopes;
         this.state = state;
         this.nonce = nonce;
+        this.codeChallenge = codeChallenge;
+        this.codeChallengeMethod = codeChallengeMethod;
     }
 
     public Response verify() {
@@ -95,6 +103,14 @@ public final class AuthorizeRequestMetadata {
 
     public String getNonce() {
         return nonce;
+    }
+
+    public String getCodeChallenge() {
+        return codeChallenge;
+    }
+
+    public String getCodeChallengeMethod() {
+        return codeChallengeMethod;
     }
 
     public Set<String> getRequestedScopes() {

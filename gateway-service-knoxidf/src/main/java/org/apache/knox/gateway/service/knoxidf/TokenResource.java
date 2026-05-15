@@ -47,7 +47,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +59,12 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.AUTH_CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE_METHOD;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_VERIFIER;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_PLAIN;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_S256;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN_TTL;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN_TTL_DEFAULT;
@@ -271,9 +280,41 @@ public class TokenResource extends PasscodeTokenResourceBase {
                     throw new AuthTokenValidationError("Invalid client_id: " + clientId);
                 }
             }
+
+            // PKCE validation
+            final String codeChallenge = authCodeTokenMetadata.getMetadata(CODE_CHALLENGE);
+            if (StringUtils.isNotBlank(codeChallenge)) {
+                final String codeChallengeMethod = authCodeTokenMetadata.getMetadata(CODE_CHALLENGE_METHOD);
+                final String codeVerifier = getRequestParam(CODE_VERIFIER);
+                if (StringUtils.isBlank(codeVerifier)) {
+                    throw new AuthTokenValidationError("Missing code_verifier");
+                }
+                if (!validatePKCE(codeVerifier, codeChallenge, codeChallengeMethod)) {
+                    throw new AuthTokenValidationError("Invalid code_verifier");
+                }
+            }
         } catch (UnknownTokenException e) {
             throw new AuthTokenValidationError("Unknown auth_code");
         }
+    }
+
+    private boolean validatePKCE(String codeVerifier, String codeChallenge, String method) {
+        if (PKCE_METHOD_PLAIN.equals(method)) {
+            return codeVerifier.equals(codeChallenge);
+        } else if (PKCE_METHOD_S256.equals(method)) {
+            try {
+                return generateS256Challenge(codeVerifier).equals(codeChallenge);
+            } catch (NoSuchAlgorithmException e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private String generateS256Challenge(String codeVerifier) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] digest = md.digest(codeVerifier.getBytes(StandardCharsets.UTF_8));
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
     }
 
     private String generateIdToken(JWT accessToken, TokenMetadata authCodeTokenMetadata) throws TokenServiceException {

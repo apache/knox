@@ -68,6 +68,7 @@ public class DiscoveryResource {
         config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE, KnoxIDFConstants.REFRESH_TOKEN});
         config.put("scopes_supported", KnoxIDFConstants.DEFAULT_SCOPES);
         config.put("id_token_signing_alg_values_supported", new String[]{"RS256"});
+        config.put("code_challenge_methods_supported", new String[]{KnoxIDFConstants.PKCE_METHOD_PLAIN, KnoxIDFConstants.PKCE_METHOD_S256});
         return Response.ok(JsonUtils.renderAsJsonString(config)).build();
     }
 

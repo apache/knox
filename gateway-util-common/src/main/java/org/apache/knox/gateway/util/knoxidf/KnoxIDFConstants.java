@@ -39,6 +39,12 @@ public interface KnoxIDFConstants {
     String CODE_RESPONSE_TYPE = RESPONSE_TYPE + "=" + CODE;
     String NONCE = "nonce";
 
+    String CODE_CHALLENGE = "code_challenge";
+    String CODE_CHALLENGE_METHOD = "code_challenge_method";
+    String CODE_VERIFIER = "code_verifier";
+    String PKCE_METHOD_S256 = "S256";
+    String PKCE_METHOD_PLAIN = "plain";
+
     String TOKEN_ID_ATTRIBUTE = "X-Token-Id";
     String SCOPE_ATTRIBUTE = "X-Token-Scope";
 

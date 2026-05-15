@@ -90,7 +90,9 @@ public class KnoxIDFUtils {
         final Set<String> requestedScopes = StringUtils.isBlank(scope) ? KnoxIDFConstants.DEFAULT_SCOPES : new HashSet<>(Arrays.asList(scope.split("\\s+")));
         final String state = request.getParameter(KnoxIDFConstants.STATE);
         final String nonce = request.getParameter(KnoxIDFConstants.NONCE);
-        return new AuthorizeRequestMetadata(clientId, null, responseType, redirectUri, requestedScopes, state, nonce);
+        final String codeChallenge = request.getParameter(KnoxIDFConstants.CODE_CHALLENGE);
+        final String codeChallengeMethod = request.getParameter(KnoxIDFConstants.CODE_CHALLENGE_METHOD);
+        return new AuthorizeRequestMetadata(clientId, null, responseType, redirectUri, requestedScopes, state, nonce, codeChallenge, codeChallengeMethod);
     }
 
     public static String buildFederatedOpAuthRedirect(final FederatedOpConfiguration federatedOpConfiguration, final String federatedState) {
