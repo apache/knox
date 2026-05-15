@@ -17,35 +17,39 @@ FROM eclipse-temurin:17-jre
 
 MAINTAINER moresandeep
 
-RUN useradd -ms /bin/bash gateway
+# Install dependencies
+RUN apt-get update && apt-get install -y git && useradd -ms /bin/bash gateway
 
-# Create directories
-RUN mkdir /knox-runtime
-RUN mkdir /knox-runtime/knoxshell
+# Create temporary directories for extraction
+RUN mkdir -p /tmp/knox-artifacts /tmp/knoxshell-artifacts /knox-runtime /knoxshell /knox-runtime/knoxshell
 
-# Copy artifacts
-COPY knox-temp-artifacts /knox-temp-artifacts-staging
-COPY knoxshell-temp-artifacts /knoxshell-temp-artifacts-staging
+# Copy pre-built tarballs from the local target directory
+# In CI, these are built in the previous step.
+# Locally, these are built by the developer.
+COPY target/*/knox-*.tar.gz /tmp/knox-artifacts/
+COPY target/*/knoxshell-*.tar.gz /tmp/knoxshell-artifacts/
 
-# Move runtime to new location
-RUN mv /knox-temp-artifacts-staging/*/* /knox-runtime/ && \
-    mv /knoxshell-temp-artifacts-staging/*/* /knox-runtime/knoxshell/ && \
-    rm -rf /knox-temp-artifacts-staging /knoxshell-temp-artifacts-staging
+# Extract and move to runtime location
+RUN tar -xvzf /tmp/knox-artifacts/knox-*.tar.gz -C /tmp/knox-artifacts/ && \
+    tar -xvzf /tmp/knoxshell-artifacts/knoxshell-*.tar.gz -C /tmp/knoxshell-artifacts/ && \
+    mv /tmp/knox-artifacts/knox-*/* /knox-runtime/ && \
+    mv /tmp/knoxshell-artifacts/knoxshell-*/* /knox-runtime/knoxshell/ && \
+    rm -rf /tmp/knox-artifacts /tmp/knoxshell-artifacts
 
-# Add configuration
-ADD master /knox-runtime/data/security/master
-ADD gateway-site.xml /knox-runtime/conf/gateway-site.xml
-ADD conf/topologies/knoxtoken.xml /knox-runtime/conf/topologies/knoxtoken.xml
-ADD conf/topologies/knoxldap.xml /knox-runtime/conf/topologies/knoxldap.xml
-ADD conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
-ADD conf/topologies/knoxidf-ldap.xml /knox-runtime/conf/topologies/knoxidf-ldap.xml
-ADD conf/topologies/knoxidf-token.xml /knox-runtime/conf/topologies/knoxidf-token.xml
-
-ADD conf/topologies/health.xml /knox-runtime/conf/topologies/health.xml
+# Configuration and scripts
+ADD .github/workflows/build/master /knox-runtime/data/security/master
+ADD .github/workflows/build/gateway-site.xml /knox-runtime/conf/gateway-site.xml
+ADD .github/workflows/build/conf/topologies/knoxtoken.xml /knox-runtime/conf/topologies/knoxtoken.xml
+ADD .github/workflows/build/conf/topologies/health.xml /knox-runtime/conf/topologies/health.xml
+ADD .github/workflows/build/conf/topologies/knoxldap.xml /knox-runtime/conf/topologies/knoxldap.xml
+ADD .github/workflows/build/conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
+ADD .github/workflows/build/conf/topologies/knoxidf-ldap.xml /knox-runtime/conf/topologies/knoxidf-ldap.xml
+ADD .github/workflows/build/conf/topologies/knoxidf-token.xml /knox-runtime/conf/topologies/knoxidf-token.xml
 
 RUN chown -R gateway /knox-runtime/
 
-ADD ldap.sh /ldap.sh
-ADD gateway.sh /gateway.sh
+ADD .github/workflows/build/ldap.sh /ldap.sh
+ADD .github/workflows/build/gateway.sh /gateway.sh
 
-RUN chmod +x /ldap.sh /gateway.sh
+RUN chmod +x /ldap.sh
+RUN chmod +x /gateway.sh
