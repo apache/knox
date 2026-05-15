@@ -18,6 +18,8 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
+import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
 import org.apache.knox.gateway.service.knoxtoken.PasscodeTokenResourceBase;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -85,7 +87,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     public void init() throws ServletException, AliasServiceException, ServiceLifecycleException, KeyLengthException {
         super.init();
         this.servletContext = wrapContextForDefaultParams(this.servletContext);
-        this.userParamsProvider = new LdapUserParamsProvider(servletContext.getInitParameter("user.params.provider.ldap.url"));
+        this.userParamsProvider = UserParamsProviderFactory.getUserParamsProvider(servletContext);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
         setRefreshTokenTTL();

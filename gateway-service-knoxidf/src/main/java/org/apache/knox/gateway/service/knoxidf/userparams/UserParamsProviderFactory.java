@@ -14,17 +14,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.service.knoxidf;
+package org.apache.knox.gateway.service.knoxidf.userparams;
 
-import java.util.Map;
+import javax.servlet.ServletContext;
 
-public interface UserParamsProvider {
-
-    /**
-     * Fetches OIDC parameters for the given subject name.
-     *
-     * @param subjectName The user login/ID (e.g., "sam").
-     * @return a map of OIDC parameters (e.g., email, name, roles)
-     */
-    Map<String, Object> getParamsFor(String subjectName, String scope);
+public class UserParamsProviderFactory {
+    public static UserParamsProvider getUserParamsProvider(ServletContext servletContext) {
+        final String ldapUrl = servletContext.getInitParameter(LdapUserParamsProvider.LDAP_URL);
+        return ldapUrl == null ? new EmptyUserParamsProvider() : new LdapUserParamsProvider(servletContext);
+    }
 }

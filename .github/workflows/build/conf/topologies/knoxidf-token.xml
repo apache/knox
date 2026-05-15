@@ -27,10 +27,6 @@
             <name>knoxidf.knox.token.limit.per.user</name>
             <value>-1</value>
         </param>
-        <param>
-           <name>user.params.provider.ldap.url</name>
-           <value>ldap://ldap:33389</value>
-        </param>
     </service>
     <service>
         <role>KNOXTOKEN</role>

@@ -63,9 +63,5 @@
             <name>token.exchange.topology.name</name>
             <value>knoxidf-token</value>
         </param>
-        <param>
-            <name>user.params.provider.ldap.url</name>
-            <value>ldap://ldap:33389</value>
-        </param>
     </service>
 </topology>

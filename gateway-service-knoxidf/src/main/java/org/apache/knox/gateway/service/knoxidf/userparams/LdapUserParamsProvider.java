@@ -14,7 +14,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.service.knoxidf;
+package org.apache.knox.gateway.service.knoxidf.userparams;
+
+import org.apache.knox.gateway.service.knoxidf.OIDCScope;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -24,6 +30,7 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
+import javax.servlet.ServletContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -32,21 +39,50 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-
 public class LdapUserParamsProvider implements UserParamsProvider {
+    private static final String PREFIX = "user.params.provider.ldap.";
+    static final String LDAP_URL = PREFIX + "url";
+    private static final String LDAP_BASE_DN = PREFIX + "baseDn";
+    private static final String LDAP_USER_DN_TEMPLATE = PREFIX + "userDnTemplate";
+    private static final String LDAP_SYSTEM_USER = PREFIX + "systemUser";
+    private static final String LDAP_SYSTEM_PASSWORD_ALIAS = PREFIX + "systemPasswordAlias";
 
-    // === Hardcoded LDAP config for now ===
-    private static final String BASE_DN = "dc=hadoop,dc=apache,dc=org";
-    private static final String USER_DN_TEMPLATE = "uid=%s,ou=people," + BASE_DN;
-    private static final String SYSTEM_USER = "uid=admin,ou=people," + BASE_DN;
-    private static final String SYSTEM_PASSWORD = "admin-password";
+    // === Defaults point to Knox's demo LDAP ===
+    private static final String DEFAULT_BASE_DN = "dc=hadoop,dc=apache,dc=org";
+    private static final String DEFAULT_USER_DN_TEMPLATE = "uid=%s,ou=people," + DEFAULT_BASE_DN;
+    private static final String DEFAULT_SYSTEM_USER = "uid=admin,ou=people," + DEFAULT_BASE_DN;
+    private static final String DEFAULT_SYSTEM_PASSWORD = "admin-password";
 
     private static final String[] ATTRIBUTES = {"cn", "sn", "givenName", "mail"};
 
     private final String ldapUrl;
+    private final String ldapBaseDn;
+    private final String ldapUserDnTemplate;
+    private final String ldapSystemUser;
+    private final String ldapSystemPassword;
 
-    LdapUserParamsProvider(String ldapUrl) {
-        this.ldapUrl = ldapUrl;
+    LdapUserParamsProvider(ServletContext servletContext) {
+        this.ldapUrl = servletContext.getInitParameter(LDAP_URL);
+        this.ldapBaseDn = getInitParamOrDefault(servletContext, LDAP_BASE_DN, DEFAULT_BASE_DN);
+        this.ldapUserDnTemplate = getInitParamOrDefault(servletContext, LDAP_USER_DN_TEMPLATE, DEFAULT_USER_DN_TEMPLATE);
+        this.ldapSystemUser = getInitParamOrDefault(servletContext, LDAP_SYSTEM_USER, DEFAULT_SYSTEM_USER);
+        this.ldapSystemPassword = getSystemPassword(servletContext);
+    }
+
+    private String getInitParamOrDefault(ServletContext servletContext, String key, String defaultValue) {
+        final String value = servletContext.getInitParameter(key);
+        return value == null ? defaultValue : value;
+    }
+
+    private String getSystemPassword(ServletContext servletContext) {
+        final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+        final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+        try {
+            final char[] systemPassword = aliasService.getPasswordFromAliasForGateway(LDAP_SYSTEM_PASSWORD_ALIAS);
+            return systemPassword == null ? DEFAULT_SYSTEM_PASSWORD : new String(systemPassword);
+        } catch (AliasServiceException e) {
+            return DEFAULT_SYSTEM_PASSWORD;
+        }
     }
 
     @Override
@@ -62,7 +98,7 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         try {
             ctx = createSystemContext();
 
-            String userDn = String.format(Locale.US, USER_DN_TEMPLATE, subjectName);
+            String userDn = String.format(Locale.US, ldapUserDnTemplate, subjectName);
 
             SearchControls controls = new SearchControls();
             controls.setSearchScope(SearchControls.OBJECT_SCOPE);
@@ -116,7 +152,7 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         groupControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
         groupControls.setReturningAttributes(new String[]{"cn", "member"});
 
-        String groupsBase = "ou=groups," + BASE_DN;
+        String groupsBase = "ou=groups," + ldapBaseDn;
         NamingEnumeration<SearchResult> groupResults =
                 ctx.search(groupsBase, "(objectClass=groupOfNames)", groupControls);
 
@@ -143,8 +179,8 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, ldapUrl);
         env.put(Context.SECURITY_AUTHENTICATION, "simple");
-        env.put(Context.SECURITY_PRINCIPAL, SYSTEM_USER);
-        env.put(Context.SECURITY_CREDENTIALS, SYSTEM_PASSWORD);
+        env.put(Context.SECURITY_PRINCIPAL, ldapSystemUser);
+        env.put(Context.SECURITY_CREDENTIALS, ldapSystemPassword);
         return new InitialLdapContext(env, null);
     }
 

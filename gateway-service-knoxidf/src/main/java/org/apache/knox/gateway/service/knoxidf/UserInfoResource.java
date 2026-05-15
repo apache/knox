@@ -18,6 +18,8 @@ package org.apache.knox.gateway.service.knoxidf;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
+import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentity;
@@ -64,7 +66,7 @@ public class UserInfoResource {
 
     @PostConstruct
     public void init() {
-        this.userParamsProvider = new LdapUserParamsProvider(servletContext.getInitParameter("user.params.provider.ldap.url"));
+        this.userParamsProvider = UserParamsProviderFactory.getUserParamsProvider(servletContext);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
     }
