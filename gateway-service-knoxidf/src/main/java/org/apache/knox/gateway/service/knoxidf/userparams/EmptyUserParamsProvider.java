@@ -16,12 +16,13 @@
  */
 package org.apache.knox.gateway.service.knoxidf.userparams;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class EmptyUserParamsProvider implements UserParamsProvider {
 
     @Override
     public Map<String, Object> getParamsFor(String subjectName, String scope) {
-        return Map.of();
+        return new HashMap<>();
     }
 }
