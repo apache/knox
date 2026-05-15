@@ -30,10 +30,6 @@ jobs:
       checks: write
       pull-requests: write
 
-    env:
-      KNOX_URL: "https://github.com/apache/knox.git"
-      BRANCH: "${{ github.head_ref }}"  # PR branch being tested
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -54,20 +50,11 @@ jobs:
           -Dshellcheck.skip=true -Dxml.skip=true \
           -s .github/workflows/build/settings.xml
 
-      - name: Extract Artifacts
-        run: |
-          mkdir -p .github/workflows/build/knox-temp-artifacts .github/workflows/build/knoxshell-temp-artifacts
-          # Extract artifacts to the build directory where Dockerfile expects them
-          tar -xvzf target/*/knox-*.tar.gz -C .github/workflows/build/knox-temp-artifacts
-          tar -xvzf target/*/knoxshell-*.tar.gz -C .github/workflows/build/knoxshell-temp-artifacts
-
       - name: Set up Docker Compose
         run: docker compose version
 
       - name: Build Docker Images
         run: |
-          export knoxurl=${KNOX_URL}
-          export branch=${BRANCH:-master}
           # Build only knox-dev which is the runtime image using artifacts
           docker compose -f ./.github/workflows/compose/docker-compose.yml build knox-dev
 
