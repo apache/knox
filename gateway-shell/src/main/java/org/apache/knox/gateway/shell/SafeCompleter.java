@@ -17,50 +17,33 @@
  */
 package org.apache.knox.gateway.shell;
 
-import java.nio.charset.StandardCharsets;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
 
-public abstract class AbstractCredentialCollector implements CredentialCollector {
+import java.util.List;
 
-  protected String prompt;
-  protected String value;
-  private String name;
+/**
+ * A wrapper to protect JLine from crashing when underlying completers
+ * (like Groovy's reflection completer) throw unexpected JVM exceptions.
+ */
+public class SafeCompleter implements Completer {
+    private final Completer delegate;
 
-  public AbstractCredentialCollector() {
-    super();
-  }
+    public SafeCompleter(Completer delegate) {
+        this.delegate = delegate;
+    }
 
-  public boolean validate() {
-    return true;
-  }
-
-  @Override
-  public String string() {
-    return value;
-  }
-
-  @Override
-  public char[] chars() {
-    return value.toCharArray();
-  }
-
-  @Override
-  public byte[] bytes() {
-    return value.getBytes(StandardCharsets.UTF_8);
-  }
-
-  @Override
-  public void setPrompt(String prompt) {
-    this.prompt = prompt;
-  }
-
-  @Override
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  @Override
-  public String name() {
-    return name;
-  }
-
+    @Override
+    public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+        if (delegate == null) {
+            return;
+        }
+        try {
+            delegate.complete(reader, line, candidates);
+        } catch (Throwable t) {
+            // ignore
+        }
+    }
 }
