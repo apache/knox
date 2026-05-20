@@ -243,6 +243,7 @@
         <joda-time.version>2.10.8</joda-time.version>
         <json-path.version>2.9.0</json-path.version>
         <json-smart.version>2.5.2</json-smart.version>
+        <jsoup.version>1.22.2</jsoup.version>
         <junit.version>4.13.2</junit.version>
         <kotlin-stdlib.version>1.9.10</kotlin-stdlib.version>
         <lang-tag.version>1.5</lang-tag.version>
@@ -265,6 +266,7 @@
         <postgresql.version>42.4.4</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
         <mariadb.connector.version>3.3.0</mariadb.connector.version>
+        <oauth2-oidc-sdk.version>9.13</oauth2-oidc-sdk.version>
         <okio.version>3.6.0</okio.version>
         <protobuf.version>3.25.5</protobuf.version>
         <powermock.version>2.0.9</powermock.version>
@@ -287,7 +289,7 @@
         <swagger-annotations.version>1.6.2</swagger-annotations.version>
         <swagger-maven-plugin.version>3.1.7</swagger-maven-plugin.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
-        <testcontainers.version>1.15.1</testcontainers.version>
+        <testcontainers.version>1.16.3</testcontainers.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
         <velocity.version>2.4.1</velocity.version>
         <woodstox-core.version>6.4.0</woodstox-core.version>
@@ -1430,6 +1432,11 @@
                 <artifactId>lang-tag</artifactId>
                 <version>${lang-tag.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>oauth2-oidc-sdk</artifactId>
+                <version>${oauth2-oidc-sdk.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>net.minidev</groupId>
@@ -2452,6 +2459,12 @@
                 <groupId>org.pac4j</groupId>
                 <artifactId>pac4j-oidc</artifactId>
                 <version>${pac4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.nimbusds</groupId>
+                        <artifactId>oauth2-oidc-sdk</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.pac4j</groupId>
@@ -2686,6 +2699,12 @@
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-library</artifactId>
                 <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
