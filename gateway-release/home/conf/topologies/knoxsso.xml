@@ -74,6 +74,10 @@
                 <value>simple</value>
             </param>
             <param>
+                <name>urls./api/v1/websso/federated/op</name>
+                <value>anon</value>
+            </param>
+            <param>
                 <name>urls./**</name>
                 <value>authcBasic</value>
             </param>

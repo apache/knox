@@ -17,7 +17,8 @@ FROM eclipse-temurin:17-jre
 
 MAINTAINER moresandeep
 
-RUN useradd -ms /bin/bash gateway
+# Install dependencies
+RUN apt-get update && apt-get install -y git && useradd -ms /bin/bash gateway
 
 # Create temporary directories for extraction
 RUN mkdir -p /tmp/knox-artifacts /tmp/knoxshell-artifacts /knox-runtime /knoxshell /knox-runtime/knoxshell
@@ -43,6 +44,8 @@ ADD .github/workflows/build/conf/topologies/health.xml /knox-runtime/conf/topolo
 ADD .github/workflows/build/conf/topologies/knoxldap.xml /knox-runtime/conf/topologies/knoxldap.xml
 ADD .github/workflows/build/conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
 ADD .github/workflows/build/conf/topologies/k8sauth.xml /knox-runtime/conf/topologies/k8sauth.xml
+ADD .github/workflows/build/conf/topologies/knoxidf-ldap.xml /knox-runtime/conf/topologies/knoxidf-ldap.xml
+ADD .github/workflows/build/conf/topologies/knoxidf-token.xml /knox-runtime/conf/topologies/knoxidf-token.xml
 
 RUN chown -R gateway /knox-runtime/
 
