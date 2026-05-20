@@ -275,6 +275,22 @@ public class DataSourceProviderTest {
     EasyMock.verify(gatewayConfig);
   }
 
+  @Test
+  public void oracleDataSourceShouldHaveProperSslConnectionProperties() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    setBasicOracleExpectations(gatewayConfig, aliasService);
+    EasyMock.expect(gatewayConfig.isDatabaseSslEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.verifyDatabaseSslServerCertificate()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseSslTruststoreFileName()).andReturn("/path/to/truststore").anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    final OracleDataSource dataSource = (OracleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertEquals("tcps", dataSource.getNetworkProtocol());
+    assertEquals("/path/to/truststore", dataSource.getConnectionProperty("javax.net.ssl.trustStore"));
+    assertEquals("JKS", dataSource.getConnectionProperty("javax.net.ssl.trustStoreType"));
+    //Can't validate the truststore password because oracle datasource doesn't return it.
+  }
+
   private void setBasicOracleExpectations(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException {
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.ORACLE.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
@@ -282,5 +298,6 @@ public class DataSourceProviderTest {
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME)).andReturn("ts_password".toCharArray()).anyTimes();
   }
 }
