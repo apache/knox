@@ -126,6 +126,8 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPPort()).andReturn(3890);
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com");
         expect(mockConfig.getLDAPBackendType()).andReturn("invalid");
+        expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).anyTimes();
+        expect(mockConfig.getLDAPGroupMaxDepth()).andReturn(10).anyTimes();
         expect(mockConfig.getLDAPBackendConfig("invalid")).andReturn(new HashMap<>());
         replay(mockConfig);
 
@@ -171,6 +173,8 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPPort()).andReturn(3890);
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com");
         expect(mockConfig.getLDAPBackendType()).andReturn("file");
+        expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).anyTimes();
+        expect(mockConfig.getLDAPGroupMaxDepth()).andReturn(10).anyTimes();
 
         Map<String, String> fileBackendConfig = new HashMap<>();
         fileBackendConfig.put("dataFile", tempLdapFile.getAbsolutePath());
@@ -183,6 +187,8 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPPort()).andReturn(3890);
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com");
         expect(mockConfig.getLDAPBackendType()).andReturn("ldap");
+        expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).anyTimes();
+        expect(mockConfig.getLDAPGroupMaxDepth()).andReturn(10).anyTimes();
 
         Map<String, String> ldapBackendConfig = new HashMap<>();
         ldapBackendConfig.put("url", "ldap://localhost:33389");
