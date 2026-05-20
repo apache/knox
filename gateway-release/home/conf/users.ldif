@@ -39,7 +39,9 @@ objectclass:organizationalPerson
 objectclass:inetOrgPerson
 cn: Guest
 sn: User
+givenName: Guest
 uid: guest
+mail: guest@example.org
 userPassword:guest-password
 
 # entry for sample user admin
@@ -48,9 +50,11 @@ objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: Admin
-sn: Admin
+cn: System Administrator
+sn: Administrator
+givenName: System
 uid: admin
+mail: admin@example.org
 userPassword:admin-password
 
 # entry for sample user sam
@@ -59,9 +63,11 @@ objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: sam
-sn: sam
+cn: Sam Peterson
+sn: Peterson
+givenName: Sam
 uid: sam
+mail: sam@example.org
 userPassword:sam-password
 
 # entry for sample user tom
@@ -70,9 +76,11 @@ objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: tom
-sn: tom
+cn: Tom Richards
+sn: Richards
+givenName: Tom
 uid: tom
+mail: tom@example.org
 userPassword:tom-password
 
 # create FIRST Level groups branch

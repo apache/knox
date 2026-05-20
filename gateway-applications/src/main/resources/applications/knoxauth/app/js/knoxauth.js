@@ -16,7 +16,8 @@
  */
 
 var loginPageSuffix = "/knoxauth/login.html";
-var webssoURL = "/api/v1/websso?originalUrl=";
+var webssoURLBase = "/api/v1/websso";
+var webssoURL = webssoURLBase + "?originalUrl=";
 var userAgent = navigator.userAgent.toLowerCase();
 
 function get(name) {
@@ -24,6 +25,11 @@ function get(name) {
 	if ((name = (new RegExp('[?&]' + encodeURIComponent(name) + '=([^]*)')).exec(location.search))) {
 		return decodeURIComponent(name[1]);
 	}
+}
+
+function getSimpleParam(name) {
+	const params = new URLSearchParams(window.location.search);
+	return params.get(name);
 }
 
 function testSameOrigin(url) {
@@ -53,6 +59,35 @@ var keypressed = function(event) {
 	if (event.keyCode == 13) {
 		login();
 	}
+};
+
+var loadFederatedOpLinks = function() {
+	const ops = getSimpleParam("federatedOpNames")?.split(",") ?? [];
+	const container = $("#federated-op-container");
+
+	if (ops.length > 0) {
+		container.before(`
+            <div class="or-separator">
+                <span>Or</span>
+            </div>
+        `);
+	}
+
+	ops.forEach(op => {
+		container.append(`
+            <div class="fed-op-btn" onclick="loginWithOp('${op}')">
+                <span class="fed-op-icon">🌐</span>
+                <span class="fed-op-label">Continue with ${op}</span>
+            </div>
+        `);
+	});
+};
+
+var loginWithOp = function(opName) {
+	const sessionId = getSimpleParam("federatedOpLoginSession");
+	var pathname = window.location.pathname;
+	var topologyContext = pathname.replace(loginPageSuffix, "");
+	redirect(topologyContext + webssoURLBase + "/federated/op?fedOpSid=" + sessionId + "&fedOpName=" + encodeURIComponent(opName));
 };
 
 var login = function() {

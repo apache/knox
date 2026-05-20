@@ -23,6 +23,7 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
 
 public interface JWT {
 
@@ -62,6 +63,8 @@ public interface JWT {
   String getHeader();
 
   String getClaims();
+
+  JWTClaimsSet  getJWTClaimsSet();
 
   JWSAlgorithm getSignatureAlgorithm();
 

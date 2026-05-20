@@ -40,7 +40,8 @@ public enum ServiceType {
   REMOTE_CONFIGURATION_MONITOR("RemoteConfigurationMonitor"),
   GATEWAY_STATUS_SERVICE("GatewayStatusService"),
   LDAP_SERVICE("LDAPService"),
-  LDAP_ROLES_LOOKUP_SERVICE("LDAPRoleLookupService");
+  LDAP_ROLES_LOOKUP_SERVICE("LDAPRoleLookupService"),
+  KNOXIDF_FEDERATED_IDENTITY_SERVICE("KnoxIDFFederatedIdentityService");
 
   private final String serviceTypeName;
   private final String shortName;
