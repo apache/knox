@@ -33,6 +33,7 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -54,10 +55,11 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.AUTH_CODE;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
@@ -205,6 +207,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue);
           if (token != null) {
             Subject subject = createSubjectFromToken(token);
+            addKnoxIDFAttributes(request, token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
         } catch (ParseException | UnknownTokenException ex) {
@@ -226,7 +229,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         }
         if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
-            Subject subject = createSubjectFromTokenIdentifier(tokenId);
+            final Subject subject = createSubjectFromTokenIdentifier(tokenId);
+            request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           } catch (UnknownTokenException e) {
             ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -237,6 +241,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // no token provided in header
       log.missingTokenFromHeader(wireToken);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+  }
+
+  private static void addKnoxIDFAttributes(ServletRequest request, JWT token) {
+    request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, TokenUtils.getTokenId(token));
+    final String scope = token.getClaim(KnoxIDFConstants.SCOPE);
+    if (scope != null) {
+      request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, token.getClaim(scope));
     }
   }
 
@@ -338,8 +350,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
         final String grantType = unwrappedRequest.getParameter(GRANT_TYPE);
         final String clientAssertionType = unwrappedRequest.getParameter(CLIENT_ASSERTION_TYPE);
-        if (CLIENT_CREDENTIALS.equals(grantType)) {
-          if (clientAssertionType != null && CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
+        if (CLIENT_CREDENTIALS.equals(grantType) || AUTH_CODE.equals(grantType)) {
+          if (CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
             // short lived client assertion token expected
             return getClientTokenFromParams(unwrappedRequest, CLIENT_ASSERTION);
           }

@@ -70,7 +70,6 @@ public class TokenMetadata {
   }
 
   public TokenMetadata(Map<String, String> metadataMap) {
-    this.metadataMap.clear();
     this.metadataMap.putAll(metadataMap);
   }
 
@@ -151,12 +150,17 @@ public class TokenMetadata {
 
   @JsonIgnore
   public boolean isKnoxSsoCookie() {
-    return getType() == null ? false : TokenMetadataType.KNOXSSO_COOKIE == TokenMetadataType.valueOf(getType());
+    return getType() != null && TokenMetadataType.KNOXSSO_COOKIE == TokenMetadataType.valueOf(getType());
   }
 
   @JsonIgnore
   public boolean isClientId() {
-    return getType() == null ? false : TokenMetadataType.CLIENT_ID == TokenMetadataType.valueOf(getType());
+    return getType() != null && TokenMetadataType.CLIENT_ID == TokenMetadataType.valueOf(getType());
+  }
+
+  @JsonIgnore
+  public boolean isAuthCode() {
+    return getType() != null && TokenMetadataType.AUTH_CODE == TokenMetadataType.valueOf(getType());
   }
 
   public String getType() {
