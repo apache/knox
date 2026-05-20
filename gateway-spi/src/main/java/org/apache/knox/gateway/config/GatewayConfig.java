@@ -747,6 +747,12 @@ public interface GatewayConfig {
   Set<String> getServicesToIgnoreDoAs();
 
   /**
+   * @return refresh interval in ms
+   * @since 3.0.0
+   */
+  int getConfigRefreshInterval();
+
+  /**
    * @return the monitoring interval (in milliseconds) of Cloudera Manager descriptors
    */
   long getClouderaManagerDescriptorsMonitoringInterval();
