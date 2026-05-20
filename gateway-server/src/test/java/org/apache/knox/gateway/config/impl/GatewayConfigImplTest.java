@@ -32,6 +32,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -749,7 +751,7 @@ public class GatewayConfigImplTest {
   public void testReloadableConfigLoading() throws Exception {
     File dir = folder.newFolder("conf");
     File reloadableFile = new File(dir, "gateway-reloadable.xml");
-    try (java.io.PrintWriter writer = new java.io.PrintWriter(reloadableFile)) {
+    try (PrintWriter writer = new PrintWriter(reloadableFile, StandardCharsets.UTF_8)) {
       writer.println("<configuration>");
       writer.println("  <property>");
       writer.println("    <name>test.reloadable.prop</name>");

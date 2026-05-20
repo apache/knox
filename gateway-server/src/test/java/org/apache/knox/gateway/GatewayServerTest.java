@@ -24,8 +24,10 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 
@@ -41,7 +43,7 @@ public class GatewayServerTest {
     GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
 
     File configFile = folder.newFile("gateway-reloadable.xml");
-    try (java.io.PrintWriter writer = new java.io.PrintWriter(configFile)) {
+    try (PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8)) {
       writer.println("<configuration>");
       writer.println("  <property>");
       writer.println("    <name>test.prop</name>");
@@ -76,7 +78,7 @@ public class GatewayServerTest {
 
     // Update file to trigger reload
     Thread.sleep(1000); // Ensure timestamp changes
-    try (java.io.PrintWriter writer = new java.io.PrintWriter(configFile)) {
+    try (PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8)) {
       writer.println("<configuration>");
       writer.println("  <property>");
       writer.println("    <name>test.prop</name>");
