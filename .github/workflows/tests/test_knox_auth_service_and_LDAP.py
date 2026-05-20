@@ -53,6 +53,17 @@ class TestKnoxAuthService(unittest.TestCase):
         self.assertEqual(response.headers[actor_id_header], 'guest')
         print(f"Verified {actor_id_header}: {response.headers[actor_id_header]}")
 
+        # Check for groups (recursive)
+        prefix = 'x-knox-actor-groups'
+        all_groups = collect_actor_group_values(response, prefix=prefix)
+        self.assertTrue(len(all_groups) > 0, f"No headers found starting with {prefix}")
+        
+        expected_groups = ['group1', 'group2', 'recursive-leaf', 'recursive-mid', 'recursive-top']
+        print(f"Found groups: {all_groups}")
+        for group in expected_groups:
+            self.assertIn(group, all_groups)
+        print(f"Verified all expected recursive groups for guest")
+
     def test_auth_service_admin_groups(self):
         """
         Verify that admin user gets actor ID and group headers.
