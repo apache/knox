@@ -524,5 +524,9 @@
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-service-restcatalog</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-knoxidf</artifactId>
+        </dependency>
     </dependencies>
 </project>

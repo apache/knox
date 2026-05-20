@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -37,12 +38,16 @@ public class JsonUtils {
   private static final GatewayUtilCommonMessages LOG = MessagesFactory.get( GatewayUtilCommonMessages.class );
 
   public static String renderAsJsonString(Map<String, Object> map) {
+    return renderAsJsonString(map, false);
+  }
+
+  public static String renderAsJsonString(Map<String, Object> map, boolean pretty) {
     String json = null;
     ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     try {
-      // write JSON to a file
-      json = mapper.writeValueAsString(map);
+      final ObjectWriter writer = pretty ? mapper.writerWithDefaultPrettyPrinter() :  mapper.writer();
+      json = writer.writeValueAsString(map);
     } catch ( JsonProcessingException e ) {
       LOG.failedToSerializeMapToJSON( map, e );
     }

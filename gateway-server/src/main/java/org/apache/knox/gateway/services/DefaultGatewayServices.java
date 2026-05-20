@@ -90,6 +90,8 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
       ldapService.init(config, options);
       addService(ServiceType.LDAP_SERVICE, ldapService);
     }
+
+    addService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE, gatewayServiceFactory.create(this, ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE, config, options));
   }
 
   @Override

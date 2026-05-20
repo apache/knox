@@ -15,6 +15,8 @@
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 import unittest
 from typing import Any
@@ -66,3 +68,32 @@ def collect_actor_group_values(
 def assert_hsts_header(testcase: unittest.TestCase, response: requests.Response) -> None:
     testcase.assertIn(HSTS_HEADER_NAME, response.headers)
     testcase.assertEqual(response.headers[HSTS_HEADER_NAME], HSTS_EXPECTED_VALUE)
+
+def get_token_id_display_text(uuid):
+    """
+    Format the token ID for display, matching Knox's getTokenIDDisplayText logic.
+    """
+    if uuid and len(uuid) == 36 and "-" in uuid:
+        first_dash = uuid.find('-')
+        last_dash = uuid.rfind('-')
+        return f"{uuid[:first_dash]}...{uuid[last_dash+1:]}"
+    return uuid
+
+
+def get_token_claim(token, claim):
+    """
+    Decodes a JWT token and returns the value of the specified claim.
+    """
+    try:
+        payload_b64 = token.split('.')[1]
+        # URL-safe base64 decoding usually needs padding adjustment
+        missing_padding = len(payload_b64) % 4
+        if missing_padding:
+            payload_b64 += '=' * (4 - missing_padding)
+        # Use urlsafe_b64decode just in case, though standard b64decode often works with padding
+        payload_json = base64.urlsafe_b64decode(payload_b64).decode('utf-8')
+        payload = json.loads(payload_json)
+        return payload.get(claim)
+    except Exception as e:
+        print(f"Failed to decode token for claim '{claim}': {e}")
+        return None

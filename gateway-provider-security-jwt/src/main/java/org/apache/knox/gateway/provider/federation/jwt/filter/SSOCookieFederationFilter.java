@@ -31,6 +31,10 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.Urls;
+import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import org.eclipse.jetty.http.MimeTypes;
 
 import javax.security.auth.Subject;
@@ -45,12 +49,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
@@ -103,6 +110,8 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private boolean shouldUseOriginalUrlFromHeader = DEFAULT_SHOULD_USE_ORIGINAL_URL_FROM_HEADER;
   private boolean verifyOriginalUrlFromHeaderDomain = DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN;
   private final List<String> verifyOriginalUrlFromHeaderDomainWhitelist = new ArrayList<>();
+  private final AuthorizeRequestMetadataStore authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(120000L);
+  private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
   private String originalUrlHeaderName;
 
   @Override
@@ -334,6 +343,22 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       providerURL = authenticationProviderUrl;
     }
     if (providerURL.contains("?")) {
+      delimiter = "&";
+    }
+
+    final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request);
+    if (!enabledFederatedOpConfigs.isEmpty()) {
+      final String loginSessionId = request.getSession().getId();
+      authorizeRequestMetadataStore.put(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
+      federatedOpConfigurationStore.put(loginSessionId, enabledFederatedOpConfigs);
+      final List<String> opNames = enabledFederatedOpConfigs.stream()
+              .sorted(Comparator.comparing(FederatedOpConfiguration::getName))
+              .map(FederatedOpConfiguration::getName)
+              .collect(Collectors.toList());
+      providerURL += delimiter
+              + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)
+              + "&federatedOpNames=" + URLEncoder.encode(String.join(",", opNames), StandardCharsets.UTF_8);
+
       delimiter = "&";
     }
 
