@@ -149,6 +149,7 @@
         <module>gateway-service-metadata</module>
         <module>gateway-service-session</module>
         <module>gateway-openapi-ui</module>
+        <module>gateway-service-knoxidf</module>
     </modules>
 
     <properties>
@@ -289,6 +290,7 @@
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
         <testcontainers.version>1.15.1</testcontainers.version>
         <txw2.version>2.4.0-b180830.0438</txw2.version>
+        <uuid.generator.version>5.2.0</uuid.generator.version>
         <velocity.version>2.4.1</velocity.version>
         <woodstox-core.version>6.4.0</woodstox-core.version>
         <xmlsec.version>4.0.4</xmlsec.version>
@@ -1429,6 +1431,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-knoxidf</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.glassfish.jersey.containers</groupId>
                 <artifactId>jersey-container-servlet-core</artifactId>
                 <version>${jersey.version}</version>
@@ -1441,6 +1448,11 @@
             <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
                 <artifactId>jersey-server</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-common</artifactId>
                 <version>${jersey.version}</version>
             </dependency>
 
@@ -2042,6 +2054,11 @@
                 <groupId>com.fasterxml.woodstox</groupId>
                 <artifactId>woodstox-core</artifactId>
                 <version>${woodstox-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.uuid</groupId>
+                <artifactId>java-uuid-generator</artifactId>
+                <version>${uuid.generator.version}</version>
             </dependency>
 
             <dependency>

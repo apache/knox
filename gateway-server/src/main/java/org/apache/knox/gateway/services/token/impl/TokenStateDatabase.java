@@ -19,7 +19,7 @@ package org.apache.knox.gateway.services.token.impl;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.database.DatabaseType;
-import org.apache.knox.gateway.database.JDBCUtils;
+import org.apache.knox.gateway.database.KnoxDatabase;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 
@@ -37,7 +37,7 @@ import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class TokenStateDatabase {
+public class TokenStateDatabase extends KnoxDatabase {
   static final String TOKENS_TABLE_NAME = "KNOX_TOKENS";
   static final String TOKEN_METADATA_TABLE_NAME = "KNOX_TOKEN_METADATA";
   private static final String ADD_TOKEN_SQL = "INSERT INTO " + TOKENS_TABLE_NAME + "(token_id, issue_time, expiration, max_lifetime) VALUES(?, ?, ?, ?)";
@@ -58,19 +58,11 @@ public class TokenStateDatabase {
   private static final String GET_TOKENS_CREATED_BY_USER_NAME_SQL = GET_ALL_TOKENS_SQL + " AND kt.token_id IN (SELECT token_id FROM " + TOKEN_METADATA_TABLE_NAME + " WHERE md_name = '" + TokenMetadata.CREATED_BY + "' AND md_value = ? )"
       + " ORDER BY kt.issue_time";
 
-  private final DataSource dataSource;
-
   TokenStateDatabase(DataSource dataSource, String dbType) throws Exception {
-    this.dataSource = dataSource;
+    super(dataSource);
     DatabaseType databaseType = DatabaseType.fromString(dbType);
     createTableIfNotExists(TOKENS_TABLE_NAME, databaseType.tokensTableSql());
     createTableIfNotExists(TOKEN_METADATA_TABLE_NAME, databaseType.metadataTableSql());
-  }
-
-  private void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
-    if (!JDBCUtils.tableExists(tableName, dataSource)) {
-      JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
-    }
   }
 
   boolean addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) throws SQLException {

@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.text.ParseException;
+import java.util.UUID;
 
 public class TokenUtils {
   public static final String ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID = "currentKnoxSsoCookieTokenId";
@@ -51,6 +53,21 @@ public class TokenUtils {
    */
   public static String getTokenId(final JWT token) {
     return token.getClaim(JWTToken.KNOX_ID_CLAIM);
+  }
+
+  /**
+   * If the supplied 'token' conforms the UUID string representation, we consider
+   * that as the token ID; otherwise we expect that 'token' is the entire JWT, and
+   * we get the token ID from it
+   */
+  public static String getTokenId(String token) throws ParseException {
+    try {
+      UUID.fromString(token);
+      return token;
+    } catch (IllegalArgumentException e) {
+      //NOP: the supplied token is not a UUID, we expect the entire JWT
+    }
+    return getTokenId(new JWTToken(token));
   }
 
   /**
