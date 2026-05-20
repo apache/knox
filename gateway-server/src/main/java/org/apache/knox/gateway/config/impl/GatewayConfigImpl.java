@@ -1765,6 +1765,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isLDAPRecursiveGroupResolutionEnabled() {
+    return Boolean.parseBoolean(get(LDAP_RECURSIVE_GROUP_RESOLUTION, "false"));
+  }
+
+  @Override
+  public int getLDAPGroupMaxDepth() {
+    return Integer.parseInt(get(LDAP_GROUP_MAX_DEPTH, "10"));
+  }
+
+  @Override
   public Set<String> getPropertyNames() {
     Set<String> names = new HashSet<>();
     Iterator<Map.Entry<String, String>> iterator = this.iterator();

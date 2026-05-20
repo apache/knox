@@ -155,10 +155,12 @@ public class LdapProxyBackendTest {
         assertEquals("ldaptest1@example.com", entry.get("mail").getString());
         assertEquals("Test user ldaptest1", entry.get("description").getString());
         assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
+        assertEquals(4, entry.get("memberOf").size());
         Set<String> expectedMemberOf = Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=recursive-leaf,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=circular-a,ou=groups,dc=hadoop,dc=apache,dc=org");
         Set<String> foundMemberOf = new HashSet<>(2);
         Iterator<Value> memberOfs = entry.get("memberOf").iterator();
         while (memberOfs.hasNext()) {
@@ -187,10 +189,12 @@ public class LdapProxyBackendTest {
         assertEquals("ldaptest1@example.com", entry.get("mail").getString());
         assertEquals("Test user ldaptest1", entry.get("description").getString());
         assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
+        assertEquals(4, entry.get("memberOf").size());
         Set<String> expectedMemberOf = Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=recursive-leaf,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=circular-a,ou=groups,dc=hadoop,dc=apache,dc=org");
         Set<String> foundMemberOf = new HashSet<>(2);
         Iterator<Value> memberOfs = entry.get("memberOf").iterator();
         while (memberOfs.hasNext()) {
@@ -211,10 +215,12 @@ public class LdapProxyBackendTest {
         assertEquals("ldaptest1@example.com", entry.get("mail").getString());
         assertEquals("Test user ldaptest1", entry.get("description").getString());
         assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
+        assertEquals(4, entry.get("memberOf").size());
         Set<String> expectedMemberOf = Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=recursive-leaf,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=circular-a,ou=groups,dc=hadoop,dc=apache,dc=org");
         Set<String> foundMemberOf = new HashSet<>(2);
         Iterator<Value> memberOfs = entry.get("memberOf").iterator();
         while (memberOfs.hasNext()) {
@@ -235,10 +241,12 @@ public class LdapProxyBackendTest {
         assertEquals("ldaptest1@example.com", entry.get("mail").getString());
         assertEquals("Test user ldaptest1", entry.get("description").getString());
         assertEquals("TestSam1", entry.get("sAMAccountName").getString());
-        assertEquals(2, entry.get("memberOf").size());
+        assertEquals(4, entry.get("memberOf").size());
         Set<String> expectedMemberOf = Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=recursive-leaf,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=circular-a,ou=groups,dc=hadoop,dc=apache,dc=org");
         Set<String> foundMemberOf = new HashSet<>(2);
         Iterator<Value> memberOfs = entry.get("memberOf").iterator();
         while (memberOfs.hasNext()) {
@@ -452,4 +460,57 @@ public class LdapProxyBackendTest {
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
     }
-}
+
+    @Test
+    public void testGetUserGroupsRecursive() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
+        assertTrue(userGroups.contains("group1"));
+        assertTrue(userGroups.contains("group2"));
+        assertTrue(userGroups.contains("recursive-leaf"));
+        assertTrue(userGroups.contains("recursive-mid"));
+        assertTrue(userGroups.contains("recursive-top"));
+    }
+
+    @Test
+    public void testGetUserGroupsRecursiveCircular() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
+        assertTrue(userGroups.contains("circular-a"));
+        assertTrue(userGroups.contains("circular-b"));
+    }
+
+    @Test
+    public void testGetUserGroupsRecursiveMaxDepth() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        config.put("groupMaxDepth", "1"); // Only leaf level
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
+        assertTrue(userGroups.contains("recursive-leaf"));
+        assertTrue(userGroups.contains("recursive-mid"));
+        // recursive-top is depth 2 from leaf (which is depth 0 relative to user groups search)
+        assertTrue(!userGroups.contains("recursive-top"));
+    }
+
+    @Test
+    public void testGetUserGroupsRecursiveUseMemberOf() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("useMemberOf", "true");
+        config.put("recursiveGroupResolution", "true");
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2");
+        assertTrue(userGroups.contains("groupMemberOf1"));
+        assertTrue(userGroups.contains("groupMemberOf2"));
+        assertTrue(userGroups.contains("recursive-mid-mo"));
+        assertTrue(userGroups.contains("recursive-top-mo"));
+        }
+        }
