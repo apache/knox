@@ -104,7 +104,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String DEFAULT_APPLICATIONS_DIR = "applications";
 
-  private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"};
+  public static final String RELOADABLE_CONFIG_FILENAME = GATEWAY_CONFIG_FILE_PREFIX + "-reloadable.xml";
+
+  private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml", RELOADABLE_CONFIG_FILENAME};
 
   private static final String GATEWAY_SERVICE_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".service.";
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
@@ -276,6 +278,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.prefix";
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.";
+
+  static final String CONFIG_REFRESH_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".config.refresh.interval";
+  static final int CONFIG_REFRESH_INTERVAL_DEFAULT = 10000;
 
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
@@ -1330,6 +1335,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
     }
 
     return set;
+  }
+
+  @Override
+  public int getConfigRefreshInterval() {
+    return getInt(CONFIG_REFRESH_INTERVAL, CONFIG_REFRESH_INTERVAL_DEFAULT);
   }
 
   @Override

@@ -31,6 +31,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -45,9 +46,14 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class GatewayConfigImplTest {
+
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testHttpServerSettings() {
@@ -728,5 +734,36 @@ public class GatewayConfigImplTest {
   public void testCmSslCiphersWithoutDefaults() {
     final List<String> result = new GatewayConfigImpl().getClouderaManagerClientSSLCiphers();
     assertNull(result);
+  }
+
+  @Test
+  public void testGetConfigRefreshInterval() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    assertThat(config.getConfigRefreshInterval(), is(10000));
+
+    config.setInt("gateway.config.refresh.interval", 5000);
+    assertThat(config.getConfigRefreshInterval(), is(5000));
+  }
+
+  @Test
+  public void testReloadableConfigLoading() throws Exception {
+    File dir = folder.newFolder("conf");
+    File reloadableFile = new File(dir, "gateway-reloadable.xml");
+    try (java.io.PrintWriter writer = new java.io.PrintWriter(reloadableFile)) {
+      writer.println("<configuration>");
+      writer.println("  <property>");
+      writer.println("    <name>test.reloadable.prop</name>");
+      writer.println("    <value>test.reloadable.val</value>");
+      writer.println("  </property>");
+      writer.println("</configuration>");
+    }
+
+    try {
+      System.setProperty("KNOX_GATEWAY_CONF_DIR", dir.getAbsolutePath());
+      GatewayConfigImpl config = new GatewayConfigImpl();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
+    } finally {
+      System.clearProperty("KNOX_GATEWAY_CONF_DIR");
+    }
   }
 }

@@ -687,6 +687,12 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.INFO, text = "Stopping service: {0}")
   void stoppingService(String serviceTypeName);
 
+  @Message(level = MessageLevel.INFO, text = "Refreshed gateway config")
+  void refreshedGatewayConfig();
+
+  @Message(level = MessageLevel.WARN, text = "Unable to refresh gateway config")
+  void unableToReloadGatewayConfig(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.INFO, text = "Redeploying topology {0} due to service definition change {1} / {2} / {3}")
   void redeployingTopologyOnServiceDefinitionChange(String topologyName, String serviceName, String role, String version);
 
