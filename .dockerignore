@@ -1,0 +1,14 @@
+# Ignore all files by default to reduce build context size and protect secrets.
+*
+
+# Allow the target directory and its subdirectories for the required artifacts.
+!target/
+!target/*/
+!target/*/knox-*.tar.gz
+!target/*/knoxshell-*.tar.gz
+
+# Allow the build workflow configurations and scripts.
+!.github/
+!.github/workflows/
+!.github/workflows/build/
+!.github/workflows/build/**

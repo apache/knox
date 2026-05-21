@@ -18,16 +18,16 @@ services:
     build:
       context: ../../../
       dockerfile: .github/workflows/build/Dockerfile
-    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
+    image: apache/knox-dev:${IMAGE_TAG:-master}
 
   ldap:
-    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
+    image: apache/knox-dev:${IMAGE_TAG:-master}
     command: /ldap.sh
     depends_on:
       - knox-dev
 
   knox:
-    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
+    image: apache/knox-dev:${IMAGE_TAG:-master}
     command: /gateway.sh
     volumes:
 #      - ./topologies:/knox-runtime/conf/topologies
