@@ -23,7 +23,6 @@ import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.filter.FilterEncoder;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
@@ -284,7 +283,7 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     private Entry fetchEntry(String username, SchemaManager schemaManager, LdapConnection connection, String searchBase, String searchFilter) throws Exception {
-        try (final EntryCursor cursor = connection.search(searchBase, searchFilter, SearchScope.SUBTREE, "*", "+")) {
+        try (EntryCursor cursor = connection.search(searchBase, searchFilter, SearchScope.SUBTREE, "*", "+")) {
             final Entry sourceEntry = cursor.next() ? cursor.get() : null;
             return sourceEntry == null ? null : createProxyEntry(sourceEntry, username, connection, schemaManager);
         }
@@ -365,7 +364,7 @@ public class LdapProxyBackend implements LdapBackend {
     private Set<String> fetchNextLevelDNs(LdapConnection connection, Set<String> allGroupDns) throws IOException, LdapException, CursorException {
         final Set<String> nextLevelDns = new HashSet<>();
         for (String dn : new HashSet<>(allGroupDns)) {
-            try (final EntryCursor cursor = connection.search(dn, "(objectClass=*)", SearchScope.OBJECT, MEMBER_OF, "+")) {
+            try (EntryCursor cursor = connection.search(dn, "(objectClass=*)", SearchScope.OBJECT, MEMBER_OF, "+")) {
                 if (cursor.next()) {
                     Attribute memberOfAttr = cursor.get().get(MEMBER_OF);
                     if (memberOfAttr != null) {
@@ -428,7 +427,7 @@ public class LdapProxyBackend implements LdapBackend {
             filter = "(|(memberUid=" + (username != null ? username : "") + ")(member=" + userDn + ")(uniqueMember=" + userDn + "))";
         }
 
-        try (final EntryCursor cursor = connection.search(groupSearchBase, filter, SearchScope.SUBTREE, "cn") ) {
+        try (EntryCursor cursor = connection.search(groupSearchBase, filter, SearchScope.SUBTREE, "cn") ) {
             List<Entry> groups = new ArrayList<>();
             while (cursor.next()) {
                 groups.add(cursor.get());
@@ -443,7 +442,7 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             final String userSearchFilter = "(" + userIdentifierAttribute + "=" + filter.trim() + ")";
-            try (final EntryCursor cursor = connection.search(userSearchBase, userSearchFilter, SearchScope.SUBTREE, "*", "+")) {
+            try (EntryCursor cursor = connection.search(userSearchBase, userSearchFilter, SearchScope.SUBTREE, "*", "+")) {
                 final List<Entry> users = new ArrayList<>();
                 while (cursor.next()) {
                     Entry sourceEntry = cursor.get();
