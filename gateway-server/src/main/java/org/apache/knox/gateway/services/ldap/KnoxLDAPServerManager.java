@@ -153,6 +153,10 @@ public class KnoxLDAPServerManager {
     public void stop() throws Exception {
         LOG.ldapServiceStopping(port);
 
+        if (backend != null) {
+            backend.close();
+        }
+
         if (ldapServer != null) {
             try {
                 ldapServer.stop();

@@ -65,4 +65,9 @@ public interface LdapBackend {
      * @return List of matching entries
      */
     List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception;
+
+    /**
+     * Closing underlying resources on the backend, if any
+     */
+    void close();
 }
