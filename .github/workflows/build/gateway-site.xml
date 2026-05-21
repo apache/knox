@@ -160,4 +160,60 @@ limitations under the License.
         <value>max-age=300; includeSubDomains</value>
     </property>
 
+    <!-- KnoxLDAP Service Configuration -->
+    <property>
+        <name>gateway.ldap.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.port</name>
+        <value>33389</value>
+    </property>
+    <property>
+        <name>gateway.ldap.base.dn</name>
+        <value>dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.type</name>
+        <value>ldap</value>
+    </property>
+    <property>
+        <name>gateway.ldap.recursive.group.resolution</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.group.max.depth</name>
+        <value>10</value>
+    </property>
+
+    <!-- LDAP Backend specific configuration (proxying to demo ldap) -->
+    <property>
+        <name>gateway.ldap.backend.ldap.url</name>
+        <value>ldap://ldap:33389</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.remoteBaseDn</name>
+        <value>dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemUsername</name>
+        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.systemPassword</name>
+        <value>guest-password</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.userSearchBase</name>
+        <value>ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.groupSearchBase</name>
+        <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.ldap.groupMemberAttribute</name>
+        <value>member</value>
+    </property>
+
 </configuration>

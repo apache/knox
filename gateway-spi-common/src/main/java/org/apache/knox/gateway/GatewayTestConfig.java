@@ -1245,6 +1245,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isLDAPRecursiveGroupResolutionEnabled() {
+    return false;
+  }
+
+  @Override
+  public int getLDAPGroupMaxDepth() {
+    return 10;
+  }
+
+  @Override
   public Set<String> getPropertyNames() {
     return Collections.emptySet();
   }

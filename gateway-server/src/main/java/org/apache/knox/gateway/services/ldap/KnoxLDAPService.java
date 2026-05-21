@@ -61,6 +61,8 @@ public class KnoxLDAPService implements Service {
 
             // Add common configuration
             backendConfig.put("baseDn", baseDn);
+            backendConfig.put("recursiveGroupResolution", String.valueOf(config.isLDAPRecursiveGroupResolutionEnabled()));
+            backendConfig.put("groupMaxDepth", String.valueOf(config.getLDAPGroupMaxDepth()));
 
             // Add legacy dataFile property for backwards compatibility with file backend
             if ("file".equalsIgnoreCase(backendType) && !backendConfig.containsKey("dataFile")) {

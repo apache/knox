@@ -130,6 +130,8 @@ public interface GatewayConfig {
   String LDAP_BASE_DN = "gateway.ldap.base.dn";
   String LDAP_BACKEND_TYPE = "gateway.ldap.backend.type";
   String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
+  String LDAP_RECURSIVE_GROUP_RESOLUTION = "gateway.ldap.recursive.group.resolution";
+  String LDAP_GROUP_MAX_DEPTH = "gateway.ldap.group.max.depth";
 
   /**
    * The location of the gateway configuration.
@@ -1074,6 +1076,16 @@ public interface GatewayConfig {
    * @return the path to the data file for file-based backend
    */
   String getLDAPBackendDataFile();
+
+  /**
+   * @return true if recursive group resolution is enabled for LDAP; otherwise false
+   */
+  boolean isLDAPRecursiveGroupResolutionEnabled();
+
+  /**
+   * @return the maximum depth for recursive group resolution
+   */
+  int getLDAPGroupMaxDepth();
 
   /**
    * Get backend-specific configuration properties.

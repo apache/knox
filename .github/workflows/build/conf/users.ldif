@@ -39,19 +39,19 @@ dn: cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:groupOfNames
 cn: group1
-member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 
 dn: cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:groupOfNames
 cn: group2
-member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 
 dn: cn=recursive-leaf,ou=groups,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:groupOfNames
 cn: recursive-leaf
-member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+member: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 
 dn: cn=recursive-mid,ou=groups,dc=hadoop,dc=apache,dc=org
 objectclass:top
@@ -65,54 +65,6 @@ objectclass:groupOfNames
 cn: recursive-top
 member: cn=recursive-mid,ou=groups,dc=hadoop,dc=apache,dc=org
 
-dn: cn=circular-a,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:groupOfNames
-cn: circular-a
-member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
-member: cn=circular-b,ou=groups,dc=hadoop,dc=apache,dc=org
-
-dn: cn=circular-b,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:groupOfNames
-cn: circular-b
-member: cn=circular-a,ou=groups,dc=hadoop,dc=apache,dc=org
-
-dn: cn=groupMemberOf1,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: groupMemberOf1
-sn: groupMemberOf1
-memberOf: cn=recursive-mid-mo,ou=groups,dc=hadoop,dc=apache,dc=org
-
-dn: cn=groupMemberOf2,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: groupMemberOf2
-sn: groupMemberOf2
-
-dn: cn=recursive-mid-mo,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: recursive-mid-mo
-sn: recursive-mid-mo
-memberOf: cn=recursive-top-mo,ou=groups,dc=hadoop,dc=apache,dc=org
-
-dn: cn=recursive-top-mo,ou=groups,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: recursive-top-mo
-sn: recursive-top-mo
-
-# entry for the end users
 dn: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
@@ -123,30 +75,12 @@ sn: User
 uid: guest
 userPassword:guest-password
 
-dn: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
+dn: uid=admin,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
 objectclass:organizationalPerson
 objectclass:inetOrgPerson
-cn: TestCn1
-sn: Ldap
-uid: ldaptest1
-sAMAccountName: TestSam1
-userPassword: 12345
-mail: ldaptest1@example.com
-description: Test user ldaptest1
-
-dn: uid=ldaptest2,ou=people,dc=hadoop,dc=apache,dc=org
-objectclass:top
-objectclass:person
-objectclass:organizationalPerson
-objectclass:inetOrgPerson
-cn: TestCn2
-sn: Ldap
-uid: ldaptest2
-sAMAccountName: TestSam2
-userPassword: 12345
-mail: ldaptest2@example.com
-description: Test user ldaptest2
-memberOf: cn=groupMemberOf1,ou=groups,dc=hadoop,dc=apache,dc=org
-memberOf: cn=groupMemberOf2,ou=groups,dc=hadoop,dc=apache,dc=org
+cn: Admin
+sn: User
+uid: admin
+userPassword:admin-password

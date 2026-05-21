@@ -141,4 +141,9 @@ public class FileBackend implements LdapBackend {
 
         return results;
     }
+
+    @Override
+    public void close() {
+        //NOP
+    }
 }
