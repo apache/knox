@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Strings;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1748,8 +1749,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLDAPBackendType() {
-    return get(LDAP_BACKEND_TYPE, "file");
+  public List<String> getLDAPInterceptorNames() {
+    String names = get(LDAP_INTERCEPTOR_NAMES, "");
+    String[] namesArray = names.split(",");
+    List<String> namesList = new ArrayList<>();
+    for (String name : namesArray) {
+      if (!Strings.isNullOrEmpty(name)) {
+        namesList.add(name.trim());
+      }
+    }
+    return namesList;
   }
 
   @Override
@@ -1776,9 +1785,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Map<String, String> getLDAPBackendConfig(String backendType) {
+  public Map<String, String> getLDAPInterceptorConfig(String interceptorName) {
     Map<String, String> config = new HashMap<>();
-    String prefix = "gateway.ldap.backend." + backendType + ".";
+    String prefix = "gateway.ldap.interceptor." + interceptorName + ".";
 
     for (String key : getPropertyNames()) {
       if (key != null && key.startsWith(prefix)) {

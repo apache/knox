@@ -16,6 +16,6 @@
 # limitations under the License.
 ##########################################################################
 
-# Built-in LDAP backend implementations
-org.apache.knox.gateway.services.ldap.backend.FileBackend
-org.apache.knox.gateway.services.ldap.backend.LdapProxyBackend
+# Built-in LDAP interceptor factory implementations
+org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptorFactory
+org.apache.knox.gateway.services.ldap.interceptor.DuplicateUserFilteringInterceptorFactory

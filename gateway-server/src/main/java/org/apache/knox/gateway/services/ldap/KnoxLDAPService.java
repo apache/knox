@@ -17,12 +17,17 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,24 +59,32 @@ public class KnoxLDAPService implements Service {
             // Get configuration
             int port = config.getLDAPPort();
             String baseDn = config.getLDAPBaseDN();
-            String backendType = config.getLDAPBackendType();
 
-            // Get backend-specific configuration using prefixed properties
-            Map<String, String> backendConfig = config.getLDAPBackendConfig(backendType);
+            List<String> interceptorNames = config.getLDAPInterceptorNames();
+            List<Interceptor> interceptors = new ArrayList<>(interceptorNames.size());
+            for (String interceptorName : interceptorNames) {
+                // Get backend-specific configuration using prefixed properties
+                Map<String, String> interceptorConfig = config.getLDAPInterceptorConfig(interceptorName);
 
-            // Add common configuration
-            backendConfig.put("baseDn", baseDn);
+                // Add common configuration
+                interceptorConfig.put("baseDn", baseDn);
 
-            // Add legacy dataFile property for backwards compatibility with file backend
-            if ("file".equalsIgnoreCase(backendType) && !backendConfig.containsKey("dataFile")) {
-                backendConfig.put("dataFile", config.getLDAPBackendDataFile());
+                // Add legacy dataFile property for backwards compatibility with file backend
+                String interceptorType = interceptorConfig.get("interceptorType");
+                String backendType = interceptorConfig.get("backendType");
+                if ("backend".equalsIgnoreCase(interceptorType) &&
+                        "file".equalsIgnoreCase(backendType) &&
+                        !interceptorConfig.containsKey("dataFile")) {
+                    interceptorConfig.put("dataFile", config.getLDAPBackendDataFile());
+                }
+
+                interceptors.add(InterceptorFactory.createInterceptor(interceptorName, interceptorConfig));
             }
-
-            // For proxy backends, extract remoteBaseDn if present
-            String remoteBaseDn = backendConfig.get("remoteBaseDn");
+            // Reverse order of interceptors so the highest priority interceptor is last in the list.
+            Collections.reverse(interceptors);
 
             // Initialize but don't start yet
-            ldapServerManager.initialize(ldapWorkDir, port, baseDn, backendType, backendConfig, remoteBaseDn);
+            ldapServerManager.initialize(ldapWorkDir, port, baseDn, interceptors);
 
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);

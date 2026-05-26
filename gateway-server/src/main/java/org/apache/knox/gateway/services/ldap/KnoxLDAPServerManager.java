@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -24,17 +25,21 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
+import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.directory.server.core.api.schema.SchemaPartition;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
+import org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptor;
 
 import java.io.File;
-import java.util.Map;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Manages the ApacheDS LDAP server instance with pluggable backends
@@ -42,13 +47,13 @@ import java.util.Map;
 public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    private DirectoryService directoryService;
+    @VisibleForTesting
+    DirectoryService directoryService;
     private LdapServer ldapServer;
-    private LdapBackend backend;
+    private List<Interceptor> interceptors;
     private File workDir;
     private int port;
     private String baseDn;
-    private String remoteBaseDn;
 
     /**
      * Initialize the LDAP server with the given configuration
@@ -56,19 +61,13 @@ public class KnoxLDAPServerManager {
      * @param workDir Directory for LDAP data storage
      * @param port Port for LDAP server to listen on
      * @param baseDn Base DN for LDAP entries in the proxy server
-     * @param backendType Type of backend to use
-     * @param backendConfig Backend-specific configuration
-     * @param remoteBaseDn Base DN of the remote LDAP server (for proxy backends)
+     * @param interceptors List of LDAP interceptors
      */
-    public void initialize(File workDir, int port, String baseDn, String backendType, Map<String, String> backendConfig, String remoteBaseDn) throws Exception {
+    public void initialize(File workDir, int port, String baseDn, List<Interceptor> interceptors) throws Exception {
         this.workDir = workDir;
         this.port = port;
         this.baseDn = baseDn;
-        this.remoteBaseDn = remoteBaseDn;
-
-        // Initialize backend
-        backendConfig.put("baseDn", baseDn);
-        backend = BackendFactory.createBackend(backendType, backendConfig);
+        this.interceptors = interceptors;
 
         // Clean up previous run if it didn't shut down cleanly
         File lockFile = new File(workDir, "run/instance.lock");
@@ -115,18 +114,27 @@ public class KnoxLDAPServerManager {
         partition.setPartitionPath(new File(workDir, "proxy").toURI());
         directoryService.addPartition(partition);
 
+        // Add our interceptor for user search
         // Create partition for remote base DN if different from proxy base DN
         // This allows backend entries with remote DNs to be returned in search results
-        if (remoteBaseDn != null && !remoteBaseDn.equals(baseDn)) {
-            JdbmPartition remotePartition = new JdbmPartition(schemaManager, directoryService.getDnFactory());
-            remotePartition.setId("remote");
-            remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
-            remotePartition.setPartitionPath(new File(workDir, "remote").toURI());
-            directoryService.addPartition(remotePartition);
+        Set<String> baseDns = new HashSet<>();
+        baseDns.add(baseDn);
+        for (Interceptor interceptor : interceptors) {
+            if (interceptor instanceof UserSearchInterceptor) {
+                LdapBackend backend = ((UserSearchInterceptor) interceptor).getBackend();
+                String remoteBaseDn = backend.getBaseDn();
+                if (!baseDns.contains(remoteBaseDn)) {
+                    //create partition
+                    String id = backend.getName().replaceAll("\\s+", "");
+                    JdbmPartition remotePartition = new JdbmPartition(schemaManager, directoryService.getDnFactory());
+                    remotePartition.setId(id);
+                    remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
+                    remotePartition.setPartitionPath(new File(workDir, id).toURI());
+                    directoryService.addPartition(remotePartition);
+                    baseDns.add(remoteBaseDn);
+                }            }
+            directoryService.addLast(interceptor);
         }
-
-        // Add our interceptor for group lookups
-        directoryService.addLast(new GroupLookupInterceptor(directoryService, backend));
 
         // Allow anonymous access
         directoryService.setAllowAnonymousAccess(true);
@@ -134,8 +142,8 @@ public class KnoxLDAPServerManager {
         // Start the service
         directoryService.startup();
 
-        // Add base entries to the partition
-        createBaseEntries(schemaManager);
+        // Add base entries to the partitions
+        createBaseEntries(baseDns, schemaManager);
 
         // Create LDAP server on configured port
         ldapServer = new LdapServer();
@@ -156,6 +164,7 @@ public class KnoxLDAPServerManager {
         if (ldapServer != null) {
             try {
                 ldapServer.stop();
+                ldapServer = null;
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
@@ -164,6 +173,7 @@ public class KnoxLDAPServerManager {
         if (directoryService != null) {
             try {
                 directoryService.shutdown();
+                directoryService = null;
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
@@ -172,13 +182,10 @@ public class KnoxLDAPServerManager {
         LOG.ldapServiceStopped();
     }
 
-    private void createBaseEntries(SchemaManager schemaManager) throws Exception {
-        // Create base entries for proxy base DN
-        createBaseEntriesForDn(schemaManager, baseDn);
-
-        // Create base entries for remote base DN if different
-        if (remoteBaseDn != null && !remoteBaseDn.equals(baseDn)) {
-            createBaseEntriesForDn(schemaManager, remoteBaseDn);
+    private void createBaseEntries(Collection<String> baseDns, SchemaManager schemaManager) throws Exception {
+        // Create base entries for proxy base DN and remote base DNs
+        for (String baseDn : baseDns) {
+            createBaseEntriesForDn(schemaManager, baseDn);
         }
     }
 
