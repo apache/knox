@@ -134,7 +134,6 @@
         <module>gateway-service-vault</module>
         <module>gateway-service-test</module>
         <module>gateway-test-release</module>
-        <module>gateway-admin-ui</module>
         <module>gateway-applications</module>
         <module>gateway-shell-samples</module>
         <module>gateway-shell-release</module>
@@ -148,11 +147,7 @@
         <module>gateway-topology-hadoop-xml</module>
         <module>gateway-service-metadata</module>
         <module>gateway-service-session</module>
-        <module>knox-homepage-ui</module>
         <module>gateway-openapi-ui</module>
-        <module>knox-token-management-ui</module>
-        <module>knox-webshell-ui</module>
-        <module>knox-token-generation-ui</module>
     </modules>
 
     <properties>
@@ -423,6 +418,27 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>build-ui</id>
+
+            <activation>
+                <property>
+                    <name>!skipUi</name>
+                </property>
+            </activation>
+
+            <properties>
+                <failsafe.group>org.apache.knox.test.category.VerifyTest</failsafe.group>
+            </properties>
+
+            <modules>
+                <module>gateway-admin-ui</module>
+                <module>knox-homepage-ui</module>
+                <module>knox-token-management-ui</module>
+                <module>knox-webshell-ui</module>
+                <module>knox-token-generation-ui</module>
+            </modules>
         </profile>
     </profiles>
 
