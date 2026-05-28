@@ -29,6 +29,7 @@ import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import org.apache.directory.ldap.client.api.LdapConnectionPool;
+import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.ldap.client.api.ValidatingPoolableLdapConnectionFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
@@ -250,6 +251,24 @@ public class LdapProxyBackend implements LdapBackend {
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
+        }
+    }
+
+    @Override
+    public boolean authenticate(String userDn, String password) {
+        // Create a temporary connection for authentication (bind)
+        final LdapConnectionConfig authConfig = new LdapConnectionConfig();
+        authConfig.setLdapHost(host);
+        authConfig.setLdapPort(port);
+        authConfig.setName(userDn);
+        authConfig.setCredentials(password);
+        try (LdapConnection connection =  new LdapNetworkConnection(authConfig)){
+            connection.bind();
+            LOG.ldapAuthSucceeded(userDn);
+            return true;
+        } catch (Exception e) {
+            LOG.ldapAuthFailed(userDn, e);
+            return false;
         }
     }
 

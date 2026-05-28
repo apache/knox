@@ -24,6 +24,7 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
+import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.directory.server.core.api.schema.SchemaPartition;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
@@ -34,6 +35,8 @@ import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -125,8 +128,7 @@ public class KnoxLDAPServerManager {
             directoryService.addPartition(remotePartition);
         }
 
-        // Add our interceptor for group lookups
-        directoryService.addLast(new GroupLookupInterceptor(directoryService, backend));
+        addGroupLookupInterceptor();
 
         // Allow anonymous access
         directoryService.setAllowAnonymousAccess(true);
@@ -145,6 +147,27 @@ public class KnoxLDAPServerManager {
         ldapServer.start();
 
         LOG.ldapServiceStarted(port);
+    }
+
+    private void addGroupLookupInterceptor() {
+        // Add our interceptor for group lookups and bind proxying
+        // We need to insert it before AuthenticationInterceptor to intercept bind requests
+        final List<Interceptor> interceptors = new ArrayList<>(directoryService.getInterceptors());
+        int authIdx = -1;
+        for (int i = 0; i < interceptors.size(); i++) {
+            if (interceptors.get(i).getName().equalsIgnoreCase("authenticationInterceptor")) {
+                authIdx = i;
+                break;
+            }
+        }
+
+        final GroupLookupInterceptor interceptor = new GroupLookupInterceptor(directoryService, backend);
+        if (authIdx != -1) {
+            interceptors.add(authIdx, interceptor);
+        } else {
+            interceptors.add(interceptor);
+        }
+        directoryService.setInterceptors(interceptors);
     }
 
     /**

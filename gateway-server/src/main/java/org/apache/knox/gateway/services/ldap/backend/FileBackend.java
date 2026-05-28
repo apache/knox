@@ -45,6 +45,7 @@ public class FileBackend implements LdapBackend {
 
     static class UserData {
         String username;
+        String password;
         String cn;
         String sn;
         List<String> groups;
@@ -140,5 +141,26 @@ public class FileBackend implements LdapBackend {
         }
 
         return results;
+    }
+
+    @Override
+    public boolean authenticate(String userDn, String password) {
+        // Extract username from DN (e.g., uid=admin,ou=people,dc=hadoop,dc=apache,dc=org)
+        String username = null;
+        if (userDn != null && userDn.startsWith("uid=")) {
+            int commaIdx = userDn.indexOf(',');
+            if (commaIdx > 0) {
+                username = userDn.substring(4, commaIdx);
+            } else {
+                username = userDn.substring(4);
+            }
+        }
+
+        if (username != null) {
+            UserData userData = users.get(username);
+            return userData != null && password != null && password.equals(userData.password);
+        }
+
+        return false;
     }
 }

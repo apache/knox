@@ -31,7 +31,7 @@ class TestKnoxAuthService(unittest.TestCase):
     def setUp(self):
         self.base_url = gateway_base_url()
         # The topology name is based on the filename knoxldap.xml
-        self.topology_url = self.base_url + "gateway/knoxldap/auth/api/v1/extauthz"
+        self.topology_url = self.base_url + "gateway/knoxldap/auth/api/v1/pre"
 
     def test_auth_service_guest(self):
         """
@@ -47,7 +47,7 @@ class TestKnoxAuthService(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         
         # Check for Actor ID header
-        # The config in knoxtoken.xml sets 'preauth.auth.header.actor.id.name' to 'x-knox-actor-username'
+        # The config in knoxldap.xml sets 'preauth.auth.header.actor.id.name' to 'x-knox-actor-username'
         actor_id_header = 'x-knox-actor-username'
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], 'guest')

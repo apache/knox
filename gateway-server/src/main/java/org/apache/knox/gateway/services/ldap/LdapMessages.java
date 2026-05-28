@@ -96,4 +96,10 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR,
             text = "Failed to copy attribute: {0}")
     void ldapAttributeCopyError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.DEBUG, text = "LDAP authentication succeeded for user: {0}")
+    void ldapAuthSucceeded(String user);
+
+    @Message(level = MessageLevel.DEBUG, text = "LDAP authentication failed for user: {0}")
+    void ldapAuthFailed(String user, @StackTrace(level = MessageLevel.INFO) Throwable cause);
 }

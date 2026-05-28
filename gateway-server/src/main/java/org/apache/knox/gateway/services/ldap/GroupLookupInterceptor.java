@@ -17,15 +17,21 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.name.Rdn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
+import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursorImpl;
 import org.apache.directory.server.core.api.interceptor.BaseInterceptor;
 import org.apache.directory.server.core.api.interceptor.context.BindOperationContext;
+import org.apache.directory.server.core.api.interceptor.context.LookupOperationContext;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
@@ -40,6 +46,7 @@ import java.util.regex.Pattern;
  */
 public class GroupLookupInterceptor extends BaseInterceptor {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+    public static final String ANONYMOUS = "anonymous";
     private DirectoryService directoryService;
     private LdapBackend backend;
     private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
@@ -49,6 +56,22 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     public GroupLookupInterceptor(DirectoryService directoryService, LdapBackend backend) {
         this.directoryService = directoryService;
         this.backend = backend;
+    }
+
+    @Override
+    public Entry lookup(LookupOperationContext ctx) throws LdapException {
+        Entry entry = next(ctx);
+        if (entry == null) {
+            String username = extractUsernameFromDn(ctx.getDn());
+            if (username != null) {
+                try {
+                    entry = backend.getUser(username, directoryService.getSchemaManager());
+                } catch (Exception e) {
+                    LOG.ldapServiceStopFailed(e);
+                }
+            }
+        }
+        return entry;
     }
 
     @Override
@@ -120,9 +143,26 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     }
 
     @Override
-    public void bind(BindOperationContext ctx) {
-        // Allow anonymous bind or simple bind
-        LOG.ldapBind(ctx.getDn() != null ? ctx.getDn().toString() : "anonymous");
+    public void bind(BindOperationContext ctx) throws LdapException {
+        final String dn = ctx.getDn() != null ? ctx.getDn().toString() : ANONYMOUS;
+        LOG.ldapBind(dn);
+
+        // Try backend first for non-system users
+        if (dn != null && !dn.endsWith("ou=system") && !ANONYMOUS.equals(dn)) {
+            byte[] credentials = ctx.getCredentials();
+            if (credentials != null) {
+                String password = new String(credentials, java.nio.charset.StandardCharsets.UTF_8);
+                if (backend.authenticate(dn, password)) {
+                    // Create session for the authenticated user and set it in context
+                    // This is required by LdapServer to avoid NullPointerException
+                    LdapPrincipal principal = new LdapPrincipal(directoryService.getSchemaManager(), ctx.getDn(), AuthenticationLevel.SIMPLE);
+                    CoreSession session = directoryService.getSession(principal);
+                    ctx.setSession(session);
+                    return; // Successfully authenticated via backend, bypass local check
+                }
+            }
+        }
+
         try {
             next(ctx);
         } catch (Exception e) {
@@ -153,6 +193,20 @@ public class GroupLookupInterceptor extends BaseInterceptor {
         }
 
         return null;
+    }
+
+    private String extractUsernameFromDn(Dn dn) {
+        if (dn == null || dn.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return "uid".equalsIgnoreCase(dn.getRdn().getType())
+                    ? dn.getRdn().getValue()
+                    : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }
 

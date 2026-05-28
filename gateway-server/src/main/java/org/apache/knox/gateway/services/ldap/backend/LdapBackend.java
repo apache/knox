@@ -65,4 +65,13 @@ public interface LdapBackend {
      * @return List of matching entries
      */
     List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception;
+
+    /**
+     * Authenticate a user with password
+     *
+     * @param userDn   The user's Distinguished Name
+     * @param password The user's password
+     * @return true if authentication is successful, false otherwise
+     */
+    boolean authenticate(String userDn, String password);
 }
