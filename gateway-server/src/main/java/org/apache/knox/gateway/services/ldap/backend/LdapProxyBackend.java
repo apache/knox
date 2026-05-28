@@ -24,11 +24,13 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import org.apache.directory.ldap.client.api.LdapConnectionPool;
+import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.ldap.client.api.ValidatingPoolableLdapConnectionFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
@@ -250,6 +252,25 @@ public class LdapProxyBackend implements LdapBackend {
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
+        }
+    }
+
+    @Override
+    public boolean authenticate(Dn userDn, String password) {
+        final String userDnText = userDn.toString(); //at this point we are sure it's not NULL
+        // Create a temporary connection for authentication (bind)
+        final LdapConnectionConfig authConfig = new LdapConnectionConfig();
+        authConfig.setLdapHost(host);
+        authConfig.setLdapPort(port);
+        authConfig.setName(userDnText);
+        authConfig.setCredentials(password);
+        try (LdapConnection connection =  new LdapNetworkConnection(authConfig)){
+            connection.bind();
+            LOG.ldapAuthSucceeded(userDnText);
+            return true;
+        } catch (Exception e) {
+            LOG.ldapAuthFailed(userDnText, e);
+            return false;
         }
     }
 

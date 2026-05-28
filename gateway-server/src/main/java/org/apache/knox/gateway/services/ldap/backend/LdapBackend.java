@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.backend;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 
 import java.util.List;
@@ -65,4 +66,13 @@ public interface LdapBackend {
      * @return List of matching entries
      */
     List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception;
+
+    /**
+     * Authenticate a user with password
+     *
+     * @param userDn   The user's Distinguished Name
+     * @param password The user's password
+     * @return true if authentication is successful, false otherwise
+     */
+    boolean authenticate(Dn userDn, String password);
 }

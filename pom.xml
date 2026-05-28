@@ -800,6 +800,7 @@
                                 <ignoredNonTestScopedDependency>com.nimbusds:nimbus-jose-jwt</ignoredNonTestScopedDependency>
                                 <ignoredNonTestScopedDependency>org.apache.httpcomponents:httpcore</ignoredNonTestScopedDependency>
                                 <ignoredNonTestScopedDependency>org.apache.knox:gateway-server</ignoredNonTestScopedDependency>
+                                <ignoredNonTestScopedDependency>org.apache.mina:mina-core</ignoredNonTestScopedDependency>
                             </ignoredNonTestScopedDependencies>
                             <ignoredUsedUndeclaredDependencies>
                                 <ignoredUsedUndeclaredDependency>org.glassfish.hk2.external:jakarta.inject</ignoredUsedUndeclaredDependency>

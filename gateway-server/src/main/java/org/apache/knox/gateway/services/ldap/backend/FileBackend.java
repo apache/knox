@@ -20,9 +20,11 @@ package org.apache.knox.gateway.services.ldap.backend;
 import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
+import org.apache.knox.gateway.services.ldap.LdapUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +47,7 @@ public class FileBackend implements LdapBackend {
 
     static class UserData {
         String username;
+        String password;
         String cn;
         String sn;
         List<String> groups;
@@ -140,5 +143,18 @@ public class FileBackend implements LdapBackend {
         }
 
         return results;
+    }
+
+    @Override
+    public boolean authenticate(Dn userDn, String password) {
+        // Extract username from DN (e.g., uid=admin,  ou=people,dc=hadoop,dc=apache,dc=org)
+        final String username = LdapUtils.extractUsernameFromDn(userDn);
+
+        if (username != null) {
+            UserData userData = users.get(username);
+            return userData != null && password != null && password.equals(userData.password);
+        }
+
+        return false;
     }
 }

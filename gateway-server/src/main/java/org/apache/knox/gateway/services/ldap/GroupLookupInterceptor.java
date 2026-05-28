@@ -17,15 +17,19 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
+import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursorImpl;
 import org.apache.directory.server.core.api.interceptor.BaseInterceptor;
 import org.apache.directory.server.core.api.interceptor.context.BindOperationContext;
+import org.apache.directory.server.core.api.interceptor.context.LookupOperationContext;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
@@ -49,6 +53,22 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     public GroupLookupInterceptor(DirectoryService directoryService, LdapBackend backend) {
         this.directoryService = directoryService;
         this.backend = backend;
+    }
+
+    @Override
+    public Entry lookup(LookupOperationContext ctx) throws LdapException {
+        Entry entry = next(ctx);
+        if (entry == null) {
+            String username = LdapUtils.extractUsernameFromDn(ctx.getDn());
+            if (username != null) {
+                try {
+                    entry = backend.getUser(username, directoryService.getSchemaManager());
+                } catch (Exception e) {
+                    LOG.ldapServiceStopFailed(e);
+                }
+            }
+        }
+        return entry;
     }
 
     @Override
@@ -120,9 +140,25 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     }
 
     @Override
-    public void bind(BindOperationContext ctx) {
-        // Allow anonymous bind or simple bind
+    public void bind(BindOperationContext ctx) throws LdapException {
         LOG.ldapBind(ctx.getDn() != null ? ctx.getDn().toString() : "anonymous");
+
+        // Try backend first for non-system users
+        if (ctx.getDn() != null && !ctx.getDn().toString().endsWith("ou=system")) {
+            byte[] credentials = ctx.getCredentials();
+            if (credentials != null) {
+                String password = new String(credentials, java.nio.charset.StandardCharsets.UTF_8);
+                if (backend.authenticate(ctx.getDn(), password)) {
+                    // Create session for the authenticated user and set it in context
+                    // This is required by LdapServer to avoid NullPointerException
+                    LdapPrincipal principal = new LdapPrincipal(directoryService.getSchemaManager(), ctx.getDn(), AuthenticationLevel.SIMPLE);
+                    CoreSession session = directoryService.getSession(principal);
+                    ctx.setSession(session);
+                    return; // Successfully authenticated via backend, bypass local check
+                }
+            }
+        }
+
         try {
             next(ctx);
         } catch (Exception e) {
