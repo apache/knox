@@ -20,9 +20,11 @@ package org.apache.knox.gateway.services.ldap.backend;
 import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
+import org.apache.knox.gateway.services.ldap.LdapUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -144,17 +146,9 @@ public class FileBackend implements LdapBackend {
     }
 
     @Override
-    public boolean authenticate(String userDn, String password) {
-        // Extract username from DN (e.g., uid=admin,ou=people,dc=hadoop,dc=apache,dc=org)
-        String username = null;
-        if (userDn != null && userDn.startsWith("uid=")) {
-            int commaIdx = userDn.indexOf(',');
-            if (commaIdx > 0) {
-                username = userDn.substring(4, commaIdx);
-            } else {
-                username = userDn.substring(4);
-            }
-        }
+    public boolean authenticate(Dn userDn, String password) {
+        // Extract username from DN (e.g., uid=admin,  ou=people,dc=hadoop,dc=apache,dc=org)
+        final String username = LdapUtils.extractUsernameFromDn(userDn);
 
         if (username != null) {
             UserData userData = users.get(username);

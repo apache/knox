@@ -21,8 +21,6 @@ import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.name.Dn;
-import org.apache.directory.api.ldap.model.name.Rdn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
@@ -46,7 +44,6 @@ import java.util.regex.Pattern;
  */
 public class GroupLookupInterceptor extends BaseInterceptor {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
-    public static final String ANONYMOUS = "anonymous";
     private DirectoryService directoryService;
     private LdapBackend backend;
     private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
@@ -62,7 +59,7 @@ public class GroupLookupInterceptor extends BaseInterceptor {
     public Entry lookup(LookupOperationContext ctx) throws LdapException {
         Entry entry = next(ctx);
         if (entry == null) {
-            String username = extractUsernameFromDn(ctx.getDn());
+            String username = LdapUtils.extractUsernameFromDn(ctx.getDn());
             if (username != null) {
                 try {
                     entry = backend.getUser(username, directoryService.getSchemaManager());
@@ -144,15 +141,14 @@ public class GroupLookupInterceptor extends BaseInterceptor {
 
     @Override
     public void bind(BindOperationContext ctx) throws LdapException {
-        final String dn = ctx.getDn() != null ? ctx.getDn().toString() : ANONYMOUS;
-        LOG.ldapBind(dn);
+        LOG.ldapBind(ctx.getDn() != null ? ctx.getDn().toString() : "anonymous");
 
         // Try backend first for non-system users
-        if (dn != null && !dn.endsWith("ou=system") && !ANONYMOUS.equals(dn)) {
+        if (ctx.getDn() != null && !ctx.getDn().toString().endsWith("ou=system")) {
             byte[] credentials = ctx.getCredentials();
             if (credentials != null) {
                 String password = new String(credentials, java.nio.charset.StandardCharsets.UTF_8);
-                if (backend.authenticate(dn, password)) {
+                if (backend.authenticate(ctx.getDn(), password)) {
                     // Create session for the authenticated user and set it in context
                     // This is required by LdapServer to avoid NullPointerException
                     LdapPrincipal principal = new LdapPrincipal(directoryService.getSchemaManager(), ctx.getDn(), AuthenticationLevel.SIMPLE);
@@ -193,20 +189,6 @@ public class GroupLookupInterceptor extends BaseInterceptor {
         }
 
         return null;
-    }
-
-    private String extractUsernameFromDn(Dn dn) {
-        if (dn == null || dn.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return "uid".equalsIgnoreCase(dn.getRdn().getType())
-                    ? dn.getRdn().getValue()
-                    : null;
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 }
 
