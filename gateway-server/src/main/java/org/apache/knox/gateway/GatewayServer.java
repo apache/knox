@@ -28,6 +28,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentException;
@@ -127,6 +128,7 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -147,6 +149,8 @@ public class GatewayServer {
 
   private static GatewayServer server;
   private static GatewayServices services;
+
+  private static final List<GatewayConfigChangeListener> configChangeListeners = new CopyOnWriteArrayList<>();
 
   private static Properties buildProperties;
 
@@ -239,6 +243,14 @@ public class GatewayServer {
     return services;
   }
 
+  public static void registerConfigChangeListener(GatewayConfigChangeListener listener) {
+    configChangeListeners.add(listener);
+  }
+
+  public static void unregisterConfigChangeListener(GatewayConfigChangeListener listener) {
+    configChangeListeners.remove(listener);
+  }
+
   private static void setupGatewayConfigRefresh(GatewayConfigImpl config) {
     Path resourcePath = Paths.get(config.getGatewayConfDir(), RELOADABLE_CONFIG_FILENAME);
     int refreshInterval = config.getConfigRefreshInterval();
@@ -261,6 +273,9 @@ public class GatewayServer {
           lastReloadTime = lastModifiedTime;
           config.reloadConfiguration();
           log.refreshedGatewayConfig();
+          for (GatewayConfigChangeListener listener : configChangeListeners) {
+            listener.onGatewayConfigChanged();
+          }
         }
       }
     } catch (IOException e) {

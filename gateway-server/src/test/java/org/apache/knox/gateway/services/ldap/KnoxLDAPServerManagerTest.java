@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
@@ -25,6 +27,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -71,9 +75,16 @@ public class KnoxLDAPServerManagerTest {
 
     @Test
     public void testInitializeWithFileBackend() throws Exception {
-        Map<String, String> backendConfig = createFileBackendConfig();
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(3890).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(new HashMap<>()).anyTimes();
+        replay(mockConfig);
 
-        serverManager.initialize(tempWorkDir, 3890, "dc=test,dc=com", "file", backendConfig, null);
+        serverManager.initialize(mockConfig);
 
         assertEquals("Port should be set correctly", 3890, serverManager.getPort());
         assertEquals("Base DN should be set correctly", "dc=test,dc=com", serverManager.getBaseDn());
@@ -82,9 +93,22 @@ public class KnoxLDAPServerManagerTest {
 
     @Test
     public void testInitializeWithLdapBackend() throws Exception {
-        Map<String, String> backendConfig = createLdapBackendConfig();
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(3891).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com").anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("ldap").anyTimes();
 
-        serverManager.initialize(tempWorkDir, 3891, "dc=proxy,dc=com", "ldap", backendConfig, "dc=hadoop,dc=apache,dc=org");
+        Map<String, String> backendConfig = new HashMap<>();
+        backendConfig.put("url", "ldap://localhost:33389");
+        backendConfig.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");
+        backendConfig.put("systemUsername", "cn=admin,dc=hadoop,dc=apache,dc=org");
+        backendConfig.put("systemPassword", "admin-password");
+
+        expect(mockConfig.getLDAPBackendConfig("ldap")).andReturn(backendConfig).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
 
         assertEquals("Port should be set correctly", 3891, serverManager.getPort());
         assertEquals("Base DN should be set correctly", "dc=proxy,dc=com", serverManager.getBaseDn());
@@ -93,23 +117,36 @@ public class KnoxLDAPServerManagerTest {
 
     @Test(expected = Exception.class)
     public void testInitializeWithInvalidBackendType() throws Exception {
-        Map<String, String> backendConfig = new HashMap<>();
-        backendConfig.put("baseDn", "dc=test,dc=com");
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("invalid").anyTimes();
+        expect(mockConfig.getLDAPBackendConfig("invalid")).andReturn(new HashMap<>()).anyTimes();
+        replay(mockConfig);
 
-        serverManager.initialize(tempWorkDir, 3890, "dc=test,dc=com", "invalid", backendConfig, null);
+        serverManager.initialize(mockConfig);
     }
 
     @Test
     public void testLockFileCleanup() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(new HashMap<>()).anyTimes();
+        replay(mockConfig);
+
+        // The manager will use tempWorkDir.getParent()/ldap-server as workDir
+        File actualWorkDir = new File(tempWorkDir.getParent(), "ldap-server");
+        actualWorkDir.mkdirs();
+
         // Create a lock file to simulate previous unclean shutdown
-        File runDir = new File(tempWorkDir, "run");
+        File runDir = new File(actualWorkDir, "run");
         runDir.mkdirs();
         File lockFile = new File(runDir, "instance.lock");
         lockFile.createNewFile();
         assertTrue("Lock file should exist before initialization", lockFile.exists());
 
-        Map<String, String> backendConfig = createFileBackendConfig();
-        serverManager.initialize(tempWorkDir, 3890, "dc=test,dc=com", "file", backendConfig, null);
+        serverManager.initialize(mockConfig);
 
         assertFalse("Lock file should be cleaned up during initialization", lockFile.exists());
     }
@@ -123,8 +160,14 @@ public class KnoxLDAPServerManagerTest {
 
     @Test
     public void testStopBeforeStart() throws Exception {
-        Map<String, String> backendConfig = createFileBackendConfig();
-        serverManager.initialize(tempWorkDir, 3890, "dc=test,dc=com", "file", backendConfig, null);
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(new HashMap<>()).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
 
         // Should not throw exception when stopping before starting
         serverManager.stop();
@@ -132,8 +175,14 @@ public class KnoxLDAPServerManagerTest {
 
     @Test
     public void testMultipleStopCalls() throws Exception {
-        Map<String, String> backendConfig = createFileBackendConfig();
-        serverManager.initialize(tempWorkDir, 3890, "dc=test,dc=com", "file", backendConfig, null);
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(new HashMap<>()).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
 
         // Multiple stop calls should not throw exceptions
         serverManager.stop();
@@ -147,21 +196,24 @@ public class KnoxLDAPServerManagerTest {
         serverManager.start();
     }
 
-    private Map<String, String> createFileBackendConfig() {
-        Map<String, String> config = new HashMap<>();
-        config.put("baseDn", "dc=test,dc=com");
-        config.put("dataFile", tempLdapFile.getAbsolutePath());
-        return config;
-    }
+    @Test
+    public void testOnGatewayConfigChanged() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(3890).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(new HashMap<>()).anyTimes();
+        expect(mockConfig.isLDAPEnabled()).andReturn(true).anyTimes();
+        replay(mockConfig);
 
-    private Map<String, String> createLdapBackendConfig() {
-        Map<String, String> config = new HashMap<>();
-        config.put("baseDn", "dc=proxy,dc=com");
-        config.put("url", "ldap://localhost:33389");
-        config.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");
-        config.put("systemUsername", "cn=admin,dc=hadoop,dc=apache,dc=org");
-        config.put("systemPassword", "admin-password");
-        return config;
+        serverManager.initialize(mockConfig);
+
+        // Test reload
+        serverManager.onGatewayConfigChanged();
+
+        assertEquals("Port should be maintained after reload", 3890, serverManager.getPort());
     }
 
     private void cleanupTempFiles() {

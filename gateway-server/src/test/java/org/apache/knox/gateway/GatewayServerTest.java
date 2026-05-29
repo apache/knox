@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway;
 
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.easymock.EasyMock;
 import org.junit.Rule;
@@ -32,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class GatewayServerTest {
 
@@ -94,5 +96,35 @@ public class GatewayServerTest {
 
     refreshMethod.invoke(null, config, configFile.toPath());
     EasyMock.verify(config);
+  }
+
+  @Test
+  public void testGatewayConfigChangeListener() throws Exception {
+    GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
+    File configFile = folder.newFile("gateway-reloadable-listener.xml");
+    try (PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8)) {
+      writer.println("<configuration></configuration>");
+    }
+
+    final boolean[] notified = {false};
+    GatewayConfigChangeListener listener = () -> notified[0] = true;
+
+    GatewayServer.registerConfigChangeListener(listener);
+
+    try {
+      Method refreshMethod = GatewayServer.class.getDeclaredMethod("refreshGatewayConfig", GatewayConfigImpl.class, Path.class);
+      refreshMethod.setAccessible(true);
+
+      // Reset lastReloadTime to ensure refresh happens
+      Field lastReloadTimeField = GatewayServer.class.getDeclaredField("lastReloadTime");
+      lastReloadTimeField.setAccessible(true);
+      lastReloadTimeField.set(null, null);
+
+      refreshMethod.invoke(null, config, configFile.toPath());
+
+      assertTrue("Listener should have been notified", notified[0]);
+    } finally {
+      GatewayServer.unregisterConfigChangeListener(listener);
+    }
   }
 }
