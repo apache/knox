@@ -200,7 +200,7 @@ public class KnoxLDAPServerManagerTest {
     public void testOnGatewayConfigChanged() throws Exception {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
-        expect(mockConfig.getLDAPPort()).andReturn(3890).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
         expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
         expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
@@ -209,11 +209,12 @@ public class KnoxLDAPServerManagerTest {
         replay(mockConfig);
 
         serverManager.initialize(mockConfig);
+        assertEquals("Initial port should be 3890", 3890, serverManager.getPort());
 
-        // Test reload
+        // Test reload with new port
         serverManager.onGatewayConfigChanged();
 
-        assertEquals("Port should be maintained after reload", 3890, serverManager.getPort());
+        assertEquals("Port should be updated to 3891 after reload", 3891, serverManager.getPort());
     }
 
     private void cleanupTempFiles() {
