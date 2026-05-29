@@ -47,7 +47,6 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
             // Initialize the LDAP server manager with configuration
             ldapServerManager = new KnoxLDAPServerManager();
             ldapServerManager.initialize(config);
-
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
         }

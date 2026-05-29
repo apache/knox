@@ -22,6 +22,7 @@ import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -65,6 +66,8 @@ public class LdapProxyBackend implements LdapBackend {
     private String userSearchFilter = "({userIdAttr}={username})"; // Will be populated with userIdentifierAttribute
     private String groupMemberAttribute = "memberUid"; // member for AD, memberUid for POSIX
     private boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
+    private boolean recursiveGroupResolution;
+    private int recursiveGroupResolutionMaxDepth;
 
     private List<String> proxyEntryAttributeTypes = List.of(
             // "uid" will always be filled
@@ -133,13 +136,16 @@ public class LdapProxyBackend implements LdapBackend {
         userIdentifierAttribute = config.getOrDefault("userIdentifierAttribute", "uid");
         groupMemberAttribute = config.getOrDefault("groupMemberAttribute", "memberUid");
         useMemberOf = Boolean.parseBoolean(config.getOrDefault("useMemberOf", "false"));
+        recursiveGroupResolution = Boolean.parseBoolean(config.getOrDefault("recursiveGroupResolution", "false"));
+        recursiveGroupResolutionMaxDepth = Integer.parseInt(config.getOrDefault("recursiveGroupResolutionMaxDepth", "3"));
 
         // Build search filter template
         userSearchFilter = "(" + userIdentifierAttribute + "={username})";
 
         LOG.ldapBackendLoading(getName(), "Proxying " + proxyBaseDn + " to " + ldapUrl + " (" + remoteBaseDn + ") with " +
                               userIdentifierAttribute + " attribute" +
-                              (useMemberOf ? " using memberOf lookups" : " using group searches"));
+                              (useMemberOf ? " using memberOf lookups" : " using group searches") +
+                              (recursiveGroupResolution ? " with recursive group resolution (max depth: " + recursiveGroupResolutionMaxDepth + ")" : ""));
 
         // Initialize connection pool
         initializeConnectionPool(config);
@@ -281,15 +287,12 @@ public class LdapProxyBackend implements LdapBackend {
             connection = getConnection();
             // Search for user using configurable attribute
             String filter = userSearchFilter.replace("{username}", username);
-            EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "*");
-
-            if (cursor.next()) {
-                Entry sourceEntry = cursor.get();
-                Entry entry = createProxyEntry(sourceEntry, username, connection, schemaManager);
-                cursor.close();
-                return entry;
+            try (EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "*")) {
+                if (cursor.next()) {
+                    Entry sourceEntry = cursor.get();
+                    return createProxyEntry(sourceEntry, username, connection, schemaManager);
+                }
             }
-            cursor.close();
             return null;
         } finally {
             releaseConnection(connection);
@@ -301,53 +304,138 @@ public class LdapProxyBackend implements LdapBackend {
         LdapConnection connection = null;
         try {
             connection = getConnection();
-            if (useMemberOf) {
-                // Use memberOf attribute for efficient AD lookups
-                return getUserGroupsViaMemberOf(connection, username);
-            } else {
-                // Use traditional group search approach
-                String filter = userSearchFilter.replace("{username}", username);
-                EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "dn");
-
-                if (cursor.next()) {
-                    String userDn = cursor.get().getDn().toString();
-                    cursor.close();
-                    return getCnsFromEntries(getUserGroupsInternal(connection, userDn, username));
-                }
-
-                cursor.close();
-            }
-            return Collections.emptyList();
+            List<Entry> groups = getUserGroupsEntries(connection, username);
+            return getCnsFromEntries(groups);
         } finally {
             releaseConnection(connection);
         }
     }
 
-    private List<String> getUserGroupsViaMemberOf(LdapConnection connection, String username) throws LdapException, CursorException, IOException {
-        List<String> groups = new ArrayList<>();
-
-        // Search for user and retrieve memberOf attribute
-        String filter = userSearchFilter.replace("{username}", username);
-        EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "memberOf");
-
-        if (cursor.next()) {
-            Entry userEntry = cursor.get();
-            Attribute memberOfAttr = userEntry.get("memberOf");
-
-            if (memberOfAttr != null) {
-                // Extract group names from DNs
-                for (org.apache.directory.api.ldap.model.entry.Value value : memberOfAttr) {
-                    String groupDn = value.getString();
-                    String groupName = extractGroupNameFromDn(groupDn);
-                    if (groupName != null) {
-                        groups.add(groupName);
-                    }
+    private List<Entry> getUserGroupsEntries(LdapConnection connection, String username) throws Exception {
+        List<Entry> groups;
+        if (useMemberOf) {
+            // Use memberOf attribute for efficient AD lookups
+            groups = getUserGroupsViaMemberOfInternal(connection, username);
+        } else {
+            // Use traditional group search approach
+            String filter = userSearchFilter.replace("{username}", username);
+            try (EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "dn")) {
+                if (cursor.next()) {
+                    String userDn = cursor.get().getDn().toString();
+                    groups = getUserGroupsInternal(connection, userDn, username);
+                } else {
+                    groups = Collections.emptyList();
                 }
             }
         }
 
-        cursor.close();
+        if (recursiveGroupResolution && !groups.isEmpty()) {
+            groups = resolveGroupsRecursive(connection, groups, username);
+        }
         return groups;
+    }
+
+    private List<Entry> getUserGroupsViaMemberOfInternal(LdapConnection connection, String username) throws LdapException, CursorException, IOException {
+        final List<Entry> groups = new ArrayList<>();
+
+        // Search for user and retrieve memberOf attribute
+        final String filter = userSearchFilter.replace("{username}", username);
+        try (EntryCursor cursor = connection.search(userSearchBase, filter, SearchScope.SUBTREE, "memberOf")) {
+            if (cursor.next()) {
+                final Attribute memberOfAttr = cursor.get().get("memberOf");
+
+                if (memberOfAttr != null) {
+                    for (Value value : memberOfAttr) {
+                        String groupDn = value.getString();
+                        try {
+                            Entry groupEntry = connection.lookup(groupDn, "cn");
+                            if (groupEntry != null) {
+                                groups.add(groupEntry);
+                            } else {
+                                groups.add(createSkeletonGroupEntry(groupDn));
+                            }
+                        } catch (LdapException e) {
+                            groups.add(createSkeletonGroupEntry(groupDn));
+                        }
+                    }
+                }
+            }
+        }
+        return groups;
+    }
+
+    /**
+     * Creates a skeleton group entry from a DN when the actual group entry cannot be
+     * found in the backend. This ensures backward compatibility with the original
+     * implementation which extracted group names directly from memberOf DNs even
+     * if the referenced group entries did not exist.
+     *
+     * @param groupDn The Distinguished Name of the group
+     * @return A skeleton Entry containing the DN and CN (if extractable), or null if creation fails
+     */
+    private Entry createSkeletonGroupEntry(String groupDn) {
+        try {
+            Entry entry = new DefaultEntry(groupDn);
+            String groupName = extractGroupNameFromDn(groupDn);
+            if (groupName != null) {
+                entry.add("cn", groupName);
+            }
+            LOG.ldapSkeletonGroupEntryCreated(groupDn);
+            return entry;
+        } catch (LdapException e) {
+            LOG.ldapSearch(groupDn, "failed to create skeleton entry");
+            return null;
+        }
+    }
+
+    private List<Entry> resolveGroupsRecursive(LdapConnection connection, List<Entry> initialGroups, String username) throws LdapException, CursorException, IOException {
+        LOG.ldapRecursiveGroupSearchConfig(recursiveGroupResolution, recursiveGroupResolutionMaxDepth);
+
+        java.util.Set<String> allGroupDns = new java.util.HashSet<>();
+        List<Entry> allGroups = new ArrayList<>();
+        List<Entry> currentLevelGroups = new ArrayList<>(initialGroups);
+
+        for (Entry group : initialGroups) {
+            allGroupDns.add(group.getDn().getNormName());
+            allGroups.add(group);
+        }
+
+        int depth = 1;
+        while (!currentLevelGroups.isEmpty() && depth < recursiveGroupResolutionMaxDepth) {
+            List<Entry> nextLevelGroups = new ArrayList<>();
+            StringBuilder filterBuilder = new StringBuilder("(|");
+
+            for (Entry group : currentLevelGroups) {
+                String dn = group.getDn().getName();
+                filterBuilder.append("(member=").append(dn).append(")(uniqueMember=").append(dn).append(")");
+            }
+            filterBuilder.append(")");
+
+            try (EntryCursor cursor = connection.search(groupSearchBase, filterBuilder.toString(), SearchScope.SUBTREE, "cn")) {
+                while (cursor.next()) {
+                    Entry parentGroup = cursor.get();
+                    String parentDn = parentGroup.getDn().getNormName();
+                    if (!allGroupDns.contains(parentDn)) {
+                        allGroupDns.add(parentDn);
+                        allGroups.add(parentGroup);
+                        nextLevelGroups.add(parentGroup);
+                    } else {
+                        LOG.ldapRecursiveGroupSearchCycleDetected(username, parentDn);
+                    }
+                }
+            }
+
+            LOG.ldapRecursiveGroupSearchProgress(username, nextLevelGroups.size(), depth);
+            currentLevelGroups = nextLevelGroups;
+            depth++;
+
+            if (depth == recursiveGroupResolutionMaxDepth && !currentLevelGroups.isEmpty()) {
+                LOG.ldapRecursiveGroupSearchMaxDepthReached(username, recursiveGroupResolutionMaxDepth);
+            }
+        }
+
+        LOG.ldapRecursiveGroupSearchFinished(username, allGroups.size());
+        return allGroups;
     }
 
     private String extractGroupNameFromDn(String groupDn) {
@@ -381,13 +469,12 @@ public class LdapProxyBackend implements LdapBackend {
                     ")";
         }
 
-        EntryCursor cursor = connection.search(groupSearchBase, filter, SearchScope.SUBTREE, "cn");
-
-        while (cursor.next()) {
-            groups.add(cursor.get());
+        try (EntryCursor cursor = connection.search(groupSearchBase, filter, SearchScope.SUBTREE, "cn")) {
+            while (cursor.next()) {
+                groups.add(cursor.get());
+            }
         }
 
-        cursor.close();
         return groups;
     }
 
@@ -410,19 +497,17 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             String ldapFilter = "(" + userIdentifierAttribute + "=" + filter.trim() + ")";
-            EntryCursor cursor = connection.search(userSearchBase, ldapFilter, SearchScope.SUBTREE, "*");
-
-            while (cursor.next()) {
-                Entry sourceEntry = cursor.get();
-                Attribute idAttr = sourceEntry.get(userIdentifierAttribute);
-                if (idAttr != null) {
-                    String username = idAttr.getString();
-                    Entry entry = createProxyEntry(sourceEntry, username, connection, schemaManager);
-                    results.add(entry);
+            try (EntryCursor cursor = connection.search(userSearchBase, ldapFilter, SearchScope.SUBTREE, "*")) {
+                while (cursor.next()) {
+                    Entry sourceEntry = cursor.get();
+                    Attribute idAttr = sourceEntry.get(userIdentifierAttribute);
+                    if (idAttr != null) {
+                        String username = idAttr.getString();
+                        Entry entry = createProxyEntry(sourceEntry, username, connection, schemaManager);
+                        results.add(entry);
+                    }
                 }
             }
-
-            cursor.close();
             return results;
         } finally {
             releaseConnection(connection);
@@ -463,10 +548,10 @@ public class LdapProxyBackend implements LdapBackend {
             copyAttribute(sourceEntry, entry, attributeType);
         }
 
-        if (useMemberOf) {
+        if (useMemberOf && !recursiveGroupResolution) {
             copyAttribute(sourceEntry, entry, proxyEntryGroupMembershipAttributeType);
         } else {
-            List<Entry> groups = getUserGroupsInternal(connection, sourceEntry.getDn().toString(), username);
+            List<Entry> groups = getUserGroupsEntries(connection, username);
             for (Entry groupEntry : groups) {
                 entry.add(proxyEntryGroupMembershipAttributeType, groupEntry.getDn().getName());
             }
@@ -476,10 +561,10 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     private void copyAttribute(Entry source, Entry target, String attributeName) throws LdapException {
-        Attribute attr = source.get(attributeName);
-        if (attr != null) {
+        final Attribute attribute = source.get(attributeName);
+        if (attribute != null) {
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
-            for (org.apache.directory.api.ldap.model.entry.Value value : attr) {
+            for (Value value : attribute) {
                 try {
                     target.add(attributeName, value.getString());
                 } catch (LdapException e) {

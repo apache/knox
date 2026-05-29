@@ -1,0 +1,82 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: 1
+
+# entry for recursive people container
+dn: ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: recursivePeople
+
+# entry for recursive group container
+dn: ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: recursiveGroups
+
+# entry for the end user
+dn: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: RecursiveUser
+sn: User
+uid: recursiveUser
+userPassword: password
+
+# Level 1 Group
+dn: cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: level1Group
+member: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+
+# Level 2 Group
+dn: cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: level2Group
+member: cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+# Level 3 Group
+dn: cn=level3Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: level3Group
+member: cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+# Level 4 Group
+dn: cn=level4Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: level4Group
+member: cn=level3Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+# Cycle: Group A -> Group B -> Group A
+dn: cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: cycleGroupA
+member: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+member: cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+dn: cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: cycleGroupB
+member: cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org

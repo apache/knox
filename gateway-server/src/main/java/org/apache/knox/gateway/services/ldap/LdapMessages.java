@@ -110,4 +110,22 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR,
             text = "Failed to reload LDAP service: {0}")
     void ldapServiceReloadFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search enabled: {0}, max depth: {1}")
+    void ldapRecursiveGroupSearchConfig(boolean enabled, int maxDepth);
+
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} found {1} groups at depth {2}")
+    void ldapRecursiveGroupSearchProgress(String user, int count, int depth);
+
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} completed. Total groups found: {1}")
+    void ldapRecursiveGroupSearchFinished(String user, int count);
+
+    @Message(level = MessageLevel.WARN, text = "Recursive group search for user {0} reached max depth {1}")
+    void ldapRecursiveGroupSearchMaxDepthReached(String user, int maxDepth);
+
+    @Message(level = MessageLevel.DEBUG, text = "Cycle detected in recursive group search for user {0} at group {1}")
+    void ldapRecursiveGroupSearchCycleDetected(String user, String groupDn);
+
+    @Message(level = MessageLevel.DEBUG, text = "Created skeleton group entry for {0} as actual group entry was not found in the backend")
+    void ldapSkeletonGroupEntryCreated(String groupDn);
 }

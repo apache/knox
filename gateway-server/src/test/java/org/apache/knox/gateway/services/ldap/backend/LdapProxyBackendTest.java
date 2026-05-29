@@ -46,7 +46,6 @@ import org.junit.Test;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,13 +98,10 @@ public class LdapProxyBackendTest {
         // Start the DirectoryService
         directoryService.startup();
 
-        // load test data from ldif file
-        File ldifFile = new File(
-                LdapProxyBackendTest.class.getResource( "/ldap-proxy-backend-test.ldif" )
-                        .toURI());
+        // load test data from ldif files
         CoreSession session = directoryService.getAdminSession();
-        LdifFileLoader lfl = new LdifFileLoader(session, ldifFile, null);
-        lfl.execute();
+        loadLdif(session, "/ldap-proxy-backend-test.ldif");
+        loadLdif(session, "/ldap-recursive-test.ldif");
 
         // Create and start the LDAP server
         ldapServer = new LdapServer();
@@ -122,6 +118,12 @@ public class LdapProxyBackendTest {
                 "systemPassword", "guest-password",
                 "userSearchBase", "ou=people,dc=hadoop,dc=apache,dc=org",
                 "groupSearchBase", "ou=groups,dc=hadoop,dc=apache,dc=org");
+    }
+
+    private static void loadLdif(CoreSession session, String ldifResource) throws Exception {
+        File ldifFile = new File(LdapProxyBackendTest.class.getResource(ldifResource).toURI());
+        LdifFileLoader lfl = new LdifFileLoader(session, ldifFile, null);
+        lfl.execute();
     }
 
     @AfterClass
@@ -150,21 +152,10 @@ public class LdapProxyBackendTest {
         ldapProxyBackend.initialize(ldapBackendConfig);
 
         Entry entry = ldapProxyBackend.getUser("ldaptest1", schemaManager);
-        assertEquals("ldaptest1", entry.get("uid").getString());
-        assertEquals("TestCn1", entry.get("cn").getString());
-        assertEquals("ldaptest1@example.com", entry.get("mail").getString());
-        assertEquals("Test user ldaptest1", entry.get("description").getString());
-        assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
-        Set<String> expectedMemberOf = Set.of(
+        validateUserEntry(entry, "ldaptest1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
+        validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
-        Set<String> foundMemberOf = new HashSet<>(2);
-        Iterator<Value> memberOfs = entry.get("memberOf").iterator();
-        while (memberOfs.hasNext()) {
-            foundMemberOf.add(memberOfs.next().getString());
-        }
-        assertEquals(expectedMemberOf, foundMemberOf);
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
@@ -177,74 +168,39 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testGetUserByUID() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "uid");
+        Map<String, String> config = createConfigWithUserAttr("uid");
         ldapProxyBackend.initialize(config);
 
         Entry entry = ldapProxyBackend.getUser("ldaptest1", schemaManager);
-        assertEquals("ldaptest1", entry.get("uid").getString());
-        assertEquals("TestCn1", entry.get("cn").getString());
-        assertEquals("ldaptest1@example.com", entry.get("mail").getString());
-        assertEquals("Test user ldaptest1", entry.get("description").getString());
-        assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
-        Set<String> expectedMemberOf = Set.of(
+        validateUserEntry(entry, "ldaptest1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
+        validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
-        Set<String> foundMemberOf = new HashSet<>(2);
-        Iterator<Value> memberOfs = entry.get("memberOf").iterator();
-        while (memberOfs.hasNext()) {
-            foundMemberOf.add(memberOfs.next().getString());
-        }
-        assertEquals(expectedMemberOf, foundMemberOf);
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
     public void testGetUserByCN() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "cn");
+        Map<String, String> config = createConfigWithUserAttr("cn");
         ldapProxyBackend.initialize(config);
 
         Entry entry = ldapProxyBackend.getUser("TestCn1", schemaManager);
-        assertEquals("TestCn1", entry.get("uid").getString());
-        assertEquals("TestCn1", entry.get("cn").getString());
-        assertEquals("ldaptest1@example.com", entry.get("mail").getString());
-        assertEquals("Test user ldaptest1", entry.get("description").getString());
-        assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
-        Set<String> expectedMemberOf = Set.of(
+        validateUserEntry(entry, "TestCn1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
+        validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
-        Set<String> foundMemberOf = new HashSet<>(2);
-        Iterator<Value> memberOfs = entry.get("memberOf").iterator();
-        while (memberOfs.hasNext()) {
-            foundMemberOf.add(memberOfs.next().getString());
-        }
-        assertEquals(expectedMemberOf, foundMemberOf);
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
     public void testGetUserBySAMAccountName() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "sAMAccountName");
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
         ldapProxyBackend.initialize(config);
 
         Entry entry = ldapProxyBackend.getUser("TestSam1", schemaManager);
-        assertEquals("TestSam1", entry.get("uid").getString());
-        assertEquals("TestCn1", entry.get("cn").getString());
-        assertEquals("ldaptest1@example.com", entry.get("mail").getString());
-        assertEquals("Test user ldaptest1", entry.get("description").getString());
+        validateUserEntry(entry, "TestSam1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
         assertEquals("TestSam1", entry.get("sAMAccountName").getString());
-        assertEquals(2, entry.get("memberOf").size());
-        Set<String> expectedMemberOf = Set.of(
+        validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org");
-        Set<String> foundMemberOf = new HashSet<>(2);
-        Iterator<Value> memberOfs = entry.get("memberOf").iterator();
-        while (memberOfs.hasNext()) {
-            foundMemberOf.add(memberOfs.next().getString());
-        }
-        assertEquals(expectedMemberOf, foundMemberOf);
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
@@ -254,22 +210,10 @@ public class LdapProxyBackendTest {
         ldapProxyBackend.initialize(config);
 
         Entry entry = ldapProxyBackend.getUser("ldaptest2", schemaManager);
-        assertEquals("ldaptest2", entry.get("uid").getString());
-        assertEquals("TestCn2", entry.get("cn").getString());
-        assertEquals("ldaptest2@example.com", entry.get("mail").getString());
-        assertEquals("Test user ldaptest2", entry.get("description").getString());
-        assertNull(entry.get("sAMAccountName"));
-        assertEquals(2, entry.get("memberOf").size());
-        Set<String> expectedMemberOf = Set.of(
+        validateUserEntry(entry, "ldaptest2", "TestCn2", "ldaptest2@example.com", "Test user ldaptest2");
+        validateMemberOf(entry, Set.of(
                 "cn=groupMemberOf1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=groupMemberOf2,ou=groups,dc=hadoop,dc=apache,dc=org");
-        Set<String> foundMemberOf = new HashSet<>(2);
-        Iterator<Value> memberOfs = entry.get("memberOf").iterator();
-        while (memberOfs.hasNext()) {
-            foundMemberOf.add(memberOfs.next().getString());
-        }
-        assertEquals(expectedMemberOf, foundMemberOf);
-
+                "cn=groupMemberOf2,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
@@ -330,126 +274,162 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testSearchUsers() throws Exception {
-        // searches by uid by default
         ldapProxyBackend.initialize(ldapBackendConfig);
-
-        List<Entry> entries = ldapProxyBackend.searchUsers("*", schemaManager);
-        Set<String> foundUids = new HashSet<>();
-        for (Entry entry : entries) {
-            foundUids.add(entry.get("uid").getString());
-        }
-        assertEquals(3, foundUids.size());
-        assertTrue(foundUids.contains("ldaptest1"));
-        assertTrue(foundUids.contains("ldaptest2"));
-        assertTrue(foundUids.contains("guest"));
+        validateUserSearch("*", 3, Set.of("ldaptest1", "ldaptest2", "guest"));
     }
 
     @Test
     public void testSearchUsersPartial() throws Exception {
-        // searches by uid by default
         ldapProxyBackend.initialize(ldapBackendConfig);
-
-        List<Entry> entries = ldapProxyBackend.searchUsers("ldap*", schemaManager);
-        Set<String> foundUids = new HashSet<>();
-        for (Entry entry : entries) {
-            foundUids.add(entry.get("uid").getString());
-        }
-        assertEquals(2, foundUids.size());
-        assertTrue(foundUids.contains("ldaptest1"));
-        assertTrue(foundUids.contains("ldaptest2"));
+        validateUserSearch("ldap*", 2, Set.of("ldaptest1", "ldaptest2"));
     }
 
     @Test
     public void testSearchUsersNoneFound() throws Exception {
-        // searches by uid by default
         ldapProxyBackend.initialize(ldapBackendConfig);
-
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
     }
 
     @Test
     public void testSearchUsersByCn() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "cn");
+        Map<String, String> config = createConfigWithUserAttr("cn");
         ldapProxyBackend.initialize(config);
-
-        List<Entry> entries = ldapProxyBackend.searchUsers("*", schemaManager);
-        Set<String> foundUids = new HashSet<>();
-        for (Entry entry : entries) {
-            foundUids.add(entry.get("uid").getString());
-        }
-        assertEquals(3, foundUids.size());
-        assertTrue(foundUids.contains("TestCn1"));
-        assertTrue(foundUids.contains("TestCn2"));
-        assertTrue(foundUids.contains("Guest"));
+        validateUserSearch("*", 3, Set.of("TestCn1", "TestCn2", "Guest"));
     }
 
     @Test
     public void testSearchUsersPartialByCn() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "cn");
+        Map<String, String> config = createConfigWithUserAttr("cn");
         ldapProxyBackend.initialize(config);
-
-        List<Entry> entries = ldapProxyBackend.searchUsers("TestCn*", schemaManager);
-        Set<String> foundUids = new HashSet<>();
-        for (Entry entry : entries) {
-            foundUids.add(entry.get("uid").getString());
-        }
-        assertEquals(2, foundUids.size());
-        assertTrue(foundUids.contains("TestCn1"));
-        assertTrue(foundUids.contains("TestCn2"));
+        validateUserSearch("TestCn*", 2, Set.of("TestCn1", "TestCn2"));
     }
 
     @Test
     public void testSearchUsersNoneFoundByCn() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "cn");
+        Map<String, String> config = createConfigWithUserAttr("cn");
         ldapProxyBackend.initialize(config);
-
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
     }
 
     @Test
     public void testSearchUsersBySAMAccountName() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "sAMAccountName");
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
         ldapProxyBackend.initialize(config);
-
-        List<Entry> entries = ldapProxyBackend.searchUsers("*", schemaManager);
-        Set<String> foundUids = new HashSet<>();
-        for (Entry entry : entries) {
-            foundUids.add(entry.get("uid").getString());
-        }
-        assertEquals(2, foundUids.size());
-        assertTrue(foundUids.contains("TestSam1"));
-        assertTrue(foundUids.contains("TestSam2"));
+        validateUserSearch("*", 2, Set.of("TestSam1", "TestSam2"));
     }
 
     @Test
     public void testSearchUsersPartialBySAMAccountName() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "sAMAccountName");
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
         ldapProxyBackend.initialize(config);
-
-        List<Entry> entries = ldapProxyBackend.searchUsers("TestSam*", schemaManager);
-        Set<String> foundUids = new HashSet<>();
-        for (Entry entry : entries) {
-            foundUids.add(entry.get("uid").getString());
-        }
-        assertEquals(2, foundUids.size());
-        assertTrue(foundUids.contains("TestSam1"));
-        assertTrue(foundUids.contains("TestSam2"));
+        validateUserSearch("TestSam*", 2, Set.of("TestSam1", "TestSam2"));
     }
 
     @Test
     public void testSearchUsersNoneFoundBySAMAccountName() throws Exception {
-        Map<String, String> config = new HashMap<>(ldapBackendConfig);
-        config.put("userIdentifierAttribute", "sAMAccountName");
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
         ldapProxyBackend.initialize(config);
-
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
+    }
+
+    @Test
+    public void testGetRecursiveUserGroupsDepth2() throws Exception {
+        Map<String, String> config = createRecursiveConfig(2);
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
+        assertEquals(4, userGroups.size());
+        assertTrue(userGroups.contains("level1Group"));
+        assertTrue(userGroups.contains("level2Group"));
+        assertTrue(userGroups.contains("cycleGroupA"));
+        assertTrue(userGroups.contains("cycleGroupB"));
+    }
+
+    @Test
+    public void testGetRecursiveUserGroupsDepth4() throws Exception {
+        Map<String, String> config = createRecursiveConfig(4);
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
+        assertEquals(6, userGroups.size());
+        assertTrue(userGroups.contains("level1Group"));
+        assertTrue(userGroups.contains("level2Group"));
+        assertTrue(userGroups.contains("level3Group"));
+        assertTrue(userGroups.contains("level4Group"));
+        assertTrue(userGroups.contains("cycleGroupA"));
+        assertTrue(userGroups.contains("cycleGroupB"));
+    }
+
+    @Test
+    public void testGetRecursiveUserGroupsWithCycle() throws Exception {
+        Map<String, String> config = createRecursiveConfig(10);
+        ldapProxyBackend.initialize(config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
+        assertTrue(userGroups.contains("cycleGroupA"));
+        assertTrue(userGroups.contains("cycleGroupB"));
+    }
+
+    @Test
+    public void testGetUserRecursiveGroups() throws Exception {
+        Map<String, String> config = createRecursiveConfig(5);
+        ldapProxyBackend.initialize(config);
+
+        Entry entry = ldapProxyBackend.getUser("recursiveUser", schemaManager);
+        validateMemberOf(entry, Set.of(
+                "cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=level3Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=level4Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    // Helper methods for refactoring
+
+    private Map<String, String> createConfigWithUserAttr(String attr) {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("userIdentifierAttribute", attr);
+        return config;
+    }
+
+    private Map<String, String> createRecursiveConfig(int depth) {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        config.put("recursiveGroupResolutionMaxDepth", String.valueOf(depth));
+        config.put("userSearchBase", "ou=recursivePeople,dc=hadoop,dc=apache,dc=org");
+        config.put("groupSearchBase", "ou=recursiveGroups,dc=hadoop,dc=apache,dc=org");
+        return config;
+    }
+
+    private void validateUserEntry(Entry entry, String expectedUid, String expectedCn, String expectedMail, String expectedDesc) throws Exception {
+        assertEquals(expectedUid, entry.get("uid").getString());
+        assertEquals(expectedCn, entry.get("cn").getString());
+        assertEquals(expectedMail, entry.get("mail").getString());
+        assertEquals(expectedDesc, entry.get("description").getString());
+    }
+
+    private void validateMemberOf(Entry entry, Set<String> expectedGroups) throws Exception {
+        assertEquals(expectedGroups.size(), entry.get("memberOf").size());
+        Set<String> foundGroups = new HashSet<>();
+        for (Value value : entry.get("memberOf")) {
+            foundGroups.add(value.getString());
+        }
+        assertEquals(expectedGroups, foundGroups);
+    }
+
+    private void validateUserSearch(String filter, int expectedSize, Set<String> expectedUids) throws Exception {
+        List<Entry> entries = ldapProxyBackend.searchUsers(filter, schemaManager);
+        assertEquals(expectedSize, entries.size());
+        Set<String> foundUids = new HashSet<>();
+        for (Entry entry : entries) {
+            foundUids.add(entry.get("uid").getString());
+        }
+        for (String uid : expectedUids) {
+            assertTrue("Expected UID " + uid + " not found", foundUids.contains(uid));
+        }
     }
 }
