@@ -102,4 +102,12 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.WARN, text = "LDAP authentication failed for user: {0}")
     void ldapAuthFailed(String user, @StackTrace(level = MessageLevel.INFO) Throwable cause);
+
+    @Message(level = MessageLevel.INFO,
+            text = "Reloading LDAP configuration")
+    void ldapReloadingConfig();
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Failed to reload LDAP service: {0}")
+    void ldapServiceReloadFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 }
