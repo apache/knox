@@ -70,15 +70,12 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
     }
 
     @Override
-    public void setSystemPassword(final String systemPass) {
-        if (StringUtils.isBlank(systemPass)) {
-            return;
-        }
-
+    public String getSystemPassword() {
+        final String systemPass = super.getSystemPassword();
         final AliasService aliasService = getAliasService();
 
         if (!aliasService.isAlias(systemPass)) {
-            super.setSystemPassword(systemPass);
+            return systemPass;
         } else {
             final String systemPasswordAlias = aliasService.extractAlias(systemPass);
             char[] systemPassword = null;
@@ -93,10 +90,10 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
                 LOG.unableToGetPassword(e);
             }
             if (systemPassword != null) {
-                super.setSystemPassword(new String(systemPassword));
+                return new String(systemPassword);
             } else {
-                super.setSystemPassword(""); //needs to be set to blank
                 LOG.aliasValueNotFound(clusterName, systemPasswordAlias);
+                return ""; //needs to be set to blank
             }
         }
     }

@@ -82,6 +82,7 @@ import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.token.TokenMigrationTarget;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
@@ -302,6 +303,8 @@ public class KnoxCLI extends Configured implements Tool {
         } else {
           command = new LDAPAuthCommand();
         }
+      } else if(args[i].equals("ldap-user-groups-test")) {
+        command = new LDAPGroupTestCommand();
       } else if(args[i].equals("system-user-auth-test")) {
         if (i + 1 >= args.length){
           printKnoxShellUsage();
@@ -712,6 +715,30 @@ public class KnoxCLI extends Configured implements Tool {
 
     protected RemoteConfigurationRegistryClientService getRemoteConfigRegistryClientService() {
       return services.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
+    }
+
+    protected String ensureNotNullUserName() {
+      return ensureNotNullUserName(null);
+    }
+
+    protected String ensureNotNullUserName(String userName) {
+      if (userName != null) {
+        return userName;
+      }
+
+      final Console c = System.console();
+      if (c != null) {
+        return c.readLine("Username: ");
+      } else {
+        try (InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
+          out.println("Username: ");
+          return reader.readLine();
+        } catch (IOException e) {
+          out.println(e.toString());
+          return "";
+        }
+      }
     }
 
   }
@@ -1763,37 +1790,26 @@ public class KnoxCLI extends Configured implements Tool {
      * populates the username and password members.
      */
     protected void promptCredentials() {
-      if(this.username == null){
-        Console c = System.console();
-        if( c != null) {
-          this.username = c.readLine("Username: ");
-        } else {
-          try(InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            out.println("Username: ");
-            this.username = reader.readLine();
-          } catch (IOException e){
-            out.println(e.toString());
-            this.username = "";
-          }
-        }
-      }
+      this.username = ensureNotNullUserName(this.username);
+      populatePassword();
+    }
 
-      if(this.password == null){
+    private void populatePassword() {
+      if (this.password == null) {
         Console c = System.console();
-        if( c != null) {
+        if (c != null) {
           this.password = c.readPassword("Password: ");
-        }else{
-          try(InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-              BufferedReader reader = new BufferedReader(inputStreamReader)) {
+        } else {
+          try (InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+               BufferedReader reader = new BufferedReader(inputStreamReader)) {
             out.println("Password: ");
             String pw = reader.readLine();
-            if(pw != null){
+            if (pw != null) {
               this.password = pw.toCharArray();
             } else {
               this.password = new char[0];
             }
-          } catch (IOException e){
+          } catch (IOException e) {
             out.println(e.toString());
             this.password = new char[0];
           }
@@ -1865,6 +1881,49 @@ public class KnoxCLI extends Configured implements Tool {
         return false;
       }
       return true;
+    }
+  }
+
+  private class LDAPGroupTestCommand extends Command {
+    public static final String USAGE = "ldap-user-groups-test [--u username] [--d]";
+    public static final String DESC = """
+            This command tests the KnoxLDAPService ability to retrieve groups for a user directly from the configured LDAP backend.
+            Optional: [--u username]: Provide a username argument to the command""";
+
+    private String username;
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() throws Exception {
+      if (user != null) {
+        this.username = user;
+      } else {
+        this.username = ensureNotNullUserName();
+      }
+
+      GatewayConfig config = getGatewayConfig();
+      if (!config.isLDAPEnabled()) {
+        out.println("KnoxLDAPService is not enabled in gateway-site.xml; cannot lookup LDAP groups");
+        return;
+      }
+
+      try {
+        final KnoxLDAPService ldapService = services.getService(ServiceType.LDAP_SERVICE);
+        out.println("Querying KnoxLDAPService for groups of user: " + username);
+        List<String> groups = ldapService.getUserGroups(username);
+        if (groups == null || groups.isEmpty()) {
+          out.println(username + " does not belong to any groups");
+        } else {
+          out.println(username + " is a member of: " + String.join(", ", groups));
+        }
+      } catch (Exception e) {
+        out.println("Error retrieving groups: " + e.getMessage());
+        throw e;
+      }
     }
   }
 

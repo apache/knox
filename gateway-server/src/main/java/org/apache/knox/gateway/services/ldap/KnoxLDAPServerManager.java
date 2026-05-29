@@ -258,6 +258,15 @@ public class KnoxLDAPServerManager {
     }
 
     /**
+     * Get groups for a user from the configured backend
+     * @param username The username
+     * @return List of group names
+     */
+    public List<String> getUserGroups(String username) throws Exception {
+        return backend.getUserGroups(username);
+    }
+
+    /**
      * Check if the LDAP server is currently running.
      *
      * @return true if the server is running, false otherwise
