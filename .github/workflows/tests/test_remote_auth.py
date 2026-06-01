@@ -67,7 +67,7 @@ class TestRemoteAuth(unittest.TestCase):
         # knoxldap maps admin to: longGroupName1,longGroupName2,longGroupName3,longGroupName4
         # RemoteAuthFilter picks these up from x-knox-actor-groups-*
         # And KNOX-AUTH-SERVICE echoes them back in X-Knox-Actor-Groups-*
-        
+
         all_groups = collect_actor_group_values(response)
 
         print(f"Found groups: {all_groups}")

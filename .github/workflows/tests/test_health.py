@@ -48,7 +48,7 @@ class TestKnoxHealth(unittest.TestCase):
             self.fail(f"Health check failed with unexpected error: {e}")
 
     def test_health_metrics_returns_json(self):
-        """Metrics with pretty=true returns 200 and a JSON object with application/json content type."""
+        """Metrics with pretty=true returns 200 and JSON with application/json type."""
         url = self.base_url + "gateway/health/v1/metrics?pretty=true"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
@@ -71,7 +71,7 @@ class TestKnoxHealth(unittest.TestCase):
         )
 
     def test_health_metrics_without_pretty_returns_json(self):
-        """Metrics without pretty still returns 200, parseable JSON, and the same top-level keys as pretty."""
+        """Metrics without pretty returns 200, parseable JSON, and same top-level keys."""
         url = self.base_url + "gateway/health/v1/metrics"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
@@ -94,4 +94,3 @@ class TestKnoxHealth(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -42,12 +42,11 @@ class TestKnoxAuthService(unittest.TestCase):
             self.topology_url,
             auth=HTTPBasicAuth('guest', 'guest-password'),
         )
-        
+
         print(f"Status Code: {response.status_code}")
         self.assertEqual(response.status_code, 200)
-        
-        # Check for Actor ID header
-        # The config in knoxldap.xml sets 'preauth.auth.header.actor.id.name' to 'x-knox-actor-username'
+
+        # Check for Actor ID header (knoxldap.xml: preauth.auth.header.actor.id.name)
         actor_id_header = 'x-knox-actor-username'
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], 'guest')
@@ -62,16 +61,16 @@ class TestKnoxAuthService(unittest.TestCase):
             self.topology_url,
             auth=HTTPBasicAuth('admin', 'admin-password'),
         )
-        
+
         print(f"Status Code: {response.status_code}")
         self.assertEqual(response.status_code, 200)
-        
+
         # Check for Actor ID header
         actor_id_header = 'x-knox-actor-username'
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], 'admin')
         print(f"Verified {actor_id_header}: {response.headers[actor_id_header]}")
-        
+
         # Config: 'preauth.auth.header.actor.groups.prefix' = 'x-knox-actor-groups'
         # We mapped admin to 'longGroupName1,longGroupName2,longGroupName3,longGroupName4'
         prefix = 'x-knox-actor-groups'
@@ -87,4 +86,3 @@ class TestKnoxAuthService(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

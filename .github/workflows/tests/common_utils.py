@@ -54,7 +54,7 @@ def knox_post(url: str, **kwargs: Any) -> requests.Response:
 def collect_actor_group_values(
     response: requests.Response, prefix: str = "x-knox-actor-groups"
 ) -> list[str]:
-    """Comma-split values from all response headers whose names start with prefix (case-insensitive)."""
+    """Split comma-separated values from headers matching prefix (case-insensitive)."""
     prefix_lower = prefix.lower()
     all_groups: list[str] = []
     for name in response.headers:

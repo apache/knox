@@ -43,5 +43,5 @@ class TestKnoxConfigs(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
         assert_hsts_header(self, response)
-        print(f"Verified Strict-Transport-Security: {response.headers['Strict-Transport-Security']}")
-
+        hsts = response.headers['Strict-Transport-Security']
+        print(f"Verified Strict-Transport-Security: {hsts}")
