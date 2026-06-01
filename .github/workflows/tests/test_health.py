@@ -95,11 +95,13 @@ class TestHealthGatewayExtended(unittest.TestCase):
         )
 
     def test_health_metrics_without_pretty_includes_same_top_level_keys(self):
-        """Metrics without ?pretty= still expose the same registry sections."""
+        """Metrics without ?pretty= returns application/json with the same registry sections."""
         url = self.base_url + "gateway/health/v1/metrics"
         r = knox_get(url)
         self.assertEqual(r.status_code, 200)
+        self.assertIn("application/json", r.headers.get("Content-Type", ""))
         payload = json.loads(r.text)
+        self.assertIsInstance(payload, dict)
         self.assertTrue(METRICS_TOP_LEVEL_KEYS.issubset(payload.keys()))
 
     def test_health_metrics_version_value_is_non_empty_string(self):
