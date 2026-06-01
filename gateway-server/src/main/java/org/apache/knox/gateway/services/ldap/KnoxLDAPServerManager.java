@@ -30,6 +30,7 @@ import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
@@ -56,21 +57,33 @@ public class KnoxLDAPServerManager {
     /**
      * Initialize the LDAP server with the given configuration
      *
-     * @param workDir Directory for LDAP data storage
-     * @param port Port for LDAP server to listen on
-     * @param baseDn Base DN for LDAP entries in the proxy server
-     * @param backendType Type of backend to use
-     * @param backendConfig Backend-specific configuration
-     * @param remoteBaseDn Base DN of the remote LDAP server (for proxy backends)
+     * @param config Gateway configuration
      */
-    public void initialize(File workDir, int port, String baseDn, String backendType, Map<String, String> backendConfig, String remoteBaseDn) throws Exception {
-        this.workDir = workDir;
-        this.port = port;
-        this.baseDn = baseDn;
-        this.remoteBaseDn = remoteBaseDn;
+    public void initialize(GatewayConfig config) throws Exception {
+        // Prepare work directory for LDAP data
+        File gatewayDataDir = new File(config.getGatewayDataDir());
+        this.workDir = new File(gatewayDataDir, "ldap-server");
+
+        // Get configuration
+        this.port = config.getLDAPPort();
+        this.baseDn = config.getLDAPBaseDN();
+        String backendType = config.getLDAPBackendType();
+
+        // Get backend-specific configuration using prefixed properties
+        Map<String, String> backendConfig = config.getLDAPBackendConfig(backendType);
+
+        // Add common configuration
+        backendConfig.put("baseDn", baseDn);
+
+        // Add legacy dataFile property for backwards compatibility with file backend
+        if ("file".equalsIgnoreCase(backendType) && !backendConfig.containsKey("dataFile")) {
+            backendConfig.put("dataFile", config.getLDAPBackendDataFile());
+        }
+
+        // For proxy backends, extract remoteBaseDn if present
+        this.remoteBaseDn = backendConfig.get("remoteBaseDn");
 
         // Initialize backend
-        backendConfig.put("baseDn", baseDn);
         backend = BackendFactory.createBackend(backendType, backendConfig);
 
         // Clean up previous run if it didn't shut down cleanly

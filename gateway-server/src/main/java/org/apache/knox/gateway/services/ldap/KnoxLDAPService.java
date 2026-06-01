@@ -18,18 +18,18 @@
 package org.apache.knox.gateway.services.ldap;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 
-import java.io.File;
 import java.util.Map;
 
 /**
  * Knox LDAP Service - provides an embedded LDAP server with pluggable backends
  * for user and group lookups.
  */
-public class KnoxLDAPService implements Service {
+public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private KnoxLDAPServerManager ldapServerManager;
@@ -46,32 +46,7 @@ public class KnoxLDAPService implements Service {
         try {
             // Initialize the LDAP server manager with configuration
             ldapServerManager = new KnoxLDAPServerManager();
-
-            // Prepare work directory for LDAP data
-            File gatewayDataDir = new File(config.getGatewayDataDir());
-            File ldapWorkDir = new File(gatewayDataDir, "ldap-server");
-
-            // Get configuration
-            int port = config.getLDAPPort();
-            String baseDn = config.getLDAPBaseDN();
-            String backendType = config.getLDAPBackendType();
-
-            // Get backend-specific configuration using prefixed properties
-            Map<String, String> backendConfig = config.getLDAPBackendConfig(backendType);
-
-            // Add common configuration
-            backendConfig.put("baseDn", baseDn);
-
-            // Add legacy dataFile property for backwards compatibility with file backend
-            if ("file".equalsIgnoreCase(backendType) && !backendConfig.containsKey("dataFile")) {
-                backendConfig.put("dataFile", config.getLDAPBackendDataFile());
-            }
-
-            // For proxy backends, extract remoteBaseDn if present
-            String remoteBaseDn = backendConfig.get("remoteBaseDn");
-
-            // Initialize but don't start yet
-            ldapServerManager.initialize(ldapWorkDir, port, baseDn, backendType, backendConfig, remoteBaseDn);
+            ldapServerManager.initialize(config);
 
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
@@ -104,6 +79,26 @@ public class KnoxLDAPService implements Service {
         } catch (Exception e) {
             LOG.ldapServiceStopFailed(e);
             throw new ServiceLifecycleException("Failed to stop LDAP service", e);
+        }
+    }
+
+    @Override
+    public void onGatewayConfigChanged(GatewayConfig config) {
+        LOG.ldapReloadingConfig();
+        try {
+            this.enabled = config.isLDAPEnabled();
+
+            if (this.enabled) {
+                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager() : this.ldapServerManager;
+                ldapServerManager.stop();
+                ldapServerManager.initialize(config);
+                ldapServerManager.start();
+            } else if (ldapServerManager != null) {
+                ldapServerManager.stop();
+                ldapServerManager = null;
+            }
+        } catch (Exception e) {
+            LOG.ldapServiceReloadFailed(e);
         }
     }
 

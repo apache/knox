@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.knox.gateway.GatewayMessages;
+import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
@@ -88,6 +89,7 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     if (config.isLDAPEnabled()) {
       KnoxLDAPService ldapService = new KnoxLDAPService();
       ldapService.init(config, options);
+      GatewayServer.registerConfigChangeListener(ldapService);
       addService(ServiceType.LDAP_SERVICE, ldapService);
     }
   }

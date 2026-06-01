@@ -165,6 +165,31 @@ public class KnoxLDAPServiceTest {
         assertFalse("Should not be enabled when not initialized", ldapService.isEnabled());
     }
 
+    @Test
+    public void testOnGatewayConfigChanged() throws Exception {
+        expect(mockConfig.isLDAPEnabled()).andReturn(true).anyTimes();
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
+
+        Map<String, String> fileBackendConfig = new HashMap<>();
+        fileBackendConfig.put("dataFile", tempLdapFile.getAbsolutePath());
+        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(fileBackendConfig).anyTimes();
+
+        replay(mockConfig);
+
+        ldapService.init(mockConfig, new HashMap<>());
+        assertEquals("Initial port should be 3890", 3890, ldapService.getLdapPort());
+
+        // Test reload with new port
+        ldapService.onGatewayConfigChanged(mockConfig);
+
+        assertEquals("Port should be updated to 3891 after reload", 3891, ldapService.getLdapPort());
+
+        verify(mockConfig);
+    }
+
     private void setupMockConfigForFileBackend() {
         expect(mockConfig.isLDAPEnabled()).andReturn(true);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
