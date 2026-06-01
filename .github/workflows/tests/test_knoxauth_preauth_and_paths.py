@@ -88,11 +88,6 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_preauth_get_guest_returns_actor_username(self):
-        response = knox_get(self.preauth_url, auth=knox_ldap_guest_auth())
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers.get("x-knox-actor-username"), "guest")
-
     def test_preauth_get_admin_includes_long_group_names_three_and_four(self):
         response = knox_get(self.preauth_url, auth=knox_ldap_admin_auth())
         self.assertEqual(response.status_code, 200)

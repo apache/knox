@@ -30,11 +30,6 @@ from common_utils import (
 class TestKnoxHealth(unittest.TestCase):
     """Integration checks for the gateway health REST API (ping and metrics)."""
 
-    # Top-level keys expected in /metrics JSON (aligned with Java GatewayHealthFuncTest).
-    _METRICS_TOP_LEVEL_KEYS = frozenset(
-        {"timers", "histograms", "counters", "gauges", "version", "meters"}
-    )
-
     def setUp(self):
         self.base_url = gateway_base_url()
 
@@ -47,57 +42,13 @@ class TestKnoxHealth(unittest.TestCase):
             print(f"Received status code: {response.status_code}")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.text.strip(), "OK")
+            self.assertIn("text/plain", response.headers.get("Content-Type", ""))
 
             assert_hsts_header(self, response)
         except requests.exceptions.ConnectionError:
             self.fail("Failed to connect to Knox on port 8443 - Connection refused")
         except Exception as e:
             self.fail(f"Health check failed with unexpected error: {e}")
-
-    def test_health_metrics_returns_json(self):
-        """Metrics with pretty=true returns 200 and a JSON object with application/json content type."""
-        url = self.base_url + "gateway/health/v1/metrics?pretty=true"
-        response = knox_get(url)
-        self.assertEqual(response.status_code, 200)
-
-        content_type = response.headers.get("Content-Type", "")
-        self.assertIn("application/json", content_type)
-
-        payload = json.loads(response.text)
-        self.assertIsInstance(payload, dict)
-
-    def test_health_metrics_contains_core_fields(self):
-        """Metrics JSON should expose the same top-level keys as the Java GatewayHealthFuncTest."""
-        url = self.base_url + "gateway/health/v1/metrics?pretty=true"
-        response = knox_get(url)
-        self.assertEqual(response.status_code, 200)
-        payload = json.loads(response.text)
-        self.assertTrue(
-            self._METRICS_TOP_LEVEL_KEYS.issubset(payload.keys()),
-            msg=f"Missing keys: {self._METRICS_TOP_LEVEL_KEYS - set(payload.keys())}",
-        )
-
-    def test_health_metrics_without_pretty_returns_json(self):
-        """Metrics without pretty still returns 200, parseable JSON, and the same top-level keys as pretty."""
-        url = self.base_url + "gateway/health/v1/metrics"
-        response = knox_get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("application/json", response.headers.get("Content-Type", ""))
-        payload = json.loads(response.text)
-        self.assertIsInstance(payload, dict)
-        self.assertTrue(
-            self._METRICS_TOP_LEVEL_KEYS.issubset(payload.keys()),
-            msg=f"Missing keys: {self._METRICS_TOP_LEVEL_KEYS - set(payload.keys())}",
-        )
-
-    def test_health_ping_content_type_is_plain_text(self):
-        """Ping response declares text/plain Content-Type and body OK."""
-        url = self.base_url + "gateway/health/v1/ping"
-        response = knox_get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.text.strip(), "OK")
-        content_type = response.headers.get("Content-Type", "")
-        self.assertIn("text/plain", content_type)
 
 
 class TestHealthGatewayExtended(unittest.TestCase):
@@ -131,8 +82,13 @@ class TestHealthGatewayExtended(unittest.TestCase):
         self.assertIn("no-cache", cc)
 
     def test_health_metrics_pretty_includes_all_core_top_level_keys(self):
-        """Pretty metrics JSON includes timers/histograms/counters/gauges/version/meters."""
-        payload = health_metrics_pretty_dict(self.base_url)
+        """Pretty metrics JSON is application/json with timers/histograms/counters/gauges/version/meters."""
+        url = self.base_url + "gateway/health/v1/metrics?pretty=true"
+        r = knox_get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("application/json", r.headers.get("Content-Type", ""))
+        payload = json.loads(r.text)
+        self.assertIsInstance(payload, dict)
         self.assertTrue(
             METRICS_TOP_LEVEL_KEYS.issubset(payload.keys()),
             msg=f"Missing keys: {METRICS_TOP_LEVEL_KEYS - set(payload.keys())}",

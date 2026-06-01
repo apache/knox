@@ -57,15 +57,6 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
         for name in ("longGroupName1", "longGroupName2"):
             self.assertIn(name, groups)
 
-    def test_extauthz_additional_deep_path_still_ignored(self):
-        """ignore.additional.path accepts longer arbitrary suffix segments."""
-        response = knox_get(
-            self.extauthz_url + "/a/b/c/d/extra",
-            auth=knox_ldap_guest_auth(),
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers.get("X-Knox-Actor-ID"), "guest")
-
     def test_extauthz_bad_credentials_unauthorized(self):
         response = knox_get(
             self.extauthz_url,

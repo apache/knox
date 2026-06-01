@@ -123,8 +123,11 @@ class TestKnoxLdapKnoxToken(unittest.TestCase):
         self.assertIn("application/json", r.headers.get("Content-Type", ""))
         body = json.loads(r.text)
         self.assertIn("access_token", body)
-        self.assertIsInstance(body["access_token"], str)
-        self.assertTrue(len(body["access_token"]) > 0)
+        token = body["access_token"]
+        self.assertIsInstance(token, str)
+        self.assertTrue(len(token) > 0)
+        parts = token.split(".")
+        self.assertGreaterEqual(len(parts), 3, msg="access_token should look like a JWT")
 
     def test_knoxldap_token_v2_get_returns_access_token_json(self):
         """GET knoxtoken v2/token exposes access_token for basic acquisition."""
@@ -144,16 +147,6 @@ class TestKnoxLdapKnoxToken(unittest.TestCase):
         url = self._token_prefix + "/v2/token"
         r = knox_get(url)
         self.assertEqual(r.status_code, 401)
-
-    def test_knoxldap_access_token_string_is_jwt_shape(self):
-        """Issued access_token is a typical JWT (header.payload.sig segments)."""
-        url = self._token_prefix + "/v1/token"
-        r = knox_get(url, auth=knox_ldap_guest_auth())
-        self.assertEqual(r.status_code, 200)
-        body = json.loads(r.text)
-        token = body.get("access_token", "")
-        parts = token.split(".")
-        self.assertGreaterEqual(len(parts), 3, msg="access_token should look like a JWT")
 
 
 class TestKnoxLdapExtAuthzAuthn(unittest.TestCase):
