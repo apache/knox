@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.identityasserter.hadoop.groups.filter;
 
-import java.io.IOException;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -26,10 +25,14 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 import org.apache.hadoop.security.GroupMappingServiceProvider;
 import org.apache.hadoop.security.Groups;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 
 /**
  * A filter that integrates the Hadoop {@link GroupMappingServiceProvider} for
@@ -55,6 +58,8 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
    */
   private Groups hadoopGroups;
 
+  private KnoxLDAPService ldapService;
+
   /* create an instance */
   public HadoopGroupProviderFilter() {
     super();
@@ -64,26 +69,26 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   public void init(final FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
 
-    try {
-      hadoopConfig = new Configuration(false);
+    final GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (gatewayConfig != null && gatewayConfig.isLDAPEnabled()) {
+      final GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      ldapService = services.getService(ServiceType.LDAP_SERVICE);
+    } else {
+      try {
+        hadoopConfig = new Configuration(false);
 
-      if (filterConfig.getInitParameterNames() != null) {
+        if (filterConfig.getInitParameterNames() != null) {
+          for (final Enumeration<String> keys = filterConfig.getInitParameterNames(); keys.hasMoreElements(); ) {
+            final String key = keys.nextElement();
+            hadoopConfig.set(key, filterConfig.getInitParameter(key));
 
-        for (final Enumeration<String> keys = filterConfig
-            .getInitParameterNames(); keys.hasMoreElements();) {
-
-          final String key = keys.nextElement();
-          hadoopConfig.set(key, filterConfig.getInitParameter(key));
-
+          }
         }
-
+        hadoopGroups = new Groups(hadoopConfig);
+      } catch (final Exception e) {
+        throw new ServletException(e);
       }
-      hadoopGroups = new Groups(hadoopConfig);
-
-    } catch (final Exception e) {
-      throw new ServletException(e);
     }
-
   }
 
   /**
@@ -100,7 +105,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
       LOG.groupsFound(mappedPrincipalName, groupList.toString());
       groups = groupList.toArray(new String[0]);
 
-    } catch (final IOException e) {
+    } catch (final Exception e) {
       if (e.toString().contains("No groups found for user")) {
         /* no groups found move on */
         LOG.noGroupsFound(mappedPrincipalName);
@@ -113,8 +118,13 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
     return groups;
   }
 
-  protected List<String> hadoopGroups(String mappedPrincipalName) throws IOException {
-    return hadoopGroups.getGroups(mappedPrincipalName);
+  protected List<String> hadoopGroups(String mappedPrincipalName) throws Exception {
+    if (ldapService == null) {
+      return hadoopGroups.getGroups(mappedPrincipalName);
+    } else {
+      LOG.useKnoxLDAPService();
+      return ldapService.getUserGroups(mappedPrincipalName);
+    }
   }
 
   @Override

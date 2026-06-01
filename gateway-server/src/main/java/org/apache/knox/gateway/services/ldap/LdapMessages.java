@@ -114,8 +114,8 @@ public interface LdapMessages {
     @Message(level = MessageLevel.DEBUG, text = "Recursive group search enabled: {0}, max depth: {1}")
     void ldapRecursiveGroupSearchConfig(boolean enabled, int maxDepth);
 
-    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} found {1} groups at depth {2}")
-    void ldapRecursiveGroupSearchProgress(String user, int count, int depth);
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} found {1} group(s) ({2}) at depth {3}")
+    void ldapRecursiveGroupSearchProgress(String user, int count, String groups, int depth);
 
     @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} completed. Total groups found: {1}")
     void ldapRecursiveGroupSearchFinished(String user, int count);

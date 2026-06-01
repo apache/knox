@@ -40,9 +40,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * LDAP backend that proxies to an external LDAP server.
@@ -391,7 +394,7 @@ public class LdapProxyBackend implements LdapBackend {
     private List<Entry> resolveGroupsRecursive(LdapConnection connection, List<Entry> initialGroups, String username) throws LdapException, CursorException, IOException {
         LOG.ldapRecursiveGroupSearchConfig(recursiveGroupResolution, recursiveGroupResolutionMaxDepth);
 
-        java.util.Set<String> allGroupDns = new java.util.HashSet<>();
+        Set<String> allGroupDns = new HashSet<>();
         List<Entry> allGroups = new ArrayList<>();
         List<Entry> currentLevelGroups = new ArrayList<>(initialGroups);
 
@@ -399,6 +402,8 @@ public class LdapProxyBackend implements LdapBackend {
             allGroupDns.add(group.getDn().getNormName());
             allGroups.add(group);
         }
+
+        logRecursiveSearchProgress(username, initialGroups, 0);
 
         int depth = 1;
         while (!currentLevelGroups.isEmpty() && depth < recursiveGroupResolutionMaxDepth) {
@@ -425,7 +430,7 @@ public class LdapProxyBackend implements LdapBackend {
                 }
             }
 
-            LOG.ldapRecursiveGroupSearchProgress(username, nextLevelGroups.size(), depth);
+            logRecursiveSearchProgress(username, nextLevelGroups, depth);
             currentLevelGroups = nextLevelGroups;
             depth++;
 
@@ -436,6 +441,12 @@ public class LdapProxyBackend implements LdapBackend {
 
         LOG.ldapRecursiveGroupSearchFinished(username, allGroups.size());
         return allGroups;
+    }
+
+    private void logRecursiveSearchProgress(String username, List<Entry> groups, int depth) {
+        LOG.ldapRecursiveGroupSearchProgress(username, groups.size(),
+                String.join(",", groups.stream().map(e -> e.getDn().getRdn().getValue()).collect(Collectors.joining())),
+                depth);
     }
 
     private String extractGroupNameFromDn(String groupDn) {
