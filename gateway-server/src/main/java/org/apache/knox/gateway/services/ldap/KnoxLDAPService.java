@@ -88,28 +88,20 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
         try {
             this.enabled = config.isLDAPEnabled();
 
-            if (ldapServerManager != null) {
-                boolean wasRunning = ldapServerManager.isRunning();
-                if (wasRunning) {
-                    ldapServerManager.stop();
-                }
-                // Re-initialize and start if it's now enabled
-                if (this.enabled) {
-                    ldapServerManager.initialize(config);
-                    if (wasRunning) {
-                        ldapServerManager.start();
-                    }
-                }
-            } else if (this.enabled) {
-                // If it wasn't there, but now it's enabled, we need to create and initialize it.
-                ldapServerManager = new KnoxLDAPServerManager();
+            if (this.enabled) {
+                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager() : this.ldapServerManager;
+                ldapServerManager.stop();
                 ldapServerManager.initialize(config);
                 ldapServerManager.start();
+            } else if (ldapServerManager != null) {
+                ldapServerManager.stop();
+                ldapServerManager = null;
             }
         } catch (Exception e) {
             LOG.ldapServiceReloadFailed(e);
         }
     }
+
     /**
      * Get the port the LDAP server is listening on
      */
