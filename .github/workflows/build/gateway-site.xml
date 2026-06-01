@@ -177,6 +177,10 @@ limitations under the License.
         <name>gateway.ldap.backend.type</name>
         <value>ldap</value>
     </property>
+    <property>
+        <name>gateway.ldap.recursive.group.resolution</name>
+        <value>true</value>
+    </property>
 
     <!-- LDAP Backend specific configuration (proxying to demo ldap) -->
     <property>

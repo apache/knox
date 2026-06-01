@@ -48,7 +48,7 @@ limitations under the License.
 		</provider>
 		<provider>
 			<role>identity-assertion</role>
-			<name>Default</name>
+			<name>HadoopGroupProvider</name>
 			<enabled>true</enabled>
 			<param>
 				<name>group.principal.mapping</name>
