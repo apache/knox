@@ -55,8 +55,7 @@ jobs:
 
       - name: Build Docker Images
         run: |
-          # Build only knox-dev which is the runtime image using artifacts
-          docker compose -f ./.github/workflows/compose/docker-compose.yml build knox-dev
+          docker compose -f ./.github/workflows/compose/docker-compose.yml build knox-dev tests
 
       - name: Start Knox and LDAP Services
         run: docker compose -f ./.github/workflows/compose/docker-compose.yml up -d

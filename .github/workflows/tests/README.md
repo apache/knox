@@ -109,7 +109,7 @@ The tests run in a dedicated Docker container defined in `../compose/docker-comp
 3. It waits for the `knox` service to be ready.
 4. It runs `python -m unittest discover -p 'test_*.py'` to find and execute all test files.
 
-**Additional detail (default Compose as checked in):** In the usual workflow, test sources are **`COPY`'d** into the `tests` image at **build** time (see `Dockerfile` in this directory), not bind-mounted. To run against your working tree without rebuilding, you can merge **`../compose/docker-compose.tests-mount.yml`**, which bind-mounts `../tests` read-only (optional; some Docker Desktop setups may have bind-mount issues). The `tests` service command runs **`pytest --junitxml=test-results.xml`** (see `docker-compose.yml`). After you change `test_*.py` locally, **`docker compose ... build tests`** (or **`build tests --no-cache`**) ensures the image matches the repo; CI builds `knox-dev` and `tests` so PRs stay in sync.
+**Additional detail (default Compose as checked in):** In the usual workflow, test sources are **`COPY`'d** into the `tests` image at **build** time (see `Dockerfile` in this directory), not bind-mounted. To run against your working tree without rebuilding, you can merge **`../compose/docker-compose.tests-mount.yml`**, which bind-mounts `../tests` read-only (optional; some Docker Desktop setups may have bind-mount issues). The `tests` service command runs **`pylint`** on all test sources, then **`pytest --junitxml=test-results.xml`** (see `docker-compose.yml`). After you change `test_*.py` locally, **`docker compose ... build tests`** (or **`build tests --no-cache`**) ensures the image matches the repo; CI builds `knox-dev` and `tests` so PRs stay in sync.
 
 ## Skipping Tests on Pull Requests
 
@@ -149,7 +149,7 @@ Before pushing changes to Python files in this directory, install the repo git h
 ./githooks/install.sh
 ```
 
-The pre-push hook runs pylint only on **modified** `.py` files under `.github/workflows/tests/` (in the commits being pushed). The local venv at `.github/workflows/tests/.venv/` installs test dependencies from `requirements.txt` plus pylint (local lint only; not installed in the Docker test image).
+The pre-push hook runs pylint only on **modified** `.py` files under `.github/workflows/tests/` (in the commits being pushed). The local venv at `.github/workflows/tests/.venv/` installs test dependencies from `requirements.txt` (including pylint). CI and Compose also run pylint in the `tests` container before pytest.
 
 To lint your current working tree changes manually:
 

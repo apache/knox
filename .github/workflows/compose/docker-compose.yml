@@ -16,9 +16,17 @@
 services:
   knox-dev:
     build:
-      context: ../../../
+      context: ../../..
       dockerfile: .github/workflows/build/Dockerfile
-    image: apache/knox-dev:${IMAGE_TAG:-master}
+    image: apache/knox-dev:master
+
+  knox-dev-local:
+    # Repository root: COPY source in Dockerfile.local (no git clone). First Maven
+    # build is still long; use: docker compose build --progress=plain knox-dev-local
+    build:
+      context: ../../..
+      dockerfile: .github/workflows/build/Dockerfile.local
+    image: apache/knox-dev:local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}
 
   ldap:
     image: apache/knox-dev:${IMAGE_TAG:-master}
@@ -31,22 +39,30 @@ services:
     command: /gateway.sh
     volumes:
 #      - ./topologies:/knox-runtime/conf/topologies
-      - ./logs:/knox-runtime/logs
+      # Named volume avoids bind-mount mkdir failures on some Docker Desktop setups.
+      - knox_logs:/knox-runtime/logs
 #      - ./knoxshell:/knoxshell
     depends_on:
       - ldap
 
   tests:
-    image: python:3.9-slim
+    # Build from ../tests: test sources are COPY'd into the image. `compose up` alone
+    # does NOT refresh them — run `compose build tests` or `compose up --build`, or use
+    # docker-compose.tests-mount.yml to mount ../tests from your working tree.
+    build:
+      context: ../tests
+      dockerfile: Dockerfile
+    image: apache/knox-compose-tests:local
     working_dir: /tests
-    volumes:
-      - ../tests:/tests
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >
-      bash -c "pip install -r requirements.txt 
-      && echo 'Waiting for knox...' 
-      && sleep 30 
+      bash -c "pylint --rcfile=.pylintrc -j 0 common_utils.py test_*.py
+      && echo 'Waiting for knox...'
+      && sleep 30
       && pytest --junitxml=test-results.xml"
     depends_on:
       - knox
+
+volumes:
+  knox_logs:
