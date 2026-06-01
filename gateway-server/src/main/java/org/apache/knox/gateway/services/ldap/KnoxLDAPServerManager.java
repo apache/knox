@@ -80,6 +80,9 @@ public class KnoxLDAPServerManager {
             backendConfig.put("dataFile", config.getLDAPBackendDataFile());
         }
 
+        backendConfig.put("recursiveGroupResolution", String.valueOf(config.isLDAPRecursiveGroupResolutionEnabled()));
+        backendConfig.put("recursiveGroupResolutionMaxDepth", String.valueOf(config.getLDAPRecursiveGroupResolutionMaxDepth()));
+
         // For proxy backends, extract remoteBaseDn if present
         this.remoteBaseDn = backendConfig.get("remoteBaseDn");
 

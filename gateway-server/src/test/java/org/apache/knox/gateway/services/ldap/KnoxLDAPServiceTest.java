@@ -96,7 +96,6 @@ public class KnoxLDAPServiceTest {
     @Test
     public void testInitWithLdapEnabledFileBackend() throws Exception {
         setupMockConfig("file");
-        replay(mockConfig);
 
         ldapService.init(mockConfig, new HashMap<>());
 
@@ -109,7 +108,6 @@ public class KnoxLDAPServiceTest {
     @Test
     public void testInitWithLdapEnabledLdapBackend() throws Exception {
         setupMockConfig("ldap");
-        replay(mockConfig);
 
         ldapService.init(mockConfig, new HashMap<>());
 
@@ -122,7 +120,6 @@ public class KnoxLDAPServiceTest {
     @Test(expected = ServiceLifecycleException.class)
     public void testInitWithInvalidBackendType() throws Exception {
         setupMockConfig("invalid");
-        replay(mockConfig);
 
         ldapService.init(mockConfig, new HashMap<>());
     }
@@ -152,17 +149,7 @@ public class KnoxLDAPServiceTest {
 
     @Test
     public void testOnGatewayConfigChanged() throws Exception {
-        expect(mockConfig.isLDAPEnabled()).andReturn(true).anyTimes();
-        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).anyTimes();
-        expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
-        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
-        expect(mockConfig.getLDAPBackendType()).andReturn("file").anyTimes();
-
-        Map<String, String> fileBackendConfig = new HashMap<>();
-        fileBackendConfig.put("dataFile", tempLdapFile.getAbsolutePath());
-        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(fileBackendConfig).anyTimes();
-
-        replay(mockConfig);
+        setupMockConfig("file");
 
         ldapService.init(mockConfig, new HashMap<>());
         assertEquals("Initial port should be 3890", 3890, ldapService.getLdapPort());
@@ -176,14 +163,15 @@ public class KnoxLDAPServiceTest {
     }
 
     private void setupMockConfig(String backendType) {
-        expect(mockConfig.isLDAPEnabled()).andReturn(true);
-        expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false);
-        expect(mockConfig.getLDAPRecursiveGroupResolutionMaxDepth()).andReturn(0);
-        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
-        expect(mockConfig.getLDAPPort()).andReturn(3890);
-        expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn(backendType);
-        expect(mockConfig.getLDAPBackendConfig(backendType)).andReturn(buildBackendConfig(backendType));
+        expect(mockConfig.isLDAPEnabled()).andReturn(true).atLeastOnce();
+        expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).atLeastOnce();
+        expect(mockConfig.getLDAPRecursiveGroupResolutionMaxDepth()).andReturn(0).atLeastOnce();
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).atLeastOnce();
+        expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com").atLeastOnce();
+        expect(mockConfig.getLDAPBackendType()).andReturn(backendType).atLeastOnce();
+        expect(mockConfig.getLDAPBackendConfig(backendType)).andReturn(buildBackendConfig(backendType)).atLeastOnce();
+        replay(mockConfig);
     }
 
     private Map<String, String> buildBackendConfig(String backendType) {
