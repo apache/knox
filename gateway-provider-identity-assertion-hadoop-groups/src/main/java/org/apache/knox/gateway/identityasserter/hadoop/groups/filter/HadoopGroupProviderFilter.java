@@ -25,6 +25,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.LdapGroupsMapping;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
@@ -45,8 +46,9 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   /**
    * Logging
    */
-  public static final HadoopGroupProviderMessages LOG = MessagesFactory
-      .get(HadoopGroupProviderMessages.class);
+  public static final HadoopGroupProviderMessages LOG = MessagesFactory.get(HadoopGroupProviderMessages.class);
+
+  static final String USE_LDAP_SERVICE = "use.ldap.service";
 
   /**
    * Configuration object needed by for hadoop classes
@@ -69,8 +71,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   public void init(final FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
 
-    final GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    if (gatewayConfig != null && gatewayConfig.isLDAPEnabled()) {
+    if (shouldUseLdapService(filterConfig)) {
       final GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       ldapService = services.getService(ServiceType.LDAP_SERVICE);
     } else {
@@ -89,6 +90,15 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
         throw new ServletException(e);
       }
     }
+  }
+
+  private boolean shouldUseLdapService(final FilterConfig filterConfig) {
+    final String groupMappingsProvider = filterConfig.getInitParameter(GroupMappingServiceProvider.GROUP_MAPPING_CONFIG_PREFIX);
+    final boolean ldapGroupsMappingEnabled = LdapGroupsMapping.class.getName().equals(groupMappingsProvider);
+    final boolean useLdapService = Boolean.parseBoolean(filterConfig.getInitParameter(USE_LDAP_SERVICE));
+    final GatewayConfig gatewayConfig = (GatewayConfig) filterConfig.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final boolean ldapEnabled = gatewayConfig != null && gatewayConfig.isLDAPEnabled();
+    return  ldapGroupsMappingEnabled && useLdapService && ldapEnabled;
   }
 
   /**
