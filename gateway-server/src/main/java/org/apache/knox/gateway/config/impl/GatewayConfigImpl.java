@@ -353,6 +353,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_SSL_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.enabled";
   private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
+  private static final String GATEWAY_DATABASE_SSL_TRUSTSTORE_TYPE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.type";
 
   // Concurrent session properties
   private static final String GATEWAY_SESSION_VERIFICATION_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification";
@@ -1539,6 +1540,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDatabaseSslTruststoreFileName() {
     return get(GATEWAY_DATABASE_TRUSTSTORE_FILE);
+  }
+
+  @Override
+  public String getDatabaseSslTruststoreType() {
+    return get(GATEWAY_DATABASE_SSL_TRUSTSTORE_TYPE, "JKS");
   }
 
   @Override

@@ -62,7 +62,7 @@ public class OracleDataSourceFactory extends AbstractDataSourceFactory {
             oracleDataSource.setNetworkProtocol("tcps");
             if (gatewayConfig.verifyDatabaseSslServerCertificate()) {
                 oracleDataSource.setConnectionProperty("javax.net.ssl.trustStore", gatewayConfig.getDatabaseSslTruststoreFileName());
-                oracleDataSource.setConnectionProperty("javax.net.ssl.trustStoreType", "JKS");
+                oracleDataSource.setConnectionProperty("javax.net.ssl.trustStoreType", gatewayConfig.getDatabaseSslTruststoreType());
                 final String truststorePassword = getDatabaseAlias(aliasService, DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME);
                 if (truststorePassword != null) {
                     oracleDataSource.setConnectionProperty("javax.net.ssl.trustStorePassword", truststorePassword);

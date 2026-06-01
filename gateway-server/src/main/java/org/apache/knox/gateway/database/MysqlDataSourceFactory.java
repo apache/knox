@@ -49,7 +49,7 @@ public class MysqlDataSourceFactory extends AbstractDataSourceFactory {
             if (gatewayConfig.verifyDatabaseSslServerCertificate()) {
                 dataSource.setSslMode(PropertyDefinitions.SslMode.VERIFY_CA.name());
                 dataSource.setVerifyServerCertificate(true);
-                dataSource.setTrustCertificateKeyStoreType("JKS");
+                dataSource.setTrustCertificateKeyStoreType(gatewayConfig.getDatabaseSslTruststoreType());
                 dataSource.setTrustCertificateKeyStoreUrl("file:" + gatewayConfig.getDatabaseSslTruststoreFileName());
                 dataSource.setTrustCertificateKeyStorePassword(getDatabaseAlias(aliasService, DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME));
             } else {
