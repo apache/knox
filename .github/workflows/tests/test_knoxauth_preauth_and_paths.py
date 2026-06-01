@@ -16,7 +16,14 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import collect_actor_group_values, gateway_base_url, knox_get, knox_post
+from common_utils import (
+    collect_actor_group_values,
+    gateway_base_url,
+    knox_get,
+    knox_ldap_admin_auth,
+    knox_ldap_guest_auth,
+    knox_post,
+)
 
 
 class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
@@ -44,7 +51,7 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         """POST preauth with guest credentials returns 200 and x-knox-actor-username."""
         response = knox_post(
             self.preauth_url,
-            auth=HTTPBasicAuth("guest", "guest-password"),
+            auth=knox_ldap_guest_auth(),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -77,9 +84,16 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         """Unknown path under extauthz returns 404; extra segments are not ignored as success."""
         response = knox_get(
             self.extauthz_url + "/does-not-exist",
-            auth=HTTPBasicAuth("guest", "guest-password"),
+            auth=knox_ldap_guest_auth(),
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_preauth_get_admin_includes_long_group_names_three_and_four(self):
+        response = knox_get(self.preauth_url, auth=knox_ldap_admin_auth())
+        self.assertEqual(response.status_code, 200)
+        groups = collect_actor_group_values(response, prefix="x-knox-actor-groups")
+        for name in ("longGroupName3", "longGroupName4"):
+            self.assertIn(name, groups)
 
 
 if __name__ == "__main__":

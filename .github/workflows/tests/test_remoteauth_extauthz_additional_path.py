@@ -16,7 +16,13 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, knox_get
+from common_utils import (
+    collect_actor_group_values,
+    gateway_base_url,
+    knox_get,
+    knox_ldap_admin_auth,
+    knox_ldap_guest_auth,
+)
 
 
 class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
@@ -27,7 +33,7 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
     def test_extauthz_success(self):
         response = knox_get(
             self.extauthz_url,
-            auth=HTTPBasicAuth("guest", "guest-password"),
+            auth=knox_ldap_guest_auth(),
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("X-Knox-Actor-ID", response.headers)
@@ -36,11 +42,20 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
     def test_extauthz_additional_path_is_ignored(self):
         response = knox_get(
             self.extauthz_url + "/some/extra/path",
-            auth=HTTPBasicAuth("guest", "guest-password"),
+            auth=knox_ldap_guest_auth(),
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("X-Knox-Actor-ID", response.headers)
         self.assertEqual(response.headers["X-Knox-Actor-ID"], "guest")
+
+    def test_extauthz_admin_user_actor_and_groups(self):
+        """Admin via remoteauth extauthz maps LDAP groups onto X-Knox-Actor-* headers."""
+        response = knox_get(self.extauthz_url, auth=knox_ldap_admin_auth())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("X-Knox-Actor-ID"), "admin")
+        groups = collect_actor_group_values(response, prefix="X-Knox-Actor-Groups")
+        for name in ("longGroupName1", "longGroupName2"):
+            self.assertIn(name, groups)
 
     def test_extauthz_bad_credentials_unauthorized(self):
         response = knox_get(

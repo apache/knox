@@ -15,12 +15,14 @@
 
 from __future__ import annotations
 
+import json
 import os
 import unittest
 from typing import Any
 
 import requests
 import urllib3
+from requests.auth import HTTPBasicAuth
 
 # Default timeout for HTTP calls to the gateway (self-signed TLS, CI).
 KNOX_REQUEST_TIMEOUT = 30
@@ -28,7 +30,36 @@ KNOX_REQUEST_TIMEOUT = 30
 HSTS_HEADER_NAME = "Strict-Transport-Security"
 HSTS_EXPECTED_VALUE = "max-age=300; includeSubDomains"
 
+# Top-level keys in /gateway/{topology}/health/v1/metrics JSON (see Java GatewayHealthFuncTest).
+METRICS_TOP_LEVEL_KEYS = frozenset(
+    {"timers", "histograms", "counters", "gauges", "version", "meters"}
+)
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def knox_ldap_guest_auth() -> HTTPBasicAuth:
+    """HTTP Basic auth for the demo LDAP `guest` user (CI Docker topologies)."""
+
+    return HTTPBasicAuth("guest", "guest-password")
+
+
+def knox_ldap_admin_auth() -> HTTPBasicAuth:
+    """HTTP Basic auth for the demo LDAP `admin` user (CI Docker topologies)."""
+
+    return HTTPBasicAuth("admin", "admin-password")
+
+
+def health_metrics_pretty_dict(gateway_base: str) -> dict[str, Any]:
+    """
+    GET health metrics with ?pretty=true; raise AssertionError if not HTTP 200 or invalid JSON.
+    gateway_base must include a trailing slash (see gateway_base_url()).
+    """
+
+    r = knox_get(gateway_base + "gateway/health/v1/metrics?pretty=true")
+    if r.status_code != 200:
+        raise AssertionError(f"health metrics expected 200, got {r.status_code}")
+    return json.loads(r.text)
 
 
 def gateway_base_url() -> str:
