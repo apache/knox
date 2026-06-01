@@ -43,7 +43,6 @@ velocity.log
 # Workflow rules
 .github/workflows/compose/logs/*
 .github/workflows/tests/test-results.xml
-.github/workflows/tests/.venv/
 .github/workflows/tests/.pylint_cache/
 
 
