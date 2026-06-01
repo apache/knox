@@ -1,0 +1,26 @@
+[MAIN]
+py-version=3.10
+jobs=0
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    invalid-name,
+    too-few-public-methods,
+    too-many-public-methods,
+    too-many-lines,
+    duplicate-code,
+    broad-exception-caught,
+    f-string-without-interpolation
+
+[FORMAT]
+max-line-length=100
+
+[BASIC]
+good-names=i,e,fd,op
+
+[DESIGN]
+max-args=10
+max-locals=20
