@@ -18,5 +18,5 @@
 package org.apache.knox.gateway.config;
 
 public interface GatewayConfigChangeListener {
-  void onGatewayConfigChanged();
+  void onGatewayConfigChanged(GatewayConfig config);
 }

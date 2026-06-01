@@ -107,7 +107,7 @@ public class GatewayServerTest {
     }
 
     final boolean[] notified = {false};
-    GatewayConfigChangeListener listener = () -> notified[0] = true;
+    GatewayConfigChangeListener listener = (c) -> notified[0] = true;
 
     GatewayServer.registerConfigChangeListener(listener);
 

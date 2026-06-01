@@ -274,7 +274,7 @@ public class GatewayServer {
           config.reloadConfiguration();
           log.refreshedGatewayConfig();
           for (GatewayConfigChangeListener listener : configChangeListeners) {
-            listener.onGatewayConfigChanged();
+            listener.onGatewayConfigChanged(config);
           }
         }
       }

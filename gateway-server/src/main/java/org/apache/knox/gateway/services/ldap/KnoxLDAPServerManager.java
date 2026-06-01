@@ -30,9 +30,7 @@ import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
-import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
@@ -45,10 +43,9 @@ import java.util.Map;
 /**
  * Manages the ApacheDS LDAP server instance with pluggable backends
  */
-public class KnoxLDAPServerManager implements GatewayConfigChangeListener {
+public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    private GatewayConfig config;
     private DirectoryService directoryService;
     private LdapServer ldapServer;
     private LdapBackend backend;
@@ -63,11 +60,6 @@ public class KnoxLDAPServerManager implements GatewayConfigChangeListener {
      * @param config Gateway configuration
      */
     public void initialize(GatewayConfig config) throws Exception {
-        if (this.config == null) {
-            GatewayServer.registerConfigChangeListener(this);
-        }
-        this.config = config;
-
         // Prepare work directory for LDAP data
         File gatewayDataDir = new File(config.getGatewayDataDir());
         this.workDir = new File(gatewayDataDir, "ldap-server");
@@ -102,26 +94,6 @@ public class KnoxLDAPServerManager implements GatewayConfigChangeListener {
         }
 
         workDir.mkdirs();
-    }
-
-    @Override
-    public void onGatewayConfigChanged() {
-        LOG.ldapReloadingConfig();
-        try {
-            boolean wasRunning = isRunning();
-            if (wasRunning) {
-                stop();
-            }
-            // Re-initialize and start if it was running or if it's now enabled
-            if (config.isLDAPEnabled()) {
-                initialize(config);
-                if (wasRunning) {
-                    start();
-                }
-            }
-        } catch (Exception e) {
-            LOG.ldapServiceReloadFailed(e);
-        }
     }
 
     /**
