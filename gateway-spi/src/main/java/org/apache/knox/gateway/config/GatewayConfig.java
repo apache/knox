@@ -233,6 +233,8 @@ public interface GatewayConfig {
 
   String getTruststoreType();
 
+  String getDatabaseSslTruststoreType();
+
   /**
    * Returns the configured value for the alias name to use when to looking up the Gateway's
    * truststore password.

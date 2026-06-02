@@ -76,6 +76,8 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private boolean sslEnabled;
   private String truststoreType = "jks";
   private String keystoreType = "jks";
+  private String databaseSslTruststoreType = "JKS";
+
   private boolean isTopologyPortMappingEnabled = true;
   private ConcurrentMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
@@ -365,12 +367,21 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getDatabaseSslTruststoreType() {
+    return databaseSslTruststoreType;
+  }
+
+  @Override
   public String getTruststorePasswordAlias() {
     return null;
   }
 
   public void setTruststoreType( String truststoreType ) {
     this.truststoreType = truststoreType;
+  }
+
+  public void setDatabaseSslTruststoreType(String databaseSslTruststoreType) {
+    this.databaseSslTruststoreType = databaseSslTruststoreType;
   }
 
   @Override

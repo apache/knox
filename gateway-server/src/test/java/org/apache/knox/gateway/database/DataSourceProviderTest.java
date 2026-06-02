@@ -185,6 +185,26 @@ public class DataSourceProviderTest {
   }
 
   @Test
+  public void mysqlDataSourceShouldHaveProperSslConnectionProperties() throws Exception {
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.MYSQL.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseHost()).andReturn("localhost").anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabasePort()).andReturn(3306).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
+    EasyMock.expect(gatewayConfig.isDatabaseSslEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.verifyDatabaseSslServerCertificate()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseSslTruststoreFileName()).andReturn("/path/to/truststore").anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseSslTruststoreType()).andReturn("BCFKS").anyTimes();
+
+    EasyMock.replay(gatewayConfig, aliasService);
+    MysqlDataSource dataSource = (MysqlDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertTrue(dataSource.getUseSSL());
+    assertEquals("BCFKS", dataSource.getTrustCertificateKeyStoreType());
+    assertEquals("file:/path/to/truststore", dataSource.getTrustCertificateKeyStoreUrl());
+  }
+
+  @Test
   public void testGetMySqlDatasourceFromJdbcConnectionUrl() throws Exception {
     String connectionUrl = "jdbc:mysql://mysql_host:1234/testDb?user=user&password=secret&ssl=true&sslmode=verify-ca&sslrootcert=/var/lib/knox/gateway/conf/postgresql/root.crt";
     GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
@@ -283,11 +303,12 @@ public class DataSourceProviderTest {
     EasyMock.expect(gatewayConfig.isDatabaseSslEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(gatewayConfig.verifyDatabaseSslServerCertificate()).andReturn(true).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseSslTruststoreFileName()).andReturn("/path/to/truststore").anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseSslTruststoreType()).andReturn("BCFKS").anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
     final OracleDataSource dataSource = (OracleDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
     assertEquals("tcps", dataSource.getNetworkProtocol());
     assertEquals("/path/to/truststore", dataSource.getConnectionProperty("javax.net.ssl.trustStore"));
-    assertEquals("JKS", dataSource.getConnectionProperty("javax.net.ssl.trustStoreType"));
+    assertEquals("BCFKS", dataSource.getConnectionProperty("javax.net.ssl.trustStoreType"));
     //Can't validate the truststore password because oracle datasource doesn't return it.
   }
 
