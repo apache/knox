@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.server.core.api.interceptor.Interceptor;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
@@ -32,8 +33,9 @@ import java.util.ServiceLoader;
 public class InterceptorFactory {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    public static Interceptor createInterceptor(String interceptorName, Map<String, String> config) throws Exception {
-        String interceptorType = config.get("interceptorType");
+    public static Interceptor createInterceptor(final GatewayConfig gatewayConfig, final String interceptorName,
+                                                final Map<String, String> interceptorConfig) throws Exception {
+        final String interceptorType = interceptorConfig.get("interceptorType");
         if (interceptorType == null) {
             // No backend type configured found
             LOG.ldapInterceptorTypeNotFound(interceptorName);
@@ -47,7 +49,7 @@ public class InterceptorFactory {
         for (KnoxLdapInterceptorFactory interceptorFactory : loader) {
             if (interceptorFactory.getType().equalsIgnoreCase(interceptorType)) {
                 LOG.ldapInterceptorCreating(interceptorType, "ServiceLoader");
-                return interceptorFactory.create(interceptorName, config);
+                return interceptorFactory.create(gatewayConfig, interceptorName, interceptorConfig);
             }
         }
 

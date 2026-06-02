@@ -83,6 +83,8 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
 
     addService(ServiceType.GATEWAY_STATUS_SERVICE, gatewayServiceFactory.create(this, ServiceType.GATEWAY_STATUS_SERVICE, config, options));
 
+    addService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE,  gatewayServiceFactory.create(this, ServiceType.LDAP_ROLES_LOOKUP_SERVICE, config, options));
+
     addService(ServiceType.LDAP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_SERVICE, config, options));
   }
 

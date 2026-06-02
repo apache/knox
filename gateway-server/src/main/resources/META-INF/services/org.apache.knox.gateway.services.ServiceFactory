@@ -34,3 +34,4 @@ org.apache.knox.gateway.services.factory.TopologyServiceFactory
 org.apache.knox.gateway.services.factory.ConcurrentSessionVerifierFactory
 org.apache.knox.gateway.services.factory.GatewayStatusServiceFactory
 org.apache.knox.gateway.services.factory.LdapServiceFactory
+org.apache.knox.gateway.services.factory.LDAPRolesLookupServiceFactory

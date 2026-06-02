@@ -1276,6 +1276,21 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLdapRolesLookupStrategy() {
+    return "";
+  }
+
+  @Override
+  public String getLdapRolesLookupRestApiEndpoint() {
+    return "";
+  }
+
+  @Override
+  public String getLdapRolesLookupFilePath() {
+    return "";
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return false;
   }

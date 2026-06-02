@@ -15,23 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.interceptor;
+package org.apache.knox.gateway.services.ldap.roles;
 
-import org.apache.directory.server.core.api.interceptor.Interceptor;
-import org.apache.knox.gateway.config.GatewayConfig;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
-import java.util.Map;
+public class LookupRolesRequest {
+    @JsonProperty("user_id")
+    private String userId;
 
-public class DuplicateUserFilteringInterceptorFactory implements KnoxLdapInterceptorFactory {
-    public static final String TYPE = "duplicateuserfilter";
+    @JsonProperty("groups")
+    private List<String> groups;
 
-    @Override
-    public Interceptor create(GatewayConfig gatewayConfig, String name, Map<String, String> interceptorConfig) {
-        return new DuplicateUserFilteringInterceptor(name);
+    public LookupRolesRequest() {}
+
+    public LookupRolesRequest(String userId, List<String> groups) {
+        this.userId = userId;
+        this.groups = groups;
     }
 
-    @Override
-    public String getType() {
-        return TYPE;
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
     }
 }

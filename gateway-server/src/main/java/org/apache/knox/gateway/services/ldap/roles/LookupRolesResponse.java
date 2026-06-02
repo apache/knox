@@ -15,23 +15,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.interceptor;
+package org.apache.knox.gateway.services.ldap.roles;
 
-import org.apache.directory.server.core.api.interceptor.Interceptor;
-import org.apache.knox.gateway.config.GatewayConfig;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.knox.gateway.services.ldap.RoleAssignment;
+import java.util.List;
 
-import java.util.Map;
+public class LookupRolesResponse {
+    @JsonProperty("user_id")
+    private String userId;
 
-public class DuplicateUserFilteringInterceptorFactory implements KnoxLdapInterceptorFactory {
-    public static final String TYPE = "duplicateuserfilter";
+    @JsonProperty("roles")
+    private List<RoleAssignment> roles;
 
-    @Override
-    public Interceptor create(GatewayConfig gatewayConfig, String name, Map<String, String> interceptorConfig) {
-        return new DuplicateUserFilteringInterceptor(name);
+    public LookupRolesResponse() {}
+
+    public LookupRolesResponse(String userId, List<RoleAssignment> roles) {
+        this.userId = userId;
+        this.roles = roles;
     }
 
-    @Override
-    public String getType() {
-        return TYPE;
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public List<RoleAssignment> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<RoleAssignment> roles) {
+        this.roles = roles;
     }
 }

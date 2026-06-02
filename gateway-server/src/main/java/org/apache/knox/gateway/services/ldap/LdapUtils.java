@@ -16,7 +16,11 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.directory.api.ldap.model.entry.Attribute;
+import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.name.Rdn;
 
 public class LdapUtils {
 
@@ -32,5 +36,32 @@ public class LdapUtils {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    public static String extractUsernameFromEntry(Entry entry, String... attributeNames) {
+        String userName = null;
+        for (String attributeName : attributeNames) {
+            Attribute attribute = entry.get(attributeName);
+            if (attribute != null) {
+                try {
+                    userName = attribute.getString();
+                    if (userName != null) {
+                        break;
+                    }
+                } catch (LdapException ignored) {
+                }
+            }
+        }
+        return userName;
+    }
+
+    public static String extractGroupName(Dn dn) {
+        if (!dn.isEmpty()) {
+            Rdn rdn = dn.getRdn();
+            if (rdn.getType().equalsIgnoreCase("cn")) {
+                return rdn.getValue();
+            }
+        }
+        return null;
     }
 }

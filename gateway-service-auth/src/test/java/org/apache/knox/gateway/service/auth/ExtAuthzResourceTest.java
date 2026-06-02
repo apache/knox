@@ -20,6 +20,9 @@ package org.apache.knox.gateway.service.auth;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +39,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -91,6 +95,40 @@ public class ExtAuthzResourceTest {
       }
     }
     EasyMock.replay(context, request, response);
+  }
+
+  @Test
+  public void testPopulatingGroupsWithRoles() throws Exception {
+    final String role1 = "platform:admin";
+    final String role2 = "ml-workspace:viewer";
+    final List<String> groups = Collections.singletonList("engineering");
+
+    context = EasyMock.createNiceMock(ServletContext.class);
+    response = EasyMock.createNiceMock(HttpServletResponse.class);
+
+    LDAPRolesLookupService mockRolesService = EasyMock.createNiceMock(LDAPRolesLookupService.class);
+    EasyMock.expect(mockRolesService.enabled()).andReturn(true).anyTimes();
+    EasyMock.expect(mockRolesService.lookupRoles(EasyMock.eq(USER_NAME), EasyMock.anyObject())).andReturn(Arrays.asList(role1, role2)).anyTimes();
+
+    GatewayServices mockGatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(mockGatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE)).andReturn(mockRolesService).anyTimes();
+
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(mockGatewayServices).anyTimes();
+    EasyMock.expect(context.getInitParameter(ExtAuthzResource.IGNORE_ADDITIONAL_PATH)).andReturn("true").anyTimes();
+
+    response.setHeader(AbstractAuthResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, USER_NAME);
+    EasyMock.expectLastCall();
+
+    EasyMock.replay(context, response, mockRolesService, mockGatewayServices);
+
+    groups.forEach(group -> subject.getPrincipals().add(new GroupPrincipal(group)));
+
+    final ExtAuthzResource extAuthzResource = new ExtAuthzResource();
+    extAuthzResource.context = context;
+    extAuthzResource.response = response;
+    executeResourceWithAdditionalPath(extAuthzResource);
+
+    EasyMock.verify(response);
   }
 
   private int calculateGroupStringSize(Collection<String> groups) {

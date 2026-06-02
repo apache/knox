@@ -40,6 +40,9 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.port` | `3890` | The port on which the LDAP server listens. |
 | `gateway.ldap.base.dn` | `dc=proxy,dc=com` | The base DN for the LDAP server. |
 | `gateway.ldap.interceptor.names` | N/A | A comma separated list of interceptors to use. A separate interceptor configuration block will be used for each name. |
+| `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). |
+| `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint. |
+| `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
 
 ### Interceptor Types
 
@@ -139,7 +142,17 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 
 <property>
     <name>gateway.ldap.interceptor.names</name>
-    <value>localfile,adexample,extrenalldap,duplicatefilter</value>
+    <value>localfile,adexample,extrenalldap,duplicatefilter,rolesLookup</value>
+</property>
+
+<property>
+    <name>gateway.ldap.roles.lookup.strategy</name>
+    <value>rest</value>
+</property>
+
+<property>
+    <name>gateway.ldap.roles.lookup.rest.api.endpoint</name>
+    <value>http://localhost:8080/auth/roles</value>
 </property>
 
 <!-- File-based LDAP backend -->

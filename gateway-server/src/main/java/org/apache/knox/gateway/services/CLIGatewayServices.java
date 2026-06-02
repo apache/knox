@@ -25,7 +25,6 @@ import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.services.security.impl.CLIMasterService;
-import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.topology.Provider;
 
 public class CLIGatewayServices extends AbstractGatewayServices {
@@ -57,12 +56,10 @@ public class CLIGatewayServices extends AbstractGatewayServices {
 
     addService(ServiceType.TOKEN_STATE_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOKEN_STATE_SERVICE, config, options));
 
-    // LDAP Service - infrastructure service for embedded LDAP server
-    if (config.isLDAPEnabled()) {
-      KnoxLDAPService ldapService = new KnoxLDAPService();
-      ldapService.init(config, options);
-      addService(ServiceType.LDAP_SERVICE, ldapService);
-    }
+    addService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_ROLES_LOOKUP_SERVICE, config, options));
+
+    addService(ServiceType.LDAP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_SERVICE, config, options));
+
   }
 
   @Override

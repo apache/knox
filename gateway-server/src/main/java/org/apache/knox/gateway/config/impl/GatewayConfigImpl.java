@@ -1809,6 +1809,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLdapRolesLookupStrategy() {
+    return get(LDAP_ROLES_LOOKUP_STRATEGY);
+  }
+
+  @Override
+  public String getLdapRolesLookupRestApiEndpoint() {
+    return get(LDAP_ROLES_LOOKUP_REST_API_ENDPOINT);
+  }
+
+  @Override
+  public String getLdapRolesLookupFilePath() {
+    return get(LDAP_ROLES_LOOKUP_FILE_PATH);
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
   }

@@ -128,7 +128,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
                             if (backendEntry != null) {
                                 // Return backend result directly without caching
                                 entries.add(backendEntry);
-                                LOG.ldapUserEntry(backendEntry.toString());
+                                LOG.ldapUserEntry(backendEntry.getDn().toString());
                             } else {
                                 LOG.ldapUserNull(username);
                             }

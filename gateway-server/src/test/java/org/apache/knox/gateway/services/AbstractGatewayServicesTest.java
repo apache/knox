@@ -66,7 +66,8 @@ public class AbstractGatewayServicesTest {
         ServiceType.CONCURRENT_SESSION_VERIFIER,
         ServiceType.REMOTE_CONFIGURATION_MONITOR,
         ServiceType.GATEWAY_STATUS_SERVICE,
-        ServiceType.LDAP_SERVICE
+        ServiceType.LDAP_SERVICE,
+        ServiceType.LDAP_ROLES_LOOKUP_SERVICE
     };
 
     assertNotEquals(ServiceType.values(), orderedServiceTypes);

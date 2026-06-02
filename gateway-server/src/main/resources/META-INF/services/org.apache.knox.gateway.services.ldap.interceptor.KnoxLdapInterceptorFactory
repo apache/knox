@@ -17,5 +17,6 @@
 ##########################################################################
 
 # Built-in LDAP interceptor factory implementations
+org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptorFactory
 org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptorFactory
 org.apache.knox.gateway.services.ldap.interceptor.DuplicateUserFilteringInterceptorFactory

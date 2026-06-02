@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 /**
  * Manages the ApacheDS LDAP server instance with pluggable backends
@@ -104,25 +105,22 @@ public class KnoxLDAPServerManager {
         List<Interceptor> interceptors = new ArrayList<>(interceptorNames.size());
         for (String interceptorName : interceptorNames) {
             // Get backend-specific configuration using prefixed properties
-            Map<String, String> interceptorConfig = config.getLDAPInterceptorConfig(interceptorName);
+            final Map<String, String> interceptorConfig = config.getLDAPInterceptorConfig(interceptorName);
 
             // Add common configuration
             interceptorConfig.put("baseDn", baseDn);
 
             // Add common LDAP Proxy configurations to backends
-            String interceptorType = interceptorConfig.get("interceptorType");
-            String backendType = interceptorConfig.get("backendType");
-            if ("backend".equalsIgnoreCase(interceptorType)) {
+            if ("backend".equalsIgnoreCase(interceptorConfig.get("interceptorType"))) {
                 interceptorConfig.put("recursiveGroupResolution", String.valueOf(config.isLDAPRecursiveGroupResolutionEnabled()));
                 interceptorConfig.put("recursiveGroupResolutionMaxDepth", String.valueOf(config.getLDAPRecursiveGroupResolutionMaxDepth()));
-                if ("file".equalsIgnoreCase(backendType) &&
-                        !interceptorConfig.containsKey("dataFile")) {
+                if ("file".equalsIgnoreCase(interceptorConfig.get("backendType")) && !interceptorConfig.containsKey("dataFile")) {
                     // Add legacy dataFile property for backwards compatibility with file backend
                     interceptorConfig.put("dataFile", config.getLDAPBackendDataFile());
                 }
             }
 
-            interceptors.add(InterceptorFactory.createInterceptor(interceptorName, interceptorConfig));
+            interceptors.add(InterceptorFactory.createInterceptor(config, interceptorName, interceptorConfig));
         }
         this.interceptors = interceptors;
     }
@@ -224,13 +222,7 @@ public class KnoxLDAPServerManager {
         // Find location of AuthenticationInterceptor.
         // We need to insert interceptors before AuthenticationInterceptor to intercept bind requests
         final List<Interceptor> dsInterceptors = new ArrayList<>(directoryService.getInterceptors());
-        int authIdx = -1;
-        for (int i = 0; i < dsInterceptors.size(); i++) {
-            if (dsInterceptors.get(i).getName().equalsIgnoreCase("authenticationInterceptor")) {
-                authIdx = i;
-                break;
-            }
-        }
+        final int authIdx = fetchAuthenticationInterceptorIndex(dsInterceptors);
 
         // Add our configured interceptors for group lookups and bind proxying
         for (Interceptor interceptor : interceptors) {
@@ -241,6 +233,13 @@ public class KnoxLDAPServerManager {
             }
         }
         directoryService.setInterceptors(dsInterceptors);
+    }
+
+    private int fetchAuthenticationInterceptorIndex(final List<Interceptor> dsInterceptors) {
+        return IntStream.range(0, dsInterceptors.size())
+                .filter(i -> "authenticationInterceptor".equalsIgnoreCase(dsInterceptors.get(i).getName()))
+                .findFirst()
+                .orElse(-1);
     }
 
     /**
