@@ -39,12 +39,24 @@ sn: User
 uid: recursiveUser
 userPassword: password
 
+# entry for the second end user (for cache testing)
+dn: uid=recursiveUser2,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: RecursiveUser2
+sn: User2
+uid: recursiveUser2
+userPassword: password
+
 # Level 1 Group
 dn: cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:groupOfNames
 cn: level1Group
 member: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+member: uid=recursiveUser2,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
 
 # Level 2 Group
 dn: cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
@@ -73,6 +85,7 @@ objectclass:top
 objectclass:groupOfNames
 cn: cycleGroupA
 member: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
+member: uid=recursiveUser2,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
 member: cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
 
 dn: cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org

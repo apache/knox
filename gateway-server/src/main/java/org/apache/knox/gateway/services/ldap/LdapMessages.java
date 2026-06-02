@@ -128,4 +128,10 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.DEBUG, text = "Created skeleton group entry for {0} as actual group entry was not found in the backend")
     void ldapSkeletonGroupEntryCreated(String groupDn);
+
+    @Message(level = MessageLevel.DEBUG, text = "Found {1} parent(s) in cache for group {0}")
+    void ldapRecursiveGroupSearchCacheHit(String groupDn, int count);
+
+    @Message(level = MessageLevel.DEBUG, text = "Added parent {1} to cache for group {0}")
+    void ldapRecursiveGroupSearchCacheAdd(String groupDn, String parentDn);
 }

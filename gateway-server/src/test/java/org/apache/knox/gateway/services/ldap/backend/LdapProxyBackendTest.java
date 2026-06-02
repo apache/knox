@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LdapProxyBackendTest {
     private static Map<String, String> ldapBackendConfig;
@@ -386,6 +387,49 @@ public class LdapProxyBackendTest {
                 "cn=level4Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
                 "cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
                 "cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchUsersRecursiveWithSharedGroups() throws Exception {
+        Map<String, String> config = createRecursiveConfig(5);
+
+        final AtomicInteger cacheHits = new AtomicInteger(0);
+        ldapProxyBackend = new LdapProxyBackend() {
+            @Override
+            protected Map<String, Set<Entry>> createResolvedParentsCache() {
+                return new HashMap<>() {
+                    @Override
+                    public Set< org.apache.directory.api.ldap.model.entry.Entry> get(Object key) {
+                        if (super.get(key) != null) {
+                            cacheHits.incrementAndGet();
+                        }
+                        return super.get(key);
+                    }
+                };
+            }
+        };
+        ldapProxyBackend.initialize(config);
+
+        // Search for all recursive users (recursiveUser and recursiveUser2)
+        // They share level1Group, cycleGroupA, and all their ancestors.
+        List<Entry> entries = ldapProxyBackend.searchUsers("recursiveUser*", schemaManager);
+        assertEquals(2, entries.size());
+
+        Set<String> expectedGroups = Set.of(
+                "cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=level3Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=level4Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org");
+
+        for (Entry entry : entries) {
+            validateMemberOf(entry, expectedGroups);
+        }
+
+        // Verify that caching actually happened.
+        // For the second user, many groups should have been found in the cache.
+        assertEquals("Expected 6 cache hits for shared groups, but got " + cacheHits.get(), 6, cacheHits.get());
     }
 
     // Helper methods for refactoring
