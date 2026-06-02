@@ -56,11 +56,11 @@ limitations under the License.
         <description>Base DN for LDAP entries in the proxy server. Default is dc=proxy,dc=com.</description>
     </property>
 
-    <propery>
+    <property>
         <name>gateway.ldap.recursive.group.resolution</name>
         <value>false</value>
-        <desciption>Boolean value indicating whether recursive group resolution ie enabled in KnoxLDAPService.</desciption>
-    </propery>
+        <desciption>Boolean value indicating whether recursive group resolution is enabled in KnoxLDAPService.</desciption>
+    </property>
 
     <property>
         <name>gateway.ldap.backend.type</name>

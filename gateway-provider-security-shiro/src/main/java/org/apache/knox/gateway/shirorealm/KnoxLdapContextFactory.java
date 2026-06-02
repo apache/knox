@@ -24,6 +24,7 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.ldap.LdapContext;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -73,7 +74,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
         final String systemPass = super.getSystemPassword();
         final AliasService aliasService = getAliasService();
 
-        if (!aliasService.isAlias(systemPass)) {
+        if (StringUtils.isBlank(systemPass) || !aliasService.isAlias(systemPass)) {
             return systemPass;
         } else {
             final String systemPasswordAlias = aliasService.extractAlias(systemPass);
