@@ -56,7 +56,8 @@ ARG ENTRYPOINT
 COPY --chown=8000:0 ${ENTRYPOINT} /home/knox/knox/entrypoint.sh
 RUN chmod +x /home/knox/knox/entrypoint.sh
 
-# Add the Amazon Root CA and Let's Encrypt production + staging root certificates (best-effort)
+# Add the Amazon Root CA and Let's Encrypt production root certificates (best-effort).
+# Staging roots are downloaded at runtime when IMPORT_DEFAULT_STAGING_CERTS=true (default).
 RUN mkdir /home/knox/cacrts && \
     curl -sSLo /home/knox/cacrts/AmazonRootCA1.cer  https://www.amazontrust.com/repository/AmazonRootCA1.cer  || true && \
     curl -sSLo /home/knox/cacrts/AmazonRootCA2.cer  https://www.amazontrust.com/repository/AmazonRootCA2.cer  || true && \
@@ -64,13 +65,6 @@ RUN mkdir /home/knox/cacrts && \
     curl -sSLo /home/knox/cacrts/AmazonRootCA4.cer  https://www.amazontrust.com/repository/AmazonRootCA4.cer  || true && \
     curl -sSLo /home/knox/cacrts/isrgrootx1.pem     https://letsencrypt.org/certs/isrgrootx1.pem               || true && \
     curl -sSLo /home/knox/cacrts/isrg-root-x2.pem   https://letsencrypt.org/certs/isrg-root-x2.pem             || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-x1.pem               https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem               || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-x2.pem               https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2.pem               || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-x2-signed-by-x1.pem  https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2-signed-by-x1.pem  || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-ye.pem               https://letsencrypt.org/certs/staging/gen-y/root-ye.pem                         || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-ye-by-x2.pem        https://letsencrypt.org/certs/staging/gen-y/root-ye-by-x2.pem                    || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-yr.pem               https://letsencrypt.org/certs/staging/gen-y/root-yr.pem                         || true && \
-    curl -sSLo /home/knox/cacrts/letsencrypt-stg-root-yr-by-x1.pem        https://letsencrypt.org/certs/staging/gen-y/root-yr-by-x1.pem                    || true && \
     chown -R 8000:0 /home/knox/cacrts
 
 WORKDIR /home/knox/knox
