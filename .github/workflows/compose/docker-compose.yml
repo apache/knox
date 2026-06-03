@@ -18,7 +18,7 @@ services:
     build:
       context: ../../..
       dockerfile: .github/workflows/build/Dockerfile
-    image: apache/knox-dev:master
+    image: apache/knox-dev:${IMAGE_TAG:-master}
 
   knox-dev-local:
     # Repository root: COPY source in Dockerfile.local (no git clone). First Maven
