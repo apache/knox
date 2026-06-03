@@ -31,10 +31,8 @@ public class SimplePrincipalMapper implements PrincipalMapper {
 
   @Override
   public void loadMappingTable(String principalMapping, String groupMapping) throws PrincipalMappingException {
-    if (principalMapping != null) {
       principalMappings = parseMapping(principalMapping);
       groupMappings = parseMapping(groupMapping);
-    }
   }
 
   private Map<String, String[]> parseMapping(String mappings)

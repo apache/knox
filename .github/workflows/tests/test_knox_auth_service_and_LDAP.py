@@ -53,6 +53,11 @@ class TestKnoxAuthService(unittest.TestCase):
         self.assertEqual(response.headers[actor_id_header], 'guest')
         print(f"Verified {actor_id_header}: {response.headers[actor_id_header]}")
 
+        # Check for Actor Group header - should be empty for guest
+        prefix = 'x-knox-actor-groups'
+        all_groups = collect_actor_group_values(response, prefix=prefix)
+        self.assertEqual(len(all_groups), 0, f"Guest user should not have any group headers starting with {prefix}")
+
     def test_auth_service_admin_groups(self):
         """
         Verify that admin user gets actor ID and group headers.
@@ -81,10 +86,38 @@ class TestKnoxAuthService(unittest.TestCase):
             if h.lower().startswith(prefix.lower()):
                 print(f"Found group header {h}: {response.headers[h]}")
 
-        expected_groups = ['longGroupName1', 'longGroupName2', 'longGroupName3', 'longGroupName4']
+        expected_groups = ['admin', 'longGroupName1', 'longGroupName2', 'longGroupName3', 'longGroupName4']
         for group in expected_groups:
             self.assertIn(group, all_groups)
 
+    def test_auth_service_recursive_user_groups(self):
+        """
+        Verify that recursiveUser user gets actor ID and recursive group headers.
+        """
+        print(f"\nTesting recursiveUser authentication against {self.topology_url}")
+        response = knox_get(
+            self.topology_url,
+            auth=HTTPBasicAuth('recursiveUser', 'recursiveUser-password'),
+        )
+
+        print(f"Status Code: {response.status_code}")
+        self.assertEqual(response.status_code, 200)
+
+        # Check for Actor ID header
+        actor_id_header = 'x-knox-actor-username'
+        self.assertIn(actor_id_header, response.headers)
+        self.assertEqual(response.headers[actor_id_header], 'recursiveUser')
+        print(f"Verified {actor_id_header}: {response.headers[actor_id_header]}")
+
+        # Check for Actor Group headers
+        prefix = 'x-knox-actor-groups'
+        all_groups = collect_actor_group_values(response, prefix=prefix)
+
+        expected_groups = ['level1', 'level2', 'level3']
+        self.assertEqual(len(all_groups), len(expected_groups))
+        for group in expected_groups:
+            self.assertIn(group, all_groups)
+        print(f"Verified recursive groups: {all_groups}")
+
 if __name__ == '__main__':
     unittest.main()
-

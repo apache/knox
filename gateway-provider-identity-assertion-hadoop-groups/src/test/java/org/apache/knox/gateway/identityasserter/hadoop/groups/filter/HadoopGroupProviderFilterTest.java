@@ -39,8 +39,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.hadoop.security.GroupMappingServiceProvider;
+import org.apache.hadoop.security.LdapGroupsMapping;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -264,5 +270,60 @@ public class HadoopGroupProviderFilterTest {
 
     assertEquals(
             new HashSet<>(Arrays.asList("hadoop-group", "test-virtual-group")), calculatedGroups);
+  }
+
+  @Test
+  public void testLdapServiceIntegration() throws Exception {
+    KnoxLDAPService ldapService = EasyMock.createNiceMock(KnoxLDAPService.class);
+    doTestLdapServiceIntegration(true, Arrays.asList("group1", "group2"), ldapService);
+  }
+
+  @Test
+  public void testFallbackToHadoopGroupsWhenLdapDisabled() throws Exception {
+    doTestLdapServiceIntegration(false, Collections.singletonList("hadoop-group"), null);
+  }
+
+  private void doTestLdapServiceIntegration(boolean ldapEnabled, List<String> expectedGroups, KnoxLDAPService ldapService) throws Exception {
+    final String principalName = "test-user";
+
+    FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
+    EasyMock.expect(config.getInitParameter(GroupMappingServiceProvider.GROUP_MAPPING_CONFIG_PREFIX)).andReturn(LdapGroupsMapping.class.getName()).anyTimes();
+    EasyMock.expect(config.getInitParameter(HadoopGroupProviderFilter.USE_LDAP_SERVICE)).andReturn("true").anyTimes();
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+
+    EasyMock.expect(config.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+    EasyMock.expect(gatewayConfig.isLDAPEnabled()).andReturn(ldapEnabled).anyTimes();
+
+    if (ldapEnabled) {
+      GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+      EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
+      EasyMock.expect(services.getService(ServiceType.LDAP_SERVICE)).andReturn(ldapService).anyTimes();
+      EasyMock.expect(ldapService.getUserGroups(principalName)).andReturn(expectedGroups).anyTimes();
+      EasyMock.replay(services, ldapService);
+    } else {
+      EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    }
+
+    EasyMock.replay(config, context, gatewayConfig);
+
+    HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter() {
+      @Override
+      protected List<String> hadoopGroups(String mappedPrincipalName) throws Exception {
+        return ldapEnabled ? super.hadoopGroups(mappedPrincipalName) : expectedGroups;
+      }
+    };
+    filter.init(config);
+
+    Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal(principalName));
+
+    String[] groups = filter.mapGroupPrincipals(principalName, subject);
+
+    assertThat(Arrays.asList(groups), is(expectedGroups));
+    if (ldapEnabled) {
+      EasyMock.verify(ldapService);
+    }
   }
 }

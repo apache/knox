@@ -110,4 +110,28 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR,
             text = "Failed to reload LDAP service: {0}")
     void ldapServiceReloadFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search enabled: {0}, max depth: {1}")
+    void ldapRecursiveGroupSearchConfig(boolean enabled, int maxDepth);
+
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} found {1} group(s) ({2}) at depth {3}")
+    void ldapRecursiveGroupSearchProgress(String user, int count, String groups, int depth);
+
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} completed. Total groups found: {1}")
+    void ldapRecursiveGroupSearchFinished(String user, int count);
+
+    @Message(level = MessageLevel.WARN, text = "Recursive group search for user {0} reached max depth {1}")
+    void ldapRecursiveGroupSearchMaxDepthReached(String user, int maxDepth);
+
+    @Message(level = MessageLevel.DEBUG, text = "Cycle detected in recursive group search for user {0} at group {1}")
+    void ldapRecursiveGroupSearchCycleDetected(String user, String groupDn);
+
+    @Message(level = MessageLevel.DEBUG, text = "Created skeleton group entry for {0} as actual group entry was not found in the backend")
+    void ldapSkeletonGroupEntryCreated(String groupDn);
+
+    @Message(level = MessageLevel.DEBUG, text = "Found {1} parent(s) in cache for group {0}")
+    void ldapRecursiveGroupSearchCacheHit(String groupDn, int count);
+
+    @Message(level = MessageLevel.DEBUG, text = "Added parent {1} to cache for group {0}")
+    void ldapRecursiveGroupSearchCacheAdd(String groupDn, String parentDn);
 }

@@ -41,4 +41,7 @@ public interface HadoopGroupProviderMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "Found group mapping configuration in gateway-site" )
   void groupMappingFound();
+
+  @Message( level = MessageLevel.INFO, text = "Using Knox LDAP service to fetch groups..." )
+  void useKnoxLDAPService();
 }

@@ -57,6 +57,12 @@ limitations under the License.
     </property>
 
     <property>
+        <name>gateway.ldap.recursive.group.resolution</name>
+        <value>false</value>
+        <desciption>Boolean value indicating whether recursive group resolution is enabled in KnoxLDAPService.</desciption>
+    </property>
+
+    <property>
         <name>gateway.ldap.backend.type</name>
         <value>ldap</value>
         <description>Backend type for LDAP service. Currently supported: file, ldap. Future: jdbc, knox.</description>

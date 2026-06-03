@@ -23,6 +23,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,7 +48,6 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
             // Initialize the LDAP server manager with configuration
             ldapServerManager = new KnoxLDAPServerManager();
             ldapServerManager.initialize(config);
-
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
         }
@@ -121,5 +121,14 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
      */
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /**
+     * Get groups for a user from the configured backend
+     * @param username The username
+     * @return List of group names
+     */
+    public List<String> getUserGroups(String username) throws Exception {
+        return ldapServerManager == null ? List.of() : ldapServerManager.getUserGroups(username);
     }
 }

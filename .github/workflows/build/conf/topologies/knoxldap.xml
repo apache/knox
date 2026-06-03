@@ -48,11 +48,15 @@ limitations under the License.
 		</provider>
 		<provider>
 			<role>identity-assertion</role>
-			<name>Default</name>
+			<name>HadoopGroupProvider</name>
 			<enabled>true</enabled>
 			<param>
 				<name>group.principal.mapping</name>
 				<value>admin=longGroupName1,longGroupName2,longGroupName3,longGroupName4</value>
+			</param>
+			<param>
+				<name>CENTRAL_GROUP_CONFIG_PREFIX</name>
+				<value>gateway.group.config.</value>
 			</param>
 		</provider>
 	</gateway>

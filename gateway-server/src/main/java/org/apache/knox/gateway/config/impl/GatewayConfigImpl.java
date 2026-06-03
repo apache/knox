@@ -1799,6 +1799,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isLDAPRecursiveGroupResolutionEnabled() {
+    return Boolean.parseBoolean(get(LDAP_RECURSIVE_GROUP_RESOLUTION, "false"));
+  }
+
+  @Override
+  public int getLDAPRecursiveGroupResolutionMaxDepth() {
+    return getInt(LDAP_RECURSIVE_GROUP_RESOLUTION_MAX_DEPTH, 3);
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
   }

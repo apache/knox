@@ -104,36 +104,8 @@ limitations under the License.
         <value>org.apache.hadoop.security.LdapGroupsMapping</value>
     </property>
     <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.bind.user</name>
-        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.bind.password</name>
-        <value>guest-password</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.url</name>
-        <value>ldap://localhost:33389</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.base</name>
-        <value></value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.filter.user</name>
-        <value>(&amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.filter.group</name>
-        <value>(objectclass=groupOfNames)</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.member</name>
-        <value>member</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.group.name</name>
-        <value>cn</value>
+        <name>gateway.group.config.use.ldap.service</name>
+        <value>true</value>
     </property>
     <property>
         <name>gateway.dispatch.whitelist.services</name>
@@ -176,6 +148,10 @@ limitations under the License.
     <property>
         <name>gateway.ldap.backend.type</name>
         <value>ldap</value>
+    </property>
+    <property>
+        <name>gateway.ldap.recursive.group.resolution</name>
+        <value>true</value>
     </property>
 
     <!-- LDAP Backend specific configuration (proxying to demo ldap) -->

@@ -46,17 +46,21 @@ public class KnoxLdapContextFactoryTest {
     }
 
     @Test
-    public void testSetSystemPasswordBlank() {
+    public void testGetSystemPasswordBlank() {
         final KnoxLdapContextFactory factory = new TestKnoxLdapContextFactory();
         factory.setSystemPassword("");
-        assertNull(factory.getSystemPassword());
+        assertEquals("", factory.getSystemPassword());
+    }
 
+    @Test
+    public void testGetSystemPasswordNull() {
+        final KnoxLdapContextFactory factory = new TestKnoxLdapContextFactory();
         factory.setSystemPassword(null);
         assertNull(factory.getSystemPassword());
     }
 
     @Test
-    public void testSetSystemPasswordIsNotAlias() {
+    public void testGetSystemPasswordIsNotAlias() {
         final KnoxLdapContextFactory factory = new TestKnoxLdapContextFactory();
         final String password = "password";
         factory.setSystemPassword(password);
@@ -64,17 +68,17 @@ public class KnoxLdapContextFactoryTest {
     }
 
     @Test
-    public void testSetSystemPasswordIsAliasFoundInClusterCredentialStore() throws Exception {
+    public void testGetSystemPasswordIsAliasFoundInClusterCredentialStore() throws Exception {
         testAliasFoundInCredentialStore(PasswordLocation.CLUSTER);
     }
 
     @Test
-    public void testSetSystemPasswordIsAliasFoundInGatewayCredentialStore() throws Exception {
+    public void testGetSystemPasswordIsAliasFoundInGatewayCredentialStore() throws Exception {
         testAliasFoundInCredentialStore(PasswordLocation.GATEWAY);
     }
 
     @Test
-    public void testSetSystemPasswordNotFound() throws Exception {
+    public void testGetSystemPasswordNotFound() throws Exception {
         testAliasFoundInCredentialStore(PasswordLocation.NOWHERE);
     }
 
