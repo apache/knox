@@ -9,8 +9,7 @@ Introduced in [KNOX-3247](https://issues.apache.org/jira/browse/KNOX-3247), the 
 Key features include:
 - **Pluggable Backends**: Support for different data sources (JSON files, remote LDAP/AD).
 - **Embedded Server**: No need for an external LDAP server for simple use cases or testing.
-- **Active Directory Integration**: Optimized for proxying to AD with support for `sAMAccountName` and `memberOf`.
-- **Dynamic Schema**: Automatically handles common LDAP/AD attributes even if they aren't part of the base ApacheDS schema.
+- **Active Directory Integration**: Optimized for proxying to AD with support for `sAMAccountName`.
 
 ## Architecture
 
@@ -19,12 +18,12 @@ The Knox LDAP Service is integrated as a core gateway service. It consists of th
 1.  **KnoxLDAPServerManager**: Manages the lifecycle of the ApacheDS instance.
 2.  **GroupLookupInterceptor**: A custom ApacheDS interceptor that captures search requests. If an entry is not found in the local ApacheDS partitions, it delegates the lookup to the configured backend.
 3.  **LdapBackend**: A pluggable interface for fetching user and group data.
-4.  **SchemaManagerFactory**: Programmatically extends the ApacheDS schema to include AD-specific attributes like `memberOf` and `sAMAccountName`.
+4.  **SchemaManagerFactory**: Programmatically extends the ApacheDS schema to include AD-specific attributes like `sAMAccountName`.
 
 When a client performs an LDAP search:
 1.  The request hits the embedded ApacheDS server.
 2.  The `GroupLookupInterceptor` intercepts the search.
-3.  The interceptor attempts to find the user/group locally.
+3.  The interceptor checks the results of the local search.
 4.  If not found, it queries the configured `LdapBackend`.
 5.  Results from the backend are converted into LDAP entries and returned to the client.
 
