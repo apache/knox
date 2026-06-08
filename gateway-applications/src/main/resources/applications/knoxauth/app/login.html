@@ -13,21 +13,18 @@
   limitations under the License.
 -->
 <!DOCTYPE html>
-<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
-<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"><![endif]-->
-<!--[if IE 8]><html class="no-js lt-ie9"><![endif]-->
-<!--[if gt IE 8]><!-->
-<html class="no-js">
-    <!--<![endif]-->
+<html lang="en">
     <head>
         <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <title>KnoxSSO - Sign In</title>
         <meta name="description" content="">
-        <meta name="viewport" content="width=device-width">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link rel="shortcut icon" href="images/favicon.ico">
+        <!-- Bootstrap 5.3.3 -->
         <link href="styles/bootstrap.min.css" media="all" rel="stylesheet" type="text/css" id="bootstrap-css">
+        <!-- Bootstrap Icons 1.11.3 -->
+        <link href="styles/bootstrap-icons.min.css" media="all" rel="stylesheet" type="text/css">
         <link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
         <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
@@ -100,17 +97,17 @@
             <form action="" method="post" accept-charset="utf-8">
                 <fieldset>
                     <div class="fields">
-                        <label><i class="icon-user"></i> Username:</label>
+                        <label><i class="bi bi-person"></i> Username:</label>
                         <input type="text" name="username" id="username" tabindex="1" onkeypress=keypressed(event) autofocus>
-                        <label><i class="icon-lock"></i> Password:</label>
+                        <label><i class="bi bi-lock"></i> Password:</label>
                         <input type="password" name="password" id="password" tabindex="2" autocomplete="off" onkeypress=keypressed(event)>
                     </div>
                     <span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
-                        <i class="icon-warning-sign" style="color:#ae2817;"></i>
+                        <i class="bi bi-exclamation-triangle" style="color:#ae2817;"></i>
                     </span>
-                    <button type="button" class="btn btn-primary btn-block" id="signIn" tabindex="4" onkeypress="keypressed(event)" onclick="login();" style="position: relative; text-align: center;">
+                    <button type="button" class="btn btn-primary w-100" id="signIn" tabindex="4" onkeypress="keypressed(event)" onclick="login();" style="position: relative; text-align: center;">
                         <span>Sign In</span>
-                        <i id="signInLoading" class="icon-spinner icon-spin icon-sign-in"></i>
+                        <i id="signInLoading" class="bi bi-arrow-repeat icon-sign-in"></i>
                     </button>
                 </fieldset>
             </form>

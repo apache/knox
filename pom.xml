@@ -541,6 +541,7 @@
                         <exclude>*.patch</exclude>
                         <exclude>**/applications/**/jquery.**</exclude>
                         <exclude>**/applications/**/bootstrap.min.**</exclude>
+                        <exclude>**/applications/**/bootstrap-icons.min.**</exclude>
                         <exclude>**/applications/**/fonts/**</exclude>
                         <exclude>**/applications/**/libs/**</exclude>
                         <exclude>**/applications/**/assets/**</exclude>
