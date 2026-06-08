@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.EasyMock;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -27,9 +28,12 @@ import org.junit.After;
 
 import java.io.File;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -251,7 +255,7 @@ public class KnoxLDAPServerManagerTest {
                 backendConfig.get("baseDn"), interceptor.getBackend().getBaseDn());
         // LdapNoSuchObjectException will be thrown if expected partition does not exist
         serverManager.directoryService.getPartitionNexus().getPartition(
-                new Dn(serverManager.directoryService.getSchemaManager(), backendConfig.get("baseDn")));
+                new Dn(serverManager.directoryService.getSchemaManager(), interceptor.getBackend().getBaseDn()));
     }
 
     @Test
@@ -276,7 +280,7 @@ public class KnoxLDAPServerManagerTest {
                 backendConfig.get("remoteBaseDn"), interceptor.getBackend().getBaseDn());
         // LdapNoSuchObjectException will be thrown if expected partition does not exist
         serverManager.directoryService.getPartitionNexus().getPartition(
-                new Dn(serverManager.directoryService.getSchemaManager(), backendConfig.get("baseDn")));
+                new Dn(serverManager.directoryService.getSchemaManager(), interceptor.getBackend().getBaseDn()));
     }
 
     @Test
@@ -297,6 +301,17 @@ public class KnoxLDAPServerManagerTest {
 
         serverManager.start();
 
+        // assert that interceptors are found in reverse order
+        List<String> expectedInterceptorOrder = new ArrayList<>();
+        expectedInterceptorOrder.addAll(mockConfig.getLDAPInterceptorNames());
+        Collections.reverse(expectedInterceptorOrder);
+        List<String> interceptorNames = serverManager.directoryService.getInterceptors().stream()
+                .map(Interceptor::getName)
+                .filter(name -> expectedInterceptorOrder.contains(name))
+                .collect(Collectors.toList());
+        assertEquals("Interceptors should be added to directory service in the order specified by the config",
+                expectedInterceptorOrder, interceptorNames);
+
         // Ensure that the partitions are created and backends registered with the file backend interceptor
         UserSearchInterceptor fileInterceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("filebackend");
         assertNotNull("Interceptor should not be null", fileInterceptor);
@@ -304,7 +319,7 @@ public class KnoxLDAPServerManagerTest {
                 fileBackendConfig.get("baseDn"), fileInterceptor.getBackend().getBaseDn());
         // LdapNoSuchObjectException will be thrown if expected partition does not exist
         serverManager.directoryService.getPartitionNexus().getPartition(
-                new Dn(serverManager.directoryService.getSchemaManager(), fileBackendConfig.get("baseDn")));
+                new Dn(serverManager.directoryService.getSchemaManager(), fileInterceptor.getBackend().getBaseDn()));
 
         // Ensure that the partitions are created and backends registered with the ldap backend interceptor
         UserSearchInterceptor ldapInterceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("ldapbackend");
@@ -313,7 +328,49 @@ public class KnoxLDAPServerManagerTest {
                 ldapBackendConfig.get("remoteBaseDn"), ldapInterceptor.getBackend().getBaseDn());
         // LdapNoSuchObjectException will be thrown if expected partition does not exist
         serverManager.directoryService.getPartitionNexus().getPartition(
-                new Dn(serverManager.directoryService.getSchemaManager(), ldapBackendConfig.get("baseDn")));
+                new Dn(serverManager.directoryService.getSchemaManager(), ldapInterceptor.getBackend().getBaseDn()));
+    }
+
+    @Test
+    public void testStartWithMultipleBackendsIdCollision() throws Exception {
+        // Partitions are created using the interceptor name as an id. Whitespace is removed from the
+        // id, but this could result in id collisions and failure to create the partitions. This test
+        // checks that partitions will still be created for the DNs even if the interceptor names
+        // collide.
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("ldapbackend", "ldap backend")).anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        Map<String, String> ldapBackendConfig = createLdapBackendInterceptorConfig();
+        expect(mockConfig.getLDAPInterceptorConfig("ldapbackend")).andReturn(ldapBackendConfig).anyTimes();
+        Map<String, String> ldapBackendConfig2 = createLdapBackendInterceptorConfig();
+        ldapBackendConfig2.put("remoteBaseDn", "dc=ldapbackend,dc=example,dc=org");
+        expect(mockConfig.getLDAPInterceptorConfig("ldap backend")).andReturn(ldapBackendConfig2).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+
+        serverManager.start();
+
+        // Ensure that the partitions are created and backends registered with the ldap backend interceptor
+        UserSearchInterceptor ldapInterceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("ldapbackend");
+        assertNotNull("Interceptor should not be null", ldapInterceptor);
+        assertEquals("LDAP backend dn should match configuration",
+                ldapBackendConfig.get("remoteBaseDn"), ldapInterceptor.getBackend().getBaseDn());
+        // LdapNoSuchObjectException will be thrown if expected partition does not exist
+        serverManager.directoryService.getPartitionNexus().getPartition(
+                new Dn(serverManager.directoryService.getSchemaManager(), ldapInterceptor.getBackend().getBaseDn()));
+
+        // Ensure that the partitions are created and backends registered with the ldap backend interceptor
+        UserSearchInterceptor ldapInterceptor2 = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("ldap backend");
+        assertNotNull("Interceptor should not be null", ldapInterceptor2);
+        assertEquals("LDAP backend dn should match configuration",
+                ldapBackendConfig2.get("remoteBaseDn"), ldapInterceptor2.getBackend().getBaseDn());
+        // LdapNoSuchObjectException will be thrown if expected partition does not exist
+        serverManager.directoryService.getPartitionNexus().getPartition(
+                new Dn(serverManager.directoryService.getSchemaManager(), ldapInterceptor2.getBackend().getBaseDn()));
     }
 
     @Test

@@ -47,8 +47,7 @@ public class InterceptorFactory {
         for (KnoxLdapInterceptorFactory interceptorFactory : loader) {
             if (interceptorFactory.getType().equalsIgnoreCase(interceptorType)) {
                 LOG.ldapInterceptorCreating(interceptorType, "ServiceLoader");
-                Interceptor interceptor = interceptorFactory.create(interceptorName, config);
-                return interceptor;
+                return interceptorFactory.create(interceptorName, config);
             }
         }
 

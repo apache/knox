@@ -51,7 +51,6 @@ public class DuplicateUserFilteringInterceptor extends BaseInterceptor {
                 while (originalResults.next()) {
                     originalEntries.add(originalResults.get());
                 }
-                originalResults.close();
             } catch (CursorException e) {
                 // rethrow exception on incomplete iteration
                 throw new LdapException(e);
