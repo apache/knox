@@ -21,13 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.knox.gateway.GatewayMessages;
-import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.topology.Provider;
@@ -85,13 +83,7 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
 
     addService(ServiceType.GATEWAY_STATUS_SERVICE, gatewayServiceFactory.create(this, ServiceType.GATEWAY_STATUS_SERVICE, config, options));
 
-    // LDAP Service - infrastructure service for embedded LDAP server
-    if (config.isLDAPEnabled()) {
-      KnoxLDAPService ldapService = new KnoxLDAPService();
-      ldapService.init(config, options);
-      GatewayServer.registerConfigChangeListener(ldapService);
-      addService(ServiceType.LDAP_SERVICE, ldapService);
-    }
+    addService(ServiceType.LDAP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_SERVICE, config, options));
   }
 
   @Override
