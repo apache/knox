@@ -1754,8 +1754,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLDAPBackendType() {
-    return get(LDAP_BACKEND_TYPE, "file");
+  public List<String> getLDAPInterceptorNames() {
+    return splitConfigValueToList(LDAP_INTERCEPTOR_NAMES);
   }
 
   @Override
@@ -1782,9 +1782,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Map<String, String> getLDAPBackendConfig(String backendType) {
+  public Map<String, String> getLDAPInterceptorConfig(String interceptorName) {
     Map<String, String> config = new HashMap<>();
-    String prefix = "gateway.ldap.backend." + backendType + ".";
+    String prefix = "gateway.ldap.interceptor." + interceptorName + ".";
 
     for (String key : getPropertyNames()) {
       if (key != null && key.startsWith(prefix)) {

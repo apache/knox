@@ -1911,6 +1911,7 @@ public class KnoxCLI extends Configured implements Tool {
         return;
       }
 
+      services.start();
       try {
         final KnoxLDAPService ldapService = services.getService(ServiceType.LDAP_SERVICE);
         out.println("Querying KnoxLDAPService for groups of user: " + username);

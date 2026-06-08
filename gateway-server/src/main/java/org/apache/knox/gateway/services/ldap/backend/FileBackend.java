@@ -41,9 +41,12 @@ import java.util.Map;
 public class FileBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
+    static final String TYPE = "file";
+
     private Map<String, UserData> users = new HashMap<>();
-    private String dataFile;
-    private String baseDn;
+    private final String dataFile;
+    private final String baseDn;
+    private final String name;
 
     static class UserData {
         String username;
@@ -58,16 +61,26 @@ public class FileBackend implements LdapBackend {
         List<UserData> users;
     }
 
-    @Override
-    public String getName() {
-        return "file";
-    }
-
-    @Override
-    public void initialize(Map<String, String> config) throws Exception {
+    public FileBackend(String name, Map<String, String> config) throws Exception {
+        this.name = name;
         dataFile = config.getOrDefault("dataFile", "ldap-users.json");
         baseDn = config.getOrDefault("baseDn", "dc=proxy,dc=com");
         loadData();
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public String getBaseDn() {
+        return baseDn;
     }
 
     private void loadData() throws Exception {

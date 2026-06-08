@@ -25,6 +25,7 @@ import org.junit.After;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -169,13 +170,15 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).atLeastOnce();
         expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com").atLeastOnce();
-        expect(mockConfig.getLDAPBackendType()).andReturn(backendType).atLeastOnce();
-        expect(mockConfig.getLDAPBackendConfig(backendType)).andReturn(buildBackendConfig(backendType)).atLeastOnce();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend")).atLeastOnce();
+        expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
         replay(mockConfig);
     }
 
     private Map<String, String> buildBackendConfig(String backendType) {
         final Map<String, String> backendConfig = new HashMap<>();
+        backendConfig.put("interceptorType", "backend");
+        backendConfig.put("backendType", backendType);
         if ("ldap".equals(backendType)) {
             backendConfig.put("url", "ldap://localhost:33389");
             backendConfig.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");

@@ -39,7 +39,6 @@ import org.apache.knox.gateway.security.ldap.SimpleDirectoryService;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -137,20 +136,17 @@ public class LdapProxyBackendTest {
         }
     }
 
-    @Before
-    public void setUp() throws Exception {
-        ldapProxyBackend = new LdapProxyBackend();
-    }
-
     @After
     public void tearDown() throws Exception {
-        ldapProxyBackend.close();
+        if (ldapProxyBackend != null) {
+            ldapProxyBackend.close();
+        }
     }
 
     @Test
     public void testGetUserByDefaultUserSearchFilter() throws Exception {
         // default searches by uid and uses group search for membership
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
         Entry entry = ldapProxyBackend.getUser("ldaptest1", schemaManager);
         validateUserEntry(entry, "ldaptest1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
@@ -161,7 +157,7 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testGetUserNotFound() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
         Entry entry = ldapProxyBackend.getUser("nouser", schemaManager);
         assertNull(entry);
@@ -170,7 +166,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetUserByUID() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("uid");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("ldaptest1", schemaManager);
         validateUserEntry(entry, "ldaptest1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
@@ -182,7 +178,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetUserByCN() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("cn");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("TestCn1", schemaManager);
         validateUserEntry(entry, "TestCn1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
@@ -194,7 +190,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetUserBySAMAccountName() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("TestSam1", schemaManager);
         validateUserEntry(entry, "TestSam1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
@@ -208,7 +204,7 @@ public class LdapProxyBackendTest {
     public void testGetUserUseMemberOf() throws Exception {
         Map<String, String> config = new HashMap<>(ldapBackendConfig);
         config.put("useMemberOf", "true");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("ldaptest2", schemaManager);
         validateUserEntry(entry, "ldaptest2", "TestCn2", "ldaptest2@example.com", "Test user ldaptest2");
@@ -219,7 +215,7 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testGetUserGroups() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
         assertTrue(userGroups.contains("group1"));
@@ -228,7 +224,7 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testGetUserGroupsNoGroups() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2");
         assertTrue(userGroups.isEmpty());
@@ -236,7 +232,7 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testGetUserGroupsNoUser() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("nobody");
         assertTrue(userGroups.isEmpty());
@@ -246,7 +242,7 @@ public class LdapProxyBackendTest {
     public void testGetUserGroupsUseMemberOf() throws Exception {
         Map<String, String> config = new HashMap<>(ldapBackendConfig);
         config.put("useMemberOf", "true");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2");
         assertTrue(userGroups.contains("groupMemberOf1"));
@@ -257,7 +253,7 @@ public class LdapProxyBackendTest {
     public void testGetUserGroupsUseMemberOfNoGroups() throws Exception {
         Map<String, String> config = new HashMap<>(ldapBackendConfig);
         config.put("useMemberOf", "true");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
         assertTrue(userGroups.isEmpty());
@@ -267,7 +263,7 @@ public class LdapProxyBackendTest {
     public void testGetUserGroupsUseMemberOfNoUser() throws Exception {
         Map<String, String> config = new HashMap<>(ldapBackendConfig);
         config.put("useMemberOf", "true");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("nobody");
         assertTrue(userGroups.isEmpty());
@@ -275,19 +271,19 @@ public class LdapProxyBackendTest {
 
     @Test
     public void testSearchUsers() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateUserSearch("*", 3, Set.of("ldaptest1", "ldaptest2", "guest"));
     }
 
     @Test
     public void testSearchUsersPartial() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateUserSearch("ldap*", 2, Set.of("ldaptest1", "ldaptest2"));
     }
 
     @Test
     public void testSearchUsersNoneFound() throws Exception {
-        ldapProxyBackend.initialize(ldapBackendConfig);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
     }
@@ -295,21 +291,21 @@ public class LdapProxyBackendTest {
     @Test
     public void testSearchUsersByCn() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("cn");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateUserSearch("*", 3, Set.of("TestCn1", "TestCn2", "Guest"));
     }
 
     @Test
     public void testSearchUsersPartialByCn() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("cn");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateUserSearch("TestCn*", 2, Set.of("TestCn1", "TestCn2"));
     }
 
     @Test
     public void testSearchUsersNoneFoundByCn() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("cn");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
     }
@@ -317,21 +313,21 @@ public class LdapProxyBackendTest {
     @Test
     public void testSearchUsersBySAMAccountName() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateUserSearch("*", 2, Set.of("TestSam1", "TestSam2"));
     }
 
     @Test
     public void testSearchUsersPartialBySAMAccountName() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateUserSearch("TestSam*", 2, Set.of("TestSam1", "TestSam2"));
     }
 
     @Test
     public void testSearchUsersNoneFoundBySAMAccountName() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         List<Entry> entries = ldapProxyBackend.searchUsers("nobody*", schemaManager);
         assertTrue(entries.isEmpty());
     }
@@ -339,7 +335,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetRecursiveUserGroupsDepth2() throws Exception {
         Map<String, String> config = createRecursiveConfig(2);
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
         assertEquals(4, userGroups.size());
@@ -352,7 +348,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetRecursiveUserGroupsDepth4() throws Exception {
         Map<String, String> config = createRecursiveConfig(4);
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
         assertEquals(6, userGroups.size());
@@ -367,7 +363,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetRecursiveUserGroupsWithCycle() throws Exception {
         Map<String, String> config = createRecursiveConfig(10);
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
         assertTrue(userGroups.contains("cycleGroupA"));
@@ -377,7 +373,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testGetUserRecursiveGroups() throws Exception {
         Map<String, String> config = createRecursiveConfig(5);
-        ldapProxyBackend.initialize(config);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("recursiveUser", schemaManager);
         validateMemberOf(entry, Set.of(
@@ -394,7 +390,7 @@ public class LdapProxyBackendTest {
         Map<String, String> config = createRecursiveConfig(5);
 
         final AtomicInteger cacheHits = new AtomicInteger(0);
-        ldapProxyBackend = new LdapProxyBackend() {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config) {
             @Override
             protected Map<String, Set<Entry>> createResolvedParentsCache() {
                 return new HashMap<>() {
@@ -408,7 +404,6 @@ public class LdapProxyBackendTest {
                 };
             }
         };
-        ldapProxyBackend.initialize(config);
 
         // Search for all recursive users (recursiveUser and recursiveUser2)
         // They share level1Group, cycleGroupA, and all their ancestors.

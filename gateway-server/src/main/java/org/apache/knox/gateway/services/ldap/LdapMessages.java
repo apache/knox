@@ -49,13 +49,29 @@ public interface LdapMessages {
             text = "Failed to stop LDAP service: {0}")
     void ldapServiceStopFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR,
+            text = "Interceptor type ''{0}'' for interceptor ''{1}'' not found")
+    void ldapInterceptorNotFound(String interceptorType, String interceptorName);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Interceptor type not found for interceptor ''{0}''")
+    void ldapInterceptorTypeNotFound(String interceptorName);
+
+    @Message(level = MessageLevel.INFO,
+            text = "Creating interceptor: {0} (via {1})")
+    void ldapInterceptorCreating(String interceptorName, String source);
+
     @Message(level = MessageLevel.INFO,
             text = "Loading backend: {0} (via {1})")
     void ldapBackendLoading(String backendName, String source);
 
-    @Message(level = MessageLevel.WARN,
-            text = "Backend ''{0}'' not found, using FileBackend")
-    void ldapBackendNotFound(String backendName);
+    @Message(level = MessageLevel.ERROR,
+            text = "Backend type ''{0}'' for backend ''{1}'' not found")
+    void ldapBackendNotFound(String backendType, String backendName);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Backend type not found for backend ''{0}''")
+    void ldapBackendTypeNotFound(String backendName);
 
     @Message(level = MessageLevel.WARN,
             text = "Data file not found: {0}, creating sample data")
@@ -72,6 +88,10 @@ public interface LdapMessages {
     @Message(level = MessageLevel.DEBUG,
             text = "LDAP Search: {0} | {1}")
     void ldapSearch(String baseDn, String filter);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "LDAP Search failed: {0} | {1}, {2}")
+    void ldapSearchFailed(String baseDn, String filter, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.DEBUG,
             text = "LDAP Bind: {0}")

@@ -128,7 +128,7 @@ public interface GatewayConfig {
   String LDAP_ENABLED = "gateway.ldap.enabled";
   String LDAP_PORT = "gateway.ldap.port";
   String LDAP_BASE_DN = "gateway.ldap.base.dn";
-  String LDAP_BACKEND_TYPE = "gateway.ldap.backend.type";
+  String LDAP_INTERCEPTOR_NAMES = "gateway.ldap.interceptor.names";
   String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
   String LDAP_RECURSIVE_GROUP_RESOLUTION = "gateway.ldap.recursive.group.resolution";
   String LDAP_RECURSIVE_GROUP_RESOLUTION_MAX_DEPTH = "gateway.ldap.recursive.group.resolution.max.depth";
@@ -1069,10 +1069,10 @@ public interface GatewayConfig {
    */
   String getLDAPBaseDN();
 
-  /**
-   * @return the backend type for LDAP (file, ldap, jdbc, etc.)
-   */
-  String getLDAPBackendType();
+    /**
+     * @return the list of interceptor names for LDAP server
+     */
+  List<String> getLDAPInterceptorNames();
 
   /**
    * @return the path to the data file for file-based backend
@@ -1080,14 +1080,14 @@ public interface GatewayConfig {
   String getLDAPBackendDataFile();
 
   /**
-   * Get backend-specific configuration properties.
-   * Returns all properties with prefix "gateway.ldap.backend.{backendType}."
+   * Get interceptor-specific configuration properties.
+   * Returns all properties with prefix "gateway.ldap.interceptor.{interceptorName}."
    * with the prefix stripped from the keys.
    *
-   * @param backendType the backend type (e.g., "file", "ldap", "database")
+   * @param interceptor the interceptor name
    * @return map of configuration key-value pairs for the specified backend
    */
-  Map<String, String> getLDAPBackendConfig(String backendType);
+  Map<String, String> getLDAPInterceptorConfig(String interceptor);
 
   /**
    * @return true if recursive group resolution is enabled for LDAP service
