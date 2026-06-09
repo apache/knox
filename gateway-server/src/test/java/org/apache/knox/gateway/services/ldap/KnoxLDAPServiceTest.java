@@ -19,22 +19,22 @@ package org.apache.knox.gateway.services.ldap;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.junit.Test;
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for KnoxLDAPService.
@@ -163,7 +163,7 @@ public class KnoxLDAPServiceTest {
         verify(mockConfig);
     }
 
-    private void setupMockConfig(String backendType) {
+    private void setupMockConfig(String backendType) throws Exception {
         expect(mockConfig.isLDAPEnabled()).andReturn(true).atLeastOnce();
         expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).atLeastOnce();
         expect(mockConfig.getLDAPRecursiveGroupResolutionMaxDepth()).andReturn(0).atLeastOnce();

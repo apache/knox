@@ -132,6 +132,9 @@ public interface GatewayConfig {
   String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
   String LDAP_RECURSIVE_GROUP_RESOLUTION = "gateway.ldap.recursive.group.resolution";
   String LDAP_RECURSIVE_GROUP_RESOLUTION_MAX_DEPTH = "gateway.ldap.recursive.group.resolution.max.depth";
+  String LDAP_ROLES_LOOKUP_STRATEGY = "gateway.ldap.roles.lookup.strategy";
+  String LDAP_ROLES_LOOKUP_REST_API_ENDPOINT = "gateway.ldap.roles.lookup.rest.api.endpoint";
+  String LDAP_ROLES_LOOKUP_FILE_PATH = "gateway.ldap.roles.lookup.file.path";
 
   /**
    * The location of the gateway configuration.
@@ -1098,6 +1101,21 @@ public interface GatewayConfig {
    * @return the maximum depth for recursive group search
    */
   int getLDAPRecursiveGroupResolutionMaxDepth();
+
+  /**
+   * @return the LDAP roles lookup strategy (file or rest)
+   */
+  String getLdapRolesLookupStrategy();
+
+  /**
+   * @return the LDAP roles lookup REST API endpoint
+   */
+  String getLdapRolesLookupRestApiEndpoint();
+
+  /**
+   * @return the LDAP roles lookup file path
+   */
+  String getLdapRolesLookupFilePath();
 
   /**
    * @return set of all property names in the configuration

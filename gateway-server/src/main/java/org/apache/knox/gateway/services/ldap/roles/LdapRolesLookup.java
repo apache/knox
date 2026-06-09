@@ -15,29 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.interceptor;
+package org.apache.knox.gateway.services.ldap.roles;
 
-import org.apache.directory.server.core.api.interceptor.Interceptor;
-import org.apache.knox.gateway.config.GatewayConfig;
-
-import java.util.Map;
+import java.util.Collection;
 
 /**
- * Factory interface for creating Interceptor instances.
+ * Interface for looking up roles for a user, potentially replacing their LDAP groups.
  */
-public interface KnoxLdapInterceptorFactory {
+public interface LdapRolesLookup {
     /**
-     * Instantiate and interceptor
-     * @param gatewayConfig the Knox Gateway configuration
-     * @param name the name of the interceptor
-     * @param interceptorConfig the configuration for the interceptor
-     * @return the interceptor
+     * Look up roles for the given user and their groups.
+     *
+     * @param userId the user ID
+     * @param groups the list of groups for the user
+     * @return a list of roles (in the format "scope:name" or just "name" depending on implementation)
+     * @throws RoleLookupException if an error occurs during lookup
      */
-    Interceptor create(GatewayConfig gatewayConfig, String name, Map<String, String> interceptorConfig) throws Exception;
-
-    /**
-     * Get the type of interceptor this factory creates
-     * @return the type of interceptor ths factory creates
-     */
-    String getType();
+    Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleLookupException;
 }

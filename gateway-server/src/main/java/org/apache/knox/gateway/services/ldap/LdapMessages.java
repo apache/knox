@@ -58,7 +58,7 @@ public interface LdapMessages {
     void ldapInterceptorTypeNotFound(String interceptorName);
 
     @Message(level = MessageLevel.INFO,
-            text = "Creating interceptor: {0} (via {1})")
+            text = "Creating LDAP interceptor: {0} (via {1})")
     void ldapInterceptorCreating(String interceptorName, String source);
 
     @Message(level = MessageLevel.INFO,
@@ -154,4 +154,22 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.DEBUG, text = "Added parent {1} to cache for group {0}")
     void ldapRecursiveGroupSearchCacheAdd(String groupDn, String parentDn);
+
+    @Message(level = MessageLevel.INFO, text = "Reloading LDAP roles lookup configuration...")
+    void ldapRolesLookupReloadingConfig();
+
+    @Message(level = MessageLevel.ERROR, text = "Failed to reload LDAP roles lookup: {0}")
+    void ldapRolesLookupReloadFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.INFO, text = "LDAP roles lookup is enabled with strategy: {0}")
+    void ldapRolesLookupEnabled(String strategy);
+
+    @Message(level = MessageLevel.INFO, text = "LDAP roles lookup is disabled")
+    void ldapRolesLookupDisabled();
+
+    @Message(level = MessageLevel.DEBUG, text = "LDAP roles lookup for user {0} and groups {1} returned roles: {2}")
+    void ldapRolesLookupResult(String user, String groups, String roles);
+
+    @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
+    void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

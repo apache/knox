@@ -20,6 +20,7 @@ package org.apache.knox.gateway;
 import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.easymock.EasyMock;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -39,6 +40,11 @@ public class GatewayServerTest {
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
+
+  @Before
+  public void setup() {
+    GatewayServer.emptyConfigChangeListener();
+  }
 
   @Test
   public void testRefreshGatewayConfig() throws Exception {

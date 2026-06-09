@@ -34,10 +34,11 @@ public class LdapServiceFactory extends AbstractServiceFactory {
     @Override
     protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options,
                                     String implementation) throws ServiceLifecycleException {
-        Service service = null;
+        KnoxLDAPService service = null;
         if (shouldCreateService(implementation)) {
             service = new KnoxLDAPService();
-            GatewayServer.registerConfigChangeListener((KnoxLDAPService) service);
+            GatewayServer.registerConfigChangeListener(service);
+            logServiceUsage(service.getClass().getName(), serviceType);
         }
         return service;
     }

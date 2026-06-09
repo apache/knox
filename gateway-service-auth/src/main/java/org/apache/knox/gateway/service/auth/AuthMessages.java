@@ -20,6 +20,7 @@ package org.apache.knox.gateway.service.auth;
 import org.apache.knox.gateway.i18n.messages.Message;
 import org.apache.knox.gateway.i18n.messages.MessageLevel;
 import org.apache.knox.gateway.i18n.messages.Messages;
+import org.apache.knox.gateway.i18n.messages.StackTrace;
 
 @Messages(logger = "org.apache.knox.gateway.service.auth")
 public interface AuthMessages {
@@ -29,5 +30,8 @@ public interface AuthMessages {
 
   @Message(level = MessageLevel.INFO, text = "Serving request for path: {0}")
   void pathValue(String path);
+
+  @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
+  void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
 }

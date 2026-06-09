@@ -251,6 +251,10 @@ public class GatewayServer {
     configChangeListeners.remove(listener);
   }
 
+  static void emptyConfigChangeListener() {
+    configChangeListeners.clear();
+  }
+
   private static void setupGatewayConfigRefresh(GatewayConfigImpl config) {
     Path resourcePath = Paths.get(config.getGatewayConfDir(), RELOADABLE_CONFIG_FILENAME);
     int refreshInterval = config.getConfigRefreshInterval();

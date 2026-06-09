@@ -33,7 +33,7 @@ import java.util.Map;
 public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    private KnoxLDAPServerManager ldapServerManager;
+    KnoxLDAPServerManager ldapServerManager;
     private boolean enabled;
 
     @Override
@@ -93,6 +93,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
                 ldapServerManager.stop();
                 ldapServerManager.initialize(config);
                 ldapServerManager.start();
+                //LDAP roles lookup service also implements onGatewayConfigChanged -> no need to do anything here
             } else if (ldapServerManager != null) {
                 ldapServerManager.stop();
                 ldapServerManager = null;

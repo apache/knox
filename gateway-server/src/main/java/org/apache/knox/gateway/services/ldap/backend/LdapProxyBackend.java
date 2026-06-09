@@ -525,7 +525,7 @@ public class LdapProxyBackend implements LdapBackend {
 
     private void logRecursiveSearchProgress(String username, List<Entry> groups, int depth) {
         LOG.ldapRecursiveGroupSearchProgress(username, groups.size(),
-                String.join(",", groups.stream().map(e -> e.getDn().getRdn().getValue()).collect(Collectors.joining())),
+                groups.stream().map(e -> e.getDn().getRdn().getValue()).collect(Collectors.joining(",")),
                 depth);
     }
 
