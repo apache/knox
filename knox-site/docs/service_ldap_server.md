@@ -139,7 +139,7 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 
 <property>
     <name>gateway.ldap.interceptor.names</name>
-    <value>localfile,adexample,duplicatefilter</value>
+    <value>localfile,adexample,extrenalldap,duplicatefilter</value>
 </property>
 
 <!-- File-based LDAP backend -->
@@ -156,7 +156,7 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
     <value>${GATEWAY_DATA_HOME}/ldap-users.json</value>
 </property>
 
-<!-- LDAP backend proxy configuration -->
+<!-- LDAP backend proxy configured for Active Directory -->
 <property>
     <name>gateway.ldap.interceptor.adexample.interceptorType</name>
     <value>backend</value>
@@ -193,6 +193,59 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
     <name>gateway.ldap.interceptor.adexample.useMemberOf</name>
     <value>true</value>
 </property>
+
+<!--
+Example: Using external LDAP with authentication (supports both naming conventions)
+<property>
+    <name>gateway.ldap.interceptor.externalldap.backendType</name>
+    <value>ldap</value>
+    <description>Backend type for LDAP service. Currently supported: file, ldap. Future: jdbc, knox.</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.url</name>
+    <value>ldap://ldap.example.com:389</value>
+    <description>LDAP server URL</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.remoteBaseDn</name>
+    <value>dc=example,dc=com</value>
+    <description>Base DN of the remote LDAP server</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.systemUsername</name>
+    <value>cn=admin,dc=example,dc=com</value>
+    <description>LDAP bind DN for authentication (or use bindDn)</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.systemPassword</name>
+    <value>secret</value>
+    <description>LDAP bind password (or use bindPassword)</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.userSearchBase</name>
+    <value>ou=people,dc=example,dc=com</value>
+    <description>Base DN for user searches on remote server (defaults to ou=people,{remoteBaseDn})</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.groupSearchBase</name>
+    <value>ou=groups,dc=example,dc=com</value>
+    <description>Base DN for group searches on remote server (defaults to ou=groups,{remoteBaseDn})</description>
+</property>
+-->
+<!--
+Alternative: Use host and port instead of URL
+<property>
+    <name>gateway.ldap.interceptor.externalldap.host</name>
+    <value>localhost</value>
+    <description>LDAP server hostname</description>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.externalldap.port</name>
+    <value>33389</value>
+    <description>LDAP server port</description>
+</property>
+-->
+
 
 <!-- Duplicate Filter Interceptor -->
 <property>
