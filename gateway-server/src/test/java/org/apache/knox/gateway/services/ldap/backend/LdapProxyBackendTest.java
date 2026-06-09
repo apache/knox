@@ -18,11 +18,15 @@
 package org.apache.knox.gateway.services.ldap.backend;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
+import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
@@ -49,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LdapProxyBackendTest {
@@ -181,10 +186,19 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("TestCn1", schemaManager);
-        validateUserEntry(entry, "TestCn1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
+        validateUserEntry(entry, "ldaptest1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
         validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
                 "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testGetUserByCNFillsInUIDIfNotPresent() throws Exception {
+        Map<String, String> config = createConfigWithUserAttr("cn");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        Entry entry = ldapProxyBackend.getUser("TestCn3", schemaManager);
+        validateUserEntry(entry, "TestCn3", "TestCn3", "ldaptest3@example.com", "Test user ldaptest3");
     }
 
     @Test
@@ -193,11 +207,21 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         Entry entry = ldapProxyBackend.getUser("TestSam1", schemaManager);
-        validateUserEntry(entry, "TestSam1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
+        validateUserEntry(entry, "ldaptest1", "TestCn1", "ldaptest1@example.com", "Test user ldaptest1");
         assertEquals("TestSam1", entry.get("sAMAccountName").getString());
         validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
                 "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testGetUserBySAMAccountNameFillsInUIDIfNotPresent() throws Exception {
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        Entry entry = ldapProxyBackend.getUser("TestSam3", schemaManager);
+        validateUserEntry(entry, "TestSam3", "TestCn3", "ldaptest3@example.com", "Test user ldaptest3");
+        assertEquals("TestSam3", entry.get("sAMAccountName").getString());
     }
 
     @Test
@@ -217,7 +241,7 @@ public class LdapProxyBackendTest {
     public void testGetUserGroups() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
         assertTrue(userGroups.contains("group1"));
         assertTrue(userGroups.contains("group2"));
     }
@@ -226,7 +250,7 @@ public class LdapProxyBackendTest {
     public void testGetUserGroupsNoGroups() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2", schemaManager);
         assertTrue(userGroups.isEmpty());
     }
 
@@ -234,7 +258,7 @@ public class LdapProxyBackendTest {
     public void testGetUserGroupsNoUser() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("nobody");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("nobody", schemaManager);
         assertTrue(userGroups.isEmpty());
     }
 
@@ -244,7 +268,7 @@ public class LdapProxyBackendTest {
         config.put("useMemberOf", "true");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest2", schemaManager);
         assertTrue(userGroups.contains("groupMemberOf1"));
         assertTrue(userGroups.contains("groupMemberOf2"));
     }
@@ -255,7 +279,7 @@ public class LdapProxyBackendTest {
         config.put("useMemberOf", "true");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
         assertTrue(userGroups.isEmpty());
     }
 
@@ -265,7 +289,7 @@ public class LdapProxyBackendTest {
         config.put("useMemberOf", "true");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("nobody");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("nobody", schemaManager);
         assertTrue(userGroups.isEmpty());
     }
 
@@ -292,14 +316,14 @@ public class LdapProxyBackendTest {
     public void testSearchUsersByCn() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("cn");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
-        validateUserSearch("*", 3, Set.of("TestCn1", "TestCn2", "Guest"));
+        validateUserSearch("*", 4, Set.of("ldaptest1", "ldaptest2", "Guest", "TestCn3"));
     }
 
     @Test
     public void testSearchUsersPartialByCn() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("cn");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
-        validateUserSearch("TestCn*", 2, Set.of("TestCn1", "TestCn2"));
+        validateUserSearch("TestCn*", 3, Set.of("ldaptest1", "ldaptest2", "TestCn3"));
     }
 
     @Test
@@ -314,14 +338,14 @@ public class LdapProxyBackendTest {
     public void testSearchUsersBySAMAccountName() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
-        validateUserSearch("*", 2, Set.of("TestSam1", "TestSam2"));
+        validateUserSearch("*", 3, Set.of("ldaptest1", "ldaptest2", "TestSam3"));
     }
 
     @Test
     public void testSearchUsersPartialBySAMAccountName() throws Exception {
         Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
-        validateUserSearch("TestSam*", 2, Set.of("TestSam1", "TestSam2"));
+        validateUserSearch("TestSam*", 3, Set.of("ldaptest1", "ldaptest2", "TestSam3"));
     }
 
     @Test
@@ -337,7 +361,7 @@ public class LdapProxyBackendTest {
         Map<String, String> config = createRecursiveConfig(2);
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser", schemaManager);
         assertEquals(4, userGroups.size());
         assertTrue(userGroups.contains("level1Group"));
         assertTrue(userGroups.contains("level2Group"));
@@ -350,7 +374,7 @@ public class LdapProxyBackendTest {
         Map<String, String> config = createRecursiveConfig(4);
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser", schemaManager);
         assertEquals(6, userGroups.size());
         assertTrue(userGroups.contains("level1Group"));
         assertTrue(userGroups.contains("level2Group"));
@@ -365,7 +389,7 @@ public class LdapProxyBackendTest {
         Map<String, String> config = createRecursiveConfig(10);
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
-        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser");
+        List<String> userGroups = ldapProxyBackend.getUserGroups("recursiveUser", schemaManager);
         assertTrue(userGroups.contains("cycleGroupA"));
         assertTrue(userGroups.contains("cycleGroupB"));
     }
@@ -377,54 +401,238 @@ public class LdapProxyBackendTest {
 
         Entry entry = ldapProxyBackend.getUser("recursiveUser", schemaManager);
         validateMemberOf(entry, Set.of(
-                "cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=level3Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=level4Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org"));
+                "cn=level1Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level3Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level4Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
     public void testSearchUsersRecursiveWithSharedGroups() throws Exception {
-        Map<String, String> config = createRecursiveConfig(5);
+        testSearchUsersRecursiveWithSharedGroups(
+                () -> ldapProxyBackend.searchUsers("recursiveUser*", schemaManager));
+    }
 
-        final AtomicInteger cacheHits = new AtomicInteger(0);
-        ldapProxyBackend = new LdapProxyBackend("testbackend", config) {
-            @Override
-            protected Map<String, Set<Entry>> createResolvedParentsCache() {
-                return new HashMap<>() {
-                    @Override
-                    public Set< org.apache.directory.api.ldap.model.entry.Entry> get(Object key) {
-                        if (super.get(key) != null) {
-                            cacheHits.incrementAndGet();
-                        }
-                        return super.get(key);
-                    }
-                };
-            }
-        };
+    @Test
+    public void testSearchRecursiveWithSharedGroups() throws Exception {
+        testSearchUsersRecursiveWithSharedGroups(
+                () -> ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=recursiveUser*)", schemaManager));
+    }
 
-        // Search for all recursive users (recursiveUser and recursiveUser2)
-        // They share level1Group, cycleGroupA, and all their ancestors.
-        List<Entry> entries = ldapProxyBackend.searchUsers("recursiveUser*", schemaManager);
-        assertEquals(2, entries.size());
+    @Test
+    public void testSearchObjectClassInetOrgPerson() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(objectClass=inetOrgPerson)", 4, Set.of("ldaptest1", "ldaptest2", "guest", "TestCn3"));
+    }
 
-        Set<String> expectedGroups = Set.of(
-                "cn=level1Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=level2Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=level3Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=level4Group,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org",
-                "cn=cycleGroupB,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org");
+    @Test
+    public void testSearchByUid() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(uid=guest)", 1, Set.of("guest"));
+    }
 
-        for (Entry entry : entries) {
-            validateMemberOf(entry, expectedGroups);
-        }
+    @Test
+    public void testSearchByUidWildcard() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(uid=*)", 3, Set.of("ldaptest1", "ldaptest2", "guest"));
+    }
 
-        // Verify that caching actually happened.
-        // For the second user, many groups should have been found in the cache.
-        assertEquals("Expected 6 cache hits for shared groups, but got " + cacheHits.get(), 6, cacheHits.get());
+    @Test
+    public void testSearchByUidSubstringWildcard() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(uid=ldap*)", 2, Set.of("ldaptest1", "ldaptest2"));
+    }
+
+    @Test
+    public void testSearchObjectClassGroupOfNames() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=groups,dc=hadoop,dc=apache,dc=org", "(objectClass=groupOfNames)", 3, Set.of("group1", "group2", "nameddifferently"));
+    }
+
+    @Test
+    public void testSearchByCn() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=groups,dc=hadoop,dc=apache,dc=org", "(cn=group1)", 1, Set.of("group1"));
+    }
+
+    @Test
+    public void testSearchByCnWildcard() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=groups,dc=hadoop,dc=apache,dc=org", "(cn=*)", 3, Set.of("group1", "group2", "nameddifferently"));
+    }
+
+    @Test
+    public void testSearchByCnWSubstringildcard() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("ou=groups,dc=hadoop,dc=apache,dc=org", "(cn=group*)", 2, Set.of("group1", "group2"));
+    }
+
+    @Test
+    public void testSearchByUidOrCnWildcard() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        validateSearch("dc=hadoop,dc=apache,dc=org", "(|(uid=ldap*)(cn=group*))", 4, Set.of("ldaptest1", "ldaptest2", "group1", "group2"));
+    }
+
+    @Test
+    public void testSearchRecursiveUserGroupsDepth2() throws Exception {
+        Map<String, String> config = createRecursiveConfig(2);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=recursiveUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=level1Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchRecursiveGroupsDepth4() throws Exception {
+        Map<String, String> config = createRecursiveConfig(4);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=recursiveUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=level1Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level3Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level4Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchRecursiveGroups() throws Exception {
+        Map<String, String> config = createRecursiveConfig(10);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=recursiveUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=level1Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level3Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level4Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchRecursiveUserGroupsViaMemberOfDepth2() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(2);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=memberOfUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=memberOflevel1,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel2,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchRecursiveGroupsViaMemberOfDepth3() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(3);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=memberOfUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=memberOflevel1,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel3,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleA,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchRecursiveGroupsViaMemberOfDepth4() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(4);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=memberOfUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=memberOflevel1,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel3,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel4,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleB,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchRecursiveGroupsViaMemberOf() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(10);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=memberOfUser)", schemaManager);
+        assertEquals(1, entries.size());
+        validateMemberOf(entries.get(0), Set.of(
+                "cn=memberOflevel1,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel3,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel4,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleB,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchUsersRecursiveWithSharedGroupsViaMemberOf() throws Exception {
+        testSearchUsersRecursiveSharedGroupsViaMemberOf(
+                () -> ldapProxyBackend.searchUsers("memberOfUser*", schemaManager));
+    }
+
+    @Test
+    public void testSearchRecursiveWithSharedGroupsViaMemberOf() throws Exception {
+        testSearchUsersRecursiveSharedGroupsViaMemberOf(
+                () -> ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=memberOfUser*)", schemaManager));
+    }
+
+    @Test
+    public void testAuthenticate() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        Dn dn = new Dn("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org");
+        assertTrue(ldapProxyBackend.authenticate(dn, "guest-password"));
+    }
+
+    @Test
+    public void testAuthenticateBadPassword() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        Dn dn = new Dn("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org");
+        assertFalse(ldapProxyBackend.authenticate(dn, "bad-password"));
+    }
+
+    @Test
+    public void testAuthenticateNoUser() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        Dn dn = new Dn("uid=nobody,ou=people,dc=hadoop,dc=apache,dc=org");
+        assertFalse(ldapProxyBackend.authenticate(dn, "guest-password"));
+    }
+
+    @Test
+    public void testAuthenticateConvertsBaseDn() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("baseDn", "dc=proxy,dc=org");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        Dn dn = new Dn("uid=guest,ou=people,dc=proxy,dc=org");
+        assertTrue(ldapProxyBackend.authenticate(dn, "guest-password"));
+    }
+
+    @Test
+    public void testAuthenticateConvertsUserSearchBase() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("baseDn", "dc=proxy,dc=org");
+        config.put("userSearchBase", "ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        Dn dn = new Dn("uid=memberOfUser2,ou=people,dc=proxy,dc=org");
+        assertTrue(ldapProxyBackend.authenticate(dn, "memberOfUser2-password"));
     }
 
     // Helper methods for refactoring
@@ -444,6 +652,16 @@ public class LdapProxyBackendTest {
         return config;
     }
 
+    private Map<String, String> createRecursiveConfigForMemberOf(int depth) {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        config.put("recursiveGroupResolutionMaxDepth", String.valueOf(depth));
+        config.put("userSearchBase", "ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org");
+        config.put("groupSearchBase", "ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org");
+        config.put("useMemberOf", "true");
+        return config;
+    }
+
     private void validateUserEntry(Entry entry, String expectedUid, String expectedCn, String expectedMail, String expectedDesc) throws Exception {
         assertEquals(expectedUid, entry.get("uid").getString());
         assertEquals(expectedCn, entry.get("cn").getString());
@@ -452,6 +670,7 @@ public class LdapProxyBackendTest {
     }
 
     private void validateMemberOf(Entry entry, Set<String> expectedGroups) throws Exception {
+        assertNotNull(entry.get("memberOf"));
         assertEquals(expectedGroups.size(), entry.get("memberOf").size());
         Set<String> foundGroups = new HashSet<>();
         for (Value value : entry.get("memberOf")) {
@@ -470,5 +689,75 @@ public class LdapProxyBackendTest {
         for (String uid : expectedUids) {
             assertTrue("Expected UID " + uid + " not found", foundUids.contains(uid));
         }
+    }
+
+    private void validateSearch(String searchBase, String filter, int expectedSize, Set<String> expectedRdns) throws Exception {
+        List<Entry> entries = ldapProxyBackend.search(searchBase, SearchScope.SUBTREE, filter, schemaManager);
+        Set<String> foundRdns = new HashSet<>();
+        for (Entry entry : entries) {
+            Dn dn = entry.getDn();
+            foundRdns.add(dn.getRdn().getValue());
+        }
+        assertEquals(expectedSize, entries.size());
+        for (String rdn : expectedRdns) {
+            assertTrue("Expected RDN " + rdn + " not found", foundRdns.contains(rdn));
+        }
+    }
+
+    private void testSearchUsersRecursiveWithSharedGroups(Callable<List<Entry>> ldapSearch) throws Exception {
+        Map<String, String> config = createRecursiveConfig(5);
+        Set<String> expectedGroups = Set.of(
+                "cn=level1Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level2Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level3Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=level4Group,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=cycleGroupB,ou=groups,dc=hadoop,dc=apache,dc=org");
+
+        testSearchUsersRecursiveSharedGroups(config, ldapSearch, 2, expectedGroups, 6);
+    }
+
+    private void testSearchUsersRecursiveSharedGroupsViaMemberOf(Callable<List<Entry>> ldapSearch) throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(5);
+        Set<String> expectedGroups = Set.of(
+                "cn=memberOflevel1,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel3,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOflevel4,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleA,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=memberOfCycleB,ou=groups,dc=hadoop,dc=apache,dc=org");
+
+        testSearchUsersRecursiveSharedGroups(config, ldapSearch, 2, expectedGroups, 6);
+    }
+
+    private void testSearchUsersRecursiveSharedGroups(Map<String,String> config, Callable<List<Entry>> ldapSearch, int expectedEntries, Set<String> expectedGroups, int expectedCacheHits) throws Exception {
+        final AtomicInteger cacheHits = new AtomicInteger(0);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config) {
+            @Override
+            protected Map<String, Set<String>> createResolvedParentsCache() {
+                return new HashMap<>() {
+                    @Override
+                    public Set<String> get(Object key) {
+                        if (super.containsKey(key)) {
+                            cacheHits.incrementAndGet();
+                        }
+                        return super.get(key);
+                    }
+                };
+            }
+        };
+
+        // Search for all recursive users (recursiveUser and recursiveUser2)
+        // They share level1Group, cycleGroupA, and all their ancestors.
+        List<Entry> entries = ldapSearch.call();
+        assertEquals(expectedEntries, entries.size());
+
+        for (Entry entry : entries) {
+            validateMemberOf(entry, expectedGroups);
+        }
+
+        // Verify that caching actually happened.
+        // For the second user, many groups should have been found in the cache.
+        assertEquals("Expected " + expectedCacheHits + " cache hits for shared groups, but got " + cacheHits.get(), expectedCacheHits, cacheHits.get());
     }
 }

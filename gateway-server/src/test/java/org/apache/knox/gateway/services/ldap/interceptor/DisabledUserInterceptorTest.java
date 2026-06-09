@@ -35,15 +35,11 @@ import org.junit.Test;
 
 import java.util.List;
 
-/**
- * Unit tests for DuplicateUserFilteringInterceptor.
- */
-public class DuplicateUserFilteringInterceptorTest {
-
+public class DisabledUserInterceptorTest {
     private static final String TEST_INTERCEPTOR = "TEST";
     private static final String NEXT_INTERCEPTOR = "NEXT";
 
-    private DuplicateUserFilteringInterceptor interceptor;
+    private DisabledUserInterceptor interceptor;
 
     private DirectoryService directoryService;
     private SchemaManager schemaManager;
@@ -56,8 +52,15 @@ public class DuplicateUserFilteringInterceptorTest {
         directoryService.setShutdownHookEnabled(false);
         schemaManager = SchemaManagerFactory.createSchemaManager();
         directoryService.setSchemaManager(schemaManager);
+    }
 
-        interceptor = new DuplicateUserFilteringInterceptor(TEST_INTERCEPTOR);
+    @After
+    public void tearDown() throws Exception {
+        directoryService.shutdown();
+    }
+
+    private void setupInterceptor(boolean removeDisabledUSers) throws Exception {
+        interceptor = new DisabledUserInterceptor(TEST_INTERCEPTOR, removeDisabledUSers);
         interceptor.init(directoryService);
         directoryService.addLast(interceptor);
 
@@ -67,16 +70,12 @@ public class DuplicateUserFilteringInterceptorTest {
 
         ctx = new SearchOperationContext(directoryService.getSession());
         ctx.setInterceptors(List.of(TEST_INTERCEPTOR, NEXT_INTERCEPTOR));
-
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        directoryService.shutdown();
     }
 
     @Test
     public void testEmptyCursor() throws Exception {
+        setupInterceptor(true);
+
         nextInterceptor.setEntries(List.of());
 
         try (EntryFilteringCursor results = interceptor.search(ctx)) {
@@ -88,16 +87,23 @@ public class DuplicateUserFilteringInterceptorTest {
     }
 
     @Test
-    public void testNoDuplicateEntries() throws Exception {
-        Entry entry1 = new DefaultEntry(schemaManager);
-        entry1.add("uid", "user1");
-        Entry entry2 = new DefaultEntry(schemaManager);
-        entry2.add("uid", "user2");
-        nextInterceptor.setEntries(List.of(entry1, entry2));
+    public void testRemoveDisabledUsers() throws Exception {
+        setupInterceptor(true);
+
+        Entry disabledEntryUac = new DefaultEntry(schemaManager);
+        disabledEntryUac.add("uid", "disabledEntryUac");
+        disabledEntryUac.add("useraccountcontrol", "2");
+        Entry disabledEntryNsaccountlock = new DefaultEntry(schemaManager);
+        disabledEntryNsaccountlock.add("uid", "disabledEntryNsaccountlock");
+        disabledEntryNsaccountlock.add("nsaccountlock", "true");
+        Entry enabledEntry = new DefaultEntry(schemaManager);
+        enabledEntry.add("uid", "enabledEntry");
+        enabledEntry.add("useraccountcontrol", "512");
+        nextInterceptor.setEntries(List.of(disabledEntryUac, disabledEntryNsaccountlock, enabledEntry));
 
         try (EntryFilteringCursor results = interceptor.search(ctx)) {
-            assertNextEntryUid(results, "user1");
-            assertNextEntryUid(results, "user2");
+            Entry entry = assertNextEntryUid(results, "enabledEntry");
+            assertFalse(entry.contains("nsaccountlock", "true"));
             assertFalse("No more entries expected", results.next());
         }
 
@@ -106,15 +112,27 @@ public class DuplicateUserFilteringInterceptorTest {
     }
 
     @Test
-    public void testDuplicateEntries() throws Exception {
-        Entry entry1 = new DefaultEntry(schemaManager);
-        entry1.add("uid", "user1");
-        Entry entry2 = new DefaultEntry(schemaManager);
-        entry2.add("uid", "user1");
-        nextInterceptor.setEntries(List.of(entry1, entry2));
+    public void testDontRemoveDisabledUsers() throws Exception {
+        setupInterceptor(false);
+
+        Entry disabledEntryUac = new DefaultEntry(schemaManager);
+        disabledEntryUac.add("uid", "disabledEntryUac");
+        disabledEntryUac.add("useraccountcontrol", "2");
+        Entry disabledEntryNsaccountlock = new DefaultEntry(schemaManager);
+        disabledEntryNsaccountlock.add("uid", "disabledEntryNsaccountlock");
+        disabledEntryNsaccountlock.add("nsaccountlock", "true");
+        Entry enabledEntry = new DefaultEntry(schemaManager);
+        enabledEntry.add("uid", "enabledEntry");
+        enabledEntry.add("useraccountcontrol", "512");
+        nextInterceptor.setEntries(List.of(disabledEntryUac, disabledEntryNsaccountlock, enabledEntry));
 
         try (EntryFilteringCursor results = interceptor.search(ctx)) {
-            assertNextEntryUid(results, "user1");
+            Entry entry1 = assertNextEntryUid(results, "disabledEntryUac");
+            assertTrue(entry1.contains("nsaccountlock", "true"));
+            Entry entry2 = assertNextEntryUid(results, "disabledEntryNsaccountlock");
+            assertTrue(entry2.contains("nsaccountlock", "true"));
+            Entry entry3 = assertNextEntryUid(results, "enabledEntry");
+            assertFalse(entry3.contains("nsaccountlock", "true"));
             assertFalse("No more entries expected", results.next());
         }
 

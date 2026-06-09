@@ -38,8 +38,6 @@ import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Interceptor for LDAP operations to proxy user searches to backends when not found locally
@@ -47,15 +45,16 @@ import java.util.regex.Pattern;
 public class UserSearchInterceptor extends BaseInterceptor {
 
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
-    private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
-    private static final Pattern CN_PATTERN = Pattern.compile(".*\\(cn=([^)]+)\\).*");
-    private static final Pattern SAMAACCOUNTNAME_PATTERN = Pattern.compile(".*\\(sAMAccountName=([^)]+)\\).*");
 
     private final LdapBackend backend;
 
     public UserSearchInterceptor(String name, Map<String, String> config) throws Exception {
+        this(name, BackendFactory.createBackend(name, config));
+    }
+
+    protected UserSearchInterceptor(String name, LdapBackend backend) {
         super(name);
-        backend = BackendFactory.createBackend(name, config);
+        this.backend = backend;
     }
 
     public LdapBackend getBackend() {
@@ -69,9 +68,9 @@ public class UserSearchInterceptor extends BaseInterceptor {
             String username = LdapUtils.extractUsernameFromDn(ctx.getDn());
             if (username != null) {
                 try {
-                    entry = backend.getUser(username, directoryService.getSchemaManager());
+                    entry = backend.getUser(username, schemaManager);
                 } catch (Exception e) {
-                    LOG.ldapServiceStopFailed(e);
+                    LOG.ldapLookupFailed(ctx.getDn().toString(),e);
                 }
             }
         }
@@ -80,64 +79,30 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     @Override
     public EntryFilteringCursor search(SearchOperationContext ctx) throws LdapException {
+
         String filter = ctx.getFilter() != null ? ctx.getFilter().toString() : "";
         String baseDn = ctx.getDn() != null ? ctx.getDn().toString() : "";
 
         LOG.ldapSearch(baseDn, filter);
 
+        List<Entry> entries = new ArrayList<>();
+
         // First execute the next interceptor in the chain
-        EntryFilteringCursor originalResults;
-        originalResults = next(ctx);
-
-        // Check if this is a user search and call the backends
-        if (isUserSearch(filter)) {
-            String username = extractUser(filter);
-
-            // Check if we have any results from local search
-            List<Entry> entries = new ArrayList<>();
-            try {
-                while (originalResults.next()) {
-                    entries.add(originalResults.get());
-                }
-                originalResults.close();
-            } catch (Exception e) {
-                // If we get an error or no results, try the backends
+        try (EntryFilteringCursor originalResults = next(ctx)){
+            while (originalResults.next()) {
+                entries.add(originalResults.get());
             }
-
-            if (username != null) {
-                try {
-                    if (username.contains("*")) {
-                        // Wildcard search - use searchUsers
-                        LOG.ldapSearch(baseDn, "wildcard user search: " + username);
-                        // Return backend results directly without caching to avoid deadlock
-                        // (caching during an active search can cause ApacheDS locking issues)
-                        entries.addAll(backend.searchUsers(username, schemaManager));
-                    } else {
-                        // if no results, perform single-user search
-                        if (entries.isEmpty()) {
-                            // Specific user lookup
-                            Entry backendEntry = backend.getUser(username, schemaManager);
-                            LOG.ldapUserLoaded(username);
-
-                            if (backendEntry != null) {
-                                // Return backend result directly without caching
-                                entries.add(backendEntry);
-                                LOG.ldapUserEntry(backendEntry.getDn().toString());
-                            } else {
-                                LOG.ldapUserNull(username);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.ldapSearchFailed(baseDn, filter, e);
-                }
-            }
-
-            // Return cursor with our results - use a simple approach
-            return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+        } catch (Exception e) {
+            // If we get an error or no results, try the backends
+        }
+        try {
+            entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
+        } catch (Exception e) {
+            LOG.ldapSearchFailed(baseDn, filter, e);
         }
 
-        return originalResults;
+        // Return cursor with our results - use a simple approach
+        return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
     }
 
     @Override
@@ -165,31 +130,6 @@ public class UserSearchInterceptor extends BaseInterceptor {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private boolean isUserSearch(String filter) {
-        return UID_PATTERN.matcher(filter).matches()
-                || CN_PATTERN.matcher(filter).matches()
-                || SAMAACCOUNTNAME_PATTERN.matcher(filter).matches();
-    }
-
-    private String extractUser(String filter) {
-        Matcher uidMatcher = UID_PATTERN.matcher(filter);
-        if (uidMatcher.matches()) {
-            return uidMatcher.group(1);
-        }
-
-        Matcher cnMatcher = CN_PATTERN.matcher(filter);
-        if (cnMatcher.matches()) {
-            return cnMatcher.group(1);
-        }
-
-        Matcher samaaccountnameMatcher = SAMAACCOUNTNAME_PATTERN.matcher(filter);
-        if (samaaccountnameMatcher.matches()) {
-            return samaaccountnameMatcher.group(1);
-        }
-
-        return null;
     }
 }
 

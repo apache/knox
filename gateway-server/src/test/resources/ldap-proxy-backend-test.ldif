@@ -58,6 +58,12 @@ objectclass:groupOfNames
 cn: group2
 member: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
 
+dn: cn=nameddifferently,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:groupOfNames
+cn: nameddifferently
+member: uid=guest,ou=people,dc=hadoop,dc=apache,dc=org
+
 dn: uid=ldaptest1,ou=people,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass:person
@@ -85,3 +91,16 @@ mail: ldaptest2@example.com
 description: Test user ldaptest2
 memberOf: cn=groupMemberOf1,ou=groups,dc=hadoop,dc=apache,dc=org
 memberOf: cn=groupMemberOf2,ou=groups,dc=hadoop,dc=apache,dc=org
+
+dn: cn=TestCn3,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: TestCn3
+sn: Ldap
+sAMAccountName: TestSam3
+userPassword: 12345
+mail: ldaptest3@example.com
+description: Test user ldaptest3
+

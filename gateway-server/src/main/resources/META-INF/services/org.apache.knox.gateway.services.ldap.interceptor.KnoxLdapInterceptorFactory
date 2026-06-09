@@ -20,3 +20,4 @@
 org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptorFactory
 org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptorFactory
 org.apache.knox.gateway.services.ldap.interceptor.DuplicateUserFilteringInterceptorFactory
+org.apache.knox.gateway.services.ldap.interceptor.DisabledUserInterceptorFactory

@@ -10,7 +10,7 @@ Key features include:
 - **Pluggable LDAP Interceptors**: Support for customization of LDAP search behavior including combining results from multiple LDAP backends.
 - **Pluggable Backends**: Support for multiple, different data sources (JSON files, remote LDAP/AD).
 - **Embedded Server**: No need for an external LDAP server for simple use cases or testing.
-- **Active Directory Integration**: Optimized for proxying to AD with support for `sAMAccountName`.
+- **Active Directory Integration**: Optimized for proxying to AD with support for `sAMAccountName` and `userAccountControl`.
 
 ## Architecture
 
@@ -52,13 +52,21 @@ The service is configured in `gateway-site.xml`.
 | :--- | :--- | :--- |
 | `gateway.ldap.interceptor.<name>.interceptorType` | N/A | The type of interceptor to use (`backend` or `duplicateuserfilter`). |
 
-#### Duplicate User Filter Interceptor (`backend`)
-
-The duplicate user filter interceptor ensures that each `Entry` has a unique `uid`. This interceptor removes entries that have a duplicate `uid`. 
-
-#### User Search Interceptor (`duplicateuserfilter`)
+#### User Search Interceptor (`backend`)
 
 The user search interceptor is created if the `interceptorType` configuration is set to `backend`. This interceptor forwards search queries to its configured backend.
+
+#### Duplicate User Filter Interceptor (`duplicateuserfilter`)
+
+The duplicate user filter interceptor ensures that each `Entry` in the results has a unique `uid`. This interceptor removes entries that have a duplicate `uid`. 
+
+#### Disabled User Filter Interceptor (`disableduserfilter`)
+
+The disabled user filter interceptor will recognize and filter disabled users. If the `removeDisabledUsers` property is set to `true`, users will be removed from the results. Users will have their `nsAccountLock` attribute set if `removeDisabledUsers` is set to `false`.
+
+| Property | Default Value | Description |
+| :--- | :--- | :--- |
+| `gateway.ldap.interceptor.<name>.removeDisabledUsers` | `false` | Whether to remove disabled users from the results. |
 
 #### Roles Lookup Interceptor (`rolesLookup`)
 
@@ -120,15 +128,19 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.url` | N/A | Remote LDAP URL (e.g., `ldap://remote-host:389`). |
 | `gateway.ldap.interceptor.<name>.host` | N/A | Host of remote LDAP (used if `url` is not provided). |
 | `gateway.ldap.interceptor.<name>.port` | N/A | Port of remote LDAP (used if `url` is not provided). |
+| `gateway.ldap.interceptor.<name>.baseDn` | N/A | **Required**. The base DN of the LDAP proxy server. |
 | `gateway.ldap.interceptor.<name>.remoteBaseDn` | N/A | **Required**. The base DN of the remote LDAP server. |
 | `gateway.ldap.interceptor.<name>.systemUsername` | N/A | Bind DN for the remote server (alias: `bindDn`). |
 | `gateway.ldap.interceptor.<name>.systemPassword` | N/A | Password for the bind DN (alias: `bindPassword`). |
 | `gateway.ldap.interceptor.<name>.userSearchBase` | `ou=people,{remoteBaseDn}` | Base DN for user searches on the remote server. |
 | `gateway.ldap.interceptor.<name>.groupSearchBase` | `ou=groups,{remoteBaseDn}` | Base DN for group searches on the remote server. |
 | `gateway.ldap.interceptor.<name>.userIdentifierAttribute` | `uid` | Attribute used for user lookup (e.g., `sAMAccountName` for AD). |
+| `gateway.ldap.interceptor.<name>.userObjectClass` | `inetOrgPerson` | Objectclass for identifying users in remote server (e.g., `person` for AD). |
+| `gateway.ldap.interceptor.<name>.groupObjectClass` | `groupOfNames` | Objectclass for identifying groups in remote server (e.g., `group` for AD). |
 | `gateway.ldap.interceptor.<name>.groupMemberAttribute` | `memberUid` | Attribute used for group membership (e.g., `member` for AD). |
 | `gateway.ldap.interceptor.<name>.useMemberOf` | `false` | If `true`, use the `memberOf` attribute for efficient group lookups. |
-| `gateway.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
+| `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
+| `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
 
 ## Active Directory (AD) Integration
 
@@ -136,7 +148,7 @@ The Knox LDAP Service includes several optimizations for working with Active Dir
 
 - **sAMAccountName Support**: The service recognizes `sAMAccountName` in search filters, allowing seamless integration with Windows environments.
 - **Efficient Group Lookups**: By setting `gateway.ldap.backend.proxy.useMemberOf` to `true`, Knox can retrieve all of a user's groups in a single query by reading the `memberOf` attribute, rather than searching all group objects.
-- **Schema Extensions**: AD-specific attributes (`memberOf`, `sAMAccountName`) are programmatically added to the embedded ApacheDS schema to prevent "attribute not found" errors during proxying.
+- **Schema Extensions**: Attributes (e.g., `memberOf`, `nsAccountLock`, and AD-specific attributes `sAMAccountName` and `userAccountControl`) are programmatically added to the embedded ApacheDS schema to prevent "attribute not found" errors during proxying.
 - **Case Sensitivity**: Search filters are handled to accommodate AD's case-insensitive nature for user identifiers.
 
 ## Usage Example
@@ -160,7 +172,7 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 
 <property>
     <name>gateway.ldap.interceptor.names</name>
-    <value>localfile,adexample,extrenalldap,duplicatefilter,rolesLookup</value>
+    <value>localfile,adexample,extrenalldap,duplicatefilter,disableduserfilter,rolesLookup</value>
 </property>
 
 <property>
@@ -224,6 +236,14 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
     <name>gateway.ldap.interceptor.adexample.useMemberOf</name>
     <value>true</value>
 </property>
+<property>
+    <name>gateway.ldap.interceptor.adexample.userObjectClass</name>
+    <value>person</value>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.adexample.groupObjectClass</name>
+    <value>group</value>
+</property>
 
 <!--
 Example: Using external LDAP with authentication (supports both naming conventions)
@@ -281,6 +301,16 @@ Alternative: Use host and port instead of URL
 <property>
     <name>gateway.ldap.interceptor.duplicatefilter.interceptorType</name>
     <value>duplicateuserfilter</value>
+</property>
+
+<!-- Disabled User Filter Interceptor -->
+<property>
+    <name>gateway.ldap.interceptor.disableduserfilter.interceptorType</name>
+    <value>disableduserfilter</value>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.disableduserfilter.removeDisabledUsers</name>
+    <value>false</value>
 </property>
 
 <!-- Roles Lookup Interceptor -->

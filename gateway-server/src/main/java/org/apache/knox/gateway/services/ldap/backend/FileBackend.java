@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.ldap.backend;
 import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -33,13 +34,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * File-based backend that reads user/group data from JSON
  */
 public class FileBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
+    private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
+    private static final Pattern CN_PATTERN = Pattern.compile(".*\\(cn=([^)]+)\\).*");
+    private static final Pattern SAMAACCOUNTNAME_PATTERN = Pattern.compile(".*\\(sAMAccountName=([^)]+)\\).*");
 
     static final String TYPE = "file";
 
@@ -136,7 +144,7 @@ public class FileBackend implements LdapBackend {
     }
 
     @Override
-    public List<String> getUserGroups(String username) throws Exception {
+    public List<String> getUserGroups(String username, SchemaManager schemaManager) throws Exception {
         UserData userData = users.get(username);
         return userData != null && userData.groups != null ? userData.groups : Collections.emptyList();
     }
@@ -145,9 +153,13 @@ public class FileBackend implements LdapBackend {
     public List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception {
         List<Entry> results = new ArrayList<>();
 
+        String userFilter = extractUser(filter).toLowerCase(Locale.ROOT);
+
         // Simple filter matching - just check if username matches
         for (String username : users.keySet()) {
-            if (filter.contains("uid=" + username) || filter.contains("*")) {
+            String usernameLowerCase = username.toLowerCase(Locale.ROOT);
+            if (userFilter.equalsIgnoreCase(usernameLowerCase) ||
+                    (userFilter.contains("*") && userFilter.contains(usernameLowerCase))) {
                 Entry entry = getUser(username, schemaManager);
                 if (entry != null) {
                     results.add(entry);
@@ -169,5 +181,29 @@ public class FileBackend implements LdapBackend {
         }
 
         return false;
+    }
+
+    @Override
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+        return searchUsers(filter, schemaManager);
+    }
+
+    private String extractUser(String filter) {
+        Matcher uidMatcher = UID_PATTERN.matcher(filter);
+        if (uidMatcher.matches()) {
+            return uidMatcher.group(1);
+        }
+
+        Matcher cnMatcher = CN_PATTERN.matcher(filter);
+        if (cnMatcher.matches()) {
+            return cnMatcher.group(1);
+        }
+
+        Matcher samaaccountnameMatcher = SAMAACCOUNTNAME_PATTERN.matcher(filter);
+        if (samaaccountnameMatcher.matches()) {
+            return samaaccountnameMatcher.group(1);
+        }
+
+        return null;
     }
 }
