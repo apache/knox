@@ -361,7 +361,7 @@ public class RemoteAuthFilter implements Filter {
 
   // Add method to hash cache key
   private String hashCacheKey(String key) {
-    return String.valueOf(key.hashCode());
+    return  key == null ? "" : String.valueOf(key.hashCode());
   }
 
   // Change to package-private for testing

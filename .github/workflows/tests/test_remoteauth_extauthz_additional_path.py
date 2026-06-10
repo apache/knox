@@ -49,10 +49,10 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_extauthz_missing_credentials_server_error(self):
-        # No Authorization header: RemoteAuth hits an error path (500), not 401.
+    def test_extauthz_missing_credentials(self):
+        # No Authorization header: 401 (no longer hit the NPE because of missing cache key from the header).
         response = knox_get(self.extauthz_url)
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 401)
 
 
 if __name__ == "__main__":
