@@ -17,8 +17,12 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import org.apache.directory.api.ldap.codec.api.ControlFactory;
+import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
+import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.easymock.EasyMock;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptor;
@@ -374,8 +378,21 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
-    public void testGetUserGroups() {
+    public void testStartRegistersRolesLookupBypassControl() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
+        replay(mockConfig);
 
+        serverManager.initialize(mockConfig);
+
+        serverManager.start();
+
+        Map<String, ControlFactory<? extends Control>> controlFactoryMap = serverManager.directoryService.getLdapCodecService().getRequestControlFactories();
+        assertTrue(controlFactoryMap.containsKey(RolesLookupBypassControl.OID));
+        assertTrue(controlFactoryMap.get(RolesLookupBypassControl.OID) instanceof RolesLookupBypassControlFactory);
     }
 
     private Map<String, String> createFileBackendInterceptorConfig() {

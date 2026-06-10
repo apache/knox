@@ -22,7 +22,6 @@ import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.server.core.api.CoreSession;
-import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursorImpl;
@@ -61,11 +60,6 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     public LdapBackend getBackend() {
         return backend;
-    }
-
-    @Override
-    public void init(DirectoryService directoryService) throws LdapException {
-        super.init(directoryService);
     }
 
     @Override
