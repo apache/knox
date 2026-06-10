@@ -70,6 +70,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
@@ -1106,13 +1107,21 @@ public class TokenResource {
         jwtAttributesBuilder.setClientId(tokenIdPrincipals.iterator().next().getName());
       }
 
-      // RFC 8693 Token Exchange: Add the "act" claim if delegated auth is enabled and impersonation occurred
+      // RFC 8693 Token Exchange: Build the actor chain if delegated auth is enabled and impersonation occurred
       if (enableDelegatedAuth && SubjectUtils.isImpersonating(subject)) {
         String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
         String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
         if (primaryPrincipalName != null && impersonatedPrincipalName != null && !primaryPrincipalName.equals(impersonatedPrincipalName)) {
-          // The primary principal (the one doing the impersonation) becomes the actor
-          jwtAttributesBuilder.setActor(primaryPrincipalName);
+          // Check if the subject already has an ActorChainPrincipal from a previous token exchange
+          Set<ActorChainPrincipal> actorChainPrincipals = subject.getPrincipals(ActorChainPrincipal.class);
+          List<Map<String, Object>> existingChain = null;
+          if (!actorChainPrincipals.isEmpty()) {
+            existingChain = actorChainPrincipals.iterator().next().getActorChain();
+          }
+
+          // Build the new actor chain by adding the current actor (primary principal) to the existing chain
+          List<Map<String, Object>> newActorChain = TokenUtils.addActorToChain(existingChain, primaryPrincipalName);
+          jwtAttributesBuilder.setActorChain(newActorChain);
           log.addingActorClaimToToken(primaryPrincipalName, impersonatedPrincipalName);
         }
       }

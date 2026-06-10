@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class JWTokenAttributes {
@@ -40,7 +41,7 @@ public class JWTokenAttributes {
   private final String issuer;
   private String kid;
   private final String clientId;
-  private final String actor;
+  private final List<Map<String, Object>> actorChain;
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
       char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer) {
@@ -53,7 +54,7 @@ public class JWTokenAttributes {
   }
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
-      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId, String actor) {
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId, List<Map<String, Object>> actorChain) {
     this.userName = userName;
     this.audiences = audiences;
     this.algorithm = algorithm;
@@ -68,7 +69,7 @@ public class JWTokenAttributes {
     this.kid = kid;
     this.issuer = issuer;
     this.clientId = clientId;
-    this.actor = actor;
+    this.actorChain = actorChain;
   }
 
   public String getUserName() {
@@ -143,7 +144,27 @@ public class JWTokenAttributes {
     return clientId;
   }
 
-  public String getActor() {
-    return actor;
+  /**
+   * Get the actor chain for RFC 8693 token exchange.
+   *
+   * <p>The actor chain represents the complete delegation history for this token.
+   * Each element in the list is a Map of identity claims (such as 'sub' and 'iss')
+   * that identify an actor in the delegation chain. The list is ordered from most
+   * recent actor (first element) to oldest actor (last element).</p>
+   *
+   * <p>According to RFC 8693 Section 4.1, identity claims within the 'act' claim
+   * identify the actor. Common claims include:</p>
+   * <ul>
+   *   <li>'sub' - the subject/identity of the actor</li>
+   *   <li>'iss' - the issuer of the actor's identity</li>
+   * </ul>
+   *
+   * <p>Non-identity claims (e.g., 'exp', 'nbf', 'aud') should NOT be used within
+   * actor claims as they are not relevant to the validity of the containing JWT.</p>
+   *
+   * @return the actor chain, or null if no delegation has occurred
+   */
+  public List<Map<String, Object>> getActorChain() {
+    return actorChain;
   }
 }
