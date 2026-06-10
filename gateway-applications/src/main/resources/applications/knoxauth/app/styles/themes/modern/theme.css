@@ -252,6 +252,7 @@ body.login {
 }
 
 .login .l-logo {
+  box-sizing: content-box;
   height: 72px;
   align-self: stretch;
   flex-grow: 0;
