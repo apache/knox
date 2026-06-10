@@ -130,7 +130,7 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
 
   protected List<String> hadoopGroups(String mappedPrincipalName) throws Exception {
     if (ldapService == null) {
-      return hadoopGroups.getGroups(mappedPrincipalName);
+      return hadoopGroups == null ? List.of() : hadoopGroups.getGroups(mappedPrincipalName);
     } else {
       LOG.useKnoxLDAPService();
       return ldapService.getUserGroups(mappedPrincipalName);

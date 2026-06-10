@@ -273,6 +273,19 @@ public class HadoopGroupProviderFilterTest {
   }
 
   @Test
+  public void testHadoopGroupsIsNull() throws Exception {
+    final HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter();
+
+    final Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal(username));
+
+    // no init() method called -> hadoopGroups is null
+    final String[] groups = filter.mapGroupPrincipals(username, subject);
+
+    assertThat(groups.length, is(0));
+  }
+
+  @Test
   public void testLdapServiceIntegration() throws Exception {
     KnoxLDAPService ldapService = EasyMock.createNiceMock(KnoxLDAPService.class);
     doTestLdapServiceIntegration(true, Arrays.asList("group1", "group2"), ldapService);
