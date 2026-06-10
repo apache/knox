@@ -21,7 +21,6 @@ import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.easymock.EasyMock;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,7 +47,6 @@ public class GatewayServerTest {
   }
 
   @Test
-  @Ignore
   public void testRefreshGatewayConfig() throws Exception {
     GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
 
