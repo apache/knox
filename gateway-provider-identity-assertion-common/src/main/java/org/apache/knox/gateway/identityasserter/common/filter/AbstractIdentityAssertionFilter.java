@@ -46,6 +46,7 @@ import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.i18n.GatewaySpiResources;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -146,6 +147,11 @@ public abstract class AbstractIdentityAssertionFilter extends
 
           final Set<TokenIdPrincipal> tokenIdPrincipals = SubjectUtils.getTokenIdPrincipals(currentSubject);
           subject.getPrincipals().addAll(tokenIdPrincipals);
+
+          // RFC 8693 Token Exchange: Preserve ActorChainPrincipal from the current subject
+          // This ensures the delegation chain is maintained through identity assertion
+          final Set<ActorChainPrincipal> actorChainPrincipals = currentSubject.getPrincipals(ActorChainPrincipal.class);
+          subject.getPrincipals().addAll(actorChainPrincipals);
 
           doAs(request, response, chain, subject);
         }
