@@ -52,7 +52,7 @@ public class RolesLookupBypassControlDecoratorTest {
 
     @Test
     public void decodeFalseValue() throws Exception {
-        byte[] bytes = new byte[]{0x01, 0x03, 0x00};
+        byte[] bytes = new byte[]{0x01, 0x01, 0x00};
         rolesLookupBypassControlDecorator.decode(bytes);
 
         assertFalse(rolesLookupBypassControl.isBypassRolesLookup());
@@ -60,7 +60,7 @@ public class RolesLookupBypassControlDecoratorTest {
 
     @Test
     public void decodeTrueValue() throws Exception {
-        byte[] bytes = new byte[]{0x01, 0x03, (byte) 0xff};
+        byte[] bytes = new byte[]{0x01, 0x01, (byte) 0xff};
         rolesLookupBypassControlDecorator.decode(bytes);
 
         assertTrue(rolesLookupBypassControl.isBypassRolesLookup());
@@ -68,13 +68,13 @@ public class RolesLookupBypassControlDecoratorTest {
 
     @Test(expected = DecoderException.class)
     public void decodeWrongTag() throws Exception {
-        byte[] bytes = new byte[]{0x02, 0x03, 0x00};
+        byte[] bytes = new byte[]{0x02, 0x01, 0x00};
         rolesLookupBypassControlDecorator.decode(bytes);
     }
 
     @Test(expected = DecoderException.class)
     public void decodeWrongLength() throws Exception {
-        byte[] bytes = new byte[]{0x02, 0x04, 0x00, 0x00};
+        byte[] bytes = new byte[]{0x02, 0x02, 0x00, 0x00};
         rolesLookupBypassControlDecorator.decode(bytes);
     }
 
@@ -87,7 +87,7 @@ public class RolesLookupBypassControlDecoratorTest {
     @Test
     public void encodeTrueValue() throws Exception {
         rolesLookupBypassControl.setBypassRolesLookup(true);
-        byte[] expectedBytes = new byte[]{0x01, 0x03, (byte) 0xff};
+        byte[] expectedBytes = new byte[]{0x01, 0x01, (byte) 0xff};
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(3);
         ByteBuffer encodedBuffer = rolesLookupBypassControlDecorator.encode(byteBuffer);
@@ -100,7 +100,7 @@ public class RolesLookupBypassControlDecoratorTest {
 
     @Test
     public void encodeFalseValue() throws Exception {
-        byte[] expectedBytes = new byte[]{0x01, 0x03, 0x00};
+        byte[] expectedBytes = new byte[]{0x01, 0x01, 0x00};
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(3);
         ByteBuffer encodedBuffer = rolesLookupBypassControlDecorator.encode(byteBuffer);

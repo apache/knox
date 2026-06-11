@@ -60,7 +60,7 @@ public class RolesLookupBypassControlFactory extends AbstractControlFactory<Role
             RolesLookupBypassControl rolesLookupBypassControl = (RolesLookupBypassControl) control;
 
             buffer.put(BOOLEAN_TAG_BYTE);
-            buffer.put((byte) 3);
+            buffer.put((byte) 1); // Value is one byte long
             buffer.put((byte) (rolesLookupBypassControl.isBypassRolesLookup() ? 0xFF : 0x00));
         }
     }

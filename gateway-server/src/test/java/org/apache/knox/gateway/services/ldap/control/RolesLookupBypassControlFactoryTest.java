@@ -52,7 +52,7 @@ public class RolesLookupBypassControlFactoryTest {
     @Test
     public void decodeFalseValue() throws Exception {
         RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
-        byte[] bytes = new byte[]{0x01, 0x03, 0x00};
+        byte[] bytes = new byte[]{0x01, 0x01, 0x00};
 
         rolesLookupBypassControlFactory.decodeValue(control, bytes);
 
@@ -62,7 +62,7 @@ public class RolesLookupBypassControlFactoryTest {
     @Test
     public void decodeTrueValue() throws Exception {
         RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
-        byte[] bytes = new byte[]{0x01, 0x03, (byte) 0xff};
+        byte[] bytes = new byte[]{0x01, 0x01, (byte) 0xff};
 
         rolesLookupBypassControlFactory.decodeValue(control, bytes);
 
@@ -78,7 +78,7 @@ public class RolesLookupBypassControlFactoryTest {
         rolesLookupBypassControlFactory.encodeValue(asn1Buffer, control);
 
         // expectedBytes in reverse because Asn1Buffer stores bytes in reverse order
-        byte[] expectedBytes = new byte[]{(byte) 0xff, 0x03, 0x01};
+        byte[] expectedBytes = new byte[]{(byte) 0xff, 0x01, 0x01};
         System.out.println(asn1Buffer.toString());
         ByteBuffer encodedBuffer = asn1Buffer.getBytes();
         byte[] encodedBytes = new byte[encodedBuffer.remaining()];
@@ -95,7 +95,7 @@ public class RolesLookupBypassControlFactoryTest {
         rolesLookupBypassControlFactory.encodeValue(asn1Buffer, control);
 
         // expectedBytes in reverse because Asn1Buffer stores bytes in reverse order
-        byte[] expectedBytes = new byte[]{0x00, 0x03, 0x01};
+        byte[] expectedBytes = new byte[]{0x00, 0x01, 0x01};
         ByteBuffer encodedBuffer = asn1Buffer.getBytes();
         byte[] encodedBytes = new byte[encodedBuffer.remaining()];
         encodedBuffer.get(encodedBytes);

@@ -68,7 +68,7 @@ The interceptor will skip role mapping for a search request if the RolesLookupBy
 
 For example, the control can be added to the `ldapsearch` cli using the `-e` option.
 ```shell script
-ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' -e "1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953=AQP/" '(uid=sam*)' '*'
+ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' -e "1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953=AQH/" '(uid=sam*)' '*'
 ```
 The control is specified using it's OID, `1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953`. The value is a 3 byte array. This value must be base64 encoded for `ldapsearch`.
 
