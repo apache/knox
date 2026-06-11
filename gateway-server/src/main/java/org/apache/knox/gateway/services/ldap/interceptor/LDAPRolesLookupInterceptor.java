@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -50,19 +51,24 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private final LDAPRolesLookupService rolesLookupService;
+    private final String rolesLookupBypassControlOid;
 
-    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService) {
+    // tODO take in config
+    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, String rolesLookupBypassControlOid) {
         this.rolesLookupService = rolesLookupService;
+        this.rolesLookupBypassControlOid = rolesLookupBypassControlOid;
     }
 
     @Override
     public EntryFilteringCursor search(SearchOperationContext ctx) throws LdapException {
-        if (ctx.hasRequestControl(RolesLookupBypassControl.OID)) {
-            Control control = ctx.getRequestControl(RolesLookupBypassControl.OID);
-            if (control instanceof RolesLookupBypassControl) {
-                RolesLookupBypassControl rolesLookupBypassControl = (RolesLookupBypassControl) control;
-                if (rolesLookupBypassControl.isBypassRolesLookup()) {
-                    return next(ctx);
+        if (StringUtils.isNotBlank(rolesLookupBypassControlOid)) {
+            if (ctx.hasRequestControl(rolesLookupBypassControlOid)) {
+                Control control = ctx.getRequestControl(rolesLookupBypassControlOid);
+                if (control instanceof RolesLookupBypassControl) {
+                    RolesLookupBypassControl rolesLookupBypassControl = (RolesLookupBypassControl) control;
+                    if (rolesLookupBypassControl.isBypassRolesLookup()) {
+                        return next(ctx);
+                    }
                 }
             }
         }

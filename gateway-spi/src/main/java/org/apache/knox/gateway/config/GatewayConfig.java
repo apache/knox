@@ -135,6 +135,7 @@ public interface GatewayConfig {
   String LDAP_ROLES_LOOKUP_STRATEGY = "gateway.ldap.roles.lookup.strategy";
   String LDAP_ROLES_LOOKUP_REST_API_ENDPOINT = "gateway.ldap.roles.lookup.rest.api.endpoint";
   String LDAP_ROLES_LOOKUP_FILE_PATH = "gateway.ldap.roles.lookup.file.path";
+  String LDAP_ROLES_LOOKUP_BYPASS_CONTROL_OID = "gateway.ldap.roles.lookup.bypass.control.oid";
 
   /**
    * The location of the gateway configuration.
@@ -1116,6 +1117,11 @@ public interface GatewayConfig {
    * @return the LDAP roles lookup file path
    */
   String getLdapRolesLookupFilePath();
+
+  /**
+   * @return the OID to register the role lookup bypass control
+   */
+  String getLdapRolesLookupBypassControlOid();
 
   /**
    * @return set of all property names in the configuration

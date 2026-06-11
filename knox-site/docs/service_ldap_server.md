@@ -68,15 +68,22 @@ The interceptor will skip role mapping for a search request if the RolesLookupBy
 
 For example, the control can be added to the `ldapsearch` cli using the `-e` option.
 ```shell script
-ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' -e "1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953=AQH/" '(uid=sam*)' '*'
+ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' -e "<oid>=<value>" '(uid=sam*)' '*'
 ```
-The control is specified using it's OID, `1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953`. The value is a 3 byte array. This value must be base64 encoded for `ldapsearch`.
+The control is specified using it's OID. The OID used for this control is configurable until an official OID is generated. An OID generated from a UUID, e.g., `1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953`, is guaranteed not to collide with existing OIDs.
+
+| Property | Default Value | Description |
+| :--- | :--- | :--- |
+| `gateway.ldap.roles.lookup.bypass.control.oid` | N/A | The OID to use for the bypass control. The control will not be registered if this value is not provided. The Knox LDAP Service will fail to initialize if the value provided is on an OID. |
+
+
+The value is a 3 byte array. This value must be base64 encoded for `ldapsearch`.
 
 | Byte | Value | Description |
 | :--- | :--- | :--- |
 | Tag | 0x01 | The Boolean Tag value |
-| Length | 0x03 | The length of the value in bytes |
-| Bypass | 0x00 or Oxff | 0x00 corresponds to `false` and 0xff corresponds to `true |
+| Length | 0x01 | The length of the value in bytes |
+| Bypass | 0x00 or Oxff | 0x00 corresponds to `false` and 0xff corresponds to `true` |
 
 ### Backend Types
 
@@ -171,6 +178,11 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 <property>
     <name>gateway.ldap.roles.lookup.rest.api.endpoint</name>
     <value>http://localhost:8080/auth/roles</value>
+</property>
+
+<property>
+    <name>gateway.ldap.roles.lookup.bypass.control.oid</name>
+    <value>1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953</value>
 </property>
 
 <!-- File-based LDAP backend -->

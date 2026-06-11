@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.ldap;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.directory.api.asn1.util.Oid;
 import org.apache.directory.api.ldap.codec.api.LdapApiService;
 import org.apache.directory.api.ldap.codec.api.LdapApiServiceFactory;
 import org.apache.directory.api.ldap.model.cursor.Cursor;
@@ -42,6 +43,7 @@ import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
@@ -74,6 +76,7 @@ public class KnoxLDAPServerManager {
     private String baseDn;
     // Collection of DNs for the proxied backend LDAP servers
     private Set<String> baseDns;
+    private String rolesLookupBypassControlOid;
 
     /**
      * Initialize the LDAP server with the given configuration
@@ -90,6 +93,14 @@ public class KnoxLDAPServerManager {
         // Get configuration
         this.port = config.getLDAPPort();
         this.baseDn = config.getLDAPBaseDN();
+
+        // Get OID for roles lookup bypass control
+        this.rolesLookupBypassControlOid = gatewayConfig.getLdapRolesLookupBypassControlOid();
+        if (StringUtils.isNotBlank(this.rolesLookupBypassControlOid)) {
+            if (!Oid.isOid(this.rolesLookupBypassControlOid)) {
+                throw new ConfigurationException("Roles Lookup Bypass Control OID is not valid");
+            }
+        }
 
         createInterceptors(config);
 
@@ -139,12 +150,14 @@ public class KnoxLDAPServerManager {
         directoryService.setInstanceLayout(new InstanceLayout(workDir));
 
         // Add RolesLookupBypassControlFactory
-        LdapApiService apiService = directoryService.getLdapCodecService();
-        if (apiService == null) {
-            apiService = LdapApiServiceFactory.getSingleton();
+        if (StringUtils.isNotBlank(rolesLookupBypassControlOid)) {
+            LdapApiService apiService = directoryService.getLdapCodecService();
+            if (apiService == null) {
+                apiService = LdapApiServiceFactory.getSingleton();
+            }
+            RolesLookupBypassControlFactory rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(apiService, rolesLookupBypassControlOid);
+            apiService.registerRequestControl(rolesLookupBypassControlFactory);
         }
-        RolesLookupBypassControlFactory rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(apiService);
-        apiService.registerRequestControl(rolesLookupBypassControlFactory);
 
         // Create SchemaManager
         SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();

@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.directory.api.asn1.util.Oid;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -35,7 +37,16 @@ public class LDAPRolesLookupInterceptorFactory implements KnoxLdapInterceptorFac
         if (ldapRolesLookupService == null || !ldapRolesLookupService.enabled()) {
             throw new ServiceLifecycleException("LDAP roles lookup service not found or disabled");
         }
-        return new LDAPRolesLookupInterceptor(ldapRolesLookupService);
+
+        // Configure the OID used for the RolesLookupBypassControl until an official OID is available
+        String rolesLookupBypassControlOid = gatewayConfig.getLdapRolesLookupBypassControlOid();
+        if (StringUtils.isNotBlank(rolesLookupBypassControlOid)) {
+            if (!Oid.isOid(rolesLookupBypassControlOid)) {
+                rolesLookupBypassControlOid = "";
+            }
+        }
+
+        return new LDAPRolesLookupInterceptor(ldapRolesLookupService, rolesLookupBypassControlOid);
     }
 
     protected LDAPRolesLookupService getLDAPRolesLookupService() {

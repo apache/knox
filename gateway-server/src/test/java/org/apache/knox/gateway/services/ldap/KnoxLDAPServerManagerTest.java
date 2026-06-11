@@ -20,8 +20,8 @@ package org.apache.knox.gateway.services.ldap;
 import org.apache.directory.api.ldap.codec.api.ControlFactory;
 import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
+import org.apache.knox.gateway.config.ConfigurationException;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.easymock.EasyMock;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -384,6 +385,7 @@ public class KnoxLDAPServerManagerTest {
         expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
+        expect(mockConfig.getLdapRolesLookupBypassControlOid()).andReturn(ROLES_LOOKUP_BYPASS_CONTROL_OID).anyTimes();
         replay(mockConfig);
 
         serverManager.initialize(mockConfig);
@@ -391,9 +393,43 @@ public class KnoxLDAPServerManagerTest {
         serverManager.start();
 
         Map<String, ControlFactory<? extends Control>> controlFactoryMap = serverManager.directoryService.getLdapCodecService().getRequestControlFactories();
-        assertTrue(controlFactoryMap.containsKey(RolesLookupBypassControl.OID));
-        assertTrue(controlFactoryMap.get(RolesLookupBypassControl.OID) instanceof RolesLookupBypassControlFactory);
+        assertTrue(controlFactoryMap.containsKey(ROLES_LOOKUP_BYPASS_CONTROL_OID));
+        assertTrue(controlFactoryMap.get(ROLES_LOOKUP_BYPASS_CONTROL_OID) instanceof RolesLookupBypassControlFactory);
     }
+
+    @Test
+    public void testStartDontRegistersRolesLookupBypassControl() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
+        expect(mockConfig.getLdapRolesLookupBypassControlOid()).andReturn("").anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+
+        serverManager.start();
+
+        Map<String, ControlFactory<? extends Control>> controlFactoryMap = serverManager.directoryService.getLdapCodecService().getRequestControlFactories();
+        assertFalse(controlFactoryMap.values().stream()
+                .filter(control -> control instanceof RolesLookupBypassControlFactory)
+                .count() > 0);
+    }
+
+    @Test(expected = ConfigurationException.class)
+    public void testInitializeRolesLookupBypassControlBadOid() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
+        expect(mockConfig.getLdapRolesLookupBypassControlOid()).andReturn("notanoid").anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+    }
+
 
     private Map<String, String> createFileBackendInterceptorConfig() {
         Map<String, String> config = new HashMap<>();

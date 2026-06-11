@@ -26,13 +26,13 @@ import org.apache.directory.api.ldap.model.message.Control;
 public class RolesLookupBypassControlFactory extends AbstractControlFactory<RolesLookupBypassControl> {
     public static final byte BOOLEAN_TAG_BYTE = 0x01;
 
-    public RolesLookupBypassControlFactory(LdapApiService codec) {
-        super(codec, RolesLookupBypassControl.OID);
+    public RolesLookupBypassControlFactory(LdapApiService codec, String oid) {
+        super(codec, oid);
     }
 
     @Override
     public Control newControl() {
-        return new RolesLookupBypassControlDecorator(codec, new RolesLookupBypassControlImpl(), this);
+        return new RolesLookupBypassControlDecorator(codec, new RolesLookupBypassControlImpl(oid), this);
     }
 
     @Override

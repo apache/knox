@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
@@ -98,7 +99,7 @@ public class LDAPRolesLookupInterceptorTest {
 
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 
-        final LDAPRolesLookupInterceptor rolesLookupInterceptor = new LDAPRolesLookupInterceptor(mockRolesService);
+        final LDAPRolesLookupInterceptor rolesLookupInterceptor = new LDAPRolesLookupInterceptor(mockRolesService, ROLES_LOOKUP_BYPASS_CONTROL_OID);
         rolesLookupInterceptor.init(directoryService);
         directoryService.addLast(rolesLookupInterceptor);
 
@@ -109,7 +110,7 @@ public class LDAPRolesLookupInterceptorTest {
         final CoreSession session = directoryService.getSession();
         final SearchOperationContext ctx = new SearchOperationContext(session);
         ctx.setInterceptors(List.of(rolesLookupInterceptor.getName(), "NEXT"));
-        final RolesLookupBypassControl rolesLookupBypassControl = new RolesLookupBypassControlImpl();
+        final RolesLookupBypassControl rolesLookupBypassControl = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
         rolesLookupBypassControl.setBypassRolesLookup(false);
         ctx.addRequestControl(rolesLookupBypassControl);
 
@@ -138,7 +139,7 @@ public class LDAPRolesLookupInterceptorTest {
         SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();
         directoryService.setSchemaManager(schemaManager);
 
-        final LDAPRolesLookupInterceptor rolesLookupInterceptor = new LDAPRolesLookupInterceptor(createMockRolesService());
+        final LDAPRolesLookupInterceptor rolesLookupInterceptor = new LDAPRolesLookupInterceptor(createMockRolesService(), ROLES_LOOKUP_BYPASS_CONTROL_OID);
         rolesLookupInterceptor.init(directoryService);
         directoryService.addLast(rolesLookupInterceptor);
 
@@ -150,7 +151,7 @@ public class LDAPRolesLookupInterceptorTest {
         final SearchOperationContext ctx = new SearchOperationContext(session);
         ctx.setInterceptors(List.of(rolesLookupInterceptor.getName(), "NEXT"));
 
-        final RolesLookupBypassControl rolesLookupBypassControl = new RolesLookupBypassControlImpl();
+        final RolesLookupBypassControl rolesLookupBypassControl = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
         rolesLookupBypassControl.setBypassRolesLookup(true);
         ctx.addRequestControl(rolesLookupBypassControl);
 
@@ -173,7 +174,7 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     private LDAPRolesLookupInterceptor createInterceptor() throws Exception {
-        return new LDAPRolesLookupInterceptor(createMockRolesService());
+        return new LDAPRolesLookupInterceptor(createMockRolesService(), ROLES_LOOKUP_BYPASS_CONTROL_OID);
     }
 
     private Entry createUserEntry(final String username, final String... memberOfDns) throws Exception {

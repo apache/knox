@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.control;
 
+import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertArrayEquals;
@@ -44,8 +45,8 @@ public class RolesLookupBypassControlDecoratorTest {
         mockLdapApiService = mock(LdapApiService.class);
         replay(mockLdapApiService);
 
-        rolesLookupBypassControl = new RolesLookupBypassControlImpl();
-        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService);
+        rolesLookupBypassControl = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
+        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService, ROLES_LOOKUP_BYPASS_CONTROL_OID);
 
         rolesLookupBypassControlDecorator = new RolesLookupBypassControlDecorator(mockLdapApiService, rolesLookupBypassControl, rolesLookupBypassControlFactory);
     }

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.control;
 
+import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertArrayEquals;
@@ -40,7 +41,7 @@ public class RolesLookupBypassControlFactoryTest {
     public void setUp() throws Exception {
         mockLdapApiService = mock(LdapApiService.class);
         replay(mockLdapApiService);
-        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService);
+        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService, ROLES_LOOKUP_BYPASS_CONTROL_OID);
     }
 
     @Test
@@ -51,7 +52,7 @@ public class RolesLookupBypassControlFactoryTest {
 
     @Test
     public void decodeFalseValue() throws Exception {
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
         byte[] bytes = new byte[]{0x01, 0x01, 0x00};
 
         rolesLookupBypassControlFactory.decodeValue(control, bytes);
@@ -61,7 +62,7 @@ public class RolesLookupBypassControlFactoryTest {
 
     @Test
     public void decodeTrueValue() throws Exception {
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
         byte[] bytes = new byte[]{0x01, 0x01, (byte) 0xff};
 
         rolesLookupBypassControlFactory.decodeValue(control, bytes);
@@ -72,7 +73,7 @@ public class RolesLookupBypassControlFactoryTest {
     @Test
     public void encodeTrueValue() {
         Asn1Buffer asn1Buffer = new Asn1Buffer();
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
         control.setBypassRolesLookup(true);
 
         rolesLookupBypassControlFactory.encodeValue(asn1Buffer, control);
@@ -89,7 +90,7 @@ public class RolesLookupBypassControlFactoryTest {
     @Test
     public void encodeFalseValue() {
         Asn1Buffer asn1Buffer = new Asn1Buffer();
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
         control.setBypassRolesLookup(false);
 
         rolesLookupBypassControlFactory.encodeValue(asn1Buffer, control);

@@ -20,11 +20,6 @@ package org.apache.knox.gateway.services.ldap.control;
 import org.apache.directory.api.ldap.model.message.Control;
 
 public interface RolesLookupBypassControl extends Control {
-    // OID created from a UUID to ensure no collisions:
-    // Apache Root OID for core object classes 1.3.6.1.4.1.18060.2
-    // UUID "5236bee0-8a22-4419-9f8e-f1de43312ce1"
-    String OID = "1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953";
-
     boolean isBypassRolesLookup();
     void setBypassRolesLookup(boolean bypassRolesLookup);
 }

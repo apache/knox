@@ -17,22 +17,9 @@
  */
 package org.apache.knox.gateway.services.ldap.control;
 
-import org.apache.directory.api.ldap.model.message.controls.AbstractControl;
-
-public class RolesLookupBypassControlImpl extends AbstractControl implements RolesLookupBypassControl {
-    private boolean bypassRolesLookup;
-
-    public RolesLookupBypassControlImpl(String oid) {
-        super(oid);
-    }
-
-    @Override
-    public boolean isBypassRolesLookup() {
-        return bypassRolesLookup;
-    }
-
-    @Override
-    public void setBypassRolesLookup(boolean bypassRolesLookup) {
-        this.bypassRolesLookup = bypassRolesLookup;
-    }
+public class RolesLookupTestConstants {
+    // Test OID created from a UUID to ensure no collisions until an official OID is obtained:
+    // Apache Root OID for core object classes 1.3.6.1.4.1.18060.2
+    // UUID "5236bee0-8a22-4419-9f8e-f1de43312ce1"
+    public static final String ROLES_LOOKUP_BYPASS_CONTROL_OID = "1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953";
 }
