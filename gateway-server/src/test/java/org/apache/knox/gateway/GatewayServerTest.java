@@ -21,7 +21,6 @@ import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.easymock.EasyMock;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,7 +47,6 @@ public class GatewayServerTest {
   }
 
   @Test
-  @Ignore
   public void testRefreshGatewayConfig() throws Exception {
     GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
 
@@ -65,6 +63,11 @@ public class GatewayServerTest {
     Method refreshMethod = GatewayServer.class.getDeclaredMethod("refreshGatewayConfig", GatewayConfigImpl.class, Path.class);
     refreshMethod.setAccessible(true);
 
+    // Reset static lastReloadTime to ensure test isolation
+    Field lastReloadTimeField = GatewayServer.class.getDeclaredField("lastReloadTime");
+    lastReloadTimeField.setAccessible(true);
+    lastReloadTimeField.set(null, null);
+
     // Initial load
     config.reloadConfiguration();
     EasyMock.expectLastCall().once();
@@ -75,8 +78,6 @@ public class GatewayServerTest {
     EasyMock.verify(config);
 
     // Check lastReloadTime is set
-    Field lastReloadTimeField = GatewayServer.class.getDeclaredField("lastReloadTime");
-    lastReloadTimeField.setAccessible(true);
     FileTime lastReloadTime = (FileTime) lastReloadTimeField.get(null);
     assertNotNull(lastReloadTime);
 
