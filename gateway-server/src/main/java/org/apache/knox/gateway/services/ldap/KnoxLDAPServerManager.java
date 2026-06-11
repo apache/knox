@@ -95,9 +95,9 @@ public class KnoxLDAPServerManager {
         this.baseDn = config.getLDAPBaseDN();
 
         // Get OID for roles lookup bypass control
-        this.rolesLookupBypassControlOid = gatewayConfig.getLdapRolesLookupBypassControlOid();
-        if (StringUtils.isNotBlank(this.rolesLookupBypassControlOid)) {
-            if (!Oid.isOid(this.rolesLookupBypassControlOid)) {
+        rolesLookupBypassControlOid = gatewayConfig.getLdapRolesLookupBypassControlOid();
+        if (StringUtils.isNotBlank(rolesLookupBypassControlOid)) {
+            if (!Oid.isOid(rolesLookupBypassControlOid)) {
                 throw new ConfigurationException("Roles Lookup Bypass Control OID is not valid");
             }
         }

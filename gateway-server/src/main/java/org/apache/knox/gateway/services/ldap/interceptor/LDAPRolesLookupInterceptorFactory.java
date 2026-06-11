@@ -42,7 +42,7 @@ public class LDAPRolesLookupInterceptorFactory implements KnoxLdapInterceptorFac
         String rolesLookupBypassControlOid = gatewayConfig.getLdapRolesLookupBypassControlOid();
         if (StringUtils.isNotBlank(rolesLookupBypassControlOid)) {
             if (!Oid.isOid(rolesLookupBypassControlOid)) {
-                rolesLookupBypassControlOid = "";
+                rolesLookupBypassControlOid = null;
             }
         }
 

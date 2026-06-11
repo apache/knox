@@ -53,7 +53,6 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private final LDAPRolesLookupService rolesLookupService;
     private final String rolesLookupBypassControlOid;
 
-    // tODO take in config
     public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, String rolesLookupBypassControlOid) {
         this.rolesLookupService = rolesLookupService;
         this.rolesLookupBypassControlOid = rolesLookupBypassControlOid;
