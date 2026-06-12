@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.security.token.impl;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 import com.nimbusds.jose.JOSEException;
@@ -33,6 +34,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 
 public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
@@ -100,14 +102,12 @@ public class JWTToken implements JWT {
     if (jwtAttributes.getClientId() != null) {
       builder.claim(CLIENT_ID_CLAIM, jwtAttributes.getClientId());
     }
-    if (jwtAttributes.getActor() != null) {
-      // RFC 8693 Token Exchange: The "act" (actor) claim provides a means within a JWT to express
-      // that delegation has occurred and identify the acting party to whom authority has been delegated.
-      // The act claim value is a JSON object containing a "sub" claim with the identity of the actor.
-      JWTClaimsSet actClaims = new JWTClaimsSet.Builder()
-          .subject(jwtAttributes.getActor())
-          .build();
-      builder.claim(ACT_CLAIM, actClaims.toJSONObject());
+    // RFC 8693 Token Exchange: The "act" (actor) claim provides a means within a JWT to express
+    // that delegation has occurred and identify the acting party to whom authority has been delegated.
+    // The actor chain is converted to the nested structure required by RFC 8693.
+    Map<String, Object> nestedAct = TokenUtils.buildNestedActClaim(jwtAttributes.getActorChain());
+    if (nestedAct != null) {
+      builder.claim(ACT_CLAIM, nestedAct);
     }
 
     // Add a private UUID claim for uniqueness

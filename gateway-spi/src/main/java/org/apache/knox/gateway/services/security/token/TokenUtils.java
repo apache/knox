@@ -30,7 +30,11 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TokenUtils {
   public static final String ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID = "currentKnoxSsoCookieTokenId";
@@ -112,6 +116,132 @@ public class TokenUtils {
    */
   private static boolean useHMAC(char[] hmacSecret, String signingKeystoreName) {
     return hmacSecret != null && StringUtils.isBlank(signingKeystoreName);
+  }
+
+  /**
+   * Extract the actor chain from an RFC 8693 'act' claim in a JWT token.
+   *
+   * <p>The 'act' claim in RFC 8693 represents a delegation chain where each actor
+   * delegated authority to the next. The claim is structured as a nested JSON object,
+   * where each level contains identity claims (such as 'sub' and 'iss') and potentially
+   * another nested 'act' claim.</p>
+   *
+   * <p>According to RFC 8693 Section 4.1, the 'act' claim contains identity claims that
+   * identify the actor. Common identity claims include:</p>
+   * <ul>
+   *   <li>'sub' - the subject/identity of the actor</li>
+   *   <li>'iss' - the issuer of the actor's identity</li>
+   * </ul>
+   *
+   * <p>Non-identity claims (e.g., 'exp', 'nbf', 'aud') are not relevant to the validity
+   * of the containing JWT and should not be used within 'act' claims.</p>
+   *
+   * <p>Example JWT 'act' claim structure:</p>
+   * <pre>
+   * {
+   *   "sub": "service-a",
+   *   "iss": "https://issuer.example.com",
+   *   "act": {
+   *     "sub": "service-b",
+   *     "act": {
+   *       "sub": "service-c"
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   * <p>This method flattens this nested structure into a list ordered from most recent
+   * actor (service-a) to oldest (service-c).</p>
+   *
+   * @param token The JWT token to extract the actor chain from
+   * @return A list of actor claim maps, ordered from most recent to oldest; empty list if no 'act' claim exists
+   */
+  @SuppressWarnings("unchecked")
+  public static List<Map<String, Object>> extractActorChain(JWT token) {
+    Object currentAct = token == null ? null : token.getClaimAsObject(JWTToken.ACT_CLAIM);
+    final List<Map<String, Object>> actorChain = new ArrayList<>();
+
+    while (currentAct instanceof Map<?, ?> actorMap) {
+      actorChain.add(new LinkedHashMap<>((Map<String, Object>) actorMap));
+      currentAct = actorMap.get(JWTToken.ACT_CLAIM);
+    }
+
+    return Collections.unmodifiableList(actorChain);
+  }
+
+  /**
+   * Build a new actor chain by adding a new actor to an existing chain.
+   *
+   * <p>This creates a new list with the new actor as the first element (most recent),
+   * followed by all actors from the existing chain.</p>
+   *
+   * @param existingChain The existing actor chain (may be null or empty)
+   * @param newActor The new actor to add to the chain
+   * @return A new immutable list with the complete actor chain
+   */
+  public static List<Map<String, Object>> addActorToChain(List<Map<String, Object>> existingChain, String newActor) {
+    if (newActor == null || newActor.isEmpty()) {
+      return existingChain == null ? Collections.emptyList() : existingChain;
+    }
+
+    List<Map<String, Object>> newChain = new ArrayList<>();
+
+    // Add the new actor as the first element
+    Map<String, Object> newActorClaim = new LinkedHashMap<>();
+    newActorClaim.put("sub", newActor);
+    newChain.add(newActorClaim);
+
+    // Add all existing actors
+    if (existingChain != null && !existingChain.isEmpty()) {
+      newChain.addAll(existingChain);
+    }
+
+    return Collections.unmodifiableList(newChain);
+  }
+
+  /**
+   * Convert an actor chain list into the nested structure required for the JWT 'act' claim.
+   *
+   * <p>This method takes a flat list of actor claim maps (ordered from most recent to oldest)
+   * and converts it into the nested structure required by RFC 8693.</p>
+   *
+   * <p>Example transformation:</p>
+   * <pre>
+   * Input:  [{"sub": "actor1"}, {"sub": "actor2"}, {"sub": "actor3"}]
+   * Output: {
+   *   "sub": "actor1",
+   *   "act": {
+   *     "sub": "actor2",
+   *     "act": {
+   *       "sub": "actor3"
+   *     }
+   *   }
+   * }
+   * </pre>
+   *
+   * @param actorChain The flat list of actor claim maps, ordered from most recent to oldest
+   * @return The nested structure for the 'act' claim, or null if the chain is empty
+   */
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object> buildNestedActClaim(List<Map<String, Object>> actorChain) {
+    if (actorChain == null || actorChain.isEmpty()) {
+      return null;
+    }
+
+    // Start from the last actor (oldest) and work backwards
+    Map<String, Object> nestedAct = null;
+    for (int i = actorChain.size() - 1; i >= 0; i--) {
+      Map<String, Object> currentActor = new LinkedHashMap<>(actorChain.get(i));
+
+      if (nestedAct != null) {
+        // Add the previously built nested structure as the 'act' claim
+        currentActor.put(JWTToken.ACT_CLAIM, nestedAct);
+      }
+
+      nestedAct = currentActor;
+    }
+
+    return nestedAct;
   }
 
 }
