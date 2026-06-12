@@ -1824,11 +1824,6 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLdapRolesLookupBypassControlOid() {
-    return get(LDAP_ROLES_LOOKUP_BYPASS_CONTROL_OID);
-  }
-
-  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
   }

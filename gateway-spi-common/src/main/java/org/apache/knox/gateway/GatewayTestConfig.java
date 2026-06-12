@@ -1291,11 +1291,6 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLdapRolesLookupBypassControlOid() {
-    return "";
-  }
-
-  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return false;
   }

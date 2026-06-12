@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.services.ldap.control;
 
-import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertArrayEquals;
@@ -41,18 +40,18 @@ public class RolesLookupBypassControlFactoryTest {
     public void setUp() throws Exception {
         mockLdapApiService = mock(LdapApiService.class);
         replay(mockLdapApiService);
-        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService, ROLES_LOOKUP_BYPASS_CONTROL_OID);
+        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService);
     }
 
     @Test
-    public void newControl() {
+    public void testNewControl() {
         Control control = rolesLookupBypassControlFactory.newControl();
         assertTrue("Control must be a RolesLookupBypassControlDecorator", control instanceof RolesLookupBypassControlDecorator);
     }
 
     @Test
-    public void decodeFalseValue() throws Exception {
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
+    public void testDecodeFalseValue() throws Exception {
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
         byte[] bytes = new byte[]{0x01, 0x01, 0x00};
 
         rolesLookupBypassControlFactory.decodeValue(control, bytes);
@@ -61,8 +60,8 @@ public class RolesLookupBypassControlFactoryTest {
     }
 
     @Test
-    public void decodeTrueValue() throws Exception {
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
+    public void testDecodeTrueValue() throws Exception {
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
         byte[] bytes = new byte[]{0x01, 0x01, (byte) 0xff};
 
         rolesLookupBypassControlFactory.decodeValue(control, bytes);
@@ -71,32 +70,27 @@ public class RolesLookupBypassControlFactoryTest {
     }
 
     @Test
-    public void encodeTrueValue() {
-        Asn1Buffer asn1Buffer = new Asn1Buffer();
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        control.setBypassRolesLookup(true);
-
-        rolesLookupBypassControlFactory.encodeValue(asn1Buffer, control);
-
-        // expectedBytes in reverse because Asn1Buffer stores bytes in reverse order
-        byte[] expectedBytes = new byte[]{(byte) 0xff, 0x01, 0x01};
-        System.out.println(asn1Buffer.toString());
-        ByteBuffer encodedBuffer = asn1Buffer.getBytes();
-        byte[] encodedBytes = new byte[encodedBuffer.remaining()];
-        encodedBuffer.get(encodedBytes);
-        assertArrayEquals(expectedBytes, encodedBytes);
+    public void testEncodeTrueValue() {
+        testEncode(true);
     }
 
     @Test
-    public void encodeFalseValue() {
+    public void testEncodeFalseValue() {
+        testEncode(false);
+    }
+
+    private void testEncode(boolean encodeValue) {
+        byte byteValue = encodeValue ? (byte) 0xff : 0x00;
+
         Asn1Buffer asn1Buffer = new Asn1Buffer();
-        RolesLookupBypassControl control = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        control.setBypassRolesLookup(false);
+        RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
+        control.setBypassRolesLookup(encodeValue);
 
         rolesLookupBypassControlFactory.encodeValue(asn1Buffer, control);
 
         // expectedBytes in reverse because Asn1Buffer stores bytes in reverse order
-        byte[] expectedBytes = new byte[]{0x00, 0x01, 0x01};
+        byte[] expectedBytes = new byte[]{byteValue, 0x01, 0x01};
+        System.out.println(asn1Buffer.toString());
         ByteBuffer encodedBuffer = asn1Buffer.getBytes();
         byte[] encodedBytes = new byte[encodedBuffer.remaining()];
         encodedBuffer.get(encodedBytes);

@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -173,7 +172,6 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com").atLeastOnce();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend")).atLeastOnce();
         expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
-        expect(mockConfig.getLdapRolesLookupBypassControlOid()).andReturn(ROLES_LOOKUP_BYPASS_CONTROL_OID).anyTimes();
         replay(mockConfig);
     }
 

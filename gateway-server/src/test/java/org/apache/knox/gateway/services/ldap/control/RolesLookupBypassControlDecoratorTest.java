@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.services.ldap.control;
 
-import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertArrayEquals;
@@ -45,14 +44,14 @@ public class RolesLookupBypassControlDecoratorTest {
         mockLdapApiService = mock(LdapApiService.class);
         replay(mockLdapApiService);
 
-        rolesLookupBypassControl = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService, ROLES_LOOKUP_BYPASS_CONTROL_OID);
+        rolesLookupBypassControl = new RolesLookupBypassControlImpl();
+        rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(mockLdapApiService);
 
         rolesLookupBypassControlDecorator = new RolesLookupBypassControlDecorator(mockLdapApiService, rolesLookupBypassControl, rolesLookupBypassControlFactory);
     }
 
     @Test
-    public void decodeFalseValue() throws Exception {
+    public void testDecodeFalseValue() throws Exception {
         byte[] bytes = new byte[]{0x01, 0x01, 0x00};
         rolesLookupBypassControlDecorator.decode(bytes);
 
@@ -60,7 +59,7 @@ public class RolesLookupBypassControlDecoratorTest {
     }
 
     @Test
-    public void decodeTrueValue() throws Exception {
+    public void testDecodeTrueValue() throws Exception {
         byte[] bytes = new byte[]{0x01, 0x01, (byte) 0xff};
         rolesLookupBypassControlDecorator.decode(bytes);
 
@@ -68,28 +67,38 @@ public class RolesLookupBypassControlDecoratorTest {
     }
 
     @Test(expected = DecoderException.class)
-    public void decodeWrongTag() throws Exception {
+    public void testDecodeWrongTag() throws Exception {
         byte[] bytes = new byte[]{0x02, 0x01, 0x00};
         rolesLookupBypassControlDecorator.decode(bytes);
     }
 
     @Test(expected = DecoderException.class)
-    public void decodeWrongLength() throws Exception {
+    public void testDecodeWrongLength() throws Exception {
         byte[] bytes = new byte[]{0x02, 0x02, 0x00, 0x00};
         rolesLookupBypassControlDecorator.decode(bytes);
     }
 
 
     @Test
-    public void computeLength() {
+    public void testComputeLength() {
         assertEquals("Length must always be 3", 3, rolesLookupBypassControlDecorator.computeLength());
     }
 
     @Test
-    public void encodeTrueValue() throws Exception {
-        rolesLookupBypassControl.setBypassRolesLookup(true);
-        byte[] expectedBytes = new byte[]{0x01, 0x01, (byte) 0xff};
+    public void testEncodeTrueValue() throws Exception {
+        testEncode(true);
+    }
 
+    @Test
+    public void testEncodeFalseValue() throws Exception {
+        testEncode(false);
+    }
+
+    private void testEncode(boolean encodeValue) throws Exception {
+        byte byteValue = encodeValue ? (byte) 0xff : 0x00;
+        rolesLookupBypassControlDecorator.setBypassRolesLookup(encodeValue);
+
+        byte[] expectedBytes = new byte[] {0x01, 0x01, byteValue};
         ByteBuffer byteBuffer = ByteBuffer.allocate(3);
         ByteBuffer encodedBuffer = rolesLookupBypassControlDecorator.encode(byteBuffer);
         // transition from write mode to read mode
@@ -100,31 +109,20 @@ public class RolesLookupBypassControlDecoratorTest {
     }
 
     @Test
-    public void encodeFalseValue() throws Exception {
-        byte[] expectedBytes = new byte[]{0x01, 0x01, 0x00};
-
-        ByteBuffer byteBuffer = ByteBuffer.allocate(3);
-        ByteBuffer encodedBuffer = rolesLookupBypassControlDecorator.encode(byteBuffer);
-        // transition from write mode to read mode
-        encodedBuffer.flip();
-        byte[] encodedBytes = new byte[encodedBuffer.remaining()];
-        encodedBuffer.get(encodedBytes);
-        assertArrayEquals(expectedBytes, encodedBytes);
-    }
-
-    @Test
-    public void isBypassRolesLookup() {
+    public void testIsBypassRolesLookup() {
+        // Set value on the decorated instance and check that the decorator matches.
         rolesLookupBypassControl.setBypassRolesLookup(true);
-        assertEquals("isBypassRolesLookup should match the value from the decorated Impl", rolesLookupBypassControl.isBypassRolesLookup(), rolesLookupBypassControlDecorator.isBypassRolesLookup());
+        assertEquals("isBypassRolesLookup should match the value from the decorated Impl", true, rolesLookupBypassControlDecorator.isBypassRolesLookup());
         rolesLookupBypassControl.setBypassRolesLookup(false);
-        assertEquals("isBypassRolesLookup should match the value from the decorated Impl", rolesLookupBypassControl.isBypassRolesLookup(), rolesLookupBypassControlDecorator.isBypassRolesLookup());
+        assertEquals("isBypassRolesLookup should match the value from the decorated Impl", false, rolesLookupBypassControlDecorator.isBypassRolesLookup());
     }
 
     @Test
-    public void setBypassRolesLookup() {
+    public void testSetBypassRolesLookup() {
+        // Set value on the decorator and check that the decorated instance matches.
         rolesLookupBypassControlDecorator.setBypassRolesLookup(true);
-        assertEquals("isBypassRolesLookup should match the value from the decorated Impl", rolesLookupBypassControl.isBypassRolesLookup(), rolesLookupBypassControlDecorator.isBypassRolesLookup());
+        assertEquals("Decorated instance value should be updated by the decorator", true, rolesLookupBypassControl.isBypassRolesLookup());
         rolesLookupBypassControlDecorator.setBypassRolesLookup(false);
-        assertEquals("isBypassRolesLookup should match the value from the decorated Impl", rolesLookupBypassControl.isBypassRolesLookup(), rolesLookupBypassControlDecorator.isBypassRolesLookup());
+        assertEquals("Decorated instance value should be updated by the decorator", false, rolesLookupBypassControl.isBypassRolesLookup());
     }
 }

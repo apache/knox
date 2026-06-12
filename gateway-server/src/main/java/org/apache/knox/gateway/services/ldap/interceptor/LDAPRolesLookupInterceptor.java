@@ -17,7 +17,6 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -36,6 +35,7 @@ import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.LdapUtils;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
+import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,23 +51,19 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private final LDAPRolesLookupService rolesLookupService;
-    private final String rolesLookupBypassControlOid;
 
-    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, String rolesLookupBypassControlOid) {
+    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService) {
         this.rolesLookupService = rolesLookupService;
-        this.rolesLookupBypassControlOid = rolesLookupBypassControlOid;
     }
 
     @Override
     public EntryFilteringCursor search(SearchOperationContext ctx) throws LdapException {
-        if (StringUtils.isNotBlank(rolesLookupBypassControlOid)) {
-            if (ctx.hasRequestControl(rolesLookupBypassControlOid)) {
-                Control control = ctx.getRequestControl(rolesLookupBypassControlOid);
-                if (control instanceof RolesLookupBypassControl) {
-                    RolesLookupBypassControl rolesLookupBypassControl = (RolesLookupBypassControl) control;
-                    if (rolesLookupBypassControl.isBypassRolesLookup()) {
-                        return next(ctx);
-                    }
+        if (ctx.hasRequestControl(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID)) {
+            Control control = ctx.getRequestControl(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID);
+            if (control instanceof RolesLookupBypassControl) {
+                RolesLookupBypassControl rolesLookupBypassControl = (RolesLookupBypassControl) control;
+                if (rolesLookupBypassControl.isBypassRolesLookup()) {
+                    return next(ctx);
                 }
             }
         }

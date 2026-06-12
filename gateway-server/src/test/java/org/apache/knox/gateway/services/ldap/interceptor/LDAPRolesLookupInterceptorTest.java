@@ -21,7 +21,6 @@ import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
-import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
@@ -39,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
@@ -92,37 +90,21 @@ public class LDAPRolesLookupInterceptorTest {
 
     @Test
     public void testRolesLookupNoBypass() throws Exception {
-        final DirectoryService directoryService = new SimpleDirectoryService();
-        directoryService.setShutdownHookEnabled(false);
-        SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();
-        directoryService.setSchemaManager(schemaManager);
-
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 
-        final LDAPRolesLookupInterceptor rolesLookupInterceptor = new LDAPRolesLookupInterceptor(mockRolesService, ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        rolesLookupInterceptor.init(directoryService);
-        directoryService.addLast(rolesLookupInterceptor);
+        final Collection<String> roles = Arrays.asList("roleA", "roleG");
+        expect(mockRolesService.lookupRoles(anyString(), anyObject()))
+                .andReturn(roles)
+                .atLeastOnce();
+        replay(mockRolesService);
 
-        final ConfigurableEntriesTestInterceptor nextInterceptor = new ConfigurableEntriesTestInterceptor("NEXT");
-        nextInterceptor.init(directoryService);
-        directoryService.addLast(nextInterceptor);
-
-        final CoreSession session = directoryService.getSession();
-        final SearchOperationContext ctx = new SearchOperationContext(session);
-        ctx.setInterceptors(List.of(rolesLookupInterceptor.getName(), "NEXT"));
-        final RolesLookupBypassControl rolesLookupBypassControl = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        rolesLookupBypassControl.setBypassRolesLookup(false);
-        ctx.addRequestControl(rolesLookupBypassControl);
+        TestContext testContext = createTestContext(false, mockRolesService);
 
         // Set up test to with group and role mapping
         final Entry userEntry = createUserEntry("alice", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
-        nextInterceptor.setEntries(List.of(userEntry));
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
 
-        final Collection<String> roles = Arrays.asList("roleA", "roleG");
-        expect(mockRolesService.lookupRoles(anyString(), anyObject())).andReturn(roles).atLeastOnce();
-        replay(mockRolesService);
-
-        final EntryFilteringCursor entries = rolesLookupInterceptor.search(ctx);
+        final EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx);
 
         assertTrue(entries.next());
         Entry modifiedEntry = entries.get();
@@ -134,37 +116,47 @@ public class LDAPRolesLookupInterceptorTest {
 
     @Test
     public void testRolesLookupWithBypass() throws Exception {
-        final DirectoryService directoryService = new SimpleDirectoryService();
-        directoryService.setShutdownHookEnabled(false);
-        SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();
-        directoryService.setSchemaManager(schemaManager);
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 
-        final LDAPRolesLookupInterceptor rolesLookupInterceptor = new LDAPRolesLookupInterceptor(createMockRolesService(), ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        rolesLookupInterceptor.init(directoryService);
-        directoryService.addLast(rolesLookupInterceptor);
-
-        final ConfigurableEntriesTestInterceptor nextInterceptor = new ConfigurableEntriesTestInterceptor("NEXT");
-        nextInterceptor.init(directoryService);
-        directoryService.addLast(nextInterceptor);
-
-        final CoreSession session = directoryService.getSession();
-        final SearchOperationContext ctx = new SearchOperationContext(session);
-        ctx.setInterceptors(List.of(rolesLookupInterceptor.getName(), "NEXT"));
-
-        final RolesLookupBypassControl rolesLookupBypassControl = new RolesLookupBypassControlImpl(ROLES_LOOKUP_BYPASS_CONTROL_OID);
-        rolesLookupBypassControl.setBypassRolesLookup(true);
-        ctx.addRequestControl(rolesLookupBypassControl);
+        TestContext testContext = createTestContext(true, mockRolesService);
 
         // Set up test to with group and role mapping
         final Entry userEntry = createUserEntry("alice", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
-        nextInterceptor.setEntries(List.of(userEntry));
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
 
-        final EntryFilteringCursor entries = rolesLookupInterceptor.search(ctx);
+        final EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx);
 
         assertTrue(entries.next());
         Entry modifiedEntry = entries.get();
         assertMemberOf(modifiedEntry, "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
         assertFalse(entries.next());
+    }
+
+    private TestContext createTestContext(boolean bypass, LDAPRolesLookupService rolesService) throws Exception {
+        DirectoryService directoryService = new SimpleDirectoryService();
+        directoryService.setShutdownHookEnabled(false);
+        directoryService.setSchemaManager(SchemaManagerFactory.createSchemaManager());
+
+        LDAPRolesLookupInterceptor interceptor =
+                new LDAPRolesLookupInterceptor(rolesService);
+        interceptor.init(directoryService);
+        directoryService.addLast(interceptor);
+
+        ConfigurableEntriesTestInterceptor nextInterceptor =
+                new ConfigurableEntriesTestInterceptor("NEXT");
+        nextInterceptor.init(directoryService);
+        directoryService.addLast(nextInterceptor);
+
+        SearchOperationContext ctx =
+                new SearchOperationContext(directoryService.getSession());
+        ctx.setInterceptors(List.of(interceptor.getName(), "NEXT"));
+
+        RolesLookupBypassControl control =
+                new RolesLookupBypassControlImpl();
+        control.setBypassRolesLookup(bypass);
+        ctx.addRequestControl(control);
+
+        return new TestContext(interceptor, nextInterceptor, ctx);
     }
 
     private LDAPRolesLookupService createMockRolesService() throws Exception {
@@ -174,7 +166,7 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     private LDAPRolesLookupInterceptor createInterceptor() throws Exception {
-        return new LDAPRolesLookupInterceptor(createMockRolesService(), ROLES_LOOKUP_BYPASS_CONTROL_OID);
+        return new LDAPRolesLookupInterceptor(createMockRolesService());
     }
 
     private Entry createUserEntry(final String username, final String... memberOfDns) throws Exception {
@@ -192,5 +184,11 @@ public class LDAPRolesLookupInterceptorTest {
         for (final String expected : expectedDns) {
             assertTrue("Missing expected role DN: " + expected, memberOf.contains(expected));
         }
+    }
+
+    private record TestContext(
+            LDAPRolesLookupInterceptor interceptor,
+            ConfigurableEntriesTestInterceptor nextInterceptor,
+            SearchOperationContext ctx) {
     }
 }

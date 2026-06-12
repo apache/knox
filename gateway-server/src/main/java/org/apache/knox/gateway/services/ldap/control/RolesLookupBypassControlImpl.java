@@ -18,12 +18,13 @@
 package org.apache.knox.gateway.services.ldap.control;
 
 import org.apache.directory.api.ldap.model.message.controls.AbstractControl;
+import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 public class RolesLookupBypassControlImpl extends AbstractControl implements RolesLookupBypassControl {
     private boolean bypassRolesLookup;
 
-    public RolesLookupBypassControlImpl(String oid) {
-        super(oid);
+    public RolesLookupBypassControlImpl() {
+        super(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID);
     }
 
     @Override

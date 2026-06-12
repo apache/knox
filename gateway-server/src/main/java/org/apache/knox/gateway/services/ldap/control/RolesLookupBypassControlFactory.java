@@ -22,17 +22,18 @@ import org.apache.directory.api.asn1.util.Asn1Buffer;
 import org.apache.directory.api.ldap.codec.api.AbstractControlFactory;
 import org.apache.directory.api.ldap.codec.api.LdapApiService;
 import org.apache.directory.api.ldap.model.message.Control;
+import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 public class RolesLookupBypassControlFactory extends AbstractControlFactory<RolesLookupBypassControl> {
     public static final byte BOOLEAN_TAG_BYTE = 0x01;
 
-    public RolesLookupBypassControlFactory(LdapApiService codec, String oid) {
-        super(codec, oid);
+    public RolesLookupBypassControlFactory(LdapApiService codec) {
+        super(codec, SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID);
     }
 
     @Override
     public Control newControl() {
-        return new RolesLookupBypassControlDecorator(codec, new RolesLookupBypassControlImpl(oid), this);
+        return new RolesLookupBypassControlDecorator(codec, new RolesLookupBypassControlImpl(), this);
     }
 
     @Override

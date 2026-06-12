@@ -15,11 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.control;
+package org.apache.knox.gateway.services.ldap.model.constants;
 
-public class RolesLookupTestConstants {
-    // Test OID created from a UUID to ensure no collisions until an official OID is obtained:
-    // Apache Root OID for core object classes 1.3.6.1.4.1.18060.2
-    // UUID "5236bee0-8a22-4419-9f8e-f1de43312ce1"
-    public static final String ROLES_LOOKUP_BYPASS_CONTROL_OID = "1.3.6.1.4.1.18060.2.1379319520.35362.17433.40846.265936912329953";
+/**
+ * A utility class where we declare the schema objects being used by the Knox LDAP Server.
+ * Apache Knox OID Base = 1.3.6.1.4.1.18060.18
+ */
+public final class SchemaConstants {
+
+    // Apache Knox LDAP Controls 1.3.6.1.4.1.18060.18.0
+    public static final String ROLES_LOOKUP_BYPASS_CONTROL_OID = "1.3.6.1.4.1.18060.18.0.1";
+
 }

@@ -25,8 +25,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static org.apache.knox.gateway.services.ldap.control.RolesLookupTestConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID;
-import static org.easymock.EasyMock.expect;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -46,7 +44,6 @@ public class LDAPRolesLookupInterceptorFactoryTest {
         };
 
         GatewayConfig mockConfig = EasyMock.createMock(GatewayConfig.class);
-        expect(mockConfig.getLdapRolesLookupBypassControlOid()).andReturn(ROLES_LOOKUP_BYPASS_CONTROL_OID).anyTimes();
         EasyMock.replay(mockConfig);
 
         Interceptor interceptor = factory.create(mockConfig, "test", Collections.emptyMap());
