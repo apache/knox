@@ -12,22 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Integration tests for Knox Auth Service with LDAP authentication."""
+
 import unittest
+
 from requests.auth import HTTPBasicAuth
 
 from common_utils import collect_actor_group_values, gateway_base_url, knox_get
 
-########################################################
-# This test is verifying the behavior of the Knox Auth Service + LDAP authentication.
-# It is using the 'auth/api/v1/pre' endpoint to get the actor ID and group headers.
-# It is using the 'guest' user to get the guest user headers.
-# It is using the 'admin' user to get the admin user headers.
-# It is verifying that the actor ID and group headers are correct.
-# It is verifying that the actor ID and group headers are not empty.
-# It is verifying that the actor ID and group headers are not None.
-########################################################
 
 class TestKnoxAuthService(unittest.TestCase):
+    """Verify actor ID and group headers from the knoxldap preauth endpoint."""
+
     def setUp(self):
         self.base_url = gateway_base_url()
         # The topology name is based on the filename knoxldap.xml
@@ -42,12 +39,13 @@ class TestKnoxAuthService(unittest.TestCase):
             self.topology_url,
             auth=HTTPBasicAuth('guest', 'guest-password'),
         )
-        
+
         print(f"Status Code: {response.status_code}")
         self.assertEqual(response.status_code, 200)
-        
+
         # Check for Actor ID header
-        # The config in knoxldap.xml sets 'preauth.auth.header.actor.id.name' to 'x-knox-actor-username'
+        # The config in knoxldap.xml sets 'preauth.auth.header.actor.id.name'
+        # to 'x-knox-actor-username'
         actor_id_header = 'x-knox-actor-username'
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], 'guest')
@@ -56,7 +54,11 @@ class TestKnoxAuthService(unittest.TestCase):
         # Check for Actor Group header - should be empty for guest
         prefix = 'x-knox-actor-groups'
         all_groups = collect_actor_group_values(response, prefix=prefix)
-        self.assertEqual(len(all_groups), 0, f"Guest user should not have any group headers starting with {prefix}")
+        self.assertEqual(
+            len(all_groups),
+            0,
+            f"Guest user should not have any group headers starting with {prefix}",
+        )
 
     def test_auth_service_admin_groups(self):
         """
@@ -67,26 +69,32 @@ class TestKnoxAuthService(unittest.TestCase):
             self.topology_url,
             auth=HTTPBasicAuth('admin', 'admin-password'),
         )
-        
+
         print(f"Status Code: {response.status_code}")
         self.assertEqual(response.status_code, 200)
-        
+
         # Check for Actor ID header
         actor_id_header = 'x-knox-actor-username'
         self.assertIn(actor_id_header, response.headers)
         self.assertEqual(response.headers[actor_id_header], 'admin')
         print(f"Verified {actor_id_header}: {response.headers[actor_id_header]}")
-        
+
         # Config: 'preauth.auth.header.actor.groups.prefix' = 'x-knox-actor-groups'
         # We mapped admin to 'longGroupName1,longGroupName2,longGroupName3,longGroupName4'
         prefix = 'x-knox-actor-groups'
         all_groups = collect_actor_group_values(response, prefix=prefix)
         self.assertTrue(len(all_groups) > 0, f"No headers found starting with {prefix}")
-        for h in response.headers:
-            if h.lower().startswith(prefix.lower()):
-                print(f"Found group header {h}: {response.headers[h]}")
+        for header_name in response.headers:
+            if header_name.lower().startswith(prefix.lower()):
+                print(f"Found group header {header_name}: {response.headers[header_name]}")
 
-        expected_groups = ['admin', 'longGroupName1', 'longGroupName2', 'longGroupName3', 'longGroupName4']
+        expected_groups = [
+            'admin',
+            'longGroupName1',
+            'longGroupName2',
+            'longGroupName3',
+            'longGroupName4',
+        ]
         for group in expected_groups:
             self.assertIn(group, all_groups)
 
@@ -118,6 +126,7 @@ class TestKnoxAuthService(unittest.TestCase):
         for group in expected_groups:
             self.assertIn(group, all_groups)
         print(f"Verified recursive groups: {all_groups}")
+
 
 if __name__ == '__main__':
     unittest.main()

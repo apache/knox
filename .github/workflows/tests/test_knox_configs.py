@@ -12,19 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Integration tests for global Knox gateway configuration."""
+
 import unittest
+
 from requests.auth import HTTPBasicAuth
 
 from common_utils import assert_hsts_header, gateway_base_url, knox_get
 
 
-########################################################
-# This test is verifying the global HSTS headers for 404 response.
-# It executes new GET request on non-existent Knox path
-# It verifies header is present with the correct value.
-########################################################
-
 class TestKnoxConfigs(unittest.TestCase):
+    """Verify global gateway settings such as HSTS on error responses."""
+
     def setUp(self):
         self.base_url = gateway_base_url()
         self.non_existent_path = self.base_url + "gateway/not-exists"
@@ -33,7 +33,7 @@ class TestKnoxConfigs(unittest.TestCase):
         """
         Verifies header is present with the correct value
         """
-        print(f"\nTesting global HSTS config for 404 response")
+        print("\nTesting global HSTS config for 404 response")
         response = knox_get(
             self.non_existent_path,
             auth=HTTPBasicAuth('admin', 'admin-password'),
@@ -43,5 +43,5 @@ class TestKnoxConfigs(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
         assert_hsts_header(self, response)
-        print(f"Verified Strict-Transport-Security: {response.headers['Strict-Transport-Security']}")
-
+        hsts_value = response.headers['Strict-Transport-Security']
+        print(f"Verified Strict-Transport-Security: {hsts_value}")

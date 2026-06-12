@@ -12,21 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Integration tests for the RemoteAuthProvider topology."""
+
 import unittest
+
 from requests.auth import HTTPBasicAuth
 
 from common_utils import collect_actor_group_values, gateway_base_url, knox_get
 
-########################################################
-# This test is verifying the behavior of the RemoteAuthProvider.
-# It is using the 'auth/api/v1/pre' endpoint to get the actor ID and group headers.
-# It is using the 'guest' user to get the guest user headers.
-# It is using the 'admin' user to get the admin user headers.
-# It is verifying that the actor ID and group headers are correct.
-# It is verifying that the actor ID and group headers are not empty.
-# It is verifying that the actor ID and group headers are not None.
-########################################################
+
 class TestRemoteAuth(unittest.TestCase):
+    """Verify RemoteAuthProvider actor ID and group headers via the pre endpoint."""
+
     def setUp(self):
         self.base_url = gateway_base_url()
         self.topology_url = self.base_url + "gateway/remoteauth/auth/api/v1/pre"
@@ -67,7 +65,7 @@ class TestRemoteAuth(unittest.TestCase):
         # knoxldap maps admin to: longGroupName1,longGroupName2,longGroupName3,longGroupName4
         # RemoteAuthFilter picks these up from x-knox-actor-groups-*
         # And KNOX-AUTH-SERVICE echoes them back in X-Knox-Actor-Groups-*
-        
+
         all_groups = collect_actor_group_values(response)
 
         print(f"Found groups: {all_groups}")
@@ -86,6 +84,7 @@ class TestRemoteAuth(unittest.TestCase):
         print(f"Status Code: {response.status_code}")
         # When remote auth fails (knoxldap returns 401), RemoteAuthFilter should return 401
         self.assertEqual(response.status_code, 401)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Integration tests for the Knox gateway health REST API."""
+
 import json
 import unittest
 
@@ -44,11 +47,11 @@ class TestKnoxHealth(unittest.TestCase):
             assert_hsts_header(self, response)
         except requests.exceptions.ConnectionError:
             self.fail("Failed to connect to Knox on port 8443 - Connection refused")
-        except Exception as e:
-            self.fail(f"Health check failed with unexpected error: {e}")
+        except requests.exceptions.RequestException as exc:
+            self.fail(f"Health check failed with unexpected error: {exc}")
 
     def test_health_metrics_returns_json(self):
-        """Metrics with pretty=true returns 200 and a JSON object with application/json content type."""
+        """Metrics with pretty=true returns 200 and JSON with application/json type."""
         url = self.base_url + "gateway/health/v1/metrics?pretty=true"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
@@ -71,7 +74,7 @@ class TestKnoxHealth(unittest.TestCase):
         )
 
     def test_health_metrics_without_pretty_returns_json(self):
-        """Metrics without pretty still returns 200, parseable JSON, and the same top-level keys as pretty."""
+        """Metrics without pretty returns 200, parseable JSON, and the same top-level keys."""
         url = self.base_url + "gateway/health/v1/metrics"
         response = knox_get(url)
         self.assertEqual(response.status_code, 200)
@@ -92,6 +95,6 @@ class TestKnoxHealth(unittest.TestCase):
         content_type = response.headers.get("Content-Type", "")
         self.assertIn("text/plain", content_type)
 
+
 if __name__ == '__main__':
     unittest.main()
-
