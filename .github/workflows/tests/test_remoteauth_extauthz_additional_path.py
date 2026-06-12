@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Integration tests for RemoteAuth extauthz path handling."""
+
 import unittest
 
 from requests.auth import HTTPBasicAuth
@@ -20,11 +23,14 @@ from common_utils import gateway_base_url, knox_get
 
 
 class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
+    """Verify RemoteAuth extauthz success, path handling, and auth failures."""
+
     def setUp(self):
         self.base_url = gateway_base_url()
         self.extauthz_url = self.base_url + "gateway/remoteauth/auth/api/v1/extauthz"
 
     def test_extauthz_success(self):
+        """Valid credentials on extauthz return 200 and X-Knox-Actor-ID."""
         response = knox_get(
             self.extauthz_url,
             auth=HTTPBasicAuth("guest", "guest-password"),
@@ -34,6 +40,7 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
         self.assertEqual(response.headers["X-Knox-Actor-ID"], "guest")
 
     def test_extauthz_additional_path_is_ignored(self):
+        """Extra path segments under extauthz still authenticate successfully."""
         response = knox_get(
             self.extauthz_url + "/some/extra/path",
             auth=HTTPBasicAuth("guest", "guest-password"),
@@ -43,6 +50,7 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
         self.assertEqual(response.headers["X-Knox-Actor-ID"], "guest")
 
     def test_extauthz_bad_credentials_unauthorized(self):
+        """Invalid credentials on extauthz return 401."""
         response = knox_get(
             self.extauthz_url,
             auth=HTTPBasicAuth("baduser", "badpass"),
@@ -50,11 +58,10 @@ class TestRemoteAuthExtAuthzAdditionalPath(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_extauthz_missing_credentials(self):
-        # No Authorization header: 401 (no longer hit the NPE because of missing cache key from the header).
+        """Missing Authorization header on extauthz returns 401."""
         response = knox_get(self.extauthz_url)
         self.assertEqual(response.status_code, 401)
 
 
 if __name__ == "__main__":
     unittest.main()
-

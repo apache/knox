@@ -37,16 +37,17 @@ services:
       - ldap
 
   tests:
-    image: python:3.9-slim
+    image: python:3.10-slim
     working_dir: /tests
     volumes:
       - ../tests:/tests
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >
-      bash -c "pip install -r requirements.txt 
-      && echo 'Waiting for knox...' 
-      && sleep 30 
+      bash -c "pip install -r requirements.txt
+      && pylint *.py
+      && echo 'Waiting for knox...'
+      && sleep 30
       && pytest --junitxml=test-results.xml"
     depends_on:
       - knox

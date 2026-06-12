@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Shared helpers for Knox gateway integration tests."""
+
 from __future__ import annotations
 
 import os
@@ -54,7 +56,10 @@ def knox_post(url: str, **kwargs: Any) -> requests.Response:
 def collect_actor_group_values(
     response: requests.Response, prefix: str = "x-knox-actor-groups"
 ) -> list[str]:
-    """Comma-split values from all response headers whose names start with prefix (case-insensitive)."""
+    """Comma-split values from response headers whose names start with prefix.
+
+    Matching is case-insensitive.
+    """
     prefix_lower = prefix.lower()
     all_groups: list[str] = []
     for name in response.headers:
@@ -64,5 +69,6 @@ def collect_actor_group_values(
 
 
 def assert_hsts_header(testcase: unittest.TestCase, response: requests.Response) -> None:
+    """Assert the response includes the expected Strict-Transport-Security header."""
     testcase.assertIn(HSTS_HEADER_NAME, response.headers)
     testcase.assertEqual(response.headers[HSTS_HEADER_NAME], HSTS_EXPECTED_VALUE)

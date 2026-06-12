@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Integration tests for KnoxLDAP preauth and extauthz path handling."""
+
 import unittest
 
 from requests.auth import HTTPBasicAuth
@@ -84,4 +87,3 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
