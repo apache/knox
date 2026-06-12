@@ -128,7 +128,6 @@
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
         <module>knox-cli-launcher</module>
-        <module>gateway-adapter</module>
         <module>hadoop-examples</module>
         <module>gateway-release</module>
         <module>gateway-test</module>
@@ -1329,11 +1328,6 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-shell-launcher</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.knox</groupId>
-                <artifactId>gateway-adapter</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
