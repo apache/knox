@@ -51,6 +51,7 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
 
 public abstract class AbstractIdentityAssertionFilter extends
@@ -106,6 +107,23 @@ public abstract class AbstractIdentityAssertionFilter extends
           throw new IllegalStateException("Required Subject Missing");
         }
 
+        // RFC 8693: Check if this is a token exchange request
+        // For token exchange, we need to apply local policy mapping to the subject identity
+        // BEFORE using it for impersonation. This ensures topology configuration takes precedence.
+        TokenExchangePrincipal tokenExchangePrincipal = SubjectUtils.getTokenExchangePrincipal(currentSubject);
+        if (tokenExchangePrincipal != null) {
+          // Get the subject identity from token exchange
+          String tokenExchangeSubject = tokenExchangePrincipal.getSubjectPrincipalName();
+
+          // Apply local policy mapping to the subject identity
+          // This allows topology configuration to map external identities to local ones
+          String mappedTokenExchangeSubject = mapUserPrincipal(tokenExchangeSubject);
+
+          // Use the mapped subject as the identity to impersonate
+          // This respects local policy while honoring the token exchange semantics
+          mappedPrincipalName = mappedTokenExchangeSubject;
+        }
+
         String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(currentSubject);
         if (primaryPrincipalName != null) {
           if (!primaryPrincipalName.equals(mappedPrincipalName)) {
@@ -152,6 +170,11 @@ public abstract class AbstractIdentityAssertionFilter extends
           // This ensures the delegation chain is maintained through identity assertion
           final Set<ActorChainPrincipal> actorChainPrincipals = SubjectUtils.getActorChainPrincipal(currentSubject, subject);
           subject.getPrincipals().addAll(actorChainPrincipals);
+
+          // RFC 8693 Token Exchange: Preserve TokenExchangePrincipal for audit trail
+          if (tokenExchangePrincipal != null) {
+            subject.getPrincipals().add(tokenExchangePrincipal);
+          }
 
           doAs(request, response, chain, subject);
         }
