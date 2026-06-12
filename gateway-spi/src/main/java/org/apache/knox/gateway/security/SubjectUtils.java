@@ -101,4 +101,8 @@ public class SubjectUtils {
   public static Set<TokenIdPrincipal> getTokenIdPrincipals(Subject subject) {
     return subject.getPrincipals(TokenIdPrincipal.class);
   }
+
+  public static Set<ActorChainPrincipal> getActorChainPrincipal(Subject currentSubject, Subject subject) {
+    return currentSubject.getPrincipals(ActorChainPrincipal.class);
+  }
 }

@@ -150,7 +150,7 @@ public abstract class AbstractIdentityAssertionFilter extends
 
           // RFC 8693 Token Exchange: Preserve ActorChainPrincipal from the current subject
           // This ensures the delegation chain is maintained through identity assertion
-          final Set<ActorChainPrincipal> actorChainPrincipals = currentSubject.getPrincipals(ActorChainPrincipal.class);
+          final Set<ActorChainPrincipal> actorChainPrincipals = SubjectUtils.getActorChainPrincipal(currentSubject, subject);
           subject.getPrincipals().addAll(actorChainPrincipals);
 
           doAs(request, response, chain, subject);
@@ -160,7 +160,7 @@ public abstract class AbstractIdentityAssertionFilter extends
         }
       }
 
-  private void doAs(final ServletRequest request, final ServletResponse response, final FilterChain chain, Subject subject)
+    private void doAs(final ServletRequest request, final ServletResponse response, final FilterChain chain, Subject subject)
       throws IOException, ServletException {
     try {
       Subject.doAs(

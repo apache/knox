@@ -1108,36 +1108,40 @@ public class TokenResource {
       }
 
       // RFC 8693 Token Exchange: Build the actor chain if delegated auth is enabled
-      if (enableDelegatedAuth) {
-        // First check if there's an existing actor chain from a previous token exchange
-        Set<ActorChainPrincipal> actorChainPrincipals = subject.getPrincipals(ActorChainPrincipal.class);
-        List<Map<String, Object>> existingChain = null;
-        if (!actorChainPrincipals.isEmpty()) {
-          existingChain = actorChainPrincipals.iterator().next().getActorChain();
-          log.generalInfoMessage("Found existing actor chain with " + existingChain.size() + " actors");
-        }
-
-        // Check if impersonation is occurring to add a new actor to the chain
-        if (SubjectUtils.isImpersonating(subject)) {
-          String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
-          String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
-          if (primaryPrincipalName != null && impersonatedPrincipalName != null && !primaryPrincipalName.equals(impersonatedPrincipalName)) {
-            // Build the new actor chain by adding the current actor (primary principal) to the existing chain
-            List<Map<String, Object>> newActorChain = TokenUtils.addActorToChain(existingChain, primaryPrincipalName);
-            jwtAttributesBuilder.setActorChain(newActorChain);
-            log.addingActorClaimToToken(primaryPrincipalName, impersonatedPrincipalName);
-          }
-        } else if (existingChain != null && !existingChain.isEmpty()) {
-          // No new impersonation, but preserve existing actor chain
-          jwtAttributesBuilder.setActorChain(existingChain);
-          log.generalInfoMessage("Preserving existing actor chain without adding new actor");
-        }
-      }
+      handleDelegatedAuthentication(subject, jwtAttributesBuilder);
     }
 
     jwtAttributes = jwtAttributesBuilder.build();
     token = ts.issueToken(jwtAttributes);
     return token;
+  }
+
+  private void handleDelegatedAuthentication(Subject subject, JWTokenAttributesBuilder jwtAttributesBuilder) {
+    if (enableDelegatedAuth) {
+      // First check if there's an existing actor chain from a previous token exchange
+      Set<ActorChainPrincipal> actorChainPrincipals = subject.getPrincipals(ActorChainPrincipal.class);
+      List<Map<String, Object>> existingChain = null;
+      if (!actorChainPrincipals.isEmpty()) {
+        existingChain = actorChainPrincipals.iterator().next().getActorChain();
+        log.generalInfoMessage("Found existing actor chain with " + existingChain.size() + " actors");
+      }
+
+      // Check if impersonation is occurring to add a new actor to the chain
+      if (SubjectUtils.isImpersonating(subject)) {
+        String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
+        String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
+        if (primaryPrincipalName != null && impersonatedPrincipalName != null && !primaryPrincipalName.equals(impersonatedPrincipalName)) {
+          // Build the new actor chain by adding the current actor (primary principal) to the existing chain
+          List<Map<String, Object>> newActorChain = TokenUtils.addActorToChain(existingChain, primaryPrincipalName);
+          jwtAttributesBuilder.setActorChain(newActorChain);
+          log.addingActorClaimToToken(primaryPrincipalName, impersonatedPrincipalName);
+        }
+      } else if (existingChain != null && !existingChain.isEmpty()) {
+        // No new impersonation, but preserve existing actor chain
+        jwtAttributesBuilder.setActorChain(existingChain);
+        log.generalInfoMessage("Preserving existing actor chain without adding new actor");
+      }
+    }
   }
 
   private boolean shouldIncludeGroups() {

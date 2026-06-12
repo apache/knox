@@ -158,24 +158,11 @@ public class TokenUtils {
    */
   @SuppressWarnings("unchecked")
   public static List<Map<String, Object>> extractActorChain(JWT token) {
-    if (token == null) {
-      return Collections.emptyList();
-    }
+    Object currentAct = token == null ? null : token.getClaimAsObject(JWTToken.ACT_CLAIM);
+    final List<Map<String, Object>> actorChain = new ArrayList<>();
 
-    Object actClaim = token.getClaimAsObject(JWTToken.ACT_CLAIM);
-    if (actClaim == null) {
-      return Collections.emptyList();
-    }
-
-    List<Map<String, Object>> actorChain = new ArrayList<>();
-
-    // Recursively traverse the nested 'act' claims
-    Object currentAct = actClaim;
-    while (currentAct instanceof Map) {
-      Map<String, Object> actorMap = (Map<String, Object>) currentAct;
-      actorChain.add(new LinkedHashMap<>(actorMap));
-
-      // Get the nested 'act' claim for the next iteration
+    while (currentAct instanceof Map<?, ?> actorMap) {
+      actorChain.add(new LinkedHashMap<>((Map<String, Object>) actorMap));
       currentAct = actorMap.get(JWTToken.ACT_CLAIM);
     }
 
