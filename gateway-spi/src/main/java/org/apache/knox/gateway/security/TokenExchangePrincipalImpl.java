@@ -73,8 +73,8 @@ public class TokenExchangePrincipalImpl implements TokenExchangePrincipal {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("TokenExchangePrincipal[");
-    sb.append("actor=").append(actorPrincipalName);
+    StringBuilder sb = new StringBuilder("TokenExchangePrincipal[actor=");
+    sb.append(actorPrincipalName);
     if (actorIssuer != null) {
       sb.append("@").append(actorIssuer);
     }
