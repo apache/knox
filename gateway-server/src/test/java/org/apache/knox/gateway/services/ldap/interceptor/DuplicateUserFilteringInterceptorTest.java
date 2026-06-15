@@ -21,18 +21,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
-import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
-import org.apache.directory.server.core.api.filtering.EntryFilteringCursorImpl;
-import org.apache.directory.server.core.api.interceptor.BaseInterceptor;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
 import org.apache.knox.gateway.security.ldap.SimpleDirectoryService;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
@@ -139,28 +135,5 @@ public class DuplicateUserFilteringInterceptorTest {
         assertEquals("Attribute should have only one value", 1, uidAttr.size());
         Value value = uidAttr.get();
         assertEquals("Uid should match " + uid, uid, value.getString());
-    }
-
-    private static class ConfigurableEntriesTestInterceptor extends BaseInterceptor {
-        private List<Entry> entries;
-        private EntryFilteringCursor cursor;
-
-        ConfigurableEntriesTestInterceptor(String name) {
-            super(name);
-        }
-
-        public void setEntries(List<Entry> entries) {
-            this.entries = entries;
-        }
-
-        public EntryFilteringCursor getCursor() {
-            return cursor;
-        }
-
-        @Override
-        public EntryFilteringCursor search(SearchOperationContext searchContext) throws LdapException {
-            cursor = new EntryFilteringCursorImpl(new ListCursor<>(entries), searchContext, schemaManager);
-            return cursor;
-        }
     }
 }

@@ -60,6 +60,24 @@ The duplicate user filter interceptor ensures that each `Entry` has a unique `ui
 
 The user search interceptor is created if the `interceptorType` configuration is set to `backend`. This interceptor forwards search queries to its configured backend.
 
+#### Roles Lookup Interceptor (`rolesLookup`)
+
+The rolesLookup interceptor is created if the `interceptorType` configuration is set to `rolesLookup`. This interceptor transforms the response entities based on the mappings provided by the Role Lookup Service. For each entity, a request will be made to lookup roles based on the user's name and group membership. These roles will replace the values in the `memberOf` attribute.
+
+The interceptor will skip role mapping for a search request if the RolesLookupBypassControl is set to true. The control is specified using it's OID, `1.3.6.1.4.1.18060.18.0.1`. The value is a 3 byte array. This value must be base64 encoded for `ldapsearch`.
+
+| Byte | Value | Description |
+| :--- | :--- | :--- |
+| Tag | 0x01 | The Boolean Tag value |
+| Length | 0x03 | The length of the value in bytes |
+| Bypass | 0x00 or Oxff | 0x00 corresponds to `false` and 0xff corresponds to `true |
+
+
+For example, the control can be added to the `ldapsearch` cli using the `-e` option.
+```shell script
+ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' -e "1.3.6.1.4.1.18060.18.0.1=AQH/" '(uid=sam*)' '*'
+```
+
 ### Backend Types
 
 #### Common Backend Properties
@@ -259,11 +277,16 @@ Alternative: Use host and port instead of URL
 </property>
 -->
 
-
 <!-- Duplicate Filter Interceptor -->
 <property>
     <name>gateway.ldap.interceptor.duplicatefilter.interceptorType</name>
     <value>duplicateuserfilter</value>
+</property>
+
+<!-- Roles Lookup Interceptor -->
+<property>
+    <name>gateway.ldap.interceptor.rolesLookup.interceptorType</name>
+    <value>rolesLookup</value>
 </property>
 
 <!-- End LDAP Proxy Service Configuration -->

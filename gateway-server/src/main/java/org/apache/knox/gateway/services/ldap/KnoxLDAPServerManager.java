@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.ldap;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.directory.api.ldap.codec.api.LdapApiService;
+import org.apache.directory.api.ldap.codec.api.LdapApiServiceFactory;
 import org.apache.directory.api.ldap.model.cursor.Cursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
@@ -42,6 +44,7 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 
 import java.io.File;
@@ -134,6 +137,14 @@ public class KnoxLDAPServerManager {
         // Initialize DirectoryService
         directoryService = new DefaultDirectoryService();
         directoryService.setInstanceLayout(new InstanceLayout(workDir));
+
+        // Add RolesLookupBypassControlFactory
+        LdapApiService apiService = directoryService.getLdapCodecService();
+        if (apiService == null) {
+            apiService = LdapApiServiceFactory.getSingleton();
+        }
+        RolesLookupBypassControlFactory rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(apiService);
+        apiService.registerRequestControl(rolesLookupBypassControlFactory);
 
         // Create SchemaManager
         SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();

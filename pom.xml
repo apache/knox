@@ -2228,6 +2228,16 @@
                 <artifactId>api-util</artifactId>
                 <version>${apacheds.directory.api.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-codec-core</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-asn1-api</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.mina</groupId>

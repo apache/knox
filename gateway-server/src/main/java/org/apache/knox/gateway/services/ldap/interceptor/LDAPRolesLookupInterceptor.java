@@ -23,6 +23,7 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
+import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.name.Rdn;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
@@ -33,6 +34,8 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.LdapUtils;
+import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
+import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +49,7 @@ import java.util.Set;
  */
 public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
     private final LDAPRolesLookupService rolesLookupService;
 
     public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService) {
@@ -54,6 +58,16 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
 
     @Override
     public EntryFilteringCursor search(SearchOperationContext ctx) throws LdapException {
+        if (ctx.hasRequestControl(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID)) {
+            Control control = ctx.getRequestControl(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID);
+            if (control instanceof RolesLookupBypassControl) {
+                RolesLookupBypassControl rolesLookupBypassControl = (RolesLookupBypassControl) control;
+                if (rolesLookupBypassControl.isBypassRolesLookup()) {
+                    return next(ctx);
+                }
+            }
+        }
+
         final List<Entry> entries = new ArrayList<>();
         try (EntryFilteringCursor cursor = next(ctx)) {
             while (cursor.next()) {
