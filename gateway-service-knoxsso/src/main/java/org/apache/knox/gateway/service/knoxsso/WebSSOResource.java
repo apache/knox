@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -51,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -84,6 +86,7 @@ public class WebSSOResource {
   private static final String SSO_COOKIE_TOKEN_TYPE_PARAM = "knoxsso.token.type";
   private static final String SSO_COOKIE_TOKEN_AUDIENCES_PARAM = "knoxsso.token.audiences";
   private static final String SSO_COOKIE_TOKEN_SIG_ALG = "knoxsso.token.sigalg";
+  private static final String SSO_COOKIE_INCLUDE_GROUPS_PARAM = "knoxsso.token.include.groups";
   private static final String SSO_COOKIE_TOKEN_WHITELIST_PARAM = "knoxsso.redirect.whitelist.regex";
 
   private static final String SSO_SIGNINGKEY_KEYSTORE_NAME = "knoxsso.signingkey.keystore.name";
@@ -111,6 +114,7 @@ public class WebSSOResource {
   private List<String> targetAudiences = new ArrayList<>();
   private boolean enableSession;
   private String signatureAlgorithm;
+  private boolean includeGroups;
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
   private String tokenIssuer;
@@ -224,6 +228,8 @@ public class WebSSOResource {
     }
     final String configuredTokenType = context.getInitParameter(SSO_COOKIE_TOKEN_TYPE_PARAM);
     tokenType = StringUtils.isBlank(configuredTokenType) ? JOSEObjectType.JWT.getType() : configuredTokenType;
+
+    includeGroups = Boolean.parseBoolean(context.getInitParameter(SSO_COOKIE_INCLUDE_GROUPS_PARAM));
   }
 
   @GET
@@ -314,7 +320,9 @@ public class WebSSOResource {
               .setSigningKeystorePassphrase(signingKeystorePassphrase)
               .setManaged(tokenStateService != null)
               .setType(tokenType)
+              .setGroups(groups())
               .build();
+
       JWT token = tokenAuthority.issueToken(jwtAttributes);
 
       // Coverity CID 1327959
@@ -349,9 +357,11 @@ public class WebSSOResource {
       // todo log return error response
     }
 
-
-
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
+  }
+
+  Set<String> groups() {
+    return includeGroups ? SubjectUtils.getCurrentGroupPrincipalNames() : null;
   }
 
   protected String getOriginalUrlFromQueryParams() {

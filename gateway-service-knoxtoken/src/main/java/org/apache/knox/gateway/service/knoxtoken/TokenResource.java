@@ -1149,11 +1149,7 @@ public class TokenResource {
   }
 
   protected Set<String> groups() {
-    Subject subject = SubjectUtils.getCurrentSubject();
-    Set<String> groups = subject.getPrincipals(GroupPrincipal.class).stream()
-            .map(GroupPrincipal::getName)
-            .collect(Collectors.toSet());
-    return groups;
+    return SubjectUtils.getCurrentGroupPrincipalNames();
   }
 
   protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {

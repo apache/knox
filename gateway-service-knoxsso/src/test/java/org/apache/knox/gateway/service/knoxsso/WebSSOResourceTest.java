@@ -689,6 +689,55 @@ public class WebSSOResourceTest {
   }
 
   @Test
+  public void testIncludeGroupsTrue() throws Exception {
+    testIncludeGroups(Boolean.TRUE, Collections.singleton("group1"), true);
+  }
+
+  @Test
+  public void testIncludeGroupsFalse() throws Exception {
+    testIncludeGroups(Boolean.FALSE, Collections.singleton("group1"), false);
+  }
+
+  @Test
+  public void testIncludeGroupsOmitted() throws Exception {
+    testIncludeGroups(null, Collections.singleton("group1"), false);
+  }
+
+  private void testIncludeGroups(Boolean includeGroupsParam, Set<String> groupsToReturn, boolean expectedInToken) throws Exception {
+    final boolean includeGroups = includeGroupsParam != null && includeGroupsParam;
+    configureCommonExpectations(includeGroups ? Map.of("knoxsso.token.include.groups", includeGroupsParam.toString()) : Map.of());
+
+    final TestWebSSOResource webSSOResponse = new TestWebSSOResource(includeGroups ? groupsToReturn : null);
+    webSSOResponse.request = request;
+    webSSOResponse.response = responseWrapper;
+    webSSOResponse.context = context;
+    webSSOResponse.init();
+
+    // Issue a token
+    webSSOResponse.doGet();
+
+    // Check the cookie
+    final Cookie cookie = responseWrapper.getCookie("hadoop-jwt");
+    assertNotNull(cookie);
+
+    final JWT parsedToken = new JWTToken(cookie.getValue());
+    assertEquals("alice", parsedToken.getSubject());
+    assertTrue(authority.verifyToken(parsedToken));
+
+    // Verify the groups
+    List<String> tokenGroups = (List<String>) parsedToken.getClaimAsObject(JWTToken.KNOX_GROUPS_CLAIM);
+    if (expectedInToken) {
+      assertNotNull(tokenGroups);
+      assertEquals(groupsToReturn.size(), tokenGroups.size());
+      for (String group : groupsToReturn) {
+        assertTrue(tokenGroups.contains(group));
+      }
+    } else {
+      Assert.assertNull(tokenGroups);
+    }
+  }
+
+  @Test
   public void testConcurrentSessionLimitHit() throws Exception {
     configureCommonExpectations(Collections.emptyMap(), false, false, false);
 
@@ -808,6 +857,24 @@ public class WebSSOResourceTest {
     assertEquals(ORIGINAL_URL, result);
   }
 
+
+  private static class TestWebSSOResource extends WebSSOResource {
+    private final Set<String> groups;
+
+    private TestWebSSOResource(Set<String> groups) {
+      this.groups = groups;
+    }
+
+
+    @Override
+    Set<String> groups() {
+      try {
+        return groups;
+      } catch (Exception e) {
+        return null;
+      }
+    }
+  }
 
   /**
    * A wrapper for HttpServletResponseWrapper to store the cookies

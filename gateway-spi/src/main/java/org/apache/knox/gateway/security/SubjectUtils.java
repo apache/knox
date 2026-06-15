@@ -26,6 +26,7 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * General utility methods for interrogating the standard java Subject
@@ -92,6 +93,11 @@ public class SubjectUtils {
   public static Set<GroupPrincipal> getCurrentGroupPrincipals() {
     final Subject subject = getCurrentSubject();
     return subject == null ? Collections.emptySet() : getGroupPrincipals(subject);
+  }
+
+  public static Set<String> getCurrentGroupPrincipalNames() {
+    final Set<GroupPrincipal> groupPrincipals = getCurrentGroupPrincipals();
+    return groupPrincipals.isEmpty() ? Collections.emptySet() : groupPrincipals.stream().map(Principal::getName).collect(Collectors.toSet());
   }
 
   public static Set<GroupPrincipal> getGroupPrincipals(Subject subject) {
