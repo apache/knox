@@ -21,7 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.TokenExchangePrincipal;
+import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -40,11 +44,13 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.Principal;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -514,30 +520,30 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     String actorIssuer = actorToken.getIssuer();
     // Create principals for the Subject
     // PrimaryPrincipal is the ACTOR (the authenticated party)
-    org.apache.knox.gateway.security.PrimaryPrincipal primaryPrincipal =
-        new org.apache.knox.gateway.security.PrimaryPrincipal(actorPrincipalName);
+    PrimaryPrincipal primaryPrincipal =
+        new PrimaryPrincipal(actorPrincipalName);
 
     // TokenExchangePrincipal carries metadata for identity assertion layer
-    org.apache.knox.gateway.security.TokenExchangePrincipal tokenExchangePrincipal =
-        new org.apache.knox.gateway.security.TokenExchangePrincipalImpl(
+    TokenExchangePrincipal tokenExchangePrincipal =
+        new TokenExchangePrincipalImpl(
             subjectPrincipalName, subjectIssuer, actorPrincipalName, actorIssuer);
 
     // Extract actor chain from subject_token (if present) using existing logic
-    java.util.List<java.util.Map<String, Object>> actorChain =
-        org.apache.knox.gateway.services.security.token.TokenUtils.extractActorChain(subjectToken);
+    List<Map<String, Object>> actorChain =
+        TokenUtils.extractActorChain(subjectToken);
 
     // Create Subject with all necessary principals
-    java.util.Set<java.security.Principal> principals = new java.util.HashSet<>();
+    Set<Principal> principals = new HashSet<>();
     principals.add(primaryPrincipal);
     principals.add(tokenExchangePrincipal);
 
     // Add ActorChainPrincipal if actor chain exists in subject_token
-    if (actorChain != null && !actorChain.isEmpty()) {
-      principals.add(new org.apache.knox.gateway.security.ActorChainPrincipalImpl(actorChain));
+    if (!actorChain.isEmpty()) {
+      principals.add(new ActorChainPrincipalImpl(actorChain));
     }
 
     @SuppressWarnings("rawtypes")
-    java.util.HashSet emptySet = new java.util.HashSet();
+    HashSet emptySet = new HashSet();
     return new Subject(true, principals, emptySet, emptySet);
   }
 
