@@ -53,7 +53,7 @@ public class IcebergRestServiceModelGeneratorTest extends AbstractServiceModelGe
     serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PORT, "8090");
     serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PATH, "icecli");
     serviceConfig.put(IcebergRestServiceModelGenerator.REST_CATALOG_ENABLED, "true");
-    serviceConfig.put(IcebergRestServiceModelGenerator.SSL_ENABLED, "true");
+    serviceConfig.put(IcebergRestServiceModelGenerator.SSL_ENABLED, "false");
 
     final Map<String, String> roleConfig = Collections.emptyMap();
 
