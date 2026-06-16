@@ -50,9 +50,23 @@ public class IcebergRestServiceModelGeneratorTest extends AbstractServiceModelGe
   @Test
   public void testServiceModel() {
     final Map<String, String> serviceConfig = new HashMap<>();
-    serviceConfig.put("hive_metastore_catalog_servlet_port", "8090");
-    serviceConfig.put("hive_metastore_catalog_servlet_path", "icecli");
-    serviceConfig.put("hive_rest_catalog_enabled", "true");
+    serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PORT, "8090");
+    serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PATH, "icecli");
+    serviceConfig.put(IcebergRestServiceModelGenerator.REST_CATALOG_ENABLED, "true");
+    serviceConfig.put(IcebergRestServiceModelGenerator.SSL_ENABLED, "false");
+
+    final Map<String, String> roleConfig = Collections.emptyMap();
+
+    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+  }
+
+  @Test
+  public void testServiceModelSslEnabled() {
+    final Map<String, String> serviceConfig = new HashMap<>();
+    serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PORT, "8091");
+    serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PATH, "icecli2");
+    serviceConfig.put(IcebergRestServiceModelGenerator.REST_CATALOG_ENABLED, "false");
+    serviceConfig.put(IcebergRestServiceModelGenerator.SSL_ENABLED, "true");
 
     final Map<String, String> roleConfig = Collections.emptyMap();
 

@@ -36,6 +36,7 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
   static final String HTTP_PORT = "hive_metastore_catalog_servlet_port";
   static final String HTTP_PATH = "hive_metastore_catalog_servlet_path";
   static final String REST_CATALOG_ENABLED = "hive_rest_catalog_enabled";
+  static final String SSL_ENABLED    = "hiveserver2_enable_ssl";
 
   static final String DEFAULT_HTTP_PATH = "icecli";
 
@@ -74,7 +75,8 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
                                       ApiRole role,
                                       ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
-    String scheme = "http";
+    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    String scheme = sslEnabled ? "https" : "http";
     String port = getHttpPort(serviceConfig);
     String httpPath = getHttpPath(serviceConfig);
 
@@ -87,6 +89,7 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
     model.addServiceProperty(HTTP_PORT, getHttpPort(serviceConfig));
     model.addServiceProperty(HTTP_PATH, getHttpPath(serviceConfig));
     model.addServiceProperty(REST_CATALOG_ENABLED, getRestCatalogEnabled(serviceConfig));
+    model.addServiceProperty(SSL_ENABLED, Boolean.toString(sslEnabled));
 
     return model;
   }
