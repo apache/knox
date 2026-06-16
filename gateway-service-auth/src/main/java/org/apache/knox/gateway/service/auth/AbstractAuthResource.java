@@ -105,9 +105,9 @@ public abstract class AbstractAuthResource {
     final Set<String> matchingGroupNames = subject == null ? Collections.emptySet()
             : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupFilterPattern.matcher(group.getName()).matches()).map(group -> group.getName())
             .collect(Collectors.toSet());
-    if (!matchingGroupNames.isEmpty()) {
-      final Collection<String> roles = lookupRoles(primaryPrincipalName, matchingGroupNames);
-      final List<String> groupStrings = GroupUtils.getGroupStrings(roles == null ? matchingGroupNames : roles, groupHeaderLengthLimit, groupHeaderSizeLimit);
+    final Collection<String> roles = lookupRoles(primaryPrincipalName, matchingGroupNames);
+    if (!matchingGroupNames.isEmpty() || !roles.isEmpty()) {
+      final List<String> groupStrings = GroupUtils.getGroupStrings(roles.isEmpty() ? matchingGroupNames : roles, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
         getResponse().addHeader(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1), groupStrings.get(i));
       }
@@ -116,17 +116,16 @@ public abstract class AbstractAuthResource {
   }
 
   private Collection<String> lookupRoles(String userName, Collection<String> groups) {
+    Collection<String> roles = null;
       try {
         if (ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
-          return ldapRolesLookupService.lookupRoles(userName, groups);
-        } else {
-          return null;
+          roles = ldapRolesLookupService.lookupRoles(userName, groups);
         }
       } catch (Exception e) {
         // Couldn't lookup roles: log and return null so that the API will return the groups
         LOG.ldapRolesLookupFailed(userName, e);
-        return null;
       }
+      return roles == null ? Collections.emptySet() : roles;
   }
 
 }
