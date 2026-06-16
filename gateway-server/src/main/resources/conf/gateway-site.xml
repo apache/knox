@@ -218,4 +218,53 @@ limitations under the License.
     </property>
     -->
 
+    <!-- KnoxIDF Trusted OIDC Issuer Service Configuration
+         These properties configure the TrustedOidcIssuerService gateway service,
+         which manages the registry of OIDC issuers trusted for dynamic JWKS
+         discovery. They are gateway-scoped and apply to all topologies that
+         deploy the KNOXIDF or KNOXIDF_ADMIN service roles.
+    -->
+    <!--
+    <property>
+        <name>gateway.trustedoidcissuer.max.issuers</name>
+        <value>10000</value>
+        <description>
+            Maximum number of OIDC issuers that may be registered in the trusted
+            issuer registry. Increasing this value may delay how quickly updates
+            take effect.
+        </description>
+    </property>
+
+    <property>
+        <name>gateway.trustedoidcissuer.discovery.cache.ttl.secs</name>
+        <value>600</value>
+        <description>
+            TTL in seconds for the resolved JWKS URI per trusted issuer. After
+            expiry the JWKS URI is re-resolved on the next use. Use the admin
+            API refresh endpoint to force immediate re-resolution without waiting
+            for TTL expiry.
+        </description>
+    </property>
+
+    <property>
+        <name>gateway.trustedoidcissuer.discovery.connect.timeout.ms</name>
+        <value>3000</value>
+        <description>
+            HTTP connect timeout in milliseconds when fetching an OIDC discovery
+            document (/.well-known/openid-configuration). A short value fails fast
+            if the issuer endpoint is unreachable.
+        </description>
+    </property>
+
+    <property>
+        <name>gateway.trustedoidcissuer.discovery.read.timeout.ms</name>
+        <value>10000</value>
+        <description>
+            HTTP read timeout in milliseconds when fetching an OIDC discovery
+            document. Allows for slower issuer endpoints while bounding the
+            latency of a cache-miss resolution.
+        </description>
+    </property>
+    -->
+
 </configuration>
