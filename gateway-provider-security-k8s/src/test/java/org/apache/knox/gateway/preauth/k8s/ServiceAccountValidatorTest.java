@@ -66,7 +66,7 @@ public class ServiceAccountValidatorTest {
         EasyMock.expect(resolver.getAnnotation(NS, SA, ANNOTATION)).andReturn(Optional.of("bob"));
         EasyMock.replay(resolver);
 
-        assertTrue(validator.validate(request(SPIFFE, "bob", resolver), defaultConfig()));
+        assertTrue(validator.validate(request(SPIFFE, "bob"), defaultConfig()));
         EasyMock.verify(resolver);
     }
 
@@ -75,28 +75,28 @@ public class ServiceAccountValidatorTest {
         EasyMock.expect(resolver.getAnnotation(NS, SA, ANNOTATION)).andReturn(Optional.of("alice"));
         EasyMock.replay(resolver);
 
-        assertFalse(validator.validate(request(SPIFFE, "bob", resolver), defaultConfig()));
+        assertFalse(validator.validate(request(SPIFFE, "bob"), defaultConfig()));
         EasyMock.verify(resolver);
     }
 
     @Test
     public void testRejectWhenSpiffeHeaderMissing() throws PreAuthValidationException {
         EasyMock.replay(resolver);
-        assertFalse(validator.validate(request(null, "bob", resolver), defaultConfig()));
+        assertFalse(validator.validate(request(null, "bob"), defaultConfig()));
         EasyMock.verify(resolver);
     }
 
     @Test
     public void testRejectWhenUserHeaderMissing() throws PreAuthValidationException {
         EasyMock.replay(resolver);
-        assertFalse(validator.validate(request(SPIFFE, null, resolver), defaultConfig()));
+        assertFalse(validator.validate(request(SPIFFE, null), defaultConfig()));
         EasyMock.verify(resolver);
     }
 
     @Test
     public void testRejectWhenSpiffeUnparseable() throws PreAuthValidationException {
         EasyMock.replay(resolver);
-        assertFalse(validator.validate(request("not-a-spiffe-id", "bob", resolver), defaultConfig()));
+        assertFalse(validator.validate(request("not-a-spiffe-id", "bob"), defaultConfig()));
         EasyMock.verify(resolver);
     }
 
@@ -105,7 +105,7 @@ public class ServiceAccountValidatorTest {
         EasyMock.expect(resolver.getAnnotation(NS, SA, ANNOTATION)).andReturn(Optional.empty());
         EasyMock.replay(resolver);
 
-        assertFalse(validator.validate(request(SPIFFE, "bob", resolver), defaultConfig()));
+        assertFalse(validator.validate(request(SPIFFE, "bob"), defaultConfig()));
         EasyMock.verify(resolver);
     }
 
@@ -145,8 +145,7 @@ public class ServiceAccountValidatorTest {
         return cfg;
     }
 
-    private static HttpServletRequest request(String spiffe, String user,
-                                              K8sServiceAccountResolver resolver) {
+    private static HttpServletRequest request(String spiffe, String user) {
         final HttpServletRequest req = EasyMock.createMock(HttpServletRequest.class);
         EasyMock.expect(req.getHeader(ServiceAccountValidator.SPIFFE_HEADER_DEFAULT))
                 .andReturn(spiffe).anyTimes();
