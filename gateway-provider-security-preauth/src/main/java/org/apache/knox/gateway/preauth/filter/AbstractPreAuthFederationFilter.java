@@ -87,11 +87,19 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
         doAs(httpRequest, response, chain, subject);
       } else {
         // TODO: log preauthenticated SSO validation failure
-        ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "SSO Validation Failure.");
+        ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, getValidationFailureMessage());
       }
     } else {
-      ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, "Missing Required Header for PreAuth SSO Federation");
+      ((HttpServletResponse)response).sendError(HttpServletResponse.SC_FORBIDDEN, getMissingPrincipalMessage());
     }
+  }
+
+  protected String getValidationFailureMessage() {
+    return "SSO Validation Failure.";
+  }
+
+  protected String getMissingPrincipalMessage() {
+    return "Missing Required Header for PreAuth SSO Federation";
   }
 
   @Override

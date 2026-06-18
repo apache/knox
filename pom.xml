@@ -87,6 +87,7 @@
         <module>gateway-provider-security-jwt</module>
         <module>gateway-provider-security-webappsec</module>
         <module>gateway-provider-security-preauth</module>
+        <module>gateway-provider-security-k8s</module>
         <module>gateway-provider-security-hadoopauth</module>
         <module>gateway-provider-security-clientcert</module>
         <module>gateway-provider-security-shiro</module>
@@ -200,9 +201,9 @@
         <ehcache.version>3.3.1</ehcache.version>
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
         <fastinfoset.version>1.2.18</fastinfoset.version>
-        <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
         <forbiddenapis.version>3.9</forbiddenapis.version>
         <findsecbugs-plugin.version>1.11.0</findsecbugs-plugin.version>
+        <fabric8.kubernetes-client.version>7.7.0</fabric8.kubernetes-client.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <gethostname4j.version>1.0.0</gethostname4j.version>  <!-- See here: https://github.com/mattsheppard/gethostname4j -->
         <glassfish-jaxb.version>4.0.5</glassfish-jaxb.version>
@@ -1042,6 +1043,11 @@
             <dependency>
                 <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-provider-security-preauth</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-provider-security-k8s</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2747,6 +2753,11 @@
                         <artifactId>error_prone_annotations</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.fabric8</groupId>
+                <artifactId>kubernetes-client</artifactId>
+                <version>${fabric8.kubernetes-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.fabric8</groupId>

@@ -383,6 +383,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-k8s</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-security-hadoopauth</artifactId>
         </dependency>
         <dependency>
