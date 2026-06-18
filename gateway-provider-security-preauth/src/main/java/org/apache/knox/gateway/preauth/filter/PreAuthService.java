@@ -31,29 +31,27 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This class manages few utility methods used across different classes of pre-auth module
+ * This class manages utility methods used across different classes of pre-auth module.
+ * It is now instance-based to ensure proper ClassLoader-aware validator discovery.
  * @since 0.12
  */
 public class PreAuthService {
 
   public static final String VALIDATION_METHOD_PARAM = "preauth.validation.method";
-  private static ConcurrentHashMap<String, PreAuthValidator> validatorMap;
+  private final Map<String, PreAuthValidator> validatorMap = new ConcurrentHashMap<>();
+  private boolean initialized;
 
-  static {
-    initializeValidators();
+  public PreAuthService() {
   }
 
-  private static void initializeValidators() {
-    ServiceLoader<PreAuthValidator> servLoader = ServiceLoader.load(PreAuthValidator.class);
-    validatorMap = new ConcurrentHashMap<>();
-    for (PreAuthValidator validator : servLoader) {
-      validatorMap.put(validator.getName(), validator);
+  private synchronized void ensureInitialized() {
+    if (!initialized) {
+      ServiceLoader<PreAuthValidator> servLoader = ServiceLoader.load(PreAuthValidator.class);
+      for (PreAuthValidator validator : servLoader) {
+        validatorMap.put(validator.getName(), validator);
+      }
+      initialized = true;
     }
-  }
-
-  // VisibleForTesting
-  public static Map<String, PreAuthValidator> getValidatorMap() {
-    return Collections.unmodifiableMap(validatorMap);
   }
 
   /**
@@ -64,7 +62,8 @@ public class PreAuthService {
    * @return a list of PreAuthValidator instances as defined in config
    * @throws ServletException unable to find validator
    */
-  public static List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {
+  public List<PreAuthValidator> getValidators(FilterConfig filterConfig) throws ServletException {
+    ensureInitialized();
     String validationMethods = filterConfig.getInitParameter(VALIDATION_METHOD_PARAM);
     List<PreAuthValidator> vList = new ArrayList<>();
     if (validationMethods == null || validationMethods.isEmpty()) {
@@ -76,26 +75,30 @@ public class PreAuthService {
       if (validatorMap.containsKey(vName)) {
         vList.add(validatorMap.get(vName));
       } else {
-        throw new ServletException(String.format(Locale.ROOT, "Unable to find validator with name '%s'", validationMethods));
+        throw new ServletException(String.format(Locale.ROOT, "Unable to find validator with name '%s'", vName));
       }
     }
     return vList;
   }
 
-  public static boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig, List<PreAuthValidator>
+  public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig, List<PreAuthValidator>
       validators) {
     try {
       for (PreAuthValidator validator : validators) {
-        //Any one validator fails, it will fail the request. loginal AND behavior
+        // Any one validator fails, it will fail the request. Logical AND behavior.
         if (!validator.validate(httpRequest, filterConfig)) {
           return false;
         }
       }
     } catch (PreAuthValidationException e) {
-      // TODO log exception
       return false;
     }
     return true;
   }
 
+  // VisibleForTesting
+  public Map<String, PreAuthValidator> getValidatorMap() {
+    ensureInitialized();
+    return Collections.unmodifiableMap(validatorMap);
+  }
 }

@@ -33,6 +33,7 @@ public class PreAuthFederationFilter implements Filter {
   private static final String CUSTOM_HEADER_PARAM = "preauth.customHeader";
   private List<PreAuthValidator> validators;
   private FilterConfig filterConfig;
+  private PreAuthService preAuthService;
   private String headerName = "SM_USER";
 
   @Override
@@ -42,7 +43,8 @@ public class PreAuthFederationFilter implements Filter {
       headerName = customHeader;
     }
     this.filterConfig = filterConfig;
-    validators = PreAuthService.getValidators(filterConfig);
+    preAuthService = new PreAuthService();
+    validators = preAuthService.getValidators(filterConfig);
   }
 
   @Override
@@ -50,7 +52,7 @@ public class PreAuthFederationFilter implements Filter {
                        FilterChain chain) throws IOException, ServletException {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
     if (httpRequest.getHeader(headerName) != null) {
-      if (PreAuthService.validate(httpRequest, filterConfig, validators)) {
+      if (preAuthService.validate(httpRequest, filterConfig, validators)) {
         // TODO: continue as subject
         chain.doFilter(request, response);
       } else {

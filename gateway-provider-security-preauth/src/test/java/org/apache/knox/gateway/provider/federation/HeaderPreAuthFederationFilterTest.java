@@ -23,6 +23,7 @@ import org.apache.knox.gateway.preauth.filter.IPValidator;
 import org.apache.knox.gateway.preauth.filter.PreAuthService;
 import org.apache.knox.gateway.preauth.filter.PreAuthValidator;
 import org.easymock.EasyMock;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.FilterConfig;
@@ -36,6 +37,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class HeaderPreAuthFederationFilterTest {
+
+  private PreAuthService preAuthService;
+
+  @Before
+  public void setUp() {
+    preAuthService = new PreAuthService();
+  }
+
   @Test
   public void testDefaultValidator() throws ServletException {
     HeaderPreAuthFederationFilter hpaff = new HeaderPreAuthFederationFilter();
@@ -50,7 +59,7 @@ public class HeaderPreAuthFederationFilterTest {
     List<PreAuthValidator> validators = hpaff.getValidators();
     assertEquals(validators.size(), 1);
     assertEquals(validators.get(0).getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
-    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    assertTrue(preAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -72,13 +81,13 @@ public class HeaderPreAuthFederationFilterTest {
     List<PreAuthValidator> validators = hpaff.getValidators();
     assertEquals(validators.size(), 1);
     assertEquals(validators.get(0).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
-    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    assertTrue(preAuthService.validate(request, filterConfig, validators));
 
     //Negative testing
     EasyMock.reset(request);
     EasyMock.expect(request.getRemoteAddr()).andReturn("10.10.22.33");
     EasyMock.replay(request);
-    assertFalse(PreAuthService.validate(request, filterConfig, validators));
+    assertFalse(preAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -99,7 +108,7 @@ public class HeaderPreAuthFederationFilterTest {
     EasyMock.reset(request);
     EasyMock.expect(request.getHeader("CUSTOM_TOKEN")).andReturn("HelloWorld");
     EasyMock.replay(request);
-    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    assertTrue(preAuthService.validate(request, filterConfig, validators));
 
   }
 
@@ -121,7 +130,7 @@ public class HeaderPreAuthFederationFilterTest {
     EasyMock.reset(request);
     EasyMock.expect(request.getHeader("CUSTOM_TOKEN")).andReturn("NOTHelloWorld");
     EasyMock.replay(request);
-    assertFalse(PreAuthService.validate(request, filterConfig, validators));
+    assertFalse(preAuthService.validate(request, filterConfig, validators));
 
   }
 

@@ -49,6 +49,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
 
   private List<PreAuthValidator> validators;
   private FilterConfig filterConfig;
+  private PreAuthService preAuthService;
   private static AuditService auditService = AuditServiceFactory.getAuditService();
   private static Auditor auditor = auditService.getAuditor(
       AuditConstants.DEFAULT_AUDITOR_NAME, AuditConstants.KNOX_SERVICE_NAME,
@@ -56,12 +57,13 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
 
   public AbstractPreAuthFederationFilter() {
     super();
+    preAuthService = new PreAuthService();
   }
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     this.filterConfig = filterConfig;
-    validators = PreAuthService.getValidators(filterConfig);
+    validators = preAuthService.getValidators(filterConfig);
     for (PreAuthValidator validator : validators) {
       try {
         validator.init(filterConfig);
@@ -82,7 +84,7 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
     HttpServletRequest httpRequest = (HttpServletRequest)request;
     String principal = getPrimaryPrincipal(httpRequest);
     if (principal != null) {
-      if (PreAuthService.validate(httpRequest, filterConfig, validators)) {
+      if (preAuthService.validate(httpRequest, filterConfig, validators)) {
         Subject subject = new Subject();
         subject.getPrincipals().add(new PrimaryPrincipal(principal));
         addGroupPrincipals(httpRequest, subject.getPrincipals());
