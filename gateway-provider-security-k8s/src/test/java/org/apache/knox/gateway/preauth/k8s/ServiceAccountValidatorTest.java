@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
+import java.time.Duration;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -40,9 +41,19 @@ public class ServiceAccountValidatorTest {
     private ServiceAccountValidator validator;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         resolver = EasyMock.createMock(K8sServiceAccountResolver.class);
-        validator = new ServiceAccountValidator();
+        validator = new ServiceAccountValidator() {
+            @Override
+            protected K8sServiceAccountResolver createResolver(Duration duration, long maxSize) {
+                return resolver;
+            }
+        };
+        final FilterConfig filterConfig = EasyMock.createMock(FilterConfig.class);
+        EasyMock.expect(filterConfig.getInitParameter(ServiceAccountValidator.CACHE_TTL_SECONDS_PARAM)).andReturn("120").anyTimes();
+        EasyMock.expect(filterConfig.getInitParameter(ServiceAccountValidator.CACHE_MAX_SIZE_PARAM)).andReturn("100").anyTimes();
+        EasyMock.replay(filterConfig);
+        validator.init(filterConfig);
     }
 
     @Test
@@ -114,8 +125,6 @@ public class ServiceAccountValidatorTest {
         EasyMock.replay(cfg);
 
         final HttpServletRequest req = EasyMock.createMock(HttpServletRequest.class);
-        EasyMock.expect(req.getAttribute(ServiceAccountValidator.RESOLVER_REQUEST_ATTR))
-                .andReturn(resolver).anyTimes();
         EasyMock.expect(req.getHeader("X-Custom-Spiffe")).andReturn(SPIFFE).anyTimes();
         EasyMock.expect(req.getHeader("x-custom-user")).andReturn("bob").anyTimes();
         EasyMock.replay(req);
@@ -139,8 +148,6 @@ public class ServiceAccountValidatorTest {
     private static HttpServletRequest request(String spiffe, String user,
                                               K8sServiceAccountResolver resolver) {
         final HttpServletRequest req = EasyMock.createMock(HttpServletRequest.class);
-        EasyMock.expect(req.getAttribute(ServiceAccountValidator.RESOLVER_REQUEST_ATTR))
-                .andReturn(resolver).anyTimes();
         EasyMock.expect(req.getHeader(ServiceAccountValidator.SPIFFE_HEADER_DEFAULT))
                 .andReturn(spiffe).anyTimes();
         EasyMock.expect(req.getHeader(ServiceAccountValidator.USER_HEADER_DEFAULT))

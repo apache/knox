@@ -62,6 +62,13 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
   public void init(FilterConfig filterConfig) throws ServletException {
     this.filterConfig = filterConfig;
     validators = PreAuthService.getValidators(filterConfig);
+    for (PreAuthValidator validator : validators) {
+      try {
+        validator.init(filterConfig);
+      } catch (Exception e) {
+        throw new ServletException("Unable to initialize validator: " + validator.getName(), e);
+      }
+    }
   }
 
   // VisibleForTesting
@@ -104,6 +111,9 @@ public abstract class AbstractPreAuthFederationFilter implements Filter {
 
   @Override
   public void destroy() {
+    for (PreAuthValidator validator : validators) {
+      validator.destroy();
+    }
   }
 
   private void doAs(final ServletRequest request, final ServletResponse response, final FilterChain chain, Subject subject)

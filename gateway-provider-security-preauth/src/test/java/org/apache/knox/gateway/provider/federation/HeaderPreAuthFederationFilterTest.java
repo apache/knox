@@ -132,6 +132,16 @@ public class HeaderPreAuthFederationFilterTest {
     }
 
     @Override
+    public void init(FilterConfig filterConfig) throws Exception {
+      //NOP
+    }
+
+    @Override
+    public void destroy() {
+      //NOP
+    }
+
+    @Override
     public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) {
       String token = httpRequest.getHeader("CUSTOM_TOKEN");
       return "HelloWorld".equalsIgnoreCase(token);
