@@ -107,9 +107,11 @@ public abstract class AbstractAuthResource {
             .collect(Collectors.toSet());
     final Collection<String> roles = lookupRoles(primaryPrincipalName, matchingGroupNames);
     if (!matchingGroupNames.isEmpty() || !roles.isEmpty()) {
-      final List<String> groupStrings = GroupUtils.getGroupStrings(roles.isEmpty() ? matchingGroupNames : roles, groupHeaderLengthLimit, groupHeaderSizeLimit);
+      final boolean useRoles = !roles.isEmpty();
+      final List<String> groupStrings = GroupUtils.getGroupStrings(useRoles ? roles : matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
-        getResponse().addHeader(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1), groupStrings.get(i));
+        final String headerName = useRoles ? authHeaderActorGroupsPrefix : String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1);
+        getResponse().addHeader(headerName, groupStrings.get(i));
       }
     }
     return ok().build();

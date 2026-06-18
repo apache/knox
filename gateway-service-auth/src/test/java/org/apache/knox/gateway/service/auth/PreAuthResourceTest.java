@@ -56,15 +56,15 @@ public class PreAuthResourceTest {
     subject.getPrincipals().add(new PrimaryPrincipal(USER_NAME));
   }
 
-  private void configureCommonExpectations(String actorIdHeaderName) {
+  private void configureCommonExpectations(String actorIdHeaderName) throws Exception {
     configureCommonExpectations(actorIdHeaderName, null, Collections.emptySet());
   }
 
-  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups) {
+  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups) throws Exception {
     configureCommonExpectations(actorIdHeaderName, groupsHeaderPrefix, groups, null);
   }
 
-  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups, GatewayServices gatewayServices) {
+  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups, GatewayServices gatewayServices) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_ID_HEADER_NAME)).andReturn(actorIdHeaderName).anyTimes();
     EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_GROUPS_HEADER_PREFIX)).andReturn(groupsHeaderPrefix).anyTimes();
@@ -77,7 +77,18 @@ public class PreAuthResourceTest {
       EasyMock.expectLastCall();
     }
 
-    if (!groups.isEmpty()) {
+    if (gatewayServices != null) {
+      EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices);
+      final LDAPRolesLookupService rolesLookupService = gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE);
+      if (rolesLookupService != null && rolesLookupService.enabled()) {
+        Collection<String> roles = rolesLookupService.lookupRoles(USER_NAME, groups);
+        if (roles != null && !roles.isEmpty()) {
+          final String expectedGroupsHeaderPrefix = (groupsHeaderPrefix == null ? PreAuthResource.DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX : groupsHeaderPrefix);
+          response.addHeader(EasyMock.eq(expectedGroupsHeaderPrefix), EasyMock.anyString());
+          EasyMock.expectLastCall().anyTimes();
+        }
+      }
+    } else if (!groups.isEmpty()) {
       groups.forEach(group -> subject.getPrincipals().add(new GroupPrincipal(group)));
       final int groupStringSize = calculateGroupStringSize(groups);
       final int expectedGroupHeaderCount = groupStringSize / 1000 + 1;
@@ -87,11 +98,6 @@ public class PreAuthResourceTest {
         response.addHeader(EasyMock.eq(expectedGroupsHeaderPrefix + i), EasyMock.anyString());
         EasyMock.expectLastCall();
       }
-    }
-
-    if (gatewayServices != null) {
-      EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices);
-
     }
 
     EasyMock.replay(context, request, response);

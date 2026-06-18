@@ -119,6 +119,9 @@ public class ExtAuthzResourceTest {
     response.setHeader(AbstractAuthResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, USER_NAME);
     EasyMock.expectLastCall();
 
+    response.addHeader(EasyMock.eq(AbstractAuthResource.DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX), EasyMock.anyString());
+    EasyMock.expectLastCall().anyTimes();
+
     EasyMock.replay(context, response, mockRolesService, mockGatewayServices);
 
     groups.forEach(group -> subject.getPrincipals().add(new GroupPrincipal(group)));
