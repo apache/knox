@@ -42,6 +42,7 @@ ADD .github/workflows/build/conf/topologies/knoxtoken.xml /knox-runtime/conf/top
 ADD .github/workflows/build/conf/topologies/health.xml /knox-runtime/conf/topologies/health.xml
 ADD .github/workflows/build/conf/topologies/knoxldap.xml /knox-runtime/conf/topologies/knoxldap.xml
 ADD .github/workflows/build/conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
+ADD .github/workflows/build/conf/topologies/k8sauth.xml /knox-runtime/conf/topologies/k8sauth.xml
 
 RUN chown -R gateway /knox-runtime/
 

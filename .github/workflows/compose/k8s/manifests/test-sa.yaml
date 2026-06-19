@@ -1,0 +1,38 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with this
+# work for additional information regarding copyright ownership. The ASF
+# licenses this file to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Fixtures applied to the throwaway k3s cluster by the k8s-bootstrap service.
+# The Knox container connects to k3s as cluster admin (via the generated
+# kubeconfig), so the Role/RoleBinding a real deployment would use to grant the
+# Knox ServiceAccount read access are not needed here - only the annotated
+# ServiceAccount the validator looks up matters.
+#
+# SPIFFE id under test: spiffe://cluster.local/ns/test/sa/test-sa
+#   -> namespace "test", service account "test-sa"
+# The validator reads the 'knox.apache.org/owner-username' annotation ("bob")
+# and compares it to the asserted user from the x-knoxidf-obo.username header.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa
+  namespace: test
+  annotations:
+    knox.apache.org/owner-username: "bob"
