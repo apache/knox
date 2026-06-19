@@ -54,7 +54,7 @@ public class K8sServiceAccountResolver implements Closeable {
         .build();
   }
 
-  public Optional<String> getAnnotation(String namespace, String serviceAccount, String annotationKey) {
+  Optional<String> getAnnotation(String namespace, String serviceAccount, String annotationKey) {
     final Key key = new Key(namespace, serviceAccount);
     final Optional<Map<String, String>> annotations;
     try {

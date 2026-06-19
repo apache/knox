@@ -22,6 +22,7 @@ import org.apache.knox.gateway.preauth.filter.IPValidator;
 import org.apache.knox.gateway.preauth.filter.PreAuthService;
 import org.apache.knox.gateway.preauth.filter.PreAuthValidator;
 import org.easymock.EasyMock;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.FilterConfig;
@@ -39,9 +40,17 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class PreAuthServiceTest {
+
+  private PreAuthService preAuthService;
+
+  @Before
+  public void setUp() throws Exception {
+    preAuthService = new PreAuthService();
+  }
+
   @Test
   public void testValidatorMap() {
-    Map<String, PreAuthValidator> valMap = PreAuthService.getValidatorMap();
+    Map<String, PreAuthValidator> valMap = preAuthService.getValidatorMap();
     assertNotNull(valMap.get(IPValidator.IP_VALIDATION_METHOD_VALUE));
     assertEquals(valMap.get(IPValidator.IP_VALIDATION_METHOD_VALUE).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
     assertNotNull(valMap.get(DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE));
@@ -61,10 +70,10 @@ public class PreAuthServiceTest {
     final HttpServletRequest request = EasyMock.createMock(HttpServletRequest.class);
     EasyMock.replay(request);
 
-    List<PreAuthValidator> validators = PreAuthService.getValidators(filterConfig);
+    List<PreAuthValidator> validators = preAuthService.getValidators(filterConfig);
     assertEquals(validators.size(), 1);
     assertEquals(validators.get(0).getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
-    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    assertTrue(preAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -80,16 +89,16 @@ public class PreAuthServiceTest {
         .andReturn(IPValidator.IP_VALIDATION_METHOD_VALUE).anyTimes();
     EasyMock.replay(filterConfig);
 
-    List<PreAuthValidator> validators = PreAuthService.getValidators(filterConfig);
+    List<PreAuthValidator> validators = preAuthService.getValidators(filterConfig);
     assertEquals(validators.size(), 1);
     assertEquals(validators.get(0).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
-    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    assertTrue(preAuthService.validate(request, filterConfig, validators));
 
     //Negative testing
     EasyMock.reset(request);
     EasyMock.expect(request.getRemoteAddr()).andReturn("10.10.22.33");
     EasyMock.replay(request);
-    assertFalse(PreAuthService.validate(request, filterConfig, validators));
+    assertFalse(preAuthService.validate(request, filterConfig, validators));
   }
 
   @Test
@@ -105,17 +114,17 @@ public class PreAuthServiceTest {
         .andReturn(DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE + "," + IPValidator.IP_VALIDATION_METHOD_VALUE).anyTimes();
     EasyMock.replay(filterConfig);
 
-    List<PreAuthValidator> validators = PreAuthService.getValidators(filterConfig);
+    List<PreAuthValidator> validators = preAuthService.getValidators(filterConfig);
     assertEquals(validators.size(), 2);
     assertEquals(validators.get(0).getName(), DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE);
     assertEquals(validators.get(1).getName(), IPValidator.IP_VALIDATION_METHOD_VALUE);
 
-    assertTrue(PreAuthService.validate(request, filterConfig, validators));
+    assertTrue(preAuthService.validate(request, filterConfig, validators));
     //Negative testing
     EasyMock.reset(request);
     EasyMock.expect(request.getRemoteAddr()).andReturn("10.10.22.33");
     EasyMock.replay(request);
-    assertFalse(PreAuthService.validate(request, filterConfig, validators));
+    assertFalse(preAuthService.validate(request, filterConfig, validators));
 
   }
 
@@ -126,12 +135,11 @@ public class PreAuthServiceTest {
         (DefaultValidator.DEFAULT_VALIDATION_METHOD_VALUE + ",  NOT_EXISTED_VALIDATOR" );
     EasyMock.replay(filterConfig);
     try {
-      PreAuthService.getValidators(filterConfig);
+      preAuthService.getValidators(filterConfig);
       fail("Should throw exception due to invalid validator");
     } catch (Exception e) {
       //Expected
-      assertEquals("Unable to find validator with name 'preauth.default.validation,  " +
-                       "NOT_EXISTED_VALIDATOR'", e.getMessage());
+      assertEquals("Unable to find validator with name 'NOT_EXISTED_VALIDATOR'", e.getMessage());
     }
   }
 }
