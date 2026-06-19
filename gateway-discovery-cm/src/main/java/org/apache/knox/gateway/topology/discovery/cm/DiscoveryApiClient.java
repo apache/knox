@@ -20,6 +20,7 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
@@ -155,6 +156,11 @@ public class DiscoveryApiClient extends ApiClient {
     return (address.endsWith("/") ? address + apiPath : address + "/" + apiPath);
   }
 
+  private boolean isSecure() {
+    final String basePath = getBasePath();
+    return basePath != null && basePath.toLowerCase(Locale.ROOT).startsWith("https:");
+  }
+
   private void configureInterceptors(List<Interceptor> interceptors) {
     final OkHttpClient.Builder builder = getHttpClient().newBuilder();
     interceptors.forEach(builder::addInterceptor);
@@ -172,6 +178,14 @@ public class DiscoveryApiClient extends ApiClient {
   }
 
   private void configureSsl(GatewayConfig gatewayConfig, KeyStore trustStore) {
+    // The CM discovery endpoint may be plain HTTP (e.g. CM TLS not enabled). In that case the
+    // TLS-only ConnectionSpec below would make OkHttp reject the connection with
+    // "CLEARTEXT communication not enabled for client". Only configure TLS for HTTPS addresses.
+    if (!isSecure()) {
+      log.skippingSslConfigurationForCleartextAddress(getBasePath());
+      return;
+    }
+
     final SSLContext truststoreSSLContext = TruststoreSSLContextUtils.getTruststoreSSLContext(trustStore);
     final X509TrustManager trustManager = TruststoreSSLContextUtils.getTrustManager(trustStore);
 
