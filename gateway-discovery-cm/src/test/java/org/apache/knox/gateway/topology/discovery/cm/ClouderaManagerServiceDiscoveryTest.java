@@ -91,6 +91,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ClouderaManagerServiceDiscoveryTest {
 
   private static final String DISCOVERY_URL = "http://localhost:1234";
+  private static final String DISCOVERY_URL_TLS = "https://localhost:1234";
   private static final String DISCOVERY_USER = "discoveryUser";
   private static final String CLUSTER_NAME = "Cluster 1";
   private static final String DISCOVERY_PASSWORD_ALIAS = "discovery.alias";
@@ -164,7 +165,7 @@ public class ClouderaManagerServiceDiscoveryTest {
     EasyMock.expect(gwConf.getClouderaManagerClientSSLProtocols()).andReturn(Set.of(cmClientTlsVersion)).anyTimes();
     EasyMock.replay(gwConf);
 
-    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL_TLS, DISCOVERY_USER, CLUSTER_NAME);
 
     AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.replay(aliasService);
@@ -193,6 +194,33 @@ public class ClouderaManagerServiceDiscoveryTest {
     assertNotNull(connectionSpecs.get(0).tlsVersions());
     assertFalse(connectionSpecs.get(0).tlsVersions().isEmpty());
     assertTrue(containsTlsVersion(connectionSpecs.get(0).tlsVersions(), cmClientTlsVersion));
+  }
+
+  /**
+   * KNOX-3353: when the CM discovery address is plain HTTP (CM TLS not enabled), the client must
+   * not be locked to a TLS-only ConnectionSpec, otherwise OkHttp rejects the request with
+   * "CLEARTEXT communication not enabled for client". The default specs (which include CLEARTEXT)
+   * should be left in place.
+   */
+  @Test
+  public void testApiClientAllowsCleartextForHttpDiscoveryAddress() {
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(GatewayConfig.DEFAULT_CLOUDERA_MANAGER_SERVICE_DISCOVERY_API_VERSION).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(DISCOVERY_URL, DISCOVERY_USER, CLUSTER_NAME);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    KeyStore trustStore = EasyMock.createNiceMock(KeyStore.class);
+    EasyMock.replay(trustStore);
+
+    ApiClient apiClient = new TestDiscoveryApiClient(gwConf, sdConfig, aliasService, trustStore);
+
+    final List<ConnectionSpec> connectionSpecs = apiClient.getHttpClient().connectionSpecs();
+    assertTrue("HTTP discovery address should keep a CLEARTEXT-capable connection spec.",
+        connectionSpecs.stream().anyMatch(spec -> spec.equals(ConnectionSpec.CLEARTEXT)));
   }
 
   private boolean containsCipherSuite(List<CipherSuite> cipherSuites, String cipherSuiteNameToCheck) {

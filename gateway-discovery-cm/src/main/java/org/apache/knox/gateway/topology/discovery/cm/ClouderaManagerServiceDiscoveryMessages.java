@@ -280,6 +280,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to configure truststore")
   void failedToConfigureTruststore();
 
+  @Message(level = MessageLevel.DEBUG, text = "Skipping SSL configuration for cleartext CM discovery address {0}")
+  void skippingSslConfigurationForCleartextAddress(String address);
+
   @Message(level = MessageLevel.DEBUG, text = "Looking up cluster services from service discovery repository...")
   void lookupClusterServicesFromRepository();
 
