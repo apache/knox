@@ -38,7 +38,11 @@ public class SubjectUtils {
    */
   @SuppressForbidden
   public static Subject getCurrentSubject() {
-    return Subject.getSubject( AccessController.getContext() );
+    try {
+      return (Subject) Subject.class.getMethod("current").invoke(null);
+    } catch (Exception e) {
+      return Subject.getSubject( AccessController.getContext() );
+    }
   }
 
   public static String getPrimaryPrincipalName(Subject subject) {
