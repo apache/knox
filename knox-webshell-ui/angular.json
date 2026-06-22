@@ -36,26 +36,30 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "target/classes/webshell-ui/app",
+            "outputPath": {
+              "base": "target/classes/webshell-ui/app",
+              "browser": ""
+            },
             "index": "webshell-ui/index.html",
-            "main": "webshell-ui/main.ts",
-            "polyfills": "webshell-ui/polyfills.ts",
-            "tsConfig": "tsconfig.app.json",
+            "polyfills": ["webshell-ui/polyfills.ts"],
+            "tsConfig": "webshell-ui/tsconfig.json",
             "assets": [
-              "webshell-ui/favicon.ico",
-              "webshell-ui/assets"
+              "webshell-ui/favicon.ico"
             ],
             "styles": [
               "webshell-ui/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "browser": "webshell-ui/main.ts",
+            "allowedCommonJsDependencies": [
+              "@xterm/xterm",
+              "@xterm/addon-fit"
+            ]
           },
           "configurations": {
             "production": {
-              "buildOptimizer": false,
-              "aot": false,
               "fileReplacements": [
                 {
                   "replace": "webshell-ui/environments/environment.ts",
@@ -65,9 +69,8 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
+              "aot": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -76,21 +79,21 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "webshell-ui:build:production"
+              "buildTarget": "webshell-ui:build:production"
             },
             "development": {
-              "browserTarget": "webshell-ui:build:development"
+              "buildTarget": "webshell-ui:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "webshell-ui:build"
+            "buildTarget": "webshell-ui:build"
           }
         },
         "lint": {
@@ -104,12 +107,5 @@
         }
       }
     }
-  },
-  "defaultProject": "webshell-ui",
-  "cli": {
-    "schematicCollections": [
-      "@angular-eslint/schematics",
-      "@angular-eslint/schematics"
-    ]
   }
 }

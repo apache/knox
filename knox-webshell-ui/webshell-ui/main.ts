@@ -14,15 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import './polyfills.ts';
 
-import { AppModule } from './app/app.module';
+import { enableProdMode, provideZoneChangeDetection } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { APP_BASE_HREF } from '@angular/common';
+
 import { environment } from './environments/environment';
+import { AppComponent } from './app/app.component';
 
 if (environment.production) {
   enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideZoneChangeDetection(),
+    provideRouter([]),
+    {
+      provide: APP_BASE_HREF,
+      useValue: (window as unknown as {'base-href'?: string})['base-href'] || '/'
+    }
+  ]
+}).catch(err => console.error(err));
