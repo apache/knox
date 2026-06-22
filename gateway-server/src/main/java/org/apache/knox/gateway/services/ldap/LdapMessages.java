@@ -34,6 +34,10 @@ public interface LdapMessages {
     void ldapServiceStarted(int port);
 
     @Message(level = MessageLevel.INFO,
+            text = "Anonymous access disabled; clients must bind as: {0}")
+    void ldapBindUserConfigured(String bindDn);
+
+    @Message(level = MessageLevel.INFO,
             text = "Stopping LDAP service on port {0}")
     void ldapServiceStopping(int port);
 

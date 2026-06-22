@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.ldap;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -49,6 +51,10 @@ public class KnoxLDAPServiceTest {
     @Before
     public void setUp() throws Exception {
         ldapService = new KnoxLDAPService();
+        // No bind password stored in the credential store -> anonymous access (default behavior).
+        final AliasService aliasService = createNiceMock(AliasService.class);
+        replay(aliasService);
+        ldapService.setAliasService(aliasService);
         mockConfig = createMock(GatewayConfig.class);
 
         // Create temporary directories and files
@@ -170,6 +176,7 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).atLeastOnce();
         expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com").atLeastOnce();
+        expect(mockConfig.getLDAPBindUser()).andReturn(null).anyTimes();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend")).atLeastOnce();
         expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
         replay(mockConfig);

@@ -37,6 +37,7 @@ public class LdapServiceFactory extends AbstractServiceFactory {
         KnoxLDAPService service = null;
         if (shouldCreateService(implementation)) {
             service = new KnoxLDAPService();
+            service.setAliasService(getAliasService(gatewayServices));
             GatewayServer.registerConfigChangeListener(service);
             logServiceUsage(service.getClass().getName(), serviceType);
         }

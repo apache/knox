@@ -18,9 +18,16 @@
 package org.apache.knox.gateway.services.ldap;
 
 import org.apache.directory.api.ldap.codec.api.ControlFactory;
+import org.apache.directory.api.ldap.model.cursor.EntryCursor;
+import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
+import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.message.Control;
+import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 import org.easymock.EasyMock;
@@ -51,6 +58,9 @@ import static org.junit.Assert.assertFalse;
  */
 public class KnoxLDAPServerManagerTest {
 
+    private static final String BIND_DN = "uid=knox,ou=system";
+    private static final String BIND_PASSWORD = "knox-password";
+
     private KnoxLDAPServerManager serverManager;
     private File tempWorkDir;
     private File tempLdapFile;
@@ -58,7 +68,10 @@ public class KnoxLDAPServerManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        serverManager = new KnoxLDAPServerManager();
+        // By default no bind password is stored in the credential store, so the server
+        // runs with anonymous access (the historical behavior). Bind-enforcing tests
+        // rebuild the manager via useBindPassword(...).
+        serverManager = new KnoxLDAPServerManager(aliasServiceReturning(null));
 
         // Create temporary work directory
         tempWorkDir = File.createTempFile("knox-ldap-work", "");
@@ -393,6 +406,95 @@ public class KnoxLDAPServerManagerTest {
         Map<String, ControlFactory<? extends Control>> controlFactoryMap = serverManager.directoryService.getLdapCodecService().getRequestControlFactories();
         assertTrue(controlFactoryMap.containsKey(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID));
         assertTrue(controlFactoryMap.get(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID) instanceof RolesLookupBypassControlFactory);
+    }
+
+    @Test(expected = LdapException.class)
+    public void testBindRequiredRejectsAnonymous() throws Exception {
+        useBindPassword(BIND_PASSWORD);
+        serverManager.initialize(createBindEnabledConfig());
+        serverManager.start();
+
+        // Anonymous access is disabled, so an anonymous bind must be rejected.
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+        }
+    }
+
+    @Test
+    public void testBindWithConfiguredCredentialsSucceeds() throws Exception {
+        useBindPassword(BIND_PASSWORD);
+        serverManager.initialize(createBindEnabledConfig());
+        serverManager.start();
+
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind(BIND_DN, BIND_PASSWORD);
+            assertTrue("Connection should be authenticated", connection.isAuthenticated());
+            // An authenticated client should be able to search.
+            try (EntryCursor cursor = connection.search("dc=test,dc=com", "(objectClass=*)", SearchScope.SUBTREE)) {
+                assertTrue("Authenticated search should return at least one entry", cursor.next());
+            }
+        }
+    }
+
+    @Test(expected = LdapAuthenticationException.class)
+    public void testWrongBindPasswordRejected() throws Exception {
+        useBindPassword(BIND_PASSWORD);
+        serverManager.initialize(createBindEnabledConfig());
+        serverManager.start();
+
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind(BIND_DN, "wrong-password");
+        }
+    }
+
+    @Test
+    public void testAnonymousStillAllowedWhenUnconfigured() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(createFileBackendInterceptorConfig()).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+        serverManager.start();
+
+        // No bind credentials configured -> anonymous access remains allowed (backward compatible).
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+            try (EntryCursor cursor = connection.search("dc=test,dc=com", "(objectClass=*)", SearchScope.SUBTREE)) {
+                assertTrue("Anonymous search should return at least one entry", cursor.next());
+            }
+        }
+    }
+
+    private GatewayConfig createBindEnabledConfig() {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPBindUser()).andReturn(BIND_DN).anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(createFileBackendInterceptorConfig()).anyTimes();
+        replay(mockConfig);
+        return mockConfig;
+    }
+
+    /** Rebuild the server manager so its credential store resolves the bind password to the given value. */
+    private void useBindPassword(String password) throws Exception {
+        serverManager = new KnoxLDAPServerManager(aliasServiceReturning(password));
+    }
+
+    /** Create an AliasService whose gateway password lookups return the given value (null => alias not set). */
+    private AliasService aliasServiceReturning(String password) throws Exception {
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString()))
+                .andReturn(password == null ? null : password.toCharArray()).anyTimes();
+        replay(aliasService);
+        return aliasService;
     }
 
     private Map<String, String> createFileBackendInterceptorConfig() {

@@ -128,6 +128,7 @@ public interface GatewayConfig {
   String LDAP_ENABLED = "gateway.ldap.enabled";
   String LDAP_PORT = "gateway.ldap.port";
   String LDAP_BASE_DN = "gateway.ldap.base.dn";
+  String LDAP_BIND_USER = "gateway.ldap.bind.user";
   String LDAP_INTERCEPTOR_NAMES = "gateway.ldap.interceptor.names";
   String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
   String LDAP_RECURSIVE_GROUP_RESOLUTION = "gateway.ldap.recursive.group.resolution";
@@ -1071,6 +1072,12 @@ public interface GatewayConfig {
    * @return the base DN for LDAP entries
    */
   String getLDAPBaseDN();
+
+  /**
+   * @return the bind DN required to query the embedded LDAP service, or null/blank if
+   * anonymous access should be allowed
+   */
+  String getLDAPBindUser();
 
     /**
      * @return the list of interceptor names for LDAP server

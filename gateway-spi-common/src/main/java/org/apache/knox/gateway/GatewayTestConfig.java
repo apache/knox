@@ -1246,6 +1246,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLDAPBindUser() {
+    return null;
+  }
+
+  @Override
   public List<String> getLDAPInterceptorNames() {
     return List.of("testinterceptor");
   }

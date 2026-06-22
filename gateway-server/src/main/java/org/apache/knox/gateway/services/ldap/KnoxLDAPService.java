@@ -22,6 +22,7 @@ import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     KnoxLDAPServerManager ldapServerManager;
+    AliasService aliasService;
     private boolean enabled;
 
     @Override
@@ -46,11 +48,15 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
 
         try {
             // Initialize the LDAP server manager with configuration
-            ldapServerManager = new KnoxLDAPServerManager();
+            ldapServerManager = new KnoxLDAPServerManager(aliasService);
             ldapServerManager.initialize(config);
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
         }
+    }
+
+    public void setAliasService(AliasService aliasService) {
+        this.aliasService = aliasService;
     }
 
     @Override
@@ -89,7 +95,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
             this.enabled = config.isLDAPEnabled();
 
             if (this.enabled) {
-                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager() : this.ldapServerManager;
+                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager(aliasService) : this.ldapServerManager;
                 ldapServerManager.stop();
                 ldapServerManager.initialize(config);
                 ldapServerManager.start();
