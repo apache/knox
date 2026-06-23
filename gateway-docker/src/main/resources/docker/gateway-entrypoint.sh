@@ -110,15 +110,15 @@ else
 fi
 /home/knox/knox/bin/knoxcli.sh create-master --master "${MASTER_SECRET}"
 
-if [[ -n ${LDAP_PASSWORD_FILE} ]]
-then
-  LDAP_BIND_PASSWORD=$(/bin/cat "${LDAP_PASSWORD_FILE}" 2> /dev/null)
+# Check LDAP_BIND_PASSWORD first, and only fall back to the file if it’s unset or empty.
+if [[ -z ${LDAP_BIND_PASSWORD} && -n ${LDAP_PASSWORD_FILE} ]]; then
+  LDAP_BIND_PASSWORD=$(/bin/cat "${LDAP_PASSWORD_FILE}" 2>/dev/null)
 fi
 
-saveAlias ldap-bind-password "${LDAP_BIND_PASSWORD}"
 saveAlias gateway_database_user "${DATABASE_CONNECTION_USER}"
 saveAlias gateway_database_password "${DATABASE_CONNECTION_PASSWORD}"
 saveAlias gateway_database_ssl_truststore_password "${DATABASE_CONNECTION_TRUSTSTORE_PASSWORD}"
+saveAlias gateway_ldap_bind_password "${LDAP_BIND_PASSWORD}"
 
 # RemoteAuthProvider truststore password
 saveAlias rap_truststore_password "${RAP_TRUSTSTORE_PASSWORD}"

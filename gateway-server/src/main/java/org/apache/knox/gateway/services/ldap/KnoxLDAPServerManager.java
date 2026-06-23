@@ -64,7 +64,7 @@ import java.util.stream.IntStream;
  */
 public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
-    private static final String LDAP_BIND_PASSWORD_ALIAS = "gateway.ldap.bind.password";
+    private static final String LDAP_BIND_PASSWORD_ALIAS = "gateway_ldap_bind_password";
     private final AliasService aliasService;
 
     @VisibleForTesting
