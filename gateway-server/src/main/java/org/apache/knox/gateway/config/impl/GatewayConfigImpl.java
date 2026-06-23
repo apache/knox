@@ -1754,6 +1754,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLDAPBindUser() {
+    return get(LDAP_BIND_USER, null);
+  }
+
+  @Override
   public List<String> getLDAPInterceptorNames() {
     return splitConfigValueToList(LDAP_INTERCEPTOR_NAMES);
   }

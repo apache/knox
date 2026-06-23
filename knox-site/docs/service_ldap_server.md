@@ -39,10 +39,68 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.enabled` | `false` | Enables or disables the embedded LDAP service. |
 | `gateway.ldap.port` | `3890` | The port on which the LDAP server listens. |
 | `gateway.ldap.base.dn` | `dc=proxy,dc=com` | The base DN for the LDAP server. |
+| `gateway.ldap.bind.user` | N/A | Full bind DN (e.g. `uid=knox,ou=system`) that clients must authenticate as. When set together with the `gateway_ldap_bind_password` credential store alias, anonymous access is disabled. The bind DN's parent container must already exist (`ou=system` always exists; `ou=people,{base.dn}` and `ou=groups,{base.dn}` are created automatically). |
 | `gateway.ldap.interceptor.names` | N/A | A comma separated list of interceptors to use. A separate interceptor configuration block will be used for each name. |
 | `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). |
 | `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint. |
 | `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
+
+### Bind Credentials
+
+By default the embedded LDAP server permits anonymous access. To require clients to
+authenticate, set `gateway.ldap.bind.user` and store the matching password in the gateway
+credential store under the `gateway_ldap_bind_password` alias. When both are present,
+anonymous access is disabled and clients must bind with these credentials.
+
+#### Relationship between the base DN and the bind user
+
+`gateway.ldap.bind.user` is a **full DN**, not a bare username — `admin` on its own is not
+valid. The bind entry is created inside the embedded directory at start-up, so its parent
+container must already exist. The server creates the following containers under the
+configured `gateway.ldap.base.dn`:
+
+- `ou=people,{gateway.ldap.base.dn}`
+- `ou=groups,{gateway.ldap.base.dn}`
+
+(`ou=system` also always exists, independently of the base DN.) The bind DN must therefore
+be placed under one of these containers; a DN under a container that is not created (e.g.
+`ou=admins`) will fail.
+
+For example, with:
+
+```xml
+<property>
+    <name>gateway.ldap.base.dn</name>
+    <value>dc=hadoop,dc=apache,dc=org</value>
+</property>
+```
+
+a good bind user is a dedicated service identity under the auto-created `ou=people`
+container — note how the base DN is the suffix of the bind DN:
+
+```xml
+<property>
+    <name>gateway.ldap.bind.user</name>
+    <value>uid=knox,ou=people,dc=hadoop,dc=apache,dc=org</value>
+</property>
+```
+
+and the password is stored as:
+
+```shell script
+knoxcli.sh create-alias gateway_ldap_bind_password --value knoxsecret
+```
+
+Clients then bind with the full DN, e.g.:
+
+```shell script
+ldapsearch -x -H ldap://localhost:3890 -D "uid=knox,ou=people,dc=hadoop,dc=apache,dc=org" -w knoxsecret -b "" "(uid=admin)"
+```
+
+The bind entry is created as an `inetOrgPerson`, so either a `uid`-based RDN
+(`uid=knox,...`) or a `cn`-based RDN (`cn=bind,...`) is valid. Use a dedicated identity
+(e.g. `uid=knox`) rather than the built-in ApacheDS admin `uid=admin,ou=system`, which
+remains available with its default credentials.
 
 ### Interceptor Types
 
@@ -296,4 +354,4 @@ Alternative: Use host and port instead of URL
 
 - **Logs**: LDAP service logs can be found in `gateway.log`. Look for messages from `org.apache.knox.gateway.services.ldap`.
 - **Lock Files**: If Knox crashes, an `instance.lock` file might remain in `${GATEWAY_DATA_HOME}/ldap-server/run/`. The service attempts to clean this up on startup.
-- **Anonymous Access**: The embedded LDAP server allows anonymous access by default to facilitate discovery and simple binds, but backend lookups are performed using the configured `systemUsername`.
+- **Anonymous Access**: The embedded LDAP server allows anonymous access by default to facilitate discovery and simple binds, but backend lookups are performed using the configured `systemUsername`. To require authentication, set `gateway.ldap.bind.user` and store the corresponding password in the gateway credential store under the `gateway_ldap_bind_password` alias (e.g. `knoxcli.sh create-alias gateway_ldap_bind_password --value <password>`). Clients must then bind with those credentials (e.g. `ldapsearch -D "uid=knox,ou=system" -w <password> ...`) and anonymous queries are rejected. Note that the built-in ApacheDS admin (`uid=admin,ou=system`) remains available with its default credentials.

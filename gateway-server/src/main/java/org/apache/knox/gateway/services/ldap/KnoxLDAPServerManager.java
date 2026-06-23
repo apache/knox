@@ -46,6 +46,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
+import org.apache.knox.gateway.services.security.AliasService;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,6 +64,8 @@ import java.util.stream.IntStream;
  */
 public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+    private static final String LDAP_BIND_PASSWORD_ALIAS = "gateway_ldap_bind_password";
+    private final AliasService aliasService;
 
     @VisibleForTesting
     DirectoryService directoryService;
@@ -72,8 +75,13 @@ public class KnoxLDAPServerManager {
     private File workDir;
     private int port;
     private String baseDn;
+    private String bindUser;
     // Collection of DNs for the proxied backend LDAP servers
     private Set<String> baseDns;
+
+    KnoxLDAPServerManager(AliasService aliasService) {
+        this.aliasService = aliasService;
+    }
 
     /**
      * Initialize the LDAP server with the given configuration
@@ -90,6 +98,7 @@ public class KnoxLDAPServerManager {
         // Get configuration
         this.port = config.getLDAPPort();
         this.baseDn = config.getLDAPBaseDN();
+        this.bindUser = config.getLDAPBindUser();
 
         createInterceptors(config);
 
@@ -177,14 +186,24 @@ public class KnoxLDAPServerManager {
 
         addInterceptors();
 
-        // Allow anonymous access
-        directoryService.setAllowAnonymousAccess(true);
+        // Require clients to bind with the configured credentials when both a bind user and
+        // a bind password (resolved from the gateway credential store) are set; otherwise
+        // keep the historical behavior of allowing anonymous access.
+        final char[] bindPasswordChars = aliasService.getPasswordFromAliasForGateway(LDAP_BIND_PASSWORD_ALIAS);
+        final String bindPassword = bindPasswordChars == null ? null : new String(bindPasswordChars);
+        final boolean requireBind = StringUtils.isNotBlank(bindUser) && StringUtils.isNotBlank(bindPassword);
+        directoryService.setAllowAnonymousAccess(!requireBind);
 
         // Start the service
         directoryService.startup();
 
         // Add base entries to the partitions
         createBaseEntries(baseDns, schemaManager);
+
+        if (requireBind) {
+            createBindUser(schemaManager, bindPassword);
+            LOG.ldapBindUserConfigured(bindUser);
+        }
 
         // Create LDAP server on configured port
         ldapServer = new LdapServer();
@@ -315,6 +334,26 @@ public class KnoxLDAPServerManager {
             groupsOu.add("objectClass", "top", "organizationalUnit");
             groupsOu.add("ou", "groups");
             directoryService.getAdminSession().add(groupsOu);
+        }
+    }
+
+    /**
+     * Create the entry used by external clients to bind against the embedded LDAP server.
+     * The bind DN's parent container (e.g. {@code ou=system} or {@code ou=people,<baseDn>})
+     * must already exist. The entry is added using the privileged admin session, which is
+     * unaffected by the anonymous-access setting.
+     */
+    private void createBindUser(SchemaManager schemaManager, String bindPassword) throws Exception {
+        Dn bindDn = new Dn(schemaManager, bindUser);
+        if (!directoryService.getAdminSession().exists(bindDn)) {
+            String rdnValue = bindDn.getRdn().getValue();
+            Entry bindEntry = new DefaultEntry(schemaManager);
+            bindEntry.setDn(bindDn);
+            bindEntry.add("objectClass", "top", "person", "organizationalPerson", "inetOrgPerson");
+            bindEntry.add("cn", rdnValue);
+            bindEntry.add("sn", rdnValue);
+            bindEntry.add("userPassword", bindPassword);
+            directoryService.getAdminSession().add(bindEntry);
         }
     }
 
