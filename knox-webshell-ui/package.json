@@ -2,6 +2,7 @@
   "name": "ng-knox-webshell-ui",
   "version": "1.0.0",
   "license": "Apache-2.0",
+  "type": "module",
   "scripts": {
     "start": "ng serve --verbose=true",
     "build": "ng build",
@@ -10,25 +11,30 @@
   },
   "private": true,
   "dependencies": {
-    "@angular-eslint/schematics": "^15.1.0",
-    "@angular/common": "~13.0.1",
-    "@angular/compiler": "~13.0.1",
-    "@angular/core": "~13.0.1",
-    "@angular/platform-browser": "~13.0.1",
-    "@angular/platform-browser-dynamic": "~13.0.1",
-    "@angular/router": "~13.0.1",
-    "ajv": "^6.12.6",
-    "ng-terminal": "^3.1.1",
-    "zone.js": "~0.11.4"
+    "@angular/common": "^21.0.5",
+    "@angular/compiler": "^21.0.5",
+    "@angular/core": "^21.0.5",
+    "@angular/platform-browser": "^21.0.5",
+    "@angular/platform-browser-dynamic": "^21.0.5",
+    "@angular/router": "^21.0.5",
+    "ng-terminal": "^6.6.0",
+    "zone.js": "~0.15.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^13.3.11",
-    "@angular-eslint/builder": "^12.6.1 ",
-    "@angular/cli": "~14.2.9",
-    "@angular/compiler-cli": "~13.0.1",
-    "@types/jasmine": "~3.6.0",
-    "@types/node": "16.18.11",
-    "typescript": "~4.4.4",
-    "codelyzer": "^4.1.0"
+    "@angular-eslint/builder": "21.1.0",
+    "@angular-eslint/eslint-plugin": "21.1.0",
+    "@angular-eslint/eslint-plugin-template": "21.1.0",
+    "@angular-eslint/schematics": "21.1.0",
+    "@angular-eslint/template-parser": "21.1.0",
+    "@angular/build": "^21.0.3",
+    "@angular/cli": "^21.0.3",
+    "@angular/compiler-cli": "^21.0.5",
+    "@angular/language-service": "^21.0.5",
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^24.5.2",
+    "eslint": "^9.39.0",
+    "ts-node": "~10.9.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.2"
   }
 }

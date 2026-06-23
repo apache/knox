@@ -14,48 +14,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild, AfterViewInit, HostListener} from '@angular/core';
-import { NgTerminal } from 'ng-terminal';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { NgTerminal, NgTerminalModule } from 'ng-terminal';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [NgTerminalModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit {
-  @ViewChild('term', {static: false}) child: NgTerminal;
-  private websocket: WebSocket;
+  @ViewChild('term', {static: false}) child!: NgTerminal;
+  private websocket!: WebSocket;
 
   constructor() { }
 
   ngOnInit() {}
 
   ngAfterViewInit() {
-    const terminal = this.child.underlying;
-    // todo: can add other options to customize xterm
+    const terminal = this.child.underlying!;
     terminal.options.convertEol = true;
     terminal.options.letterSpacing = 0;
     terminal.options.fontFamily = 'Courier New';
 
-    /* check font
-    const fontFamily = terminal.getOption("fontFamily");
-    console.log(fontFamily);
-    */
-
-    let endpoint = 'wss://'+ location.hostname + ':' + location.port + '/'+
+    const endpoint = 'wss://' + location.hostname + ':' + location.port + '/' +
         location.pathname.split('/')[1] + '/webshell';
     console.log(endpoint);
     this.websocket = new WebSocket(endpoint);
-    this.websocket.onmessage = function(event){
+    this.websocket.onmessage = (event) => {
       terminal.write(event.data);
-    }
-    this.websocket.onclose = function(event){
-      terminal.write("\r\nConnection closed");
-    }
+    };
+    this.websocket.onclose = () => {
+      terminal.write('\r\nConnection closed');
+    };
 
-    terminal.onData((userInput) => {
-      // send userInput to backend server
-      this.websocket.send(JSON.stringify({userInput:userInput}));
-    })
+    terminal.onData((userInput: string) => {
+      this.websocket.send(JSON.stringify({userInput: userInput}));
+    });
   }
 }
