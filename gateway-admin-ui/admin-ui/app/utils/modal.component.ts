@@ -18,18 +18,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 
 @Component({
     selector: 'app-modal',
-    template: `
-        <div class="modal" [class.show]="visible" [style.display]="visible ? 'block' : 'none'" tabindex="-1">
-            <div class="modal-dialog" [class.modal-sm]="size === 'sm'" [class.modal-lg]="size === 'lg'">
-                <div class="modal-content">
-                    <ng-content></ng-content>
-                </div>
-            </div>
-        </div>
-        @if (visible) {
-            <div class="modal-backdrop fade show"></div>
-        }
-    `
+    templateUrl: './modal.component.html'
 })
 export class ModalComponent {
     @Input() size: string = 'md';

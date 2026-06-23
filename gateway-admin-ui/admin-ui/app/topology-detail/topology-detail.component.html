@@ -1,0 +1,77 @@
+<div class="panel panel-default" style="margin-top: 10px;">
+    <div class="panel-heading">
+        <h4 class="panel-title">{{title}}
+            @if (showEditOptions === false) {
+                <span style="padding-left: 15%;" class="text-danger text-center"> Read Only (generated file) </span>
+            }
+            <span class="pull-right">{{titleSuffix}}</span>
+        </h4>
+    </div>
+    <div [style.display]="getEditorVisibility()" class="panel-body" style="padding: 0;">
+        <div class="code-editor-scroll">
+            <div class="code-editor-wrapper">
+                <div class="code-editor-gutter">
+                    @for (line of getLineNumbers(); track line) {
+                        <div class="line-number">{{line}}</div>
+                    }
+                </div>
+                <textarea
+                        class="code-editor"
+                        [(ngModel)]="topologyContent"
+                        [readOnly]="!showEditOptions"
+                        [attr.rows]="getLineNumbers().length || 1"
+                        spellcheck="false"
+                        (input)="onChange($event.target.value)">
+                </textarea>
+            </div>
+        </div>
+        <div class="editor-toolbar">
+            <button id="duplicateTopology" (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm"
+                    title="Duplicate Topology" type="submit">
+                <span class="material-icons">content_copy</span>
+            </button>
+            @if (showEditOptions) {
+                <button id="deleteTopology" (click)="deleteConfirmModal.open('sm')"
+                        class="btn btn-default btn-sm" title="Delete Topology" type="submit">
+                    <span class="material-icons">delete</span>
+                </button>
+            }
+            @if (showEditOptions) {
+                <button id="saveTopology" (click)="saveTopology()" class="btn btn-default btn-sm pull-right"
+                        title="Save Topology" [disabled]="!changedTopology" type="submit">
+                    <span class="material-icons">save</span>
+                </button>
+            }
+        </div>
+    </div>
+    <app-modal (onClose)="createTopology()" #duplicateModal>
+        <div class="modal-header">
+            <h4 class="modal-title">Create a copy</h4>
+            <button type="button" class="btn-close" (click)="duplicateModal.dismiss()"></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="textbox">Name the new topology</label>
+                <input autofocus type="text" class="form-control" required [(ngModel)]="newTopologyName" id="textbox">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-sm" (click)="duplicateModal.dismiss()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="!isValidNewTopologyName()"
+                    (click)="duplicateModal.close()">Ok</button>
+        </div>
+    </app-modal>
+    <app-modal (onClose)="deleteTopology()" #deleteConfirmModal>
+        <div class="modal-header">
+            <h4 class="modal-title">Deleting Topology {{titleSuffix}}</h4>
+            <button type="button" class="btn-close" (click)="deleteConfirmModal.dismiss()"></button>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to delete the topology?
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default btn-sm" (click)="deleteConfirmModal.dismiss()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" (click)="deleteConfirmModal.close()">Ok</button>
+        </div>
+    </app-modal>
+</div>

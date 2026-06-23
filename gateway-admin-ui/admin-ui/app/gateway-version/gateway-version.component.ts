@@ -21,33 +21,8 @@ import {GatewayVersionService} from '../service/gateway-version.service';
 
 @Component({
     selector: 'app-gateway-version',
-    template: `
-        @if (gatewayVersion) {
-            <span class="version-item"><strong>Version</strong> {{gatewayVersion.version}}</span>
-            <span class="version-divider">|</span>
-            <span class="version-item"><strong>Hash</strong> {{gatewayVersion.hash}}</span>
-        }
-    `,
-    styles: [`
-        :host {
-            display: inline;
-        }
-
-        .version-item {
-            font-size: 12px;
-            color: #888;
-        }
-
-        .version-item strong {
-            color: #555;
-            margin-right: 3px;
-        }
-
-        .version-divider {
-            margin: 0 8px;
-            color: #ccc;
-        }
-    `]
+    templateUrl: './gateway-version.component.html',
+    styleUrls: ['./gateway-version.component.css']
 })
 
 export class GatewayVersionComponent implements OnInit {

@@ -19,15 +19,7 @@ import {TabComponent} from './tab.component';
 
 @Component({
     selector: 'app-tabs',
-    template: `
-        <ul class="nav nav-tabs">
-            @for (tab of tabs; track tab.title) {
-                <li (click)="selectTab(tab)" [class.active]="tab.active">
-                    <a>{{tab.title}}</a>
-                </li>
-            }
-        </ul>
-    `
+    templateUrl: './tabs.component.html'
 })
 export class TabsComponent implements AfterContentInit {
 

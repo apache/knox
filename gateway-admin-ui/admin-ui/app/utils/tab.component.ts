@@ -18,15 +18,8 @@ import {Component, Input} from '@angular/core';
 
 @Component({
     selector: 'app-tab',
-    styles: [`
-        .pane {
-            padding: 1em;
-        }
-    `],
-    template: `
-        <div [hidden]="!active" class="pane">
-        </div>
-    `
+    templateUrl: './tab.component.html',
+    styleUrls: ['./tab.component.css']
 })
 export class TabComponent {
     @Input('tabTitle') title: string;

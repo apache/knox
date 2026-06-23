@@ -22,27 +22,7 @@ import {TopologyService} from '../service/topology.service';
 
 @Component({
     selector: 'app-topology',
-    template: `
-        <div class="table-responsive" style="max-height: 400px; width:100%; overflow: auto;">
-            <table class="table table-striped table-hover">
-                <thead>
-                <tr>
-                    <th>Topology Name</th>
-                    <th>Timestamp</th>
-                </tr>
-                </thead>
-                <tbody>
-                @for (topology of topologies; track topology.name) {
-                    <tr [class.selected]="topology === selectedTopology"
-                        (click)="onSelect(topology)">
-                        <td>{{topology.name}}</td>
-                        <td>{{topology.timestamp | date:'medium'}}</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    `,
+    templateUrl: './topology.component.html',
     imports: [DatePipe]
 })
 export class TopologyComponent implements OnInit {
