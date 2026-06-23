@@ -33,7 +33,7 @@ export class WebAppSecurityProviderConfig extends DisplayBindingProviderConfig {
         return [];
     }
 
-    getDisplayNamePropertyBinding(name: string): string {
+    getDisplayNamePropertyBinding(_name: string): string {
         return null;
     }
 }

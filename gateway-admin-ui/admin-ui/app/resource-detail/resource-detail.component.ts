@@ -15,25 +15,27 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ResourceService} from '../resource/resource.service';
-import {Resource} from '../resource/resource';
-import {ProviderConfig} from './provider-config';
-import {Descriptor} from './descriptor';
-import {Service} from '../resource/service';
-// Commented out in scope of KNOX-2834 (see below)
-// import {parseString} from 'xml2js';
-
-import 'brace/theme/monokai';
-import 'brace/mode/xml';
+import {FormsModule} from '@angular/forms';
+import {ResourceService} from '../service/resource.service';
+import {Resource} from '../model/resource';
+import {ProviderConfig} from '../model/provider-config';
+import {Descriptor} from '../model/descriptor';
+import {Service} from '../model/service';
 
 import {ProviderConfigSelectorComponent} from '../provider-config-selector/provider-config-selector.component';
-import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
-import {HttpErrorResponse} from '@angular/common/http';
+import {ResourceTypesService} from '../service/resourcetypes.service';
+import {TopologyDetailComponent} from '../topology-detail/topology-detail.component';
+import {ServiceDefinitionDetailComponent} from '../service-definition/servicedefinition-detail.component';
+import {ModalComponent} from '../utils/modal.component';
+import { HttpErrorResponse } from '@angular/common/http';
+import * as yaml from 'js-yaml';
 
 @Component({
     selector: 'app-resource-detail',
     templateUrl: './resource-detail.component.html',
-    styleUrls: ['./resource-detail.component.css']
+    styleUrls: ['./resource-detail.component.css'],
+    imports: [FormsModule, ProviderConfigSelectorComponent,
+        TopologyDetailComponent, ServiceDefinitionDetailComponent, ModalComponent]
 })
 
 export class ResourceDetailComponent implements OnInit {
@@ -42,8 +44,6 @@ export class ResourceDetailComponent implements OnInit {
     private static emptyResource: Resource = new Resource();
 
     private static emptyDescriptor: Descriptor = new Descriptor();
-
-    title: string;
 
     resourceType: string;
     resource: Resource;
@@ -119,48 +119,10 @@ export class ResourceDetailComponent implements OnInit {
                     this.providers = contentObj['providers'];
                     this.readOnlyProviderConfig = contentObj['readOnly'];
                 } else if (res.name.endsWith('yaml') || res.name.endsWith('yml')) {
-                    // Parse the YAML representation
-                    let yaml = require('js-yaml');
-                    contentObj = yaml.safeLoad(this.resourceContent);
+                    contentObj = yaml.load(this.resourceContent);
                     this.providers = contentObj['providers'];
                     this.readOnlyProviderConfig = contentObj['readOnly'];
                 }
-                /*  Commented out in scope of KNOX-2834, because documentation does not mention supporting
-                    XML shared provider files and xml2js library is not compatible with angular 14.
-
-                    else if (res.name.endsWith('xml')) {
-                    // Parse the XML representation
-
-                    parseString(this.resourceContent,
-                        (error, result) => {
-                            if (error) {
-                                console.log('Error parsing ' + res.name + ' error: ' + error);
-                            } else {
-                                // Parsing the XML is a bit less straight-forward
-                                let tempProviders = new Array<ProviderConfig>();
-                                result['gateway'].provider.forEach(entry => {
-                                    let providerConfig: ProviderConfig = new ProviderConfig();
-                                    providerConfig.role = entry.role[0];
-                                    providerConfig.name = entry.name[0];
-                                    providerConfig.enabled = entry.enabled[0];
-
-                                    // There may not be params
-                                    if (entry.param) {
-                                        let params = new Map<string, string>();
-                                        for (let i = 0; i < entry.param.length; i++) {
-                                            let param = entry.param[i];
-                                            params[param.name[0]] = param.value[0];
-                                        }
-                                        providerConfig.params = params;
-                                    }
-                                    tempProviders.push(providerConfig);
-                                });
-                                this.providers = tempProviders;
-                                this.readOnlyProviderConfig = result['gateway'].readOnly;
-                            }
-                        }
-                    );
-                } */
             } catch (e) {
                 console.error('ResourceDetailComponent --> setProviderConfigContent() --> Error parsing ' + res.name + ' content: ' + e);
                 this.providers = null; // Clear detail display
@@ -176,7 +138,6 @@ export class ResourceDetailComponent implements OnInit {
                 if (res.name.endsWith('json')) {
                     contentObj = JSON.parse(this.resourceContent);
                 } else if (res.name.endsWith('yaml') || res.name.endsWith('yml')) {
-                    let yaml = require('js-yaml');
                     contentObj = yaml.load(this.resourceContent);
                 }
                 let tempDesc = new Descriptor();
@@ -331,7 +292,7 @@ export class ResourceDetailComponent implements OnInit {
     }
 
     onRemoveProviderParam(pc: ProviderConfig, paramName: string) {
-        if (pc.params.hasOwnProperty(paramName)) {
+        if (Object.prototype.hasOwnProperty.call(pc.params, paramName)) {
             delete pc.params[paramName];
         }
         this.changedProviders = this.providers;
@@ -352,7 +313,7 @@ export class ResourceDetailComponent implements OnInit {
         for (let i = 0; i < this.descriptor.services.length; i++) {
             if (this.descriptor.services[i].name === serviceName) {
                 let service = this.descriptor.services[i];
-                if (service.params.hasOwnProperty(paramName)) {
+                if (Object.prototype.hasOwnProperty.call(service.params, paramName)) {
                     delete service.params[paramName];
                     this.descriptor.setDirty();
                     done = true;
@@ -548,7 +509,7 @@ export class ResourceDetailComponent implements OnInit {
     }
 
     // This method is required to maintain focus on descriptor service URLs when they're being edited.
-    trackByServiceURLIndex(index: any, item: any) {
+    trackByServiceURLIndex(index: any, _item: any) {
         return index;
     }
 
@@ -573,7 +534,7 @@ export class ResourceDetailComponent implements OnInit {
 
     showEditOptions(): boolean {
         if (this.resourceType === 'Descriptors' && this.descriptor.readOnly) {
-            return !Boolean(this.descriptor.readOnly);
+            return !this.descriptor.readOnly;
         }
 
         if (this.resourceType === 'Provider Configurations' && this.readOnlyProviderConfig) {

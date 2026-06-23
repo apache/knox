@@ -57,12 +57,13 @@ export class CSRFProviderConfig extends WebAppSecurityContributor {
                 case CSRFProviderConfig.CUSTOM_HEADER:
                     isValid = ValidationUtils.isValidString(value);
                     break;
-                case CSRFProviderConfig.METHODS_TO_IGNORE:
+                case CSRFProviderConfig.METHODS_TO_IGNORE: {
                     let methodList: string[] = value.split(',');
                     for (let method of methodList) {
                         isValid = isValid && ValidationUtils.isValidHTTPMethod(method.trim().toUpperCase());
                     }
                     break;
+                }
                 default:
             }
         }

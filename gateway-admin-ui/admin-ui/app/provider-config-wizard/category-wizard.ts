@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {ProviderConfig} from '../model/provider-config';
 
 export abstract class CategoryWizard {
 

@@ -16,13 +16,29 @@
  */
 import './polyfills.ts';
 
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-import {enableProdMode} from '@angular/core';
-import {environment} from './environments/environment';
-import {AppModule} from './app/';
+import { enableProdMode, provideZoneChangeDetection } from '@angular/core';
+import { environment } from './environments/environment';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideHttpClient } from '@angular/common/http';
+import { SessionInformationComponent } from './app/session-information/session.information.component';
+import { GatewayVersionComponent } from './app/gateway-version/gateway-version.component';
+import { AppComponent } from './app/app.component';
 
 if (environment.production) {
-    enableProdMode();
+  enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule);
+const bootstrapComponents = [
+  SessionInformationComponent,
+  GatewayVersionComponent,
+  AppComponent
+];
+
+bootstrapComponents.forEach(component => {
+  bootstrapApplication(component, {
+    providers: [
+      provideZoneChangeDetection(),
+      provideHttpClient()
+    ]
+  }).catch(err => console.error(err));
+});

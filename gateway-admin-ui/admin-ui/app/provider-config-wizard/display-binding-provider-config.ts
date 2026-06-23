@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {ProviderConfig} from '../model/provider-config';
 
 export abstract class DisplayBindingProviderConfig extends ProviderConfig {
 
@@ -59,11 +59,11 @@ export abstract class DisplayBindingProviderConfig extends ProviderConfig {
         return this.params[name];
     }
 
-    isPasswordParam(name: string): boolean {
+    isPasswordParam(_name: string): boolean {
         return false;
     }
 
-    isValidParamValue(paramName: string) {
+    isValidParamValue(_paramName: string) {
         return true;
     }
 

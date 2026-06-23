@@ -16,7 +16,7 @@
  */
 
 import {CategoryWizard} from './category-wizard';
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {ProviderConfig} from '../model/provider-config';
 import {ProviderContributorWizard} from './provider-contributor-wizard';
 import {DisplayBindingProviderConfig} from './display-binding-provider-config';
 import {WebAppSecurityProviderConfig} from './webappsec-provider-config';
@@ -68,8 +68,7 @@ export class WebAppSecurityWizard extends CategoryWizard implements ProviderCont
     onChange() {
         let configType = WebAppSecurityWizard.typeConfigMap.get(this.selectedType);
         if (configType) {
-            this.providerConfig = Object.create(configType.prototype) as WebAppSecurityContributor;
-            this.providerConfig = this.providerConfig.constructor.apply(this.providerConfig);
+            this.providerConfig = new (configType as any)();
             (this.providerConfig as WebAppSecurityContributor).setType(this.selectedType);
         } else {
             console.debug('WebAppSecurityWizard --> No provider configuration type mapped for ' + this.selectedType);

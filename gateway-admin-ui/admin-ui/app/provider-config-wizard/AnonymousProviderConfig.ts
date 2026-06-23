@@ -30,7 +30,7 @@ export class AnonymousProviderConfig extends AuthenticationProviderConfig {
         return this.displayBindingPropertyNames;
     }
 
-    getDisplayNamePropertyBinding(name: string): string {
+    getDisplayNamePropertyBinding(_name: string): string {
         return null;
     }
 

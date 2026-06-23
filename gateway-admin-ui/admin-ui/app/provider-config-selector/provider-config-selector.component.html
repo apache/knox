@@ -1,28 +1,25 @@
-<bs-modal (onClose)="onClose()" #chooseProviderConfigModal>
-    <bs-modal-header [showDismiss]="true">
+<app-modal (onClose)="onClose()" #chooseProviderConfigModal>
+    <div class="modal-header">
         <label class="modal-title">Choose a Provider Configuration</label>
-    </bs-modal-header>
-    <bs-modal-body>
+        <button type="button" class="btn-close" (click)="chooseProviderConfigModal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
         <div class="form-group">
             <select autofocus required class="md-select form-control" [(ngModel)]="selectedName"
                     id="select">
-                <option *ngFor="let pc of getProviderConfigs()"
-                        class="md-option"
-                        [value]="getReferenceName(pc.name)"
-                        [selected]="getReferenceName(pc.name) === selectedName">{{getReferenceName(pc.name)}}</option>
+                @for (pc of getProviderConfigs(); track pc.name) {
+                    <option class="md-option"
+                            [value]="getReferenceName(pc.name)"
+                            [selected]="getReferenceName(pc.name) === selectedName">{{getReferenceName(pc.name)}}</option>
+                }
             </select>
         </div>
-    </bs-modal-body>
-    <bs-modal-footer>
-        <button type="button"
-                class="btn btn-default btn-sm"
-                data-dismiss="chooseProviderConfigModal"
-                (click)="chooseProviderConfigModal.dismiss()">Cancel
-        </button>
-        <button type="button"
-                class="btn btn-primary btn-sm"
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default btn-sm"
+                (click)="chooseProviderConfigModal.dismiss()">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm"
                 [disabled]="!selectedName"
-                (click)="chooseProviderConfigModal.close()">Ok
-        </button>
-    </bs-modal-footer>
-</bs-modal>
+                (click)="chooseProviderConfigModal.close()">Ok</button>
+    </div>
+</app-modal>

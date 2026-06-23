@@ -15,33 +15,15 @@
  * limitations under the License.
  */
 import {Component} from '@angular/core';
-import {TopologyService} from './topology.service';
-import {ServiceDefinitionService} from './service-definition/servicedefinition.service';
-import {ResourceTypesService} from './resourcetypes/resourcetypes.service';
+import {ResourcetypesComponent} from './resourcetypes/resourcetypes.component';
+import {ResourceComponent} from './resource/resource.component';
+import {ResourceDetailComponent} from './resource-detail/resource-detail.component';
 
 @Component({
     selector: 'app-resource-management',
-    template: `
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-2 col-lg-2">
-                    <app-resourcetypes></app-resourcetypes>
-                </div>
-                <div class="col-md-3 col-lg-3">
-                    <app-resource></app-resource>
-                </div>
-                <div class="col-md-7 col-lg-7">
-                    <app-resource-detail></app-resource-detail>
-                </div>
-            </div>
-        </div>
-    `,
-    providers: [TopologyService, ServiceDefinitionService, ResourceTypesService]
+    templateUrl: './app.component.html',
+    imports: [ResourcetypesComponent, ResourceComponent, ResourceDetailComponent]
 })
 
 export class AppComponent {
-    constructor(private topologyService: TopologyService,
-                private serviceDefinitionService: ServiceDefinitionService,
-                private resourcetypesService: ResourceTypesService) {
-    }
 }

@@ -14,26 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
-import {ResourceService} from './resource.service';
-import {Resource} from './resource';
-import {TopologyService} from '../topology.service';
-import {Topology} from '../topology';
-import {ServiceDefinitionService} from '../service-definition/servicedefinition.service';
-import {ServiceDefinition} from '../service-definition/servicedefinition';
-import {HttpErrorResponse} from '@angular/common/http';
+import {Component, OnInit, ViewChild, AfterViewInit} from '@angular/core';
+import {DatePipe} from '@angular/common';
+import {MatTableModule, MatTableDataSource} from '@angular/material/table';
+import {MatPaginatorModule, MatPaginator} from '@angular/material/paginator';
+import {ResourceTypesService} from '../service/resourcetypes.service';
+import {ResourceService} from '../service/resource.service';
+import {Resource} from '../model/resource';
+import {TopologyService} from '../service/topology.service';
+import {Topology} from '../model/topology';
+import {ServiceDefinitionService} from '../service/servicedefinition.service';
+import {ServiceDefinition} from '../model/servicedefinition';
+import {NewDescWizardComponent} from '../new-desc-wizard/new-desc-wizard.component';
+import {ProviderConfigWizardComponent} from '../provider-config-wizard/provider-config-wizard.component';
+import {NewServiceDefinitionComponent} from '../service-definition/new-service-definition.component';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'app-resource',
     templateUrl: './resource.component.html',
-    styleUrls: ['./resource.component.css']
+    styleUrls: ['./resource.component.css'],
+    imports: [DatePipe, MatTableModule, MatPaginatorModule,
+        NewDescWizardComponent, ProviderConfigWizardComponent, NewServiceDefinitionComponent]
 })
-export class ResourceComponent implements OnInit {
+export class ResourceComponent implements OnInit, AfterViewInit {
     resourceType: string;
-    value: any;
-    resources: Resource[];
     selectedResource: Resource;
+    dataSource = new MatTableDataSource<Resource>([]);
+
+    @ViewChild(MatPaginator) paginator: MatPaginator;
 
     constructor(private resourceTypesService: ResourceTypesService,
                 private resourceService: ResourceService,
@@ -45,15 +54,25 @@ export class ResourceComponent implements OnInit {
         this.resourceTypesService.selectedResourceType$.subscribe(resourceType => this.setResourceType(resourceType));
     }
 
+    ngAfterViewInit() {
+        this.dataSource.paginator = this.paginator;
+    }
+
+    getDisplayedColumns(): string[] {
+        if (this.resourceType === 'Topologies') {
+            return ['name', 'timestamp'];
+        }
+        return ['name'];
+    }
+
     setResourceType(resType: string) {
-        // Clear the selected resource, so it can be removed from the list on refresh if necessary
         this.selectedResource = null;
 
         this.resourceType = resType;
         this.resourceService.selectedResourceType(this.resourceType);
         this.resourceService.getResources(resType)
             .then(resources => {
-                this.resources = resources;
+                this.dataSource.data = resources;
 
                 let debugMsg = 'ResourceComponent --> Found ' + resources.length + ' ' + resType + ' resources\n';
                 for (let res of resources) {
@@ -73,7 +92,6 @@ export class ResourceComponent implements OnInit {
     onSelect(resource: Resource) {
         this.selectedResource = resource;
 
-        // If it's a topology resource, notify the topology service
         if (this.resourceType === 'Topologies') {
             let topology = new Topology();
             topology.name = resource.name;
@@ -81,13 +99,11 @@ export class ResourceComponent implements OnInit {
             this.topologyService.selectedTopology(topology);
         } else if (this.resourceType === 'Service Definitions') {
            let serviceDefinition = new ServiceDefinition();
-           serviceDefinition.name = resource.name;
            serviceDefinition.service = resource.service['name'];
            serviceDefinition.role = resource.service['role'];
            serviceDefinition.version = resource.service['version'];
            this.serviceDefinitionService.selectedServiceDefinition(serviceDefinition);
         } else {
-            // Otherwise, notify the resource service
             this.resourceService.selectedResource(resource);
         }
     }

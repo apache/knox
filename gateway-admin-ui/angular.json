@@ -36,12 +36,14 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "target/classes/admin-ui/app",
+            "outputPath": {
+              "base": "target/classes/admin-ui/app",
+              "browser": ""
+            },
             "index": "admin-ui/index.html",
-            "main": "admin-ui/main.ts",
-            "polyfills": "admin-ui/polyfills.ts",
+            "polyfills": ["admin-ui/polyfills.ts"],
             "tsConfig": "admin-ui/tsconfig.json",
             "assets": [
               "admin-ui/favicon.ico",
@@ -49,18 +51,16 @@
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "admin-ui/styles.css"
+              "admin-ui/material-theme.scss",
+              "admin-ui/styles.scss"
             ],
             "scripts": [
-              "node_modules/jquery/dist/jquery.min.js",
-              "node_modules/bootstrap/dist/js/bootstrap.js",
-              "node_modules/ace-builds/src-min/ace.js",
-              "node_modules/ace-builds/src-min/theme-monokai.js"              
-            ]
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "browser": "admin-ui/main.ts"
           },
           "configurations": {
             "production": {
-              "buildOptimizer": false,
               "aot": false,
               "fileReplacements": [
                 {
@@ -71,10 +71,8 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "aot": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -83,25 +81,21 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "admin-ui:build:production"
+              "buildTarget": "admin-ui:build:production"
             },
             "development": {
-              "browserTarget": "admin-ui:build:development"
+              "buildTarget": "admin-ui:build:development"
             }
-          },
-          "options": {
-            "browserTarget": "admin-ui:build",
-            "proxyConfig": "proxy.conf.json"
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "admin-ui:build"
+            "buildTarget": "admin-ui:build"
           }
         },
         "lint": {
@@ -115,12 +109,5 @@
         }
       }
     }
-  },
-  "defaultProject": "admin-ui",
-  "cli": {
-    "schematicCollections": [
-      "@angular-eslint/schematics",
-      "@angular-eslint/schematics"
-    ]
   }
 }
