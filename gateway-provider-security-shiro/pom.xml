@@ -126,5 +126,10 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>de.thetaphi</groupId>
+            <artifactId>forbiddenapis</artifactId>
+        </dependency>   
     </dependencies>
 </project>

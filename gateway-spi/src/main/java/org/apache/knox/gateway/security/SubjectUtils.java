@@ -22,6 +22,7 @@ import de.thetaphi.forbiddenapis.SuppressForbidden;
 import javax.security.auth.Subject;
 
 import java.security.AccessController;
+import java.lang.reflect.Method;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.Optional;
@@ -36,13 +37,36 @@ public class SubjectUtils {
    * There is no option in JDK 17 other then suppressing.
    * For JDK 18+ use Subject.current() instead.
    */
+  /*
+   * Subject.current() was introduced in JDK 18 (JEP 411).
+   * Resolved once at class-load time to avoid per-request reflection overhead.
+   * On JDK 17, SUBJECT_CURRENT_METHOD will be null and we fall back to
+   * the deprecated Subject.getSubject() which still works on JDK 17.
+   * On JDK 23+, the fallback throws UnsupportedOperationException (KNOX-3338).
+   */
+  private static final Method SUBJECT_CURRENT_METHOD;
+
+  static {
+    Method m = null;
+    try {
+      m = Subject.class.getMethod("current"); // available since JDK 18
+    } catch (NoSuchMethodException | SecurityException e) {
+      // JDK 17 — fallback to Subject.getSubject() below
+    }
+    SUBJECT_CURRENT_METHOD = m;
+  }
+
   @SuppressForbidden
   public static Subject getCurrentSubject() {
-    try {
-      return (Subject) Subject.class.getMethod("current").invoke(null);
-    } catch (Exception e) {
-      return Subject.getSubject( AccessController.getContext() );
+    if (SUBJECT_CURRENT_METHOD != null) {
+      try {
+        return (Subject) SUBJECT_CURRENT_METHOD.invoke(null);
+      } catch (ReflectiveOperationException e) {
+        throw new RuntimeException("Subject.current() invocation failed", e);
+      }
     }
+    // JDK 17 fallback — deprecated but functional; throws on JDK 23+
+    return Subject.getSubject(AccessController.getContext());
   }
 
   public static String getPrimaryPrincipalName(Subject subject) {

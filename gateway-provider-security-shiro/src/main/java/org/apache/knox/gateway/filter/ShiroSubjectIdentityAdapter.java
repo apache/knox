@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.filter;
 
+import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.ShiroMessages;
 import org.apache.knox.gateway.audit.api.Action;
@@ -44,6 +45,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
@@ -70,6 +73,49 @@ public class ShiroSubjectIdentityAdapter implements Filter {
 
   /* List of URLs with anon authentication */
   private static List<Matcher> anonUrls = new ArrayList<>();
+
+  /*
+   * Subject.callAs(Subject, Callable) was introduced in JDK 18 (JEP 411).
+   * Resolved once at class-load time to avoid per-request reflection overhead.
+   * On JDK 17, SUBJECT_CALL_AS will be null and doSubjectAction() falls back
+   * to Subject.doAs() which still works on JDK 17.
+   * On JDK 23+, Subject.doAs() throws UnsupportedOperationException (KNOX-3338).
+   */
+  private static final Method SUBJECT_CALL_AS;
+
+  static {
+    Method m = null;
+    try {
+      m = javax.security.auth.Subject.class.getMethod(
+          "callAs", javax.security.auth.Subject.class, Callable.class);
+    } catch (NoSuchMethodException | SecurityException e) {
+      // JDK 17 — will fall back to Subject.doAs() in doSubjectAction()
+    }
+    SUBJECT_CALL_AS = m;
+  }
+
+  /**
+   * Executes action under the given subject's identity.
+   * Uses Subject.callAs() on JDK 18+, falls back to Subject.doAs() on JDK 17.
+   * Fixes UnsupportedOperationException on JDK 23+ (KNOX-3338).
+   */
+  @SuppressForbidden
+  private static void doSubjectAction(javax.security.auth.Subject subject,
+                                      Callable<Void> action) throws Exception {
+    if (SUBJECT_CALL_AS != null) {
+      try {
+        SUBJECT_CALL_AS.invoke(null, subject, action);
+      } catch (InvocationTargetException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof Exception) { throw (Exception) cause; }
+        throw new RuntimeException(cause);
+      }
+    } else {
+      // JDK 17 fallback — deprecated but functional on JDK 17
+      javax.security.auth.Subject.doAs(subject,
+          (PrivilegedExceptionAction<Void>) action::call);
+    }
+  }
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
@@ -130,13 +176,11 @@ public class ShiroSubjectIdentityAdapter implements Filter {
     @SuppressWarnings("unchecked")
     @Override
     public Void call() throws Exception {
-      PrivilegedExceptionAction<Void> action = new PrivilegedExceptionAction<Void>() {
-        @Override
-        public Void run() throws Exception {
+      Callable<Void> action = () -> {
           chain.doFilter( request, response );
           return null;
-        }
       };
+
       Subject shiroSubject = SecurityUtils.getSubject();
 
       /**
@@ -158,7 +202,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         AuditContext context = auditService.getContext();
         context.setUsername(principal);
         auditService.attachContext(context);
-        javax.security.auth.Subject.doAs(subject, action);
+        doSubjectAction(subject, action);
       } else {
 
         final String principal = shiroSubject.getPrincipal().toString();
@@ -211,7 +255,7 @@ public class ShiroSubjectIdentityAdapter implements Filter {
         // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
         javax.security.auth.Subject subject = new javax.security.auth.Subject(
             true, principals, Collections.emptySet(), Collections.emptySet());
-        javax.security.auth.Subject.doAs(subject, action);
+        doSubjectAction(subject, action);
       }
 
       return null;
