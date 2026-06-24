@@ -774,6 +774,11 @@ public class AliasBasedTokenStateServiceTest extends DefaultTokenStateServiceTes
     }
 
     @Override
+    public char[] getHttpClientKeyPassphrase() throws AliasServiceException {
+      return new char[0];
+    }
+
+    @Override
     public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
       return new char[0];
     }

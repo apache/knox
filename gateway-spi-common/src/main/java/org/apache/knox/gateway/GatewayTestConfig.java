@@ -468,6 +468,36 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getHttpClientKeystorePath() {
+    return null;
+  }
+
+  @Override
+  public String getHttpClientKeystoreType() {
+    return DEFAULT_HTTP_CLIENT_KEYSTORE_TYPE;
+  }
+
+  @Override
+  public String getHttpClientKeystorePasswordAlias() {
+    return DEFAULT_HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS;
+  }
+
+  @Override
+  public String getHttpClientKeyAlias() {
+    return DEFAULT_HTTP_CLIENT_KEY_ALIAS;
+  }
+
+  @Override
+  public String getHttpClientKeyPassphraseAlias() {
+    return DEFAULT_HTTP_CLIENT_KEY_PASSPHRASE_ALIAS;
+  }
+
+  @Override
+  public boolean isSingleEkuEnabled() {
+    return DEFAULT_TLS_SINGLE_EKU_ENABLED;
+  }
+
+  @Override
   public String getCredentialStoreAlgorithm() {
     return DEFAULT_CREDENTIAL_STORE_ALG;
   }

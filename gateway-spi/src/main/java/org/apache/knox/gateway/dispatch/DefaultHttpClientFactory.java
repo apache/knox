@@ -93,7 +93,7 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
       builder = HttpClients.custom();
     }
 
-    SSLContext sslContext = createSSLContext(services, filterConfig, serviceRole);
+    SSLContext sslContext = createSSLContext(services, gatewayConfig, filterConfig, serviceRole);
     setSSLSocketFactory(sslContext, filterConfig, builder);
 
     if (Boolean.parseBoolean(System.getProperty(GatewayConfig.HADOOP_KERBEROS_SECURED))) {
@@ -173,25 +173,34 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
    * <p>
    * This method is package private to allow access to unit tests
    *
-   * @param services     the {@link GatewayServices}
-   * @param filterConfig a {@link FilterConfig} used to query for parameters for this operation
-   * @param serviceRole the name of the service role to whom this HTTP client is being created for
+   * @param services       the {@link GatewayServices}
+   * @param gatewayConfig  the {@link GatewayConfig} used to determine single-EKU mode
+   * @param filterConfig   a {@link FilterConfig} used to query for parameters for this operation
+   * @param serviceRole    the name of the service role to whom this HTTP client is being created for
    * @return a {@link SSLContext} or <code>null</code> if a custom {@link SSLContext} is not needed.
    */
-  SSLContext createSSLContext(GatewayServices services, FilterConfig filterConfig, String serviceRole) {
+  SSLContext createSSLContext(GatewayServices services, GatewayConfig gatewayConfig, FilterConfig filterConfig, String serviceRole) {
     KeyStore identityKeystore;
     char[] identityKeyPassphrase;
     KeyStore trustKeystore;
 
     KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
     try {
+      boolean singleEku = gatewayConfig != null && gatewayConfig.isSingleEkuEnabled();
       if (Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))) {
         LOG.usingTwoWaySsl(serviceRole);
         AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
 
-        // Get the Gateway's configured identity keystore and key passphrase
-        identityKeystore = ks.getKeystoreForGateway();
-        identityKeyPassphrase = as.getGatewayIdentityPassphrase();
+        if (singleEku) {
+          // Single-EKU mode: present the dedicated client-identity keystore (clientAuth EKU)
+          // instead of the Gateway's server identity keystore.
+          identityKeystore = ks.getKeystoreForHttpClient();
+          identityKeyPassphrase = as.getHttpClientKeyPassphrase();
+        } else {
+          // Multi-purpose (default): present the Gateway's server identity keystore.
+          identityKeystore = ks.getKeystoreForGateway();
+          identityKeyPassphrase = as.getGatewayIdentityPassphrase();
+        }
 
         // The trustKeystore will be the same as the identityKeystore if a truststore was not explicitly
         // configured in gateway-site (gateway.truststore.password.alias, gateway.truststore.path, gateway.truststore.type)
@@ -201,6 +210,11 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
           trustKeystore = identityKeystore;
         }
       } else {
+        if (singleEku) {
+          // Single-EKU mode is enabled but this dispatch is not configured for two-way SSL,
+          // so no client certificate is presented. Surface this so it is never a silent surprise.
+          LOG.singleEkuEnabledWithoutTwoWaySsl(serviceRole);
+        }
         // If not using twoWaySsl, there is no need to calculate the Gateway's identity keystore or
         // identity key.
         identityKeystore = null;

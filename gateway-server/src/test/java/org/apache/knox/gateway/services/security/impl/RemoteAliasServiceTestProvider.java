@@ -116,6 +116,11 @@ public class RemoteAliasServiceTestProvider implements RemoteAliasServiceProvide
     }
 
     @Override
+    public char[] getHttpClientKeyPassphrase() {
+      return getPasswordFromAliasForGateway(config.getHttpClientKeyPassphraseAlias());
+    }
+
+    @Override
     public char[] getGatewayIdentityKeystorePassword() {
       return getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
     }

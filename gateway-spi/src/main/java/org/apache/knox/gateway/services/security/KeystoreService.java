@@ -44,6 +44,16 @@ public interface KeystoreService extends Service {
    */
   KeyStore getTruststoreForHttpClient() throws KeystoreServiceException;
 
+  /**
+   * Gets the keystore holding the Gateway's client identity used for outbound mutual-TLS
+   * connections (single-EKU mode).
+   *
+   * @return a {@link KeyStore}; or <code>null</code> if {@code gateway.httpclient.keystore.path}
+   *         is not configured
+   * @throws KeystoreServiceException if the configured keystore cannot be loaded
+   */
+  default KeyStore getKeystoreForHttpClient() throws KeystoreServiceException { return null; }
+
   KeyStore getSigningKeystore() throws KeystoreServiceException;
 
   KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException;
