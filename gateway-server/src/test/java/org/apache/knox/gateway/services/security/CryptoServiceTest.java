@@ -128,6 +128,11 @@ public class CryptoServiceTest {
       }
 
       @Override
+      public char[] getHttpClientKeyPassphrase() throws AliasServiceException {
+        return null;
+      }
+
+      @Override
       public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
         return null;
       }

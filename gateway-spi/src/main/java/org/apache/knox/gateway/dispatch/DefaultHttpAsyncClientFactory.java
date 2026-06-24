@@ -54,7 +54,7 @@ public class DefaultHttpAsyncClientFactory extends DefaultHttpClientFactory impl
         }
 
         // Conditionally set a custom SSLContext
-        SSLContext sslContext = createSSLContext(services, filterConfig, serviceRole);
+        SSLContext sslContext = createSSLContext(services, gatewayConfig, filterConfig, serviceRole);
         if (sslContext != null) {
             builder.setSSLContext(sslContext);
         }

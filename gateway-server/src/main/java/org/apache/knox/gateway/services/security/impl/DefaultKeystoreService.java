@@ -153,6 +153,17 @@ public class DefaultKeystoreService implements KeystoreService {
   }
 
   @Override
+  public KeyStore getKeystoreForHttpClient() throws KeystoreServiceException {
+    String keystorePath = config.getHttpClientKeystorePath();
+    if (keystorePath == null) {
+      return null;
+    } else {
+      return getKeystore(Paths.get(keystorePath), config.getHttpClientKeystoreType(),
+          config.getHttpClientKeystorePasswordAlias(), true);
+    }
+  }
+
+  @Override
   public KeyStore getSigningKeystore() throws KeystoreServiceException {
     return getSigningKeystore(null);
   }

@@ -74,6 +74,20 @@ public class DefaultAliasService extends AbstractAliasService {
   }
 
   @Override
+  public char[] getHttpClientKeyPassphrase() throws AliasServiceException {
+    char[] passphrase = getPasswordFromAliasForGateway(config.getHttpClientKeyPassphraseAlias());
+    if (passphrase == null) {
+      // Fall back to the keystore password if a key-specific password was not explicitly set.
+      passphrase = getPasswordFromAliasForGateway(config.getHttpClientKeystorePasswordAlias());
+    }
+    if (passphrase == null) {
+      // Use the master password if no password was found
+      passphrase = masterService.getMasterSecret();
+    }
+    return passphrase;
+  }
+
+  @Override
   public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
     char[] passphrase = getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
     if (passphrase == null) {

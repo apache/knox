@@ -205,6 +205,9 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the gateway truststore using the alias {0}: {1}" )
   void failedToGetPasswordForGatewayTruststore(String alias, Exception e);
 
+  @Message( level = MessageLevel.ERROR, text = "Single-EKU mode is enabled but {0} is not configured. Knox cannot verify TLS certificates of upstream services. Server will not start." )
+  void singleEkuHttpClientTruststoreNotConfigured(String property);
+
   @Message( level = MessageLevel.DEBUG, text = "Received request: {0} {1}" )
   void receivedRequest( String method, String uri );
 

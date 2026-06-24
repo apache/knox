@@ -819,6 +819,36 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getHttpClientKeystorePath() {
+    return get(HTTP_CLIENT_KEYSTORE_PATH);
+  }
+
+  @Override
+  public String getHttpClientKeystoreType() {
+    return get(HTTP_CLIENT_KEYSTORE_TYPE, DEFAULT_HTTP_CLIENT_KEYSTORE_TYPE);
+  }
+
+  @Override
+  public String getHttpClientKeystorePasswordAlias() {
+    return get(HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS, DEFAULT_HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS);
+  }
+
+  @Override
+  public String getHttpClientKeyAlias() {
+    return get(HTTP_CLIENT_KEY_ALIAS, DEFAULT_HTTP_CLIENT_KEY_ALIAS);
+  }
+
+  @Override
+  public String getHttpClientKeyPassphraseAlias() {
+    return get(HTTP_CLIENT_KEY_PASSPHRASE_ALIAS, DEFAULT_HTTP_CLIENT_KEY_PASSPHRASE_ALIAS);
+  }
+
+  @Override
+  public boolean isSingleEkuEnabled() {
+    return getBoolean(TLS_SINGLE_EKU_ENABLED, DEFAULT_TLS_SINGLE_EKU_ENABLED);
+  }
+
+  @Override
   public String getCredentialStoreAlgorithm() {
     final String alg = get(CREDENTIAL_STORE_ALG, DEFAULT_CREDENTIAL_STORE_ALG);
     FipsUtils.validateAlgorithm(alg, CREDENTIAL_STORE_ALG);

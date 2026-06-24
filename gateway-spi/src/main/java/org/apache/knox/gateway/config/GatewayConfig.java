@@ -90,6 +90,19 @@ public interface GatewayConfig {
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway-httpclient-truststore-password";
 
+  String HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS = "gateway.httpclient.keystore.password.alias";
+  String HTTP_CLIENT_KEYSTORE_PATH = "gateway.httpclient.keystore.path";
+  String HTTP_CLIENT_KEYSTORE_TYPE = "gateway.httpclient.keystore.type";
+  String HTTP_CLIENT_KEY_ALIAS = "gateway.httpclient.key.alias";
+  String HTTP_CLIENT_KEY_PASSPHRASE_ALIAS = "gateway.httpclient.key.passphrase.alias";
+  String DEFAULT_HTTP_CLIENT_KEYSTORE_TYPE = KeyStore.getDefaultType();
+  String DEFAULT_HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS = "gateway-httpclient-keystore-password";
+  String DEFAULT_HTTP_CLIENT_KEY_ALIAS = "gateway-httpclient-key";
+  String DEFAULT_HTTP_CLIENT_KEY_PASSPHRASE_ALIAS = "gateway-httpclient-key-passphrase";
+
+  String TLS_SINGLE_EKU_ENABLED = "gateway.tls.single.eku.enabled";
+  boolean DEFAULT_TLS_SINGLE_EKU_ENABLED = false;
+
   String CREDENTIAL_STORE_ALG = "gateway.credential.store.alg";
   String DEFAULT_CREDENTIAL_STORE_ALG = "AES";
   String SELF_SIGNING_CERT_ALG = "gateway.self.signing.cert.alg";
@@ -281,6 +294,39 @@ public interface GatewayConfig {
    * @return an alias name
    */
   String getHttpClientTruststorePasswordAlias();
+
+  /**
+   * @return the path to the keystore holding the Gateway's client identity for outbound
+   *         mutual-TLS connections; or <code>null</code> if not set
+   */
+  String getHttpClientKeystorePath();
+
+  /**
+   * @return the type of the keystore specified by {@link #getHttpClientKeystorePath()}
+   */
+  String getHttpClientKeystoreType();
+
+  /**
+   * @return the alias used to look up the password for the HTTP client keystore
+   */
+  String getHttpClientKeystorePasswordAlias();
+
+  /**
+   * @return the alias of the key entry to present from the HTTP client keystore
+   */
+  String getHttpClientKeyAlias();
+
+  /**
+   * @return the alias used to look up the passphrase for the HTTP client key
+   */
+  String getHttpClientKeyPassphraseAlias();
+
+  /**
+   * @return <code>true</code> when single-purpose (single-EKU) certificates are in use, so the
+   *         Gateway presents a dedicated client keystore for outbound mTLS instead of its server
+   *         identity keystore. Defaults to <code>false</code> (multi-purpose certificates).
+   */
+  boolean isSingleEkuEnabled();
 
   /**
    * @return the algorithm that is used when creating a SecretKey when adding an

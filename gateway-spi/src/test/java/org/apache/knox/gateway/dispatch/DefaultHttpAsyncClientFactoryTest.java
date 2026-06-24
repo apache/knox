@@ -48,6 +48,7 @@ public class DefaultHttpAsyncClientFactoryTest {
         expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
         expect(gatewayConfig.getHttpClientSocketTimeout()).andReturn(20000).once();
         expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
+        expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();

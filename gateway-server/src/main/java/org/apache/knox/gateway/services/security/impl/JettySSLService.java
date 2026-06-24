@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.security.impl;
 
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -93,6 +95,9 @@ public class JettySSLService implements SSLService {
         log.keyStoreForGatewayFoundNotCreating();
       }
       logAndValidateCertificate(config);
+      if (config.isSingleEkuEnabled()) {
+        validateSingleEkuConfig(config);
+      }
     } catch (KeystoreServiceException e) {
       throw new ServiceLifecycleException("The identity keystore was not loaded properly - the provided password may not match the password for the keystore.", e);
     }
@@ -129,6 +134,52 @@ public class JettySSLService implements SSLService {
       }
     } else {
       throw new ServiceLifecycleException("Public certificate for the gateway cannot be found with the alias " + identityKeyAlias + ". Please check the identity certificate alias.");
+    }
+  }
+
+  // Package private for unit test access.
+  // When single-EKU mode is enabled, refuse to start unless the outbound client identity keystore
+  // is present and usable, and inbound client authentication is enforced. Fail closed: never fall
+  // back to the server identity certificate.
+  void validateSingleEkuConfig(GatewayConfig config) throws ServiceLifecycleException {
+    // 1. Outbound client-identity keystore must be configured and contain the configured key entry.
+    String clientKeystorePath = config.getHttpClientKeystorePath();
+    if (clientKeystorePath == null || clientKeystorePath.isEmpty()) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled (" + GatewayConfig.TLS_SINGLE_EKU_ENABLED
+          + "=true) but the HTTP client keystore path (" + GatewayConfig.HTTP_CLIENT_KEYSTORE_PATH
+          + ") is not configured. Server will not start.");
+    }
+    String clientKeyAlias = config.getHttpClientKeyAlias();
+    try {
+      KeyStore clientKeystore = keystoreService.getKeystoreForHttpClient();
+      if (clientKeystore == null || !clientKeystore.isKeyEntry(clientKeyAlias)) {
+        throw new ServiceLifecycleException("Single-EKU mode is enabled but the HTTP client keystore at "
+            + clientKeystorePath + " does not contain a key entry for alias '" + clientKeyAlias
+            + "' (" + GatewayConfig.HTTP_CLIENT_KEY_ALIAS + "). Server will not start.");
+      }
+    } catch (KeystoreServiceException | KeyStoreException e) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the HTTP client keystore at "
+          + clientKeystorePath + " could not be loaded. Server will not start.", e);
+    }
+
+    // 2. Inbound client authentication must be enforced (server truststore + client-auth).
+    if (config.getTruststorePath() == null) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the server truststore ("
+          + GatewayConfig.GATEWAY_TRUSTSTORE_PATH + ") is not configured. Server will not start.");
+    }
+    if (!config.isClientAuthNeeded() && !config.isClientAuthWanted()) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but client authentication is not "
+          + "enabled (set gateway.client.auth.needed=true). Server will not start.");
+    }
+
+    // 3. Outbound HTTP client truststore must be configured so Knox can verify upstream TLS certs.
+    String httpClientTruststorePath = config.getHttpClientTruststorePath();
+    if (httpClientTruststorePath == null || httpClientTruststorePath.isEmpty()) {
+      log.singleEkuHttpClientTruststoreNotConfigured(GatewayConfig.HTTP_CLIENT_TRUSTSTORE_PATH);
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but "
+          + GatewayConfig.HTTP_CLIENT_TRUSTSTORE_PATH
+          + " is not configured. Knox cannot verify TLS certificates of upstream services. "
+          + "Server will not start.");
     }
   }
 

@@ -1,0 +1,38 @@
+#!/bin/sh
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with this
+# work for additional information regarding copyright ownership. The ASF
+# licenses this file to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# CDPD-103449: single-EKU container entrypoint.
+#
+# The dev keystore fixtures (host-client_keystore.jks / global_truststore.jks)
+# are protected with the dev password "horton". The baked apache/knox-dev image
+# resolves keystore passwords from credential-store aliases, falling back to the
+# (image-specific) master secret when an alias is absent. Rather than depend on
+# the master secret value, we create the aliases explicitly so the password is
+# deterministic, then start the gateway. Keystore TYPE (JKS) comes from
+# gateway-site.xml (config), never hardcoded in Knox Java code.
+set -e
+
+PASS="horton"
+
+# Create the credential-store aliases the single-EKU config resolves:
+#   - gateway-httpclient-keystore-password : client keystore store password
+#     (the client key passphrase alias falls back to this one)
+#   - gateway-truststore-password          : server truststore password
+for alias in gateway-httpclient-keystore-password gateway-truststore-password; do
+  /knox-runtime/bin/knoxcli.sh create-alias "$alias" --value "$PASS"
+done
+
+exec java -jar /knox-runtime/bin/gateway.jar
