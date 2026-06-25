@@ -502,7 +502,9 @@ public class LdapProxyBackend implements LdapBackend {
             groupEntry = entryCache.get((groupDn));
         } else {
             try {
-                groupEntry = connection.lookup(groupDn, "memberOf");
+                // Request "cn" alongside "memberOf" so the cached entry can be resolved to a
+                // group name later (e.g. by getUserGroups); a memberOf-only lookup omits it.
+                groupEntry = connection.lookup(groupDn, "cn", "memberOf");
             } catch (LdapException e) {
                 // assume group doesn't exist and has no parent groups
                 groupEntry = createSkeletonGroupEntry(groupDn);
@@ -736,6 +738,10 @@ public class LdapProxyBackend implements LdapBackend {
             Attribute cnAttr = entry.get("cn");
             if (cnAttr != null) {
                 cns.add(cnAttr.getString());
+            } else if (entry.getDn() != null && entry.getDn().getRdn() != null) {
+                // Fall back to the CN carried in the DN when the entry was fetched without the
+                // cn attribute, so resolved groups are not silently dropped from the result.
+                cns.add(entry.getDn().getRdn().getValue());
             }
         }
         return cns;
