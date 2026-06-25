@@ -105,6 +105,14 @@ public interface LdapMessages {
             text = "Loaded user from backend: {0}")
     void ldapUserLoaded(String username);
 
+    @Message(level = MessageLevel.ERROR,
+            text = "LDAP Lookup failed: {0}, {1}")
+    void ldapLookupFailed(String dn, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.INFO,
+            text = "AttributeType not found: {0}")
+    void ldapAttributeTypeNotFound(String attribute);
+
     @Message(level = MessageLevel.INFO,
             text = "Cleaning up old lock file: {0}")
     void ldapCleaningLockFile(String lockFile);
@@ -138,17 +146,20 @@ public interface LdapMessages {
     @Message(level = MessageLevel.DEBUG, text = "Recursive group search enabled: {0}, max depth: {1}")
     void ldapRecursiveGroupSearchConfig(boolean enabled, int maxDepth);
 
-    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} found {1} group(s) ({2}) at depth {3}")
-    void ldapRecursiveGroupSearchProgress(String user, int count, String groups, int depth);
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for entry {0} found {1} group(s) ({2}) at depth {3}")
+    void ldapRecursiveGroupSearchProgress(String entryName, int count, String groups, int depth);
 
-    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for user {0} completed. Total groups found: {1}")
-    void ldapRecursiveGroupSearchFinished(String user, int count);
+    @Message(level = MessageLevel.DEBUG, text = "Recursive group search for entry {0} completed. Total groups found: {1}")
+    void ldapRecursiveGroupSearchFinished(String entryName, int count);
 
-    @Message(level = MessageLevel.WARN, text = "Recursive group search for user {0} reached max depth {1}")
-    void ldapRecursiveGroupSearchMaxDepthReached(String user, int maxDepth);
+    @Message(level = MessageLevel.WARN, text = "Recursive group search for entry {0} reached max depth {1}")
+    void ldapRecursiveGroupSearchMaxDepthReached(String entryName, int maxDepth);
 
-    @Message(level = MessageLevel.DEBUG, text = "Cycle detected in recursive group search for user {0} at group {1}")
-    void ldapRecursiveGroupSearchCycleDetected(String user, String groupDn);
+    @Message(level = MessageLevel.DEBUG, text = "Cycle detected in recursive group search for entry {0} at group {1}")
+    void ldapRecursiveGroupSearchCycleDetected(String entryName, String groupDn);
+
+    @Message(level = MessageLevel.WARN, text = "Expected entry for group {0} not found in entry cache")
+    void ldapRecursiveGroupSearchExpectedGroupNotInCache(String groupDn);
 
     @Message(level = MessageLevel.DEBUG, text = "Created skeleton group entry for {0} as actual group entry was not found in the backend")
     void ldapSkeletonGroupEntryCreated(String groupDn);

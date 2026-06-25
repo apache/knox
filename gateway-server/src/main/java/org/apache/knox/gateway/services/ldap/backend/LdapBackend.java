@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.backend;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 
@@ -59,9 +60,10 @@ public interface LdapBackend {
     /**
      * Get groups for a user
      * @param username The username
-     * @return List of group names
+     * @param schemaManager Schema manager for creating entries
+     * @return List of group names or null if not found
      */
-    List<String> getUserGroups(String username) throws Exception;
+    List<String> getUserGroups(String username, SchemaManager schemaManager) throws Exception;
 
     /**
      * Search for users matching a filter
@@ -70,6 +72,16 @@ public interface LdapBackend {
      * @return List of matching entries
      */
     List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception;
+
+    /**
+     * Search for entries matching a filter
+     * @param searchBase The base DN for the search
+     * @param searchScope The scope of the search
+     * @param filter LDAP filter string (simplified)
+     * @param schemaManager Schema manager for creating entries
+     * @return List of matching entries
+     */
+    List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception;
 
     /**
      * Authenticate a user with password

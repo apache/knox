@@ -28,6 +28,18 @@ objectClass: top
 objectClass: organizationalUnit
 ou: recursiveGroups
 
+# entry for recursive people container for memberOf tests
+dn: ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:organizationalUnit
+ou: recursiveMemberOfPeople
+
+# entry for recursive group container for memberOf tests
+dn: ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: recursiveMemberOfGroups
+
 # entry for the end user
 dn: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
 objectclass:top
@@ -93,3 +105,77 @@ objectclass:top
 objectclass:groupOfNames
 cn: cycleGroupB
 member: cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+# entry for sample user memberOfUser using memberOf
+dn: uid=memberOfUser,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: MemberOf
+sn: User
+uid: memberOfUser
+userPassword:memberOfUser-password
+memberOf: cn=memberOflevel1,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+
+# entry for sample user memberOfUser using memberOf
+dn: uid=memberOfUser2,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: MemberOf2
+sn: User
+uid: memberOfUser2
+userPassword:memberOfUser2-password
+memberOf: cn=memberOflevel1,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+
+# memberOf Level 1 Group
+dn: cn=memberOflevel1,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: memberOflevel1
+memberOf: cn=memberOflevel2,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+member: uid=memberOfUser,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
+member: uid=memberOfUser2,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
+
+# memberOf Level 2 Group (Member is Level 1)
+dn: cn=memberOflevel2,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: memberOflevel2level2
+memberOf: cn=memberOflevel3,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+memberOf: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+member: cn=memberOflevel1,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+# memberOf Level 3 Group (Member is Level 2)
+dn: cn=memberOflevel3,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: memberOflevel3
+memberOf: cn=memberOflevel4,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+member: cn=memberOflevel2,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+
+# memberOf Level 4 Group (Member is Level 3)
+dn: cn=memberOflevel4,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: memberOflevel4
+member: cn=memberOflevel3,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+
+# memberOf Cycle Group A (level 3)
+dn: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: memberOfCycleA
+memberOf: cn=memberOfCycleB,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+member: cn=memberOfCycleB,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+member: cn=memberOflevel2,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+
+# memberOf Cycle Group B (level 4)
+dn: cn=memberOfCycleB,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: memberOfCycleB
+memberOf: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+member: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
