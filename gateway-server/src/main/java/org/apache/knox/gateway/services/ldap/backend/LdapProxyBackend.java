@@ -399,7 +399,7 @@ public class LdapProxyBackend implements LdapBackend {
                     results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
                 }
             } catch (LdapException e) {
-                LOG.ldapAttributeCopyError(e);
+                LOG.ldapSearchFailed(remoteSearchBase, remoteFilter, e);
             }
             return results;
         } finally {
@@ -685,7 +685,6 @@ public class LdapProxyBackend implements LdapBackend {
         return null;
     }
 
-    // tODO reuse this method in recursive calls
     private List<Entry> getUserGroupsInternal(LdapConnection connection, Dn... dns) throws LdapException, CursorException, IOException {
         List<Entry> groups = new ArrayList<>();
         if (dns.length == 0) {

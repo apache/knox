@@ -71,8 +71,6 @@ public class DisabledUserInterceptor extends BaseInterceptor {
         } catch (IOException e) {
             // IOException would only occur after finishing iterating over results
             // we can ignore this exception and return the filtered entries
-        } catch (Exception e) {
-            throw e;
         }
         return new EntryFilteringCursorImpl(new ListCursor<>(filteredEntries), ctx, schemaManager);
     }

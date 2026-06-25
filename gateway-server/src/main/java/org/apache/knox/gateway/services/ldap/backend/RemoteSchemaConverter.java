@@ -28,6 +28,7 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
+import java.text.ParseException;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -113,13 +114,15 @@ public class RemoteSchemaConverter {
 
         // replace userObjectClass and groupObjectClass object classes
         Attribute objectClassAttribute = sourceEntry.get("objectclass");
-        if (objectClassAttribute.contains(remoteGroupObjectClass)) {
-            entry.remove("objectclass", remoteGroupObjectClass);
-            entry.add("objectclass", "groupofnames");
-        }
-        if (objectClassAttribute.contains(remoteUserObjectClass)) {
-            entry.remove("objectclass", remoteUserObjectClass);
-            entry.add("objectclass", "inetOrgPerson");
+        if (objectClassAttribute != null) {
+            if (objectClassAttribute.contains(remoteGroupObjectClass)) {
+                entry.remove("objectclass", remoteGroupObjectClass);
+                entry.add("objectclass", "groupofnames");
+            }
+            if (objectClassAttribute.contains(remoteUserObjectClass)) {
+                entry.remove("objectclass", remoteUserObjectClass);
+                entry.add("objectclass", "inetOrgPerson");
+            }
         }
 
         return entry;
@@ -130,9 +133,9 @@ public class RemoteSchemaConverter {
      * @param filter the filter
      * @param schemaManager the schema manager
      * @return the converted filter
-     * @throws Exception if the filter cannot be parsed
+     * @throws ParseException if the filter cannot be parsed
      */
-    public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws Exception {
+    public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws ParseException {
         FilterMappingVisitor filterMappingVisitor = new FilterMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager);
 
         // Filter likely has already been annotated by other interceptors.
