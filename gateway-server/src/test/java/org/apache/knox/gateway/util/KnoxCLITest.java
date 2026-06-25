@@ -38,7 +38,18 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.SecretList;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -53,6 +64,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.test.TestUtils;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -1516,4 +1528,209 @@ public class KnoxCLITest {
                                                           "    {\"name\":\"RESOURCEMANAGER\"}\n" +
                                                           "  ]\n" +
                                                           "}";
+
+  private static class FakeK8sKnoxCLI extends KnoxCLI {
+
+    private final KubernetesClient client;
+
+    FakeK8sKnoxCLI(KubernetesClient client) {
+      this.client = client;
+    }
+
+    @Override
+    protected KubernetesClient buildKubernetesClient() {
+      return client;
+    }
+  }
+
+  private static Secret secretWithEntries(Map<String, String> entries) {
+    Map<String, String> data = new HashMap<>();
+    for (Map.Entry<String, String> e : entries.entrySet()) {
+      data.put(e.getKey(),
+              Base64.getEncoder().encodeToString(e.getValue().getBytes(StandardCharsets.UTF_8)));
+    }
+    return new SecretBuilder().withData(data).build();
+  }
+
+  private static MockChain expectSecretLookup(KubernetesClient client, String ns, String name, Secret secret) {
+    MixedOperation<Secret, SecretList, Resource<Secret>> mixed = EasyMock.createMock(MixedOperation.class);
+    NonNamespaceOperation<Secret, SecretList, Resource<Secret>> namespaced = EasyMock.createMock(NonNamespaceOperation.class);
+    Resource<Secret> resource = EasyMock.createMock(Resource.class);
+    EasyMock.expect(client.secrets()).andReturn(mixed);
+    EasyMock.expect(mixed.inNamespace(ns)).andReturn(namespaced);
+    EasyMock.expect(namespaced.withName(name)).andReturn(resource);
+    EasyMock.expect(resource.get()).andReturn(secret);
+    return new MockChain(mixed, namespaced, resource);
+  }
+
+  private record MockChain(Object... mocks) {
+  }
+
+  @Test
+  public void testCreateK8sAliasSuccess() throws Exception {
+    outContent.reset();
+
+    Map<String, String> entries = new HashMap<>();
+    entries.put("alias.name", "k8s-success-alias");
+    entries.put("alias.value", "p4ssw0rd");
+    entries.put("topology", "k8s-success-topo");
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chain = expectSecretLookup(client, "knox", "my-secret", secretWithEntries(entries));
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "my-secret", "--master", "master"});
+    assertEquals(errContent.toString(StandardCharsets.UTF_8), 0, rc);
+    String out = outContent.toString(StandardCharsets.UTF_8);
+    assertTrue(out, out.contains("k8s-success-alias has been successfully created in topology k8s-success-topo"));
+    assertTrue(out, out.contains("from secret my-secret"));
+
+    outContent.reset();
+    rc = cli.run(new String[]{"list-alias", "--cluster", "k8s-success-topo", "--master", "master"});
+    assertEquals(0, rc);
+    assertTrue(outContent.toString(StandardCharsets.UTF_8),
+            outContent.toString(StandardCharsets.UTF_8).contains("k8s-success-alias"));
+
+    EasyMock.verify(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+  }
+
+  @Test
+  public void testCreateK8sAliasDefaultsTopologyToGateway() throws Exception {
+    outContent.reset();
+
+    Map<String, String> entries = new HashMap<>();
+    entries.put("alias.name", "k8s-default-topo-alias");
+    entries.put("alias.value", "v");
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chain = expectSecretLookup(client, "knox", "my-secret", secretWithEntries(entries));
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "my-secret", "--master", "master"});
+    assertEquals(errContent.toString(StandardCharsets.UTF_8), 0, rc);
+    String out = outContent.toString(StandardCharsets.UTF_8);
+    assertTrue(out, out.contains("k8s-default-topo-alias has been successfully created in topology __gateway"));
+
+    EasyMock.verify(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+  }
+
+  @Test
+  public void testCreateK8sAliasUsesCustomNamespace() throws Exception {
+    outContent.reset();
+
+    Map<String, String> entries = new HashMap<>();
+    entries.put("alias.name", "k8s-custom-ns-alias");
+    entries.put("alias.value", "v");
+    entries.put("topology", "k8s-custom-ns-topo");
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chain = expectSecretLookup(client, "other-ns", "my-secret", secretWithEntries(entries));
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "my-secret", "--namespace", "other-ns", "--master", "master"});
+    assertEquals(errContent.toString(StandardCharsets.UTF_8), 0, rc);
+
+    EasyMock.verify(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+  }
+
+  @Test
+  public void testCreateK8sAliasBatch() throws Exception {
+    outContent.reset();
+
+    Map<String, String> entriesA = new HashMap<>();
+    entriesA.put("alias.name", "k8s-batch-alias-a");
+    entriesA.put("alias.value", "va");
+    entriesA.put("topology", "k8s-batch-topo-a");
+
+    Map<String, String> entriesB = new HashMap<>();
+    entriesB.put("alias.name", "k8s-batch-alias-b");
+    entriesB.put("alias.value", "vb");
+    entriesB.put("topology", "k8s-batch-topo-b");
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chainA = expectSecretLookup(client, "knox", "secret-a", secretWithEntries(entriesA));
+    MockChain chainB = expectSecretLookup(client, "knox", "secret-b", secretWithEntries(entriesB));
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client,
+            chainA.mocks[0], chainA.mocks[1], chainA.mocks[2],
+            chainB.mocks[0], chainB.mocks[1], chainB.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "secret-a", "secret-b", "--master", "master"});
+    assertEquals(errContent.toString(StandardCharsets.UTF_8), 0, rc);
+    String out = outContent.toString(StandardCharsets.UTF_8);
+    assertTrue(out, out.contains("k8s-batch-alias-a has been successfully created in topology k8s-batch-topo-a"));
+    assertTrue(out, out.contains("k8s-batch-alias-b has been successfully created in topology k8s-batch-topo-b"));
+
+    EasyMock.verify(client,
+            chainA.mocks[0], chainA.mocks[1], chainA.mocks[2],
+            chainB.mocks[0], chainB.mocks[1], chainB.mocks[2]);
+  }
+
+  @Test
+  public void testCreateK8sAliasFailsWhenSecretMissing() throws Exception {
+    outContent.reset();
+    errContent.reset();
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chain = expectSecretLookup(client, "knox", "missing-secret", null);
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "missing-secret", "--master", "master"});
+    assertEquals(-3, rc);
+    String err = errContent.toString(StandardCharsets.UTF_8);
+    assertTrue(err, err.contains("Secret 'missing-secret' not found"));
+    assertTrue(err, err.contains("namespace 'knox'"));
+
+    EasyMock.verify(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+  }
+
+  @Test
+  public void testCreateK8sAliasFailsWhenRequiredEntryMissing() throws Exception {
+    outContent.reset();
+    errContent.reset();
+
+    Map<String, String> entries = new HashMap<>();
+    entries.put("alias.value", "v");
+    entries.put("topology", "k8s-missing-name-topo");
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chain = expectSecretLookup(client, "knox", "incomplete-secret", secretWithEntries(entries));
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "incomplete-secret", "--master", "master"});
+    assertEquals(-3, rc);
+    String err = errContent.toString(StandardCharsets.UTF_8);
+    assertTrue(err, err.contains("Secret 'incomplete-secret' is missing required entry 'alias.name'"));
+
+    EasyMock.verify(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
+  }
 }

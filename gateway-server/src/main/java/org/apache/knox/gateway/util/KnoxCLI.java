@@ -50,6 +50,10 @@ import java.util.stream.Stream;
 
 import javax.net.ssl.SSLException;
 
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -117,6 +121,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + CertCreateCommand.USAGE + "]\n" +
       "   [" + CertExportCommand.USAGE + "]\n" +
       "   [" + AliasCreateCommand.USAGE + "]\n" +
+      "   [" + K8sAliasCreateCommand.USAGE + "]\n" +
       "   [" + BatchAliasCreateCommand.USAGE + "]\n" +
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
       "   [" + AliasListCommand.USAGE + "]\n" +
@@ -150,6 +155,7 @@ public class KnoxCLI extends Configured implements Tool {
   private Command command;
   private String value;
   private String cluster;
+  private String namespace;
   private String path;
   private String generate = "false";
   private String hostname;
@@ -214,6 +220,10 @@ public class KnoxCLI extends Configured implements Tool {
     return exitCode;
   }
 
+  protected KubernetesClient buildKubernetesClient() {
+    return new KubernetesClientBuilder().build();
+  }
+
   public static synchronized GatewayServices getGatewayServices() {
     return services;
   }
@@ -272,6 +282,16 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
+      } else if (args[i].equals("create-k8s-alias")) {
+        List<String> secretNames = new ArrayList<>();
+        while (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+          secretNames.add(args[++i]);
+        }
+        if (secretNames.isEmpty() || (secretNames.size() == 1 && "--help".equals(secretNames.get(0)))) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        command = new K8sAliasCreateCommand(secretNames);
       } else if (args[i].equals("create-aliases")) {
         command = new BatchAliasCreateCommand();
         if (args.length < 3 || "--help".equals(alias)) {
@@ -357,6 +377,12 @@ public class KnoxCLI extends Configured implements Tool {
         if(command instanceof CreateListAliasesCommand) {
           ((CreateListAliasesCommand) command).toMap(this.cluster);
         }
+      } else if (args[i].equals("--namespace") || args[i].equals("--ns")) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.namespace = args[++i];
       } else if (args[i].equals("service-test")) {
         if( i + 1 >= args.length) {
           printKnoxShellUsage();
@@ -621,6 +647,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println();
       out.println( div );
       out.println( AliasCreateCommand.USAGE + "\n\n" + AliasCreateCommand.DESC );
+      out.println();
+      out.println( div );
+      out.println( K8sAliasCreateCommand.USAGE + "\n\n" + K8sAliasCreateCommand.DESC );
       out.println();
       out.println( div );
       out.println( AliasDeleteCommand.USAGE + "\n\n" + AliasDeleteCommand.DESC );
@@ -1021,6 +1050,77 @@ public class KnoxCLI extends Configured implements Tool {
           out.println(name + " has been successfully created.");
        }
      }
+   }
+
+   @Override
+   public String getUsage() {
+     return USAGE + ":\n\n" + DESC;
+   }
+ }
+
+ public class K8sAliasCreateCommand extends Command {
+
+   public static final String USAGE = "create-k8s-alias secret-name [secret-name ...] [--namespace namespace]";
+   public static final String DESC = "The create-k8s-alias command reads one or more Kubernetes\n"
+                                   + "Secrets and creates a Knox alias for each. The namespace\n"
+                                   + "defaults to 'knox' and can be overridden with --namespace.\n"
+                                   + "Every Secret must contain 'alias.name' (the alias name)\n"
+                                   + "and 'alias.value' (the secret value); 'topology' is optional\n"
+                                   + "and defaults to the gateway-level credential store ('__gateway').\n"
+                                   + "Uses in-cluster Kubernetes config.";
+
+   private static final String DEFAULT_NAMESPACE = "knox";
+   private static final String ENTRY_NAME = "alias.name";
+   private static final String ENTRY_TOPOLOGY = "topology";
+   private static final String ENTRY_KEY = "alias.value";
+   private static final String DEFAULT_TOPOLOGY = "__gateway";
+
+   private final List<String> secretNames;
+
+   public K8sAliasCreateCommand(List<String> secretNames) {
+     this.secretNames = secretNames;
+   }
+
+   @Override
+   public void execute() throws Exception {
+     AliasService as = getAliasService();
+     String ns = (namespace == null || namespace.isEmpty()) ? DEFAULT_NAMESPACE : namespace;
+     try (KubernetesClient client = buildKubernetesClient()) {
+       for (String secretName : secretNames) {
+         Secret secret = client.secrets().inNamespace(ns).withName(secretName).get();
+         if (secret == null) {
+           throw new IllegalStateException(
+               "Secret '" + secretName + "' not found in namespace '" + ns + "'.");
+         }
+         String aliasName = requireEntry(secret, secretName, ENTRY_NAME);
+         String aliasValue = requireEntry(secret, secretName, ENTRY_KEY);
+         String topology = optionalEntry(secret, ENTRY_TOPOLOGY);
+         if (topology == null || topology.isEmpty()) {
+           topology = DEFAULT_TOPOLOGY;
+         }
+
+         as.addAliasForCluster(topology, aliasName, aliasValue);
+         out.println(aliasName + " has been successfully created in topology " + topology
+             + " (from secret " + secretName + ").");
+       }
+     }
+   }
+
+   private String requireEntry(Secret secret, String secretName, String entryKey) {
+     String entry = optionalEntry(secret, entryKey);
+     if (entry == null || entry.isEmpty()) {
+       throw new IllegalStateException(
+           "Secret '" + secretName + "' is missing required entry '" + entryKey + "'.");
+     }
+     return entry;
+   }
+
+   private String optionalEntry(Secret secret, String entryKey) {
+     if (secret.getData() != null && secret.getData().containsKey(entryKey)) {
+       return new String(java.util.Base64.getDecoder().decode(secret.getData().get(entryKey)),
+                         StandardCharsets.UTF_8);
+     }
+     return null;
    }
 
    @Override
