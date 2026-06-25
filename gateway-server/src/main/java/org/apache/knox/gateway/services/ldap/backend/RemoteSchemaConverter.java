@@ -30,6 +30,8 @@ import org.apache.knox.gateway.services.ldap.LdapMessages;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RemoteSchemaConverter {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
@@ -174,11 +176,14 @@ public class RemoteSchemaConverter {
      * @return the proxy search base
      */
     public String convertRemoteDnToProxyDn(String string) {
-        return string == null ?
-                null :
-                string.replaceAll("(?i)" + remoteGroupSearchBase, proxyGroupSearchBase)
-                .replaceAll("(?i)" + remoteUserSearchBase, proxyUserSearchBase)
-                .replaceAll("(?i)" + remoteBaseDn, proxyBaseDn);
+        if (string == null) {
+            return null;
+        }
+        // Replace the most specific bases first; they contain the base DN as a suffix.
+        String result = replaceIgnoreCase(string, remoteGroupSearchBase, proxyGroupSearchBase);
+        result = replaceIgnoreCase(result, remoteUserSearchBase, proxyUserSearchBase);
+        result = replaceIgnoreCase(result, remoteBaseDn, proxyBaseDn);
+        return result;
     }
 
     /**
@@ -187,10 +192,24 @@ public class RemoteSchemaConverter {
      * @return the remote search base
      */
     public String convertProxyDnToRemoteDn(String string) {
-        return string == null ?
-                null :
-                string.replaceAll("(?i)" + proxyGroupSearchBase, remoteGroupSearchBase)
-                .replaceAll("(?i)" + proxyUserSearchBase, remoteUserSearchBase)
-                .replaceAll("(?i)" + proxyBaseDn, remoteBaseDn);
+        if (string == null) {
+            return null;
+        }
+        // Replace the most specific bases first; they contain the base DN as a suffix.
+        String result = replaceIgnoreCase(string, proxyGroupSearchBase, remoteGroupSearchBase);
+        result = replaceIgnoreCase(result, proxyUserSearchBase, remoteUserSearchBase);
+        result = replaceIgnoreCase(result, proxyBaseDn, remoteBaseDn);
+        return result;
+    }
+
+    /**
+     * Case-insensitive literal replacement of all occurrences of {@code search} with
+     * {@code replacement}. Both operands are treated as literals (not regular expressions),
+     * so DNs containing regex metacharacters are handled safely.
+     */
+    private static String replaceIgnoreCase(String input, String search, String replacement) {
+        return Pattern.compile(Pattern.quote(search), Pattern.CASE_INSENSITIVE)
+                .matcher(input)
+                .replaceAll(Matcher.quoteReplacement(replacement));
     }
 }
