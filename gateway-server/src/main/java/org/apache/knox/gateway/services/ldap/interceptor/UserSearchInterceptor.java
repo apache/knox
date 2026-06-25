@@ -95,14 +95,31 @@ public class UserSearchInterceptor extends BaseInterceptor {
         } catch (Exception e) {
             // If we get an error or no results, try the backends
         }
-        try {
-            entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
-        } catch (Exception e) {
-            LOG.ldapSearchFailed(baseDn, filter, e);
+
+        // Only forward to the backend when the search base is under the backend's namespace.
+        // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
+        if (isUnderBackendBaseDn(baseDn)) {
+            try {
+                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
+            } catch (Exception e) {
+                LOG.ldapSearchFailed(baseDn, filter, e);
+            }
         }
 
         // Return cursor with our results - use a simple approach
         return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    private boolean isUnderBackendBaseDn(String searchBase) {
+        if (searchBase == null || searchBase.isEmpty()) {
+            return false;
+        }
+        String backendBase = backend.getBaseDn();
+        if (backendBase == null || backendBase.isEmpty()) {
+            return false;
+        }
+        return searchBase.toLowerCase(java.util.Locale.ROOT)
+                .endsWith(backendBase.toLowerCase(java.util.Locale.ROOT));
     }
 
     @Override
