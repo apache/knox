@@ -25,7 +25,6 @@
     <routes>
         <route path="/yarn/ws/**">
             <rewrite apply="YARNUI/yarn/inbound/ws" to="request.url"/>
-            <dispatch contributor-name="http-client" />
         </route>
         <route path="/yarn/proxy/**">
             <rewrite apply="YARNUI/yarn/outbound/headers/jobhistory/job" to="response.headers"/>
