@@ -506,12 +506,15 @@ public class LdapProxyBackend implements LdapBackend {
                 // group name later (e.g. by getUserGroups); a memberOf-only lookup omits it.
                 groupEntry = connection.lookup(groupDn, "cn", "memberOf");
             } catch (LdapException e) {
-                // assume group doesn't exist and has no parent groups
+                groupEntry = null;
+            }
+            if (groupEntry == null) {
+                // Entry not found or lookup failed — synthesise a skeleton so cn is still known.
                 groupEntry = createSkeletonGroupEntry(groupDn);
             }
             entryCache.put(groupDn, groupEntry);
         }
-        Attribute memberOf = groupEntry.get("memberOf");
+        Attribute memberOf = groupEntry == null ? null : groupEntry.get("memberOf");
         if (memberOf != null) {
             for (Value value : memberOf) {
                 parents.add(value.getNormalized());

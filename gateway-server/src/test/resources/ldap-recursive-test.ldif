@@ -143,10 +143,10 @@ member: uid=memberOfUser2,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
 dn: cn=memberOflevel2,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
 objectclass:top
 objectclass: groupofnames
-cn: memberOflevel2level2
+cn: memberOflevel2
 memberOf: cn=memberOflevel3,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
 memberOf: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
-member: cn=memberOflevel1,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+member: cn=memberOflevel1,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
 
 # memberOf Level 3 Group (Member is Level 2)
 dn: cn=memberOflevel3,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
