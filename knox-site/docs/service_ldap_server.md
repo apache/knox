@@ -108,7 +108,7 @@ remains available with its default credentials.
 
 | Property | Default Value | Description |
 | :--- | :--- | :--- |
-| `gateway.ldap.interceptor.<name>.interceptorType` | N/A | The type of interceptor to use (`backend` or `duplicateuserfilter`). |
+| `gateway.ldap.interceptor.<name>.interceptorType` | N/A | The type of interceptor to use (`backend`, `duplicateuserfilter`, `disableduserfilter`, or `rolesLookup`). |
 
 #### User Search Interceptor (`backend`)
 
@@ -197,7 +197,6 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.groupObjectClass` | `groupOfNames` | Objectclass for identifying groups in remote server (e.g., `group` for AD). |
 | `gateway.ldap.interceptor.<name>.groupMemberAttribute` | `memberUid` | Attribute used for group membership (e.g., `member` for AD). |
 | `gateway.ldap.interceptor.<name>.useMemberOf` | `false` | If `true`, use the `memberOf` attribute for efficient group lookups. |
-| `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
 | `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
 
 ## Active Directory (AD) Integration
