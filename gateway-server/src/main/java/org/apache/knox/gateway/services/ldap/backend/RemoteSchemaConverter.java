@@ -28,8 +28,20 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
+import java.util.Locale;
+import java.util.Set;
+
 public class RemoteSchemaConverter {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
+    // Credential-bearing attributes that must never be surfaced through the proxy entry.
+    private static final Set<String> SENSITIVE_ATTRIBUTES = Set.of(
+            "userpassword", "unicodepwd", "userpkcs12");
+
+    // Attributes whose values are distinguished names and therefore need remote->proxy
+    // DN rewriting. Other attribute values (mail, description, ...) are copied verbatim.
+    private static final Set<String> DN_VALUED_ATTRIBUTES = Set.of(
+            "member", "uniquemember", "memberof", "manager", "owner", "seealso");
 
     // Proxy configuration
     private final String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
@@ -80,8 +92,12 @@ public class RemoteSchemaConverter {
         Entry entry = new DefaultEntry(schemaManager);
         entry.setDn(sourceEntry.getDn());
 
-        // Copy all known AttributeTypes as-is from backend response
+        // Copy attributes from the backend response, skipping credential-bearing ones so
+        // they are never exposed through the proxy.
         for (Attribute attribute : sourceEntry.getAttributes()) {
+            if (SENSITIVE_ATTRIBUTES.contains(attribute.getId().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
             copyAttribute(sourceEntry, entry, attribute.getId());
         }
 
@@ -135,9 +151,12 @@ public class RemoteSchemaConverter {
     public void copyAttribute(Entry source, Entry target, String attributeName) {
         final Attribute attribute = source.get(attributeName);
         if (attribute != null) {
+            // Only rewrite DNs for DN-valued attributes; other values (e.g. mail, description)
+            // are copied verbatim so they are not corrupted if they happen to contain a base DN.
+            final boolean dnValued = DN_VALUED_ATTRIBUTES.contains(attributeName.toLowerCase(Locale.ROOT));
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
             for (Value value : attribute) {
-                String valueString = convertRemoteDnToProxyDn(value.toString());
+                String valueString = dnValued ? convertRemoteDnToProxyDn(value.toString()) : value.toString();
                 if (!target.contains(attributeName, valueString)) {
                     try {
                         target.add(attributeName, valueString);
