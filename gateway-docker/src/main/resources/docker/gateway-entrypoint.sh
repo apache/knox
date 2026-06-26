@@ -35,6 +35,8 @@
 #   TRUSTSTORE_IMPORTS="myRootCA:/mountedpath/enterprise_root_cert.pem myBizPartnerCA:/mountedpath/mybiz_partner_cert.pem"
 #   Description:
 #   This will import the specified certificates into the truststore JKS with the provided alias name(s) during the container startup process.
+# - KNOX_ALIAS_LABEL - (optional) label selector used to discover Knox alias
+#   Secrets in the pod's namespace, default 'knox.apache.org/alias=true'.
 
 
 set -e
@@ -92,6 +94,49 @@ saveAlias() {
   fi
 }
 
+## Helper function to load Knox aliases from labeled Kubernetes Secrets.
+loadAliasesFromK8sSecrets() {
+  local sa_token_file="/var/run/secrets/kubernetes.io/serviceaccount/token"
+  local sa_ca_file="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  local sa_ns_file="/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+  local label="${KNOX_ALIAS_LABEL:-knox.apache.org/alias=true}"
+
+  if [[ ! -r ${sa_token_file} || ! -r ${sa_ca_file} || ! -r ${sa_ns_file} ]]; then
+    echo "ServiceAccount token not mounted; skipping k8s-sourced Knox aliases"
+    return 0
+  fi
+
+  echo "Loading Knox aliases from labeled k8s Secrets (label: ${label}) ..."
+  local namespace token resp_file http_code secret_names
+  namespace=$(/bin/cat "${sa_ns_file}")
+  token=$(/bin/cat "${sa_token_file}")
+  resp_file=$(mktemp)
+
+  http_code=$(curl -sS \
+    --cacert "${sa_ca_file}" \
+    -H "Authorization: Bearer ${token}" \
+    -o "${resp_file}" -w "%{http_code}" \
+    "https://kubernetes.default.svc/api/v1/namespaces/${namespace}/secrets?labelSelector=${label}") || http_code="000"
+
+  if [[ ${http_code} != "200" ]]; then
+    echo "WARN: failed to list Knox alias Secrets from k8s API (HTTP ${http_code}); continuing without k8s aliases"
+    /bin/rm -f "${resp_file}"
+    return 0
+  fi
+
+  secret_names=$(jq -r '.items[].metadata.name' "${resp_file}" | tr '\n' ' ') || secret_names=""
+  /bin/rm -f "${resp_file}"
+
+  if [[ -z ${secret_names} ]]; then
+    echo "No labeled Knox alias Secrets found"
+    return 0
+  fi
+
+  # shellcheck disable=SC2086
+  /home/knox/knox/bin/knoxcli.sh create-k8s-alias ${secret_names} --namespace "${namespace}"
+  echo "Knox aliases loaded from k8s Secrets: ${secret_names}"
+}
+
 export GATEWAY_SERVER_RUN_IN_FOREGROUND=true
 
 
@@ -130,6 +175,8 @@ else
   echo "Generating knox.token.hash.key alias ..."
   /home/knox/knox/bin/knoxcli.sh generate-jwk --saveAlias knox.token.hash.key
 fi
+
+loadAliasesFromK8sSecrets
 
 # If keystore dir is empty use default one
 if [[ -z ${KEYSTORE_DIR} ]]
