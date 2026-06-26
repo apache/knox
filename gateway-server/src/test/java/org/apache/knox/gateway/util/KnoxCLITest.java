@@ -1733,4 +1733,42 @@ public class KnoxCLITest {
 
     EasyMock.verify(client, chain.mocks[0], chain.mocks[1], chain.mocks[2]);
   }
+
+  @Test
+  public void testCreateK8sAliasBatchIsAtomicOnFailure() throws Exception {
+    outContent.reset();
+    errContent.reset();
+
+    Map<String, String> entriesA = new HashMap<>();
+    entriesA.put("alias.name", "k8s-atomic-alias-a");
+    entriesA.put("alias.value", "va");
+    entriesA.put("topology", "k8s-atomic-topo-a");
+
+    KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
+    MockChain chainA = expectSecretLookup(client, "knox", "secret-a", secretWithEntries(entriesA));
+    MockChain chainB = expectSecretLookup(client, "knox", "secret-b", null);
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client,
+        chainA.mocks[0], chainA.mocks[1], chainA.mocks[2],
+        chainB.mocks[0], chainB.mocks[1], chainB.mocks[2]);
+
+    KnoxCLI cli = new FakeK8sKnoxCLI(client);
+    cli.setConf(new GatewayConfigImpl());
+
+    int rc = cli.run(new String[]{"create-k8s-alias", "secret-a", "secret-b", "--master", "master"});
+    assertEquals(-3, rc);
+    String err = errContent.toString(StandardCharsets.UTF_8);
+    assertTrue(err, err.contains("Secret 'secret-b' not found"));
+
+    outContent.reset();
+    rc = cli.run(new String[]{"list-alias", "--cluster", "k8s-atomic-topo-a", "--master", "master"});
+    assertEquals(0, rc);
+    assertFalse(outContent.toString(StandardCharsets.UTF_8),
+        outContent.toString(StandardCharsets.UTF_8).contains("k8s-atomic-alias-a"));
+
+    EasyMock.verify(client,
+        chainA.mocks[0], chainA.mocks[1], chainA.mocks[2],
+        chainB.mocks[0], chainB.mocks[1], chainB.mocks[2]);
+  }
 }

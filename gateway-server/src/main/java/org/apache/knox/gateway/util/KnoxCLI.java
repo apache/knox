@@ -1067,7 +1067,9 @@ public class KnoxCLI extends Configured implements Tool {
                                    + "Every Secret must contain 'alias.name' (the alias name)\n"
                                    + "and 'alias.value' (the secret value); 'topology' is optional\n"
                                    + "and defaults to the gateway-level credential store ('__gateway').\n"
-                                   + "Uses in-cluster Kubernetes config.";
+                                   + "All Secrets are fetched and validated before any alias is\n"
+                                   + "written, so a failure in the batch leaves the credential\n"
+                                   + "store untouched. Uses in-cluster Kubernetes config.";
 
    private static final String DEFAULT_NAMESPACE = "knox";
    private static final String ENTRY_NAME = "alias.name";
@@ -1085,6 +1087,7 @@ public class KnoxCLI extends Configured implements Tool {
    public void execute() throws Exception {
      AliasService as = getAliasService();
      String ns = (namespace == null || namespace.isEmpty()) ? DEFAULT_NAMESPACE : namespace;
+     List<ParsedAlias> parsed = new ArrayList<>(secretNames.size());
      try (KubernetesClient client = buildKubernetesClient()) {
        for (String secretName : secretNames) {
          Secret secret = client.secrets().inNamespace(ns).withName(secretName).get();
@@ -1098,13 +1101,17 @@ public class KnoxCLI extends Configured implements Tool {
          if (topology == null || topology.isEmpty()) {
            topology = DEFAULT_TOPOLOGY;
          }
-
-         as.addAliasForCluster(topology, aliasName, aliasValue);
-         out.println(aliasName + " has been successfully created in topology " + topology
-             + " (from secret " + secretName + ").");
+         parsed.add(new ParsedAlias(secretName, topology, aliasName, aliasValue));
        }
      }
+     for (ParsedAlias p : parsed) {
+       as.addAliasForCluster(p.topology(), p.aliasName(), p.aliasValue());
+       out.println(p.aliasName() + " has been successfully created in topology " + p.topology()
+           + " (from secret " + p.secretName() + ").");
+     }
    }
+
+   private record ParsedAlias(String secretName, String topology, String aliasName, String aliasValue) {}
 
    private String requireEntry(Secret secret, String secretName, String entryKey) {
      String entry = optionalEntry(secret, entryKey);
