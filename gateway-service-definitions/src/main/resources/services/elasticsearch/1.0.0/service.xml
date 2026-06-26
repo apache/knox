@@ -26,5 +26,5 @@
         <route path="/elasticsearch"/>
         <route path="/elasticsearch/**"/>
     </routes>
-    <dispatch classname="org.apache.hadoop.gateway.dispatch.PassAllHeadersDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.dispatch.PassAllHeadersDispatch"/>
 </service>

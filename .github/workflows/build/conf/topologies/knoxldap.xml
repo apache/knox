@@ -27,7 +27,7 @@ limitations under the License.
 			</param>
 			<param>
 				<name>main.ldapRealm</name>
-				<value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
+				<value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>
 			</param>
 			<param>
 				<name>main.ldapRealm.userDnTemplate</name>
