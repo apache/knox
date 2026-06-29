@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Locale.ROOT;
+
 /**
  * Interceptor for LDAP operations to proxy user searches to backends when not found locally
  */
@@ -111,15 +113,11 @@ public class UserSearchInterceptor extends BaseInterceptor {
     }
 
     private boolean isUnderBackendBaseDn(String searchBase) {
-        if (searchBase == null || searchBase.isEmpty()) {
+        final String backendBase = backend.getBaseDn();
+        if (searchBase == null || searchBase.isEmpty() || backendBase == null || backendBase.isEmpty()) {
             return false;
         }
-        String backendBase = backend.getBaseDn();
-        if (backendBase == null || backendBase.isEmpty()) {
-            return false;
-        }
-        return searchBase.toLowerCase(java.util.Locale.ROOT)
-                .endsWith(backendBase.toLowerCase(java.util.Locale.ROOT));
+        return searchBase.toLowerCase(ROOT).endsWith(backendBase.toLowerCase(ROOT));
     }
 
     @Override

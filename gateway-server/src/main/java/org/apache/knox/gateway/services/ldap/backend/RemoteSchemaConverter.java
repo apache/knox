@@ -175,15 +175,15 @@ public class RemoteSchemaConverter {
 
     /**
      * Converts a remote dn string to a proxy dn string. This also works for search base strings.
-     * @param string the remote dn or search base
+     * @param attributeValue the remote dn or search base
      * @return the proxy search base
      */
-    public String convertRemoteDnToProxyDn(String string) {
-        if (string == null) {
+    private String convertRemoteDnToProxyDn(String attributeValue) {
+        if (attributeValue == null) {
             return null;
         }
         // Replace the most specific bases first; they contain the base DN as a suffix.
-        String result = replaceIgnoreCase(string, remoteGroupSearchBase, proxyGroupSearchBase);
+        String result = replaceIgnoreCase(attributeValue, remoteGroupSearchBase, proxyGroupSearchBase);
         result = replaceIgnoreCase(result, remoteUserSearchBase, proxyUserSearchBase);
         result = replaceIgnoreCase(result, remoteBaseDn, proxyBaseDn);
         return result;
@@ -191,15 +191,15 @@ public class RemoteSchemaConverter {
 
     /**
      * Converts a proxy dn string to a remote dn string. This also works for search base strings.
-     * @param string the proxy dn or search base
+     * @param attributeValue the proxy dn or search base
      * @return the remote search base
      */
-    public String convertProxyDnToRemoteDn(String string) {
-        if (string == null) {
+    public String convertProxyDnToRemoteDn(String attributeValue) {
+        if (attributeValue == null) {
             return null;
         }
         // Replace the most specific bases first; they contain the base DN as a suffix.
-        String result = replaceIgnoreCase(string, proxyGroupSearchBase, remoteGroupSearchBase);
+        String result = replaceIgnoreCase(attributeValue, proxyGroupSearchBase, remoteGroupSearchBase);
         result = replaceIgnoreCase(result, proxyUserSearchBase, remoteUserSearchBase);
         result = replaceIgnoreCase(result, proxyBaseDn, remoteBaseDn);
         return result;
@@ -210,7 +210,7 @@ public class RemoteSchemaConverter {
      * {@code replacement}. Both operands are treated as literals (not regular expressions),
      * so DNs containing regex metacharacters are handled safely.
      */
-    private static String replaceIgnoreCase(String input, String search, String replacement) {
+    private String replaceIgnoreCase(String input, String search, String replacement) {
         return Pattern.compile(Pattern.quote(search), Pattern.CASE_INSENSITIVE)
                 .matcher(input)
                 .replaceAll(Matcher.quoteReplacement(replacement));
