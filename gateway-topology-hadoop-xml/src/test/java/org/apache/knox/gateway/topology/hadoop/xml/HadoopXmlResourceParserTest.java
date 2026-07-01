@@ -306,7 +306,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals(expectUserDnTemplateParam ? 10 : 9, authenticationProvider.getParams().size());
     assertEquals("30", authenticationProvider.getParams().get("sessionTimeout"));
     assertEquals("org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory", authenticationProvider.getParams().get("main.ldapContextFactory"));
-    assertEquals("org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm", authenticationProvider.getParams().get("main.ldapRealm"));
+    assertEquals("org.apache.knox.gateway.shirorealm.KnoxLdapRealm", authenticationProvider.getParams().get("main.ldapRealm"));
     assertEquals("$ldapContextFactory", authenticationProvider.getParams().get("main.ldapRealm.contextFactory"));
     assertEquals("simple", authenticationProvider.getParams().get("main.ldapRealm.contextFactory.authenticationMechanism"));
     assertEquals(expectedLdapUrl, authenticationProvider.getParams().get("main.ldapRealm.contextFactory.url"));

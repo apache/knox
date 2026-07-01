@@ -52,7 +52,7 @@ limitations under the License.
           role=authentication#
           authentication.name=ShiroProvider#
           authentication.param.sessionTimeout=30#
-          authentication.param.main.ldapRealm=org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm#
+          authentication.param.main.ldapRealm=org.apache.knox.gateway.shirorealm.KnoxLdapRealm#
           authentication.param.main.ldapContextFactory=org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory#
           authentication.param.main.ldapRealm.contextFactory=$ldapContextFactory#
           authentication.param.main.ldapRealm.contextFactory.authenticationMechanism=simple#
