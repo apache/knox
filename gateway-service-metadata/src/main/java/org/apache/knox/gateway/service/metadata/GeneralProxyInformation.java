@@ -55,6 +55,10 @@ public class GeneralProxyInformation {
   @ApiModelProperty(value = "A boolean flag indicating whether Webshell UI should be enabled on the Knox Home page")
   private String enableWebshell = "false";
 
+  @XmlElement
+  @ApiModelProperty(value = "The truststore type the homepage should offer for download (e.g. 'jks' or 'bcfks')")
+  private String truststoreType = "jks";
+
   public String getVersion() {
     return version;
   }
@@ -110,6 +114,68 @@ public class GeneralProxyInformation {
 
   public void setEnableWebshell(String enableWebshell) {
     this.enableWebshell = enableWebshell;
+  }
+
+  public String getTruststoreType() {
+    return truststoreType;
+  }
+
+  public void setTruststoreType(String truststoreType) {
+    this.truststoreType = truststoreType;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static final class Builder {
+    private final GeneralProxyInformation instance = new GeneralProxyInformation();
+
+    private Builder() {}
+
+    public Builder version(String version) {
+      instance.setVersion(version);
+      return this;
+    }
+
+    public Builder hostname(String hostname) {
+      instance.setHostname(hostname);
+      return this;
+    }
+
+    public Builder adminUiUrl(String adminUiUrl) {
+      instance.setAdminUiUrl(adminUiUrl);
+      return this;
+    }
+
+    public Builder webShellUrl(String webShellUrl) {
+      instance.setWebShellUrl(webShellUrl);
+      return this;
+    }
+
+    public Builder adminApiBookUrl(String adminApiBookUrl) {
+      instance.setAdminApiBookUrl(adminApiBookUrl);
+      return this;
+    }
+
+    public Builder enableTokenManagement(boolean enableTokenManagement) {
+      instance.setEnableTokenManagement(Boolean.toString(enableTokenManagement));
+      return this;
+    }
+
+    public Builder enableWebshell(boolean enableWebshell) {
+      instance.setEnableWebshell(Boolean.toString(enableWebshell));
+      return this;
+    }
+
+    public Builder truststoreType(String truststoreType) {
+      instance.setTruststoreType(truststoreType);
+      return this;
+    }
+
+    public GeneralProxyInformation build() {
+      return instance;
+    }
   }
 
 }
