@@ -25,5 +25,6 @@ public abstract class ResourceType {
   public static final String TOPOLOGY = "topology";
   public static final String PRINCIPAL = "principal";
   public static final String PROCESS = "process";
+  public static final String TRUSTED_ISSUER = "trusted-issuer";
 
 }
