@@ -112,6 +112,7 @@ public class SSEHaDispatchTest {
         expect(gatewayConfig.isAsyncSupported()).andReturn(true).anyTimes();
         expect(gatewayConfig.isTopologyAsyncSupported("SSE")).andReturn(false).anyTimes();
         expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).once();
+        expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
@@ -693,6 +694,7 @@ public class SSEHaDispatchTest {
         expect(gatewayConfig.isAsyncSupported()).andReturn(true).anyTimes();
         expect(gatewayConfig.isTopologyAsyncSupported("SSE")).andReturn(false).once();
         expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).once();
+        expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();

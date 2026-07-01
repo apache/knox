@@ -498,6 +498,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isHttpClientTwoWaySslEnabled() {
+    return isSingleEkuEnabled();
+  }
+
+  @Override
   public String getCredentialStoreAlgorithm() {
     return DEFAULT_CREDENTIAL_STORE_ALG;
   }
