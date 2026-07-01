@@ -1732,6 +1732,28 @@ body.login {
   box-shadow: none !important;
   outline: none !important;
 }
+.login #errorBox {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background-color: rgba(174, 40, 23, 0.15);
+  border: 1px solid #ae2817;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+  width: 100%;
+}
+.login #errorBox i {
+  color: #ae2817;
+  margin-right: 8px;
+  vertical-align: text-top;
+}
+.login #errorBox .errorMsg {
+  display: inline;
+}
 .label-yellow{
     background-color: #f3a139;
 }

@@ -102,9 +102,10 @@
                         <label><i class="bi bi-lock"></i> Password:</label>
                         <input type="password" name="password" id="password" tabindex="2" autocomplete="off" onkeypress=keypressed(event)>
                     </div>
-                    <span id="errorBox" class="help-inline" style="color:white;display:none;"><span class="errorMsg"></span>
-                        <i class="bi bi-exclamation-triangle" style="color:#ae2817;"></i>
-                    </span>
+                    <div id="errorBox" style="display:none;" role="alert">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                        <span class="errorMsg"></span>
+                    </div>
                     <button type="button" class="btn btn-primary w-100" id="signIn" tabindex="4" onkeypress="keypressed(event)" onclick="login();" style="position: relative; text-align: center;">
                         <span>Sign In</span>
                         <i id="signInLoading" class="bi bi-arrow-repeat icon-sign-in"></i>
