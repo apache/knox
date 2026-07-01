@@ -367,12 +367,8 @@ The second option involves a newly created Knox CLI command called `generate-jwk
 There was an important step the Knox team made to provide more flexibility for our end-users: there are some internal service implementations in Knox that were hard-coded in the Java source code. One of those services is the `Token State` service implementation which you can change in gateway-site.xml going forward by setting the `gateway.service.tokenstate.impl` property to any of:
 
 1.  `org.apache.knox.gateway.services.token.impl.DefaultTokenStateService` - keeps all token information in memory, therefore all of this information is lost when Knox is shut down
-2.  `org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService` - token information is stored in the gateway credential store. This is a durable option, but not suitable for HA deployments
-3.  `org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService` - token information is stored in plain files within `$KNOX_DATA_DIR/security/token-state` folder. This option also provides a durable persistence layer for tokens and it might be good for HA scenarios too (in case of KNOX_DATA_DIR is on a shared drive), but the token data is written out in plain text (i.e. not encrypted) so it's less secure.
-4.  `org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService` - this is an extension of the keystore-based approach. In this case, token information is stored in Zookeeper using Knox aliases. The token's alias name equals to its generated token ID.
-5.  `org.apache.knox.gateway.services.token.impl.JDBCTokenStateService` - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. The following database types are supported: PostgreSQL, MySQL, MariaDB, Oracle, Derby and HSQL.
-
-By default, the `AliasBasedTokenStateService` implementation is used.
+2.  `org.apache.knox.gateway.services.token.impl.JDBCTokenStateService` - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. The following database types are supported: PostgreSQL, MySQL, MariaDB, Oracle, Derby and HSQL.
+3.  `org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService` - a specialization of `JDBCTokenStateService` backed by an embedded Apache Derby database that Knox provisions and manages automatically under the gateway security directory (`$KNOX_DATA_DIR/security`). It provides durable token storage without any external database setup and is the __default__ implementation when `gateway.service.tokenstate.impl` is not set. If the embedded Derby database cannot be initialized Knox falls back to `DefaultTokenStateService`.
 
 ##### Configuring the JDBC token state service
 
