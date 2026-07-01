@@ -370,7 +370,7 @@ There was an important step the Knox team made to provide more flexibility for o
 2.  `org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService` - token information is stored in the gateway credential store. This is a durable option, but not suitable for HA deployments
 3.  `org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService` - token information is stored in plain files within `$KNOX_DATA_DIR/security/token-state` folder. This option also provides a durable persistence layer for tokens and it might be good for HA scenarios too (in case of KNOX_DATA_DIR is on a shared drive), but the token data is written out in plain text (i.e. not encrypted) so it's less secure.
 4.  `org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService` - this is an extension of the keystore-based approach. In this case, token information is stored in Zookeeper using Knox aliases. The token's alias name equals to its generated token ID.
-5.  `org.apache.knox.gateway.services.token.impl.JDBCTokenStateService` - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. Currently, PostgreSQL and MySQL databases are supported.
+5.  `org.apache.knox.gateway.services.token.impl.JDBCTokenStateService` - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. The following database types are supported: PostgreSQL, MySQL, MariaDB, Oracle, Derby and HSQL.
 
 By default, the `AliasBasedTokenStateService` implementation is used.
 
@@ -381,17 +381,32 @@ If you want to use the newly implemented database token management, you’ve to 
 Now, that you have configured your token state backend, you need to configure a valid database in _gateway-site.xml_. There are two ways to do that:
 
 1.  You either declare database connection properties one-by-one:  
-    `gateway.database.type` - should be set to `postgresql` or `mysql`  
+    `gateway.database.type` - should be set to `postgresql`, `mysql`, `mariadb`, `oracle`, `derbydb` or `hsql`  
     `gateway.database.host` - the host where your DB server is running  
     `gateway.database.port` - the port that your DB server is listening on  
-    `gateway.database.name` - the name of the database you are connecting to
+    `gateway.database.name` - the name of the database you are connecting to (for Oracle, this is the service name)
 2.  Or you declare an all-in-one JDBC connection string called `gateway.database.connection.url`. The following value will show you how to connect to an SSL enabled PostgreSQL server:  
     <code>jdbc:postgresql://$myPostgresServerHost:5432/postgres?user=postgres&amp;ssl=true&amp;sslmode=verify-full&amp;sslrootcert=/usr/local/var/postgresql@10/data/root.crt</code>
-
+    
 If your database requires user/password authentication, the following aliases must be saved into the Knox Gateway’s credential store (__gateway-credentials.jceks):
 
 *   `gateway_database_user` - the username
 *   `gateway_database_password` - the password
+
+###### Database SSL
+
+SSL connections to the database are supported for PostgreSQL, MySQL and Oracle. MariaDB, Derby and HSQL do not honor the `gateway.database.ssl.*` properties. SSL is enabled per gateway by setting:
+
+*   `gateway.database.ssl.enabled` - set to `true` to enable SSL
+*   `gateway.database.ssl.verify.server.cert` - set to `true` to verify the server certificate against a local truststore
+*   `gateway.database.ssl.truststore.file` - path to the truststore (for PostgreSQL this is the PEM-encoded SSL root certificate file)
+*   `gateway.database.ssl.truststore.type` - truststore type, used by MySQL and Oracle. Defaults to `JKS`; other supported values include `PKCS12`. PostgreSQL ignores this property because it reads the root cert as PEM.
+
+If the truststore is password-protected, store the password in the Knox Gateway's credential store under the `gateway_database_ssl_truststore_password` alias.
+
+###### Provided JDBC drivers
+
+The MySQL and Oracle JDBC drivers are declared as __provided__ Maven dependencies and are __not__ shipped with the Knox distribution (due to licensing). To enable MySQL or Oracle support, download the matching driver jar (`mysql-connector-java*.jar` or `ojdbc11.jar`) and drop it into the `$KNOX_HOME/ext` directory before starting the gateway. PostgreSQL, MariaDB, Derby and HSQL drivers are bundled with Knox and require no extra steps.
 
 ###### Database design
 
