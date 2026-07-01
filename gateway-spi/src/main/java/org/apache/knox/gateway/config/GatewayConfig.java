@@ -102,6 +102,7 @@ public interface GatewayConfig {
 
   String TLS_SINGLE_EKU_ENABLED = "gateway.tls.single.eku.enabled";
   boolean DEFAULT_TLS_SINGLE_EKU_ENABLED = false;
+  String HTTP_CLIENT_TWO_WAY_SSL_ENABLED = "gateway.httpclient.twoWaySsl.enabled";
 
   String CREDENTIAL_STORE_ALG = "gateway.credential.store.alg";
   String DEFAULT_CREDENTIAL_STORE_ALG = "AES";
@@ -327,6 +328,14 @@ public interface GatewayConfig {
    *         identity keystore. Defaults to <code>false</code> (multi-purpose certificates).
    */
   boolean isSingleEkuEnabled();
+
+  /**
+   * @return {@code true} when outbound mTLS is enabled globally for all dispatches.
+   *         Defaults to {@code true} when {@link #isSingleEkuEnabled()} is {@code true};
+   *         otherwise defaults to {@code false}. An explicit value in gateway-site.xml
+   *         always wins regardless of the single-EKU toggle.
+   */
+  boolean isHttpClientTwoWaySslEnabled();
 
   /**
    * @return the algorithm that is used when creating a SecretKey when adding an

@@ -187,7 +187,9 @@ public class DefaultHttpClientFactory implements HttpClientFactory {
     KeystoreService ks = services.getService(ServiceType.KEYSTORE_SERVICE);
     try {
       boolean singleEku = gatewayConfig != null && gatewayConfig.isSingleEkuEnabled();
-      if (Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))) {
+      boolean twoWaySsl = Boolean.parseBoolean(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL))
+          || (gatewayConfig != null && gatewayConfig.isHttpClientTwoWaySslEnabled());
+      if (twoWaySsl) {
         LOG.usingTwoWaySsl(serviceRole);
         AliasService as = services.getService(ServiceType.ALIAS_SERVICE);
 

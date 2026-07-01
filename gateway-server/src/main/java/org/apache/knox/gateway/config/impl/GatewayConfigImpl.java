@@ -849,6 +849,15 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isHttpClientTwoWaySslEnabled() {
+    String configured = get(HTTP_CLIENT_TWO_WAY_SSL_ENABLED);
+    if (configured != null) {
+      return Boolean.parseBoolean(configured);
+    }
+    return isSingleEkuEnabled();
+  }
+
+  @Override
   public String getCredentialStoreAlgorithm() {
     final String alg = get(CREDENTIAL_STORE_ALG, DEFAULT_CREDENTIAL_STORE_ALG);
     FipsUtils.validateAlgorithm(alg, CREDENTIAL_STORE_ALG);
