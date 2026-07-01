@@ -28,8 +28,23 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
+import java.text.ParseException;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class RemoteSchemaConverter {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
+    // Credential-bearing attributes that must never be surfaced through the proxy entry.
+    private static final Set<String> SENSITIVE_ATTRIBUTES = Set.of(
+            "userpassword", "unicodepwd", "userpkcs12");
+
+    // Attributes whose values are distinguished names and therefore need remote->proxy
+    // DN rewriting. Other attribute values (mail, description, ...) are copied verbatim.
+    private static final Set<String> DN_VALUED_ATTRIBUTES = Set.of(
+            "member", "uniquemember", "memberof", "manager", "owner", "seealso");
 
     // Proxy configuration
     private final String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
@@ -80,8 +95,12 @@ public class RemoteSchemaConverter {
         Entry entry = new DefaultEntry(schemaManager);
         entry.setDn(sourceEntry.getDn());
 
-        // Copy all known AttributeTypes as-is from backend response
+        // Copy attributes from the backend response, skipping credential-bearing ones so
+        // they are never exposed through the proxy.
         for (Attribute attribute : sourceEntry.getAttributes()) {
+            if (SENSITIVE_ATTRIBUTES.contains(attribute.getId().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
             copyAttribute(sourceEntry, entry, attribute.getId());
         }
 
@@ -95,13 +114,15 @@ public class RemoteSchemaConverter {
 
         // replace userObjectClass and groupObjectClass object classes
         Attribute objectClassAttribute = sourceEntry.get("objectclass");
-        if (objectClassAttribute.contains(remoteGroupObjectClass)) {
-            entry.remove("objectclass", remoteGroupObjectClass);
-            entry.add("objectclass", "groupofnames");
-        }
-        if (objectClassAttribute.contains(remoteUserObjectClass)) {
-            entry.remove("objectclass", remoteUserObjectClass);
-            entry.add("objectclass", "inetOrgPerson");
+        if (objectClassAttribute != null) {
+            if (objectClassAttribute.contains(remoteGroupObjectClass)) {
+                entry.remove("objectclass", remoteGroupObjectClass);
+                entry.add("objectclass", "groupofnames");
+            }
+            if (objectClassAttribute.contains(remoteUserObjectClass)) {
+                entry.remove("objectclass", remoteUserObjectClass);
+                entry.add("objectclass", "inetOrgPerson");
+            }
         }
 
         return entry;
@@ -112,9 +133,9 @@ public class RemoteSchemaConverter {
      * @param filter the filter
      * @param schemaManager the schema manager
      * @return the converted filter
-     * @throws Exception if the filter cannot be parsed
+     * @throws ParseException if the filter cannot be parsed
      */
-    public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws Exception {
+    public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws ParseException {
         FilterMappingVisitor filterMappingVisitor = new FilterMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager);
 
         // Filter likely has already been annotated by other interceptors.
@@ -135,9 +156,12 @@ public class RemoteSchemaConverter {
     public void copyAttribute(Entry source, Entry target, String attributeName) {
         final Attribute attribute = source.get(attributeName);
         if (attribute != null) {
+            // Only rewrite DNs for DN-valued attributes; other values (e.g. mail, description)
+            // are copied verbatim so they are not corrupted if they happen to contain a base DN.
+            final boolean dnValued = DN_VALUED_ATTRIBUTES.contains(attributeName.toLowerCase(Locale.ROOT));
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
             for (Value value : attribute) {
-                String valueString = convertRemoteDnToProxyDn(value.toString());
+                String valueString = dnValued ? convertRemoteDnToProxyDn(value.toString()) : value.toString();
                 if (!target.contains(attributeName, valueString)) {
                     try {
                         target.add(attributeName, valueString);
@@ -151,27 +175,44 @@ public class RemoteSchemaConverter {
 
     /**
      * Converts a remote dn string to a proxy dn string. This also works for search base strings.
-     * @param string the remote dn or search base
+     * @param attributeValue the remote dn or search base
      * @return the proxy search base
      */
-    public String convertRemoteDnToProxyDn(String string) {
-        return string == null ?
-                null :
-                string.replaceAll("(?i)" + remoteGroupSearchBase, proxyGroupSearchBase)
-                .replaceAll("(?i)" + remoteUserSearchBase, proxyUserSearchBase)
-                .replaceAll("(?i)" + remoteBaseDn, proxyBaseDn);
+    private String convertRemoteDnToProxyDn(String attributeValue) {
+        if (attributeValue == null) {
+            return null;
+        }
+        // Replace the most specific bases first; they contain the base DN as a suffix.
+        String result = replaceIgnoreCase(attributeValue, remoteGroupSearchBase, proxyGroupSearchBase);
+        result = replaceIgnoreCase(result, remoteUserSearchBase, proxyUserSearchBase);
+        result = replaceIgnoreCase(result, remoteBaseDn, proxyBaseDn);
+        return result;
     }
 
     /**
      * Converts a proxy dn string to a remote dn string. This also works for search base strings.
-     * @param string the proxy dn or search base
+     * @param attributeValue the proxy dn or search base
      * @return the remote search base
      */
-    public String convertProxyDnToRemoteDn(String string) {
-        return string == null ?
-                null :
-                string.replaceAll("(?i)" + proxyGroupSearchBase, remoteGroupSearchBase)
-                .replaceAll("(?i)" + proxyUserSearchBase, remoteUserSearchBase)
-                .replaceAll("(?i)" + proxyBaseDn, remoteBaseDn);
+    public String convertProxyDnToRemoteDn(String attributeValue) {
+        if (attributeValue == null) {
+            return null;
+        }
+        // Replace the most specific bases first; they contain the base DN as a suffix.
+        String result = replaceIgnoreCase(attributeValue, proxyGroupSearchBase, remoteGroupSearchBase);
+        result = replaceIgnoreCase(result, proxyUserSearchBase, remoteUserSearchBase);
+        result = replaceIgnoreCase(result, proxyBaseDn, remoteBaseDn);
+        return result;
+    }
+
+    /**
+     * Case-insensitive literal replacement of all occurrences of {@code search} with
+     * {@code replacement}. Both operands are treated as literals (not regular expressions),
+     * so DNs containing regex metacharacters are handled safely.
+     */
+    private String replaceIgnoreCase(String input, String search, String replacement) {
+        return Pattern.compile(Pattern.quote(search), Pattern.CASE_INSENSITIVE)
+                .matcher(input)
+                .replaceAll(Matcher.quoteReplacement(replacement));
     }
 }

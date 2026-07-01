@@ -399,7 +399,7 @@ public class LdapProxyBackend implements LdapBackend {
                     results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
                 }
             } catch (LdapException e) {
-                LOG.ldapAttributeCopyError(e);
+                LOG.ldapSearchFailed(remoteSearchBase, remoteFilter, e);
             }
             return results;
         } finally {
@@ -502,14 +502,19 @@ public class LdapProxyBackend implements LdapBackend {
             groupEntry = entryCache.get((groupDn));
         } else {
             try {
-                groupEntry = connection.lookup(groupDn, "memberOf");
+                // Request "cn" alongside "memberOf" so the cached entry can be resolved to a
+                // group name later (e.g. by getUserGroups); a memberOf-only lookup omits it.
+                groupEntry = connection.lookup(groupDn, "cn", "memberOf");
             } catch (LdapException e) {
-                // assume group doesn't exist and has no parent groups
+                groupEntry = null;
+            }
+            if (groupEntry == null) {
+                // Entry not found or lookup failed — synthesise a skeleton so cn is still known.
                 groupEntry = createSkeletonGroupEntry(groupDn);
             }
             entryCache.put(groupDn, groupEntry);
         }
-        Attribute memberOf = groupEntry.get("memberOf");
+        Attribute memberOf = groupEntry == null ? null : groupEntry.get("memberOf");
         if (memberOf != null) {
             for (Value value : memberOf) {
                 parents.add(value.getNormalized());
@@ -683,7 +688,6 @@ public class LdapProxyBackend implements LdapBackend {
         return null;
     }
 
-    // tODO reuse this method in recursive calls
     private List<Entry> getUserGroupsInternal(LdapConnection connection, Dn... dns) throws LdapException, CursorException, IOException {
         List<Entry> groups = new ArrayList<>();
         if (dns.length == 0) {
@@ -736,6 +740,10 @@ public class LdapProxyBackend implements LdapBackend {
             Attribute cnAttr = entry.get("cn");
             if (cnAttr != null) {
                 cns.add(cnAttr.getString());
+            } else if (entry.getDn() != null && entry.getDn().getRdn() != null) {
+                // Fall back to the CN carried in the DN when the entry was fetched without the
+                // cn attribute, so resolved groups are not silently dropped from the result.
+                cns.add(entry.getDn().getRdn().getValue());
             }
         }
         return cns;

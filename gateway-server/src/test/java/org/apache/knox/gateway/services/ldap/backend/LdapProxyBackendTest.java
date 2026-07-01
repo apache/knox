@@ -294,6 +294,33 @@ public class LdapProxyBackendTest {
     }
 
     @Test
+    public void testGetUserGroupsUseMemberOfRecursive() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(10);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("memberOfUser", schemaManager);
+        assertTrue(userGroups.contains("memberOflevel1"));
+        assertTrue(userGroups.contains("memberOflevel2"));
+        assertTrue(userGroups.contains("memberOflevel3"));
+        assertTrue(userGroups.contains("memberOflevel4"));
+        assertTrue(userGroups.contains("memberOfCycleA"));
+        assertTrue(userGroups.contains("memberOfCycleB"));
+    }
+
+    @Test
+    public void testGetUserGroupsUseMemberOfRecursiveDepth2() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(2);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("memberOfUser", schemaManager);
+        assertTrue(userGroups.contains("memberOflevel1"));
+        assertTrue(userGroups.contains("memberOflevel2"));
+        assertFalse("Level 3 should not appear at max depth 2", userGroups.contains("memberOflevel3"));
+    }
+
+    @Test
     public void testSearchUsers() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateUserSearch("*", 3, Set.of("ldaptest1", "ldaptest2", "guest"));

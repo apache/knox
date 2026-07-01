@@ -153,7 +153,13 @@ public class FileBackend implements LdapBackend {
     public List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception {
         List<Entry> results = new ArrayList<>();
 
-        String userFilter = extractUser(filter).toLowerCase(Locale.ROOT);
+        final String extractedUser = extractUser(filter);
+        if (extractedUser == null) {
+            // The filter does not target a recognized user identifier (uid/cn/sAMAccountName),
+            // so there is nothing for this user-only backend to match.
+            return results;
+        }
+        String userFilter = extractedUser.toLowerCase(Locale.ROOT);
 
         // Simple filter matching - just check if username matches
         for (String username : users.keySet()) {
