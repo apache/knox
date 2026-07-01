@@ -60,6 +60,7 @@ public class DefaultHttpClientFactoryTest {
 
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
     expect(gatewayConfig.isMetricsEnabled()).andReturn(false).once();
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).once();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).once();
@@ -102,6 +103,7 @@ public class DefaultHttpClientFactoryTest {
 
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -186,6 +188,7 @@ public class DefaultHttpClientFactoryTest {
 
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -211,6 +214,7 @@ public class DefaultHttpClientFactoryTest {
 
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -265,6 +269,7 @@ public class DefaultHttpClientFactoryTest {
 
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.isSingleEkuEnabled()).andReturn(true).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
     FilterConfig filterConfig = createMock(FilterConfig.class);
     expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
@@ -277,6 +282,39 @@ public class DefaultHttpClientFactoryTest {
     assertNull(context);
 
     verify(keystoreService, gatewayServices, gatewayConfig, filterConfig);
+  }
+
+  @Test
+  public void testCreateSSLContextGlobalTwoWaySslActivatesClientKeystore() throws Exception {
+    // Global flag = true overrides per-dispatch param = false → client keystore is presented
+    KeyStore clientKeyStore = loadKeyStore("target/test-classes/keystores/server-keystore.jks", "horton", "JKS");
+
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getTruststoreForHttpClient()).andReturn(null).once();
+    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeyStore).once();
+
+    AliasService aliasService = createMock(AliasService.class);
+    expect(aliasService.getHttpClientKeyPassphrase()).andReturn("horton".toCharArray()).once();
+
+    GatewayServices gatewayServices = createMock(GatewayServices.class);
+    expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();
+    expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).once();
+
+    GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
+    expect(gatewayConfig.isSingleEkuEnabled()).andReturn(true).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(true).once();
+
+    FilterConfig filterConfig = createMock(FilterConfig.class);
+    // per-dispatch param is false — global flag must carry it
+    expect(filterConfig.getInitParameter(PARAMETER_USE_TWO_WAY_SSL)).andReturn("false").once();
+
+    replay(keystoreService, aliasService, gatewayServices, gatewayConfig, filterConfig);
+
+    DefaultHttpClientFactory factory = new DefaultHttpClientFactory();
+    SSLContext context = factory.createSSLContext(gatewayServices, gatewayConfig, filterConfig, "service");
+    assertNotNull(context);
+
+    verify(keystoreService, aliasService, gatewayServices, gatewayConfig, filterConfig);
   }
 
   @Test
@@ -355,6 +393,7 @@ public class DefaultHttpClientFactoryTest {
 
     GatewayConfig gatewayConfig = createMock(GatewayConfig.class);
     expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+    expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).anyTimes();
     expect(gatewayConfig.isMetricsEnabled()).andReturn(false).anyTimes();
     expect(gatewayConfig.getHttpClientMaxConnections()).andReturn(32).anyTimes();
     expect(gatewayConfig.getHttpClientConnectionTimeout()).andReturn(20000).anyTimes();
