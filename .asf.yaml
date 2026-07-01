@@ -15,10 +15,23 @@
 # limitations under the License.
 #
 notifications:
-    commits:      commits@knox.apache.org
-    issues:       dev@knox.apache.org
-    pullrequests: dev@knox.apache.org
-    jira_options: link label worklog
+  commits: commits@knox.apache.org
+  issues: dev@knox.apache.org
+  pullrequests: dev@knox.apache.org
+  jira_options: link label worklog
 github:
-  ghp_branch:  gh-pages
-  ghp_path:    /
+  ghp_branch: gh-pages
+  ghp_path: /
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "release/*"
+          - "rel/*"
+        excludes: []
+      bypass_teams:
+        - root
+      restrict_deletion: true
+      restrict_force_push: true
