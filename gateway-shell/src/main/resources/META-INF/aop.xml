@@ -20,7 +20,7 @@
   <aspect name="org.apache.knox.gateway.shell.table.KnoxShellTableHistoryAspect" />
  </aspects>
 
- <weaver>
+ <weaver options="-nowarn">
   <include within="org.apache.knox.gateway.shell.table.*" />
  </weaver>
  
