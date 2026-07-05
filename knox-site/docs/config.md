@@ -174,6 +174,46 @@ Property    | Description | Default
 `gateway.strict.transport.option` | This optional parameter specifies a particular value for the HTTP Strict-Transport-Security header in case the global config is enabled. | `max-age=31536000; includeSubDomains`
 `gateway.server.append.classpath` | A `;` delimited list of paths that are appended to the gateway server's classpath. | null
 `gateway.server.prepend.classpath` | A `;` delimited list of paths that are prepended to the gateway server's classpath. | null
+`gateway.config.refresh.interval` | The interval (in milliseconds) at which the gateway will check `gateway-reloadable.xml` for changes and reload it if the file's last-modified timestamp has advanced. Set to `0` or a negative value to disable the periodic refresh. See [Reloadable Gateway Configuration](#Reloadable+Gateway+Configuration). | `10000` (10 seconds)
+
+
+##### Reloadable Gateway Configuration #####
+
+Most gateway server properties are loaded once at startup from `gateway-default.xml` and `gateway-site.xml` and require a restart to take effect. To allow selected properties to be updated without restarting the gateway, Knox also loads a third configuration file — `gateway-reloadable.xml` — from the gateway configuration directory (`{GATEWAY_HOME}/conf`) and periodically re-reads it while the gateway is running.
+
+###### `gateway-reloadable.xml` ######
+
+`gateway-reloadable.xml` uses the same Hadoop `Configuration` XML format as `gateway-site.xml`:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+        <property>
+            <name>gateway.some.reloadable.property</name>
+            <value>...</value>
+        </property>
+    </configuration>
+
+The file is optional. If it is absent no periodic reload is performed even if the refresh interval is greater than zero. Properties defined here override values with the same name in `gateway-site.xml` and `gateway-default.xml`, following the standard configuration precedence.
+
+###### Periodic Refresh ######
+
+At startup the gateway schedules a single-threaded task that checks the last-modified timestamp of `gateway-reloadable.xml` on the interval configured by `gateway.config.refresh.interval` (default 10 seconds). When the timestamp advances beyond the previously observed value, the gateway configuration is reloaded and an `INFO` level message ("Refreshed gateway config") is written to the gateway log. If the file cannot be read a `WARN` level message is logged and the previous configuration remains in effect.
+
+Setting `gateway.config.refresh.interval` to `0` (or any non-positive value) disables the periodic refresh entirely.
+
+Only properties that are consumed lazily, or by components that register for change notifications (see below), will actually pick up the new value at runtime. Properties that are read once during gateway startup will continue to reflect their startup values until the gateway is restarted.
+
+###### Reacting to Configuration Changes ######
+
+Gateway services and other server-side components can react to configuration reloads by implementing the `GatewayConfigChangeListener` SPI (`org.apache.knox.gateway.config.GatewayConfigChangeListener`):
+
+    public interface GatewayConfigChangeListener {
+      void onGatewayConfigChanged(GatewayConfig config);
+    }
+
+Listeners are registered with the gateway server through `GatewayServer.registerConfigChangeListener(listener)` (and removed with `GatewayServer.unregisterConfigChangeListener(listener)`). After `gateway-reloadable.xml` is successfully reloaded, the refreshed `GatewayConfig` is delivered to each registered listener in registration order.
+
+The embedded Knox LDAP service (`KnoxLDAPService`) is the first built-in consumer of this mechanism: when the reloadable configuration changes it re-reads its own settings and, depending on the new value of `gateway.knox.ldap.enabled`, restarts or stops the embedded LDAP server without requiring a gateway restart.
 
 
 #### Topology Descriptors ####
