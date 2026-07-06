@@ -393,7 +393,7 @@ Release build file for the Apache Knox Gateway
         <exec executable="bin/knoxcli.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
             <arg value="create-master"/>
             <arg value="--master"/>
-            <arg value="knox"/>
+            <arg value="apacheknox"/>
         </exec>
         <exec executable="bin/knoxcli.sh" dir="${install.dir}/${gateway-artifact}-${gateway-version}">
             <arg value="create-cert"/>
