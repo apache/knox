@@ -22,6 +22,7 @@ import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
@@ -45,6 +46,9 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 public class JettySSLService implements SSLService {
   private static final String EPHEMERAL_DH_KEY_SIZE_PROPERTY = "jdk.tls.ephemeralDHKeySize";
   private static final String GATEWAY_CREDENTIAL_STORE_NAME = "__gateway";
+  // Extended Key Usage OIDs (RFC 5280) used to enforce single-purpose certificates in single-EKU mode.
+  private static final String EKU_SERVER_AUTH = "1.3.6.1.5.5.7.3.1";
+  private static final String EKU_CLIENT_AUTH = "1.3.6.1.5.5.7.3.2";
   private static GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
   private KeystoreService keystoreService;
@@ -138,9 +142,14 @@ public class JettySSLService implements SSLService {
   }
 
   // Package private for unit test access.
-  // When single-EKU mode is enabled, refuse to start unless the outbound client identity keystore
-  // is present and usable, and inbound client authentication is enforced. Fail closed: never fall
-  // back to the server identity certificate.
+  // When single-EKU mode is enabled, refuse to start unless:
+  //   - the outbound client-identity keystore is present and holds a usable key entry,
+  //   - inbound client authentication is enforced (server truststore + client-auth),
+  //   - the outbound HTTP client truststore is configured, and
+  //   - both identities are single-purpose: the client identity carries clientAuth (not serverAuth)
+  //     and the server identity carries serverAuth (not clientAuth).
+  // Fail closed: never fall back to the server identity certificate for outbound calls, and never
+  // defer a cross-wired/dual-purpose certificate to a runtime handshake failure.
   void validateSingleEkuConfig(GatewayConfig config) throws ServiceLifecycleException {
     // 1. Outbound client-identity keystore must be configured and contain the configured key entry.
     String clientKeystorePath = config.getHttpClientKeystorePath();
@@ -150,8 +159,9 @@ public class JettySSLService implements SSLService {
           + ") is not configured. Server will not start.");
     }
     String clientKeyAlias = config.getHttpClientKeyAlias();
+    KeyStore clientKeystore;
     try {
-      KeyStore clientKeystore = keystoreService.getKeystoreForHttpClient();
+      clientKeystore = keystoreService.getKeystoreForHttpClient();
       if (clientKeystore == null || !clientKeystore.isKeyEntry(clientKeyAlias)) {
         throw new ServiceLifecycleException("Single-EKU mode is enabled but the HTTP client keystore at "
             + clientKeystorePath + " does not contain a key entry for alias '" + clientKeyAlias
@@ -180,6 +190,64 @@ public class JettySSLService implements SSLService {
           + GatewayConfig.HTTP_CLIENT_TRUSTSTORE_PATH
           + " is not configured. Knox cannot verify TLS certificates of upstream services. "
           + "Server will not start.");
+    }
+
+    // 4. Enforce single-purpose Extended Key Usage on both identities. This is the guarantee the
+    // feature exists to provide: the outbound client identity must be clientAuth-only and the
+    // inbound server identity must be serverAuth-only, so a cross-wired or dual-purpose cert cannot
+    // be presented in the wrong direction. Fail closed rather than defer the discovery to a runtime
+    // handshake failure.
+    Certificate clientCert;
+    try {
+      clientCert = clientKeystore.getCertificate(clientKeyAlias);
+    } catch (KeyStoreException e) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the certificate for alias '"
+          + clientKeyAlias + "' in the HTTP client keystore could not be read. Server will not start.", e);
+    }
+    validateSinglePurposeEku(clientCert, clientKeyAlias, "HTTP client keystore",
+        EKU_CLIENT_AUTH, "clientAuth", EKU_SERVER_AUTH, "serverAuth");
+
+    String identityKeyAlias = config.getIdentityKeyAlias();
+    Certificate serverCert;
+    try {
+      KeyStore serverKeystore = keystoreService.getKeystoreForGateway();
+      serverCert = serverKeystore == null ? null : serverKeystore.getCertificate(identityKeyAlias);
+    } catch (KeystoreServiceException | KeyStoreException e) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the server identity certificate for "
+          + "alias '" + identityKeyAlias + "' could not be read. Server will not start.", e);
+    }
+    validateSinglePurposeEku(serverCert, identityKeyAlias, "server identity keystore",
+        EKU_SERVER_AUTH, "serverAuth", EKU_CLIENT_AUTH, "clientAuth");
+  }
+
+  // Fail closed unless the given certificate declares exactly the required single Extended Key Usage:
+  // it must carry requiredEku and must NOT carry forbiddenEku. A certificate with no EKU extension is
+  // rejected because single-EKU mode is an explicit opt-in to purpose-restricted certificates, and an
+  // unrestricted (EKU-less) cert is usable for any purpose — defeating the guarantee.
+  private void validateSinglePurposeEku(Certificate cert, String alias, String storeDesc,
+      String requiredEku, String requiredEkuName, String forbiddenEku, String forbiddenEkuName)
+      throws ServiceLifecycleException {
+    if (!(cert instanceof X509Certificate)) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the certificate for alias '"
+          + alias + "' in the " + storeDesc + " is missing or is not an X.509 certificate. Server will not start.");
+    }
+    List<String> ekus;
+    try {
+      ekus = ((X509Certificate) cert).getExtendedKeyUsage();
+    } catch (CertificateParsingException e) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the Extended Key Usage of the "
+          + "certificate for alias '" + alias + "' in the " + storeDesc + " could not be parsed. "
+          + "Server will not start.", e);
+    }
+    if (ekus == null || !ekus.contains(requiredEku)) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the certificate for alias '"
+          + alias + "' in the " + storeDesc + " does not declare the required " + requiredEkuName
+          + " Extended Key Usage. Server will not start.");
+    }
+    if (ekus.contains(forbiddenEku)) {
+      throw new ServiceLifecycleException("Single-EKU mode is enabled but the certificate for alias '"
+          + alias + "' in the " + storeDesc + " also declares the " + forbiddenEkuName
+          + " Extended Key Usage; single-EKU mode requires a single-purpose certificate. Server will not start.");
     }
   }
 

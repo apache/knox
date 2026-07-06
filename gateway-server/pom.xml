@@ -551,6 +551,19 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Used by JettySSLServiceTest to build certificates with specific Extended Key Usages
+             for single-EKU validation tests. -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>gateway-shell</artifactId>
