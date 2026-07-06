@@ -19,7 +19,7 @@ limitations under the License.
 <configuration>
 
     <!--
-      CDPD-103449 single-EKU mode (added on top of the baked
+      KNOX-3359 single-EKU mode (added on top of the baked
       .github/workflows/build/gateway-site.xml). Enables single-EKU TLS, points
       the outbound HTTP client at a clientAuth-only keystore, sets the server
       truststore, and requires inbound client authentication. Keystore

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# CDPD-103449: single-EKU container entrypoint.
+# KNOX-3359: single-EKU container entrypoint.
 #
 # The dev keystore fixtures (host-client_keystore.jks / global_truststore.jks)
 # are protected with the dev password "horton". The baked apache/knox-dev image

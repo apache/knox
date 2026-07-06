@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# CDPD-103449: single-EKU compose OVERRIDE.
+# KNOX-3359: single-EKU compose OVERRIDE.
 #
 # This file is intentionally separate from docker-compose.yml. The default
 # stack's existing integration tests make requests WITHOUT a client cert, so
