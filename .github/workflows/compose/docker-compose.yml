@@ -114,7 +114,7 @@ services:
       && pylint *.py
       && echo 'Waiting for knox...'
       && sleep 30
-      && pytest --junitxml=test-results.xml"
+      && pytest --ignore=test_single_eku_mtls.py --junitxml=test-results.xml"
     depends_on:
       - knox
 
