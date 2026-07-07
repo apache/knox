@@ -85,6 +85,7 @@ jobs:
         run: sleep 30  # Adjust as needed for services startup time
 
       - name: Run Single-EKU mTLS Tests
+        id: single_eku_tests
         run: |
           # KNOX_SINGLE_EKU=true (set by the override) un-skips the suite.
           # Emit a distinct JUnit file so it reports as its own test suite.
@@ -93,6 +94,27 @@ jobs:
             -f ./.github/workflows/compose/docker-compose.single-eku.yml \
             run --rm tests bash -c "pip install -r requirements.txt \
             && pytest test_single_eku_mtls.py --junitxml=test-results-single-eku.xml"
+
+      # Evidence gathering: a "Connection refused" from the suite means the
+      # single-EKU gateway never listened. Dump container status, the knox
+      # container's stdout/stderr (includes the entrypoint's create-alias output
+      # and any Java startup stacktrace), and the gateway log so we can tell a
+      # failed entrypoint apart from single-EKU fail-fast validation.
+      - name: Dump single-EKU diagnostics on failure
+        if: failure() && steps.single_eku_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku.yml \
+            logs --no-color knox || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
 
       - name: Upload Test Results
         if: (!cancelled())

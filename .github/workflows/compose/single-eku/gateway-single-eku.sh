@@ -16,22 +16,31 @@
 #
 # KNOX-3359: single-EKU container entrypoint.
 #
-# The dev keystore fixtures (host-client_keystore.jks / global_truststore.jks)
-# are protected with the dev password "horton". The baked apache/knox-dev image
-# resolves keystore passwords from credential-store aliases, falling back to the
-# (image-specific) master secret when an alias is absent. Rather than depend on
-# the master secret value, we create the aliases explicitly so the password is
-# deterministic, then start the gateway. Keystore TYPE (JKS) comes from
-# gateway-site.xml (config), never hardcoded in Knox Java code.
+# The dev keystore fixtures (host-client_keystore.jks / server-identity_keystore.jks
+# / global_truststore.jks) are protected with the dev password "horton". The
+# baked apache/knox-dev image resolves keystore passwords from credential-store
+# aliases, falling back to the (image-specific) master secret when an alias is
+# absent. The mounted fixtures do NOT use the master secret as their password,
+# so relying on the fallback would fail to open them. We therefore create every
+# alias single-EKU resolves explicitly, then start the gateway. Keystore TYPE
+# (JKS) comes from gateway-site.xml (config), never hardcoded in Knox Java code.
 set -e
 
 PASS="horton"
 
 # Create the credential-store aliases the single-EKU config resolves:
-#   - gateway-httpclient-keystore-password : client keystore store password
+#   - gateway-httpclient-keystore-password    : client keystore store password
 #     (the client key passphrase alias falls back to this one)
-#   - gateway-truststore-password          : server truststore password
-for alias in gateway-httpclient-keystore-password gateway-truststore-password; do
+#   - gateway-httpclient-truststore-password  : outbound HTTP client truststore
+#   - gateway-truststore-password             : server truststore password
+#   - gateway-identity-keystore-password      : server identity keystore password
+#   - gateway-identity-passphrase             : server identity key passphrase
+for alias in \
+    gateway-httpclient-keystore-password \
+    gateway-httpclient-truststore-password \
+    gateway-truststore-password \
+    gateway-identity-keystore-password \
+    gateway-identity-passphrase; do
   /knox-runtime/bin/knoxcli.sh create-alias "$alias" --value "$PASS"
 done
 

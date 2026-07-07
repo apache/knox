@@ -51,6 +51,34 @@ limitations under the License.
         <name>gateway.truststore.type</name>
         <value>JKS</value>
     </property>
+    <!-- Outbound HTTP client truststore. single-EKU mode refuses to start
+         unless this is configured (Knox must be able to verify upstream TLS
+         certs). No real upstream mTLS call is made in the test, so the server
+         truststore fixture is reused here. -->
+    <property>
+        <name>gateway.httpclient.truststore.path</name>
+        <value>/knox-runtime/conf/single-eku-keystores/global_truststore.jks</value>
+    </property>
+    <property>
+        <name>gateway.httpclient.truststore.type</name>
+        <value>JKS</value>
+    </property>
+    <!-- Server identity keystore. The image's auto-generated gateway-identity
+         cert carries no EKU, which single-EKU mode rejects (the server identity
+         must be serverAuth-only), so a dedicated serverAuth-only fixture is
+         supplied here. -->
+    <property>
+        <name>gateway.tls.keystore.path</name>
+        <value>/knox-runtime/conf/single-eku-keystores/server-identity_keystore.jks</value>
+    </property>
+    <property>
+        <name>gateway.tls.keystore.type</name>
+        <value>JKS</value>
+    </property>
+    <property>
+        <name>gateway.tls.key.alias</name>
+        <value>gateway-identity</value>
+    </property>
     <property>
         <name>gateway.client.auth.needed</name>
         <value>true</value>
