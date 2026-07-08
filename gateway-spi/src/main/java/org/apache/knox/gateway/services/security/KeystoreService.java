@@ -34,6 +34,15 @@ public interface KeystoreService extends Service {
 
   void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) throws KeystoreServiceException;
 
+  /**
+   * Adds a self-signed certificate to the Gateway keystore, stamping the given Extended Key Usage
+   * purpose OIDs (single-EKU identities). The default implementation ignores the OIDs.
+   */
+  default void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname, String... ekuOids)
+      throws KeystoreServiceException {
+    addSelfSignedCertForGateway(alias, passphrase, hostname);
+  }
+
   KeyStore getKeystoreForGateway() throws KeystoreServiceException;
 
   /**

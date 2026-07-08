@@ -156,11 +156,15 @@ public class DefaultKeystoreService implements KeystoreService {
   public KeyStore getKeystoreForHttpClient() throws KeystoreServiceException {
     String keystorePath = config.getHttpClientKeystorePath();
     if (keystorePath == null) {
+      // Single-EKU with no dedicated client keystore: the clientAuth identity is
+      // co-located in the gateway keystore.
+      if (config.isSingleEkuEnabled()) {
+        return getKeystoreForGateway();
+      }
       return null;
-    } else {
-      return getKeystore(Paths.get(keystorePath), config.getHttpClientKeystoreType(),
-          config.getHttpClientKeystorePasswordAlias(), true);
     }
+    return getKeystore(Paths.get(keystorePath), config.getHttpClientKeystoreType(),
+        config.getHttpClientKeystorePasswordAlias(), true);
   }
 
   @Override
@@ -196,7 +200,13 @@ public class DefaultKeystoreService implements KeystoreService {
     addCertForGateway(alias, passphrase, hostname);
   }
 
-  private synchronized void addCertForGateway(String alias, char[] passphrase, String hostname)
+  @Override
+  public void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname, String... ekuOids)
+      throws KeystoreServiceException {
+    addCertForGateway(alias, passphrase, hostname, ekuOids);
+  }
+
+  private synchronized void addCertForGateway(String alias, char[] passphrase, String hostname, String... ekuOids)
       throws KeystoreServiceException {
     KeyPairGenerator keyPairGenerator;
     try {
@@ -209,11 +219,11 @@ public class DefaultKeystoreService implements KeystoreService {
       X509Certificate cert;
       if(hostname.equals(CERT_GEN_MODE_HOSTNAME)) {
         String dn = buildDistinguishedName(InetAddress.getLocalHost().getHostName());
-        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, this.selfSigningCertificateAlgorithm);
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, this.selfSigningCertificateAlgorithm, ekuOids);
       }
       else {
         String dn = buildDistinguishedName(hostname);
-        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, this.selfSigningCertificateAlgorithm);
+        cert = X509CertificateUtil.generateCertificate(dn, KPair, 365, this.selfSigningCertificateAlgorithm, ekuOids);
       }
 
       KeyStore privateKS = getKeystoreForGateway();

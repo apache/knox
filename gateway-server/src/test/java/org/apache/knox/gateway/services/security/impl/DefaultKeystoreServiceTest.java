@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -212,6 +213,7 @@ public class DefaultKeystoreServiceTest {
 
     GatewayConfig config = createMock(GatewayConfig.class);
     expect(config.getHttpClientKeystorePath()).andReturn(null).atLeastOnce();
+    expect(config.isSingleEkuEnabled()).andReturn(false).atLeastOnce();   // NEW: no fallback when single-EKU off
     expect(config.getGatewayKeystoreDir()).andReturn(testFolder.newFolder().getAbsolutePath()).anyTimes();
     expectInitConfig(config);
     replay(config);
@@ -222,6 +224,35 @@ public class DefaultKeystoreServiceTest {
 
     assertNull(keystoreService.getKeystoreForHttpClient());
     verify(config);
+  }
+
+  @Test
+  public void testGetKeystoreForHttpClientFallsBackToGatewayKeystoreForSingleEku() throws Exception {
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn("horton".toCharArray()).anyTimes();
+    replay(masterService);
+
+    GatewayConfig config = createMock(GatewayConfig.class);
+    expect(config.getHttpClientKeystorePath()).andReturn(null).atLeastOnce();
+    expect(config.isSingleEkuEnabled()).andReturn(true).atLeastOnce();
+    expect(config.getGatewayKeystoreDir()).andReturn(testFolder.newFolder().getAbsolutePath()).anyTimes();
+    expectInitConfig(config);
+    replay(config);
+
+    KeyStore gatewayKeystore = createNiceMock(KeyStore.class);
+    replay(gatewayKeystore);
+
+    DefaultKeystoreService keystoreService = createMockBuilder(DefaultKeystoreService.class)
+        .addMockedMethod("getKeystoreForGateway")
+        .createMock();
+    expect(keystoreService.getKeystoreForGateway()).andReturn(gatewayKeystore).once();
+    keystoreService.setMasterService(masterService);
+    replay(keystoreService);
+
+    keystoreService.init(config, Collections.emptyMap());
+
+    assertSame(gatewayKeystore, keystoreService.getKeystoreForHttpClient());
+    verify(config, keystoreService);
   }
 
   @Test
