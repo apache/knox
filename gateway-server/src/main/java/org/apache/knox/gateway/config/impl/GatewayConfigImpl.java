@@ -850,11 +850,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isHttpClientTwoWaySslEnabled() {
-    String configured = get(HTTP_CLIENT_TWO_WAY_SSL_ENABLED);
-    if (configured != null) {
-      return Boolean.parseBoolean(configured);
-    }
-    return isSingleEkuEnabled();
+    return Boolean.parseBoolean(get(HTTP_CLIENT_TWO_WAY_SSL_ENABLED, HTTP_CLIENT_TWO_WAY_SSL_ENABLED_DEFAULT));
   }
 
   @Override

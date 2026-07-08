@@ -74,6 +74,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private List<String> includedSSLCiphers;
   private List<String> excludedSSLCiphers;
   private boolean sslEnabled;
+  private boolean httpClientTwoWaySslEnabled;
   private String truststoreType = "jks";
   private String keystoreType = "jks";
   private String databaseSslTruststoreType = "JKS";
@@ -499,7 +500,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isHttpClientTwoWaySslEnabled() {
-    return isSingleEkuEnabled();
+    return httpClientTwoWaySslEnabled;
+  }
+
+  public void setHttpClientTwoWaySslEnabled(boolean httpClientTwoWaySslEnabled) {
+    this.httpClientTwoWaySslEnabled = httpClientTwoWaySslEnabled;
   }
 
   @Override

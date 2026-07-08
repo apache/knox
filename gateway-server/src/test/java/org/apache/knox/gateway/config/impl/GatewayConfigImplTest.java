@@ -584,21 +584,21 @@ public class GatewayConfigImplTest {
   public void testHttpClientTwoWaySslEnabledOption() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
-    // Default: single-EKU off - two-way SSL also off
+    // Default: off, independent of single-EKU.
     assertFalse(config.isHttpClientTwoWaySslEnabled());
 
-    // When single-EKU is on, two-way SSL defaults to true (sane default)
+    // Enabling single-EKU must NOT turn on two-way SSL.
     config.set("gateway.tls.single.eku.enabled", "true");
-    assertTrue(config.isHttpClientTwoWaySslEnabled());
-
-    // Explicit false overrides the single-EKU-derived default
-    config.set("gateway.httpclient.twoWaySsl.enabled", "false");
     assertFalse(config.isHttpClientTwoWaySslEnabled());
 
-    // Explicit true works regardless of single-EKU state
-    config.set("gateway.tls.single.eku.enabled", "false");
+    // Explicit true works regardless of single-EKU state.
     config.set("gateway.httpclient.twoWaySsl.enabled", "true");
     assertTrue(config.isHttpClientTwoWaySslEnabled());
+
+    // Explicit false works with single-EKU off too.
+    config.set("gateway.tls.single.eku.enabled", "false");
+    config.set("gateway.httpclient.twoWaySsl.enabled", "false");
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
   }
 
   @Test
