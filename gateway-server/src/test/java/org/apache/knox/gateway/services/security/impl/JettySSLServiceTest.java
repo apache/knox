@@ -748,16 +748,49 @@ public class JettySSLServiceTest {
   // ---- OUTBOUND mTLS: client identity + httpclient truststore required only when two-way SSL is on ----
 
   @Test
-  public void testSingleEkuValidationFailsWhenOutboundOnAndClientKeystorePathMissing() throws Exception {
-    GatewayConfig config = singleEkuConfig(null, "server", null, false, true, "client-trust.jks");
+  public void testSingleEkuValidationPassesWithGeneratedServerIdentityAndTwoWayOff() throws Exception {
+    // Simulates a self-generated serverAuth identity present in the gateway keystore, mTLS off.
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, false, null);
     KeystoreService keystoreService = createMock(KeystoreService.class);
     expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
     replay(config, keystoreService);
+
+    sslServiceWith(keystoreService).validateSingleEkuConfig(config); // must not throw
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationPassesWithGeneratedClientIdentityWhenTwoWayOn() throws Exception {
+    // Outbound two-way on, no configured client keystore path: the clientAuth identity is
+    // available via the (fallback) HTTP-client keystore. Outbound truststore is configured.
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient())
+        .andReturn(keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth)).anyTimes();
+    replay(config, keystoreService);
+
+    sslServiceWith(keystoreService).validateSingleEkuConfig(config); // must not throw
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationFailsWhenTwoWayOnAndNoClientKeyEntry() throws Exception {
+    // Known-limitation case: two-way on, keystore present but no client key entry for the alias.
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    // A keystore that has NO key entry for alias "server".
+    KeyStore empty = KeyStore.getInstance("JKS");
+    empty.load(null, null);
+    expect(keystoreService.getKeystoreForHttpClient()).andReturn(empty).anyTimes();
+    replay(config, keystoreService);
     try {
       sslServiceWith(keystoreService).validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException for missing client keystore path with two-way SSL");
+      fail("Expected ServiceLifecycleException when no client key entry is available");
     } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains(GatewayConfig.HTTP_CLIENT_KEYSTORE_PATH));
+      assertTrue(e.getMessage().contains("server"));                              // names the alias
+      assertTrue(e.getMessage().contains(GatewayConfig.HTTP_CLIENT_KEY_ALIAS));   // guidance
     }
     verify(config, keystoreService);
   }

@@ -93,7 +93,24 @@ public class JettySSLService implements SSLService {
         } catch (AliasServiceException e) {
           throw new ServiceLifecycleException("Error accessing credential store for the gateway.", e);
         }
-        keystoreService.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase);
+        if (config.isSingleEkuEnabled()) {
+          // Self-bootstrap single-purpose identities, in-line with dual-EKU self-signing.
+          log.generatingSingleEkuIdentity("serverAuth", config.getIdentityKeyAlias());
+          keystoreService.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase, null, EKU_SERVER_AUTH);
+          // Co-locate a clientAuth identity only when outbound two-way SSL will use it.
+          if (config.isHttpClientTwoWaySslEnabled()) {
+            char[] httpClientPassphrase;
+            try {
+              httpClientPassphrase = aliasService.getHttpClientKeyPassphrase();
+            } catch (AliasServiceException e) {
+              throw new ServiceLifecycleException("Error accessing credential store for the gateway.", e);
+            }
+            log.generatingSingleEkuIdentity("clientAuth", config.getHttpClientKeyAlias());
+            keystoreService.addSelfSignedCertForGateway(config.getHttpClientKeyAlias(), httpClientPassphrase, null, EKU_CLIENT_AUTH);
+          }
+        } else {
+          keystoreService.addSelfSignedCertForGateway(config.getIdentityKeyAlias(), passphrase);
+        }
       }
       else {
         log.keyStoreForGatewayFoundNotCreating();
@@ -175,24 +192,21 @@ public class JettySSLService implements SSLService {
     // OUTBOUND mTLS: only when two-way SSL is enabled is the client identity presented, so only then
     // must it exist and be clientAuth-only, and only then is an outbound truststore required.
     if (config.isHttpClientTwoWaySslEnabled()) {
-      String clientKeystorePath = config.getHttpClientKeystorePath();
-      if (clientKeystorePath == null || clientKeystorePath.isEmpty()) {
-        throw new ServiceLifecycleException("Single-EKU mode is enabled with outbound two-way SSL ("
-            + GatewayConfig.HTTP_CLIENT_TWO_WAY_SSL_ENABLED + "=true) but the HTTP client keystore path ("
-            + GatewayConfig.HTTP_CLIENT_KEYSTORE_PATH + ") is not configured. Server will not start.");
-      }
       String clientKeyAlias = config.getHttpClientKeyAlias();
       KeyStore clientKeystore;
       try {
         clientKeystore = keystoreService.getKeystoreForHttpClient();
         if (clientKeystore == null || !clientKeystore.isKeyEntry(clientKeyAlias)) {
-          throw new ServiceLifecycleException("Single-EKU mode is enabled with outbound two-way SSL but the "
-              + "HTTP client keystore at " + clientKeystorePath + " does not contain a key entry for alias '"
-              + clientKeyAlias + "' (" + GatewayConfig.HTTP_CLIENT_KEY_ALIAS + "). Server will not start.");
+          log.singleEkuClientIdentityNotAvailable(clientKeyAlias);
+          throw new ServiceLifecycleException("Single-EKU mode is enabled with outbound two-way SSL but no "
+              + "HTTP client key entry for alias '" + clientKeyAlias + "' ("
+              + GatewayConfig.HTTP_CLIENT_KEY_ALIAS + ") is available (configure "
+              + GatewayConfig.HTTP_CLIENT_KEYSTORE_PATH + " or let single-EKU generate one). "
+              + "Server will not start.");
         }
       } catch (KeystoreServiceException | KeyStoreException e) {
         throw new ServiceLifecycleException("Single-EKU mode is enabled with outbound two-way SSL but the "
-            + "HTTP client keystore at " + clientKeystorePath + " could not be loaded. Server will not start.", e);
+            + "HTTP client keystore could not be loaded. Server will not start.", e);
       }
 
       Certificate clientCert;
