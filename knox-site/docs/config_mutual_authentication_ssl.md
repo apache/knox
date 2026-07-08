@@ -87,3 +87,60 @@ The below example excludes the `health` topology from mTLS on the 9443 port.
 An example how one can access the health topology on port 9443 without mTLS.
 
      https://{gateway-host}:9443/{gateway-path}/health
+
+#### Single-EKU certificates and mTLS ####
+
+The single-EKU feature (`gateway.tls.single.eku.enabled=true`) enforces that every certificate Knox uses is *single-purpose*: the server identity certificate must be `serverAuth`-only, and the outbound client identity certificate must be `clientAuth`-only. Certificates with a dual-purpose or missing Extended Key Usage (EKU) are rejected at startup.
+
+Single-EKU is **independent of mutual TLS**. Enabling it does not turn mTLS on in either direction; it only constrains the *purpose* of whichever certificates are actually used. Whether Knox requires client certificates on inbound connections, or presents one on outbound connections, is a separate, orthogonal deployment choice.
+
+The single-EKU invariant that always holds is that **the server identity certificate must be `serverAuth`-only**, because Knox always presents it as a TLS server. Everything else is validated only when the corresponding mTLS direction is enabled:
+
+* **Inbound mTLS** (Knox acting as a TLS server that requires client certificates) is controlled by `gateway.client.auth.needed` / `gateway.client.auth.wanted`. When enabled it requires an inbound truststore via `gateway.truststore.path`.
+* **Outbound mTLS** (Knox acting as a client that presents a certificate to upstream services) is controlled by `gateway.httpclient.twoWaySsl.enabled`. It **defaults to `false`** and is **not** implied by single-EKU. When enabled it requires the `clientAuth`-only `gateway.httpclient.keystore.path` (holding a key entry for `gateway.httpclient.key.alias`) and `gateway.httpclient.truststore.path`.
+
+A deployment may therefore legitimately run single-EKU with mTLS off: Knox serves one-way TLS with its `serverAuth`-only identity, and any configured outbound client certificate simply goes unused.
+
+Passwords are not stored in `gateway-site.xml`; they resolve from credential-store aliases (`knoxcli.sh create-alias ...`) or the master-secret fallback. Keystore `*.type` defaults to `PKCS12`; `JKS` is shown below for the development fixtures.
+
+##### Scenario A — single-EKU WITH mTLS (inbound + outbound) #####
+
+    <!-- Single-EKU feature -->
+    <property><name>gateway.tls.single.eku.enabled</name><value>true</value></property>
+
+    <!-- Server identity: serverAuth-only cert (ALWAYS required under single-EKU) -->
+    <property><name>gateway.tls.keystore.path</name><value>/path/server-identity_keystore.jks</value></property>
+    <property><name>gateway.tls.keystore.type</name><value>JKS</value></property>
+    <property><name>gateway.tls.key.alias</name><value>gateway-identity</value></property>
+
+    <!-- INBOUND mTLS: Knox (as TLS server) requires client certs -->
+    <property><name>gateway.client.auth.needed</name><value>true</value></property>
+    <property><name>gateway.truststore.path</name><value>/path/global_truststore.jks</value></property>
+    <property><name>gateway.truststore.type</name><value>JKS</value></property>
+
+    <!-- OUTBOUND mTLS: Knox (as client) presents a clientAuth-only cert to upstreams -->
+    <property><name>gateway.httpclient.twoWaySsl.enabled</name><value>true</value></property>
+    <property><name>gateway.httpclient.keystore.path</name><value>/path/host-client_keystore.jks</value></property>
+    <property><name>gateway.httpclient.keystore.type</name><value>JKS</value></property>
+    <property><name>gateway.httpclient.key.alias</name><value>gateway-httpclient-key</value></property>
+    <property><name>gateway.httpclient.truststore.path</name><value>/path/global_truststore.jks</value></property>
+    <property><name>gateway.httpclient.truststore.type</name><value>JKS</value></property>
+
+Required aliases: `gateway-identity-keystore-password`, `gateway-identity-passphrase`, `gateway-truststore-password`, `gateway-httpclient-keystore-password`, `gateway-httpclient-truststore-password`.
+
+Inbound and outbound are independent: keep only the INBOUND block for inbound-only mTLS, or only the OUTBOUND block for outbound-only.
+
+##### Scenario B — single-EKU WITHOUT mTLS #####
+
+    <!-- Single-EKU feature -->
+    <property><name>gateway.tls.single.eku.enabled</name><value>true</value></property>
+
+    <!-- Server identity: serverAuth-only cert (still required) -->
+    <property><name>gateway.tls.keystore.path</name><value>/path/server-identity_keystore.jks</value></property>
+    <property><name>gateway.tls.keystore.type</name><value>JKS</value></property>
+    <property><name>gateway.tls.key.alias</name><value>gateway-identity</value></property>
+
+    <!-- No inbound mTLS  -> gateway.client.auth.needed defaults false -->
+    <!-- No outbound mTLS -> gateway.httpclient.twoWaySsl.enabled defaults false -->
+
+Required aliases: `gateway-identity-keystore-password`, `gateway-identity-passphrase`. Single-EKU validation only checks the `serverAuth`-only server identity; Knox serves one-way TLS and accepts requests with no client certificate. If Knox proxies to HTTPS upstreams in this mode, set `gateway.httpclient.truststore.path` for one-way upstream verification — general outbound-TLS config, not required by the single-EKU feature.
