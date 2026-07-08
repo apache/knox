@@ -116,6 +116,43 @@ jobs:
           echo '===== gateway.log ====='
           cat ./.github/workflows/compose/logs/gateway.log || true
 
+      # Second single-EKU scenario: mTLS OFF. Proves single-EKU does not force
+      # inbound client authentication -- a no-client-cert request must succeed.
+      - name: Restart Knox in single-EKU (no mTLS) mode
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            up -d knox
+
+      - name: Wait for single-EKU (no mTLS) gateway to stabilize
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run Single-EKU (no mTLS) Tests
+        id: single_eku_no_mtls_tests
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test_single_eku_no_mtls.py --junitxml=test-results-single-eku-no-mtls.xml"
+
+      - name: Dump single-EKU (no mTLS) diagnostics on failure
+        if: failure() && steps.single_eku_no_mtls_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            logs --no-color knox || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+
       - name: Upload Test Results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
@@ -124,6 +161,7 @@ jobs:
           path: |
             .github/workflows/tests/test-results.xml
             .github/workflows/tests/test-results-single-eku.xml
+            .github/workflows/tests/test-results-single-eku-no-mtls.xml
 
       - name: Upload Event File
         uses: actions/upload-artifact@v4
