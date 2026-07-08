@@ -19,30 +19,15 @@ limitations under the License.
 <configuration>
 
     <!--
-      KNOX-3359 single-EKU WITHOUT mTLS. single-EKU is enabled with a serverAuth-only
-      server identity keystore, but inbound client authentication and outbound two-way
-      SSL are both OFF. Proves single-EKU no longer forces mTLS: Knox serves one-way TLS
-      and accepts requests that present no client certificate.
+      KNOX-3359 single-EKU WITHOUT mTLS. single-EKU is enabled; inbound client
+      authentication and outbound two-way SSL are both OFF. No keystores are
+      provided: Knox self-generates a serverAuth-only server identity at
+      startup (default keystore, default alias/password). Proves single-EKU no
+      longer forces mTLS and self-bootstraps its identity.
     -->
     <property>
         <name>gateway.tls.single.eku.enabled</name>
         <value>true</value>
-    </property>
-    <!-- Server identity keystore. The image's auto-generated gateway-identity
-         cert carries no EKU, which single-EKU mode rejects (the server identity
-         must be serverAuth-only), so a dedicated serverAuth-only fixture is
-         supplied here. -->
-    <property>
-        <name>gateway.tls.keystore.path</name>
-        <value>/knox-runtime/conf/single-eku-keystores/server-identity_keystore.jks</value>
-    </property>
-    <property>
-        <name>gateway.tls.keystore.type</name>
-        <value>JKS</value>
-    </property>
-    <property>
-        <name>gateway.tls.key.alias</name>
-        <value>gateway-identity</value>
     </property>
 
     <property>

@@ -15,17 +15,13 @@
 #
 # KNOX-3359: single-EKU WITHOUT mTLS compose OVERRIDE.
 #
-# single-EKU on, inbound client-auth OFF, outbound two-way SSL OFF. Reuses the
-# serverAuth-only server identity keystore and the single-EKU entrypoint (which
-# creates the identity password aliases; the extra aliases it also creates are
-# unused here and harmless).
+# single-EKU on, inbound client-auth OFF, outbound two-way SSL OFF. No keystores
+# are mounted: Knox self-generates a serverAuth-only server identity at startup,
+# so the default baked /gateway.sh entrypoint is used as-is.
 services:
   knox:
-    command: /gateway-single-eku.sh
     volumes:
       - ./single-eku-no-mtls/gateway-site.xml:/knox-runtime/conf/gateway-site.xml:ro
-      - ./single-eku/keystores:/knox-runtime/conf/single-eku-keystores:ro
-      - ./single-eku/gateway-single-eku.sh:/gateway-single-eku.sh:ro
 
   tests:
     volumes:
