@@ -617,15 +617,16 @@ public class JettySSLServiceTest {
 
   private GatewayConfig singleEkuConfig(String clientKeystorePath, String clientKeyAlias,
                                         String truststorePath, boolean clientAuthNeeded,
-                                        String httpClientTruststorePath) {
+                                        boolean twoWaySsl, String httpClientTruststorePath) {
     GatewayConfig config = createMock(GatewayConfig.class);
     expect(config.isSingleEkuEnabled()).andReturn(true).anyTimes();
-    expect(config.getHttpClientKeystorePath()).andReturn(clientKeystorePath).anyTimes();
-    expect(config.getHttpClientKeyAlias()).andReturn(clientKeyAlias).anyTimes();
     expect(config.getIdentityKeyAlias()).andReturn("server").anyTimes();
-    expect(config.getTruststorePath()).andReturn(truststorePath).anyTimes();
     expect(config.isClientAuthNeeded()).andReturn(clientAuthNeeded).anyTimes();
     expect(config.isClientAuthWanted()).andReturn(false).anyTimes();
+    expect(config.getTruststorePath()).andReturn(truststorePath).anyTimes();
+    expect(config.isHttpClientTwoWaySslEnabled()).andReturn(twoWaySsl).anyTimes();
+    expect(config.getHttpClientKeystorePath()).andReturn(clientKeystorePath).anyTimes();
+    expect(config.getHttpClientKeyAlias()).andReturn(clientKeyAlias).anyTimes();
     expect(config.getHttpClientTruststorePath()).andReturn(httpClientTruststorePath).anyTimes();
     return config;
   }
@@ -657,179 +658,41 @@ public class JettySSLServiceTest {
     return ks;
   }
 
-  @Test
-  public void testSingleEkuValidationFailsWhenClientKeystorePathMissing() {
-    GatewayConfig config = singleEkuConfig(null, "server", "truststore.jks", true, "client-trust.jks");
-    KeystoreService keystoreService = createMock(KeystoreService.class);
-    replay(config, keystoreService);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException for missing client keystore path");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("gateway.httpclient.keystore.path"));
-    }
-    verify(config, keystoreService);
+  // Convenience: a valid serverAuth-only server identity keystore (alias "server").
+  private KeyStore serverAuthKeystore() throws Exception {
+    return keystoreWithEku("server", KeyPurposeId.id_kp_serverAuth);
   }
 
-  @Test
-  public void testSingleEkuValidationFailsWhenTruststoreMissing() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new java.io.File(".").getCanonicalPath();
-    }
-    String clientKeystorePath = java.nio.file.Paths.get(basedir, "target", "test-classes", "keystores", "server-keystore.jks").toString();
-    KeyStore clientKeystore = KeyStore.getInstance("JKS");
-    try (java.io.InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Paths.get(clientKeystorePath))) {
-      clientKeystore.load(in, "horton".toCharArray());
-    }
-
-    GatewayConfig config = singleEkuConfig(clientKeystorePath, "server", null, true, "client-trust.jks");
-    KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    replay(config, keystoreService);
-
+  private JettySSLService sslServiceWith(KeystoreService keystoreService) {
     JettySSLService sslService = new JettySSLService();
     sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException for missing server truststore");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("gateway.truststore.path"));
-    }
-    verify(config, keystoreService);
+    return sslService;
   }
 
-  @Test
-  public void testSingleEkuValidationFailsWhenClientAuthDisabled() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new java.io.File(".").getCanonicalPath();
-    }
-    String clientKeystorePath = java.nio.file.Paths.get(basedir, "target", "test-classes", "keystores", "server-keystore.jks").toString();
-    KeyStore clientKeystore = KeyStore.getInstance("JKS");
-    try (java.io.InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Paths.get(clientKeystorePath))) {
-      clientKeystore.load(in, "horton".toCharArray());
-    }
-
-    GatewayConfig config = singleEkuConfig(clientKeystorePath, "server", "some-truststore.jks", false, "client-trust.jks");
-    KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    replay(config, keystoreService);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException when client auth disabled");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("client authentication"));
-    }
-    verify(config, keystoreService);
-  }
+  // ---- ALWAYS: server identity must be serverAuth-only ----
 
   @Test
-  public void testSingleEkuValidationPassesWhenAllPresent() throws Exception {
-    // Client identity is clientAuth-only, server identity is serverAuth-only — the valid single-EKU setup.
-    KeyStore clientKeystore = keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth);
-    KeyStore serverKeystore = keystoreWithEku("server", KeyPurposeId.id_kp_serverAuth);
-
-    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", "some-truststore.jks", true, "client-trust.jks");
+  public void testSingleEkuValidationPassesWhenBothMtlsOff() throws Exception {
+    // single-EKU on, inbound OFF, outbound OFF -> only the serverAuth-only server identity is validated.
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, false, null);
     KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    expect(keystoreService.getKeystoreForGateway()).andReturn(serverKeystore).anyTimes();
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
     replay(config, keystoreService);
 
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    sslService.validateSingleEkuConfig(config); // must not throw
-    verify(config, keystoreService);
-  }
-
-  @Test
-  public void testSingleEkuValidationFailsWhenClientCertNotClientAuth() throws Exception {
-    // Client keystore holds a serverAuth-ONLY cert — cannot do outbound mTLS.
-    KeyStore clientKeystore = keystoreWithEku("server", KeyPurposeId.id_kp_serverAuth);
-
-    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", "some-truststore.jks", true, "client-trust.jks");
-    KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    replay(config, keystoreService);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException when client cert lacks clientAuth EKU");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("clientAuth"));
-      assertTrue(e.getMessage().contains("HTTP client keystore"));
-    }
-    verify(config, keystoreService);
-  }
-
-  @Test
-  public void testSingleEkuValidationFailsWhenClientCertHasNoEku() throws Exception {
-    // Client keystore holds a cert with NO EKU extension — unrestricted, defeats single-EKU intent.
-    KeyStore clientKeystore = keystoreWithEku("server");
-
-    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", "some-truststore.jks", true, "client-trust.jks");
-    KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    replay(config, keystoreService);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException when client cert has no EKU");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("clientAuth"));
-    }
-    verify(config, keystoreService);
-  }
-
-  @Test
-  public void testSingleEkuValidationFailsWhenClientCertIsDualPurpose() throws Exception {
-    // Client keystore holds a dual-purpose cert (clientAuth + serverAuth) — not single-purpose.
-    KeyStore clientKeystore = keystoreWithEku("server",
-        KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_serverAuth);
-
-    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", "some-truststore.jks", true, "client-trust.jks");
-    KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    replay(config, keystoreService);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException when client cert is dual-purpose");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("also declares"));
-      assertTrue(e.getMessage().contains("serverAuth"));
-    }
+    sslServiceWith(keystoreService).validateSingleEkuConfig(config); // must not throw
     verify(config, keystoreService);
   }
 
   @Test
   public void testSingleEkuValidationFailsWhenServerCertNotServerAuth() throws Exception {
-    // Client identity is valid (clientAuth), but server identity is clientAuth-only — cannot serve TLS.
-    KeyStore clientKeystore = keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth);
-    KeyStore serverKeystore = keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth);
-
-    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", "some-truststore.jks", true, "client-trust.jks");
+    // Server identity is clientAuth-only -> cannot serve TLS under single-EKU.
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, false, null);
     KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
-    expect(keystoreService.getKeystoreForGateway()).andReturn(serverKeystore).anyTimes();
+    expect(keystoreService.getKeystoreForGateway())
+        .andReturn(keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth)).anyTimes();
     replay(config, keystoreService);
-
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
     try {
-      sslService.validateSingleEkuConfig(config);
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
       fail("Expected ServiceLifecycleException when server cert lacks serverAuth EKU");
     } catch (ServiceLifecycleException e) {
       assertTrue(e.getMessage().contains("serverAuth"));
@@ -839,27 +702,154 @@ public class JettySSLServiceTest {
   }
 
   @Test
-  public void testSingleEkuValidationFailsWhenHttpClientTruststoreMissing() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new java.io.File(".").getCanonicalPath();
-    }
-    String clientKeystorePath = java.nio.file.Paths.get(basedir, "target", "test-classes", "keystores", "server-keystore.jks").toString();
-    KeyStore clientKeystore = KeyStore.getInstance("JKS");
-    try (java.io.InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Paths.get(clientKeystorePath))) {
-      clientKeystore.load(in, "horton".toCharArray());
-    }
-
-    GatewayConfig config = singleEkuConfig(clientKeystorePath, "server", "some-truststore.jks", true, null);
+  public void testSingleEkuValidationFailsWhenServerCertHasNoEku() throws Exception {
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, false, null);
     KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientKeystore).anyTimes();
+    expect(keystoreService.getKeystoreForGateway())
+        .andReturn(keystoreWithEku("server")).anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException when server cert has no EKU");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains("serverAuth"));
+    }
+    verify(config, keystoreService);
+  }
+
+  // ---- INBOUND mTLS: server truststore required only when client-auth is on ----
+
+  @Test
+  public void testSingleEkuValidationFailsWhenInboundOnAndTruststoreMissing() throws Exception {
+    GatewayConfig config = singleEkuConfig(null, "server", null, true, false, null);
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException for missing server truststore with inbound client-auth");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains(GatewayConfig.GATEWAY_TRUSTSTORE_PATH));
+    }
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationPassesWhenInboundOnAndTruststorePresent() throws Exception {
+    GatewayConfig config = singleEkuConfig(null, "server", "some-truststore.jks", true, false, null);
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
     replay(config, keystoreService);
 
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
+    sslServiceWith(keystoreService).validateSingleEkuConfig(config); // must not throw
+    verify(config, keystoreService);
+  }
+
+  // ---- OUTBOUND mTLS: client identity + httpclient truststore required only when two-way SSL is on ----
+
+  @Test
+  public void testSingleEkuValidationFailsWhenOutboundOnAndClientKeystorePathMissing() throws Exception {
+    GatewayConfig config = singleEkuConfig(null, "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    replay(config, keystoreService);
     try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException for missing HTTP client truststore");
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException for missing client keystore path with two-way SSL");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains(GatewayConfig.HTTP_CLIENT_KEYSTORE_PATH));
+    }
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationFailsWhenOutboundOnAndClientCertNotClientAuth() throws Exception {
+    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient())
+        .andReturn(keystoreWithEku("server", KeyPurposeId.id_kp_serverAuth)).anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException when client cert lacks clientAuth EKU");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains("clientAuth"));
+      assertTrue(e.getMessage().contains("HTTP client keystore"));
+    }
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationFailsWhenOutboundOnAndClientCertHasNoEku() throws Exception {
+    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient())
+        .andReturn(keystoreWithEku("server")).anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException when client cert has no EKU");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains("clientAuth"));
+    }
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationFailsWhenOutboundOnAndClientCertDualPurpose() throws Exception {
+    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient())
+        .andReturn(keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth, KeyPurposeId.id_kp_serverAuth))
+        .anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException when client cert is dual-purpose");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains("also declares"));
+      assertTrue(e.getMessage().contains("serverAuth"));
+    }
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationFailsWhenOutboundOnAndAliasIsTrustedCertNotPrivateKey() throws Exception {
+    // Alias exists but as a TrustedCertEntry (no private key) -> isKeyEntry(alias) is false.
+    java.security.cert.Certificate cert =
+        keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth).getCertificate("server");
+    KeyStore ksWithCertEntry = KeyStore.getInstance("JKS");
+    ksWithCertEntry.load(null, null);
+    ksWithCertEntry.setCertificateEntry("server", cert);
+
+    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", null, false, true, "client-trust.jks");
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient()).andReturn(ksWithCertEntry).anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException when alias is a TrustedCertEntry, not a PrivateKeyEntry");
+    } catch (ServiceLifecycleException e) {
+      assertTrue(e.getMessage().contains("key entry"));
+    }
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testSingleEkuValidationFailsWhenOutboundOnAndHttpClientTruststoreMissing() throws Exception {
+    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", null, false, true, null);
+    KeystoreService keystoreService = createMock(KeystoreService.class);
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient())
+        .andReturn(keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth)).anyTimes();
+    replay(config, keystoreService);
+    try {
+      sslServiceWith(keystoreService).validateSingleEkuConfig(config);
+      fail("Expected ServiceLifecycleException for missing HTTP client truststore with two-way SSL");
     } catch (ServiceLifecycleException e) {
       assertTrue(e.getMessage().contains(GatewayConfig.HTTP_CLIENT_TRUSTSTORE_PATH));
     }
@@ -867,38 +857,15 @@ public class JettySSLServiceTest {
   }
 
   @Test
-  public void testSingleEkuValidationFailsWhenAliasIsTrustedCertNotPrivateKey() throws Exception {
-    String basedir = System.getProperty("basedir");
-    if (basedir == null) {
-      basedir = new java.io.File(".").getCanonicalPath();
-    }
-    // Extract the public cert from the server keystore and plant it as a TrustedCertEntry at the
-    // same alias — so isKeyEntry("server") returns false even though the alias exists.
-    KeyStore sourceKeystore = KeyStore.getInstance("JKS");
-    try (java.io.InputStream in = java.nio.file.Files.newInputStream(
-        java.nio.file.Paths.get(basedir, "target", "test-classes", "keystores", "server-keystore.jks"))) {
-      sourceKeystore.load(in, "horton".toCharArray());
-    }
-    java.security.cert.Certificate cert = sourceKeystore.getCertificate("server");
-
-    KeyStore ksWithCertEntry = KeyStore.getInstance("JKS");
-    ksWithCertEntry.load(null, null);
-    ksWithCertEntry.setCertificateEntry("server", cert);
-
-    String clientKeystorePath = java.nio.file.Paths.get(basedir, "target", "test-classes", "keystores", "server-keystore.jks").toString();
-    GatewayConfig config = singleEkuConfig(clientKeystorePath, "server", "some-truststore.jks", true, "client-trust.jks");
+  public void testSingleEkuValidationPassesWhenOutboundOnAndAllPresent() throws Exception {
+    GatewayConfig config = singleEkuConfig("client-keystore.jks", "server", null, false, true, "client-trust.jks");
     KeystoreService keystoreService = createMock(KeystoreService.class);
-    expect(keystoreService.getKeystoreForHttpClient()).andReturn(ksWithCertEntry).anyTimes();
+    expect(keystoreService.getKeystoreForGateway()).andReturn(serverAuthKeystore()).anyTimes();
+    expect(keystoreService.getKeystoreForHttpClient())
+        .andReturn(keystoreWithEku("server", KeyPurposeId.id_kp_clientAuth)).anyTimes();
     replay(config, keystoreService);
 
-    JettySSLService sslService = new JettySSLService();
-    sslService.setKeystoreService(keystoreService);
-    try {
-      sslService.validateSingleEkuConfig(config);
-      fail("Expected ServiceLifecycleException when alias is a TrustedCertEntry, not a PrivateKeyEntry");
-    } catch (ServiceLifecycleException e) {
-      assertTrue(e.getMessage().contains("key entry"));
-    }
+    sslServiceWith(keystoreService).validateSingleEkuConfig(config); // must not throw
     verify(config, keystoreService);
   }
 
