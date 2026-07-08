@@ -35,7 +35,7 @@ public class ConfigurableEntriesTestInterceptor extends BaseInterceptor {
     private List<Entry> entries;
     private EntryFilteringCursor cursor;
 
-    ConfigurableEntriesTestInterceptor(String name) {
+    public ConfigurableEntriesTestInterceptor(String name) {
         super(name);
     }
 
