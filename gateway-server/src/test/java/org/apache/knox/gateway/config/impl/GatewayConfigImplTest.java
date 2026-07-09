@@ -545,6 +545,63 @@ public class GatewayConfigImplTest {
   }
 
   @Test
+  public void testHttpClientKeystoreOptions() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Validate default options
+    assertNull(config.getHttpClientKeystorePath());
+    assertEquals(KeyStore.getDefaultType(), config.getHttpClientKeystoreType());
+    assertEquals("gateway-httpclient-keystore-password", config.getHttpClientKeystorePasswordAlias());
+    assertEquals("gateway-httpclient-key", config.getHttpClientKeyAlias());
+    assertEquals("gateway-httpclient-key-passphrase", config.getHttpClientKeyPassphraseAlias());
+
+    // Validate changed options
+    config.set("gateway.httpclient.keystore.path", "custom_path");
+    config.set("gateway.httpclient.keystore.type", "custom_type");
+    config.set("gateway.httpclient.keystore.password.alias", "custom_keystore_password_alias");
+    config.set("gateway.httpclient.key.alias", "custom_key_alias");
+    config.set("gateway.httpclient.key.passphrase.alias", "custom_key_passphrase_alias");
+
+    assertEquals("custom_path", config.getHttpClientKeystorePath());
+    assertEquals("custom_type", config.getHttpClientKeystoreType());
+    assertEquals("custom_keystore_password_alias", config.getHttpClientKeystorePasswordAlias());
+    assertEquals("custom_key_alias", config.getHttpClientKeyAlias());
+    assertEquals("custom_key_passphrase_alias", config.getHttpClientKeyPassphraseAlias());
+  }
+
+  @Test
+  public void testSingleEkuEnabledOption() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Default is multi-purpose (single-EKU disabled)
+    assertFalse(config.isSingleEkuEnabled());
+
+    config.set("gateway.tls.single.eku.enabled", "true");
+    assertTrue(config.isSingleEkuEnabled());
+  }
+
+  @Test
+  public void testHttpClientTwoWaySslEnabledOption() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Default: off, independent of single-EKU.
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
+
+    // Enabling single-EKU must NOT turn on two-way SSL.
+    config.set("gateway.tls.single.eku.enabled", "true");
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
+
+    // Explicit true works regardless of single-EKU state.
+    config.set("gateway.httpclient.twoWaySsl.enabled", "true");
+    assertTrue(config.isHttpClientTwoWaySslEnabled());
+
+    // Explicit false works with single-EKU off too.
+    config.set("gateway.tls.single.eku.enabled", "false");
+    config.set("gateway.httpclient.twoWaySsl.enabled", "false");
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
+  }
+
+  @Test
   public void testGatewayTruststoreOptions() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 

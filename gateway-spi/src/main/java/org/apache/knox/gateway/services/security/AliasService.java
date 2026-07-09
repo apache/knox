@@ -67,6 +67,8 @@ public interface AliasService extends Service {
 
   char[] getGatewayIdentityPassphrase() throws AliasServiceException;
 
+  default char[] getHttpClientKeyPassphrase() throws AliasServiceException { return getGatewayIdentityPassphrase(); }
+
   char[] getGatewayIdentityKeystorePassword() throws AliasServiceException;
 
   char[] getSigningKeyPassphrase() throws AliasServiceException;

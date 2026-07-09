@@ -205,6 +205,15 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.ERROR, text = "Unable to obtain the password for the gateway truststore using the alias {0}: {1}" )
   void failedToGetPasswordForGatewayTruststore(String alias, Exception e);
 
+  @Message( level = MessageLevel.ERROR, text = "Single-EKU mode is enabled but {0} is not configured. Knox cannot verify TLS certificates of upstream services. Server will not start." )
+  void singleEkuHttpClientTruststoreNotConfigured(String property);
+
+  @Message( level = MessageLevel.ERROR, text = "Single-EKU mode is enabled with outbound two-way SSL but no HTTP client identity is available for alias {0}. If two-way SSL was enabled after the gateway keystore was already created, the client identity was not generated at bootstrap. Remove the gateway keystore to regenerate it, or configure gateway.httpclient.keystore.path. Server will not start." )
+  void singleEkuClientIdentityNotAvailable(String alias);
+
+  @Message( level = MessageLevel.INFO, text = "Single-EKU mode: generating self-signed {0} identity for alias {1}." )
+  void generatingSingleEkuIdentity(String ekuName, String alias);
+
   @Message( level = MessageLevel.DEBUG, text = "Received request: {0} {1}" )
   void receivedRequest( String method, String uri );
 

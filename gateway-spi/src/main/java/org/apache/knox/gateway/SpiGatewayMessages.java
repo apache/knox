@@ -106,6 +106,10 @@ public interface SpiGatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Using two way SSL in {0}" )
   void usingTwoWaySsl(String serviceRole);
 
+  @Message( level = MessageLevel.INFO,
+            text = "Single-EKU mode is enabled but two-way SSL is disabled for {0} (set gateway.httpclient.twoWaySsl.enabled=true or use-two-way-ssl=\"true\" on the dispatch to present a client certificate)." )
+  void singleEkuEnabledWithoutTwoWaySsl(String serviceRole);
+
   @Message( level = MessageLevel.DEBUG, text = "Adding outbound header {0} and value {1}" )
   void addedOutboundheader(String header, String value);
 

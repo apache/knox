@@ -50,10 +50,13 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.i18n.GatewayUtilCommonMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -73,7 +76,7 @@ public class X509CertificateUtil {
    * @param algorithm the signing algorithm, eg "SHA256withRSA"
    * @return self-signed X.509 certificate
    */
-  public static X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm) {
+  public static X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm, String... ekuOids) {
     try {
       Date from = new Date();
       Date to = new Date(from.getTime() + days * 86400000L);
@@ -119,6 +122,15 @@ public class X509CertificateUtil {
       if (!generalNames.isEmpty()) {
         GeneralNames subjectAltNames = new GeneralNames(generalNames.toArray(new GeneralName[0]));
         certBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames);
+      }
+
+      // Add Extended Key Usage extension when purpose OIDs are supplied (single-EKU identities).
+      if (ekuOids != null && ekuOids.length > 0) {
+        KeyPurposeId[] purposes = new KeyPurposeId[ekuOids.length];
+        for (int i = 0; i < ekuOids.length; i++) {
+          purposes[i] = KeyPurposeId.getInstance(new ASN1ObjectIdentifier(ekuOids[i]));
+        }
+        certBuilder.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(purposes));
       }
 
       ContentSigner signer = new JcaContentSignerBuilder(algorithm).build(pair.getPrivate());

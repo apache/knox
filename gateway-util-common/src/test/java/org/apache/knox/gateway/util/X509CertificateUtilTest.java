@@ -23,6 +23,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
@@ -37,6 +42,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -125,5 +131,38 @@ public class X509CertificateUtilTest {
         executor.shutdown();
       }
     }
+  }
+
+  @Test
+  public void testGenerateCertificateWithoutEkuHasNone() throws Exception {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    X509Certificate cert = X509CertificateUtil.generateCertificate(
+        "CN=localhost", kpg.generateKeyPair(), 30, "SHA256withRSA");
+    assertNull(cert.getExtendedKeyUsage());
+  }
+
+  @Test
+  public void testGenerateCertificateWithServerAuthEku() throws Exception {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    X509Certificate cert = X509CertificateUtil.generateCertificate(
+        "CN=localhost", kpg.generateKeyPair(), 30, "SHA256withRSA", "1.3.6.1.5.5.7.3.1");
+    List<String> ekus = cert.getExtendedKeyUsage();
+    assertNotNull(ekus);
+    assertTrue(ekus.contains("1.3.6.1.5.5.7.3.1"));   // serverAuth
+    assertFalse(ekus.contains("1.3.6.1.5.5.7.3.2"));  // clientAuth
+  }
+
+  @Test
+  public void testGenerateCertificateWithClientAuthEku() throws Exception {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    X509Certificate cert = X509CertificateUtil.generateCertificate(
+        "CN=localhost", kpg.generateKeyPair(), 30, "SHA256withRSA", "1.3.6.1.5.5.7.3.2");
+    List<String> ekus = cert.getExtendedKeyUsage();
+    assertNotNull(ekus);
+    assertTrue(ekus.contains("1.3.6.1.5.5.7.3.2"));   // clientAuth
+    assertFalse(ekus.contains("1.3.6.1.5.5.7.3.1"));  // serverAuth
   }
 }

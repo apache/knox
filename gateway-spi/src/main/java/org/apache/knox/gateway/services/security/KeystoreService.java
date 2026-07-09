@@ -34,6 +34,15 @@ public interface KeystoreService extends Service {
 
   void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname) throws KeystoreServiceException;
 
+  /**
+   * Adds a self-signed certificate to the Gateway keystore, stamping the given Extended Key Usage
+   * purpose OIDs (single-EKU identities). The default implementation ignores the OIDs.
+   */
+  default void addSelfSignedCertForGateway(String alias, char[] passphrase, String hostname, String... ekuOids)
+      throws KeystoreServiceException {
+    addSelfSignedCertForGateway(alias, passphrase, hostname);
+  }
+
   KeyStore getKeystoreForGateway() throws KeystoreServiceException;
 
   /**
@@ -43,6 +52,16 @@ public interface KeystoreService extends Service {
    * @return a {@link KeyStore}; or <code>null</code> if not configured
    */
   KeyStore getTruststoreForHttpClient() throws KeystoreServiceException;
+
+  /**
+   * Gets the keystore holding the Gateway's client identity used for outbound mutual-TLS
+   * connections (single-EKU mode).
+   *
+   * @return a {@link KeyStore}; or <code>null</code> if {@code gateway.httpclient.keystore.path}
+   *         is not configured
+   * @throws KeystoreServiceException if the configured keystore cannot be loaded
+   */
+  default KeyStore getKeystoreForHttpClient() throws KeystoreServiceException { return null; }
 
   KeyStore getSigningKeystore() throws KeystoreServiceException;
 
