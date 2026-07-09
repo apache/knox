@@ -45,7 +45,6 @@ import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
-import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlImpl;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 
@@ -377,10 +376,6 @@ public class KnoxLDAPServerManager {
         searchRequest.setScope(SearchScope.SUBTREE);
         searchRequest.setFilter("(uid=" + username + ")");
         searchRequest.addAttributes("*");
-
-        RolesLookupBypassControlImpl bypassControl = new RolesLookupBypassControlImpl();
-        bypassControl.setBypassRolesLookup(true);
-        searchRequest.addControl(bypassControl);
 
         List<String> groups = new ArrayList<>();
         try (Cursor<Entry> cursor = directoryService.getAdminSession().search(searchRequest)) {
