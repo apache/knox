@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
 
 import java.util.Map;
 
@@ -27,13 +28,14 @@ import java.util.Map;
  */
 public interface KnoxLdapInterceptorFactory {
     /**
-     * Instantiate and interceptor
+     * Instantiate an interceptor
      * @param gatewayConfig the Knox Gateway configuration
+     * @param gatewayServices the active GatewayServices registry (may be null)
      * @param name the name of the interceptor
      * @param interceptorConfig the configuration for the interceptor
      * @return the interceptor
      */
-    Interceptor create(GatewayConfig gatewayConfig, String name, Map<String, String> interceptorConfig) throws Exception;
+    Interceptor create(GatewayConfig gatewayConfig, GatewayServices gatewayServices, String name, Map<String, String> interceptorConfig) throws Exception;
 
     /**
      * Get the type of interceptor this factory creates

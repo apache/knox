@@ -44,6 +44,7 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlImpl;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
@@ -67,6 +68,7 @@ public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
     private static final String LDAP_BIND_PASSWORD_ALIAS = "gateway_ldap_bind_password";
     private final AliasService aliasService;
+    private final GatewayServices gatewayServices;
 
     @VisibleForTesting
     DirectoryService directoryService;
@@ -81,7 +83,12 @@ public class KnoxLDAPServerManager {
     private Set<String> baseDns;
 
     KnoxLDAPServerManager(AliasService aliasService) {
+        this(aliasService, null);
+    }
+
+    KnoxLDAPServerManager(AliasService aliasService, GatewayServices gatewayServices) {
         this.aliasService = aliasService;
+        this.gatewayServices = gatewayServices;
     }
 
     /**
@@ -133,7 +140,7 @@ public class KnoxLDAPServerManager {
                 }
             }
 
-            interceptors.add(InterceptorFactory.createInterceptor(config, interceptorName, interceptorConfig));
+            interceptors.add(InterceptorFactory.createInterceptor(config, gatewayServices, interceptorName, interceptorConfig));
         }
         this.interceptors = interceptors;
     }

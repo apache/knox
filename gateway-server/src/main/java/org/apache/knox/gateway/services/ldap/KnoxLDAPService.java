@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.ldap;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
@@ -36,6 +37,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
 
     KnoxLDAPServerManager ldapServerManager;
     AliasService aliasService;
+    private GatewayServices gatewayServices;
     private boolean enabled;
 
     @Override
@@ -48,7 +50,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
 
         try {
             // Initialize the LDAP server manager with configuration
-            ldapServerManager = new KnoxLDAPServerManager(aliasService);
+            ldapServerManager = new KnoxLDAPServerManager(aliasService, gatewayServices);
             ldapServerManager.initialize(config);
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
@@ -57,6 +59,10 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
 
     public void setAliasService(AliasService aliasService) {
         this.aliasService = aliasService;
+    }
+
+    public void setGatewayServices(GatewayServices gatewayServices) {
+        this.gatewayServices = gatewayServices;
     }
 
     @Override
@@ -95,7 +101,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
             this.enabled = config.isLDAPEnabled();
 
             if (this.enabled) {
-                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager(aliasService) : this.ldapServerManager;
+                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager(aliasService, gatewayServices) : this.ldapServerManager;
                 ldapServerManager.stop();
                 ldapServerManager.initialize(config);
                 ldapServerManager.start();
