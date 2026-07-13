@@ -25,7 +25,10 @@ under the License.
 - **Status:** v0 **draft**, produced by the ASF Security team for the Knox PMC to
   review, correct, and own. Not yet ratified. The Knox PMC (Larry McCay, chair)
   confirmed on 2026-07-02 that they want a v0 draft to react to and take
-  ownership of *(maintainer, 2026-07-02)*.
+  ownership of *(maintainer, 2026-07-02)*. Larry McCay completed a line-by-line
+  review on 2026-07-09; his answers to the Wave 1–3 and meta §14 questions are
+  folded in below and the corresponding claims promoted to *(maintainer)*
+  *(maintainer, 2026-07-09 — L. McCay)*.
 - **Version binding:** written against Knox 2.x / current `master`, cross-read
   against the 1.6.0 User's Guide. A report against Knox version *N* should be
   triaged against the model as it stood at *N*, not at HEAD. Attach this model
@@ -46,10 +49,14 @@ under the License.
 
 ### Draft confidence
 
-**14 documented / 1 maintainer / 41 inferred.** This is an early draft: most
-of the trust-boundary and adversary-model reasoning is *(inferred)* and needs
-PMC ratification. The §14 open questions are the fastest path to promoting
-those tags.
+**~14 documented / ~20 maintainer / ~22 inferred** (after the 2026-07-09 PMC
+review). The Wave 1–3 core answers — deployment shape, adversary boundary,
+the keystone identity-assertion property, backend-hop TLS expectations, the
+`HeaderPreAuth` disposition, and the reverse-proxy responsibility split — are
+now *(maintainer)*. Still *(inferred)* and awaiting confirmation: Q7, Q9–Q13,
+Q17, Q21–Q22, Q28, Q29 (remaining environment/host-side-effect inventory,
+self-signed / `-persist-master` stances, secondary adversary capabilities,
+the known-non-findings suppression set, and cross-topology isolation).
 
 ### What Knox is (one paragraph)
 
@@ -82,10 +89,11 @@ services on the other.
 - **SSO** for web UIs (KnoxSSO) and **token issuance** for programmatic clients
   (KnoxToken).
 
-**Deployment context** *(inferred → Q1)*: a long-running network daemon (Jetty-
-based server), deployed at the cluster edge, operated by a cluster administrator.
-It is **not** an in-process library and **not** a CLI-first tool (though a Knox
-CLI exists for admin/keystore operations).
+**Deployment context** *(maintainer, 2026-07-09 — L. McCay confirmed Q1)*: a
+long-running network daemon (Jetty-based server), deployed at the cluster edge,
+operated by a cluster administrator. It is **not** an in-process library and
+**not** a CLI-first tool (though a Knox CLI exists for admin/keystore
+operations).
 
 **Caller roles.** A gateway has no single "caller"; the role splits three ways:
 
@@ -99,7 +107,7 @@ CLI exists for admin/keystore operations).
   Knox delegates authentication to — trusted infrastructure, out of scope as an
   adversary (§3), but its trust assumptions are load-bearing (§5, §14).
 
-**Component-family table** *(inferred → Q2)*:
+**Component-family table** *(maintainer, 2026-07-09 — L. McCay confirmed Q2)*:
 
 | Family | Representative entry point | Touches outside process? | In model? |
 | --- | --- | --- | --- |
@@ -121,21 +129,28 @@ CLI exists for admin/keystore operations).
 - **The operator/administrator as an adversary.** Anyone who can write topology
   descriptors, provider configs, the master secret, or the keystore files
   already controls the gateway's trust decisions. A "vulnerability" that requires
-  malicious operator config is not in the model *(inferred → Q3)*.
+  malicious operator config is not in the model *(maintainer, 2026-07-09 —
+  L. McCay confirmed Q3: malicious operator config is never a Knox vuln)*.
 - **The backend services Knox fronts, and the federated IdP.** Knox trusts
   authentication assertions from the configured IdP and trusts the backend to
   enforce its own authorization once Knox asserts identity. Compromise or
-  misbehavior of those systems is out of layer *(inferred → Q4)*.
+  misbehavior of those systems is out of layer *(maintainer, 2026-07-09 —
+  L. McCay confirmed Q4)*.
 - **The demo/sample surface.** The bundled **demo LDAP (ApacheDS)**, sample
   `sandbox` topology, gateway sample apps, and self-signed test certificate are
   explicitly for evaluation, not production. Findings that only manifest with the
   demo LDAP running, the sample topology deployed, or the self-signed cert in use
-  are `OUT-OF-MODEL: unsupported-component` *(inferred → Q5; the User's Guide
-  markets these as getting-started aids, documented)*.
+  are `OUT-OF-MODEL: unsupported-component` *(maintainer, 2026-07-09 — L. McCay
+  confirmed Q5; the User's Guide markets these as getting-started aids,
+  documented)*.
 - **Securing an already-insecure cluster.** Knox is a **perimeter** control. It
   does not defend a backend that is directly network-reachable around the
   gateway; bypassing Knox by reaching the backend host directly is an operator
-  network-segmentation responsibility, not a Knox flaw *(inferred → Q6)*.
+  network-segmentation responsibility, not a Knox flaw *(maintainer, 2026-07-09 —
+  L. McCay confirmed Q6; note that clients able to authenticate directly to the
+  backend — e.g. via Kerberos — are a legitimate deployment choice, and without
+  explicit proxy-user config making them trusted proxies they cannot assert
+  another user's identity via `doAs`)*.
 - **Availability of the backend cluster.** Knox does not guarantee the liveness,
   correctness, or capacity of the services it proxies.
 - **Not a WAF / not a general-purpose API security product.** Knox enforces
@@ -201,18 +216,20 @@ Request data flow (per request) *(inferred → Q8)*:
   process user) can read the master secret file, the credential stores, and the
   identity keystore. `-persist-master` explicitly trades a prompt for on-disk
   storage and "requires careful file permission management" *(documented)*.
-- **The federated IdP is authoritative and honest** *(inferred → Q4)*. When a
-  SAML/OIDC/LDAP provider asserts "this is user X", Knox believes it. Knox
-  assumes the IdP's assertions are integrity-protected in transit (signed SAML,
-  validated OIDC ID-token, LDAPS) — the strength of that check is provider-config
-  dependent (§5a).
+- **The federated IdP is authoritative and honest** *(maintainer, 2026-07-09 —
+  L. McCay confirmed Q4)*. When a SAML/OIDC/LDAP provider asserts "this is user
+  X", Knox believes it. Knox assumes the IdP's assertions are integrity-protected
+  in transit (signed SAML, validated OIDC ID-token, LDAPS) — the strength of that
+  check is provider-config dependent (§5a). **TLS to the backend is assumed
+  required** to protect the SPNEGO tokens Knox forwards on the dispatch hop
+  *(maintainer, 2026-07-09 — L. McCay)*.
 - **The backend trusts Knox's asserted identity** *(inferred → Q10)*. The whole
   proxy-user / identity-assertion mechanism assumes the backend will accept a
   Knox-asserted principal. This means **anything that lets a client control the
   asserted identity is an authentication bypass against every backend.**
-- **Network segmentation** *(inferred → Q6)*: Knox assumes clients cannot reach
-  backends except through it. Knox does not enforce this; the operator's network
-  does.
+- **Network segmentation** *(maintainer, 2026-07-09 — L. McCay confirmed Q6)*:
+  Knox assumes clients cannot reach backends except through it. Knox does not
+  enforce this; the operator's network does.
 - **Concurrency** *(inferred → Q11)*: a Knox instance serves many concurrent
   clients; provider filters and the alias/keystore service are assumed
   thread-safe. Clustered Knox instances share the same gateway master secret
@@ -221,7 +238,11 @@ Request data flow (per request) *(inferred → Q8)*:
   listen socket(s); opens outbound connections to backends and IdPs; reads/writes
   `conf/` and `data/security/`; writes audit + service logs; may spawn nothing
   beyond the JVM. This "no-surprise" inventory is almost entirely inferred and is
-  a high-priority confirmation target.
+  a high-priority confirmation target. **Specific open item flagged by the PMC
+  (2026-07-09 — L. McCay): verify whether the webshell terminal service spawns
+  any process** — if it does, the "spawns nothing beyond the JVM" assumption
+  needs qualification and the webshell surface warrants its own trust-boundary
+  note.
 
 ---
 
@@ -237,11 +258,11 @@ non-default-build`). All rulings below are proposed, pending §14.
 
 | Knob / mode | Less-secure setting | Proposed maintainer stance |
 | --- | --- | --- |
-| Demo LDAP + `sandbox` topology | shipped, trivially bypassable creds | dev-only; production must replace *(→ Q5)* |
-| Self-signed identity keystore | default if operator provides none | dev-only; production installs a CA cert *(→ Q13)* |
-| `HeaderPreAuth` without an IP/mTLS trust check | trusts `SM_USER`/custom identity header from any client | **VALID if reachable** — a preauth header trusted without a gating check is a classic Knox misconfig-to-CVE path *(→ Q14)* |
-| Anonymous / `Anonymous` auth provider or no authz provider in a topology | request passes unauthenticated/unauthorized | operator-chosen posture for public services; report ⇒ OUT-OF-MODEL unless a *different* topology's protection leaks *(→ Q15)* |
-| TLS protocol/cipher and hostname-verification settings on the **backend dispatch hop** | plaintext or unverified backend connection | production expectation TBD — see §9 false friend *(→ Q16)* |
+| Demo LDAP + `sandbox` topology | shipped, trivially bypassable creds | dev-only; production must replace *(maintainer — confirmed Q5)* |
+| Self-signed identity certificate | default if operator provides none | dev-only; production installs a CA cert *(→ Q13)* |
+| `HeaderPreAuth` without an IP/mTLS trust check | trusts `SM_USER`/custom identity header from any client | **OUT-OF-MODEL — operator responsibility** *(maintainer, 2026-07-09 — L. McCay, Q14)*: the operator must avoid this or implicitly accepts the risk. Report ⇒ `OUT-OF-MODEL: non-default-build`. **Hardening (VALID-HARDENING):** Knox should default the trust gate so operators must *explicitly* accept the ungated risk. |
+| Anonymous / `Anonymous` auth provider or no authz provider in a topology | request passes unauthenticated/unauthorized | operator-chosen posture for public / self-authenticating services; report ⇒ OUT-OF-MODEL unless a *different* topology's protection leaks *(maintainer, 2026-07-09 — L. McCay confirmed Q15: this is used for public/self-authenticating services and is OUT-OF-MODEL)* |
+| TLS protocol/cipher and hostname-verification settings on the **backend dispatch hop** | plaintext or unverified backend connection | operator-configured; a plaintext/unverified default hop is a §11 misuse, not a Knox guarantee *(maintainer, 2026-07-09 — L. McCay confirmed Q16; TLS to backend is required to protect SPNEGO tokens)* |
 | `-persist-master` | master secret stored on disk | supported with correct file perms *(documented)* *(→ Q17)* |
 | Token TTL / renewal / server-managed token state | long-lived or non-revocable KnoxTokens | supported range TBD *(→ Q18)* |
 
@@ -304,7 +325,7 @@ replay; disclosure of a secret from the credential store over the network;
 topology/internal-address disclosure defeating the concealment goal; SSRF via the
 proxy; crashing/hanging the gateway from unauthenticated input.
 
-**Explicitly out of the adversary model** *(inferred → Q3/Q4)*:
+**Explicitly out of the adversary model** *(maintainer, 2026-07-09 — L. McCay confirmed Q3/Q4)*:
 
 - The **operator** (writes topology/secrets — already fully trusted).
 - The **backend service** and the **federated IdP** (trusted infrastructure).
@@ -326,20 +347,23 @@ Each: property (+conditions) · violation symptom · severity · provenance.
    topology with an authentication provider, a request that does not satisfy that
    provider does not reach dispatch. · *Violation:* unauthenticated client
    reaches a protected backend / gets a response it should not. · *Security-
-   critical (auth bypass).* · *(documented — perimeter-security purpose; enforcement invariant inferred → Q23)*
+   critical (auth bypass).* · *(documented — perimeter-security purpose; enforcement invariant maintainer, 2026-07-09 — L. McCay confirmed Q23: a request failing authn/authz never reaches dispatch, no exceptions)*
 2. **Authorization enforcement (AclsAuthz).** Given an authorization provider,
    only principals/groups/IPs permitted by the topology ACL reach the service.
    · *Violation:* authorized-for-A client reaches B. · *Security-critical.* ·
-   *(documented — AclsAuthz; invariant inferred → Q23)*
+   *(documented — AclsAuthz; invariant maintainer, 2026-07-09 — L. McCay confirmed Q23, no exceptions)*
 3. **Faithful identity assertion.** The identity asserted to the backend is the
    one Knox authenticated — a client cannot substitute another principal. ·
    *Violation:* client impersonates another user to the backend. ·
-   *Security-critical (this is the keystone property).* · *(inferred → Q24)*
+   *Security-critical (this is the keystone property).* · *(maintainer,
+   2026-07-09 — L. McCay confirmed Q24: this is the keystone; any break is
+   security-critical)*
 4. **Token/SSO integrity.** KnoxToken/KnoxSSO tokens are integrity-protected
    (signed) and validated (signature + expiry) before acceptance; a client cannot
    forge or tamper one. · *Violation:* accepted forged/tampered/expired token. ·
    *Security-critical.* · *(documented — tokens issued/normalized; crypto
-   invariant inferred → Q18/Q25)*
+   invariant maintainer, 2026-07-09 — L. McCay confirmed Q18/Q25: signed,
+   short-TTL, revocation-optional bearer tokens; replay within TTL is BY-DESIGN)*
 5. **Secret confidentiality at rest.** Master-secret-encrypted credential stores
    protect provider/gateway secrets; secrets are not exposed over the network
    surface. · *Violation:* a network request discloses an alias/secret or the
@@ -358,22 +382,25 @@ Each: property (+conditions) · violation symptom · severity · provenance.
 **Resource properties:** Knox makes **no strong quantitative resource guarantee**
 against unauthenticated load beyond what Jetty/topology limits provide; slow-loris
 / large-body / many-connection pressure is bounded by operator config, not a Knox
-invariant *(inferred → Q20)*. Proposed line for §14: *"an unauthenticated request
-that hangs or crashes the gateway process is a bug; merely consuming
-proportionate resources under load is not."*
+invariant *(maintainer, 2026-07-09 — L. McCay confirmed Q19/Q20)*. Confirmed
+resource line: *"an unauthenticated request that hangs or crashes the gateway
+process is a bug; merely consuming proportionate resources under load is not."*
+*(maintainer, 2026-07-09 — L. McCay)*
 
 ---
 
 ## §9 Security properties Knox does NOT provide
 
 - **No protection against the operator.** Malicious or mistaken topology/provider
-  config, secrets, or keystore contents are not defended against *(inferred →
-  Q3)*.
+  config, secrets, or keystore contents are not defended against *(maintainer,
+  2026-07-09 — L. McCay confirmed Q3)*.
 - **No backend authorization.** Once Knox asserts identity, the backend decides
   what that identity may do. Knox authz is coarse perimeter ACLs, not a
-  replacement for backend/Ranger fine-grained authz *(inferred → Q26)*.
+  replacement for backend/Ranger fine-grained authz *(maintainer, 2026-07-09 —
+  L. McCay confirmed Q26)*.
 - **No defense of an around-the-gateway path.** If a client can reach the backend
-  without traversing Knox, Knox provides nothing *(inferred → Q6)*.
+  without traversing Knox, Knox provides nothing *(maintainer, 2026-07-09 —
+  L. McCay confirmed Q6)*.
 - **No application-layer inspection of backend payloads** (not a WAF) *(inferred
   → Q7)*.
 - **No guarantee for the demo/sample surface** (§3).
@@ -384,8 +411,12 @@ proportionate resources under load is not."*
   (`SM_USER` etc.) *looks* like it authenticates the user, but it only trusts a
   header — it is secure **only** when paired with an mTLS/IP trust gate that
   proves the header came from a trusted SSO front-end. Without that gate any
-  client sets the header and impersonates anyone *(inferred → Q14)*. This is the
-  most dangerous Knox false friend.
+  client sets the header and impersonates anyone. This is the most dangerous Knox
+  false friend. **Disposition (maintainer, 2026-07-09 — L. McCay, Q14): an
+  ungated `HeaderPreAuth` is `OUT-OF-MODEL: non-default-build`** — the operator
+  must avoid it or implicitly accepts the risk; it is *not* reported as a Knox
+  `VALID` bug. The paired hardening ask is that Knox default the gate so the
+  operator has to explicitly accept the ungated posture (VALID-HARDENING).
 - **KnoxSSO cookie / KnoxToken are bearer credentials, not proof of possession.**
   Anyone who captures one can replay it until expiry; TLS + short TTL + (where
   available) revocation are load-bearing, not decorative *(inferred → Q18/Q25)*.
@@ -397,14 +428,26 @@ proportionate resources under load is not."*
   config *(inferred → Q16)*.
 
 **Well-known attack classes Knox as a reverse proxy is exposed to and the
-operator must weigh** *(inferred → Q27)*: HTTP request smuggling / desync between
-Knox and backend; SSRF via rewrite/dispatch if client input reaches the backend
-target; open-redirect via the SSO `originalUrl`/return-URL parameter; XXE if any
-provider parses attacker-supplied XML (e.g. SAML responses); host-header /
-X-Forwarded-* trust confusion; WebSocket origin/authorization gaps; cookie
-scope/`Secure`/`HttpOnly` handling for KnoxSSO. Naming them here puts the triager
-and integrator on notice; which are *Knox's* responsibility vs the operator's is a
-§14 question.
+operator must weigh** *(maintainer, 2026-07-09 — L. McCay answered Q27)*: HTTP
+request smuggling / desync between Knox and backend; SSRF via rewrite/dispatch if
+client input reaches the backend target; open-redirect via the SSO
+`originalUrl`/return-URL parameter; XXE if any provider parses attacker-supplied
+XML (e.g. SAML responses); host-header / X-Forwarded-* trust confusion; WebSocket
+origin/authorization gaps; cookie scope/`Secure`/`HttpOnly` handling for KnoxSSO.
+
+**Responsibility split (maintainer, 2026-07-09 — L. McCay):** all of these
+protections are ultimately the **operator's responsibility**, but Knox provides
+the mechanisms to configure them:
+
+- The **`WebAppSecProvider`** can be configured for **XSRF, CORS, CSP, and
+  related** cross-site protections.
+- **Regexp-based whitelists** protect against **SSRF and open-redirect** (host /
+  port / domain allow-lists).
+
+These mechanisms **must be tuned to the deployment's specific expectations**
+(allowed hosts, ports, domains). A report that a protection is *available but
+unconfigured* is therefore `OUT-OF-MODEL` (operator responsibility); a report
+that a configured `WebAppSecProvider` / whitelist can be *bypassed* is `VALID`.
 
 ---
 
@@ -419,17 +462,27 @@ For a gateway, "downstream user" = **the cluster operator/deployer.** To keep
    sample `sandbox` topology, and the self-signed cert; install a real IdP and a
    CA-issued identity keystore *(documented as getting-started aids → Q5/Q13)*.
 3. **Never deploy `HeaderPreAuth` without a trust gate** (mTLS/IP allow-list
-   proving the header source) *(inferred → Q14)*.
+   proving the header source) — an ungated deployment is the operator's risk to
+   accept, not a Knox bug *(maintainer, 2026-07-09 — L. McCay, Q14)*.
 4. **Enforce network segmentation** so backends are unreachable except through
-   Knox *(inferred → Q6)*.
+   Knox *(maintainer, 2026-07-09 — L. McCay confirmed Q6)*.
 5. **Configure the backend dispatch hop's TLS** (protocol, ciphers, hostname
-   verification) to match the threat environment *(inferred → Q16)*.
+   verification) to match the threat environment. **TLS is required together with
+   Kerberos for proxy-user-based trusted proxies** (it protects the forwarded
+   SPNEGO tokens) — the PMC asks that this be explicitly documented *(maintainer,
+   2026-07-09 — L. McCay confirmed Q16)*.
 6. **Set token TTLs / enable revocation** appropriate to data sensitivity
-   *(inferred → Q18)*.
+   *(maintainer, 2026-07-09 — L. McCay confirmed Q18)*.
 7. **Scope authorization ACLs per service/topology**; do not rely on backend
-   authz alone if perimeter authz is intended *(inferred → Q26)*.
+   authz alone if perimeter authz is intended *(maintainer, 2026-07-09 —
+   L. McCay confirmed Q26)*.
 8. **Keep provider configs pointed at integrity-checked IdP channels** (signed
-   SAML, validated OIDC, LDAPS) *(inferred → Q4)*.
+   SAML, validated OIDC, LDAPS) *(maintainer, 2026-07-09 — L. McCay confirmed
+   Q4)*.
+9. **Configure and tune `WebAppSecProvider` and the SSRF/open-redirect regexp
+   whitelists** (XSRF/CORS/CSP; allowed hosts/ports/domains) for the deployment
+   — Knox provides these mechanisms but the operator must turn them on and tune
+   them *(maintainer, 2026-07-09 — L. McCay, Q27)*.
 
 ---
 
@@ -438,7 +491,9 @@ For a gateway, "downstream user" = **the cluster operator/deployer.** To keep
 - **Preauth header trusted without a gate** — deploying `HeaderPreAuth` and
   trusting `SM_USER`/custom identity headers directly from clients. *Looks* like
   SSO integration; is actually anonymous impersonation. Fix: require mTLS/IP trust
-  gate *(inferred → Q14)*.
+  gate. Per Q14 this is the operator's risk to accept (`OUT-OF-MODEL`), with a
+  standing hardening ask that Knox default the gate to force explicit acceptance
+  *(maintainer, 2026-07-09 — L. McCay)*.
 - **Leaving demo LDAP / sample topology in production** — the sample creds are
   public. Fix: replace before exposure *(→ Q5)*.
 - **Treating Knox authz as the only authz** — assuming perimeter ACLs remove the
@@ -459,8 +514,10 @@ Q28)*:
 
 - **"Knox trusts the `SM_USER` header" flagged as auth bypass** — *not a finding*
   when the topology pairs `HeaderPreAuth` with an mTLS/IP trust gate (§6 header
-  row, §9 false friend). Only `VALID` when the gate is absent in a supported
-  posture.
+  row, §9 false friend). An **ungated** `HeaderPreAuth` is `OUT-OF-MODEL:
+  non-default-build` (operator responsibility per Q14), **not** a Knox `VALID`
+  bug — though a proposal to harden the default gate is welcome
+  *(maintainer, 2026-07-09 — L. McCay, Q14)*.
 - **"Backend URL is taken from configuration" flagged as SSRF** — the dispatch
   target comes from the **trusted topology descriptor**, not client input (§6) ⇒
   `OUT-OF-MODEL: trusted-input`. `VALID` only if *client* bytes reach the
@@ -510,73 +567,74 @@ Q28)*:
 ## §14 Open questions for the maintainers
 
 Each states a **proposed answer** to confirm/correct, and the section it lands
-in. Grouped in waves.
+in. Grouped in waves. **Larry McCay (PMC chair) answered Wave 1–3 core + meta on
+2026-07-09; those answers are recorded here and folded into the sections above.**
 
-**Wave 1 — scope, deployment, adversary (unblocks everything):**
+**Wave 1 — scope, deployment, adversary (unblocks everything) — ANSWERED
+2026-07-09:**
 
-- **Q1 (§2):** Deployment shape is "a long-running Jetty-based edge daemon,
-  administrator-operated; not an in-process library." Correct?
-- **Q2 (§2):** The component-family split is right, and the demo/sample surface
-  is the only out-of-model code? Anything missing (e.g. service-specific
-  dispatchers, HA/token-state-service, WebSocket path)?
-- **Q3 (§3/§7):** The operator (who writes topologies/secrets) is entirely out of
-  the adversary model — malicious operator config is never a Knox vuln. Agree?
-- **Q4 (§3/§5):** The federated IdP and the backend services are trusted
-  infrastructure, out of scope as adversaries; Knox believes a validated IdP
-  assertion. Agree?
-- **Q5 (§3/§5a):** Demo LDAP, `sandbox`/sample topologies, and gateway samples
-  are dev/eval only; findings requiring them are out of model. Agree?
-- **Q6 (§3/§9):** Around-the-gateway backend reachability is an operator network
-  responsibility, not a Knox flaw. Agree?
+- **Q1 (§2): ✅ Confirmed.** Deployment shape is "a long-running Jetty-based edge
+  daemon, administrator-operated; not an in-process library."
+- **Q2 (§2): ✅ Confirmed.** The component-family split is right and the
+  demo/sample surface is the only out-of-model code.
+- **Q3 (§3/§7): ✅ Confirmed.** The operator is entirely out of the adversary
+  model — malicious operator config is never a Knox vuln.
+- **Q4 (§3/§5): ✅ Confirmed**, with the addition that **TLS to the backend is
+  assumed required to protect SPNEGO tokens.**
+- **Q5 (§3/§5a): ✅ Confirmed.** Demo LDAP, `sandbox`/sample topologies, and
+  gateway samples are dev/eval only; findings requiring them are out of model.
+- **Q6 (§3/§9): ✅ Confirmed.** Around-the-gateway backend reachability is an
+  operator network responsibility. Note: clients that authenticate directly to
+  the backend (e.g. Kerberos) are a legitimate deployment choice; without
+  explicit proxy-user config making them trusted proxies they cannot assert
+  another user's identity via `doAs`.
 
-**Wave 2 — the keystone properties & false friends:**
+**Wave 2 — the keystone properties & false friends — ANSWERED 2026-07-09:**
 
-- **Q14 (§5a/§9/§11):** Is `HeaderPreAuth` trusting an identity header **without**
-  an mTLS/IP trust gate a *supported posture* (report ⇒ VALID) or a
-  *misconfiguration* the operator must avoid (⇒ OUT-OF-MODEL)? Proposed: it is a
-  real auth bypass and `VALID` whenever a topology enables it ungated.
-- **Q24 (§8):** Is "faithful identity assertion — a client cannot make Knox assert
-  a principal it did not authenticate" a top-tier claimed property (any break =
-  security-critical)? Proposed: yes, this is the keystone.
-- **Q23 (§8):** Confirm the enforcement invariants: a request failing authn/authz
-  never reaches dispatch. Any documented exceptions (e.g. explicitly public
-  topologies)?
-- **Q16 (§5a/§9):** What is the production expectation for the **backend dispatch
-  hop** TLS (encryption + hostname verification)? Proposed: operator-configured;
-  a plaintext/unverified default hop is a §11 misuse, not a Knox guarantee.
-- **Q18/Q25 (§5a/§8):** KnoxToken/KnoxSSO — are these strictly signed+expiry-
-  validated bearer tokens with optional server-side revocation? What TTL/renewal
-  posture is supported? Proposed: signed, short-TTL, revocation-optional; replay
-  within TTL is BY-DESIGN.
+- **Q14 (§5a/§9/§11): ✅ Answered — OUT-OF-MODEL.** An ungated `HeaderPreAuth` is
+  a misconfiguration the operator must avoid or implicitly accepts; a report is
+  `OUT-OF-MODEL: non-default-build`, **not** a Knox `VALID` bug. Paired hardening
+  ask: Knox should default the trust gate so operators must explicitly accept the
+  ungated risk (VALID-HARDENING). *(This corrects the v0 proposal of "VALID
+  whenever ungated".)*
+- **Q24 (§8): ✅ Confirmed.** Faithful identity assertion is the keystone
+  property; any break is security-critical.
+- **Q23 (§8): ✅ Confirmed — no exceptions.** A request failing authn/authz never
+  reaches dispatch.
+- **Q16 (§5a/§9): ✅ Confirmed.** Backend-hop TLS is operator-configured; a
+  plaintext/unverified default hop is a §11 misuse, not a Knox guarantee. **TLS
+  is required together with Kerberos for proxy-user-based trusted proxies, and
+  this should be documented.**
+- **Q18/Q25 (§5a/§8): ✅ Confirmed.** KnoxToken/KnoxSSO are signed, short-TTL,
+  revocation-optional bearer tokens; replay within TTL is BY-DESIGN.
 
 **Wave 3 — inputs, resources, isolation, false-positive suppression:**
 
-- **Q19/Q20 (§6/§8):** Confirm the per-surface trust table, and state the
-  resource line. Proposed: "unauthenticated hang/crash = bug; proportionate load
-  = not."
-- **Q26 (§9):** Confirm Knox perimeter authz does not replace backend/Ranger
-  authz.
-- **Q27 (§9):** For the reverse-proxy attack classes (request smuggling, SSRF,
-  SSO open-redirect, SAML XXE, host-header/XFF confusion, WebSocket origin),
-  which does Knox take responsibility for vs leave to the operator?
-- **Q29 (§12):** Is isolation **between topologies** a Knox-enforced boundary or
-  merely operator partitioning? Proposed: operator partitioning, not a guaranteed
-  isolation boundary — a cross-topology leak would be `VALID` only if it breaks
-  §8(1/2).
-- **Q28 (§11a):** Confirm/extend the known-non-findings list so it can seed a
-  scanner suppression set.
-- **Q7 (§3), Q9–Q13, Q17, Q21–Q22 (§5/§7/§5a):** Confirm the remaining
-  environment, host side-effect inventory, self-signed/`-persist-master` stances,
-  and adversary-capability details as stated inline.
+- **Q19/Q20 (§6/§8): ✅ Confirmed 2026-07-09.** Per-surface trust table stands;
+  resource line = "unauthenticated hang/crash = bug; proportionate load = not."
+- **Q26 (§9): ✅ Confirmed 2026-07-09.** Knox perimeter authz does not replace
+  backend/Ranger authz.
+- **Q27 (§9): ✅ Answered 2026-07-09.** All these protections are the operator's
+  responsibility, but Knox provides the mechanisms: `WebAppSecProvider`
+  (configurable for XSRF/CORS/CSP) and regexp-based whitelists (SSRF /
+  open-redirect). They must be tuned to the deployment's hosts/ports/domains.
+- **Q29 (§12): ⬜ Open.** Is isolation **between topologies** a Knox-enforced
+  boundary or merely operator partitioning? Proposed: operator partitioning, not
+  a guaranteed isolation boundary — a cross-topology leak would be `VALID` only
+  if it breaks §8(1/2).
+- **Q28 (§11a): ⬜ Open.** Confirm/extend the known-non-findings list so it can
+  seed a scanner suppression set.
+- **Q7 (§3), Q9–Q13, Q17, Q21–Q22 (§5/§7/§5a): ⬜ Open.** Confirm the remaining
+  environment, host side-effect inventory (**including whether the webshell
+  terminal spawns a process — Q12**), self-signed/`-persist-master` stances, and
+  secondary adversary-capability details as stated inline.
 
-**Wave 4 — meta / ownership:**
+**Wave 4 — meta / ownership — ANSWERED 2026-07-09:**
 
-- **Q-meta-A:** Knox has **no** project-specific `SECURITY.md` or website security
-  page (only the generic `security@apache.org` entry on
-  security.apache.org/projects). Should this model become the canonical Knox
-  security document, linked from a new `SECURITY.md` and the project site?
-- **Q-meta-B:** Where should the ratified model live (`docs/` in-repo, versioned
-  with releases) and what change class triggers a revision (per §12)?
+- **Q-meta-A: ✅ Yes.** This model should become the canonical Knox security
+  document, linked from a new `SECURITY.md` and the project site.
+- **Q-meta-B: ✅ Yes.** The ratified model lives in `docs/` in-repo, versioned
+  with releases; a §12 change class triggers a revision.
 
 ## §15 Optional: machine-readable companion
 
