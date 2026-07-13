@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.ldap.interceptor;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
 import java.util.Map;
@@ -33,7 +34,8 @@ import java.util.ServiceLoader;
 public class InterceptorFactory {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    public static Interceptor createInterceptor(final GatewayConfig gatewayConfig, final String interceptorName,
+    public static Interceptor createInterceptor(final GatewayConfig gatewayConfig, final GatewayServices gatewayServices,
+                                                final String interceptorName,
                                                 final Map<String, String> interceptorConfig) throws Exception {
         final String interceptorType = interceptorConfig.get("interceptorType");
         if (interceptorType == null) {
@@ -49,7 +51,7 @@ public class InterceptorFactory {
         for (KnoxLdapInterceptorFactory interceptorFactory : loader) {
             if (interceptorFactory.getType().equalsIgnoreCase(interceptorType)) {
                 LOG.ldapInterceptorCreating(interceptorType, "ServiceLoader");
-                return interceptorFactory.create(gatewayConfig, interceptorName, interceptorConfig);
+                return interceptorFactory.create(gatewayConfig, gatewayServices, interceptorName, interceptorConfig);
             }
         }
 

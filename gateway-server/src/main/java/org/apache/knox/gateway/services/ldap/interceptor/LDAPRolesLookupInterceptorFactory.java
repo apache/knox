@@ -30,17 +30,17 @@ public class LDAPRolesLookupInterceptorFactory implements KnoxLdapInterceptorFac
     private static final String TYPE = "rolesLookup";
 
     @Override
-    public Interceptor create(GatewayConfig gatewayConfig, String name, Map<String, String> interceptorConfig) throws Exception {
-        final LDAPRolesLookupService ldapRolesLookupService = getLDAPRolesLookupService();
+    public Interceptor create(GatewayConfig gatewayConfig, GatewayServices gatewayServices, String name, Map<String, String> interceptorConfig) throws Exception {
+        final LDAPRolesLookupService ldapRolesLookupService = getLDAPRolesLookupService(gatewayServices);
         if (ldapRolesLookupService == null || !ldapRolesLookupService.enabled()) {
             throw new ServiceLifecycleException("LDAP roles lookup service not found or disabled");
         }
         return new LDAPRolesLookupInterceptor(ldapRolesLookupService);
     }
 
-    protected LDAPRolesLookupService getLDAPRolesLookupService() {
-        final GatewayServices gatewayServices = GatewayServer.getGatewayServices();
-        return gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE);
+    protected LDAPRolesLookupService getLDAPRolesLookupService(GatewayServices gatewayServices) {
+        final GatewayServices services = gatewayServices != null ? gatewayServices : GatewayServer.getGatewayServices();
+        return services == null ? null : services.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE);
     }
 
     @Override

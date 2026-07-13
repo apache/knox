@@ -18,6 +18,7 @@ package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.easymock.EasyMock;
@@ -38,7 +39,7 @@ public class LDAPRolesLookupInterceptorFactoryTest {
 
         LDAPRolesLookupInterceptorFactory factory = new LDAPRolesLookupInterceptorFactory() {
             @Override
-            protected LDAPRolesLookupService getLDAPRolesLookupService() {
+            protected LDAPRolesLookupService getLDAPRolesLookupService(GatewayServices gatewayServices) {
                 return mockService;
             }
         };
@@ -46,7 +47,7 @@ public class LDAPRolesLookupInterceptorFactoryTest {
         GatewayConfig mockConfig = EasyMock.createMock(GatewayConfig.class);
         EasyMock.replay(mockConfig);
 
-        Interceptor interceptor = factory.create(mockConfig, "test", Collections.emptyMap());
+        Interceptor interceptor = factory.create(mockConfig, null, "test", Collections.emptyMap());
         assertNotNull(interceptor);
         assertTrue(interceptor instanceof LDAPRolesLookupInterceptor);
     }
@@ -59,7 +60,7 @@ public class LDAPRolesLookupInterceptorFactoryTest {
 
         LDAPRolesLookupInterceptorFactory factory = new LDAPRolesLookupInterceptorFactory() {
             @Override
-            protected LDAPRolesLookupService getLDAPRolesLookupService() {
+            protected LDAPRolesLookupService getLDAPRolesLookupService(GatewayServices gatewayServices) {
                 return mockService;
             }
         };
@@ -67,14 +68,14 @@ public class LDAPRolesLookupInterceptorFactoryTest {
         GatewayConfig mockConfig = EasyMock.createMock(GatewayConfig.class);
         EasyMock.replay(mockConfig);
 
-        factory.create(mockConfig, "test", Collections.emptyMap());
+        factory.create(mockConfig, null, "test", Collections.emptyMap());
     }
 
     @Test(expected = ServiceLifecycleException.class)
     public void testCreateWithNullService() throws Exception {
         LDAPRolesLookupInterceptorFactory factory = new LDAPRolesLookupInterceptorFactory() {
             @Override
-            protected LDAPRolesLookupService getLDAPRolesLookupService() {
+            protected LDAPRolesLookupService getLDAPRolesLookupService(org.apache.knox.gateway.services.GatewayServices gatewayServices) {
                 return null;
             }
         };
@@ -82,6 +83,6 @@ public class LDAPRolesLookupInterceptorFactoryTest {
         GatewayConfig mockConfig = EasyMock.createMock(GatewayConfig.class);
         EasyMock.replay(mockConfig);
 
-        factory.create(mockConfig, "test", Collections.emptyMap());
+        factory.create(mockConfig, null, "test", Collections.emptyMap());
     }
 }

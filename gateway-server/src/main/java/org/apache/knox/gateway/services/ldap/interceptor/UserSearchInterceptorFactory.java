@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
 
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public class UserSearchInterceptorFactory implements KnoxLdapInterceptorFactory 
     public static final String TYPE = "backend";
 
     @Override
-    public Interceptor create(GatewayConfig gatewayConfig, String name, Map<String, String> interceptorConfig) throws Exception {
+    public Interceptor create(GatewayConfig gatewayConfig, GatewayServices gatewayServices, String name, Map<String, String> interceptorConfig) throws Exception {
         return new UserSearchInterceptor(name, interceptorConfig);
     }
 
