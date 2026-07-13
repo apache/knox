@@ -171,6 +171,7 @@ public class KnoxLDAPServiceTest {
 
     private void setupMockConfig(String backendType) throws Exception {
         expect(mockConfig.isLDAPEnabled()).andReturn(true).atLeastOnce();
+        expect(mockConfig.isLDAPSSLEnabled()).andReturn(false).atLeastOnce();
         expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).atLeastOnce();
         expect(mockConfig.getLDAPRecursiveGroupResolutionMaxDepth()).andReturn(0).atLeastOnce();
         expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).atLeastOnce();

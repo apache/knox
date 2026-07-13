@@ -1864,6 +1864,27 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isLDAPSSLEnabled() {
+    return Boolean.parseBoolean(get(LDAP_SSL_ENABLED, "false"));
+  }
+
+  @Override
+  public String getLDAPSSLKeystorePath() {
+    return get(LDAP_SSL_KEYSTORE_PATH, null);
+  }
+
+  @Override
+  public String getLDAPSSLKeystorePasswordAlias() {
+    return get(LDAP_SSL_KEYSTORE_PASSWORD_ALIAS, null);
+  }
+
+  @Override
+  public List<String> getLDAPSSLEnabledCipherSuites() {
+    final List<String> cipherSuites = splitConfigValueToList(LDAP_SSL_ENABLED_CIPHER_SUITES);
+    return cipherSuites == null ? Collections.emptyList() : cipherSuites;
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
   }

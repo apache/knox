@@ -79,6 +79,11 @@ public class KnoxLDAPServerManager {
     private int port;
     private String baseDn;
     private String bindUser;
+    // Secure (LDAPS) transport configuration
+    private boolean sslEnabled;
+    private String sslKeystorePath;
+    private String sslKeystorePasswordAlias;
+    private List<String> sslEnabledCipherSuites;
     // Collection of DNs for the proxied backend LDAP servers
     private Set<String> baseDns;
 
@@ -107,6 +112,17 @@ public class KnoxLDAPServerManager {
         this.port = config.getLDAPPort();
         this.baseDn = config.getLDAPBaseDN();
         this.bindUser = config.getLDAPBindUser();
+
+        // Secure (LDAPS) transport configuration. When enabled but no dedicated keystore is
+        // configured, fall back to the gateway identity keystore so the embedded server can
+        // reuse the gateway's own TLS material out of the box.
+        this.sslEnabled = config.isLDAPSSLEnabled();
+        if (sslEnabled) {
+            final String configuredKeystore = config.getLDAPSSLKeystorePath();
+            this.sslKeystorePath = StringUtils.isNotBlank(configuredKeystore) ? configuredKeystore : config.getIdentityKeystorePath();
+            this.sslKeystorePasswordAlias = config.getLDAPSSLKeystorePasswordAlias();
+            this.sslEnabledCipherSuites = config.getLDAPSSLEnabledCipherSuites();
+        }
 
         createInterceptors(config);
 
@@ -215,7 +231,11 @@ public class KnoxLDAPServerManager {
 
         // Create LDAP server on configured port
         ldapServer = new LdapServer();
-        ldapServer.setTransports(new TcpTransport(port));
+        final TcpTransport transport = new TcpTransport(port);
+        if (sslEnabled) {
+            configureSsl(transport);
+        }
+        ldapServer.setTransports(transport);
         ldapServer.setDirectoryService(directoryService);
 
         ldapServer.start();
@@ -278,6 +298,56 @@ public class KnoxLDAPServerManager {
                 .filter(i -> "authenticationInterceptor".equalsIgnoreCase(dsInterceptors.get(i).getName()))
                 .findFirst()
                 .orElse(-1);
+    }
+
+    /**
+     * Enable the secure (LDAPS) transport on the embedded server. The keystore holding the
+     * server certificate and its password are resolved from the gateway configuration and
+     * credential store; the password defaults to the gateway identity keystore password when
+     * no dedicated alias is configured. The keystore must be in the JVM default format
+     * (see {@code java.security.KeyStore#getDefaultType()}), which is what ApacheDS uses to
+     * load it.
+     */
+    private void configureSsl(final TcpTransport transport) throws Exception {
+        if (StringUtils.isBlank(sslKeystorePath)) {
+            final String reason = "no keystore configured; set " + GatewayConfig.LDAP_SSL_KEYSTORE_PATH
+                    + " or configure the gateway identity keystore";
+            LOG.ldapSslConfigInvalid(reason);
+            throw new IllegalStateException("Cannot enable LDAPS: " + reason);
+        }
+
+        final File keystore = new File(sslKeystorePath);
+        if (!keystore.exists()) {
+            final String reason = "keystore file not found: " + keystore.getAbsolutePath();
+            LOG.ldapSslConfigInvalid(reason);
+            throw new IllegalStateException("Cannot enable LDAPS: " + reason);
+        }
+
+        transport.setEnableSSL(true);
+        ldapServer.setKeystoreFile(keystore.getAbsolutePath());
+
+        final char[] passwordChars = resolveSslKeystorePassword();
+        if (passwordChars != null) {
+            ldapServer.setCertificatePassword(new String(passwordChars));
+        }
+
+        if (sslEnabledCipherSuites != null && !sslEnabledCipherSuites.isEmpty()) {
+            ldapServer.setEnabledCipherSuites(new ArrayList<>(sslEnabledCipherSuites));
+        }
+
+        LOG.ldapSslEnabled(keystore.getAbsolutePath());
+    }
+
+    /**
+     * Resolve the password protecting the LDAPS keystore from the gateway credential store.
+     * Uses the configured alias when set, otherwise falls back to the gateway identity
+     * keystore password (matching the keystore-path fallback in {@link #initialize(GatewayConfig)}).
+     */
+    private char[] resolveSslKeystorePassword() throws Exception {
+        if (StringUtils.isNotBlank(sslKeystorePasswordAlias)) {
+            return aliasService.getPasswordFromAliasForGateway(sslKeystorePasswordAlias);
+        }
+        return aliasService.getGatewayIdentityKeystorePassword();
     }
 
     /**
