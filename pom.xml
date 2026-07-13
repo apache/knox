@@ -157,8 +157,8 @@
         <maven.compiler.target>17</maven.compiler.target>
 
         <!-- Dependencies sorted alphabetically -->
-        <apacheds.directory.api.version>2.0.0</apacheds.directory.api.version>
-        <apacheds.directory.server.version>2.0.0.AM26</apacheds.directory.server.version>
+        <apacheds.directory.api.version>2.1.8</apacheds.directory.api.version>
+        <apacheds.directory.server.version>2.0.0.AM27</apacheds.directory.server.version>
         <apacheds-jdbm.version>2.0.0-M5</apacheds-jdbm.version>
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>
         <ant-nodeps.version>1.8.1</ant-nodeps.version>
@@ -177,6 +177,7 @@
         <commons-cli.version>1.4</commons-cli.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-collections.version>3.2.2</commons-collections.version>
+        <commons-collections4.version>4.5.0</commons-collections4.version>
         <commons-compress.version>1.26.0</commons-compress.version>
         <commons-configuration2.version>2.15.0</commons-configuration2.version>
         <commons-digester3.version>3.2</commons-digester3.version>
@@ -2069,6 +2070,13 @@
                 <version>${commons-collections.version}</version>
             </dependency>
             <dependency>
+                <!-- Converge commons-collections4: ApacheDS pulls 4.4 transitively while
+                     directory-api 2.1.8 pulls 4.5.0. Pin to the newer, backward-compatible 4.5.0. -->
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
                 <version>${commons-compress.version}</version>
@@ -2165,6 +2173,16 @@
                         <groupId>org.bouncycastle</groupId>
                         <artifactId>bcprov-jdk15on</artifactId>
                     </exclusion>
+                    <!-- ApacheDS 2.0.0.AM27 pulls the legacy jdk15on BouncyCastle; Knox
+                         standardizes on the jdk18on artifacts (same packages). -->
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcpkix-jdk15on</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcutil-jdk15on</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -2195,6 +2213,14 @@
                     <exclusion>
                         <groupId>org.bouncycastle</groupId>
                         <artifactId>bcprov-jdk15on</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcpkix-jdk15on</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcutil-jdk15on</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -2242,6 +2268,53 @@
             <dependency>
                 <groupId>org.apache.directory.api</groupId>
                 <artifactId>api-asn1-api</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <!-- Pin the remaining directory-api artifacts (pulled transitively by ApacheDS) to
+                 the same version to avoid a mixed directory-api classpath. -->
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-asn1-ber</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-i18n</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-net-mina</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-extras-aci</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-extras-codec</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-extras-codec-api</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-extras-sp</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-extras-trigger</artifactId>
+                <version>${apacheds.directory.api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.api</groupId>
+                <artifactId>api-ldap-extras-util</artifactId>
                 <version>${apacheds.directory.api.version}</version>
             </dependency>
 

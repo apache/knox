@@ -36,8 +36,18 @@ import org.apache.directory.ldap.client.api.ValidatingPoolableLdapConnectionFact
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -86,6 +96,18 @@ public class LdapProxyBackend implements LdapBackend {
     private int recursiveGroupResolutionMaxDepth;
 
     private final String proxyEntryGroupMembershipAttributeType = "memberOf";
+
+    // Secure transport configuration for the connection to the remote LDAP server
+    private boolean useSsl;                  // LDAPS (implicit TLS)
+    private boolean trustAllCertificates;    // skip certificate validation (test/dev only)
+    private String trustStorePath;
+    private String trustStoreType;
+    private String trustStorePassword;
+    private String sslProtocol;
+    private String[] enabledProtocols;
+    private String[] enabledCipherSuites;
+    // LDAP response timeout in milliseconds; negative means use the client default.
+    private long connectionTimeoutMillis = -1;
 
     // Connection pool for efficient connection reuse
     private LdapConnectionPool connectionPool;
@@ -160,13 +182,31 @@ public class LdapProxyBackend implements LdapBackend {
         recursiveGroupResolution = Boolean.parseBoolean(config.getOrDefault("recursiveGroupResolution", "false"));
         recursiveGroupResolutionMaxDepth = Integer.parseInt(config.getOrDefault("recursiveGroupResolutionMaxDepth", "3"));
 
+        // Configure secure transport (LDAPS) to the remote server. An ldaps:// URL enables it
+        // by default; an explicit useSsl setting always wins.
+        final boolean ldapsFromUrl = ldapUrl != null && ldapUrl.toLowerCase(Locale.ROOT).startsWith("ldaps://");
+        useSsl = Boolean.parseBoolean(config.getOrDefault("useSsl", String.valueOf(ldapsFromUrl)));
+        trustAllCertificates = Boolean.parseBoolean(config.getOrDefault("trustAllCertificates", "false"));
+        trustStorePath = config.get("trustStore");
+        trustStoreType = config.getOrDefault("trustStoreType", KeyStore.getDefaultType());
+        trustStorePassword = config.get("trustStorePassword");
+        sslProtocol = config.get("sslProtocol");
+        enabledProtocols = splitToArray(config.get("enabledProtocols"));
+        enabledCipherSuites = splitToArray(config.get("enabledCipherSuites"));
+        final String timeout = config.get("connectionTimeout");
+        if (timeout != null && !timeout.trim().isEmpty()) {
+            connectionTimeoutMillis = Long.parseLong(timeout.trim());
+        }
+
         // Build search filter template
         userSearchFilter = "(" + remoteUserIdentifierAttribute + "={username})";
 
         LOG.ldapBackendLoading(getName(), "Proxying " + proxyBaseDn + " to " + ldapUrl + " (" + remoteBaseDn + ") with " +
                 remoteUserIdentifierAttribute + " attribute" +
                               (useMemberOf ? " using memberOf lookups" : " using group searches") +
-                              (recursiveGroupResolution ? " with recursive group resolution (max depth: " + recursiveGroupResolutionMaxDepth + ")" : ""));
+                              (recursiveGroupResolution ? " with recursive group resolution (max depth: " + recursiveGroupResolutionMaxDepth + ")" : "") +
+                              (useSsl ? " over LDAPS" : "") +
+                              ((useSsl && trustAllCertificates) ? " (certificate validation disabled)" : ""));
 
         // Initialize connection pool
         initializeConnectionPool(config);
@@ -198,6 +238,8 @@ public class LdapProxyBackend implements LdapBackend {
         LdapConnectionConfig connectionConfig = new LdapConnectionConfig();
         connectionConfig.setLdapHost(host);
         connectionConfig.setLdapPort(port);
+        applySslConfiguration(connectionConfig);
+        applyTimeout(connectionConfig);
 
         if (bindDn != null && !bindDn.isEmpty()) {
             connectionConfig.setName(bindDn);
@@ -255,6 +297,91 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     /**
+     * Apply the configured LDAPS settings to a connection configuration. This is shared by the
+     * pooled search connections and the short-lived authentication (bind) connection so both
+     * talk to the remote server over the same secure transport.
+     */
+    private void applySslConfiguration(LdapConnectionConfig connectionConfig) {
+        if (!useSsl) {
+            return;
+        }
+        connectionConfig.setUseSsl(true);
+        connectionConfig.setTrustManagers(buildTrustManagers());
+        if (sslProtocol != null && !sslProtocol.isEmpty()) {
+            connectionConfig.setSslProtocol(sslProtocol);
+        }
+        if (enabledProtocols != null) {
+            connectionConfig.setEnabledProtocols(enabledProtocols);
+        }
+        if (enabledCipherSuites != null) {
+            connectionConfig.setEnabledCipherSuites(enabledCipherSuites);
+        }
+    }
+
+    /** Apply the configured LDAP response timeout, when set, to a connection configuration. */
+    private void applyTimeout(LdapConnectionConfig connectionConfig) {
+        if (connectionTimeoutMillis >= 0) {
+            connectionConfig.setTimeout(connectionTimeoutMillis);
+        }
+    }
+
+    /**
+     * Build the trust managers used to validate the remote server's certificate:
+     * <ul>
+     *   <li>{@code trustAllCertificates=true} disables validation (test/dev only);</li>
+     *   <li>a configured {@code trustStore} is loaded and used as the trust anchor;</li>
+     *   <li>otherwise the JVM default trust store is used.</li>
+     * </ul>
+     */
+    private TrustManager[] buildTrustManagers() {
+        try {
+            if (trustAllCertificates) {
+                return new TrustManager[] { trustAllTrustManager() };
+            }
+            KeyStore trustStore = null;
+            if (trustStorePath != null && !trustStorePath.isEmpty()) {
+                trustStore = KeyStore.getInstance(trustStoreType);
+                final char[] password = trustStorePassword == null ? null : trustStorePassword.toCharArray();
+                try (InputStream is = Files.newInputStream(Paths.get(trustStorePath))) {
+                    trustStore.load(is, password);
+                }
+            }
+            // A null KeyStore makes the factory fall back to the JVM default trust store.
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(trustStore);
+            return tmf.getTrustManagers();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to configure trust material for LDAP backend " + getName(), e);
+        }
+    }
+
+    /** A trust manager that accepts any certificate; only used when trustAllCertificates is set. */
+    private static X509TrustManager trustAllTrustManager() {
+        return new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) { }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) { }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        };
+    }
+
+    private static String[] splitToArray(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(part -> !part.isEmpty())
+                .toArray(String[]::new);
+    }
+
+    /**
      * Gets a connection from the connection pool.
      * Connections obtained from this method should be released back to the pool
      * using releaseConnection() when done.
@@ -307,6 +434,8 @@ public class LdapProxyBackend implements LdapBackend {
         final LdapConnectionConfig authConfig = new LdapConnectionConfig();
         authConfig.setLdapHost(host);
         authConfig.setLdapPort(port);
+        applySslConfiguration(authConfig);
+        applyTimeout(authConfig);
         authConfig.setName(remoteUserDnText);
         authConfig.setCredentials(password);
         try (LdapConnection connection =  new LdapNetworkConnection(authConfig)){
