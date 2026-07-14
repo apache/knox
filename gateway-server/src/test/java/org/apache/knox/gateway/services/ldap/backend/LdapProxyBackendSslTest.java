@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
+import org.apache.directory.api.ldap.model.exception.LdapTlsHandshakeException;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.CoreSession;
@@ -194,7 +195,7 @@ public class LdapProxyBackendSslTest {
         assertNotNull("User should be resolved over LDAPS configured via useSsl flag", entry);
     }
 
-    @Test
+    @Test(expected = LdapTlsHandshakeException.class)
     public void testUntrustedCertificateIsRejected() throws Exception {
         // useSsl without trusting the self-signed cert: the JVM default trust store must reject it,
         // proving certificate validation is actually enforced.
@@ -203,12 +204,8 @@ public class LdapProxyBackendSslTest {
         config.put("connectionTimeout", "5000");
         ldapProxyBackend = new LdapProxyBackend("sslbackend", config);
 
-        try {
-            ldapProxyBackend.getUser("ldaptest1", schemaManager);
-            fail("Connecting over LDAPS to a server with an untrusted certificate should fail");
-        } catch (Exception expected) {
-            // expected: the self-signed server certificate is not trusted
-        }
+        ldapProxyBackend.getUser("ldaptest1", schemaManager);
+        fail("Connecting over LDAPS to a server with an untrusted certificate should fail");
     }
 
     private Map<String, String> baseConfig() {

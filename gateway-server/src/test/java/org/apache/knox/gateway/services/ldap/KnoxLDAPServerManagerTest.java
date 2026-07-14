@@ -23,6 +23,7 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapProtocolErrorException;
 import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
@@ -558,7 +559,7 @@ public class KnoxLDAPServerManagerTest {
         }
     }
 
-    @Test
+    @Test(expected = LdapProtocolErrorException.class)
     public void testLdapsTransportRejectsPlaintextConnection() throws Exception {
         useKeystorePassword(KEYSTORE_PASSWORD);
         serverManager.initialize(createSslEnabledConfig(createTempKeystore()));
@@ -567,15 +568,11 @@ public class KnoxLDAPServerManagerTest {
         // A plaintext client talking to an SSL-only transport must not be able to bind/search.
         try (LdapNetworkConnection connection = new LdapNetworkConnection("localhost", port)) {
             connection.setTimeOut(5000);
-            try {
-                connection.bind();
-                try (EntryCursor cursor = connection.search("dc=test,dc=com", "(objectClass=*)", SearchScope.SUBTREE)) {
-                    cursor.next();
-                }
-                fail("Plaintext access against an LDAPS-only transport should fail");
-            } catch (Exception expected) {
-                // expected: the server speaks TLS on this port
+            connection.bind();
+            try (EntryCursor cursor = connection.search("dc=test,dc=com", "(objectClass=*)", SearchScope.SUBTREE)) {
+                cursor.next();
             }
+            fail("Plaintext access against an LDAPS-only transport should fail");
         }
     }
 
