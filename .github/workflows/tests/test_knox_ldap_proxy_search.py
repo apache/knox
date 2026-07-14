@@ -18,17 +18,25 @@
 These exercise the LdapProxyBackend.search() path (KNOX-3341): clients can query
 the embedded Knox LDAP service - which proxies to the demo LDAP backend - by
 objectClass, cn and uid (including wildcards), not just by a single uid lookup.
+
+The connection is made over LDAPS: the embedded Knox LDAP service is configured
+with gateway.ldap.ssl.enabled=true, and it in turn proxies to the demo LDAP
+backend over LDAPS as well (gateway.ldap.interceptor.demoldap.url=ldaps://...).
+The gateway presents a self-signed dev certificate in CI, so certificate
+validation is disabled on the client side.
 """
 
 from __future__ import annotations
 
 import os
+import ssl
 import unittest
 from urllib.parse import urlparse
 
 import ldap3
 
-# The embedded Knox LDAP service port (see gateway-site.xml: gateway.ldap.port).
+# The embedded Knox LDAP service secure port (see gateway-site.xml: gateway.ldap.port
+# with gateway.ldap.ssl.enabled=true).
 KNOX_LDAP_PORT = 33390
 
 BASE_DN = "dc=hadoop,dc=apache,dc=org"
@@ -50,7 +58,11 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
     """Verify general search requests are proxied to the demo LDAP backend."""
 
     def setUp(self) -> None:
-        server = ldap3.Server(knox_host(), port=KNOX_LDAP_PORT, get_info=ldap3.NONE)
+        # Self-signed dev certificate in CI: connect over TLS but skip validation.
+        tls = ldap3.Tls(validate=ssl.CERT_NONE)
+        server = ldap3.Server(
+            knox_host(), port=KNOX_LDAP_PORT, use_ssl=True, tls=tls, get_info=ldap3.NONE
+        )
         self.connection = ldap3.Connection(
             server, user=BIND_DN, password=BIND_PASSWORD, auto_bind=True
         )
