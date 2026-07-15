@@ -36,7 +36,7 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
   static final String HTTP_PORT = "hive_metastore_catalog_servlet_port";
   static final String HTTP_PATH = "hive_metastore_catalog_servlet_path";
   static final String REST_CATALOG_ENABLED = "hive_rest_catalog_enabled";
-  static final String SSL_ENABLED    = "hiveserver2_enable_ssl";
+  static final String SSL_ENABLED    = "hive_metastore_enable_ssl";
 
   static final String DEFAULT_HTTP_PATH = "icecli";
 
