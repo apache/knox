@@ -41,7 +41,6 @@ import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
-import org.apache.knox.gateway.util.GroupUtils;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
