@@ -153,6 +153,20 @@ limitations under the License.
         <name>gateway.ldap.interceptor.names</name>
         <value>demoldap</value>
     </property>
+    <!-- Expose the embedded Knox LDAP service over LDAPS using the dev keystore that
+         gateway.sh provisions; its password is resolved from the credential store. -->
+    <property>
+        <name>gateway.ldap.ssl.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.ssl.keystore.path</name>
+        <value>/knox-runtime/conf/ldaps-keystore.p12</value>
+    </property>
+    <property>
+        <name>gateway.ldap.ssl.keystore.password.alias</name>
+        <value>gateway_ldap_ssl_keystore_password</value>
+    </property>
 
     <!-- LDAP Backend specific configuration (proxying to demo ldap) -->
     <property>
@@ -165,7 +179,13 @@ limitations under the License.
     </property>
     <property>
         <name>gateway.ldap.interceptor.demoldap.url</name>
-        <value>ldap://ldap:33389</value>
+        <value>ldaps://ldap:33389</value>
+    </property>
+    <!-- The demo LDAP presents a self-signed dev certificate; trust it rather than
+         wiring a truststore for this dev/CI fixture. -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.trustAllCertificates</name>
+        <value>true</value>
     </property>
     <property>
         <name>gateway.ldap.interceptor.demoldap.remoteBaseDn</name>

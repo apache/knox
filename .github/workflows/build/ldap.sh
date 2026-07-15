@@ -13,4 +13,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-java -jar /knox-runtime/bin/ldap.jar /knox-runtime/conf
+set -e
+
+# Expose the demo LDAP over a secure (LDAPS) transport so the Knox backend can be
+# configured to proxy to it over TLS. Generate a self-signed, dev-only certificate on
+# each start (the demo LDAP is a throwaway fixture, not a secret). The store and key
+# passwords must match: ApacheDS opens the keystore and recovers the key with a single
+# password. PKCS12 matches the JVM default keystore type ApacheDS loads it with.
+KEYSTORE=/knox-runtime/conf/ldap-keystore.p12
+KEYSTORE_PASSWORD=ldap-keystore-password
+
+keytool -genkeypair -alias ldaps -keyalg RSA -keysize 2048 \
+  -dname "CN=ldap" -ext "san=dns:ldap,dns:localhost" -validity 3650 \
+  -keystore "$KEYSTORE" -storetype PKCS12 \
+  -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD"
+
+java -Dldap.ssl.enabled=true \
+  -Dldap.keystore.file="$KEYSTORE" \
+  -Dldap.keystore.password="$KEYSTORE_PASSWORD" \
+  -jar /knox-runtime/bin/ldap.jar /knox-runtime/conf

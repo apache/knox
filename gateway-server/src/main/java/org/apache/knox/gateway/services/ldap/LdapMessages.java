@@ -34,6 +34,14 @@ public interface LdapMessages {
     void ldapServiceStarted(int port);
 
     @Message(level = MessageLevel.INFO,
+            text = "Enabling secure (LDAPS) transport for LDAP service using keystore: {0}")
+    void ldapSslEnabled(String keystorePath);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "Cannot enable secure (LDAPS) transport: {0}")
+    void ldapSslConfigInvalid(String reason);
+
+    @Message(level = MessageLevel.INFO,
             text = "Anonymous access disabled; clients must bind as: {0}")
     void ldapBindUserConfigured(String bindDn);
 

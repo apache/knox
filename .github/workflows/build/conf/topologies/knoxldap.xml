@@ -35,7 +35,7 @@ limitations under the License.
 			</param>
 			<param>
 				<name>main.ldapRealm.contextFactory.url</name>
-				<value>ldap://localhost:33390</value>  <!-- Local Knox LDAP service which is configured to proxy to the demo LDAP as a backend -->
+				<value>ldaps://localhost:33390</value>  <!-- Local Knox LDAP service (LDAPS); configured to proxy to the demo LDAP as a backend -->
 			</param>
 			<param>
 				<name>main.ldapRealm.contextFactory.authenticationMechanism</name>

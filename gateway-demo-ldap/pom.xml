@@ -90,6 +90,13 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
         </dependency>
+        <!-- ApacheDS 2.0.0.AM27's LdapServer.start() references bcpkix (cert utilities)
+             even for a plaintext transport. The legacy jdk15on BouncyCastle it would pull
+             transitively is excluded project-wide, so declare the jdk18on artifact here. -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

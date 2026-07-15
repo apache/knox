@@ -23,12 +23,14 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapProtocolErrorException;
 import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
+import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
@@ -42,8 +44,21 @@ import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import java.io.File;
+import java.io.OutputStream;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,6 +75,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 /**
  * Unit tests for KnoxLDAPServerManager.
@@ -68,10 +84,13 @@ public class KnoxLDAPServerManagerTest {
 
     private static final String BIND_DN = "uid=knox,ou=system";
     private static final String BIND_PASSWORD = "knox-password";
+    private static final String KEYSTORE_PASSWORD = "keystore-password";
+    private static final String SSL_KEYSTORE_ALIAS = "gateway_ldap_ssl_keystore_password";
 
     private KnoxLDAPServerManager serverManager;
     private File tempWorkDir;
     private File tempLdapFile;
+    private File tempKeystore;
     private int port;
 
     @Before
@@ -517,6 +536,116 @@ public class KnoxLDAPServerManagerTest {
         }
     }
 
+    @Test
+    public void testLdapsTransportPresentsConfiguredCertificate() throws Exception {
+        useKeystorePassword(KEYSTORE_PASSWORD);
+        serverManager.initialize(createSslEnabledConfig(createTempKeystore()));
+        serverManager.start();
+
+        assertTrue("Server should be running", serverManager.isRunning());
+
+        // A TLS handshake must succeed on the configured port and present the certificate
+        // loaded from our keystore, proving the transport is genuinely secured (LDAPS).
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, new TrustManager[] { trustAllManager() }, new SecureRandom());
+        try (SSLSocket socket = (SSLSocket) sslContext.getSocketFactory().createSocket("localhost", port)) {
+            socket.setSoTimeout(5000);
+            socket.startHandshake();
+            Certificate[] serverCerts = socket.getSession().getPeerCertificates();
+            assertTrue("Server should present a certificate", serverCerts.length > 0);
+            X509Certificate serverCert = (X509Certificate) serverCerts[0];
+            assertTrue("Server certificate should be the one from the configured keystore",
+                    serverCert.getSubjectX500Principal().getName().contains("CN=localhost"));
+        }
+    }
+
+    @Test(expected = LdapProtocolErrorException.class)
+    public void testLdapsTransportRejectsPlaintextConnection() throws Exception {
+        useKeystorePassword(KEYSTORE_PASSWORD);
+        serverManager.initialize(createSslEnabledConfig(createTempKeystore()));
+        serverManager.start();
+
+        // A plaintext client talking to an SSL-only transport must not be able to bind/search.
+        try (LdapNetworkConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.setTimeOut(5000);
+            connection.bind();
+            try (EntryCursor cursor = connection.search("dc=test,dc=com", "(objectClass=*)", SearchScope.SUBTREE)) {
+                cursor.next();
+            }
+            fail("Plaintext access against an LDAPS-only transport should fail");
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLdapsFailsWhenKeystoreMissing() throws Exception {
+        useKeystorePassword(KEYSTORE_PASSWORD);
+        File missing = new File(tempWorkDir, "does-not-exist.jks");
+        serverManager.initialize(createSslEnabledConfig(missing));
+        serverManager.start();
+    }
+
+    private GatewayConfig createSslEnabledConfig(File keystore) {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(createFileBackendInterceptorConfig()).anyTimes();
+        expect(mockConfig.isLDAPSSLEnabled()).andReturn(true).anyTimes();
+        expect(mockConfig.getLDAPSSLKeystorePath()).andReturn(keystore.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPSSLKeystorePasswordAlias()).andReturn(SSL_KEYSTORE_ALIAS).anyTimes();
+        expect(mockConfig.getLDAPSSLEnabledCipherSuites()).andReturn(Collections.emptyList()).anyTimes();
+        replay(mockConfig);
+        return mockConfig;
+    }
+
+    /** A trust manager that accepts any certificate; the test cert is self-signed. */
+    private X509TrustManager trustAllManager() {
+        return new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) { }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) { }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        };
+    }
+
+    /**
+     * Build a keystore holding a self-signed certificate and its private key, in the JVM
+     * default keystore format (which is what ApacheDS uses to load the server certificate).
+     */
+    private File createTempKeystore() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        X509Certificate cert = X509CertificateUtil.generateCertificate(
+                "CN=localhost, OU=Test, O=Knox, L=Test, ST=Test, C=US", keyPair, 365, "SHA256withRSA");
+        assertNotNull("Failed to generate a self-signed test certificate", cert);
+
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null, null);
+        keyStore.setKeyEntry("knox-ldaps", keyPair.getPrivate(), KEYSTORE_PASSWORD.toCharArray(),
+                new Certificate[] { cert });
+
+        tempKeystore = File.createTempFile("knox-ldaps-test", ".ks");
+        tempKeystore.deleteOnExit();
+        try (OutputStream os = Files.newOutputStream(tempKeystore.toPath())) {
+            keyStore.store(os, KEYSTORE_PASSWORD.toCharArray());
+        }
+        return tempKeystore;
+    }
+
+    /** Rebuild the server manager so its credential store resolves any gateway alias to the given keystore password. */
+    private void useKeystorePassword(String password) throws Exception {
+        serverManager = new KnoxLDAPServerManager(aliasServiceReturning(password));
+    }
+
     private GatewayConfig createBindEnabledConfig() {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
@@ -568,6 +697,9 @@ public class KnoxLDAPServerManagerTest {
     private void cleanupTempFiles() {
         if (tempLdapFile != null && tempLdapFile.exists()) {
             tempLdapFile.delete();
+        }
+        if (tempKeystore != null && tempKeystore.exists()) {
+            tempKeystore.delete();
         }
         if (tempWorkDir != null && tempWorkDir.exists()) {
             // Clean up work directory recursively

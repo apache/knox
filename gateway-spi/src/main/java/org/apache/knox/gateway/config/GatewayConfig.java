@@ -151,6 +151,10 @@ public interface GatewayConfig {
   String LDAP_ROLES_LOOKUP_STRATEGY = "gateway.ldap.roles.lookup.strategy";
   String LDAP_ROLES_LOOKUP_REST_API_ENDPOINT = "gateway.ldap.roles.lookup.rest.api.endpoint";
   String LDAP_ROLES_LOOKUP_FILE_PATH = "gateway.ldap.roles.lookup.file.path";
+  String LDAP_SSL_ENABLED = "gateway.ldap.ssl.enabled";
+  String LDAP_SSL_KEYSTORE_PATH = "gateway.ldap.ssl.keystore.path";
+  String LDAP_SSL_KEYSTORE_PASSWORD_ALIAS = "gateway.ldap.ssl.keystore.password.alias";
+  String LDAP_SSL_ENABLED_CIPHER_SUITES = "gateway.ldap.ssl.enabled.cipher.suites";
 
   /**
    * The location of the gateway configuration.
@@ -1180,6 +1184,32 @@ public interface GatewayConfig {
    * @return the LDAP roles lookup file path
    */
   String getLdapRolesLookupFilePath();
+
+  /**
+   * @return true if the embedded LDAP service should expose a secure (LDAPS) transport;
+   * otherwise false
+   */
+  boolean isLDAPSSLEnabled();
+
+  /**
+   * @return the path to the keystore holding the certificate presented by the embedded
+   * LDAP service on its secure transport. When null/blank the gateway identity keystore
+   * ({@link #getIdentityKeystorePath()}) is used.
+   */
+  String getLDAPSSLKeystorePath();
+
+  /**
+   * @return the credential-store alias for the password protecting the keystore returned by
+   * {@link #getLDAPSSLKeystorePath()}. When null/blank the gateway identity keystore password
+   * is used.
+   */
+  String getLDAPSSLKeystorePasswordAlias();
+
+  /**
+   * @return the TLS cipher suites the embedded LDAP service secure transport is restricted to,
+   * or an empty list to use the JVM defaults
+   */
+  List<String> getLDAPSSLEnabledCipherSuites();
 
   /**
    * @return set of all property names in the configuration
