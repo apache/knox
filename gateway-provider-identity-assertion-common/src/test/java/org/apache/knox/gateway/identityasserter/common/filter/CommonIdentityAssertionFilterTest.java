@@ -75,7 +75,7 @@ public class CommonIdentityAssertionFilterTest {
             }
 
             @Override
-            public String[] mapGroupPrincipals(String principalName, Subject subject) {
+            public String[] mapGroupPrincipals(String principalName, Subject subject, ServletRequest request) {
                 String[] groups = new String[4];
                 int i = 0;
                 for(GroupPrincipal p : subject.getPrincipals(GroupPrincipal.class)) {

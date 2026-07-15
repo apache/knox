@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.auth;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -40,6 +41,9 @@ public class ExtAuthzResource extends AbstractAuthResource {
   private boolean ignoreAdditionalPath;
 
   @Context
+  HttpServletRequest request;
+
+  @Context
   HttpServletResponse response;
 
   @Context
@@ -49,6 +53,11 @@ public class ExtAuthzResource extends AbstractAuthResource {
   public void init() {
     initialize();
     ignoreAdditionalPath = Boolean.parseBoolean(getInitParameter(IGNORE_ADDITIONAL_PATH, DEFAULT_IGNORE_ADDITIONAL_PATH));
+  }
+
+  @Override
+  public HttpServletRequest getRequest() {
+    return request;
   }
 
   @Override

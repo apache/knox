@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.auth;
 
+import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
@@ -64,6 +65,7 @@ public class ExtAuthzResourceTest {
     final ExtAuthzResource extAuthzResource = new ExtAuthzResource();
     extAuthzResource.context = context;
     extAuthzResource.response = response;
+    extAuthzResource.request = request;
     executeResourceWithAdditionalPath(extAuthzResource);
     EasyMock.verify(response);
   }
@@ -75,6 +77,7 @@ public class ExtAuthzResourceTest {
     EasyMock.expect(context.getInitParameter(ExtAuthzResource.AUTH_ACTOR_GROUPS_HEADER_PREFIX)).andReturn(groupsHeaderPrefix).anyTimes();
     EasyMock.expect(context.getInitParameter(ExtAuthzResource.IGNORE_ADDITIONAL_PATH)).andReturn("true").anyTimes();
     request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED)).andReturn("false").anyTimes();
     response = EasyMock.createNiceMock(HttpServletResponse.class);
 
     if (SubjectUtils.getPrimaryPrincipalName(subject) != null) {
@@ -122,13 +125,17 @@ public class ExtAuthzResourceTest {
     response.addHeader(EasyMock.eq(AbstractAuthResource.DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX), EasyMock.anyString());
     EasyMock.expectLastCall().anyTimes();
 
-    EasyMock.replay(context, response, mockRolesService, mockGatewayServices);
+    request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED)).andReturn("false").anyTimes();
+
+    EasyMock.replay(context, request, response, mockRolesService, mockGatewayServices);
 
     groups.forEach(group -> subject.getPrincipals().add(new GroupPrincipal(group)));
 
     final ExtAuthzResource extAuthzResource = new ExtAuthzResource();
     extAuthzResource.context = context;
     extAuthzResource.response = response;
+    extAuthzResource.request = request;
     executeResourceWithAdditionalPath(extAuthzResource);
 
     EasyMock.verify(response);

@@ -21,6 +21,8 @@ package org.apache.knox.gateway.identityasserter.filter;
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 
 public class IdentityAsserterFilter extends CommonIdentityAssertionFilter {
@@ -31,7 +33,7 @@ public class IdentityAsserterFilter extends CommonIdentityAssertionFilter {
   }
 
   @Override
-  public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
+  public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject, ServletRequest request) {
     return mapGroupPrincipalsBase(mappedPrincipalName, subject);
   }
 

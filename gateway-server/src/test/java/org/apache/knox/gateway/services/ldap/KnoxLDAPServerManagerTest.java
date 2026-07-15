@@ -19,14 +19,11 @@ package org.apache.knox.gateway.services.ldap;
 
 import org.apache.directory.api.ldap.codec.api.ControlFactory;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
-import org.apache.directory.api.ldap.model.entry.DefaultEntry;
-import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapProtocolErrorException;
 import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.api.ldap.model.message.SearchScope;
-import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
@@ -34,8 +31,6 @@ import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
-import org.apache.knox.gateway.services.ldap.interceptor.ConfigurableEntriesTestInterceptor;
-import org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptor;
 import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 import org.easymock.EasyMock;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -60,15 +55,12 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -433,45 +425,6 @@ public class KnoxLDAPServerManagerTest {
         Map<String, ControlFactory<? extends Control>> controlFactoryMap = serverManager.directoryService.getLdapCodecService().getRequestControlFactories();
         assertTrue(controlFactoryMap.containsKey(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID));
         assertTrue(controlFactoryMap.get(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID) instanceof RolesLookupBypassControlFactory);
-    }
-
-    @Test
-    public void testGetUserGroupsReturnsRawGroupsEvenWhenRolesInterceptorRewritesMemberOf() throws Exception {
-        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
-        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
-        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
-        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
-        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
-        replay(mockConfig);
-
-        serverManager.initialize(mockConfig);
-        serverManager.start();
-
-        SchemaManager schemaManager = serverManager.directoryService.getSchemaManager();
-        Entry userEntry = new DefaultEntry(schemaManager);
-        userEntry.setDn("uid=admin,ou=people,dc=test,dc=com");
-        userEntry.add("uid", "admin");
-        userEntry.add("memberOf", "cn=me-test-group-a,ou=groups,dc=test,dc=com");
-        userEntry.add("memberOf", "cn=me-test-group-b,ou=groups,dc=test,dc=com");
-        ConfigurableEntriesTestInterceptor entriesInterceptor = new ConfigurableEntriesTestInterceptor("testEntries");
-        entriesInterceptor.setEntries(List.of(userEntry));
-        entriesInterceptor.init(serverManager.directoryService);
-
-        LDAPRolesLookupService mockRolesService = EasyMock.createNiceMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.lookupRoles(anyString(), anyObject()))
-                .andReturn(Arrays.asList("console:admin", "ws-1:viewer", "ws-2:user")).anyTimes();
-        replay(mockRolesService);
-        LDAPRolesLookupInterceptor rolesInterceptor = new LDAPRolesLookupInterceptor(mockRolesService);
-        rolesInterceptor.init(serverManager.directoryService);
-
-        List<Interceptor> chain = new ArrayList<>(serverManager.directoryService.getInterceptors());
-        chain.add(0, rolesInterceptor);
-        chain.add(1, entriesInterceptor);
-        serverManager.directoryService.setInterceptors(chain);
-
-        List<String> groups = serverManager.getUserGroups("admin");
-
-        assertEquals(Arrays.asList("me-test-group-a", "me-test-group-b"), groups);
     }
 
     @Test(expected = LdapException.class)

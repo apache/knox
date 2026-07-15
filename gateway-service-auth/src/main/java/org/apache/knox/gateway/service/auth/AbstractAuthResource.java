@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.service.auth;
 
+import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -26,6 +27,7 @@ import org.apache.knox.gateway.util.GroupUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import java.util.Collection;
@@ -86,6 +88,8 @@ public abstract class AbstractAuthResource {
   /* Abstract method that gets context instance */
   abstract ServletContext getContext();
 
+  abstract ServletRequest getRequest();
+
   String getInitParameter(String paramName, String defaultValue) {
     final String initParam = getContext().getInitParameter(paramName);
     return initParam == null ? defaultValue : initParam;
@@ -110,7 +114,7 @@ public abstract class AbstractAuthResource {
       final boolean useRoles = !roles.isEmpty();
       final List<String> groupStrings = GroupUtils.getGroupStrings(useRoles ? roles : matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
-        final String headerName = useRoles ? authHeaderActorGroupsPrefix : String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1);
+        final String headerName = useRoles || rolesLookupExecuted() ? authHeaderActorGroupsPrefix : String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1);
         getResponse().addHeader(headerName, groupStrings.get(i));
       }
     }
@@ -120,7 +124,7 @@ public abstract class AbstractAuthResource {
   private Collection<String> lookupRoles(String userName, Collection<String> groups) {
     Collection<String> roles = null;
       try {
-        if (ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
+        if (!rolesLookupExecuted() && ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
           roles = ldapRolesLookupService.lookupRoles(userName, groups);
         }
       } catch (Exception e) {
@@ -128,6 +132,11 @@ public abstract class AbstractAuthResource {
         LOG.ldapRolesLookupFailed(userName, e);
       }
       return roles == null ? Collections.emptySet() : roles;
+  }
+
+  private boolean rolesLookupExecuted() {
+    final Object rolesLookupExecutedReqAttribute = getRequest() == null ? null : getRequest().getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED);
+    return rolesLookupExecutedReqAttribute != null && Boolean.parseBoolean(rolesLookupExecutedReqAttribute.toString());
   }
 
 }
