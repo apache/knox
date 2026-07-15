@@ -144,4 +144,8 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
     public List<String> getUserGroups(String username) throws Exception {
         return ldapServerManager == null ? List.of() : ldapServerManager.getUserGroups(username);
     }
+
+    public boolean hasRolesLookupInterceptor() {
+        return ldapServerManager != null && ldapServerManager.hasRolesLookupInterceptor();
+    }
 }

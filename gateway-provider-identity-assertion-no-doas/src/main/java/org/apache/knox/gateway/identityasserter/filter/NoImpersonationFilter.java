@@ -35,7 +35,7 @@ public class NoImpersonationFilter extends CommonIdentityAssertionFilter {
   }
 
   @Override
-  public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
+  public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject, ServletRequest request) {
     return mapGroupPrincipalsBase(mappedPrincipalName, subject);
   }
 

@@ -23,6 +23,7 @@ import java.util.List;
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.LdapGroupsMapping;
@@ -106,12 +107,11 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
    * provided user.
    */
   @Override
-  public String[] mapGroupPrincipals(final String mappedPrincipalName,
-                                     final Subject subject) {
+  public String[] mapGroupPrincipals(final String mappedPrincipalName, final Subject subject, ServletRequest request) {
     /* return the groups as seen by Hadoop */
     String[] groups;
     try {
-      final List<String> groupList = hadoopGroups(mappedPrincipalName);
+      final List<String> groupList = hadoopGroups(mappedPrincipalName, request);
       LOG.groupsFound(mappedPrincipalName, groupList.toString());
       groups = groupList.toArray(new String[0]);
 
@@ -128,12 +128,16 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
     return groups;
   }
 
-  protected List<String> hadoopGroups(String mappedPrincipalName) throws Exception {
+  protected List<String> hadoopGroups(String mappedPrincipalName, ServletRequest request) throws Exception {
     if (ldapService == null) {
       return hadoopGroups == null ? List.of() : hadoopGroups.getGroups(mappedPrincipalName);
     } else {
       LOG.useKnoxLDAPService();
-      return ldapService.getUserGroups(mappedPrincipalName);
+      final List<String> groups = ldapService.getUserGroups(mappedPrincipalName);
+      if (request != null && ldapService.hasRolesLookupInterceptor()) {
+        request.setAttribute(ROLES_LOOKUP_EXECUTED, Boolean.TRUE.toString());
+      }
+      return groups;
     }
   }
 

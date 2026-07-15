@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.auth;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import javax.ws.rs.DELETE;
@@ -35,6 +36,9 @@ public class PreAuthResource extends AbstractAuthResource {
   static final String RESOURCE_PATH = "auth/api/v1/pre";
 
   @Context
+  HttpServletRequest request;
+
+  @Context
   HttpServletResponse response;
 
   @Context
@@ -42,6 +46,11 @@ public class PreAuthResource extends AbstractAuthResource {
   @PostConstruct
   public void init() {
     initialize();
+  }
+
+  @Override
+  public HttpServletRequest getRequest() {
+    return request;
   }
 
   @Override

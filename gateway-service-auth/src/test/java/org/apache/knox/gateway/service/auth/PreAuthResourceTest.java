@@ -34,12 +34,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 
+import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
+import org.apache.knox.gateway.util.GroupUtils;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +50,7 @@ public class PreAuthResourceTest {
 
   private static final String USER_NAME = "test-username";
   private ServletContext context;
+  private HttpServletRequest request;
   private HttpServletResponse response;
   private final Subject subject = new Subject();
 
@@ -61,14 +64,15 @@ public class PreAuthResourceTest {
   }
 
   private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups) throws Exception {
-    configureCommonExpectations(actorIdHeaderName, groupsHeaderPrefix, groups, null);
+    configureCommonExpectations(actorIdHeaderName, groupsHeaderPrefix, groups, null, false);
   }
 
-  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups, GatewayServices gatewayServices) throws Exception {
+  private void configureCommonExpectations(String actorIdHeaderName, String groupsHeaderPrefix, Collection<String> groups, GatewayServices gatewayServices, boolean rolesLookupExecuted) throws Exception {
     context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_ID_HEADER_NAME)).andReturn(actorIdHeaderName).anyTimes();
     EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_GROUPS_HEADER_PREFIX)).andReturn(groupsHeaderPrefix).anyTimes();
-    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED)).andReturn(rolesLookupExecuted).anyTimes();
     response = EasyMock.createNiceMock(HttpServletResponse.class);
 
     if (SubjectUtils.getPrimaryPrincipalName(subject) != null) {
@@ -81,12 +85,12 @@ public class PreAuthResourceTest {
       EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices);
       final LDAPRolesLookupService rolesLookupService = gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE);
       if (rolesLookupService != null && rolesLookupService.enabled()) {
-        Collection<String> roles = rolesLookupService.lookupRoles(USER_NAME, groups);
-        if (roles != null && !roles.isEmpty()) {
           final String expectedGroupsHeaderPrefix = (groupsHeaderPrefix == null ? PreAuthResource.DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX : groupsHeaderPrefix);
           response.addHeader(EasyMock.eq(expectedGroupsHeaderPrefix), EasyMock.anyString());
-          EasyMock.expectLastCall().anyTimes();
-        }
+          EasyMock.expectLastCall().times(1);
+      }
+      if (rolesLookupExecuted) {
+        groups.forEach(group -> subject.getPrincipals().add(new GroupPrincipal(group)));
       }
     } else if (!groups.isEmpty()) {
       groups.forEach(group -> subject.getPrincipals().add(new GroupPrincipal(group)));
@@ -117,6 +121,7 @@ public class PreAuthResourceTest {
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     final Response response = executeResourceWithSubject(preAuthResource);
     assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
   }
@@ -127,6 +132,7 @@ public class PreAuthResourceTest {
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     executeResourceWithSubject(preAuthResource);
     EasyMock.verify(response);
   }
@@ -137,6 +143,7 @@ public class PreAuthResourceTest {
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     executeResourceWithSubject(preAuthResource);
     EasyMock.verify(response);
   }
@@ -147,6 +154,7 @@ public class PreAuthResourceTest {
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     executeResourceWithSubject(preAuthResource);
     EasyMock.verify(response);
   }
@@ -157,29 +165,47 @@ public class PreAuthResourceTest {
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     executeResourceWithSubject(preAuthResource);
     EasyMock.verify(response);
   }
 
   @Test
   public void testPopulatingGroupsWithRoles() throws Exception {
-    final GatewayServices gatewayServices = configureLdapRolesLookupExpectations();
-    configureCommonExpectations(PreAuthResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, null, Collections.singleton("engineering"), gatewayServices);
+    final String rolesHeader = "X-Knox-Roles";
+    final GatewayServices gatewayServices = configureLdapRolesLookupExpectations(false);
+    configureCommonExpectations(PreAuthResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, rolesHeader, Collections.singleton("engineering"), gatewayServices, false);
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     Response preAuthResponse = executeResourceWithSubject(preAuthResource);
     assertEquals(HttpServletResponse.SC_OK, preAuthResponse.getStatus());
     EasyMock.verify(response);
   }
 
-  private GatewayServices configureLdapRolesLookupExpectations() throws Exception {
+  @Test
+  public void testRolesAreNotPopulatedTwice() throws Exception {
+    final String rolesHeader = "X-Knox-Roles";
+    final GatewayServices gatewayServices = configureLdapRolesLookupExpectations(true);
+    configureCommonExpectations(PreAuthResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, rolesHeader, Collections.singleton("engineering"), gatewayServices, true);
+    final PreAuthResource preAuthResource = new PreAuthResource();
+    preAuthResource.context = context;
+    preAuthResource.response = response;
+    preAuthResource.request = request;
+    Response preAuthResponse = executeResourceWithSubject(preAuthResource);
+    assertEquals(HttpServletResponse.SC_OK, preAuthResponse.getStatus());
+    EasyMock.verify(response);
+  }
+
+  private GatewayServices configureLdapRolesLookupExpectations(boolean roleLookupExecuted) throws Exception {
     final String role1 = "platform:admin";
     final String role2 = "ml-workspace:viewer";
-    final Set<String> groups = Collections.singleton("engineering");
-    final LDAPRolesLookupService rolesLookupService = EasyMock.createNiceMock(LDAPRolesLookupService.class);
+    final LDAPRolesLookupService rolesLookupService = EasyMock.createMock(LDAPRolesLookupService.class);
     EasyMock.expect(rolesLookupService.enabled()).andReturn(true).anyTimes();
-    EasyMock.expect(rolesLookupService.lookupRoles(EasyMock.eq(USER_NAME), EasyMock.anyObject())).andReturn(Arrays.asList(role1, role2)).anyTimes();
+    if (!roleLookupExecuted) {
+      EasyMock.expect(rolesLookupService.lookupRoles(EasyMock.eq(USER_NAME), EasyMock.anyObject())).andReturn(Arrays.asList(role1, role2)).anyTimes();
+    }
 
     final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE)).andReturn(rolesLookupService).anyTimes();
@@ -203,6 +229,7 @@ public class PreAuthResourceTest {
     final PreAuthResource preAuthResource = new PreAuthResource();
     preAuthResource.context = context;
     preAuthResource.response = response;
+    preAuthResource.request = request;
     executeResourceWithSubject(preAuthResource);
     EasyMock.verify(response);
   }

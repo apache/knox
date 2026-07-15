@@ -34,6 +34,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -42,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.hadoop.security.GroupMappingServiceProvider;
 import org.apache.hadoop.security.LdapGroupsMapping;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.identityasserter.common.filter.AbstractIdentityAssertionFilter;
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -99,7 +101,7 @@ public class HadoopGroupProviderFilterTest {
     final String principal = filter.mapUserPrincipal(
         ((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0])
             .getName());
-    final String[] groups = filter.mapGroupPrincipals(principal, subject);
+    final String[] groups = filter.mapGroupPrincipals(principal, subject, null);
 
     assertThat(principal, is(username));
     assertThat(
@@ -133,7 +135,7 @@ public class HadoopGroupProviderFilterTest {
     final String principal = filter.mapUserPrincipal(
         ((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0])
             .getName());
-    final String[] groups = filter.mapGroupPrincipals(principal, subject);
+    final String[] groups = filter.mapGroupPrincipals(principal, subject, null);
 
     assertThat(principal, is(failUsername));
     assertThat(
@@ -209,7 +211,7 @@ public class HadoopGroupProviderFilterTest {
     final String principal = filter.mapUserPrincipal(
         ((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0])
             .getName());
-    final String[] groups = filter.mapGroupPrincipals(principal, subject);
+    final String[] groups = filter.mapGroupPrincipals(principal, subject, null);
 
     assertThat(principal, is(username));
 
@@ -253,7 +255,7 @@ public class HadoopGroupProviderFilterTest {
       }
 
       @Override
-      protected List<String> hadoopGroups(String mappedPrincipalName) {
+      protected List<String> hadoopGroups(String mappedPrincipalName, ServletRequest request) {
         return Collections.singletonList("hadoop-group");
       }
     };
@@ -280,7 +282,7 @@ public class HadoopGroupProviderFilterTest {
     subject.getPrincipals().add(new PrimaryPrincipal(username));
 
     // no init() method called -> hadoopGroups is null
-    final String[] groups = filter.mapGroupPrincipals(username, subject);
+    final String[] groups = filter.mapGroupPrincipals(username, subject, null);
 
     assertThat(groups.length, is(0));
   }
@@ -288,15 +290,21 @@ public class HadoopGroupProviderFilterTest {
   @Test
   public void testLdapServiceIntegration() throws Exception {
     KnoxLDAPService ldapService = EasyMock.createNiceMock(KnoxLDAPService.class);
-    doTestLdapServiceIntegration(true, Arrays.asList("group1", "group2"), ldapService);
+    doTestLdapServiceIntegration(true, Arrays.asList("group1", "group2"), ldapService, false);
   }
 
   @Test
   public void testFallbackToHadoopGroupsWhenLdapDisabled() throws Exception {
-    doTestLdapServiceIntegration(false, Collections.singletonList("hadoop-group"), null);
+    doTestLdapServiceIntegration(false, Collections.singletonList("hadoop-group"), null, false);
   }
 
-  private void doTestLdapServiceIntegration(boolean ldapEnabled, List<String> expectedGroups, KnoxLDAPService ldapService) throws Exception {
+  @Test
+  public void testLdapServiceIntegrationWithRolesLookupInterceptor() throws Exception {
+    KnoxLDAPService ldapService = EasyMock.createNiceMock(KnoxLDAPService.class);
+    doTestLdapServiceIntegration(true, Arrays.asList("group1", "group2"), ldapService, true);
+  }
+
+  private void doTestLdapServiceIntegration(boolean ldapEnabled, List<String> expectedGroups, KnoxLDAPService ldapService, boolean hasRolesLookupInterceptor) throws Exception {
     final String principalName = "test-user";
 
     FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
@@ -314,6 +322,7 @@ public class HadoopGroupProviderFilterTest {
       EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
       EasyMock.expect(services.getService(ServiceType.LDAP_SERVICE)).andReturn(ldapService).anyTimes();
       EasyMock.expect(ldapService.getUserGroups(principalName)).andReturn(expectedGroups).anyTimes();
+      EasyMock.expect(ldapService.hasRolesLookupInterceptor()).andReturn(hasRolesLookupInterceptor).anyTimes();
       EasyMock.replay(services, ldapService);
     } else {
       EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
@@ -323,8 +332,8 @@ public class HadoopGroupProviderFilterTest {
 
     HadoopGroupProviderFilter filter = new HadoopGroupProviderFilter() {
       @Override
-      protected List<String> hadoopGroups(String mappedPrincipalName) throws Exception {
-        return ldapEnabled ? super.hadoopGroups(mappedPrincipalName) : expectedGroups;
+      protected List<String> hadoopGroups(String mappedPrincipalName, ServletRequest request) throws Exception {
+        return ldapEnabled ? super.hadoopGroups(mappedPrincipalName, request) : expectedGroups;
       }
     };
     filter.init(config);
@@ -332,11 +341,21 @@ public class HadoopGroupProviderFilterTest {
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal(principalName));
 
-    String[] groups = filter.mapGroupPrincipals(principalName, subject);
+    final ServletRequest request = EasyMock.createNiceMock(ServletRequest.class);
+    if (hasRolesLookupInterceptor) {
+      request.setAttribute(AbstractIdentityAssertionFilter.ROLES_LOOKUP_EXECUTED, "true");
+      EasyMock.expectLastCall().atLeastOnce();
+    }
+    EasyMock.replay(request);
+
+    String[] groups = filter.mapGroupPrincipals(principalName, subject, request);
 
     assertThat(Arrays.asList(groups), is(expectedGroups));
     if (ldapEnabled) {
       EasyMock.verify(ldapService);
+      if (hasRolesLookupInterceptor) {
+        EasyMock.verify(request);
+      }
     }
   }
 }

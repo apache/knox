@@ -57,7 +57,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "member@us.apache.org" ) );
     assertThat( groups, is( arrayContainingInAnyOrder( "admin", "users" ) ) );
 
@@ -86,7 +86,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "MEMBER@US.APACHE.ORG" ) );
     assertThat( groups, is( arrayContainingInAnyOrder( "ADMIN", "USERS" ) ) );
 
@@ -114,7 +114,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "member@us.apache.org" ) );
     assertThat( groups, is( arrayContainingInAnyOrder( "admin", "users" ) ) );
 
@@ -140,7 +140,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "Member@us.apache.org" ) );
     assertThat( groups, is( nullValue() ) );
 
@@ -168,7 +168,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "MEMBER@US.APACHE.ORG" ) );
     assertThat( groups, is( arrayContainingInAnyOrder( "ADMIN", "USERS" ) ) );
 
@@ -196,7 +196,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "MEMBER@US.APACHE.ORG" ) );
     assertThat( groups, is( nullValue() ) );
 
@@ -224,7 +224,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "Member@us.apache.org" ) );
     assertThat( groups, is( nullValue() ) );
 
@@ -251,7 +251,7 @@ public class SwitchCaseIdentityAssertionFilterTest {
 
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "MEMBER@US.APACHE.ORG" ) );
     assertThat( groups, is( nullValue() ) );
 

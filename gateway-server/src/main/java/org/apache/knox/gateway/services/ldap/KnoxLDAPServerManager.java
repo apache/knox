@@ -46,8 +46,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
-import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlImpl;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
+import org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptor;
 import org.apache.knox.gateway.services.security.AliasService;
 
 import java.io.File;
@@ -75,6 +75,7 @@ public class KnoxLDAPServerManager {
     private LdapServer ldapServer;
     private GatewayConfig gatewayConfig;
     private List<Interceptor> interceptors;
+    private boolean hasRolesLookupInterceptor;
     private File workDir;
     private int port;
     private String baseDn;
@@ -109,6 +110,8 @@ public class KnoxLDAPServerManager {
         this.bindUser = config.getLDAPBindUser();
 
         createInterceptors(config);
+
+        hasRolesLookupInterceptor = interceptors.stream().anyMatch(interceptor -> interceptor instanceof LDAPRolesLookupInterceptor);
 
         // Clean up previous run if it didn't shut down cleanly
         File lockFile = new File(workDir, "run/instance.lock");
@@ -385,10 +388,6 @@ public class KnoxLDAPServerManager {
         searchRequest.setFilter("(uid=" + username + ")");
         searchRequest.addAttributes("*");
 
-        RolesLookupBypassControlImpl bypassControl = new RolesLookupBypassControlImpl();
-        bypassControl.setBypassRolesLookup(true);
-        searchRequest.addControl(bypassControl);
-
         List<String> groups = new ArrayList<>();
         try (Cursor<Entry> cursor = directoryService.getAdminSession().search(searchRequest)) {
             if (cursor.next()) {
@@ -409,6 +408,10 @@ public class KnoxLDAPServerManager {
             }
         }
         return groups;
+    }
+
+    public boolean hasRolesLookupInterceptor() {
+        return hasRolesLookupInterceptor;
     }
 
     /**

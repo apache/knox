@@ -58,7 +58,7 @@ public class RegexIdentityAssertionFilterTest {
     // First test is with no config.  Since the output template is the empty string that should be the result.
     filter.init(config);
     String actual = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(actual, subject);
+    String[] groups = filter.mapGroupPrincipals(actual, subject, null);
     assertThat( actual, is( "" ) );
     assertThat( groups, is( nullValue() ) ); // means for the caller to use the existing subject groups
 

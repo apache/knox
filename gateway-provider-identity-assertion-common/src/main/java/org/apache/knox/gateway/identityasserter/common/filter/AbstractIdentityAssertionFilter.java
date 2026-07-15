@@ -54,8 +54,7 @@ import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
 
-public abstract class AbstractIdentityAssertionFilter extends
-  AbstractIdentityAssertionBase implements Filter {
+public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAssertionBase implements Filter {
 
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
@@ -70,15 +69,17 @@ public abstract class AbstractIdentityAssertionFilter extends
   }
 
   /**
-   * This method returns a Stringp[] of new group principal names to use
+   * This method returns a String[] of new group principal names to use
    * based on implementation specific mapping or lookup mechanisms.
    * Returning null means that whatever set of GroupPrincipals is in the
    * provided Subject is sufficient to use and no additional mapping is required.
+   *
    * @param mappedPrincipalName username for the authenticated identity - post mapUserPrincipal mapping.
-   * @param subject the existing Subject from the authentication event which may or may not contain GroupPrincipals.
+   * @param subject             the existing Subject from the authentication event which may or may not contain GroupPrincipals.
+   * @param request             the request which may or may not be decorated with extra attributes (e.g. if LDAP roles lookup happened already)
    * @return String[] of new principal names to use as GroupPrincipals or null.
    */
-  public abstract String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject);
+  public abstract String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject, ServletRequest request);
 
   /**
    * This method is used to map the username of the authenticated identity to some other
