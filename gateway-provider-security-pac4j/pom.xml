@@ -148,7 +148,17 @@
                     <groupId>org.apache.velocity</groupId>
                     <artifactId>velocity</artifactId>
                 </exclusion>
+                <!-- Replaced by gateway-shim-opensaml-security-api which strips
+                     the non-FIPS BouncyCastle NamedCurve SPI registration. -->
+                <exclusion>
+                    <groupId>org.opensaml</groupId>
+                    <artifactId>opensaml-security-api</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-shim-opensaml-security-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.pac4j</groupId>

@@ -71,6 +71,7 @@
         <module>gateway-i18n-logging-sl4j</module>
         <module>gateway-spi</module>
         <module>gateway-spi-common</module>
+        <module>gateway-shim-opensaml-security-api</module>
         <module>gateway-discovery-ambari</module>
         <module>gateway-discovery-cm</module>
         <module>gateway-performance-test</module>
@@ -2707,8 +2708,28 @@
             </dependency>
             <dependency>
                 <groupId>org.opensaml</groupId>
+                <artifactId>opensaml-core-api</artifactId>
+                <version>${opensaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensaml</groupId>
                 <artifactId>opensaml-security-api</artifactId>
                 <version>${opensaml.version}</version>
+            </dependency>
+            <!-- FIPS shim: shaded opensaml-security-api with the non-FIPS
+                 BouncyCastle NamedCurve SPI stripped out. Modules that need
+                 opensaml-security-api on the classpath should depend on this
+                 instead and exclude the upstream artifact from pac4j-saml. -->
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-shim-opensaml-security-api</artifactId>
+                <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.opensaml</groupId>
+                        <artifactId>opensaml-security-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.opensaml</groupId>
