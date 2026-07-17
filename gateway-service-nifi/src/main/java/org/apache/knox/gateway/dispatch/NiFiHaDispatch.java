@@ -42,11 +42,12 @@ public class NiFiHaDispatch extends DefaultHaDispatch {
     try {
       outboundRequest = NiFiRequestUtil.modifyOutboundRequest(outboundRequest, inboundRequest);
       inboundResponse = executeOutboundRequest(outboundRequest);
-      writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
     } catch (IOException e) {
       LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
       failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+      return;
     }
+    writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
   }
 
   /**

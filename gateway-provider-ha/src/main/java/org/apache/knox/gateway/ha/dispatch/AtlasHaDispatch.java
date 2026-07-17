@@ -64,12 +64,12 @@ public class AtlasHaDispatch extends DefaultHaDispatch {
                 }
             }
 
-            writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
-
         } catch (IOException e) {
             LOG.errorConnectingToServer(outboundRequest.getURI().toString(), e);
             failoverRequest(outboundRequest, inboundRequest, outboundResponse, inboundResponse, e);
+            return;
         }
+        writeOutboundResponse(outboundRequest, inboundRequest, outboundResponse, inboundResponse);
     }
 
     private boolean isLoginRedirect(Header locationHeader) {
