@@ -14,9 +14,9 @@
 --  the License.
 
 CREATE TABLE TRUSTED_OIDC_ISSUERS (
-    issuer_url    VARCHAR(2048) PRIMARY KEY,
-    dynamic_jwks  BOOLEAN DEFAULT false,
-    cluster_name  VARCHAR(256),
-    registered_at TIMESTAMP,
-    registered_by VARCHAR(2048)
+    issuer_url    VARCHAR(2048) PRIMARY KEY NOT NULL,
+    dynamic_jwks  BOOLEAN       DEFAULT false NOT NULL,
+    registered_at TIMESTAMP     NOT NULL,
+    registered_by VARCHAR(2048),
+    cluster_name  VARCHAR(256)
 )
