@@ -49,14 +49,16 @@ under the License.
 
 ### Draft confidence
 
-**~14 documented / ~20 maintainer / ~22 inferred** (after the 2026-07-09 PMC
+**~17 documented / ~39 maintainer / ~11 inferred** (after the 2026-07-09 PMC
 review). The Wave 1–3 core answers — deployment shape, adversary boundary,
 the keystone identity-assertion property, backend-hop TLS expectations, the
-`HeaderPreAuth` disposition, and the reverse-proxy responsibility split — are
-now *(maintainer)*. Still *(inferred)* and awaiting confirmation: Q7, Q9–Q13,
-Q17, Q21–Q22, Q28, Q29 (remaining environment/host-side-effect inventory,
-self-signed / `-persist-master` stances, secondary adversary capabilities,
-the known-non-findings suppression set, and cross-topology isolation).
+`HeaderPreAuth` disposition, the per-surface trust table and resource line, the
+bearer-token/backend-hop false friends, and the reverse-proxy responsibility
+split — are now *(maintainer)*. Still *(inferred)* and awaiting confirmation:
+Q7, Q8, Q9–Q13, Q17, Q21–Q22, Q28, Q29 (data-flow/reachability preconditions,
+remaining environment/host-side-effect inventory, self-signed /
+`-persist-master` stances, secondary adversary capabilities, the
+known-non-findings suppression set, and cross-topology isolation).
 
 ### What Knox is (one paragraph)
 
@@ -273,7 +275,8 @@ non-default-build`). All rulings below are proposed, pending §14.
 Knox's inputs split cleanly into **untrusted network input** (the client) and
 **trusted operator input** (the descriptors and secrets).
 
-Per-surface trust table *(inferred → Q19 unless noted)*:
+Per-surface trust table *(maintainer, 2026-07-09 — L. McCay confirmed Q19: the
+table stands, unless noted)*:
 
 | Surface | Parameter | Attacker-controllable? | Operator/Knox must enforce |
 | --- | --- | --- | --- |
@@ -295,7 +298,7 @@ earn.
 
 Size/shape/rate: Knox streams request/response bodies and WebSocket frames; body
 size, connection, and timeout limits are Jetty/topology configuration rather than
-a Knox-guaranteed bound *(inferred → Q20)*.
+a Knox-guaranteed bound *(maintainer, 2026-07-09 — L. McCay confirmed Q20)*.
 
 ---
 
@@ -419,13 +422,14 @@ process is a bug; merely consuming proportionate resources under load is not."*
   operator has to explicitly accept the ungated posture (VALID-HARDENING).
 - **KnoxSSO cookie / KnoxToken are bearer credentials, not proof of possession.**
   Anyone who captures one can replay it until expiry; TLS + short TTL + (where
-  available) revocation are load-bearing, not decorative *(inferred → Q18/Q25)*.
+  available) revocation are load-bearing, not decorative *(maintainer,
+  2026-07-09 — L. McCay confirmed Q18/Q25)*.
 - **"Topology concealment" is obscurity, not an access control.** Hiding backend
   addresses reduces attack surface but is not itself an authentication/authz
   boundary *(inferred)*.
 - **TLS termination at Knox does not encrypt the backend hop.** Client→Knox TLS
   says nothing about Knox→backend; that hop's encryption/verification is separate
-  config *(inferred → Q16)*.
+  config *(maintainer, 2026-07-09 — L. McCay confirmed Q16)*.
 
 **Well-known attack classes Knox as a reverse proxy is exposed to and the
 operator must weigh** *(maintainer, 2026-07-09 — L. McCay answered Q27)*: HTTP
@@ -624,10 +628,11 @@ in. Grouped in waves. **Larry McCay (PMC chair) answered Wave 1–3 core + meta 
   if it breaks §8(1/2).
 - **Q28 (§11a): ⬜ Open.** Confirm/extend the known-non-findings list so it can
   seed a scanner suppression set.
-- **Q7 (§3), Q9–Q13, Q17, Q21–Q22 (§5/§7/§5a): ⬜ Open.** Confirm the remaining
-  environment, host side-effect inventory (**including whether the webshell
-  terminal spawns a process — Q12**), self-signed/`-persist-master` stances, and
-  secondary adversary-capability details as stated inline.
+- **Q7 (§3), Q8 (§4), Q9–Q13, Q17, Q21–Q22 (§5/§7/§5a): ⬜ Open.** Confirm the
+  remaining data-flow/reachability preconditions, environment, host side-effect
+  inventory (**including whether the webshell terminal spawns a process — Q12**),
+  self-signed/`-persist-master` stances, and secondary adversary-capability
+  details as stated inline.
 
 **Wave 4 — meta / ownership — ANSWERED 2026-07-09:**
 
