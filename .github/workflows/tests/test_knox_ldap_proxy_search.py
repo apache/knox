@@ -43,6 +43,10 @@ BASE_DN = "dc=hadoop,dc=apache,dc=org"
 PEOPLE_BASE = f"ou=people,{BASE_DN}"
 GROUPS_BASE = f"ou=groups,{BASE_DN}"
 
+PROXY_BASE_DN = "dc=proxy,dc=org"
+PROXY_PEOPLE_BASE = f"ou=people,{PROXY_BASE_DN}"
+PROXY_GROUPS_BASE = f"ou=groups,{PROXY_BASE_DN}"
+
 # A valid backend user used to bind to the proxy before searching.
 BIND_DN = f"uid=guest,{PEOPLE_BASE}"
 BIND_PASSWORD = "guest-password"
@@ -100,6 +104,28 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
     def test_search_user_by_uid(self) -> None:
         """A single user can still be looked up by uid."""
         users = self.rdn_values(PEOPLE_BASE, "(uid=sam)")
+        self.assertIn("sam", users)
+
+    def test_search_all_users_by_objectclass_proxy_dn(self) -> None:
+        """All inetOrgPerson entries under ou=people are returned."""
+        users = self.rdn_values(PROXY_PEOPLE_BASE, "(objectClass=inetOrgPerson)")
+        for expected in ("guest", "admin", "sam", "tom", "recursiveUser"):
+            self.assertIn(expected, users)
+
+    def test_search_all_groups_by_objectclass_proxy_dn(self) -> None:
+        """All groupOfNames entries under ou=groups are returned."""
+        groups = self.rdn_values(PROXY_GROUPS_BASE, "(objectClass=groupOfNames)")
+        for expected in ("analyst", "scientist", "admin", "level1", "level2", "level3"):
+            self.assertIn(expected, groups)
+
+    def test_search_groups_by_cn_wildcard_proxy_dn(self) -> None:
+        """A cn wildcard filter returns only the matching groups."""
+        groups = self.rdn_values(PROXY_GROUPS_BASE, "(cn=level*)")
+        self.assertEqual({"level1", "level2", "level3"}, set(groups))
+
+    def test_search_user_by_uid_proxy_dn(self) -> None:
+        """A single user can still be looked up by uid."""
+        users = self.rdn_values(PROXY_PEOPLE_BASE, "(uid=sam)")
         self.assertIn("sam", users)
 
 

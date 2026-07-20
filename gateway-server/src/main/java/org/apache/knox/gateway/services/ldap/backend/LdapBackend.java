@@ -50,6 +50,13 @@ public interface LdapBackend {
     String getBaseDn();
 
     /**
+     * Returns whether the a search base is supported by this backend
+     * @param searchBase the base dn for a search
+     * @return True if the base dn is supported by this backend
+     */
+    boolean isSupportedSearchBase(String searchBase);
+
+    /**
      * Get a user entry by username
      * @param username The username to look up
      * @param schemaManager Schema manager for creating entries

@@ -135,7 +135,7 @@ The interceptor will skip role mapping for a search request if the RolesLookupBy
 | Byte | Value | Description |
 | :--- | :--- | :--- |
 | Tag | 0x01 | The Boolean Tag value |
-| Length | 0x03 | The length of the value in bytes |
+| Length | 0x01 | The length of the value in bytes |
 | Bypass | 0x00 or Oxff | 0x00 corresponds to `false` and 0xff corresponds to `true |
 
 
