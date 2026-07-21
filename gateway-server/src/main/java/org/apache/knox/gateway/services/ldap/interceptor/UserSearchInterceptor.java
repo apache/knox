@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Locale.ROOT;
-
 /**
  * Interceptor for LDAP operations to proxy user searches to backends when not found locally
  */

@@ -50,7 +50,7 @@ public interface LdapBackend {
     String getBaseDn();
 
     /**
-     * Returns whether the a search base is supported by this backend
+     * Returns whether a search base is supported by this backend
      * @param searchBase the base dn for a search
      * @return True if the base dn is supported by this backend
      */

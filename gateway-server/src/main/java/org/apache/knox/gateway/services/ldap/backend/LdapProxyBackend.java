@@ -237,10 +237,8 @@ public class LdapProxyBackend implements LdapBackend {
             return false;
         }
         String searchBaseLowerCase = searchBase.toLowerCase(ROOT);
-        return searchBaseLowerCase.endsWith(proxyUserSearchBase.toLowerCase(ROOT)) ||
-                searchBaseLowerCase.endsWith(proxyGroupSearchBase.toLowerCase(ROOT)) ||
-                searchBaseLowerCase.endsWith(remoteUserSearchBase.toLowerCase(ROOT)) ||
-                searchBaseLowerCase.endsWith(remoteGroupSearchBase.toLowerCase(ROOT));
+        return searchBaseLowerCase.endsWith(proxyBaseDn.toLowerCase(ROOT)) ||
+                searchBaseLowerCase.endsWith(remoteBaseDn.toLowerCase(ROOT));
     }
 
     /**
