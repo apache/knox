@@ -15,7 +15,7 @@
          </param>
          <param>
             <name>main.ldapRealm.contextFactory.url</name>
-            <value>ldap://ldap:33389</value>
+            <value>ldaps://localhost:33390</value>
          </param>
          <param>
             <name>main.ldapRealm.contextFactory.authenticationMechanism</name>
