@@ -49,7 +49,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
 public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFederationFilterTest {
 

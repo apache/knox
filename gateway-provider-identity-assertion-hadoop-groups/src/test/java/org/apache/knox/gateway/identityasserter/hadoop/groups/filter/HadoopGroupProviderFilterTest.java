@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.security.auth.Subject;
+import javax.security.auth.Subject;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletContext;
