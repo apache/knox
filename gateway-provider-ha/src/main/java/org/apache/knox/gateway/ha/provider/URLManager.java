@@ -35,4 +35,6 @@ public interface URLManager {
   void markFailed(String url);
 
   void makeNextActiveURLAvailable();
+
+  String getActiveURLAndAdvance();
 }

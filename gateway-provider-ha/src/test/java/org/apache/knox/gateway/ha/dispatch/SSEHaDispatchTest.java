@@ -86,7 +86,6 @@ public class SSEHaDispatchTest {
 
     @Test
     public void testHADispatchURL() throws Exception {
-        String serviceName = "SSE";
         HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
         descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null, null, null));
         HaProvider provider = new DefaultHaProvider(descriptor);
@@ -344,7 +343,7 @@ public class SSEHaDispatchTest {
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         Capture<Cookie> capturedArgument = Capture.newInstance();
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -358,7 +357,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -376,7 +375,7 @@ public class SSEHaDispatchTest {
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, null);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -390,7 +389,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -408,7 +407,7 @@ public class SSEHaDispatchTest {
         AsyncContext asyncContext = this.getAsyncContext(latch, outboundResponse);
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, null);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -422,7 +421,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -454,7 +453,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest);
@@ -473,7 +472,7 @@ public class SSEHaDispatchTest {
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         Capture<Cookie> capturedArgument = Capture.newInstance();
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -487,7 +486,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -506,7 +505,7 @@ public class SSEHaDispatchTest {
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         Capture<Cookie> capturedArgument = Capture.newInstance();
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -520,7 +519,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doPost(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doPost(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -539,7 +538,7 @@ public class SSEHaDispatchTest {
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         Capture<Cookie> capturedArgument = Capture.newInstance();
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -553,7 +552,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doPost(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doPost(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -564,7 +563,7 @@ public class SSEHaDispatchTest {
     @Test
     public void testFailoverDisabledWithStickySession() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        HaServiceConfig haServiceConfig = HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, null, "agentX,user1,agentY", null);
+        HaServiceConfig haServiceConfig = HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, "true", "true", null, "true", "agentX,user1,agentY", null);
         SSEHaDispatch sseHaDispatch = this.createDispatch(true, haServiceConfig);
         PrintWriter printWriter = EasyMock.createNiceMock(PrintWriter.class);
         HttpServletResponse outboundResponse = this.getServletResponse(HttpStatus.SC_OK);
@@ -572,7 +571,7 @@ public class SSEHaDispatchTest {
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         Capture<Cookie> capturedArgument = Capture.newInstance();
         expect(inboundRequest.getHeader("User-Agent")).andReturn("unknown").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -586,7 +585,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);
@@ -625,7 +624,7 @@ public class SSEHaDispatchTest {
         HttpServletRequest inboundRequest = this.getHttpServletRequest(asyncContext);
         Capture<Cookie> capturedArgument = Capture.newInstance();
         expect(inboundRequest.getHeader("User-Agent")).andReturn("agentX").anyTimes();
-        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).once();
+        expect(inboundRequest.getRequestURL()).andReturn(new StringBuffer(URL.toString())).anyTimes();
         expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).once();
         this.expectResponseBodyAndHeader(printWriter, outboundResponse, capturedArgument);
         replay(inboundRequest, asyncContext, outboundResponse, printWriter);
@@ -639,7 +638,7 @@ public class SSEHaDispatchTest {
                 .content("id:1\ndata:data1\nevent:event1\n\ndata:data2\nevent:event2\nid:2\nretry:1\n:testing\n\n", StandardCharsets.UTF_8)
                 .header("response", "header")
                 .contentType("text/event-stream");
-        sseHaDispatch.doGet(new URI("http://unknown-host.invalid"), inboundRequest, outboundResponse);
+        sseHaDispatch.doGet(new URI("http://unknown-host.invalid/sse"), inboundRequest, outboundResponse);
 
         latch.await(2L, TimeUnit.SECONDS);
         EasyMock.verify(asyncContext, outboundResponse, inboundRequest, printWriter);

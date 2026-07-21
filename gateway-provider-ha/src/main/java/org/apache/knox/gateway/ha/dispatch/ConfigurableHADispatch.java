@@ -31,8 +31,6 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -92,9 +90,8 @@ public class ConfigurableHADispatch extends ConfigurableDispatch implements Comm
   @Override
   protected void executeRequestWrapper(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest, HttpServletResponse outboundResponse) throws IOException {
       boolean userAgentDisabled = isUserAgentDisabled(inboundRequest);
-      Optional<URI> backendURI = setBackendUri(outboundRequest, inboundRequest, userAgentDisabled);
+      setBackendUri(outboundRequest, inboundRequest, userAgentDisabled);
       executeRequest(outboundRequest, inboundRequest, outboundResponse);
-      shiftActiveURL(userAgentDisabled, backendURI);
   }
 
   @Override
