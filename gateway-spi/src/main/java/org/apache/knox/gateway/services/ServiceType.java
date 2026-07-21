@@ -41,7 +41,8 @@ public enum ServiceType {
   GATEWAY_STATUS_SERVICE("GatewayStatusService"),
   LDAP_SERVICE("LDAPService"),
   LDAP_ROLES_LOOKUP_SERVICE("LDAPRoleLookupService"),
-  KNOXIDF_FEDERATED_IDENTITY_SERVICE("KnoxIDFFederatedIdentityService");
+  KNOXIDF_FEDERATED_IDENTITY_SERVICE("KnoxIDFFederatedIdentityService"),
+  TRUSTED_OIDC_ISSUER_SERVICE("TrustedOidcIssuerService");
 
   private final String serviceTypeName;
   private final String shortName;
