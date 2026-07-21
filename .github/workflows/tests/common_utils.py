@@ -100,6 +100,6 @@ def get_token_claim(token, claim):
         payload_json = base64.urlsafe_b64decode(payload_b64).decode('utf-8')
         payload = json.loads(payload_json)
         return payload.get(claim)
-    except Exception as e:
+    except (ValueError, IndexError, json.JSONDecodeError) as e:
         print(f"Failed to decode token for claim '{claim}': {e}")
         return None
