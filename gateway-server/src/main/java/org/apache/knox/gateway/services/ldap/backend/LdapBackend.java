@@ -45,9 +45,22 @@ public interface LdapBackend {
     String getType();
 
     /**
-     * Get the base dn of this backend
+     * Get the base dn of this backend.
+     * <p>
+     * For proxying backends this is the <em>remote</em> base DN (the namespace of the
+     * upstream LDAP server). For non-proxying backends it is the same as
+     * {@link #getProxyBaseDn()}.
      */
     String getBaseDn();
+
+    /**
+     * Get the proxy (client-facing) base DN this backend is mounted at in the embedded
+     * LDAP server, i.e. the namespace incoming searches are expressed in.
+     * <p>
+     * Proxying backends translate this namespace to {@link #getBaseDn()} internally. For
+     * non-proxying backends this is the same as {@link #getBaseDn()}.
+     */
+    String getProxyBaseDn();
 
     /**
      * Get a user entry by username

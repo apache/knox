@@ -227,6 +227,11 @@ public class LdapProxyBackend implements LdapBackend {
         return remoteBaseDn;
     }
 
+    @Override
+    public String getProxyBaseDn() {
+        return proxyBaseDn;
+    }
+
     /**
      * Initializes the LDAP connection pool with configurable parameters.
      * Uses a validating pool to ensure connections remain healthy.

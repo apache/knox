@@ -91,6 +91,11 @@ public class FileBackend implements LdapBackend {
         return baseDn;
     }
 
+    @Override
+    public String getProxyBaseDn() {
+        return baseDn;
+    }
+
     private void loadData() throws Exception {
         Path path = Paths.get(dataFile);
 

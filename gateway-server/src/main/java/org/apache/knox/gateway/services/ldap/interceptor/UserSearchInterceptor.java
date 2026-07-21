@@ -113,11 +113,20 @@ public class UserSearchInterceptor extends BaseInterceptor {
     }
 
     private boolean isUnderBackendBaseDn(String searchBase) {
-        final String backendBase = backend.getBaseDn();
-        if (searchBase == null || searchBase.isEmpty() || backendBase == null || backendBase.isEmpty()) {
+        if (searchBase == null || searchBase.isEmpty()) {
             return false;
         }
-        return searchBase.toLowerCase(ROOT).endsWith(backendBase.toLowerCase(ROOT));
+        // Incoming searches are expressed in the proxy (client-facing) namespace, which the
+        // backend translates to its remote namespace internally. Accept a search base under
+        // either namespace: for non-proxying backends the two are identical, and the embedded
+        // server registers both the proxy and remote base DNs as partitions.
+        final String lowerSearchBase = searchBase.toLowerCase(ROOT);
+        return endsWithBaseDn(lowerSearchBase, backend.getProxyBaseDn())
+                || endsWithBaseDn(lowerSearchBase, backend.getBaseDn());
+    }
+
+    private boolean endsWithBaseDn(String lowerSearchBase, String baseDn) {
+        return baseDn != null && !baseDn.isEmpty() && lowerSearchBase.endsWith(baseDn.toLowerCase(ROOT));
     }
 
     @Override
