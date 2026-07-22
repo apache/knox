@@ -25,6 +25,14 @@ limitations under the License.
     <Bug pattern="PATH_TRAVERSAL_IN" />
   </Match>
 
+  <!-- Servlet6Patcher is a build-time utility invoked with a fixed argument
+       from the shim module's pom (target/<finalName>.jar). It only ever runs
+       during the reactor build. -->
+  <Match>
+    <Class name="org.apache.knox.gateway.shim.hadoopauth.Servlet6Patcher" />
+    <Bug pattern="PATH_TRAVERSAL_IN" />
+  </Match>
+
   <Match>
     <Class name="org.apache.knox.gateway.util.X509CertificateUtil" />
     <Method name="writeCertificateToKeyStore" />

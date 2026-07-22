@@ -131,9 +131,14 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
         </dependency>
+        <!-- Jakarta-compatible shim of hadoop-auth. Only the client-side
+             classes (AuthenticatedURL, AuthenticationException,
+             KerberosAuthenticator) are used from gateway-server (see
+             UrlConnectionDispatch); they have no javax.servlet coupling
+             but must be reached at the same FQNs as the upstream jar. -->
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-auth</artifactId>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-shim-hadoop-auth</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>

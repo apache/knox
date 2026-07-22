@@ -72,6 +72,7 @@
         <module>gateway-spi</module>
         <module>gateway-spi-common</module>
         <module>gateway-shim-opensaml-security-api</module>
+        <module>gateway-shim-hadoop-auth</module>
         <module>gateway-discovery-ambari</module>
         <module>gateway-discovery-cm</module>
         <module>gateway-performance-test</module>
@@ -1866,6 +1867,14 @@
                         <groupId>org.slf4j</groupId>
                         <artifactId>slf4j-reload4j</artifactId>
                     </exclusion>
+                    <!-- hadoop-auth 3.4.1 is compiled against javax.servlet 3.1.
+                         Knox depends on gateway-shim-hadoop-auth instead, which
+                         republishes the classes rebuilt against jakarta.servlet 6.
+                         Keep the javax.* API off the compile classpath. -->
+                    <exclusion>
+                        <groupId>javax.servlet</groupId>
+                        <artifactId>javax.servlet-api</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -2821,6 +2830,23 @@
                     <exclusion>
                         <groupId>org.opensaml</groupId>
                         <artifactId>opensaml-security-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- Jakarta shim: shaded hadoop-auth, with every javax.servlet
+                 reference relocated to jakarta.servlet and the Servlet 6-
+                 removed HttpServletResponse.setStatus(int, String) call
+                 patched down to setStatus(int). Modules that need
+                 AuthenticationFilter should depend on this instead of
+                 org.apache.hadoop:hadoop-auth. -->
+            <dependency>
+                <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-shim-hadoop-auth</artifactId>
+                <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-auth</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

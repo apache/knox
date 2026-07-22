@@ -51,9 +51,12 @@
             <artifactId>gateway-util-common</artifactId>
         </dependency>
         
+        <!-- Jakarta-compatible shim of hadoop-auth. Provides
+             org.apache.hadoop.security.authentication.server.AuthenticationFilter
+             linked against jakarta.servlet 6 (see gateway-shim-hadoop-auth). -->
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-auth</artifactId>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-shim-hadoop-auth</artifactId>
         </dependency>
 
         <dependency>
@@ -66,8 +69,6 @@
             <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
 
-
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -76,11 +77,6 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
         </dependency>
 
         <dependency>

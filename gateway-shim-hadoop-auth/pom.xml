@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.apache.knox</groupId>
+        <artifactId>gateway</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gateway-shim-hadoop-auth</artifactId>
+    <name>gateway-shim-hadoop-auth</name>
+    <description>
+        A drop-in replacement for org.apache.hadoop:hadoop-auth's server-side
+        classes, rebuilt against jakarta.servlet 6.0. hadoop-auth 3.4.1 is
+        compiled against javax.servlet 3.1 and cannot be used directly by
+        Knox after the Jetty 12 / Jakarta EE 10 migration. This shim shades
+        the upstream jar under its original FQNs while (a) relocating every
+        javax.servlet reference to jakarta.servlet, and (b) rewriting the
+        one HttpServletResponse.setStatus(int, String) call site removed in
+        Servlet 6 to setStatus(int) (the reason-phrase string is dropped;
+        HTTP/2 does not carry it anyway).
+
+        Modules that need AuthenticationFilter on the classpath should
+        depend on this instead of the upstream artifact.
+    </description>
+
+    <dependencies>
+        <!-- Shaded into the output jar. -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-auth</artifactId>
+        </dependency>
+
+        <!-- Needed at compile time by the shaded classes after relocation.
+             Consumers already bring jakarta.servlet-api themselves. -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ASM: used by the small post-shade patcher (Servlet6Patcher),
+             which drops the reason-phrase arg from setStatus(int, String)
+             call sites and rewrites the invoke descriptor to setStatus(I)V. -->
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 1. Shade hadoop-auth into this module's jar, relocating
+                 javax.servlet -> jakarta.servlet across every included class.
+                 The ASF-parent-inherited version (3.1.1) ships an ASM that
+                 cannot parse Java 17 classfiles, so we pin a newer version
+                 locally. Once the parent pom moves past 3.5.0 this override
+                 can be dropped. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-hadoop-auth</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.apache.hadoop:hadoop-auth</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>javax.servlet</pattern>
+                                    <shadedPattern>jakarta.servlet</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <!-- Drop the build-time patcher classes from the
+                                 published jar; they're only used to rewrite
+                                 the shaded hadoop-auth bytecode and would
+                                 otherwise sit in the release with dangling
+                                 org.objectweb.asm references. -->
+                            <filters>
+                                <filter>
+                                    <artifact>${project.groupId}:${project.artifactId}</artifact>
+                                    <excludes>
+                                        <exclude>org/apache/knox/gateway/shim/hadoopauth/Servlet6Patcher*.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 2. Post-shade: rewrite setStatus(int, String) -> setStatus(int)
+                 inside the shaded classes. Runs against target/classes for
+                 the patcher, and against the primary artifact for the patch
+                 target. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>patch-servlet6-removed-methods</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.apache.knox.gateway.shim.hadoopauth.Servlet6Patcher</mainClass>
+                            <arguments>
+                                <argument>${project.build.directory}/${project.build.finalName}.jar</argument>
+                            </arguments>
+                            <includePluginDependencies>false</includePluginDependencies>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
