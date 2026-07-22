@@ -143,7 +143,7 @@ limitations under the License.
     </property>
     <property>
         <name>gateway.ldap.base.dn</name>
-        <value>dc=hadoop,dc=apache,dc=org</value>
+        <value>dc=proxy,dc=org</value>
     </property>
     <property>
         <name>gateway.ldap.recursive.group.resolution</name>

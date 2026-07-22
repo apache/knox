@@ -662,6 +662,28 @@ public class LdapProxyBackendTest {
         assertTrue(ldapProxyBackend.authenticate(dn, "memberOfUser2-password"));
     }
 
+    @Test
+    public void testIsSupportedSearchBase() {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("baseDn", "dc=proxy,dc=org");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // Test searching remote dn
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=people,dc=hadoop,dc=apache,dc=org"));
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=groups,dc=hadoop,dc=apache,dc=org"));
+
+        // Test searching proxy dn
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=people,dc=proxy,dc=org"));
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=groups,dc=proxy,dc=org"));
+
+        // Test searching arbitrary dn
+        assertFalse(ldapProxyBackend.isSupportedSearchBase("cn=schema"));
+        assertFalse(ldapProxyBackend.isSupportedSearchBase("cn=config"));
+        assertFalse(ldapProxyBackend.isSupportedSearchBase(null));
+        assertFalse(ldapProxyBackend.isSupportedSearchBase(""));
+        assertFalse(ldapProxyBackend.isSupportedSearchBase("dc=other,dc=base,dc=org"));
+    }
+
     // Helper methods for refactoring
 
     private Map<String, String> createConfigWithUserAttr(String attr) {

@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.ldap.backend;
 
+import static java.util.Locale.ROOT;
+
 import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -54,6 +56,7 @@ public class FileBackend implements LdapBackend {
     private Map<String, UserData> users = new HashMap<>();
     private final String dataFile;
     private final String baseDn;
+    private final String userSearchBase;
     private final String name;
 
     static class UserData {
@@ -73,6 +76,7 @@ public class FileBackend implements LdapBackend {
         this.name = name;
         dataFile = config.getOrDefault("dataFile", "ldap-users.json");
         baseDn = config.getOrDefault("baseDn", "dc=proxy,dc=com");
+        userSearchBase = "ou=people," + baseDn;
         loadData();
     }
 
@@ -89,6 +93,11 @@ public class FileBackend implements LdapBackend {
     @Override
     public String getBaseDn() {
         return baseDn;
+    }
+
+    @Override
+    public boolean isSupportedSearchBase(String searchBase) {
+        return searchBase != null && searchBase.toLowerCase(ROOT).endsWith(userSearchBase.toLowerCase(ROOT));
     }
 
     private void loadData() throws Exception {
@@ -119,7 +128,7 @@ public class FileBackend implements LdapBackend {
         }
 
         Entry entry = new DefaultEntry(schemaManager);
-        entry.setDn("uid=" + userData.username + ",ou=Users," + baseDn);
+        entry.setDn("uid=" + userData.username + "," + userSearchBase);
         entry.add("objectClass", "top");
         entry.add("objectClass", "person");
         entry.add("objectClass", "organizationalPerson");
