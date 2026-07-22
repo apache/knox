@@ -53,6 +53,8 @@ public class TrustedOidcIssuersSchemaTest {
 
   @BeforeClass
   public static void setUp() throws SQLException {
+    // Derby 10.14 does not recognize locales like en_001; force a standard locale.
+    java.util.Locale.setDefault(java.util.Locale.US);
     derbyConn = DriverManager.getConnection(DERBY_URL);
     hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
   }

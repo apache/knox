@@ -57,4 +57,17 @@ public interface KnoxIDFConstants {
     String FEDERATED_OP_CONFIG_NAMES = FEDERATED_OP_CONFIG_PREFIX + "names";
 
     String TOKEN_EXCHANGE_TOPOLOGY_NAME = "token.exchange.topology.name";
+
+    // TrustedOidcIssuerService gateway-level params (read from GatewayConfig / gateway-site.xml)
+    String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS =
+        "gateway.trustedoidcissuer.discovery.cache.ttl.secs";
+    String TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS =
+        "gateway.trustedoidcissuer.discovery.connect.timeout.ms";
+    String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS =
+        "gateway.trustedoidcissuer.discovery.read.timeout.ms";
+
+    // Default values for gateway-level TrustedOidcIssuerService params
+    int TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_CACHE_TTL_SECS = 600;
+    int TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_CONNECT_TIMEOUT_MS = 3000;
+    int TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_READ_TIMEOUT_MS = 10000;
 }
