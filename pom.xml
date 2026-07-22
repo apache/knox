@@ -817,7 +817,6 @@
                                 <ignoredUnusedDeclaredDependency>*</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                             <ignoredNonTestScopedDependencies>
-                                <ignoredNonTestScopedDependency>org.eclipse.jetty:jetty-servlet</ignoredNonTestScopedDependency>
                                 <ignoredNonTestScopedDependency>org.apache.knox:gateway-util-urltemplate</ignoredNonTestScopedDependency>
                                 <ignoredNonTestScopedDependency>org.jboss.shrinkwrap.descriptors:shrinkwrap-descriptors-api-base</ignoredNonTestScopedDependency>
                                 <ignoredNonTestScopedDependency>org.apache.knox:gateway-spi</ignoredNonTestScopedDependency>
@@ -2045,6 +2044,14 @@
                     <exclusion>
                         <groupId>org.mortbay.jetty</groupId>
                         <artifactId>jetty-util</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty-servlet</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty-webapp</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
