@@ -44,8 +44,6 @@ class TrustedOidcIssuerDatabase extends KnoxDatabase {
       "DELETE FROM " + TABLE_NAME + " WHERE issuer_url = ?";
   private static final String SELECT_ALL_SQL =
       "SELECT issuer_url, dynamic_jwks, cluster_name, registered_at, registered_by FROM " + TABLE_NAME;
-  private static final String COUNT_SQL =
-      "SELECT COUNT(*) FROM " + TABLE_NAME;
 
   TrustedOidcIssuerDatabase(DataSource dataSource, String dbType) throws Exception {
     super(dataSource);
@@ -89,13 +87,5 @@ class TrustedOidcIssuerDatabase extends KnoxDatabase {
       }
     }
     return result;
-  }
-
-  int count() throws SQLException {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement ps = connection.prepareStatement(COUNT_SQL);
-         ResultSet rs = ps.executeQuery()) {
-      return rs.next() ? rs.getInt(1) : 0;
-    }
   }
 }
