@@ -98,4 +98,28 @@ public class SubjectUtils {
     return subject.getPrincipals(GroupPrincipal.class);
   }
 
+  public static Set<TokenIdPrincipal> getTokenIdPrincipals(Subject subject) {
+    return subject.getPrincipals(TokenIdPrincipal.class);
+  }
+
+  public static Set<ActorChainPrincipal> getActorChainPrincipal(Subject currentSubject, Subject subject) {
+    return currentSubject.getPrincipals(ActorChainPrincipal.class);
+  }
+
+  /**
+   * Get the TokenExchangePrincipal from the subject if present.
+   *
+   * <p>This is used to detect when an RFC 8693 token exchange has occurred
+   * and to extract the subject and actor identities.</p>
+   *
+   * @param subject the subject to check
+   * @return the TokenExchangePrincipal if present, null otherwise
+   */
+  public static TokenExchangePrincipal getTokenExchangePrincipal(Subject subject) {
+    if (subject == null) {
+      return null;
+    }
+    Set<TokenExchangePrincipal> principals = subject.getPrincipals(TokenExchangePrincipal.class);
+    return principals.isEmpty() ? null : principals.iterator().next();
+  }
 }

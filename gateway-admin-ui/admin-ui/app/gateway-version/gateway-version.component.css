@@ -1,0 +1,18 @@
+:host {
+    display: inline;
+}
+
+.version-item {
+    font-size: 12px;
+    color: #888;
+}
+
+.version-item strong {
+    color: #555;
+    margin-right: 3px;
+}
+
+.version-divider {
+    margin: 0 8px;
+    color: #ccc;
+}

@@ -49,6 +49,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dto.HomePageProfile;
+import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -103,7 +104,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final String DEFAULT_APPLICATIONS_DIR = "applications";
 
-  private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml"};
+  public static final String RELOADABLE_CONFIG_FILENAME = GATEWAY_CONFIG_FILE_PREFIX + "-reloadable.xml";
+
+  private static final String[] GATEWAY_CONFIG_FILENAMES = {GATEWAY_CONFIG_FILE_PREFIX + "-default.xml", GATEWAY_CONFIG_FILE_PREFIX + "-site.xml", RELOADABLE_CONFIG_FILENAME};
 
   private static final String GATEWAY_SERVICE_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".service.";
   public static final String HTTP_HOST = GATEWAY_CONFIG_FILE_PREFIX + ".host";
@@ -236,8 +239,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   public static final String COOKIE_SCOPING_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".scope.cookies.feature.enabled";
   public static final boolean DEFAULT_COOKIE_SCOPING_FEATURE_ENABLED = false;
-  private static final String CRYPTO_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.algorithm";
-  private static final String CRYPTO_PBE_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.pbe.algorithm";
+  public static final String CRYPTO_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.algorithm";
+  public static final String CRYPTO_PBE_ALGORITHM = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.pbe.algorithm";
   private static final String CRYPTO_TRANSFORMATION = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.transformation";
   private static final String CRYPTO_SALTSIZE = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.salt.size";
   private static final String CRYPTO_ITERATION_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".crypto.iteration.count";
@@ -275,6 +278,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.prefix";
   static final String REMOTE_ALIAS_SERVICE_CONFIG_PREFIX_DEFAULT = GATEWAY_CONFIG_FILE_PREFIX + ".remote.alias.service.config.";
+
+  static final String CONFIG_REFRESH_INTERVAL = GATEWAY_CONFIG_FILE_PREFIX + ".config.refresh.interval";
+  static final int CONFIG_REFRESH_INTERVAL_DEFAULT = 10000;
 
   private static final List<String> DEFAULT_GLOBAL_RULES_SERVICES = Arrays.asList(
       "NAMENODE", "JOBTRACKER", "WEBHDFS", "WEBHCAT",
@@ -347,6 +353,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_SSL_ENABLED =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.enabled";
   private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
+  private static final String GATEWAY_DATABASE_SSL_TRUSTSTORE_TYPE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.type";
 
   // Concurrent session properties
   private static final String GATEWAY_SESSION_VERIFICATION_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification";
@@ -812,8 +819,45 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getHttpClientKeystorePath() {
+    return get(HTTP_CLIENT_KEYSTORE_PATH);
+  }
+
+  @Override
+  public String getHttpClientKeystoreType() {
+    return get(HTTP_CLIENT_KEYSTORE_TYPE, DEFAULT_HTTP_CLIENT_KEYSTORE_TYPE);
+  }
+
+  @Override
+  public String getHttpClientKeystorePasswordAlias() {
+    return get(HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS, DEFAULT_HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS);
+  }
+
+  @Override
+  public String getHttpClientKeyAlias() {
+    return get(HTTP_CLIENT_KEY_ALIAS, DEFAULT_HTTP_CLIENT_KEY_ALIAS);
+  }
+
+  @Override
+  public String getHttpClientKeyPassphraseAlias() {
+    return get(HTTP_CLIENT_KEY_PASSPHRASE_ALIAS, DEFAULT_HTTP_CLIENT_KEY_PASSPHRASE_ALIAS);
+  }
+
+  @Override
+  public boolean isSingleEkuEnabled() {
+    return getBoolean(TLS_SINGLE_EKU_ENABLED, DEFAULT_TLS_SINGLE_EKU_ENABLED);
+  }
+
+  @Override
+  public boolean isHttpClientTwoWaySslEnabled() {
+    return Boolean.parseBoolean(get(HTTP_CLIENT_TWO_WAY_SSL_ENABLED, HTTP_CLIENT_TWO_WAY_SSL_ENABLED_DEFAULT));
+  }
+
+  @Override
   public String getCredentialStoreAlgorithm() {
-    return get(CREDENTIAL_STORE_ALG, DEFAULT_CREDENTIAL_STORE_ALG);
+    final String alg = get(CREDENTIAL_STORE_ALG, DEFAULT_CREDENTIAL_STORE_ALG);
+    FipsUtils.validateAlgorithm(alg, CREDENTIAL_STORE_ALG);
+    return alg;
   }
 
   @Override
@@ -1116,12 +1160,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public String getAlgorithm() {
-  return getVar(CRYPTO_ALGORITHM, null);
+    final String alg = getVar(CRYPTO_ALGORITHM, null);
+    FipsUtils.validateAlgorithm(alg, CRYPTO_ALGORITHM);
+    return alg;
   }
 
   @Override
   public String getPBEAlgorithm() {
-  return getVar(CRYPTO_PBE_ALGORITHM, null);
+    final String alg = getVar(CRYPTO_PBE_ALGORITHM, null);
+    FipsUtils.validateAlgorithm(alg, CRYPTO_PBE_ALGORITHM);
+    return alg;
   }
 
   @Override
@@ -1326,6 +1374,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getConfigRefreshInterval() {
+    return getInt(CONFIG_REFRESH_INTERVAL, CONFIG_REFRESH_INTERVAL_DEFAULT);
+  }
+
+  @Override
   public long getClouderaManagerDescriptorsMonitoringInterval() {
     return getLong(CLOUDERA_MANAGER_DESCRIPTORS_MONITOR_INTERVAL, -1L);
   }
@@ -1522,6 +1575,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDatabaseSslTruststoreFileName() {
     return get(GATEWAY_DATABASE_TRUSTSTORE_FILE);
+  }
+
+  @Override
+  public String getDatabaseSslTruststoreType() {
+    return get(GATEWAY_DATABASE_SSL_TRUSTSTORE_TYPE, "JKS");
   }
 
   @Override
@@ -1731,8 +1789,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLDAPBackendType() {
-    return get(LDAP_BACKEND_TYPE, "file");
+  public String getLDAPBindUser() {
+    return get(LDAP_BIND_USER, null);
+  }
+
+  @Override
+  public List<String> getLDAPInterceptorNames() {
+    return splitConfigValueToList(LDAP_INTERCEPTOR_NAMES);
   }
 
   @Override
@@ -1759,9 +1822,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Map<String, String> getLDAPBackendConfig(String backendType) {
+  public Map<String, String> getLDAPInterceptorConfig(String interceptorName) {
     Map<String, String> config = new HashMap<>();
-    String prefix = "gateway.ldap.backend." + backendType + ".";
+    String prefix = "gateway.ldap.interceptor." + interceptorName + ".";
 
     for (String key : getPropertyNames()) {
       if (key != null && key.startsWith(prefix)) {
@@ -1773,6 +1836,52 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       }
     }
     return config;
+  }
+
+  @Override
+  public boolean isLDAPRecursiveGroupResolutionEnabled() {
+    return Boolean.parseBoolean(get(LDAP_RECURSIVE_GROUP_RESOLUTION, "false"));
+  }
+
+  @Override
+  public int getLDAPRecursiveGroupResolutionMaxDepth() {
+    return getInt(LDAP_RECURSIVE_GROUP_RESOLUTION_MAX_DEPTH, 3);
+  }
+
+  @Override
+  public String getLdapRolesLookupStrategy() {
+    return get(LDAP_ROLES_LOOKUP_STRATEGY);
+  }
+
+  @Override
+  public String getLdapRolesLookupRestApiEndpoint() {
+    return get(LDAP_ROLES_LOOKUP_REST_API_ENDPOINT);
+  }
+
+  @Override
+  public String getLdapRolesLookupFilePath() {
+    return get(LDAP_ROLES_LOOKUP_FILE_PATH);
+  }
+
+  @Override
+  public boolean isLDAPSSLEnabled() {
+    return Boolean.parseBoolean(get(LDAP_SSL_ENABLED, "false"));
+  }
+
+  @Override
+  public String getLDAPSSLKeystorePath() {
+    return get(LDAP_SSL_KEYSTORE_PATH, null);
+  }
+
+  @Override
+  public String getLDAPSSLKeystorePasswordAlias() {
+    return get(LDAP_SSL_KEYSTORE_PASSWORD_ALIAS, null);
+  }
+
+  @Override
+  public List<String> getLDAPSSLEnabledCipherSuites() {
+    final List<String> cipherSuites = splitConfigValueToList(LDAP_SSL_ENABLED_CIPHER_SUITES);
+    return cipherSuites == null ? Collections.emptyList() : cipherSuites;
   }
 
   @Override

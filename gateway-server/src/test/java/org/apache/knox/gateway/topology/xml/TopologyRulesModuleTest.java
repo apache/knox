@@ -273,7 +273,7 @@ public class TopologyRulesModuleTest {
     assertThat( "Failed to find dispatch", dispatch, notNullValue() );
     assertThat( dispatch.getContributorName(), is("testContributor") );
     assertThat( dispatch.getHaContributorName(), is("testHAContributor") );
-    assertThat( dispatch.getClassName(), is("org.apache.hadoop.gateway.hbase.HBaseDispatch") );
+    assertThat( dispatch.getClassName(), is("org.apache.knox.gateway.hbase.HBaseDispatch") );
     assertThat( dispatch.getHaClassName(), is("testHAClassName") );
     assertThat( dispatch.getHttpClientFactory(), is("testHttpClientFactory") );
     assertThat( dispatch.getUseTwoWaySsl(), is(true) );
@@ -298,7 +298,7 @@ public class TopologyRulesModuleTest {
     assertThat( "Failed to find dispatch", dispatch, notNullValue() );
     assertThat( dispatch.getContributorName(), is("testContributor") );
     assertThat( dispatch.getHaContributorName(), is("testHAContributor") );
-    assertThat( dispatch.getClassName(), is("org.apache.hadoop.gateway.hbase.HBaseDispatch") );
+    assertThat( dispatch.getClassName(), is("org.apache.knox.gateway.hbase.HBaseDispatch") );
     assertThat( dispatch.getHaClassName(), is("testHAClassName") );
     assertThat( dispatch.getHttpClientFactory(), is("testHttpClientFactory") );
     assertThat( dispatch.getUseTwoWaySsl(), is(true) );

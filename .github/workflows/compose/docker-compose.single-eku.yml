@@ -1,0 +1,62 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with this
+# work for additional information regarding copyright ownership. The ASF
+# licenses this file to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# KNOX-3359: single-EKU compose OVERRIDE.
+#
+# This file is intentionally separate from docker-compose.yml. The default
+# stack's existing integration tests make requests WITHOUT a client cert, so
+# turning on gateway.client.auth.needed=true on the shared `knox` service would
+# break every one of them. This override is only applied for the single-EKU
+# test run.
+#
+# Run the single-EKU integration test (from repo root):
+#
+#   docker compose \
+#     -f .github/workflows/compose/docker-compose.yml \
+#     -f .github/workflows/compose/docker-compose.single-eku.yml \
+#     up -d knox
+#   docker compose \
+#     -f .github/workflows/compose/docker-compose.yml \
+#     -f .github/workflows/compose/docker-compose.single-eku.yml \
+#     run --rm tests python -m unittest test_single_eku_mtls -v
+#   docker compose \
+#     -f .github/workflows/compose/docker-compose.yml \
+#     -f .github/workflows/compose/docker-compose.single-eku.yml down
+#
+# The override:
+#   - mounts the single-EKU gateway-site.xml over the baked one,
+#   - mounts the dev keystores into /knox-runtime/conf/single-eku-keystores,
+#   - sets KNOX_SINGLE_EKU=true on the tests service so test_single_eku_mtls.py
+#     un-skips (it is skipped by default in the normal stack), and
+#   - mounts + points the PEM client material for the mTLS happy-path test.
+services:
+  knox:
+    # Create the keystore-password aliases (so the dev "horton" password is
+    # resolved deterministically) before starting the gateway.
+    command: /gateway-single-eku.sh
+    volumes:
+      - ./single-eku/gateway-site.xml:/knox-runtime/conf/gateway-site.xml:ro
+      - ./single-eku/keystores:/knox-runtime/conf/single-eku-keystores:ro
+      - ./single-eku/gateway-single-eku.sh:/gateway-single-eku.sh:ro
+
+  tests:
+    volumes:
+      - ../tests:/tests
+      - ./single-eku/keystores:/single-eku-keystores:ro
+    environment:
+      - KNOX_GATEWAY_URL=https://knox:8443/
+      - KNOX_SINGLE_EKU=true
+      - KNOX_CLIENT_CERT=/single-eku-keystores/client-cert.pem
+      - KNOX_CLIENT_KEY=/single-eku-keystores/client-key.pem

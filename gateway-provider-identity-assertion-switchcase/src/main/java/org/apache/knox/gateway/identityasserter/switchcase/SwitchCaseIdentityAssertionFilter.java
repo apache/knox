@@ -23,6 +23,7 @@ import org.apache.knox.gateway.security.GroupPrincipal;
 import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import java.util.Locale;
 import java.util.Set;
 
@@ -69,7 +70,7 @@ public class SwitchCaseIdentityAssertionFilter extends
   }
 
   @Override
-  public String[] mapGroupPrincipals( String mappedPrincipalName, Subject subject ) {
+  public String[] mapGroupPrincipals( String mappedPrincipalName, Subject subject, ServletRequest request) {
     String[] groupNames = null;
     if ( groupCase != SwitchCase.NONE ) {
       Set<GroupPrincipal> groups = subject.getPrincipals( GroupPrincipal.class );

@@ -74,8 +74,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private List<String> includedSSLCiphers;
   private List<String> excludedSSLCiphers;
   private boolean sslEnabled;
+  private boolean httpClientTwoWaySslEnabled;
   private String truststoreType = "jks";
   private String keystoreType = "jks";
+  private String databaseSslTruststoreType = "JKS";
+
   private boolean isTopologyPortMappingEnabled = true;
   private ConcurrentMap<String, Integer> topologyPortMapping = new ConcurrentHashMap<>();
   private int backupVersionLimit = -1;
@@ -365,12 +368,21 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getDatabaseSslTruststoreType() {
+    return databaseSslTruststoreType;
+  }
+
+  @Override
   public String getTruststorePasswordAlias() {
     return null;
   }
 
   public void setTruststoreType( String truststoreType ) {
     this.truststoreType = truststoreType;
+  }
+
+  public void setDatabaseSslTruststoreType(String databaseSslTruststoreType) {
+    this.databaseSslTruststoreType = databaseSslTruststoreType;
   }
 
   @Override
@@ -454,6 +466,45 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public String getHttpClientTruststorePasswordAlias() {
     return null;
+  }
+
+  @Override
+  public String getHttpClientKeystorePath() {
+    return null;
+  }
+
+  @Override
+  public String getHttpClientKeystoreType() {
+    return DEFAULT_HTTP_CLIENT_KEYSTORE_TYPE;
+  }
+
+  @Override
+  public String getHttpClientKeystorePasswordAlias() {
+    return DEFAULT_HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS;
+  }
+
+  @Override
+  public String getHttpClientKeyAlias() {
+    return DEFAULT_HTTP_CLIENT_KEY_ALIAS;
+  }
+
+  @Override
+  public String getHttpClientKeyPassphraseAlias() {
+    return DEFAULT_HTTP_CLIENT_KEY_PASSPHRASE_ALIAS;
+  }
+
+  @Override
+  public boolean isSingleEkuEnabled() {
+    return DEFAULT_TLS_SINGLE_EKU_ENABLED;
+  }
+
+  @Override
+  public boolean isHttpClientTwoWaySslEnabled() {
+    return httpClientTwoWaySslEnabled;
+  }
+
+  public void setHttpClientTwoWaySslEnabled(boolean httpClientTwoWaySslEnabled) {
+    this.httpClientTwoWaySslEnabled = httpClientTwoWaySslEnabled;
   }
 
   @Override
@@ -863,6 +914,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getConfigRefreshInterval() {
+    return 0;
+  }
+
+  @Override
   public long getClouderaManagerDescriptorsMonitoringInterval() {
     return 0;
   }
@@ -1230,8 +1286,13 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public String getLDAPBackendType() {
-    return "file";
+  public String getLDAPBindUser() {
+    return null;
+  }
+
+  @Override
+  public List<String> getLDAPInterceptorNames() {
+    return List.of("testinterceptor");
   }
 
   @Override
@@ -1245,8 +1306,53 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public Map<String, String> getLDAPBackendConfig(String backendType) {
+  public Map<String, String> getLDAPInterceptorConfig(String backendType) {
     return Collections.emptyMap();
+  }
+
+  @Override
+  public boolean isLDAPRecursiveGroupResolutionEnabled() {
+    return false;
+  }
+
+  @Override
+  public int getLDAPRecursiveGroupResolutionMaxDepth() {
+    return 0;
+  }
+
+  @Override
+  public String getLdapRolesLookupStrategy() {
+    return "";
+  }
+
+  @Override
+  public String getLdapRolesLookupRestApiEndpoint() {
+    return "";
+  }
+
+  @Override
+  public String getLdapRolesLookupFilePath() {
+    return "";
+  }
+
+  @Override
+  public boolean isLDAPSSLEnabled() {
+    return false;
+  }
+
+  @Override
+  public String getLDAPSSLKeystorePath() {
+    return null;
+  }
+
+  @Override
+  public String getLDAPSSLKeystorePasswordAlias() {
+    return null;
+  }
+
+  @Override
+  public List<String> getLDAPSSLEnabledCipherSuites() {
+    return Collections.emptyList();
   }
 
   @Override

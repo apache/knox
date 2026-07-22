@@ -828,17 +828,17 @@ public class DefaultHaDispatchTest {
 
     outboundResponse.setStatus(EasyMock.captureInt(statusCodeCapture));
 
-    EasyMock.expectLastCall().once();
+    EasyMock.expectLastCall().anyTimes();
     EasyMock.expect(outboundResponse.getOutputStream())
         .andAnswer((IAnswer<SynchronousServletOutputStreamAdapter>) () -> new SynchronousServletOutputStreamAdapter() {
           @Override
           public void write( int b ) throws IOException {
-            throw new IOException( "unreachable-host" ); // Fail-over condition
+            /* do nothing */
           }
-        }).atLeastOnce();
+        }).anyTimes();
 
     CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
-    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andThrow(new IOException("unreachable-host")).andReturn(inboundResponse);
 
     EasyMock.replay(filterConfig,
         servletContext,
@@ -958,17 +958,17 @@ public class DefaultHaDispatchTest {
 
     outboundResponse.setStatus(EasyMock.captureInt(statusCodeCapture));
 
-    EasyMock.expectLastCall().once();
+    EasyMock.expectLastCall().anyTimes();
     EasyMock.expect(outboundResponse.getOutputStream())
         .andAnswer((IAnswer<SynchronousServletOutputStreamAdapter>) () -> new SynchronousServletOutputStreamAdapter() {
           @Override
           public void write( int b ) throws IOException {
-            throw new IOException( "unreachable-host" ); // Fail-over condition
+            /* do nothing */
           }
-        }).atLeastOnce();
+        }).anyTimes();
 
     CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
-    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andThrow(new IOException("unreachable-host")).andReturn(inboundResponse);
 
     EasyMock.replay(filterConfig,
         servletContext,
@@ -1103,12 +1103,16 @@ public class DefaultHaDispatchTest {
             .andAnswer((IAnswer<SynchronousServletOutputStreamAdapter>) () -> new SynchronousServletOutputStreamAdapter() {
               @Override
               public void write( int b ) throws IOException {
-                throw new IOException( "unreachable-host" ); // Fail-over condition
+                /* do nothing */
               }
-            }).atLeastOnce();
+            }).anyTimes();
 
     CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
-    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).anyTimes();
+    if (withCookie) {
+      EasyMock.expect(mockHttpClient.execute(outboundRequest)).andThrow(new IOException("unreachable-host")).once();
+    } else {
+      EasyMock.expect(mockHttpClient.execute(outboundRequest)).andThrow(new IOException("unreachable-host")).andReturn(inboundResponse);
+    }
 
     EasyMock.replay(filterConfig,
                     servletContext,

@@ -31,6 +31,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -45,9 +48,14 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.impl.ZookeeperRemoteAliasService;
 import org.apache.knox.test.TestUtils;
 import org.hamcrest.CoreMatchers;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class GatewayConfigImplTest {
+
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testHttpServerSettings() {
@@ -537,6 +545,63 @@ public class GatewayConfigImplTest {
   }
 
   @Test
+  public void testHttpClientKeystoreOptions() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Validate default options
+    assertNull(config.getHttpClientKeystorePath());
+    assertEquals(KeyStore.getDefaultType(), config.getHttpClientKeystoreType());
+    assertEquals("gateway-httpclient-keystore-password", config.getHttpClientKeystorePasswordAlias());
+    assertEquals("gateway-httpclient-key", config.getHttpClientKeyAlias());
+    assertEquals("gateway-httpclient-key-passphrase", config.getHttpClientKeyPassphraseAlias());
+
+    // Validate changed options
+    config.set("gateway.httpclient.keystore.path", "custom_path");
+    config.set("gateway.httpclient.keystore.type", "custom_type");
+    config.set("gateway.httpclient.keystore.password.alias", "custom_keystore_password_alias");
+    config.set("gateway.httpclient.key.alias", "custom_key_alias");
+    config.set("gateway.httpclient.key.passphrase.alias", "custom_key_passphrase_alias");
+
+    assertEquals("custom_path", config.getHttpClientKeystorePath());
+    assertEquals("custom_type", config.getHttpClientKeystoreType());
+    assertEquals("custom_keystore_password_alias", config.getHttpClientKeystorePasswordAlias());
+    assertEquals("custom_key_alias", config.getHttpClientKeyAlias());
+    assertEquals("custom_key_passphrase_alias", config.getHttpClientKeyPassphraseAlias());
+  }
+
+  @Test
+  public void testSingleEkuEnabledOption() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Default is multi-purpose (single-EKU disabled)
+    assertFalse(config.isSingleEkuEnabled());
+
+    config.set("gateway.tls.single.eku.enabled", "true");
+    assertTrue(config.isSingleEkuEnabled());
+  }
+
+  @Test
+  public void testHttpClientTwoWaySslEnabledOption() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Default: off, independent of single-EKU.
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
+
+    // Enabling single-EKU must NOT turn on two-way SSL.
+    config.set("gateway.tls.single.eku.enabled", "true");
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
+
+    // Explicit true works regardless of single-EKU state.
+    config.set("gateway.httpclient.twoWaySsl.enabled", "true");
+    assertTrue(config.isHttpClientTwoWaySslEnabled());
+
+    // Explicit false works with single-EKU off too.
+    config.set("gateway.tls.single.eku.enabled", "false");
+    config.set("gateway.httpclient.twoWaySsl.enabled", "false");
+    assertFalse(config.isHttpClientTwoWaySslEnabled());
+  }
+
+  @Test
   public void testGatewayTruststoreOptions() {
     GatewayConfigImpl config = new GatewayConfigImpl();
 
@@ -728,5 +793,36 @@ public class GatewayConfigImplTest {
   public void testCmSslCiphersWithoutDefaults() {
     final List<String> result = new GatewayConfigImpl().getClouderaManagerClientSSLCiphers();
     assertNull(result);
+  }
+
+  @Test
+  public void testGetConfigRefreshInterval() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    assertThat(config.getConfigRefreshInterval(), is(10000));
+
+    config.setInt("gateway.config.refresh.interval", 5000);
+    assertThat(config.getConfigRefreshInterval(), is(5000));
+  }
+
+  @Test
+  public void testReloadableConfigLoading() throws Exception {
+    File dir = folder.newFolder("conf");
+    File reloadableFile = new File(dir, "gateway-reloadable.xml");
+    try (PrintWriter writer = new PrintWriter(reloadableFile, StandardCharsets.UTF_8)) {
+      writer.println("<configuration>");
+      writer.println("  <property>");
+      writer.println("    <name>test.reloadable.prop</name>");
+      writer.println("    <value>test.reloadable.val</value>");
+      writer.println("  </property>");
+      writer.println("</configuration>");
+    }
+
+    try {
+      System.setProperty("KNOX_GATEWAY_CONF_DIR", dir.getAbsolutePath());
+      GatewayConfigImpl config = new GatewayConfigImpl();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
+    } finally {
+      System.clearProperty("KNOX_GATEWAY_CONF_DIR");
+    }
   }
 }

@@ -21,13 +21,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.TokenExchangePrincipal;
+import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
+import org.apache.knox.gateway.util.ServletRequestUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -39,14 +44,20 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.Principal;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
@@ -54,16 +65,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
-  public static final String GRANT_TYPE = "grant_type";
-  public static final String CLIENT_CREDENTIALS = "client_credentials";
-  public static final String CLIENT_SECRET = "client_secret";
-  public static final String CLIENT_ID = "client_id";
   public static final String INVALID_CLIENT_SECRET = "Error while parsing the received client secret";
   public static final String MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET = "Client credentials flow with mismatching client_id and client_secret";
   public static final String REFRESH_TOKEN = "refresh_token";
   public static final String REFRESH_TOKEN_PARAM = "refresh_token";
-  public static final String TOKEN_EXCHANGE = "token_exchange";
+  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
   public static final String SUBJECT_TOKEN = "subject_token";
+  public static final String ACTOR_TOKEN = "actor_token";
   public static final String CLIENT_ASSERTION_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
   public static final String CLIENT_ASSERTION_TYPE = "client_assertion_type";
   public static final String CLIENT_ASSERTION = "client_assertion";
@@ -171,6 +179,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
     }
 
+    // RFC 8693: Check if this is a token exchange request
+    HttpServletRequest httpRequest = (HttpServletRequest) request;
+    String grantType = httpRequest.getParameter(GRANT_TYPE);
+    if (TOKEN_EXCHANGE.equals(grantType)) {
+      // Handle RFC 8693 token exchange with subject_token and actor_token
+      handleTokenExchange(httpRequest, (HttpServletResponse) response, chain);
+      return;
+    }
+
     Pair<TokenType, String> wireToken = null;
     try {
       wireToken = getWireToken(request);
@@ -185,8 +202,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
       if (TokenType.JWT.equals(tokenType)) {
         try {
-          JWT token = new JWTToken(tokenValue);
-          if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, token)) {
+          JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue);
+          if (token != null) {
             Subject subject = createSubjectFromToken(token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
@@ -315,35 +332,40 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
 
     private Pair<TokenType, String> getTokenFromRequestBody(ServletRequest request) {
-        final String grantType = request.getParameter(GRANT_TYPE);
-        final String clientAssertionType = request.getParameter(CLIENT_ASSERTION_TYPE);
+        // unwrap the servlet request so that we can get to the request body params since we are not passing this request
+        // on to other services to handle like we do when proxying. The request wrapper is protecting the body from being
+        // consumed before it gets to the proxied service that should handle it. We don't need that protection here.
+        HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
+        final String grantType = unwrappedRequest.getParameter(GRANT_TYPE);
+        final String clientAssertionType = unwrappedRequest.getParameter(CLIENT_ASSERTION_TYPE);
         if (CLIENT_CREDENTIALS.equals(grantType)) {
           if (clientAssertionType != null && CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
             // short lived client assertion token expected
-            return getClientTokenFromParams(request, CLIENT_ASSERTION);
+            return getClientTokenFromParams(unwrappedRequest, CLIENT_ASSERTION);
           }
           // client credentials flow: client_id and client_secret are expected
           // the client_id will be in the token as the token_id
-          final String clientSecret = request.getParameter(CLIENT_SECRET);
-          validateClientID((HttpServletRequest) request, clientSecret);
+          final String clientSecret = unwrappedRequest.getParameter(CLIENT_SECRET);
+          validateClientID((HttpServletRequest) unwrappedRequest, clientSecret);
           return Pair.of(TokenType.Passcode, clientSecret);
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
-          return getClientTokenFromParams(request, REFRESH_TOKEN_PARAM);
+          return getClientTokenFromParams(unwrappedRequest, REFRESH_TOKEN_PARAM);
         } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // token_exchange flow: the subject_token parameter contains the token to be exchanged
-          return getClientTokenFromParams(request, SUBJECT_TOKEN);
+          return getClientTokenFromParams(unwrappedRequest, SUBJECT_TOKEN);
         }
       return null;
     }
 
-  private Pair<TokenType, String> getClientTokenFromParams(final ServletRequest request, final String requestParamName) {
-    final String refreshOrSubjectToken = request.getParameter(requestParamName);
-    if (refreshOrSubjectToken != null) {
-      return isJWT(refreshOrSubjectToken) ? Pair.of(TokenType.JWT, refreshOrSubjectToken) : Pair.of(TokenType.Passcode, refreshOrSubjectToken);
+    private Pair<TokenType, String> getClientTokenFromParams(final ServletRequest request, final String requestParamName) {
+      final String refreshOrSubjectToken = request.getParameter(requestParamName);
+      if (refreshOrSubjectToken != null) {
+        return isJWT(refreshOrSubjectToken) ? Pair.of(TokenType.JWT, refreshOrSubjectToken) : Pair.of(TokenType.Passcode,
+                refreshOrSubjectToken);
+      }
+      return null;
     }
-    return null;
-  }
 
     private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header, final ServletRequest request) {
       Pair<TokenType, String> parsed = null;
@@ -355,12 +377,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       String passcode = values[1].isEmpty() ? null : values[1];
       if (TOKEN.equalsIgnoreCase(username) || PASSCODE.equalsIgnoreCase(username)) {
           parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, passcode);
-      } else if (request != null && CLIENT_CREDENTIALS.equals(request.getParameter(GRANT_TYPE))) {
-          // Allow client_credentials flow where client_id/client_secret are provided via HTTP Basic
-          if (passcode != null) {
-            validateClientID(username, passcode);
-            parsed = Pair.of(TokenType.Passcode, passcode);
-          }
+      } else if (request != null) {
+          HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
+          if (CLIENT_CREDENTIALS.equals(unwrappedRequest.getParameter(GRANT_TYPE))) {
+            // Allow client_credentials flow where client_id/client_secret are provided via HTTP Basic
+            if (passcode != null) {
+              validateClientID(username, passcode);
+              parsed = Pair.of(TokenType.Passcode, passcode);
+            }
+            }
       }
 
       return parsed;
@@ -374,8 +399,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     final List<Cookie> relevantCookies = CookieUtils.getCookiesForName(request, cookieName);
     for (Cookie ssoCookie : relevantCookies) {
       try {
-        final JWT token = new JWTToken(ssoCookie.getValue());
-        if (validateToken(request, response, chain, token)) {
+        final JWT token = parseAndValidateJWT(request, response, chain, ssoCookie.getValue());
+        if (token != null) {
           final Subject subject = createSubjectFromToken(token);
           continueWithEstablishedSecurityContext(subject, request, response, chain);
           // we found a valid cookie we don't need to keep checking anymore
@@ -394,6 +419,132 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
 
     return false;
+  }
+
+  /**
+   * Handle RFC 8693 token exchange flow.
+   *
+   * <p>This method validates both the subject_token and actor_token parameters,
+   * creates a TokenExchangePrincipal with the identity information from both tokens,
+   * and establishes a Subject with the actor as the PrimaryPrincipal.</p>
+   *
+   * <p>The TokenExchangePrincipal signals to the identity assertion layer that
+   * impersonation should be established with the subject as the ImpersonatedPrincipal.</p>
+   *
+   * @param request the HTTP request containing subject_token and actor_token parameters
+   * @param response the HTTP response
+   * @param chain the filter chain
+   * @throws IOException if an I/O error occurs
+   * @throws ServletException if a servlet error occurs
+   */
+  private void handleTokenExchange(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+    // Extract subject_token (required)
+    String subjectTokenValue = request.getParameter(SUBJECT_TOKEN);
+    if (subjectTokenValue == null || subjectTokenValue.isEmpty()) {
+      handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "RFC 8693 token exchange requires subject_token parameter");
+      return;
+    }
+
+    // Extract actor_token (required for proper token exchange)
+    String actorTokenValue = request.getParameter(ACTOR_TOKEN);
+    if (actorTokenValue == null || actorTokenValue.isEmpty()) {
+      handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "RFC 8693 token exchange requires actor_token parameter");
+      return;
+    }
+
+    try {
+      // Parse and validate subject_token
+      JWT subjectToken = parseAndValidateJWT(request, response, chain, subjectTokenValue);
+      if (subjectToken == null) {
+        // Validation failed, error response already sent
+        return;
+      }
+
+      // Parse and validate actor_token
+      JWT actorToken = parseAndValidateJWT(request, response, chain, actorTokenValue);
+      if (actorToken == null) {
+        // Validation failed, error response already sent
+        return;
+      }
+
+      // Create Subject with actor as PrimaryPrincipal and TokenExchangePrincipal
+      Subject subject = createSubjectForTokenExchange(subjectToken, actorToken);
+
+      continueWithEstablishedSecurityContext(subject, request, response, chain);
+
+    } catch (ParseException e) {
+      LOGGER.failedToParsePasscodeToken(e);
+      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
+          "Failed to parse token in token exchange: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Parse and validate a JWT token.
+   *
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param chain the filter chain
+   * @param tokenValue the JWT string to parse
+   * @return the parsed and validated JWT, or null if validation failed
+   * @throws ParseException if the JWT cannot be parsed
+   * @throws IOException if an I/O error occurs during validation
+   * @throws ServletException if a servlet error occurs during validation
+   */
+  private JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
+                                  FilterChain chain, String tokenValue)
+      throws ParseException, IOException, ServletException {
+    JWT token = new JWTToken(tokenValue);
+    if (validateToken(request, response, chain, token)) {
+      return token;
+    }
+    // Validation failed - error response already sent by validateToken
+    return null;
+  }
+
+  /**
+   * Create a Subject for RFC 8693 token exchange with proper principal setup.
+   *
+   * @param subjectToken the validated subject token
+   * @param actorToken the validated actor token
+   * @return a Subject configured for token exchange
+   */
+  private Subject createSubjectForTokenExchange(JWT subjectToken, JWT actorToken) {
+    // Extract identities from the tokens
+    String subjectPrincipalName = subjectToken.getSubject();
+    String subjectIssuer = subjectToken.getIssuer();
+    String actorPrincipalName = actorToken.getSubject();
+    String actorIssuer = actorToken.getIssuer();
+    // Create principals for the Subject
+    // PrimaryPrincipal is the ACTOR (the authenticated party)
+    PrimaryPrincipal primaryPrincipal =
+        new PrimaryPrincipal(actorPrincipalName);
+
+    // TokenExchangePrincipal carries metadata for identity assertion layer
+    TokenExchangePrincipal tokenExchangePrincipal =
+        new TokenExchangePrincipalImpl(
+            subjectPrincipalName, subjectIssuer, actorPrincipalName, actorIssuer);
+
+    // Extract actor chain from subject_token (if present) using existing logic
+    List<Map<String, Object>> actorChain =
+        TokenUtils.extractActorChain(subjectToken);
+
+    // Create Subject with all necessary principals
+    Set<Principal> principals = new HashSet<>();
+    principals.add(primaryPrincipal);
+    principals.add(tokenExchangePrincipal);
+
+    // Add ActorChainPrincipal if actor chain exists in subject_token
+    if (!actorChain.isEmpty()) {
+      principals.add(new ActorChainPrincipalImpl(actorChain));
+    }
+
+    @SuppressWarnings("rawtypes")
+    HashSet emptySet = new HashSet();
+    return new Subject(true, principals, emptySet, emptySet);
   }
 
   @Override

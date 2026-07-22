@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -57,10 +58,13 @@ public class DefaultCryptoService implements CryptoService {
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
-      throws ServiceLifecycleException {
+          throws ServiceLifecycleException {
     this.config = config;
-  if (aliasService == null) {
+    if (aliasService == null) {
       throw new ServiceLifecycleException("Alias service is not set");
+    }
+    if (FipsUtils.isFipsEnabledWithBCProvider()) {
+      FipsUtils.validateAlgorithms(config);
     }
   }
 

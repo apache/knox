@@ -104,36 +104,8 @@ limitations under the License.
         <value>org.apache.hadoop.security.LdapGroupsMapping</value>
     </property>
     <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.bind.user</name>
-        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.bind.password</name>
-        <value>guest-password</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.url</name>
-        <value>ldap://localhost:33389</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.base</name>
-        <value></value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.filter.user</name>
-        <value>(&amp;(|(objectclass=person)(objectclass=applicationProcess))(cn={0}))</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.filter.group</name>
-        <value>(objectclass=groupOfNames)</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.member</name>
-        <value>member</value>
-    </property>
-    <property>
-        <name>gateway.group.config.hadoop.security.group.mapping.ldap.search.attr.group.name</name>
-        <value>cn</value>
+        <name>gateway.group.config.use.ldap.service</name>
+        <value>true</value>
     </property>
     <property>
         <name>gateway.dispatch.whitelist.services</name>
@@ -158,6 +130,86 @@ limitations under the License.
     <property>
         <name>gateway.strict.transport.option</name>
         <value>max-age=300; includeSubDomains</value>
+    </property>
+
+    <!-- KnoxLDAP Service Configuration -->
+    <property>
+        <name>gateway.ldap.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.port</name>
+        <value>33390</value>
+    </property>
+    <property>
+        <name>gateway.ldap.base.dn</name>
+        <value>dc=proxy,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.recursive.group.resolution</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.names</name>
+        <value>demoldap</value>
+    </property>
+    <!-- Expose the embedded Knox LDAP service over LDAPS using the dev keystore that
+         gateway.sh provisions; its password is resolved from the credential store. -->
+    <property>
+        <name>gateway.ldap.ssl.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.ssl.keystore.path</name>
+        <value>/knox-runtime/conf/ldaps-keystore.p12</value>
+    </property>
+    <property>
+        <name>gateway.ldap.ssl.keystore.password.alias</name>
+        <value>gateway_ldap_ssl_keystore_password</value>
+    </property>
+
+    <!-- LDAP Backend specific configuration (proxying to demo ldap) -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.interceptorType</name>
+        <value>backend</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.backendType</name>
+        <value>ldap</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.url</name>
+        <value>ldaps://ldap:33389</value>
+    </property>
+    <!-- The demo LDAP presents a self-signed dev certificate; trust it rather than
+         wiring a truststore for this dev/CI fixture. -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.trustAllCertificates</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.remoteBaseDn</name>
+        <value>dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.systemUsername</name>
+        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.systemPassword</name>
+        <value>guest-password</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.userSearchBase</name>
+        <value>ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.groupSearchBase</name>
+        <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.groupMemberAttribute</name>
+        <value>member</value>
     </property>
 
 </configuration>

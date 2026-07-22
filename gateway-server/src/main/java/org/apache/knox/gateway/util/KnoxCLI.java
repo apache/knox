@@ -50,6 +50,10 @@ import java.util.stream.Stream;
 
 import javax.net.ssl.SSLException;
 
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -82,6 +86,7 @@ import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.token.TokenMigrationTarget;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
@@ -116,6 +121,7 @@ public class KnoxCLI extends Configured implements Tool {
       "   [" + CertCreateCommand.USAGE + "]\n" +
       "   [" + CertExportCommand.USAGE + "]\n" +
       "   [" + AliasCreateCommand.USAGE + "]\n" +
+      "   [" + K8sAliasCreateCommand.USAGE + "]\n" +
       "   [" + BatchAliasCreateCommand.USAGE + "]\n" +
       "   [" + AliasDeleteCommand.USAGE + "]\n" +
       "   [" + AliasListCommand.USAGE + "]\n" +
@@ -149,6 +155,7 @@ public class KnoxCLI extends Configured implements Tool {
   private Command command;
   private String value;
   private String cluster;
+  private String namespace;
   private String path;
   private String generate = "false";
   private String hostname;
@@ -213,6 +220,10 @@ public class KnoxCLI extends Configured implements Tool {
     return exitCode;
   }
 
+  protected KubernetesClient buildKubernetesClient() {
+    return new KubernetesClientBuilder().build();
+  }
+
   public static synchronized GatewayServices getGatewayServices() {
     return services;
   }
@@ -271,6 +282,16 @@ public class KnoxCLI extends Configured implements Tool {
           printKnoxShellUsage();
           return -1;
         }
+      } else if (args[i].equals("create-k8s-alias")) {
+        List<String> secretNames = new ArrayList<>();
+        while (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+          secretNames.add(args[++i]);
+        }
+        if (secretNames.isEmpty() || (secretNames.size() == 1 && "--help".equals(secretNames.get(0)))) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        command = new K8sAliasCreateCommand(secretNames);
       } else if (args[i].equals("create-aliases")) {
         command = new BatchAliasCreateCommand();
         if (args.length < 3 || "--help".equals(alias)) {
@@ -302,6 +323,8 @@ public class KnoxCLI extends Configured implements Tool {
         } else {
           command = new LDAPAuthCommand();
         }
+      } else if(args[i].equals("ldap-user-groups-test")) {
+        command = new LDAPGroupTestCommand();
       } else if(args[i].equals("system-user-auth-test")) {
         if (i + 1 >= args.length){
           printKnoxShellUsage();
@@ -354,6 +377,12 @@ public class KnoxCLI extends Configured implements Tool {
         if(command instanceof CreateListAliasesCommand) {
           ((CreateListAliasesCommand) command).toMap(this.cluster);
         }
+      } else if (args[i].equals("--namespace") || args[i].equals("--ns")) {
+        if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
+          printKnoxShellUsage();
+          return -1;
+        }
+        this.namespace = args[++i];
       } else if (args[i].equals("service-test")) {
         if( i + 1 >= args.length) {
           printKnoxShellUsage();
@@ -620,6 +649,9 @@ public class KnoxCLI extends Configured implements Tool {
       out.println( AliasCreateCommand.USAGE + "\n\n" + AliasCreateCommand.DESC );
       out.println();
       out.println( div );
+      out.println( K8sAliasCreateCommand.USAGE + "\n\n" + K8sAliasCreateCommand.DESC );
+      out.println();
+      out.println( div );
       out.println( AliasDeleteCommand.USAGE + "\n\n" + AliasDeleteCommand.DESC );
       out.println();
       out.println( div );
@@ -714,6 +746,30 @@ public class KnoxCLI extends Configured implements Tool {
       return services.getService(ServiceType.REMOTE_REGISTRY_CLIENT_SERVICE);
     }
 
+    protected String ensureNotNullUserName() {
+      return ensureNotNullUserName(null);
+    }
+
+    protected String ensureNotNullUserName(String userName) {
+      if (userName != null) {
+        return userName;
+      }
+
+      final Console c = System.console();
+      if (c != null) {
+        return c.readLine("Username: ");
+      } else {
+        try (InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
+          out.println("Username: ");
+          return reader.readLine();
+        } catch (IOException e) {
+          out.println(e.toString());
+          return "";
+        }
+      }
+    }
+
   }
 
  private class AliasListCommand extends Command {
@@ -756,12 +812,12 @@ public class KnoxCLI extends Configured implements Tool {
 
   public class CertExportCommand extends Command {
 
-    public static final String USAGE = "export-cert [--type PEM|JKS|JCEKS|PKCS12]";
+    public static final String USAGE = "export-cert [--type PEM|JKS|JCEKS|PKCS12|BCFKS]";
     public static final String DESC = "The export-cert command exports the public certificate\n" +
                                       "from the a gateway.jks keystore with the alias of gateway-identity.\n" +
                                       "It will be exported to `{GATEWAY_HOME}/data/security/keystores/` with a name of `gateway-client-trust.<type>`" +
                                       "Using the --type option you can specify which keystore type you need (default: PEM)\n" +
-                                      "NOTE: The password for the JKS, JCEKS and PKCS12 types is `changeit`.\n" +
+                                      "NOTE: The password for the JKS, JCEKS, PKCS12 and BCFKS types is `changeit`.\n" +
                                       "It can be changed using: `keytool -storepasswd -storetype <type> -keystore gateway-client-trust.<type>`";
 
     private GatewayConfig getGatewayConfig() {
@@ -808,6 +864,9 @@ public class KnoxCLI extends Configured implements Tool {
           } else if ("PKCS12".equalsIgnoreCase(type)) {
             X509CertificateUtil.writeCertificateToPkcs12(cert, new File(keyStoreDir + "gateway-client-trust.pkcs12"));
             out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.pkcs12");
+          } else if ("BCFKS".equalsIgnoreCase(type)) {
+            X509CertificateUtil.writeCertificateToBcfks(cert, new File(keyStoreDir + "gateway-client-trust.bcfks"));
+            out.println("Certificate gateway-identity has been successfully exported to: " + keyStoreDir + "gateway-client-trust.bcfks");
           } else {
             out.println("Invalid type for export file provided. Export has not been done. Please use: [PEM|JKS|JCEKS|PKCS12] default value is PEM.");
           }
@@ -991,6 +1050,84 @@ public class KnoxCLI extends Configured implements Tool {
           out.println(name + " has been successfully created.");
        }
      }
+   }
+
+   @Override
+   public String getUsage() {
+     return USAGE + ":\n\n" + DESC;
+   }
+ }
+
+ public class K8sAliasCreateCommand extends Command {
+
+   public static final String USAGE = "create-k8s-alias secret-name [secret-name ...] [--namespace namespace]";
+   public static final String DESC = "The create-k8s-alias command reads one or more Kubernetes\n"
+                                   + "Secrets and creates a Knox alias for each. The namespace\n"
+                                   + "defaults to 'knox' and can be overridden with --namespace.\n"
+                                   + "Every Secret must contain 'alias.name' (the alias name)\n"
+                                   + "and 'alias.value' (the secret value); 'topology' is optional\n"
+                                   + "and defaults to the gateway-level credential store ('__gateway').\n"
+                                   + "All Secrets are fetched and validated before any alias is\n"
+                                   + "written, so a failure in the batch leaves the credential\n"
+                                   + "store untouched. Uses in-cluster Kubernetes config.";
+
+   private static final String DEFAULT_NAMESPACE = "knox";
+   private static final String ENTRY_NAME = "alias.name";
+   private static final String ENTRY_TOPOLOGY = "topology";
+   private static final String ENTRY_KEY = "alias.value";
+   private static final String DEFAULT_TOPOLOGY = "__gateway";
+
+   private final List<String> secretNames;
+
+   public K8sAliasCreateCommand(List<String> secretNames) {
+     this.secretNames = secretNames;
+   }
+
+   @Override
+   public void execute() throws Exception {
+     AliasService as = getAliasService();
+     String ns = (namespace == null || namespace.isEmpty()) ? DEFAULT_NAMESPACE : namespace;
+     List<ParsedAlias> parsed = new ArrayList<>(secretNames.size());
+     try (KubernetesClient client = buildKubernetesClient()) {
+       for (String secretName : secretNames) {
+         Secret secret = client.secrets().inNamespace(ns).withName(secretName).get();
+         if (secret == null) {
+           throw new IllegalStateException(
+               "Secret '" + secretName + "' not found in namespace '" + ns + "'.");
+         }
+         String aliasName = requireEntry(secret, secretName, ENTRY_NAME);
+         String aliasValue = requireEntry(secret, secretName, ENTRY_KEY);
+         String topology = optionalEntry(secret, ENTRY_TOPOLOGY);
+         if (topology == null || topology.isEmpty()) {
+           topology = DEFAULT_TOPOLOGY;
+         }
+         parsed.add(new ParsedAlias(secretName, topology, aliasName, aliasValue));
+       }
+     }
+     for (ParsedAlias p : parsed) {
+       as.addAliasForCluster(p.topology(), p.aliasName(), p.aliasValue());
+       out.println(p.aliasName() + " has been successfully created in topology " + p.topology()
+           + " (from secret " + p.secretName() + ").");
+     }
+   }
+
+   private record ParsedAlias(String secretName, String topology, String aliasName, String aliasValue) {}
+
+   private String requireEntry(Secret secret, String secretName, String entryKey) {
+     String entry = optionalEntry(secret, entryKey);
+     if (entry == null || entry.isEmpty()) {
+       throw new IllegalStateException(
+           "Secret '" + secretName + "' is missing required entry '" + entryKey + "'.");
+     }
+     return entry;
+   }
+
+   private String optionalEntry(Secret secret, String entryKey) {
+     if (secret.getData() != null && secret.getData().containsKey(entryKey)) {
+       return new String(java.util.Base64.getDecoder().decode(secret.getData().get(entryKey)),
+                         StandardCharsets.UTF_8);
+     }
+     return null;
    }
 
    @Override
@@ -1760,37 +1897,26 @@ public class KnoxCLI extends Configured implements Tool {
      * populates the username and password members.
      */
     protected void promptCredentials() {
-      if(this.username == null){
-        Console c = System.console();
-        if( c != null) {
-          this.username = c.readLine("Username: ");
-        } else {
-          try(InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-              BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            out.println("Username: ");
-            this.username = reader.readLine();
-          } catch (IOException e){
-            out.println(e.toString());
-            this.username = "";
-          }
-        }
-      }
+      this.username = ensureNotNullUserName(this.username);
+      populatePassword();
+    }
 
-      if(this.password == null){
+    private void populatePassword() {
+      if (this.password == null) {
         Console c = System.console();
-        if( c != null) {
+        if (c != null) {
           this.password = c.readPassword("Password: ");
-        }else{
-          try(InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-              BufferedReader reader = new BufferedReader(inputStreamReader)) {
+        } else {
+          try (InputStreamReader inputStreamReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+               BufferedReader reader = new BufferedReader(inputStreamReader)) {
             out.println("Password: ");
             String pw = reader.readLine();
-            if(pw != null){
+            if (pw != null) {
               this.password = pw.toCharArray();
             } else {
               this.password = new char[0];
             }
-          } catch (IOException e){
+          } catch (IOException e) {
             out.println(e.toString());
             this.password = new char[0];
           }
@@ -1862,6 +1988,50 @@ public class KnoxCLI extends Configured implements Tool {
         return false;
       }
       return true;
+    }
+  }
+
+  private class LDAPGroupTestCommand extends Command {
+    public static final String USAGE = "ldap-user-groups-test [--u username] [--d]";
+    public static final String DESC = """
+            This command tests the KnoxLDAPService ability to retrieve groups for a user directly from the configured LDAP backend.
+            Optional: [--u username]: Provide a username argument to the command""";
+
+    private String username;
+
+    @Override
+    public String getUsage() {
+      return USAGE + ":\n\n" + DESC;
+    }
+
+    @Override
+    public void execute() throws Exception {
+      if (user != null) {
+        this.username = user;
+      } else {
+        this.username = ensureNotNullUserName();
+      }
+
+      GatewayConfig config = getGatewayConfig();
+      if (!config.isLDAPEnabled()) {
+        out.println("KnoxLDAPService is not enabled in gateway-site.xml; cannot lookup LDAP groups");
+        return;
+      }
+
+      services.start();
+      try {
+        final KnoxLDAPService ldapService = services.getService(ServiceType.LDAP_SERVICE);
+        out.println("Querying KnoxLDAPService for groups of user: " + username);
+        List<String> groups = ldapService.getUserGroups(username);
+        if (groups == null || groups.isEmpty()) {
+          out.println(username + " does not belong to any groups");
+        } else {
+          out.println(username + " is a member of: " + String.join(", ", groups));
+        }
+      } catch (Exception e) {
+        out.println("Error retrieving groups: " + e.getMessage());
+        throw e;
+      }
     }
   }
 

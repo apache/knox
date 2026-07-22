@@ -17,11 +17,16 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
+import com.nimbusds.jose.KeyLengthException;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenMetadataType;
 import org.apache.knox.gateway.util.JsonUtils;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
+import javax.servlet.ServletException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -35,11 +40,21 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 @Path(ClientCredentialsResource.RESOURCE_PATH)
 @Singleton
 public class ClientCredentialsResource extends PasscodeTokenResourceBase {
-    private static final String TYPE = "type";
     public static final String RESOURCE_PATH = "clientid/api/v1/oauth/credentials";
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";
     private static final String PREFIX = "clientid.";
+    private static final String THIRD_PARTY_APP = "thirdPartyApp";
+
+    private boolean thirdPartyApp;
+
+    @Override
+    @PostConstruct
+    public void init() throws AliasServiceException, ServiceLifecycleException, KeyLengthException, ServletException {
+        super.init();
+        final String configuredThirdPartyApp = context.getInitParameter(THIRD_PARTY_APP);
+        thirdPartyApp = configuredThirdPartyApp == null ? true : Boolean.parseBoolean(configuredThirdPartyApp);
+    }
 
     @Override
     @GET
@@ -57,7 +72,8 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
 
     @Override
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
-        tokenMetadata.add(TYPE, TokenMetadataType.CLIENT_ID.name());
+        tokenMetadata.add(TokenMetadata.TYPE, TokenMetadataType.CLIENT_ID.name());
+        tokenMetadata.add(TokenMetadata.THIRD_PARTY_APP, String.valueOf(thirdPartyApp));
         super.addArbitraryTokenMetadata(tokenMetadata);
     }
 

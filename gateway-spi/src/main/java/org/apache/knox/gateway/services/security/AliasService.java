@@ -26,6 +26,15 @@ import org.apache.knox.gateway.services.Service;
 
 public interface AliasService extends Service {
   String NO_CLUSTER_NAME = "__gateway";
+  String ALIAS_PREFIX = "S{ALIAS=";
+
+  default boolean isAlias(final String aliasToCheck) {
+    return aliasToCheck.startsWith(ALIAS_PREFIX);
+  }
+
+  default String extractAlias(final String aliasToCheck) {
+    return aliasToCheck.substring(ALIAS_PREFIX.length(), aliasToCheck.length() - 1);
+  }
 
   List<String> getAliasesForCluster(String clusterName)
       throws AliasServiceException;
@@ -57,6 +66,8 @@ public interface AliasService extends Service {
   Map<String, char[]> getPasswordsForGateway() throws AliasServiceException;
 
   char[] getGatewayIdentityPassphrase() throws AliasServiceException;
+
+  default char[] getHttpClientKeyPassphrase() throws AliasServiceException { return getGatewayIdentityPassphrase(); }
 
   char[] getGatewayIdentityKeystorePassword() throws AliasServiceException;
 

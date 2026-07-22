@@ -55,6 +55,11 @@ public class CLIGatewayServices extends AbstractGatewayServices {
     addService(ServiceType.TOPOLOGY_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOPOLOGY_SERVICE, config, options));
 
     addService(ServiceType.TOKEN_STATE_SERVICE, gatewayServiceFactory.create(this, ServiceType.TOKEN_STATE_SERVICE, config, options));
+
+    addService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_ROLES_LOOKUP_SERVICE, config, options));
+
+    addService(ServiceType.LDAP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_SERVICE, config, options));
+
   }
 
   @Override

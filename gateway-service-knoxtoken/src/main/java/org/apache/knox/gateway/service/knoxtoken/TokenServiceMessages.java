@@ -99,4 +99,7 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.DEBUG, text = "Token impersonation failed: {0}" )
   void tokenImpersonationFailed(@StackTrace Throwable t);
 
+  @Message( level = MessageLevel.DEBUG, text = "Adding RFC 8693 'act' claim to token: actor={0}, subject={1}" )
+  void addingActorClaimToToken(String actor, String subject);
+
 }

@@ -28,6 +28,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.deploy.DeploymentException;
@@ -109,6 +110,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -126,8 +128,14 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.RELOADABLE_CONFIG_FILENAME;
 
 public class GatewayServer {
   private static final GatewayResources res = ResourcesFactory.get(GatewayResources.class);
@@ -142,7 +150,12 @@ public class GatewayServer {
   private static GatewayServer server;
   private static GatewayServices services;
 
+  private static final List<GatewayConfigChangeListener> configChangeListeners = new CopyOnWriteArrayList<>();
+
   private static Properties buildProperties;
+
+  private static final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+  private static FileTime lastReloadTime;
 
   private Server jetty;
   private GatewayConfig config;
@@ -171,12 +184,13 @@ public class GatewayServer {
         if (services == null) {
           log.failedToInstantiateGatewayServices();
         }
-        final GatewayConfig config = new GatewayConfigImpl();
+        final GatewayConfigImpl config = new GatewayConfigImpl();
         validateConfigurableGatewayDirectories(config);
         if (config.isHadoopKerberosSecured()) {
           validateKerberosConfig(config);
           configureKerberosSecurity( config );
         }
+        setupGatewayConfigRefresh(config);
         Map<String,String> options = new HashMap<>();
         options.put(GatewayCommandLine.PERSIST_LONG, Boolean.toString(cmd.hasOption(GatewayCommandLine.PERSIST_LONG)));
         services.init(config, options);
@@ -227,6 +241,50 @@ public class GatewayServer {
 
   public static synchronized GatewayServices getGatewayServices() {
     return services;
+  }
+
+  public static void registerConfigChangeListener(GatewayConfigChangeListener listener) {
+    configChangeListeners.add(listener);
+  }
+
+  public static void unregisterConfigChangeListener(GatewayConfigChangeListener listener) {
+    configChangeListeners.remove(listener);
+  }
+
+  static void emptyConfigChangeListener() {
+    configChangeListeners.clear();
+  }
+
+  private static void setupGatewayConfigRefresh(GatewayConfigImpl config) {
+    Path resourcePath = Paths.get(config.getGatewayConfDir(), RELOADABLE_CONFIG_FILENAME);
+    int refreshInterval = config.getConfigRefreshInterval();
+    if(refreshInterval > 0) {
+      exec.scheduleAtFixedRate(() -> refreshGatewayConfig(config, resourcePath),
+              0, refreshInterval, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  /**
+   * Check if the resourcePath has been modified since the last reload time
+   * If so then reload the configuration to pick up the new configs
+   * @param resourcePath resource path to check and reload
+   */
+  private static synchronized void refreshGatewayConfig(GatewayConfigImpl config, Path resourcePath) {
+    try {
+      if(Files.exists(resourcePath) && Files.isReadable(resourcePath)) {
+        FileTime lastModifiedTime = Files.getLastModifiedTime(resourcePath);
+        if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
+          lastReloadTime = lastModifiedTime;
+          config.reloadConfiguration();
+          log.refreshedGatewayConfig();
+          for (GatewayConfigChangeListener listener : configChangeListeners) {
+            listener.onGatewayConfigChanged(config);
+          }
+        }
+      }
+    } catch (IOException e) {
+      log.unableToReloadGatewayConfig(e);
+    }
   }
 
   private static void logSysProp( String name ) {

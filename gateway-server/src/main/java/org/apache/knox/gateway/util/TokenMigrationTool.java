@@ -17,10 +17,6 @@
  */
 package org.apache.knox.gateway.util;
 
-import static org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService.TOKEN_ISSUE_TIME_POSTFIX;
-import static org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService.TOKEN_MAX_LIFETIME_POSTFIX;
-import static org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService.TOKEN_META_POSTFIX;
-
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +37,11 @@ import org.apache.knox.gateway.services.token.impl.TokenStateServiceMessages;
 public class TokenMigrationTool {
 
   private static final TokenStateServiceMessages LOG = MessagesFactory.get(TokenStateServiceMessages.class);
+
+  private static final String TOKEN_ALIAS_SUFFIX_DELIM   = "--";
+  private static final String TOKEN_ISSUE_TIME_POSTFIX   = TOKEN_ALIAS_SUFFIX_DELIM + "iss";
+  private static final String TOKEN_MAX_LIFETIME_POSTFIX = TOKEN_ALIAS_SUFFIX_DELIM + "max";
+  private static final String TOKEN_META_POSTFIX         = TOKEN_ALIAS_SUFFIX_DELIM + "meta";
 
   private final AliasService aliasService;
   private final TokenStateService tokenStateService;

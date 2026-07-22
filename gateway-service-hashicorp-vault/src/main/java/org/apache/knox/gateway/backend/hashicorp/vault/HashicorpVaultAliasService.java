@@ -177,6 +177,11 @@ public class HashicorpVaultAliasService extends AbstractAliasService {
   }
 
   @Override
+  public char[] getHttpClientKeyPassphrase() throws AliasServiceException {
+    return getPasswordFromAliasForGateway(config.getHttpClientKeyPassphraseAlias());
+  }
+
+  @Override
   public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
     return getPasswordFromAliasForGateway(config.getIdentityKeystorePasswordAlias());
   }

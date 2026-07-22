@@ -69,9 +69,9 @@ export class LDAPProviderConfig extends AuthenticationProviderConfig implements 
     constructor() {
         super('ShiroProvider');
         this.setParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.REALM),
-            'org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm');
+            'org.apache.knox.gateway.shirorealm.KnoxLdapRealm');
         this.setParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.CONTEXT_FACTORY),
-            'org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory');
+            'org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory');
         this.setParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.REALM_CONTEXT_FACTORY), '$ldapContextFactory');
         this.setParam(this.getDisplayNamePropertyBinding(LDAPProviderConfig.AUTH_CHAIN), 'authcBasic');
     }

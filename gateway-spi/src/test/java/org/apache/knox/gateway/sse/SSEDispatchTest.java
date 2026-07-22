@@ -510,6 +510,8 @@ public class SSEDispatchTest {
         expect(gatewayConfig.getHttpClientCookieSpec()).andReturn(CookieSpecs.STANDARD).anyTimes();
         expect(gatewayConfig.isAsyncSupported()).andReturn(asyncSupported).once();
         expect(gatewayConfig.isTopologyAsyncSupported("SSE")).andReturn(asyncSupportedTopology).once();
+        expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+        expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).once();
 
         GatewayServices gatewayServices = createMock(GatewayServices.class);
         expect(gatewayServices.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).once();

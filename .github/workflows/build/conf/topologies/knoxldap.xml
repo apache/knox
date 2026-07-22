@@ -27,15 +27,15 @@ limitations under the License.
 			</param>
 			<param>
 				<name>main.ldapRealm</name>
-				<value>org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm</value>
+				<value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>
 			</param>
 			<param>
 				<name>main.ldapRealm.userDnTemplate</name>
-				<value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
+				<value>uid={0},ou=people,dc=proxy,dc=org</value>
 			</param>
 			<param>
 				<name>main.ldapRealm.contextFactory.url</name>
-				<value>ldap://ldap:33389</value>
+				<value>ldaps://localhost:33390</value>  <!-- Local Knox LDAP service (LDAPS); configured to proxy to the demo LDAP as a backend -->
 			</param>
 			<param>
 				<name>main.ldapRealm.contextFactory.authenticationMechanism</name>
@@ -48,11 +48,15 @@ limitations under the License.
 		</provider>
 		<provider>
 			<role>identity-assertion</role>
-			<name>Default</name>
+			<name>HadoopGroupProvider</name>
 			<enabled>true</enabled>
 			<param>
 				<name>group.principal.mapping</name>
 				<value>admin=longGroupName1,longGroupName2,longGroupName3,longGroupName4</value>
+			</param>
+			<param>
+				<name>CENTRAL_GROUP_CONFIG_PREFIX</name>
+				<value>gateway.group.config.</value>
 			</param>
 		</provider>
 	</gateway>

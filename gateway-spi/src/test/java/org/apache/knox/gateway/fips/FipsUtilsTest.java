@@ -20,25 +20,55 @@ package org.apache.knox.gateway.fips;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class FipsUtilsTest {
 
     @Test
     public void testIsFipsEnabledWithBCProviderEmpty() {
-        System.clearProperty("com.safelogic.cryptocomply.fips.approved_only");
+        System.clearProperty(FipsUtils.FIPS_SYSTEM_PROPERTY);
         assertFalse(FipsUtils.isFipsEnabledWithBCProvider());
     }
 
     @Test
     public void testIsFipsEnabledWithBCProviderSetToTrue() {
-        System.setProperty("com.safelogic.cryptocomply.fips.approved_only", "true");
-        assertTrue(FipsUtils.isFipsEnabledWithBCProvider());
+        try {
+            System.setProperty(FipsUtils.FIPS_SYSTEM_PROPERTY, "true");
+            assertTrue(FipsUtils.isFipsEnabledWithBCProvider());
+        } finally {
+            System.clearProperty(FipsUtils.FIPS_SYSTEM_PROPERTY);
+        }
     }
 
     @Test
     public void testIsFipsEnabledWithBCProviderSetToFalse() {
-        System.setProperty("com.safelogic.cryptocomply.fips.approved_only", "false");
-        assertFalse(FipsUtils.isFipsEnabledWithBCProvider());
+        try {
+            System.setProperty(FipsUtils.FIPS_SYSTEM_PROPERTY, "false");
+            assertFalse(FipsUtils.isFipsEnabledWithBCProvider());
+        } finally {
+            System.clearProperty(FipsUtils.FIPS_SYSTEM_PROPERTY);
+        }
+    }
+
+    @Test
+    public void testValidateAlgorithm() {
+        try {
+            System.setProperty(FipsUtils.FIPS_SYSTEM_PROPERTY, "true");
+            final String[] forbiddenAlgorithms = {"MD5", "RC4", "ARC4", "ARCFOUR", "SHA1", "SHA-1"};
+            for (String algorithm : forbiddenAlgorithms) {
+                testForbiddenAlgorithm(algorithm);
+            }
+        } finally {
+            System.clearProperty(FipsUtils.FIPS_SYSTEM_PROPERTY);
+        }
+    }
+
+    private void testForbiddenAlgorithm(String algorithm) {
+        assertThrows(
+                "Should have thrown IllegalArgumentException for " + algorithm,
+                IllegalArgumentException.class,
+                () -> FipsUtils.validateAlgorithm(algorithm, null)
+        );
     }
 }

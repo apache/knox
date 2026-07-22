@@ -1,51 +1,47 @@
 <div>
-    <div class="table-responsive" style="width:100%; overflow: auto; overflow-y: scroll">
-        <table class="table table-hover" [mfData]="resources" #mf="mfDataTable" [mfRowsOnPage]="10">
-            <thead>
-            <tr>
-                <th>
-          <span>
-          {{ getResourceTypeSingularDisplayName(resourceType) }}
-          </span>
-                    <span class="clickable inline-glyph glyphicon glyphicon-plus-sign btn btn-xs pull-right"
-                          *ngIf="resourceType === 'Provider Configurations'"
-                          (click)="newProviderConfigModal.open()"
-                          title="Create New Provider Configuration"
-                          data-toggle="tooltip"></span>
-                    <span class="clickable inline-glyph glyphicon glyphicon-plus-sign btn btn-xs pull-right"
-                          (click)="isAddingService=true"
-                          *ngIf="resourceType === 'Descriptors'"
-                          (click)="newDescriptorModal.open()"
-                          title="Create New Descriptor"
-                          data-toggle="tooltip"></span>
-                    <span class="clickable inline-glyph glyphicon glyphicon-plus-sign btn btn-xs pull-right"
-                          *ngIf="resourceType === 'Service Definitions'"
-                          (click)="newServiceDefinitionModal.open()"
-                          title="Create New Service Definition"
-                          data-toggle="tooltip"></span>
-                </th>
-                <th *ngIf="resourceType === 'Topologies'">Timestamp</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let resource of mf.data"
-                [class.selected]="resource === selectedResource"
-                [class.active]="isSelectedResource(resource)"
-                (click)="onSelect(resource)"
-                class="clickable">
-                <td>{{resourceService.getResourceDisplayName(resource)}}</td>
-                <td *ngIf="resourceType === 'Topologies'">{{resource.timestamp | date:'medium'}}</td>
-            </tr>
-            </tbody>
-		    <tfoot>
-		    <tr>
-		        <td colspan="4">
-		            <mfBootstrapPaginator [rowsOnPageSet]="[5,10,15]"></mfBootstrapPaginator>
-		        </td>
-		    </tr>
-		    </tfoot>
-        </table>
+    <div class="table-header">
+        <span class="table-title">{{ getResourceTypeSingularDisplayName(resourceType) }}</span>
+        @if (resourceType === 'Provider Configurations') {
+            <span class="clickable inline-glyph btn btn-xs"
+                  (click)="newProviderConfigModal.open()"
+                  title="Create New Provider Configuration"
+                  data-toggle="tooltip"><span class="material-icons">add_circle</span></span>
+        }
+        @if (resourceType === 'Descriptors') {
+            <span class="clickable inline-glyph btn btn-xs"
+                  (click)="newDescriptorModal.open()"
+                  title="Create New Descriptor"
+                  data-toggle="tooltip"><span class="material-icons">add_circle</span></span>
+        }
+        @if (resourceType === 'Service Definitions') {
+            <span class="clickable inline-glyph btn btn-xs"
+                  (click)="newServiceDefinitionModal.open()"
+                  title="Create New Service Definition"
+                  data-toggle="tooltip"><span class="material-icons">add_circle</span></span>
+        }
     </div>
+
+    <table mat-table [dataSource]="dataSource" style="width: 100%;">
+        <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let resource">{{resourceService.getResourceDisplayName(resource)}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="timestamp">
+            <th mat-header-cell *matHeaderCellDef>Timestamp</th>
+            <td mat-cell *matCellDef="let resource">{{resource.timestamp | date:'medium'}}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="getDisplayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: getDisplayedColumns();"
+            [class.selected]="row === selectedResource"
+            [class.active]="isSelectedResource(row)"
+            (click)="onSelect(row)"
+            class="clickable"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 15]" [pageSize]="10" showFirstLastButtons></mat-paginator>
+
     <div>
         <app-new-desc-wizard #newDescriptorModal></app-new-desc-wizard>
         <app-provider-config-wizard #newProviderConfigModal></app-provider-config-wizard>

@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.security.token.impl;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 import com.nimbusds.jose.JOSEException;
@@ -33,6 +34,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 
 public class JWTToken implements JWT {
   private static JWTProviderMessages log = MessagesFactory.get( JWTProviderMessages.class );
@@ -42,6 +44,8 @@ public class JWTToken implements JWT {
   public static final String KNOX_KID_CLAIM = "kid";
   public static final String KNOX_JKU_CLAIM = "jku";
   public static final String KNOX_GROUPS_CLAIM = "knox.groups";
+  public static final String CLIENT_ID_CLAIM = "client_id";
+  public static final String ACT_CLAIM = "act";
 
   SignedJWT jwt;
 
@@ -94,6 +98,16 @@ public class JWTToken implements JWT {
     }
     if (jwtAttributes.getGroups() != null) {
       builder.claim(KNOX_GROUPS_CLAIM, jwtAttributes.getGroups());
+    }
+    if (jwtAttributes.getClientId() != null) {
+      builder.claim(CLIENT_ID_CLAIM, jwtAttributes.getClientId());
+    }
+    // RFC 8693 Token Exchange: The "act" (actor) claim provides a means within a JWT to express
+    // that delegation has occurred and identify the acting party to whom authority has been delegated.
+    // The actor chain is converted to the nested structure required by RFC 8693.
+    Map<String, Object> nestedAct = TokenUtils.buildNestedActClaim(jwtAttributes.getActorChain());
+    if (nestedAct != null) {
+      builder.claim(ACT_CLAIM, nestedAct);
     }
 
     // Add a private UUID claim for uniqueness
@@ -172,6 +186,25 @@ public class JWTToken implements JWT {
 
     try {
       claim = jwt.getJWTClaimsSet().getStringClaim(claimName);
+    } catch (ParseException e) {
+      log.unableToParseToken(e);
+    }
+
+    return claim;
+  }
+
+  /**
+   * Get a claim value as an Object. Useful for nested claims like 'act' which is a JSON object.
+   *
+   * @param claimName The name of the claim to retrieve
+   * @return The claim value as an Object, or null if the claim doesn't exist or cannot be parsed
+   */
+    @Override
+    public Object getClaimAsObject(String claimName) {
+    Object claim = null;
+
+    try {
+      claim = jwt.getJWTClaimsSet().getClaim(claimName);
     } catch (ParseException e) {
       log.unableToParseToken(e);
     }

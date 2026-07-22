@@ -19,21 +19,24 @@ package org.apache.knox.gateway.services.ldap;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
-import org.junit.Test;
-import org.junit.Before;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for KnoxLDAPService.
@@ -48,6 +51,10 @@ public class KnoxLDAPServiceTest {
     @Before
     public void setUp() throws Exception {
         ldapService = new KnoxLDAPService();
+        // No bind password stored in the credential store -> anonymous access (default behavior).
+        final AliasService aliasService = createNiceMock(AliasService.class);
+        replay(aliasService);
+        ldapService.setAliasService(aliasService);
         mockConfig = createMock(GatewayConfig.class);
 
         // Create temporary directories and files
@@ -95,8 +102,7 @@ public class KnoxLDAPServiceTest {
 
     @Test
     public void testInitWithLdapEnabledFileBackend() throws Exception {
-        setupMockConfigForFileBackend();
-        replay(mockConfig);
+        setupMockConfig("file");
 
         ldapService.init(mockConfig, new HashMap<>());
 
@@ -108,8 +114,7 @@ public class KnoxLDAPServiceTest {
 
     @Test
     public void testInitWithLdapEnabledLdapBackend() throws Exception {
-        setupMockConfigForLdapBackend();
-        replay(mockConfig);
+        setupMockConfig("ldap");
 
         ldapService.init(mockConfig, new HashMap<>());
 
@@ -121,19 +126,13 @@ public class KnoxLDAPServiceTest {
 
     @Test(expected = ServiceLifecycleException.class)
     public void testInitWithInvalidBackendType() throws Exception {
-        expect(mockConfig.isLDAPEnabled()).andReturn(true);
-        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
-        expect(mockConfig.getLDAPPort()).andReturn(3890);
-        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn("invalid");
-        expect(mockConfig.getLDAPBackendConfig("invalid")).andReturn(new HashMap<>());
-        replay(mockConfig);
+        setupMockConfig("invalid");
 
         ldapService.init(mockConfig, new HashMap<>());
     }
 
     @Test
-    public void testStartWhenDisabled() throws Exception {
+    public void testStartAndStopWhenDisabled() throws Exception {
         expect(mockConfig.isLDAPEnabled()).andReturn(false);
         replay(mockConfig);
 
@@ -141,16 +140,6 @@ public class KnoxLDAPServiceTest {
 
         // Should not throw exception
         ldapService.start();
-
-        verify(mockConfig);
-    }
-
-    @Test
-    public void testStopWhenDisabled() throws Exception {
-        expect(mockConfig.isLDAPEnabled()).andReturn(false);
-        replay(mockConfig);
-
-        ldapService.init(mockConfig, new HashMap<>());
 
         // Should not throw exception
         ldapService.stop();
@@ -165,30 +154,47 @@ public class KnoxLDAPServiceTest {
         assertFalse("Should not be enabled when not initialized", ldapService.isEnabled());
     }
 
-    private void setupMockConfigForFileBackend() {
-        expect(mockConfig.isLDAPEnabled()).andReturn(true);
-        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
-        expect(mockConfig.getLDAPPort()).andReturn(3890);
-        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn("file");
+    @Test
+    public void testOnGatewayConfigChanged() throws Exception {
+        setupMockConfig("file");
 
-        Map<String, String> fileBackendConfig = new HashMap<>();
-        fileBackendConfig.put("dataFile", tempLdapFile.getAbsolutePath());
-        expect(mockConfig.getLDAPBackendConfig("file")).andReturn(fileBackendConfig);
+        ldapService.init(mockConfig, new HashMap<>());
+        assertEquals("Initial port should be 3890", 3890, ldapService.getLdapPort());
+
+        // Test reload with new port
+        ldapService.onGatewayConfigChanged(mockConfig);
+
+        assertEquals("Port should be updated to 3891 after reload", 3891, ldapService.getLdapPort());
+
+        verify(mockConfig);
     }
 
-    private void setupMockConfigForLdapBackend() {
-        expect(mockConfig.isLDAPEnabled()).andReturn(true);
-        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath());
-        expect(mockConfig.getLDAPPort()).andReturn(3890);
-        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com");
-        expect(mockConfig.getLDAPBackendType()).andReturn("ldap");
+    private void setupMockConfig(String backendType) throws Exception {
+        expect(mockConfig.isLDAPEnabled()).andReturn(true).atLeastOnce();
+        expect(mockConfig.isLDAPSSLEnabled()).andReturn(false).atLeastOnce();
+        expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).atLeastOnce();
+        expect(mockConfig.getLDAPRecursiveGroupResolutionMaxDepth()).andReturn(0).atLeastOnce();
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempDataDir.getAbsolutePath()).atLeastOnce();
+        expect(mockConfig.getLDAPPort()).andReturn(3890).times(1).andReturn(3891).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com").atLeastOnce();
+        expect(mockConfig.getLDAPBindUser()).andReturn(null).anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend")).atLeastOnce();
+        expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
+        replay(mockConfig);
+    }
 
-        Map<String, String> ldapBackendConfig = new HashMap<>();
-        ldapBackendConfig.put("url", "ldap://localhost:33389");
-        ldapBackendConfig.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");
-        ldapBackendConfig.put("systemUsername", "cn=admin,dc=hadoop,dc=apache,dc=org");
-        ldapBackendConfig.put("systemPassword", "admin-password");
-        expect(mockConfig.getLDAPBackendConfig("ldap")).andReturn(ldapBackendConfig);
+    private Map<String, String> buildBackendConfig(String backendType) {
+        final Map<String, String> backendConfig = new HashMap<>();
+        backendConfig.put("interceptorType", "backend");
+        backendConfig.put("backendType", backendType);
+        if ("ldap".equals(backendType)) {
+            backendConfig.put("url", "ldap://localhost:33389");
+            backendConfig.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");
+            backendConfig.put("systemUsername", "cn=admin,dc=hadoop,dc=apache,dc=org");
+            backendConfig.put("systemPassword", "admin-password");
+        } else if ("file".equals(backendType)) {
+            backendConfig.put("dataFile", tempLdapFile.getAbsolutePath());
+        }
+        return backendConfig;
     }
 }

@@ -54,6 +54,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.dto.HomePageProfile;
+import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.Metadata;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
@@ -69,6 +70,7 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.TruststorePasswordSetter;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 
 import com.kstruct.gethostname4j.Hostname;
@@ -87,6 +89,7 @@ public class KnoxMetadataResource {
   private Set<String> pinnedTopologies;
   private java.nio.file.Path pemFilePath;
   private java.nio.file.Path jksFilePath;
+  private java.nio.file.Path bcfksFilePath;
 
   @Context
   private HttpServletRequest request;
@@ -96,37 +99,47 @@ public class KnoxMetadataResource {
   @Produces({ APPLICATION_JSON, APPLICATION_XML })
   @Path("info")
   public GeneralProxyInformation getGeneralProxyInformation() {
-    final GeneralProxyInformation proxyInfo = new GeneralProxyInformation();
     final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-    if (gatewayServices != null) {
-      final ServerInfoService serviceInfoService = gatewayServices.getService(ServiceType.SERVER_INFO_SERVICE);
-      final String versionInfo = serviceInfoService.getBuildVersion() + " (hash=" + serviceInfoService.getBuildHash() + ")";
-      proxyInfo.setVersion(versionInfo);
-      proxyInfo.setHostname(Hostname.getHostname());
-      proxyInfo.setAdminApiBookUrl(
-          String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(serviceInfoService.getBuildVersion())));
-      final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-      proxyInfo.setAdminUiUrl(getBaseGatewayUrl(config) + "/manager/admin-ui/");
-      proxyInfo.setWebShellUrl(getBaseGatewayUrl(config) + "/homepage/webshell-ui/index.html");
-      setTokenManagementEnabledFlag(proxyInfo, gatewayServices);
-      proxyInfo.setEnableWebshell(String.valueOf(config.isWebShellEnabled()));
+    if (gatewayServices == null) {
+      return GeneralProxyInformation.builder().build();
     }
+    final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final ServerInfoService serverInfo = gatewayServices.getService(ServiceType.SERVER_INFO_SERVICE);
+    final String baseGatewayUrl = getBaseGatewayUrl(config);
 
-    return proxyInfo;
+    return GeneralProxyInformation.builder()
+        .version(serverInfo.getBuildVersion() + " (hash=" + serverInfo.getBuildHash() + ")")
+        .hostname(Hostname.getHostname())
+        .adminUiUrl(baseGatewayUrl + "/manager/admin-ui/")
+        .webShellUrl(baseGatewayUrl + "/homepage/webshell-ui/index.html")
+        .adminApiBookUrl(buildAdminApiBookUrl(serverInfo.getBuildVersion()))
+        .enableTokenManagement(isTokenManagementEnabled(gatewayServices))
+        .enableWebshell(config.isWebShellEnabled())
+        .truststoreType(preferredTruststoreType())
+        .build();
   }
 
-  private void setTokenManagementEnabledFlag(final GeneralProxyInformation proxyInfo, final GatewayServices gatewayServices) {
+  private boolean isTokenManagementEnabled(final GatewayServices gatewayServices) {
     try {
       final AliasService aliasService = gatewayServices.getService(ServiceType.ALIAS_SERVICE);
       final List<String> aliases = aliasService.getAliasesForCluster(AliasService.NO_CLUSTER_NAME);
       final boolean tokenManagementEnabled = aliases.contains(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME);
-      proxyInfo.setEnableTokenManagement(Boolean.toString(tokenManagementEnabled));
       if (!tokenManagementEnabled) {
         LOG.tokenManagementDisabled();
       }
+      return tokenManagementEnabled;
     } catch (AliasServiceException e) {
       LOG.failedToFetchGatewayAliasList(e.getMessage(), e);
+      return false;
     }
+  }
+
+  private String buildAdminApiBookUrl(String buildVersion) {
+    return String.format(Locale.ROOT, "https://knox.apache.org/books/knox-%s/user-guide.html#Admin+API", getAdminApiBookVersion(buildVersion));
+  }
+
+  private String preferredTruststoreType() {
+    return FipsUtils.isFipsEnabledWithBCProvider() ? "bcfks" : "jks";
   }
 
   private String getAdminApiBookVersion(String buildVersion) {
@@ -140,15 +153,21 @@ public class KnoxMetadataResource {
     final GatewayConfig config = (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     final Certificate[] certificateChain = config.isSSLEnabled() ? getPublicCertificates() : getSigningkeyCerts(config);
     if (certificateChain != null) {
+      final java.nio.file.Path certFilePath;
       if ("pem".equals(certType)) {
-        generateCertificatePem(certificateChain, config);
-        return generateSuccessFileDownloadResponse(pemFilePath);
+        certFilePath = generateCertificatePem(certificateChain, config);
       } else if ("jks".equals(certType)) {
-        generateCertificateJks(certificateChain, config);
-        return generateSuccessFileDownloadResponse(jksFilePath);
+        certFilePath = generateCertificateJks(certificateChain, config);
+      } else if ("bcfks".equals(certType)) {
+        certFilePath = generateCertificateBcfks(certificateChain, config);
       } else {
         return generateFailureFileDownloadResponse(Status.BAD_REQUEST, "Invalid certification type provided!");
       }
+      if (certFilePath != null && certFilePath.toFile().exists()) {
+        return generateSuccessFileDownloadResponse(certFilePath);
+      }
+      return generateFailureFileDownloadResponse(Status.SERVICE_UNAVAILABLE,
+          "Could not generate " + certType.toUpperCase(Locale.ROOT) + " public certificate");
     }
     return generateFailureFileDownloadResponse(Status.SERVICE_UNAVAILABLE, "Could not generate public certificate");
   }
@@ -173,32 +192,60 @@ public class KnoxMetadataResource {
 
   private Certificate[] getPublicCertificates() {
     try {
-      return X509CertificateUtil.fetchPublicCertsFromServer(request.getRequestURL().toString(), true, null);
+      final GatewayServices gatewayServices = (GatewayServices) request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (gatewayServices != null) {
+        final AliasService aliasService = gatewayServices.getService(ServiceType.ALIAS_SERVICE);
+        char[] trustStorePassword = aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS);
+        return X509CertificateUtil.fetchPublicCertsFromServer(request.getRequestURL().toString(), trustStorePassword, true, null);
+      }
     } catch (Exception e) {
       LOG.failedToFetchPublicCert(e.getMessage(), e);
+    }
+    return null;
+  }
+
+  private java.nio.file.Path generateCertificatePem(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
+    if (pemFilePath != null && pemFilePath.toFile().exists()) {
+      return pemFilePath;
+    }
+    final java.nio.file.Path candidate = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.pem");
+    try {
+      X509CertificateUtil.writeCertificatesToFile(certificateChain, candidate.toFile());
+      pemFilePath = candidate;
+      return pemFilePath;
+    } catch (CertificateEncodingException | IOException e) {
+      LOG.failedToGeneratePublicCert("PEM", e.getMessage(), e);
       return null;
     }
   }
 
-  private void generateCertificatePem(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
+  private java.nio.file.Path generateCertificateJks(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
+    if (jksFilePath != null && jksFilePath.toFile().exists()) {
+      return jksFilePath;
+    }
+    final java.nio.file.Path candidate = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.jks");
     try {
-      if (pemFilePath == null || !pemFilePath.toFile().exists()) {
-        pemFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.pem");
-        X509CertificateUtil.writeCertificatesToFile(certificateChain, pemFilePath.toFile());
-      }
-    } catch (CertificateEncodingException | IOException e) {
-      LOG.failedToGeneratePublicCert("PEM", e.getMessage(), e);
+      X509CertificateUtil.writeCertificatesToJks(certificateChain, candidate.toFile(), null);
+      jksFilePath = candidate;
+      return jksFilePath;
+    } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+      LOG.failedToGeneratePublicCert("JKS", e.getMessage(), e);
+      return null;
     }
   }
 
-  private void generateCertificateJks(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
+  private java.nio.file.Path generateCertificateBcfks(Certificate[] certificateChain, GatewayConfig gatewayConfig) {
+    if (bcfksFilePath != null && bcfksFilePath.toFile().exists()) {
+      return bcfksFilePath;
+    }
+    final java.nio.file.Path candidate = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.bcfks");
     try {
-      if (jksFilePath == null || !jksFilePath.toFile().exists()) {
-        jksFilePath = Paths.get(gatewayConfig.getGatewaySecurityDir(), "gateway-client-trust.jks");
-        X509CertificateUtil.writeCertificatesToJks(certificateChain, jksFilePath.toFile(), null);
-      }
+      X509CertificateUtil.writeCertificatesToBcfks(certificateChain, candidate.toFile(), null);
+      bcfksFilePath = candidate;
+      return bcfksFilePath;
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
-      LOG.failedToGeneratePublicCert("JKS", e.getMessage(), e);
+      LOG.failedToGeneratePublicCert("BCFKS", e.getMessage(), e);
+      return null;
     }
   }
 

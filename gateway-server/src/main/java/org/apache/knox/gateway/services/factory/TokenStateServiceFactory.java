@@ -17,12 +17,6 @@
  */
 package org.apache.knox.gateway.services.factory;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
-
-import java.util.Collection;
-import java.util.Map;
-
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -30,12 +24,15 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
 import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
-import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService;
-import org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService;
+
+import java.util.Collection;
+import java.util.Map;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 public class TokenStateServiceFactory extends AbstractServiceFactory {
 
@@ -50,13 +47,6 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
         service = useDerbyDatabaseTokenStateService(gatewayServices, gatewayConfig, options);
       } else if (matchesImplementation(implementation, DefaultTokenStateService.class)) {
         service = new DefaultTokenStateService();
-      } else if (matchesImplementation(implementation, AliasBasedTokenStateService.class)) {
-        service = new AliasBasedTokenStateService();
-        ((AliasBasedTokenStateService) service).setAliasService(getAliasService(gatewayServices));
-      } else if (matchesImplementation(implementation, JournalBasedTokenStateService.class)) {
-        service = new JournalBasedTokenStateService();
-      } else if (matchesImplementation(implementation, ZookeeperTokenStateService.class)) {
-        service = new ZookeeperTokenStateService(gatewayServices);
       } else if (matchesImplementation(implementation, JDBCTokenStateService.class)) {
         try {
           service = new JDBCTokenStateService();
@@ -95,7 +85,6 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), AliasBasedTokenStateService.class.getName(), JournalBasedTokenStateService.class.getName(),
-        ZookeeperTokenStateService.class.getName(), JDBCTokenStateService.class.getName(), DerbyDBTokenStateService.class.getName()));
+    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), JDBCTokenStateService.class.getName(), DerbyDBTokenStateService.class.getName()));
   }
 }

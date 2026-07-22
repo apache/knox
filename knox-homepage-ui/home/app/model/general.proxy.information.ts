@@ -23,4 +23,5 @@ export class GeneralProxyInformation {
     adminApiBookUrl: string;
     enableTokenManagement: string;
     enableWebshell: string;
+    truststoreType: string;
 }

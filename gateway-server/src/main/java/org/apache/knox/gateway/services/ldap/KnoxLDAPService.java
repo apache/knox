@@ -18,21 +18,26 @@
 package org.apache.knox.gateway.services.ldap;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.AliasService;
 
-import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Knox LDAP Service - provides an embedded LDAP server with pluggable backends
  * for user and group lookups.
  */
-public class KnoxLDAPService implements Service {
+public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
-    private KnoxLDAPServerManager ldapServerManager;
+    KnoxLDAPServerManager ldapServerManager;
+    AliasService aliasService;
+    private GatewayServices gatewayServices;
     private boolean enabled;
 
     @Override
@@ -45,37 +50,19 @@ public class KnoxLDAPService implements Service {
 
         try {
             // Initialize the LDAP server manager with configuration
-            ldapServerManager = new KnoxLDAPServerManager();
-
-            // Prepare work directory for LDAP data
-            File gatewayDataDir = new File(config.getGatewayDataDir());
-            File ldapWorkDir = new File(gatewayDataDir, "ldap-server");
-
-            // Get configuration
-            int port = config.getLDAPPort();
-            String baseDn = config.getLDAPBaseDN();
-            String backendType = config.getLDAPBackendType();
-
-            // Get backend-specific configuration using prefixed properties
-            Map<String, String> backendConfig = config.getLDAPBackendConfig(backendType);
-
-            // Add common configuration
-            backendConfig.put("baseDn", baseDn);
-
-            // Add legacy dataFile property for backwards compatibility with file backend
-            if ("file".equalsIgnoreCase(backendType) && !backendConfig.containsKey("dataFile")) {
-                backendConfig.put("dataFile", config.getLDAPBackendDataFile());
-            }
-
-            // For proxy backends, extract remoteBaseDn if present
-            String remoteBaseDn = backendConfig.get("remoteBaseDn");
-
-            // Initialize but don't start yet
-            ldapServerManager.initialize(ldapWorkDir, port, baseDn, backendType, backendConfig, remoteBaseDn);
-
+            ldapServerManager = new KnoxLDAPServerManager(aliasService, gatewayServices);
+            ldapServerManager.initialize(config);
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
         }
+    }
+
+    public void setAliasService(AliasService aliasService) {
+        this.aliasService = aliasService;
+    }
+
+    public void setGatewayServices(GatewayServices gatewayServices) {
+        this.gatewayServices = gatewayServices;
     }
 
     @Override
@@ -107,6 +94,27 @@ public class KnoxLDAPService implements Service {
         }
     }
 
+    @Override
+    public void onGatewayConfigChanged(GatewayConfig config) {
+        LOG.ldapReloadingConfig();
+        try {
+            this.enabled = config.isLDAPEnabled();
+
+            if (this.enabled) {
+                this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager(aliasService, gatewayServices) : this.ldapServerManager;
+                ldapServerManager.stop();
+                ldapServerManager.initialize(config);
+                ldapServerManager.start();
+                //LDAP roles lookup service also implements onGatewayConfigChanged -> no need to do anything here
+            } else if (ldapServerManager != null) {
+                ldapServerManager.stop();
+                ldapServerManager = null;
+            }
+        } catch (Exception e) {
+            LOG.ldapServiceReloadFailed(e);
+        }
+    }
+
     /**
      * Get the port the LDAP server is listening on
      */
@@ -126,5 +134,18 @@ public class KnoxLDAPService implements Service {
      */
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /**
+     * Get groups for a user from the configured backend
+     * @param username The username
+     * @return List of group names
+     */
+    public List<String> getUserGroups(String username) throws Exception {
+        return ldapServerManager == null ? List.of() : ldapServerManager.getUserGroups(username);
+    }
+
+    public boolean hasRolesLookupInterceptor() {
+        return ldapServerManager != null && ldapServerManager.hasRolesLookupInterceptor();
     }
 }

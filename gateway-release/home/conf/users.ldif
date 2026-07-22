@@ -108,3 +108,35 @@ cn: admin
 description: admin group
 member: uid=admin,ou=people,dc=hadoop,dc=apache,dc=org
 
+# entry for sample user recursiveUser
+dn: uid=recursiveUser,ou=people,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass:person
+objectclass:organizationalPerson
+objectclass:inetOrgPerson
+cn: Recursive
+sn: User
+uid: recursiveUser
+userPassword:recursiveUser-password
+
+# Level 1 Group
+dn: cn=level1,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: level1
+member: uid=recursiveUser,ou=people,dc=hadoop,dc=apache,dc=org
+
+# Level 2 Group (Member is Level 1)
+dn: cn=level2,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: level2
+member: cn=level1,ou=groups,dc=hadoop,dc=apache,dc=org
+
+# Level 3 Group (Member is Level 2)
+dn: cn=level3,ou=groups,dc=hadoop,dc=apache,dc=org
+objectclass:top
+objectclass: groupofnames
+cn: level3
+member: cn=level2,ou=groups,dc=hadoop,dc=apache,dc=org
+

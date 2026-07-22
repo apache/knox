@@ -49,7 +49,7 @@ limitations under the License.
           <td>
             <a href="{{ getMetadataAPIUrl('publicCert?type=pem') }}">PEM</a>
             &nbsp;&nbsp;|&nbsp;&nbsp;
-            <a href="{{ getMetadataAPIUrl('publicCert?type=jks') }}">JKS</a>
+            <a href="{{ getMetadataAPIUrl('publicCert?type=' + getTruststoreType()) }}">{{ getTruststoreType().toUpperCase() }}</a>
           </td>
         </tr>
       }

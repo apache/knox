@@ -55,7 +55,7 @@ public class ConcatIdentityAssertionFilterTest {
 
     filter.init(config);
     String username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(username, subject);
+    String[] groups = filter.mapGroupPrincipals(username, subject, null);
     assertEquals(username, "larry");
     assertNull(groups); // means for the caller to use the existing subject groups
 

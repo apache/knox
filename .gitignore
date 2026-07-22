@@ -52,3 +52,6 @@ velocity.log
 
 #System Files
 Thumbs.db
+
+# Test-generated keystore files (accidentally tracked; see KNOX-3328)
+gateway-server/data/security/keystores/*.jceks

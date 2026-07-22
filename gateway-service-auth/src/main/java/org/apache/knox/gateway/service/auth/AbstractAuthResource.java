@@ -17,14 +17,20 @@
  */
 package org.apache.knox.gateway.service.auth;
 
+import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.apache.knox.gateway.util.GroupUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +52,7 @@ public abstract class AbstractAuthResource {
 
   static final String DEFAULT_AUTH_ACTOR_ID_HEADER_NAME = "X-Knox-Actor-ID";
   static final String DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX = "X-Knox-Actor-Groups";
+
   static final Pattern DEFAULT_GROUP_FILTER_PATTERN = Pattern.compile(".*");
 
   private static final String DEFAULT_GROUP_HEADER_LENGTH_LIMIT = "1000";
@@ -57,6 +64,8 @@ public abstract class AbstractAuthResource {
   private int groupHeaderLengthLimit;
   private int groupHeaderSizeLimit;
   protected Pattern groupFilterPattern;
+  protected String authHeaderActorRolesName;
+  private LDAPRolesLookupService ldapRolesLookupService;
 
   protected void initialize() {
     authHeaderActorIDName = getInitParameter(AUTH_ACTOR_ID_HEADER_NAME, DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
@@ -65,6 +74,12 @@ public abstract class AbstractAuthResource {
     groupHeaderSizeLimit = Integer.parseInt(getInitParameter(GROUP_HEADER_SIZE_LIMIT, DEFAULT_GROUP_HEADER_SIZE_LIMIT));
     final String groupFilterPatternString = getInitParameter(GROUP_FILTER_PATTERN, null);
     groupFilterPattern = groupFilterPatternString == null ? DEFAULT_GROUP_FILTER_PATTERN : Pattern.compile(groupFilterPatternString);
+
+    final GatewayServices gatewayServices = (GatewayServices) getContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (gatewayServices != null) {
+      ldapRolesLookupService = gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE);
+    }
+
   }
 
   /* abstract method to get the response instance */
@@ -72,6 +87,8 @@ public abstract class AbstractAuthResource {
 
   /* Abstract method that gets context instance */
   abstract ServletContext getContext();
+
+  abstract ServletRequest getRequest();
 
   String getInitParameter(String paramName, String defaultValue) {
     final String initParam = getContext().getInitParameter(paramName);
@@ -88,17 +105,38 @@ public abstract class AbstractAuthResource {
     }
     getResponse().setHeader(authHeaderActorIDName, primaryPrincipalName);
 
-    // Populate actor groups headers
+    // Populate actor groups/roles headers
     final Set<String> matchingGroupNames = subject == null ? Collections.emptySet()
             : SubjectUtils.getGroupPrincipals(subject).stream().filter(group -> groupFilterPattern.matcher(group.getName()).matches()).map(group -> group.getName())
             .collect(Collectors.toSet());
-    if (!matchingGroupNames.isEmpty()) {
-      final List<String> groupStrings = GroupUtils.getGroupStrings(matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
+    final Collection<String> roles = lookupRoles(primaryPrincipalName, matchingGroupNames);
+    if (!matchingGroupNames.isEmpty() || !roles.isEmpty()) {
+      final boolean useRoles = !roles.isEmpty();
+      final List<String> groupStrings = GroupUtils.getGroupStrings(useRoles ? roles : matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
-        getResponse().addHeader(String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1), groupStrings.get(i));
+        final String headerName = useRoles || rolesLookupExecuted() ? authHeaderActorGroupsPrefix : String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1);
+        getResponse().addHeader(headerName, groupStrings.get(i));
       }
     }
     return ok().build();
+  }
+
+  private Collection<String> lookupRoles(String userName, Collection<String> groups) {
+    Collection<String> roles = null;
+      try {
+        if (!rolesLookupExecuted() && ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
+          roles = ldapRolesLookupService.lookupRoles(userName, groups);
+        }
+      } catch (Exception e) {
+        // Couldn't lookup roles: log and return null so that the API will return the groups
+        LOG.ldapRolesLookupFailed(userName, e);
+      }
+      return roles == null ? Collections.emptySet() : roles;
+  }
+
+  private boolean rolesLookupExecuted() {
+    final Object rolesLookupExecutedReqAttribute = getRequest() == null ? null : getRequest().getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED);
+    return rolesLookupExecutedReqAttribute != null && Boolean.parseBoolean(rolesLookupExecutedReqAttribute.toString());
   }
 
 }

@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -54,7 +55,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -200,6 +203,91 @@ public class DefaultKeystoreServiceTest {
     assertEquals(keystore, keystoreService.getTruststoreForHttpClient());
 
     verify(keystore, keystoreService, masterService);
+  }
+
+  @Test
+  public void testGetKeystoreForHttpClientReturnsNullWhenPathNotConfigured() throws Exception {
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn("horton".toCharArray()).anyTimes();
+    replay(masterService);
+
+    GatewayConfig config = createMock(GatewayConfig.class);
+    expect(config.getHttpClientKeystorePath()).andReturn(null).atLeastOnce();
+    expect(config.isSingleEkuEnabled()).andReturn(false).atLeastOnce();   // NEW: no fallback when single-EKU off
+    expect(config.getGatewayKeystoreDir()).andReturn(testFolder.newFolder().getAbsolutePath()).anyTimes();
+    expectInitConfig(config);
+    replay(config);
+
+    DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+
+    assertNull(keystoreService.getKeystoreForHttpClient());
+    verify(config);
+  }
+
+  @Test
+  public void testGetKeystoreForHttpClientFallsBackToGatewayKeystoreForSingleEku() throws Exception {
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn("horton".toCharArray()).anyTimes();
+    replay(masterService);
+
+    GatewayConfig config = createMock(GatewayConfig.class);
+    expect(config.getHttpClientKeystorePath()).andReturn(null).atLeastOnce();
+    expect(config.isSingleEkuEnabled()).andReturn(true).atLeastOnce();
+    expect(config.getGatewayKeystoreDir()).andReturn(testFolder.newFolder().getAbsolutePath()).anyTimes();
+    expectInitConfig(config);
+    replay(config);
+
+    KeyStore gatewayKeystore = createNiceMock(KeyStore.class);
+    replay(gatewayKeystore);
+
+    DefaultKeystoreService keystoreService = createMockBuilder(DefaultKeystoreService.class)
+        .addMockedMethod("getKeystoreForGateway")
+        .createMock();
+    expect(keystoreService.getKeystoreForGateway()).andReturn(gatewayKeystore).once();
+    keystoreService.setMasterService(masterService);
+    replay(keystoreService);
+
+    keystoreService.init(config, Collections.emptyMap());
+
+    assertSame(gatewayKeystore, keystoreService.getKeystoreForHttpClient());
+    verify(config, keystoreService);
+  }
+
+  @Test
+  public void testGetKeystoreForHttpClientLoadsConfiguredKeystore() throws Exception {
+    char[] password = "horton".toCharArray();
+    File keystoreDir = testFolder.newFolder();
+    File clientKeystore = new File(keystoreDir, "client.jks");
+
+    // Create an empty keystore of the default type at the configured path
+    KeyStore created = KeyStore.getInstance(KeyStore.getDefaultType());
+    created.load(null, password);
+    try (OutputStream out = Files.newOutputStream(clientKeystore.toPath())) {
+      created.store(out, password);
+    }
+
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn("horton".toCharArray()).anyTimes();
+    replay(masterService);
+
+    GatewayConfig config = createMock(GatewayConfig.class);
+    expect(config.getHttpClientKeystorePath()).andReturn(clientKeystore.getAbsolutePath()).atLeastOnce();
+    expect(config.getHttpClientKeystoreType()).andReturn(KeyStore.getDefaultType()).atLeastOnce();
+    expect(config.getHttpClientKeystorePasswordAlias()).andReturn("gateway-httpclient-keystore-password").atLeastOnce();
+    expect(config.getGatewayKeystoreDir()).andReturn(keystoreDir.getAbsolutePath()).anyTimes();
+    expectInitConfig(config);
+    replay(config);
+
+    // masterService returns the keystore password so getKeyStorePassword(alias) resolves it
+    DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+
+    KeyStore loaded = keystoreService.getKeystoreForHttpClient();
+    assertNotNull(loaded);
+    verify(config);
   }
 
   @Test
@@ -822,6 +910,18 @@ public class DefaultKeystoreServiceTest {
     config.set("gateway.security.dir", baseDir.resolve("security").toAbsolutePath().toString());
     return config;
 
+  }
+
+  /**
+   * Stubs the {@link GatewayConfig} getters that {@link DefaultKeystoreService#init} invokes, so a
+   * strict mock survives initialization. Caller must still call {@code replay(config)}.
+   */
+  private void expectInitConfig(GatewayConfig config) {
+    expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(1L).anyTimes();
+    expect(config.getKeystoreCacheSizeLimit()).andReturn(1L).anyTimes();
+    expect(config.getCredentialStoreAlgorithm()).andReturn("AES").anyTimes();
+    expect(config.getCredentialStoreType()).andReturn(KeyStore.getDefaultType()).anyTimes();
+    expect(config.getSelfSigningCertificateAlgorithm()).andReturn("SHA256withRSA").anyTimes();
   }
 
   private void createKeystore(DefaultKeystoreService keystoreService, char[] password, final GatewayConfig config)

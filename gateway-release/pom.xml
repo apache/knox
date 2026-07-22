@@ -383,6 +383,10 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-provider-security-k8s</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-provider-security-hadoopauth</artifactId>
         </dependency>
         <dependency>
@@ -478,10 +482,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-adapter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.knox</groupId>
             <artifactId>gateway-service-hashicorp-vault</artifactId>
         </dependency>
         <dependency>
@@ -519,6 +519,10 @@
         <dependency>
             <groupId>org.apache.knox</groupId>
             <artifactId>knox-token-generation-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-service-restcatalog</artifactId>
         </dependency>
     </dependencies>
 </project>

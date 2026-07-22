@@ -86,14 +86,15 @@ var login = function() {
 					}
 					redirect(redirectUrl);
 				} else {
-					$('#errorBox').show();
-					$('#signInLoading').css('visibility', 'hidden');
-					$('#signIn').removeAttr('disabled');
 					if (request.status == 401) {
 						$('#errorBox .errorMsg').text("The username or password you entered is incorrect.");
 					} else {
 						$('#errorBox .errorMsg').text("Response from " + request.responseURL + " - " + request.status + ": " + request.statusText);
 					}
+					$('#errorBox').show();
+					$('#signInLoading').css('visibility', 'hidden');
+					$('#signIn').removeAttr('disabled');
+					$(window).trigger('resize');
 				}
 			}
 		};

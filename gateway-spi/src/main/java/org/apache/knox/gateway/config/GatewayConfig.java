@@ -90,6 +90,21 @@ public interface GatewayConfig {
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_TYPE = KeyStore.getDefaultType();
   String DEFAULT_HTTP_CLIENT_TRUSTSTORE_PASSWORD_ALIAS = "gateway-httpclient-truststore-password";
 
+  String HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS = "gateway.httpclient.keystore.password.alias";
+  String HTTP_CLIENT_KEYSTORE_PATH = "gateway.httpclient.keystore.path";
+  String HTTP_CLIENT_KEYSTORE_TYPE = "gateway.httpclient.keystore.type";
+  String HTTP_CLIENT_KEY_ALIAS = "gateway.httpclient.key.alias";
+  String HTTP_CLIENT_KEY_PASSPHRASE_ALIAS = "gateway.httpclient.key.passphrase.alias";
+  String DEFAULT_HTTP_CLIENT_KEYSTORE_TYPE = KeyStore.getDefaultType();
+  String DEFAULT_HTTP_CLIENT_KEYSTORE_PASSWORD_ALIAS = "gateway-httpclient-keystore-password";
+  String DEFAULT_HTTP_CLIENT_KEY_ALIAS = "gateway-httpclient-key";
+  String DEFAULT_HTTP_CLIENT_KEY_PASSPHRASE_ALIAS = "gateway-httpclient-key-passphrase";
+
+  String TLS_SINGLE_EKU_ENABLED = "gateway.tls.single.eku.enabled";
+  boolean DEFAULT_TLS_SINGLE_EKU_ENABLED = false;
+  String HTTP_CLIENT_TWO_WAY_SSL_ENABLED = "gateway.httpclient.twoWaySsl.enabled";
+  String HTTP_CLIENT_TWO_WAY_SSL_ENABLED_DEFAULT = "false";
+
   String CREDENTIAL_STORE_ALG = "gateway.credential.store.alg";
   String DEFAULT_CREDENTIAL_STORE_ALG = "AES";
   String SELF_SIGNING_CERT_ALG = "gateway.self.signing.cert.alg";
@@ -128,8 +143,18 @@ public interface GatewayConfig {
   String LDAP_ENABLED = "gateway.ldap.enabled";
   String LDAP_PORT = "gateway.ldap.port";
   String LDAP_BASE_DN = "gateway.ldap.base.dn";
-  String LDAP_BACKEND_TYPE = "gateway.ldap.backend.type";
+  String LDAP_BIND_USER = "gateway.ldap.bind.user";
+  String LDAP_INTERCEPTOR_NAMES = "gateway.ldap.interceptor.names";
   String LDAP_BACKEND_DATA_FILE = "gateway.ldap.backend.data.file";
+  String LDAP_RECURSIVE_GROUP_RESOLUTION = "gateway.ldap.recursive.group.resolution";
+  String LDAP_RECURSIVE_GROUP_RESOLUTION_MAX_DEPTH = "gateway.ldap.recursive.group.resolution.max.depth";
+  String LDAP_ROLES_LOOKUP_STRATEGY = "gateway.ldap.roles.lookup.strategy";
+  String LDAP_ROLES_LOOKUP_REST_API_ENDPOINT = "gateway.ldap.roles.lookup.rest.api.endpoint";
+  String LDAP_ROLES_LOOKUP_FILE_PATH = "gateway.ldap.roles.lookup.file.path";
+  String LDAP_SSL_ENABLED = "gateway.ldap.ssl.enabled";
+  String LDAP_SSL_KEYSTORE_PATH = "gateway.ldap.ssl.keystore.path";
+  String LDAP_SSL_KEYSTORE_PASSWORD_ALIAS = "gateway.ldap.ssl.keystore.password.alias";
+  String LDAP_SSL_ENABLED_CIPHER_SUITES = "gateway.ldap.ssl.enabled.cipher.suites";
 
   /**
    * The location of the gateway configuration.
@@ -233,6 +258,8 @@ public interface GatewayConfig {
 
   String getTruststoreType();
 
+  String getDatabaseSslTruststoreType();
+
   /**
    * Returns the configured value for the alias name to use when to looking up the Gateway's
    * truststore password.
@@ -273,6 +300,48 @@ public interface GatewayConfig {
    * @return an alias name
    */
   String getHttpClientTruststorePasswordAlias();
+
+  /**
+   * @return the path to the keystore holding the Gateway's client identity for outbound
+   *         mutual-TLS connections; or <code>null</code> if not set
+   */
+  String getHttpClientKeystorePath();
+
+  /**
+   * @return the type of the keystore specified by {@link #getHttpClientKeystorePath()}
+   */
+  String getHttpClientKeystoreType();
+
+  /**
+   * @return the alias used to look up the password for the HTTP client keystore
+   */
+  String getHttpClientKeystorePasswordAlias();
+
+  /**
+   * @return the alias of the key entry to present from the HTTP client keystore
+   */
+  String getHttpClientKeyAlias();
+
+  /**
+   * @return the alias used to look up the passphrase for the HTTP client key
+   */
+  String getHttpClientKeyPassphraseAlias();
+
+  /**
+   * @return <code>true</code> when single-purpose (single-EKU) certificates are in use, so the
+   *         Gateway presents a dedicated client keystore for outbound mTLS instead of its server
+   *         identity keystore. Defaults to <code>false</code> (multi-purpose certificates).
+   */
+  boolean isSingleEkuEnabled();
+
+  /**
+   * @return {@code true} when outbound mutual TLS (two-way SSL) is enabled globally for all
+   *         dispatches. Defaults to {@code false} and is independent of the single-EKU feature
+   *         ({@link #isSingleEkuEnabled()}); enable it explicitly via
+   *         {@code gateway.httpclient.twoWaySsl.enabled} or the per-service {@code useTwoWaySsl}
+   *         dispatch init-parameter.
+   */
+  boolean isHttpClientTwoWaySslEnabled();
 
   /**
    * @return the algorithm that is used when creating a SecretKey when adding an
@@ -747,6 +816,12 @@ public interface GatewayConfig {
   Set<String> getServicesToIgnoreDoAs();
 
   /**
+   * @return refresh interval in ms
+   * @since 3.0.0
+   */
+  int getConfigRefreshInterval();
+
+  /**
    * @return the monitoring interval (in milliseconds) of Cloudera Manager descriptors
    */
   long getClouderaManagerDescriptorsMonitoringInterval();
@@ -1060,9 +1135,15 @@ public interface GatewayConfig {
   String getLDAPBaseDN();
 
   /**
-   * @return the backend type for LDAP (file, ldap, jdbc, etc.)
+   * @return the bind DN required to query the embedded LDAP service, or null/blank if
+   * anonymous access should be allowed
    */
-  String getLDAPBackendType();
+  String getLDAPBindUser();
+
+    /**
+     * @return the list of interceptor names for LDAP server
+     */
+  List<String> getLDAPInterceptorNames();
 
   /**
    * @return the path to the data file for file-based backend
@@ -1070,14 +1151,65 @@ public interface GatewayConfig {
   String getLDAPBackendDataFile();
 
   /**
-   * Get backend-specific configuration properties.
-   * Returns all properties with prefix "gateway.ldap.backend.{backendType}."
+   * Get interceptor-specific configuration properties.
+   * Returns all properties with prefix "gateway.ldap.interceptor.{interceptorName}."
    * with the prefix stripped from the keys.
    *
-   * @param backendType the backend type (e.g., "file", "ldap", "database")
+   * @param interceptor the interceptor name
    * @return map of configuration key-value pairs for the specified backend
    */
-  Map<String, String> getLDAPBackendConfig(String backendType);
+  Map<String, String> getLDAPInterceptorConfig(String interceptor);
+
+  /**
+   * @return true if recursive group resolution is enabled for LDAP service
+   */
+  boolean isLDAPRecursiveGroupResolutionEnabled();
+
+  /**
+   * @return the maximum depth for recursive group search
+   */
+  int getLDAPRecursiveGroupResolutionMaxDepth();
+
+  /**
+   * @return the LDAP roles lookup strategy (file or rest)
+   */
+  String getLdapRolesLookupStrategy();
+
+  /**
+   * @return the LDAP roles lookup REST API endpoint
+   */
+  String getLdapRolesLookupRestApiEndpoint();
+
+  /**
+   * @return the LDAP roles lookup file path
+   */
+  String getLdapRolesLookupFilePath();
+
+  /**
+   * @return true if the embedded LDAP service should expose a secure (LDAPS) transport;
+   * otherwise false
+   */
+  boolean isLDAPSSLEnabled();
+
+  /**
+   * @return the path to the keystore holding the certificate presented by the embedded
+   * LDAP service on its secure transport. When null/blank the gateway identity keystore
+   * ({@link #getIdentityKeystorePath()}) is used.
+   */
+  String getLDAPSSLKeystorePath();
+
+  /**
+   * @return the credential-store alias for the password protecting the keystore returned by
+   * {@link #getLDAPSSLKeystorePath()}. When null/blank the gateway identity keystore password
+   * is used.
+   */
+  String getLDAPSSLKeystorePasswordAlias();
+
+  /**
+   * @return the TLS cipher suites the embedded LDAP service secure transport is restricted to,
+   * or an empty list to use the JVM defaults
+   */
+  List<String> getLDAPSSLEnabledCipherSuites();
 
   /**
    * @return set of all property names in the configuration

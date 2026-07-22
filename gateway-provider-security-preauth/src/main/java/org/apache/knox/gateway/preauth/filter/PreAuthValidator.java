@@ -21,6 +21,11 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 
 public interface PreAuthValidator {
+
+  void  init(FilterConfig filterConfig) throws Exception;
+
+  void destroy();
+
   boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws
       PreAuthValidationException;
 

@@ -38,12 +38,64 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Properties;
 
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import javax.servlet.http.HttpServletRequestWrapper;
 
 public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFederationFilterTest {
+
+    /**
+     * Test wrapper that hides access to parameters and request body to simulate
+     * real-world servlet request wrappers that may be present in the filter chain.
+     * This ensures the filter properly unwraps requests to access OAuth parameters.
+     */
+    private static class TestServletRequestWrapper extends HttpServletRequestWrapper {
+        private final HttpServletRequest wrappedRequest;
+
+        TestServletRequestWrapper(HttpServletRequest request) {
+            super(request);
+            this.wrappedRequest = request;
+        }
+
+        @Override
+        public String getParameter(String name) {
+            // Intentionally hide parameters to simulate wrapped request behavior
+            return null;
+        }
+
+        @Override
+        public String getContentType() {
+            return wrappedRequest.getContentType();
+        }
+
+        @Override
+        public String getHeader(String name) {
+            return wrappedRequest.getHeader(name);
+        }
+
+        @Override
+        public String getQueryString() {
+            return wrappedRequest.getQueryString();
+        }
+
+        @Override
+        public StringBuffer getRequestURL() {
+            return wrappedRequest.getRequestURL();
+        }
+
+        // The underlying request is still accessible via getRequest()
+        @Override
+        public HttpServletRequest getRequest() {
+            return wrappedRequest;
+        }
+    }
 
     @Override
     protected void setTokenOnRequest(HttpServletRequest request, String authUsername, String authPassword) {
@@ -62,9 +114,9 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     }
 
     private void ensureClientCredentials(final HttpServletRequest request, final String clientId, final String clientSecret, final boolean excludeQueryString) {
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ID)).andReturn(clientId).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_SECRET)).andReturn(clientSecret).anyTimes();
+        EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(request.getParameter(CLIENT_ID)).andReturn(clientId).anyTimes();
+        EasyMock.expect(request.getParameter(CLIENT_SECRET)).andReturn(clientSecret).anyTimes();
         if (excludeQueryString) {
             EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
         }
@@ -92,7 +144,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
         EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION_TYPE)).andReturn(JWTFederationFilter.CLIENT_ASSERTION_JWT_BEARER).anyTimes();
         EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION)).andReturn(token.serialize()).anyTimes();
         if (excludeQueryString) {
@@ -104,13 +156,17 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     public void testGetWireTokenUsingClientCredentialsFlowWithoutClientId() throws Exception {
         final String passcode = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
 
-        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-        ensureClientCredentials(request, null, passcode);
-        EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        ensureClientCredentials(mockRequest, null, passcode);
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
         final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, JWTFederationFilter.MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
         EasyMock.expectLastCall().atLeastOnce();
-        EasyMock.replay(request, response);
+        EasyMock.replay(mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
         handler.init(new TestFilterConfig(getProperties()));
         SecurityException securityException = null;
         try {
@@ -128,14 +184,18 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
       final String clientId = "client-id-12345";
       final String passcode = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
 
-      final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-      ensureClientCredentials(request, clientId, passcode);
-      EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
-      EasyMock.replay(request);
+      final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+      ensureClientCredentials(mockRequest, clientId, passcode);
+      EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+      EasyMock.replay(mockRequest);
+
+      // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+      final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
       handler.init(new TestFilterConfig(getProperties()));
       final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
 
-      EasyMock.verify(request);
+      EasyMock.verify(mockRequest);
 
       assertNotNull(wireToken);
       assertEquals(TokenType.Passcode, wireToken.getLeft());
@@ -158,14 +218,17 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
          "sub": "system:serviceaccount:poc:webhdfs-sa"
         }
         */
-        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-        ensureJWTClientCredentials(request, true);
-        EasyMock.replay(request);
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        ensureJWTClientCredentials(mockRequest, true);
+        EasyMock.replay(mockRequest);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
         handler.init(new TestFilterConfig(getProperties()));
         final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
 
-        EasyMock.verify(request);
+        EasyMock.verify(mockRequest);
 
         assertNotNull(wireToken);
         assertEquals(TokenType.JWT, wireToken.getLeft());
@@ -180,15 +243,18 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         final String basicCredentials = Base64.getEncoder()
                 .encodeToString((clientId + ":" + passcode).getBytes(StandardCharsets.UTF_8));
 
-        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-        EasyMock.expect(request.getHeader("Authorization")).andReturn("Basic " + basicCredentials).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(JWTFederationFilter.CLIENT_CREDENTIALS).anyTimes();
-        EasyMock.replay(request);
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn("Basic " + basicCredentials).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.replay(mockRequest);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
         handler.init(new TestFilterConfig(getProperties()));
         final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
 
-        EasyMock.verify(request);
+        EasyMock.verify(mockRequest);
 
         assertNotNull(wireToken);
         assertEquals(TokenType.Passcode, wireToken.getLeft());
@@ -205,9 +271,12 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         final Pair<TokenStateService, TokenMetadata> tokenServices = createMockTokenStateService(tokenId, passcodeToken);
         final FilterConfig filterConfig = initFilter(tokenServices.getLeft());
 
-        final HttpServletRequest request = createMockRequestForClientCredentials(tokenId);
+        final HttpServletRequest mockRequest = createMockRequestForClientCredentials(tokenId);
         final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-        EasyMock.replay(tokenServices.getLeft(), tokenServices.getRight(), request, response);
+        EasyMock.replay(tokenServices.getLeft(), tokenServices.getRight(), mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
         SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
 
@@ -229,13 +298,16 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         final Pair<TokenStateService, TokenMetadata> tokenServices = createMockTokenStateService(tokenId, passcodeToken);
         final FilterConfig filterConfig = initFilter(tokenServices.getLeft());
 
-        final HttpServletRequest request = createMockRequestForClientCredentials(tokenId + "invalidating_string");
+        final HttpServletRequest mockRequest = createMockRequestForClientCredentials(tokenId + "invalidating_string");
 
         final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
                 JWTFederationFilter.MISMATCHING_CLIENT_ID_AND_CLIENT_SECRET);
         EasyMock.expectLastCall().once();
-        EasyMock.replay(tokenServices.getLeft(), tokenServices.getRight(), request, response);
+        EasyMock.replay(tokenServices.getLeft(), tokenServices.getRight(), mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
         SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
 
@@ -262,13 +334,17 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     public void testInvalidClientSecret() throws Exception {
         final String passcode = "sUpers3cret!";
 
-        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-        ensureClientCredentials(request, "client_123", passcode);
-        EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        ensureClientCredentials(mockRequest, "client_123", passcode);
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
         final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, JWTFederationFilter.INVALID_CLIENT_SECRET);
         EasyMock.expectLastCall().atLeastOnce();
-        EasyMock.replay(request, response);
+        EasyMock.replay(mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
         handler.init(new TestFilterConfig(getProperties()));
         SecurityException securityException = null;
         try {
@@ -278,7 +354,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         }
         Assert.assertNotNull(securityException);
         Assert.assertEquals(JWTFederationFilter.INVALID_CLIENT_SECRET, securityException.getMessage());
-        EasyMock.verify(request, response);
+        EasyMock.verify(mockRequest, response);
     }
 
     @Override
@@ -368,17 +444,20 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     }
 
     private void testGetWireTokenWithGrant(String grantType, String tokenParam, String tokenValue) throws Exception {
-          final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-          EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
-          EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
-          EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(grantType).anyTimes();
-          EasyMock.expect(request.getParameter(tokenParam)).andReturn(tokenValue).anyTimes();
-          EasyMock.replay(request);
+          final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+          EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+          EasyMock.expect(mockRequest.getQueryString()).andReturn(null).anyTimes();
+          EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
+          EasyMock.expect(mockRequest.getParameter(tokenParam)).andReturn(tokenValue).anyTimes();
+          EasyMock.replay(mockRequest);
+
+          // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+          final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
           handler.init(new TestFilterConfig(getProperties()));
           final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
 
-          EasyMock.verify(request);
+          EasyMock.verify(mockRequest);
 
           assertNotNull(wireToken);
           assertEquals(TokenType.Passcode, wireToken.getLeft());
@@ -392,15 +471,18 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
 
         final FilterConfig filterConfig = initFilter(tokenStateService);
 
-        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-        EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
-        EasyMock.expect(request.getHeader("Authorization")).andReturn(null).anyTimes();
-        EasyMock.expect(request.getParameter(JWTFederationFilter.GRANT_TYPE)).andReturn(grantType).anyTimes();
-        EasyMock.expect(request.getParameter(tokenParam)).andReturn(passcodeToken).anyTimes();
-        EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(mockRequest.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(tokenParam)).andReturn(passcodeToken).anyTimes();
+        EasyMock.expect(mockRequest.getQueryString()).andReturn(null).anyTimes();
 
         final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-        EasyMock.replay(tokenStateService, tokenMetadata, request, response);
+        EasyMock.replay(tokenStateService, tokenMetadata, mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
         SignatureVerificationCache.getInstance("jwt-topology", filterConfig).recordSignatureVerification(passcode);
 

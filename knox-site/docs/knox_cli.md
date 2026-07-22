@@ -88,6 +88,34 @@ Argument     | Description
 \-\-generate | Boolean flag to indicate whether the tool should just generate the value. This assumes that \-\-value is not set - will result in error otherwise. User will not be prompted for the value when \-\-generate is set.
 \-\-cluster  | Name of Hadoop cluster for the cluster specific credential store otherwise assumes that it is for the gateway itself
 
+#### Batch alias creation across multiple credential stores ####
+
+##### `bin/knoxcli.sh create-list-aliases --alias alias1 [--value value1] ... --cluster cluster1 --alias aliasN [--value valueN] ... --cluster clusterN [--generate]` #####
+
+Creates multiple alias/secret pairs across one or more credential stores in a single invocation. The argument list is interpreted positionally: each `--cluster` closes the preceding group of `--alias`/`--value` pairs and assigns them to that cluster's credential store. Any `--alias` entries appearing before the first `--cluster` are written to the gateway credential store (`__gateway`). After the aliases are written, the full alias listing for each affected cluster is printed.
+
+Argument     | Description
+-------------|-----------
+\-\-alias    | Name of an alias to create. Belongs to the credential store of the next `--cluster` argument, or to `__gateway` if none follows.
+\-\-value    | Parameter for specifying the actual password otherwise prompted. Escape complex passwords or surround with single quotes.
+\-\-cluster  | Name of the Hadoop cluster whose credential store the preceding aliases should be written to. May be specified multiple times.
+\-\-generate | Boolean flag to indicate whether the tool should just generate the value. This assumes that `--value` is not set - will result in error otherwise. User will not be prompted for the value when `--generate` is set.
+
+#### Alias creation from Kubernetes Secrets ####
+
+##### `bin/knoxcli.sh create-k8s-alias secret-name [secret-name ...] [--namespace namespace] [--help]` #####
+
+Reads one or more Kubernetes Secrets and creates a Knox alias for each. Intended for Knox deployments running inside Kubernetes; uses in-cluster configuration to talk to the Kubernetes API.
+
+Every Secret must contain the keys `alias.name` (the alias name) and `alias.value` (the secret value). The optional `topology` key selects the credential store to write to; when absent the alias is stored in the gateway-level credential store (`__gateway`).
+
+All Secrets are fetched and validated before any alias is written, so a failure in the batch leaves the credential store untouched.
+
+Argument       | Description
+---------------|-----------
+secret-name    | Name of a Kubernetes Secret to read. One or more may be passed; all aliases are created atomically.
+\-\-namespace | Kubernetes namespace to look up the secrets in. Defaults to `knox`. `--ns` is accepted as a shorthand.
+
 #### Alias deletion ####
 ##### `bin/knoxcli.sh delete-alias name [--cluster c] [--help]` #####
 Deletes a password and alias mapping from a credential store within `{GATEWAY_HOME}/data/security/keystores`.
@@ -98,14 +126,14 @@ name        | Name of the alias to delete
 \-\-cluster | Name of Hadoop cluster for the cluster specific credential store otherwise assumes '__gateway'
 
 #### Alias listing ####
-##### `bin/knoxcli.sh list-alias [--cluster c] [--help]` #####
-Lists the alias names for the credential store within `{GATEWAY_HOME}/data/security/keystores`.
+##### `bin/knoxcli.sh list-alias [--cluster cluster1,clusterN] [--help]` #####
+Lists the alias names for one or more credential stores within `{GATEWAY_HOME}/data/security/keystores`. The aliases for each cluster are listed in a separate section, each followed by an item count. If a supplied cluster name has no credential store, an `Invalid cluster name provided` notice is printed for that entry and the remaining clusters are still processed.
 
 NOTE: This command will list the aliases in lowercase which is a result of the underlying credential store implementation. Lookup of credentials is a case insensitive operation - so this is not an issue.
 
 Argument    | Description
 ------------|-----------
-\-\-cluster | Name of Hadoop cluster for the cluster specific credential store otherwise assumes '__gateway'
+\-\-cluster | Comma-separated list of Hadoop cluster names whose credential stores should be listed. Defaults to `__gateway` when omitted.
 
 #### Self-signed cert creation ####
 ##### `bin/knoxcli.sh create-cert [--hostname n] [--help]` #####
@@ -116,10 +144,12 @@ Argument     | Description
 \-\-hostname | Name of the host to be used in the self-signed certificate. This allows multi-host deployments to specify the proper hostnames for hostname verification to succeed on the client side of the SSL connection. The default is 'localhost'.
 
 #### Certificate Export ####
-##### `bin/knoxcli.sh export-cert [--type JKS|PEM|JCEKS|PKCS12] [--help]` #####
+##### `bin/knoxcli.sh export-cert [--type JKS|PEM|JCEKS|PKCS12|BCFKS] [--help]` #####
 The export-cert command exports the public certificate from the a gateway.jks keystore with the alias of gateway-identity. It will be exported to `{GATEWAY_HOME}/data/security/keystores/` with a name of `gateway-client-trust.<type>`. Using the `--type` option you can specify which keystore type you need (default: PEM)
 
-**NOTE:** The password for the JKS, JCEKS and PKCS12 types is `changeit`. It can be changed using: `keytool -storepasswd -storetype <type> -keystore gateway-client-trust.<type>`
+**NOTE:** The password for the JKS, JCEKS, PKCS12 and BCFKS types is `changeit`. It can be changed using: `keytool -storepasswd -storetype <type> -keystore gateway-client-trust.<type>`
+
+**NOTE:** `BCFKS` is BouncyCastle's FIPS-compliant keystore format and requires a BouncyCastle provider to be **registered** with the JVM (not merely present on the classpath). The `bcprov-jdk18on` jar shipped with Knox is not registered as a security provider by the gateway, so on a stock JVM the export will fail with `NoSuchAlgorithmException: BCFKS`. Use the `BCFKS` type only on a JVM where a BouncyCastle provider is registered via `java.security` — in Knox this is the FIPS-configured deployment in which the BouncyCastle FIPS provider (`bc-fips`) is installed as a JVM security provider.
 
 #### Topology Redeploy ####
 ##### `bin/knoxcli.sh redeploy [--cluster c]` #####

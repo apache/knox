@@ -46,13 +46,15 @@ import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
 import org.apache.knox.gateway.i18n.GatewaySpiResources;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenExchangePrincipal;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 
-public abstract class AbstractIdentityAssertionFilter extends
-  AbstractIdentityAssertionBase implements Filter {
+public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAssertionBase implements Filter {
 
   private IdentityAsserterMessages LOG = MessagesFactory.get(IdentityAsserterMessages.class);
 
@@ -67,15 +69,17 @@ public abstract class AbstractIdentityAssertionFilter extends
   }
 
   /**
-   * This method returns a Stringp[] of new group principal names to use
+   * This method returns a String[] of new group principal names to use
    * based on implementation specific mapping or lookup mechanisms.
    * Returning null means that whatever set of GroupPrincipals is in the
    * provided Subject is sufficient to use and no additional mapping is required.
+   *
    * @param mappedPrincipalName username for the authenticated identity - post mapUserPrincipal mapping.
-   * @param subject the existing Subject from the authentication event which may or may not contain GroupPrincipals.
+   * @param subject             the existing Subject from the authentication event which may or may not contain GroupPrincipals.
+   * @param request             the request which may or may not be decorated with extra attributes (e.g. if LDAP roles lookup happened already)
    * @return String[] of new principal names to use as GroupPrincipals or null.
    */
-  public abstract String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject);
+  public abstract String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject, ServletRequest request);
 
   /**
    * This method is used to map the username of the authenticated identity to some other
@@ -102,6 +106,23 @@ public abstract class AbstractIdentityAssertionFilter extends
         if (currentSubject == null) {
           LOG.subjectNotAvailable();
           throw new IllegalStateException("Required Subject Missing");
+        }
+
+        // RFC 8693: Check if this is a token exchange request
+        // For token exchange, we need to apply local policy mapping to the subject identity
+        // BEFORE using it for impersonation. This ensures topology configuration takes precedence.
+        TokenExchangePrincipal tokenExchangePrincipal = SubjectUtils.getTokenExchangePrincipal(currentSubject);
+        if (tokenExchangePrincipal != null) {
+          // Get the subject identity from token exchange
+          String tokenExchangeSubject = tokenExchangePrincipal.getSubjectPrincipalName();
+
+          // Apply local policy mapping to the subject identity
+          // This allows topology configuration to map external identities to local ones
+          String mappedTokenExchangeSubject = mapUserPrincipal(tokenExchangeSubject);
+
+          // Use the mapped subject as the identity to impersonate
+          // This respects local policy while honoring the token exchange semantics
+          mappedPrincipalName = mappedTokenExchangeSubject;
         }
 
         String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(currentSubject);
@@ -142,6 +163,20 @@ public abstract class AbstractIdentityAssertionFilter extends
           if (groupsMapped) {
             addMappedGroupsToSubject(mappedPrincipalName, groups, subject);
           }
+
+          final Set<TokenIdPrincipal> tokenIdPrincipals = SubjectUtils.getTokenIdPrincipals(currentSubject);
+          subject.getPrincipals().addAll(tokenIdPrincipals);
+
+          // RFC 8693 Token Exchange: Preserve ActorChainPrincipal from the current subject
+          // This ensures the delegation chain is maintained through identity assertion
+          final Set<ActorChainPrincipal> actorChainPrincipals = SubjectUtils.getActorChainPrincipal(currentSubject, subject);
+          subject.getPrincipals().addAll(actorChainPrincipals);
+
+          // RFC 8693 Token Exchange: Preserve TokenExchangePrincipal for audit trail
+          if (tokenExchangePrincipal != null) {
+            subject.getPrincipals().add(tokenExchangePrincipal);
+          }
+
           doAs(request, response, chain, subject);
         }
         else {
@@ -149,7 +184,7 @@ public abstract class AbstractIdentityAssertionFilter extends
         }
       }
 
-  private void doAs(final ServletRequest request, final ServletResponse response, final FilterChain chain, Subject subject)
+    private void doAs(final ServletRequest request, final ServletResponse response, final FilterChain chain, Subject subject)
       throws IOException, ServletException {
     try {
       Subject.doAs(

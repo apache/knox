@@ -104,6 +104,24 @@ public class SimpleLdapDirectoryServer {
     server = new LdapServer();
     server.setTransports( transports );
     server.setDirectoryService( service );
+
+    // Optionally expose a secure (LDAPS) transport. Controlled by system properties so the
+    // demo server can be launched in either plaintext or secure mode without code changes.
+    if ( Boolean.parseBoolean( System.getProperty( "ldap.ssl.enabled", "false" ) ) ) {
+      for ( Transport transport : transports ) {
+        if ( transport instanceof TcpTransport ) {
+          ( (TcpTransport) transport ).setEnableSSL( true );
+        }
+      }
+      String keystoreFile = System.getProperty( "ldap.keystore.file" );
+      if ( keystoreFile != null && !keystoreFile.isEmpty() ) {
+        server.setKeystoreFile( keystoreFile );
+      }
+      String keystorePassword = System.getProperty( "ldap.keystore.password" );
+      if ( keystorePassword != null ) {
+        server.setCertificatePassword( keystorePassword );
+      }
+    }
   }
 
   private static void enabledPosixSchema( DirectoryService service ) throws LdapException {

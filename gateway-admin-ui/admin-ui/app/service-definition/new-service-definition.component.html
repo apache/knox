@@ -1,27 +1,21 @@
-<bs-modal (onClose)="onClose()" #newServiceDefinitionModal xmlns="http://www.w3.org/1999/html"> 
-    <bs-modal-header [showDismiss]="true">
+<app-modal #newServiceDefinitionModal>
+    <div class="modal-header">
         <label class="modal-title">Create a New Service Definition</label>
-    </bs-modal-header>
-    <bs-modal-body>
-        <div class="panel-body">
-            <div>
-                <span style="text-shadow: infotext; text-align: center;">At a minimum you must modify the service's name and role attributes!</span>
-            </div>
-            <br />
-            <div>
-                <ace-editor
-                        #editor
-                        [(text)]="serviceDefinitionContent"
-                        [options]="options"
-                        [theme]="theme"
-                        style="min-height: 430px; width:100%; overflow: auto;">
-                </ace-editor>
-            </div>
+        <button type="button" class="btn-close" (click)="newServiceDefinitionModal.dismiss()"></button>
+    </div>
+    <div class="modal-body" style="padding: 12px;">
+        <div class="alert alert-info" style="margin-bottom: 10px; font-size: 12px;">
+            At a minimum you must modify the service's <strong>name</strong> and <strong>role</strong> attributes.
         </div>
-    </bs-modal-body>
-    <bs-modal-footer>
+        <textarea
+                [(ngModel)]="serviceDefinitionContent"
+                spellcheck="false"
+                class="code-editor-modal">
+        </textarea>
+    </div>
+    <div class="modal-footer">
         <button type="button" class="btn btn-default btn-sm" (click)="newServiceDefinitionModal.dismiss()">Cancel</button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="newServiceDefinitionModal.close()"
+        <button type="button" class="btn btn-primary btn-sm" (click)="onClose()"
                 [disabled]="!validate()">Ok</button>
-    </bs-modal-footer>
-</bs-modal>
+    </div>
+</app-modal>

@@ -270,7 +270,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
 
     private String[] getGroupsForPrincipal(String mappedPrincipalName, Subject subject, ServletRequest request) {
         String[] mappedGroups = mapGroupPrincipalsBase(mappedPrincipalName, subject);
-        String[] groups = mapGroupPrincipals(mappedPrincipalName, subject);
+        String[] groups = mapGroupPrincipals(mappedPrincipalName, subject, request);
         String[] virtualGroups = virtualGroupMapper.mapGroups(mappedPrincipalName, combine(subject, groups), request).toArray(new String[0]);
         groups = combineGroupMappings(mappedGroups, groups);
         groups = combineGroupMappings(virtualGroups, groups);
@@ -353,7 +353,7 @@ public class CommonIdentityAssertionFilter extends AbstractIdentityAssertionFilt
     }
 
     @Override
-    public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject) {
+    public String[] mapGroupPrincipals(String mappedPrincipalName, Subject subject, ServletRequest request) {
         // NOP
         return null;
     }

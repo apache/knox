@@ -14,34 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {BsModalComponent} from 'ng2-bs3-modal';
-import Swal from 'sweetalert2';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import Swal from 'sweetalert2/dist/sweetalert2.esm.all.js';
 
-import {ServiceDefinitionService} from './servicedefinition.service';
-import {ResourceTypesService} from '../resourcetypes/resourcetypes.service';
-import * as ace from 'ace-builds';
+import {ServiceDefinitionService} from '../service/servicedefinition.service';
+import {ResourceTypesService} from '../service/resourcetypes.service';
+import {ModalComponent} from '../utils/modal.component';
 
 
 @Component({
     selector: 'app-service-definition-wizard',
     templateUrl: './new-service-definition.component.html',
-    styleUrls: ['./new-service-definition.component.css']
+    styleUrls: ['./new-service-definition.component.css'],
+    imports: [FormsModule, ModalComponent]
 })
 export class NewServiceDefinitionComponent implements OnInit {
+
+    @ViewChild('newServiceDefinitionModal')
+    childModal: ModalComponent;
 
     serviceDefinitionXmlTemplate = 'assets/new-service-definition-template.xml';
     defaultServiceDefinitionContent: string;
     serviceDefinitionContent: string;
-    theme: String = 'monokai';
-    options: any = {useWorker: false, printMargin: false};
-
-    @ViewChild('newServiceDefinitionModal')
-    childModal: BsModalComponent;
-
-    @ViewChild('editor')
-    editor: ElementRef<HTMLElement>;
 
     constructor(private http: HttpClient,
                 private serviceDefinitionService: ServiceDefinitionService,
@@ -53,18 +49,9 @@ export class NewServiceDefinitionComponent implements OnInit {
                      .subscribe(data => this.defaultServiceDefinitionContent = data);
     }
 
-    ngAfterViewInit(): void {
-        ace.config.set(
-            'basePath',
-            'https://unpkg.com/ace-builds@1.4.12/src-noconflict'
-        );
-        const aceEditor = ace.edit(this.editor.nativeElement);
-        aceEditor.session.setMode('xml');
-    }
-
-    open(size?: string) {
+    open() {
         this.reset();
-        this.childModal.open(size ? size : 'lg');
+        this.childModal.open('lg');
     }
 
     reset() {
@@ -73,7 +60,8 @@ export class NewServiceDefinitionComponent implements OnInit {
 
     onClose() {
         this.serviceDefinitionService.saveNewServiceDefinition(this.serviceDefinitionContent)
-                                     .then(response => {
+                                     .then(() => {
+                                        this.childModal.dismiss();
                                         Swal.fire({
                                             text: 'Saved successfully!',
                                             confirmButtonColor: '#7cd1f9'

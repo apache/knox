@@ -130,8 +130,8 @@ public class ProviderConfigurationParserTest {
     "      \"name\":\"ShiroProvider\",\n" +
     "      \"enabled\":\"true\",\n" +
     "      \"params\":{\n" +
-    "        \"main.ldapContextFactory\":\"org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory\",\n" +
-    "        \"main.ldapRealm\":\"org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm\",\n" +
+    "        \"main.ldapContextFactory\":\"org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory\",\n" +
+    "        \"main.ldapRealm\":\"org.apache.knox.gateway.shirorealm.KnoxLdapRealm\",\n" +
     "        \"main.ldapRealm.contextFactory\":\"$ldapContextFactory\",\n" +
     "        \"main.ldapRealm.userDnTemplate\":\"uid={0},ou=people,dc=hadoop,dc=apache,dc=org\",\n" +
     "        \"main.ldapRealm.contextFactory.url\":\"ldap://localhost:33389\",\n" +
@@ -200,8 +200,8 @@ public class ProviderConfigurationParserTest {
         "    enabled: true\n" +
         "    params:\n" +
         "      sessionTimeout: 30\n" +
-        "      main.ldapRealm: org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm\n" +
-        "      main.ldapContextFactory: org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory\n" +
+        "      main.ldapRealm: org.apache.knox.gateway.shirorealm.KnoxLdapRealm\n" +
+        "      main.ldapContextFactory: org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory\n" +
         "      main.ldapRealm.contextFactory: $ldapContextFactory\n" +
         "      main.ldapRealm.userDnTemplate: uid={0},ou=people,dc=hadoop,dc=apache,dc=org\n" +
         "      main.ldapRealm.contextFactory.url: ldap://localhost:33389\n" +
@@ -246,8 +246,8 @@ public class ProviderConfigurationParserTest {
         assertNotNull(params);
         assertEquals(8, params.size());
         assertEquals(params.get("sessionTimeout"), "30");
-        assertEquals(params.get("main.ldapRealm"), "org.apache.hadoop.gateway.shirorealm.KnoxLdapRealm");
-        assertEquals(params.get("main.ldapContextFactory"), "org.apache.hadoop.gateway.shirorealm.KnoxLdapContextFactory");
+        assertEquals(params.get("main.ldapRealm"), "org.apache.knox.gateway.shirorealm.KnoxLdapRealm");
+        assertEquals(params.get("main.ldapContextFactory"), "org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory");
         assertEquals(params.get("main.ldapRealm.contextFactory"), "$ldapContextFactory");
         assertEquals(params.get("main.ldapRealm.userDnTemplate"), "uid={0},ou=people,dc=hadoop,dc=apache,dc=org");
         assertEquals(params.get("main.ldapRealm.contextFactory.url"), "ldap://localhost:33389");

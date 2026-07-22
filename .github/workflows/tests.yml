@@ -30,10 +30,6 @@ jobs:
       checks: write
       pull-requests: write
 
-    env:
-      KNOX_URL: "https://github.com/apache/knox.git"
-      BRANCH: "${{ github.head_ref }}"  # PR branch being tested
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -54,20 +50,11 @@ jobs:
           -Dshellcheck.skip=true -Dxml.skip=true \
           -s .github/workflows/build/settings.xml
 
-      - name: Extract Artifacts
-        run: |
-          mkdir -p .github/workflows/build/knox-temp-artifacts .github/workflows/build/knoxshell-temp-artifacts
-          # Extract artifacts to the build directory where Dockerfile expects them
-          tar -xvzf target/*/knox-*.tar.gz -C .github/workflows/build/knox-temp-artifacts
-          tar -xvzf target/*/knoxshell-*.tar.gz -C .github/workflows/build/knoxshell-temp-artifacts
-
       - name: Set up Docker Compose
         run: docker compose version
 
       - name: Build Docker Images
         run: |
-          export knoxurl=${KNOX_URL}
-          export branch=${BRANCH:-master}
           # Build only knox-dev which is the runtime image using artifacts
           docker compose -f ./.github/workflows/compose/docker-compose.yml build knox-dev
 
@@ -82,12 +69,99 @@ jobs:
           # Run the tests service defined in docker-compose.yml
           docker compose -f ./.github/workflows/compose/docker-compose.yml up --exit-code-from tests tests
 
+      # Single-EKU mTLS runs as its own pass. Its override turns on
+      # gateway.client.auth.needed=true, which would break the default
+      # (no-client-cert) tests above, so the gateway is recreated with the
+      # single-EKU config and the mTLS suite runs against that instance. The
+      # already-built apache/knox-dev image is reused -- no second Maven build.
+      - name: Restart Knox in single-EKU mode
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku.yml \
+            up -d knox
+
+      - name: Wait for single-EKU gateway to stabilize
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run Single-EKU mTLS Tests
+        id: single_eku_tests
+        run: |
+          # KNOX_SINGLE_EKU=true (set by the override) un-skips the suite.
+          # Emit a distinct JUnit file so it reports as its own test suite.
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test_single_eku_mtls.py --junitxml=test-results-single-eku.xml"
+
+      # Evidence gathering: a "Connection refused" from the suite means the
+      # single-EKU gateway never listened. Dump container status, the knox
+      # container's stdout/stderr (includes the entrypoint's create-alias output
+      # and any Java startup stacktrace), and the gateway log so we can tell a
+      # failed entrypoint apart from single-EKU fail-fast validation.
+      - name: Dump single-EKU diagnostics on failure
+        if: failure() && steps.single_eku_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku.yml \
+            logs --no-color knox || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+
+      # Second single-EKU scenario: mTLS OFF. Proves single-EKU does not force
+      # inbound client authentication -- a no-client-cert request must succeed.
+      - name: Restart Knox in single-EKU (no mTLS) mode
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            up -d knox
+
+      - name: Wait for single-EKU (no mTLS) gateway to stabilize
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run Single-EKU (no mTLS) Tests
+        id: single_eku_no_mtls_tests
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test_single_eku_no_mtls.py --junitxml=test-results-single-eku-no-mtls.xml"
+
+      - name: Dump single-EKU (no mTLS) diagnostics on failure
+        if: failure() && steps.single_eku_no_mtls_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.single-eku-no-mtls.yml \
+            logs --no-color knox || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+
       - name: Upload Test Results
         if: (!cancelled())
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: .github/workflows/tests/test-results.xml
+          path: |
+            .github/workflows/tests/test-results.xml
+            .github/workflows/tests/test-results-single-eku.xml
+            .github/workflows/tests/test-results-single-eku-no-mtls.xml
 
       - name: Upload Event File
         uses: actions/upload-artifact@v4
@@ -99,7 +173,7 @@ jobs:
         if: always()
         run: |
           docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes
-          IMAGE_TAG="local-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ID:-local}"
-          if docker image inspect "apache/knox-dev:$IMAGE_TAG" >/dev/null 2>&1; then
-            docker rmi "apache/knox-dev:$IMAGE_TAG"
+          TAG=${IMAGE_TAG:-master}
+          if docker image inspect "apache/knox-dev:$TAG" >/dev/null 2>&1; then
+            docker rmi "apache/knox-dev:$TAG"
           fi

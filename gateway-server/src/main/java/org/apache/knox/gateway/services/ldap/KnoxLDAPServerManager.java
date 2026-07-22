@@ -17,58 +17,117 @@
  */
 package org.apache.knox.gateway.services.ldap;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.directory.api.ldap.codec.api.LdapApiService;
+import org.apache.directory.api.ldap.codec.api.LdapApiServiceFactory;
+import org.apache.directory.api.ldap.model.cursor.Cursor;
+import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.entry.Value;
+import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.message.SearchRequest;
+import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
+import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
+import org.apache.directory.server.core.api.DnFactory;
 import org.apache.directory.server.core.api.InstanceLayout;
+import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.directory.server.core.api.schema.SchemaPartition;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
-import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
-import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
+import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
+import org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptor;
+import org.apache.knox.gateway.services.security.AliasService;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 /**
  * Manages the ApacheDS LDAP server instance with pluggable backends
  */
 public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+    private static final String LDAP_BIND_PASSWORD_ALIAS = "gateway_ldap_bind_password";
+    private final AliasService aliasService;
+    private final GatewayServices gatewayServices;
 
-    private DirectoryService directoryService;
+    @VisibleForTesting
+    DirectoryService directoryService;
     private LdapServer ldapServer;
-    private LdapBackend backend;
+    private GatewayConfig gatewayConfig;
+    private List<Interceptor> interceptors;
+    private boolean hasRolesLookupInterceptor;
     private File workDir;
     private int port;
     private String baseDn;
-    private String remoteBaseDn;
+    private String bindUser;
+    // Secure (LDAPS) transport configuration
+    private boolean sslEnabled;
+    private String sslKeystorePath;
+    private String sslKeystorePasswordAlias;
+    private List<String> sslEnabledCipherSuites;
+    // Collection of DNs for the proxied backend LDAP servers
+    private Set<String> baseDns;
+
+    KnoxLDAPServerManager(AliasService aliasService) {
+        this(aliasService, null);
+    }
+
+    KnoxLDAPServerManager(AliasService aliasService, GatewayServices gatewayServices) {
+        this.aliasService = aliasService;
+        this.gatewayServices = gatewayServices;
+    }
 
     /**
      * Initialize the LDAP server with the given configuration
      *
-     * @param workDir Directory for LDAP data storage
-     * @param port Port for LDAP server to listen on
-     * @param baseDn Base DN for LDAP entries in the proxy server
-     * @param backendType Type of backend to use
-     * @param backendConfig Backend-specific configuration
-     * @param remoteBaseDn Base DN of the remote LDAP server (for proxy backends)
+     * @param config Gateway configuration
      */
-    public void initialize(File workDir, int port, String baseDn, String backendType, Map<String, String> backendConfig, String remoteBaseDn) throws Exception {
-        this.workDir = workDir;
-        this.port = port;
-        this.baseDn = baseDn;
-        this.remoteBaseDn = remoteBaseDn;
+    public void initialize(GatewayConfig config) throws Exception {
+        this.gatewayConfig = config;
 
-        // Initialize backend
-        backendConfig.put("baseDn", baseDn);
-        backend = BackendFactory.createBackend(backendType, backendConfig);
+        // Prepare work directory for LDAP data
+        File gatewayDataDir = new File(config.getGatewayDataDir());
+        this.workDir = new File(gatewayDataDir, "ldap-server");
+
+        // Get configuration
+        this.port = config.getLDAPPort();
+        this.baseDn = config.getLDAPBaseDN();
+        this.bindUser = config.getLDAPBindUser();
+
+        // Secure (LDAPS) transport configuration. When enabled but no dedicated keystore is
+        // configured, fall back to the gateway identity keystore so the embedded server can
+        // reuse the gateway's own TLS material out of the box.
+        this.sslEnabled = config.isLDAPSSLEnabled();
+        if (sslEnabled) {
+            final String configuredKeystore = config.getLDAPSSLKeystorePath();
+            this.sslKeystorePath = StringUtils.isNotBlank(configuredKeystore) ? configuredKeystore : config.getIdentityKeystorePath();
+            this.sslKeystorePasswordAlias = config.getLDAPSSLKeystorePasswordAlias();
+            this.sslEnabledCipherSuites = config.getLDAPSSLEnabledCipherSuites();
+        }
+
+        createInterceptors(config);
+
+        hasRolesLookupInterceptor = interceptors.stream().anyMatch(interceptor -> interceptor instanceof LDAPRolesLookupInterceptor);
 
         // Clean up previous run if it didn't shut down cleanly
         File lockFile = new File(workDir, "run/instance.lock");
@@ -80,6 +139,31 @@ public class KnoxLDAPServerManager {
         workDir.mkdirs();
     }
 
+    private void createInterceptors(GatewayConfig config) throws Exception {
+        List<String> interceptorNames = config.getLDAPInterceptorNames();
+        List<Interceptor> interceptors = new ArrayList<>(interceptorNames.size());
+        for (String interceptorName : interceptorNames) {
+            // Get backend-specific configuration using prefixed properties
+            final Map<String, String> interceptorConfig = config.getLDAPInterceptorConfig(interceptorName);
+
+            // Add common configuration
+            interceptorConfig.put("baseDn", baseDn);
+
+            // Add common LDAP Proxy configurations to backends
+            if ("backend".equalsIgnoreCase(interceptorConfig.get("interceptorType"))) {
+                interceptorConfig.put("recursiveGroupResolution", String.valueOf(config.isLDAPRecursiveGroupResolutionEnabled()));
+                interceptorConfig.put("recursiveGroupResolutionMaxDepth", String.valueOf(config.getLDAPRecursiveGroupResolutionMaxDepth()));
+                if ("file".equalsIgnoreCase(interceptorConfig.get("backendType")) && !interceptorConfig.containsKey("dataFile")) {
+                    // Add legacy dataFile property for backwards compatibility with file backend
+                    interceptorConfig.put("dataFile", config.getLDAPBackendDataFile());
+                }
+            }
+
+            interceptors.add(InterceptorFactory.createInterceptor(config, gatewayServices, interceptorName, interceptorConfig));
+        }
+        this.interceptors = interceptors;
+    }
+
     /**
      * Start the LDAP server
      */
@@ -89,6 +173,14 @@ public class KnoxLDAPServerManager {
         // Initialize DirectoryService
         directoryService = new DefaultDirectoryService();
         directoryService.setInstanceLayout(new InstanceLayout(workDir));
+
+        // Add RolesLookupBypassControlFactory
+        LdapApiService apiService = directoryService.getLdapCodecService();
+        if (apiService == null) {
+            apiService = LdapApiServiceFactory.getSingleton();
+        }
+        RolesLookupBypassControlFactory rolesLookupBypassControlFactory = new RolesLookupBypassControlFactory(apiService);
+        apiService.registerRequestControl(rolesLookupBypassControlFactory);
 
         // Create SchemaManager
         SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();
@@ -115,36 +207,150 @@ public class KnoxLDAPServerManager {
         partition.setPartitionPath(new File(workDir, "proxy").toURI());
         directoryService.addPartition(partition);
 
-        // Create partition for remote base DN if different from proxy base DN
-        // This allows backend entries with remote DNs to be returned in search results
-        if (remoteBaseDn != null && !remoteBaseDn.equals(baseDn)) {
-            JdbmPartition remotePartition = new JdbmPartition(schemaManager, directoryService.getDnFactory());
-            remotePartition.setId("remote");
-            remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
-            remotePartition.setPartitionPath(new File(workDir, "remote").toURI());
-            directoryService.addPartition(remotePartition);
-        }
+        baseDns = new HashSet<>();
+        baseDns.add(baseDn);
+        addRemotePartitions();
 
-        // Add our interceptor for group lookups
-        directoryService.addLast(new GroupLookupInterceptor(directoryService, backend));
+        addInterceptors();
 
-        // Allow anonymous access
-        directoryService.setAllowAnonymousAccess(true);
+        // Require clients to bind with the configured credentials when both a bind user and
+        // a bind password (resolved from the gateway credential store) are set; otherwise
+        // keep the historical behavior of allowing anonymous access.
+        final char[] bindPasswordChars = aliasService.getPasswordFromAliasForGateway(LDAP_BIND_PASSWORD_ALIAS);
+        final String bindPassword = bindPasswordChars == null ? null : new String(bindPasswordChars);
+        final boolean requireBind = StringUtils.isNotBlank(bindUser) && StringUtils.isNotBlank(bindPassword);
+        directoryService.setAllowAnonymousAccess(!requireBind);
 
         // Start the service
         directoryService.startup();
 
-        // Add base entries to the partition
-        createBaseEntries(schemaManager);
+        // Add base entries to the partitions
+        createBaseEntries(baseDns, schemaManager);
+
+        if (requireBind) {
+            createBindUser(schemaManager, bindPassword);
+            LOG.ldapBindUserConfigured(bindUser);
+        }
 
         // Create LDAP server on configured port
         ldapServer = new LdapServer();
-        ldapServer.setTransports(new TcpTransport(port));
+        final TcpTransport transport = new TcpTransport(port);
+        if (sslEnabled) {
+            configureSsl(transport);
+        }
+        ldapServer.setTransports(transport);
         ldapServer.setDirectoryService(directoryService);
 
         ldapServer.start();
 
         LOG.ldapServiceStarted(port);
+    }
+
+    private void addRemotePartitions() throws LdapException {
+        SchemaManager schemaManager = directoryService.getSchemaManager();
+        DnFactory dnFactory = directoryService.getDnFactory();
+        List<String> interceptorNames = gatewayConfig.getLDAPInterceptorNames();
+        Map<String, Integer> idCountMap = new HashMap<>();
+        for (String interceptorName : interceptorNames) {
+            // Get backend-specific configuration using prefixed properties
+            Map<String, String> interceptorConfig = gatewayConfig.getLDAPInterceptorConfig(interceptorName);
+
+            String remoteBaseDn = interceptorConfig.get("remoteBaseDn");
+            if (StringUtils.isNotBlank(remoteBaseDn)) {
+                if (!baseDns.contains(remoteBaseDn)) {
+                    //create partition
+                    String id = interceptorName.replaceAll("\\s+", "");
+                    if (idCountMap.containsKey(id)) {
+                        int count = idCountMap.get(id);
+                        idCountMap.put(id, count + 1);
+                        // add suffix to ensure unique id
+                        id = id + count;
+                    } else {
+                        idCountMap.put(id, 0);
+                    }
+                    JdbmPartition remotePartition = new JdbmPartition(schemaManager, dnFactory);
+                    remotePartition.setId(id);
+                    remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
+                    remotePartition.setPartitionPath(new File(workDir, id).toURI());
+                    directoryService.addPartition(remotePartition);
+                    baseDns.add(remoteBaseDn);
+                }
+            }
+        }
+    }
+
+    private void addInterceptors() throws LdapException {
+        // Find location of AuthenticationInterceptor.
+        // We need to insert interceptors before AuthenticationInterceptor to intercept bind requests
+        final List<Interceptor> dsInterceptors = new ArrayList<>(directoryService.getInterceptors());
+        final int authIdx = fetchAuthenticationInterceptorIndex(dsInterceptors);
+
+        // Add our configured interceptors for group lookups and bind proxying
+        for (Interceptor interceptor : interceptors) {
+            if (authIdx != -1) {
+                dsInterceptors.add(authIdx, interceptor);
+            } else {
+                dsInterceptors.add(interceptor);
+            }
+        }
+        directoryService.setInterceptors(dsInterceptors);
+    }
+
+    private int fetchAuthenticationInterceptorIndex(final List<Interceptor> dsInterceptors) {
+        return IntStream.range(0, dsInterceptors.size())
+                .filter(i -> "authenticationInterceptor".equalsIgnoreCase(dsInterceptors.get(i).getName()))
+                .findFirst()
+                .orElse(-1);
+    }
+
+    /**
+     * Enable the secure (LDAPS) transport on the embedded server. The keystore holding the
+     * server certificate and its password are resolved from the gateway configuration and
+     * credential store; the password defaults to the gateway identity keystore password when
+     * no dedicated alias is configured. The keystore must be in the JVM default format
+     * (see {@code java.security.KeyStore#getDefaultType()}), which is what ApacheDS uses to
+     * load it.
+     */
+    private void configureSsl(final TcpTransport transport) throws Exception {
+        if (StringUtils.isBlank(sslKeystorePath)) {
+            final String reason = "no keystore configured; set " + GatewayConfig.LDAP_SSL_KEYSTORE_PATH
+                    + " or configure the gateway identity keystore";
+            LOG.ldapSslConfigInvalid(reason);
+            throw new IllegalStateException("Cannot enable LDAPS: " + reason);
+        }
+
+        final File keystore = new File(sslKeystorePath);
+        if (!keystore.exists()) {
+            final String reason = "keystore file not found: " + keystore.getAbsolutePath();
+            LOG.ldapSslConfigInvalid(reason);
+            throw new IllegalStateException("Cannot enable LDAPS: " + reason);
+        }
+
+        transport.setEnableSSL(true);
+        ldapServer.setKeystoreFile(keystore.getAbsolutePath());
+
+        final char[] passwordChars = resolveSslKeystorePassword();
+        if (passwordChars != null) {
+            ldapServer.setCertificatePassword(new String(passwordChars));
+        }
+
+        if (sslEnabledCipherSuites != null && !sslEnabledCipherSuites.isEmpty()) {
+            ldapServer.setEnabledCipherSuites(new ArrayList<>(sslEnabledCipherSuites));
+        }
+
+        LOG.ldapSslEnabled(keystore.getAbsolutePath());
+    }
+
+    /**
+     * Resolve the password protecting the LDAPS keystore from the gateway credential store.
+     * Uses the configured alias when set, otherwise falls back to the gateway identity
+     * keystore password (matching the keystore-path fallback in {@link #initialize(GatewayConfig)}).
+     */
+    private char[] resolveSslKeystorePassword() throws Exception {
+        if (StringUtils.isNotBlank(sslKeystorePasswordAlias)) {
+            return aliasService.getPasswordFromAliasForGateway(sslKeystorePasswordAlias);
+        }
+        return aliasService.getGatewayIdentityKeystorePassword();
     }
 
     /**
@@ -156,6 +362,7 @@ public class KnoxLDAPServerManager {
         if (ldapServer != null) {
             try {
                 ldapServer.stop();
+                ldapServer = null;
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
@@ -164,6 +371,7 @@ public class KnoxLDAPServerManager {
         if (directoryService != null) {
             try {
                 directoryService.shutdown();
+                directoryService = null;
             } catch (Exception e) {
                 LOG.ldapServiceStopFailed(e);
             }
@@ -172,13 +380,10 @@ public class KnoxLDAPServerManager {
         LOG.ldapServiceStopped();
     }
 
-    private void createBaseEntries(SchemaManager schemaManager) throws Exception {
-        // Create base entries for proxy base DN
-        createBaseEntriesForDn(schemaManager, baseDn);
-
-        // Create base entries for remote base DN if different
-        if (remoteBaseDn != null && !remoteBaseDn.equals(baseDn)) {
-            createBaseEntriesForDn(schemaManager, remoteBaseDn);
+    private void createBaseEntries(Collection<String> baseDns, SchemaManager schemaManager) throws Exception {
+        // Create base entries for proxy base DN and remote base DNs
+        for (String baseDn : baseDns) {
+            createBaseEntriesForDn(schemaManager, baseDn);
         }
     }
 
@@ -213,12 +418,70 @@ public class KnoxLDAPServerManager {
         }
     }
 
+    /**
+     * Create the entry used by external clients to bind against the embedded LDAP server.
+     * The bind DN's parent container (e.g. {@code ou=system} or {@code ou=people,<baseDn>})
+     * must already exist. The entry is added using the privileged admin session, which is
+     * unaffected by the anonymous-access setting.
+     */
+    private void createBindUser(SchemaManager schemaManager, String bindPassword) throws Exception {
+        Dn bindDn = new Dn(schemaManager, bindUser);
+        if (!directoryService.getAdminSession().exists(bindDn)) {
+            String rdnValue = bindDn.getRdn().getValue();
+            Entry bindEntry = new DefaultEntry(schemaManager);
+            bindEntry.setDn(bindDn);
+            bindEntry.add("objectClass", "top", "person", "organizationalPerson", "inetOrgPerson");
+            bindEntry.add("cn", rdnValue);
+            bindEntry.add("sn", rdnValue);
+            bindEntry.add("userPassword", bindPassword);
+            directoryService.getAdminSession().add(bindEntry);
+        }
+    }
+
     public int getPort() {
         return port;
     }
 
     public String getBaseDn() {
         return baseDn;
+    }
+
+    /**
+     * Get groups for a user from the configured backend
+     * @param username The username
+     * @return List of group names
+     */
+    public List<String> getUserGroups(String username) throws Exception {
+        SearchRequest searchRequest = new SearchRequestImpl();
+        searchRequest.setBase(new Dn(directoryService.getSchemaManager(), baseDn));
+        searchRequest.setScope(SearchScope.SUBTREE);
+        searchRequest.setFilter("(uid=" + username + ")");
+        searchRequest.addAttributes("*");
+
+        List<String> groups = new ArrayList<>();
+        try (Cursor<Entry> cursor = directoryService.getAdminSession().search(searchRequest)) {
+            if (cursor.next()) {
+                Entry entry = cursor.get();
+                Attribute memberOf = entry.get("memberOf");
+                if (memberOf != null) {
+                    for (Value value : memberOf) {
+                        String groupDn = value.getString();
+                        if (groupDn.toLowerCase(Locale.ROOT).startsWith("cn=")) {
+                            int commaIdx = groupDn.indexOf(',');
+                            if (commaIdx > 0) {
+                                groups.add(groupDn.substring(3, commaIdx));
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+        return groups;
+    }
+
+    public boolean hasRolesLookupInterceptor() {
+        return hasRolesLookupInterceptor;
     }
 
     /**

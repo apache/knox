@@ -99,7 +99,7 @@ public class RemoteAuthFilterTest {
         gatewayServicesMock = EasyMock.createNiceMock(GatewayServices.class);
     }
 
-    private void setUp(String trustStorePath, String trustStorePass, String trustStoreType) throws Exception {
+    private void setUp(String trustStorePath, String trustStorePass, String trustStoreType, String cacheKeyHeader) throws Exception {
         // Reset ALL mocks
         EasyMock.reset(requestMock, responseMock, filterConfigMock, gatewayServicesMock,
                       servletContextMock, keystoreServiceMock, aliasServiceMock);
@@ -150,7 +150,7 @@ public class RemoteAuthFilterTest {
                .andReturn("https://example.com/auth")
                .anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_INCLUDE_HEADERS)).andReturn("Authorization").anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.DEFAULT_CACHE_KEY_HEADER)).andReturn("Authorization").anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_CACHE_KEY_HEADER)).andReturn(cacheKeyHeader).anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_EXPIRE_AFTER)).andReturn("5").anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_USER_HEADER)).andReturn(X_AUTHENTICATED_USER).anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_GROUP_HEADER))
@@ -158,7 +158,7 @@ public class RemoteAuthFilterTest {
 
         // Trust store config
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PATH)).andReturn(trustStorePath).anyTimes();
-        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD)).andReturn(trustStorePass).anyTimes();
+        EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD_ALIAS)).andReturn(trustStorePass).anyTimes();
         EasyMock.expect(filterConfigMock.getInitParameter(RemoteAuthFilter.CONFIG_TRUSTSTORE_TYPE)).andReturn(trustStoreType).anyTimes();
 
         // Only replay the mocks that won't need additional expectations
@@ -177,12 +177,20 @@ public class RemoteAuthFilterTest {
 
     // Default setup method for backward compatibility
     private void setUp() throws Exception {
-        setUp(null, null, null);
+        setUp("Authorization");
+    }
+
+    private void setUp(String cacheKeyHeader) throws Exception {
+        setUp(null, null, null, cacheKeyHeader);
     }
 
     private void setupURLConnection(String url) {
+        setupURLConnection(url, null, null);
+    }
+
+    private void setupURLConnection(String url, String user, String group) {
         try {
-            filter.httpURLConnection = new MockHttpURLConnection(new URL(url));
+            filter.httpURLConnection = new MockHttpURLConnection(new URL(url), user, group);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -254,7 +262,16 @@ public class RemoteAuthFilterTest {
 
     @Test
     public void testCacheBehavior() throws Exception {
-        setUp();
+        testCacheBehavior(true);
+    }
+
+    @Test
+    public void testCacheBehaviorNoCachedSubject() throws Exception {
+        testCacheBehavior(false);
+    }
+
+    private void testCacheBehavior(boolean useCache) throws Exception {
+        setUp(useCache ? "Authorization" : "HeaderNeverSet");
 
         String principalName = "lmccayiv";
         String groupNames = "admin2,scientists";
@@ -262,9 +279,14 @@ public class RemoteAuthFilterTest {
         subject.getPrincipals().add(new PrimaryPrincipal(principalName));
         Arrays.stream(groupNames.split(",")).forEach(groupName -> subject.getPrincipals()
                 .add(new GroupPrincipal(groupName)));
-        filter.setCachedSubject(BEARER_VALID_TOKEN, subject);
-
+        if (useCache) {
+            filter.setCachedSubject(BEARER_VALID_TOKEN, subject);
+        } else {
+            EasyMock.expect(requestMock.getHeader("HeaderNeverSet")).andReturn(null).anyTimes();
+        }
+        // either cached or uncached, we try to get the value of the "Authorization" header at one point
         EasyMock.expect(requestMock.getHeader("Authorization")).andReturn(BEARER_VALID_TOKEN).anyTimes();
+
         EasyMock.expect(responseMock.getStatus()).andReturn(200).anyTimes();
         responseMock.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
         EasyMock.expectLastCall().andThrow(new AssertionError("Authentication should be successful, but was not.")).anyTimes();
@@ -272,7 +294,7 @@ public class RemoteAuthFilterTest {
         EasyMock.replay(requestMock, responseMock);
 
         try {
-            setupURLConnection(URL_SUCCESS);
+            setupURLConnection(URL_SUCCESS, principalName, groupNames);
 
             filter.doFilter(requestMock, responseMock, chainMock);
             assertEquals(responseMock.getStatus(), HttpServletResponse.SC_OK);
@@ -411,14 +433,14 @@ public class RemoteAuthFilterTest {
 
         // Set up aliasService expectations for password resolution
         EasyMock.expect(aliasServiceMock.getPasswordFromAliasForCluster("test-topology",
-                RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD, false))
+                RemoteAuthFilter.CONFIG_TRUSTSTORE_PASSWORD_ALIAS, false))
                 .andReturn("trustpass".toCharArray())
                 .anyTimes();
 
         EasyMock.replay(servletContextMock, gatewayServicesMock, keystoreServiceMock, aliasServiceMock);
 
         // Setup with valid trust store configuration - this will now trigger truststore loading
-        setUp("/path/to/truststore.jks", null, "JKS");  // null password to test alias resolution
+        setUp("/path/to/truststore.jks", null, "JKS", "Authorization");  // null password to test alias resolution
 
         // Regular request expectations
         EasyMock.expect(requestMock.getServletContext())
@@ -455,14 +477,21 @@ public class RemoteAuthFilterTest {
         private final Map<String, List<String>> headers;
 
         public MockHttpURLConnection(URL url) {
+            this(url, null, null);
+        }
+
+        public MockHttpURLConnection(URL url, String user, String group) {
             super(url);
             this.url = url;
             this.responseCode = getCode();
             this.headers = new HashMap<>();
+            setupHeaders(url, user, group);
+        }
 
+        private void setupHeaders(URL url, String user, String group) {
             if (url.toString().equals(URL_SUCCESS)) {
-                addHeader(X_AUTHENTICATED_USER, "lmccay");
-                addHeader(X_AUTHENTICATED_GROUP, "admin,engineers");
+                addHeader(X_AUTHENTICATED_USER, user == null ? "lmccay" : user);
+                addHeader(X_AUTHENTICATED_GROUP, group == null ? "admin,engineers" : group);
             }
         }
 

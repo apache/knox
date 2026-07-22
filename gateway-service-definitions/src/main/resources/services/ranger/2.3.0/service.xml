@@ -31,6 +31,11 @@
         <route path="/ranger/service/tags/**"/>
         <route path="/ranger/service/xaudit/**"/>
         <route path="/ranger/service/roles/**"/>
+        <route path="/ranger/service/users"/>
+        <route path="/ranger/service/users/**"/>
+        <route path="/ranger/service/keys/**"/>
+        <route path="/ranger/service/audit/**"/>
+        <route path="/ranger/service/zones/**"/>
         <route path="/ranger"/>
     </routes>
     <dispatch classname="org.apache.knox.gateway.dispatch.ConfigurableDispatch"

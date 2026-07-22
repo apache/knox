@@ -16,7 +16,7 @@
  */
 
 import {CategoryWizard} from './category-wizard';
-import {ProviderConfig} from '../resource-detail/provider-config';
+import {ProviderConfig} from '../model/provider-config';
 import {IdentityAssertionProviderConfig} from './identity-assertion-provider-config';
 import {DefaultIdAssertionProviderConfig} from './default-idassertion-provider-config';
 import {ConcatAssertionProviderConfig} from './concat-idassertion-provider-config';
@@ -59,8 +59,7 @@ export class IdentityAssertionWizard extends CategoryWizard {
     onChange() {
         let configType = IdentityAssertionWizard.typeConfigMap.get(this.selectedType);
         if (configType) {
-            this.providerConfig = Object.create(configType.prototype) as IdentityAssertionProviderConfig;
-            this.providerConfig = this.providerConfig.constructor.apply(this.providerConfig);
+            this.providerConfig = new (configType as any)();
             (this.providerConfig as IdentityAssertionProviderConfig).setType(this.selectedType);
         } else {
             console.debug('IdentityAssertionWizard --> No provider configuration type mapped for ' + this.selectedType);

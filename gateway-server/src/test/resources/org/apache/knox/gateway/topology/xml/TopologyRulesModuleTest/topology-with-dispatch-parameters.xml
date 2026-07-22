@@ -22,7 +22,7 @@
         <dispatch>
             <contributor-name>testContributor</contributor-name>
             <ha-contributor-name>testHAContributor</ha-contributor-name>
-            <classname>org.apache.hadoop.gateway.hbase.HBaseDispatch</classname>
+            <classname>org.apache.knox.gateway.hbase.HBaseDispatch</classname>
             <ha-classname>testHAClassName</ha-classname>
             <http-client-factory>testHttpClientFactory</http-client-factory>
             <use-two-way-ssl>true</use-two-way-ssl>

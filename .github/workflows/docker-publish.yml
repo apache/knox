@@ -38,11 +38,9 @@ jobs:
           cache: maven
 
       - name: Login to Docker Hardened Images
-        uses: docker/login-action@v3
-        with:
-          registry: dhi.io
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin dhi.io
 
       - name: Build with Maven
         run: |
@@ -56,39 +54,43 @@ jobs:
           echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        run: |
+          docker buildx rm multiarch-builder 2>/dev/null || true
+          docker buildx create --use --name multiarch-builder
+          docker buildx inspect --bootstrap
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKERHUB_USER }}" --password-stdin
 
-      - name: Docker metadata
+      - name: Generate Docker tags
         id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: apache/knox
-          tags: |
-            # latest on every master push and on every version tag
-            type=raw,value=latest
-            # semver tags only activate when triggered by a v* tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+        run: |
+          TAGS="apache/knox:latest"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2 -s)
+            TAGS="$TAGS,apache/knox:$VERSION,apache/knox:$MAJOR"
+            if [[ -n "$MINOR" && "$VERSION" != "$MAJOR.$MINOR" ]]; then
+              TAGS="$TAGS,apache/knox:$MAJOR.$MINOR"
+            fi
+          fi
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: gateway-docker/target/classes/docker
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            RELEASE_FILE=knox-${{ steps.project-version.outputs.version }}.zip
-            ENTRYPOINT=gateway-entrypoint.sh
-            EXPOSE_PORT=8443
+        run: |
+          TAG_ARGS=$(echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' | sed 's/^/--tag /' | tr '\n' ' ')
+          docker buildx build \
+            --push \
+            --platform linux/amd64,linux/arm64 \
+            $TAG_ARGS \
+            --build-arg RELEASE_FILE=knox-${{ steps.project-version.outputs.version }}.zip \
+            --build-arg ENTRYPOINT=gateway-entrypoint.sh \
+            --build-arg EXPOSE_PORT=8443 \
+            gateway-docker/target/classes/docker

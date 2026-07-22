@@ -39,7 +39,8 @@ public class TokenMetadata {
   public static final String CREATED_BY = "createdBy";
   public static final String LAST_USED_AT = "lastUsedAt";
   public static final String TYPE = "type";
-  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, LAST_USED_AT, TYPE);
+  public static final String THIRD_PARTY_APP = "thirdPartyApp";
+  private static final List<String> KNOWN_MD_NAMES = Arrays.asList(USER_NAME, COMMENT, ENABLED, PASSCODE, CREATED_BY, LAST_USED_AT, TYPE, THIRD_PARTY_APP);
 
   private final Map<String, String> metadataMap = new HashMap<>();
 
@@ -137,6 +138,11 @@ public class TokenMetadata {
 
   public void setType(TokenMetadataType type) {
     saveMetadata(TYPE, type.name());
+  }
+
+  public boolean isThirdPartyApp() {
+    final String thirdPartyApp = getMetadata(THIRD_PARTY_APP);
+    return thirdPartyApp == null || Boolean.parseBoolean(thirdPartyApp);
   }
 
   public void markKnoxSsoCookie() {

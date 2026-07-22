@@ -50,6 +50,7 @@ nav:
   - Client/User Guide:
       - Knox Shell: knoxshell-guide/knoxshell_user_guide.md
       - Discovering Resources: book_client-details.md
+      - LDAP Server: service_ldap_server.md
       - Troubleshooting:
           - General Troubleshooting: book_troubleshooting.md
           - Client-Specific Troubleshooting: client_troubleshooting.md
@@ -79,6 +80,7 @@ nav:
               - Hadoop Auth: config_hadoop_auth_provider.md
             - Services/APIs:
               - Knox SSO: config_knox_sso.md
+              - Knox SSO Logout: knox_sso_logout.md
               - API Key: config_apikey.md
               - Client Credentials: config_client_credentials.md
               - Knox Auth Service: config_knoxauth_service.md

@@ -63,7 +63,7 @@ public class NoImpersonationFilterTest {
 
     filter.init(config);
     String username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(username, subject);
+    String[] groups = filter.mapGroupPrincipals(username, subject, null);
     assertEquals("lmccay", username);
     assertNull(groups); // means for the caller to use the existing subject groups
 
@@ -81,7 +81,7 @@ public class NoImpersonationFilterTest {
     EasyMock.replay( context, config );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] mappedGroups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
+    String[] mappedGroups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject, null);
     assertEquals("hdfs", username);
     assertTrue("mrgroup not found in groups: " + Arrays.toString(mappedGroups), groupFoundIn("mrgroup", mappedGroups));
     assertTrue("mrducks not found in groups: " + Arrays.toString(mappedGroups), groupFoundIn("mrducks", mappedGroups));
@@ -107,7 +107,7 @@ public class NoImpersonationFilterTest {
     EasyMock.replay(context, config );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    mappedGroups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
+    mappedGroups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject, null);
     assertEquals("hdfs", username);
     assertTrue("group1 not found in groups: " + Arrays.toString(mappedGroups), groupFoundIn("group1", mappedGroups));
   }
@@ -148,7 +148,7 @@ public class NoImpersonationFilterTest {
 
     filter.init(config);
     String username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    String[] groups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
+    String[] groups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject, null);
 
     assertEquals("lmccay", username);
     assertNull(groups); // means for the caller to use the existing subject groups
@@ -165,7 +165,7 @@ public class NoImpersonationFilterTest {
     EasyMock.replay( context );
     filter.init(config);
     username = filter.mapUserPrincipal(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName());
-    groups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject);
+    groups = filter.mapGroupPrincipals(((Principal) subject.getPrincipals(PrimaryPrincipal.class).toArray()[0]).getName(), subject, null);
     assertEquals("hdfs", username);
     assertTrue("mrgroup not found in groups: " + Arrays.toString(groups), groupFoundIn("mrgroup", groups));
     assertTrue("mrducks not found in groups: " + Arrays.toString(groups), groupFoundIn("mrducks", groups));

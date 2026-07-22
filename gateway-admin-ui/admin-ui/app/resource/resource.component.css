@@ -1,0 +1,58 @@
+.table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background-color: #fff;
+    border-bottom: 2px solid #4caf50;
+}
+
+.table-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+
+:host ::ng-deep .mat-mdc-table {
+    background-color: #fff;
+}
+
+:host ::ng-deep .mat-mdc-header-row {
+    height: 32px;
+    background-color: #fafafa;
+}
+
+:host ::ng-deep .mat-mdc-header-cell {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    padding: 0 12px;
+}
+
+:host ::ng-deep .mat-mdc-row {
+    height: 30px;
+}
+
+:host ::ng-deep .mat-mdc-cell {
+    font-size: 13px;
+    padding: 0 12px;
+    border-bottom-color: #eee;
+}
+
+:host ::ng-deep tr.mat-mdc-row:nth-child(even) {
+    background-color: #f9fdf9;
+}
+
+:host ::ng-deep tr.mat-mdc-row:hover {
+    background-color: #e8f5e9;
+}
+
+:host ::ng-deep tr.mat-mdc-row.selected,
+:host ::ng-deep tr.mat-mdc-row.active {
+    background-color: #c8e6c9;
+}
+
+:host ::ng-deep .mat-mdc-paginator {
+    font-size: 12px;
+    border-top: 1px solid #eee;
+}

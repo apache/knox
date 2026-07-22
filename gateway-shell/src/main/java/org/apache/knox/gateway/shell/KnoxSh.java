@@ -181,7 +181,8 @@ public class KnoxSh {
     public void execute() throws Exception {
       String result = GATEWAY_CERT_NOT_EXPORTED;
       try {
-        final X509Certificate[] gatewayServerPublicCerts = X509CertificateUtil.fetchPublicCertsFromServer(gateway, false, out);
+        final X509Certificate[] gatewayServerPublicCerts = X509CertificateUtil.fetchPublicCertsFromServer(
+                gateway, ClientTrustStoreHelper.getClientTrustStoreFilePassword().toCharArray(), false, out);
         if (gatewayServerPublicCerts != null) {
           final File trustStoreFile = ClientTrustStoreHelper.getClientTrustStoreFile();
           final String trustStorePassword = ClientTrustStoreHelper.getClientTrustStoreFilePassword();

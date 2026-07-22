@@ -54,20 +54,20 @@ public class BackendFactoryTest {
 
     @Test
     public void testServiceLoaderDiscovery() {
-        ServiceLoader<LdapBackend> loader = ServiceLoader.load(LdapBackend.class);
+        ServiceLoader<LdapBackendFactory> loader = ServiceLoader.load(LdapBackendFactory.class);
 
         // Should discover at least the built-in backends
         boolean foundFileBackend = false;
         boolean foundLdapBackend = false;
 
-        for (LdapBackend backend : loader) {
-            String backendName = backend.getName();
-            if ("file".equals(backendName)) {
+        for (LdapBackendFactory factory : loader) {
+            String backendType = factory.getType();
+            if ("file".equals(backendType)) {
                 foundFileBackend = true;
-                assertTrue("File backend should be FileBackend instance", backend instanceof FileBackend);
-            } else if ("ldap".equals(backendName)) {
+                assertTrue("File backend should be FileBackend instance", factory instanceof FileBackendFactory);
+            } else if ("ldap".equals(backendType)) {
                 foundLdapBackend = true;
-                assertTrue("LDAP backend should be LdapProxyBackend instance", backend instanceof LdapProxyBackend);
+                assertTrue("LDAP backend should be LdapProxyBackend instance", factory instanceof LdapProxyBackendFactory);
             }
         }
 
@@ -77,48 +77,57 @@ public class BackendFactoryTest {
 
     @Test
     public void testCreateFileBackend() throws Exception {
-        LdapBackend fileBackend = BackendFactory.createBackend("file", config);
+        config.put("backendType", "file");
+        LdapBackend fileBackend = BackendFactory.createBackend("testbackend", config);
 
         assertNotNull("File backend should be created", fileBackend);
         assertTrue("Should create FileBackend instance", fileBackend instanceof FileBackend);
-        assertEquals("Backend name should be 'file'", "file", fileBackend.getName());
+        assertEquals("Backend type should be 'file'", "file", fileBackend.getType());
+        assertEquals("Backend name should be 'testbackend'", "testbackend", fileBackend.getName());
     }
 
     @Test
     public void testCreateLdapBackend() throws Exception {
+        config.put("backendType", "ldap");
         config.put("url", "ldap://localhost:389");
         config.put("remoteBaseDn", "dc=hadoop,dc=apache,dc=org");
 
-        LdapBackend ldapBackend = BackendFactory.createBackend("ldap", config);
+        LdapBackend ldapBackend = BackendFactory.createBackend("testbackend", config);
 
         assertNotNull("LDAP backend should be created", ldapBackend);
         assertTrue("Should create LdapProxyBackend instance", ldapBackend instanceof LdapProxyBackend);
-        assertEquals("Backend name should be 'ldap'", "ldap", ldapBackend.getName());
+        assertEquals("Backend type should be 'ldap'", "ldap", ldapBackend.getType());
+        assertEquals("Backend name should be 'testbackend'", "testbackend", ldapBackend.getName());
     }
 
     @Test
-    public void testCaseInsensitiveBackendNames() throws Exception {
+    public void testCaseInsensitiveFileBackend() throws Exception {
         // Test uppercase
-        LdapBackend upperCaseBackend = BackendFactory.createBackend("FILE", config);
-        assertTrue("Should create FileBackend with uppercase name", upperCaseBackend instanceof FileBackend);
+        config.put("backendType", "FILE");
+        LdapBackend upperCaseBackend = BackendFactory.createBackend("UPPER", config);
+        assertTrue("Should create FileBackend with uppercase type", upperCaseBackend instanceof FileBackend);
 
         // Test mixed case
-        LdapBackend mixedCaseBackend = BackendFactory.createBackend("File", config);
-        assertTrue("Should create FileBackend with mixed case name", mixedCaseBackend instanceof FileBackend);
+        config.put("backendType", "File");
+        LdapBackend mixedCaseBackend = BackendFactory.createBackend("Mixed", config);
+        assertTrue("Should create FileBackend with mixed case type", mixedCaseBackend instanceof FileBackend);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testUnknownBackendThrowsException() throws Exception {
-        BackendFactory.createBackend("unknown", config);
+        config.put("backendType", "unknown");
+        BackendFactory.createBackend("testbackend", config);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullBackendNameThrowsException() throws Exception {
-        BackendFactory.createBackend(null, config);
+        config.put("backendType", null);
+        BackendFactory.createBackend("testbackend", config);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptyBackendNameThrowsException() throws Exception {
-        BackendFactory.createBackend("", config);
+        config.put("backendType", "");
+        BackendFactory.createBackend("testbackend", config);
     }
 }

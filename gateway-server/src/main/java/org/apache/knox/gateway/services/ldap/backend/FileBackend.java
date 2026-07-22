@@ -17,12 +17,17 @@
  */
 package org.apache.knox.gateway.services.ldap.backend;
 
+import static java.util.Locale.ROOT;
+
 import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
+import org.apache.knox.gateway.services.ldap.LdapUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +36,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * File-based backend that reads user/group data from JSON
@@ -39,12 +47,21 @@ import java.util.Map;
 public class FileBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
+    private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
+    private static final Pattern CN_PATTERN = Pattern.compile(".*\\(cn=([^)]+)\\).*");
+    private static final Pattern SAMAACCOUNTNAME_PATTERN = Pattern.compile(".*\\(sAMAccountName=([^)]+)\\).*");
+
+    static final String TYPE = "file";
+
     private Map<String, UserData> users = new HashMap<>();
-    private String dataFile;
-    private String baseDn;
+    private final String dataFile;
+    private final String baseDn;
+    private final String userSearchBase;
+    private final String name;
 
     static class UserData {
         String username;
+        String password;
         String cn;
         String sn;
         List<String> groups;
@@ -55,16 +72,32 @@ public class FileBackend implements LdapBackend {
         List<UserData> users;
     }
 
-    @Override
-    public String getName() {
-        return "file";
+    public FileBackend(String name, Map<String, String> config) throws Exception {
+        this.name = name;
+        dataFile = config.getOrDefault("dataFile", "ldap-users.json");
+        baseDn = config.getOrDefault("baseDn", "dc=proxy,dc=com");
+        userSearchBase = "ou=people," + baseDn;
+        loadData();
     }
 
     @Override
-    public void initialize(Map<String, String> config) throws Exception {
-        dataFile = config.getOrDefault("dataFile", "ldap-users.json");
-        baseDn = config.getOrDefault("baseDn", "dc=proxy,dc=com");
-        loadData();
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public String getBaseDn() {
+        return baseDn;
+    }
+
+    @Override
+    public boolean isSupportedSearchBase(String searchBase) {
+        return searchBase != null && searchBase.toLowerCase(ROOT).endsWith(userSearchBase.toLowerCase(ROOT));
     }
 
     private void loadData() throws Exception {
@@ -95,7 +128,7 @@ public class FileBackend implements LdapBackend {
         }
 
         Entry entry = new DefaultEntry(schemaManager);
-        entry.setDn("uid=" + userData.username + ",ou=Users," + baseDn);
+        entry.setDn("uid=" + userData.username + "," + userSearchBase);
         entry.add("objectClass", "top");
         entry.add("objectClass", "person");
         entry.add("objectClass", "organizationalPerson");
@@ -120,7 +153,7 @@ public class FileBackend implements LdapBackend {
     }
 
     @Override
-    public List<String> getUserGroups(String username) throws Exception {
+    public List<String> getUserGroups(String username, SchemaManager schemaManager) throws Exception {
         UserData userData = users.get(username);
         return userData != null && userData.groups != null ? userData.groups : Collections.emptyList();
     }
@@ -129,9 +162,19 @@ public class FileBackend implements LdapBackend {
     public List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception {
         List<Entry> results = new ArrayList<>();
 
+        final String extractedUser = extractUser(filter);
+        if (extractedUser == null) {
+            // The filter does not target a recognized user identifier (uid/cn/sAMAccountName),
+            // so there is nothing for this user-only backend to match.
+            return results;
+        }
+        String userFilter = extractedUser.toLowerCase(Locale.ROOT);
+
         // Simple filter matching - just check if username matches
         for (String username : users.keySet()) {
-            if (filter.contains("uid=" + username) || filter.contains("*")) {
+            String usernameLowerCase = username.toLowerCase(Locale.ROOT);
+            if (userFilter.equalsIgnoreCase(usernameLowerCase) ||
+                    (userFilter.contains("*") && userFilter.contains(usernameLowerCase))) {
                 Entry entry = getUser(username, schemaManager);
                 if (entry != null) {
                     results.add(entry);
@@ -140,5 +183,42 @@ public class FileBackend implements LdapBackend {
         }
 
         return results;
+    }
+
+    @Override
+    public boolean authenticate(Dn userDn, String password) {
+        // Extract username from DN (e.g., uid=admin,  ou=people,dc=hadoop,dc=apache,dc=org)
+        final String username = LdapUtils.extractUsernameFromDn(userDn);
+
+        if (username != null) {
+            UserData userData = users.get(username);
+            return userData != null && password != null && password.equals(userData.password);
+        }
+
+        return false;
+    }
+
+    @Override
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+        return searchUsers(filter, schemaManager);
+    }
+
+    private String extractUser(String filter) {
+        Matcher uidMatcher = UID_PATTERN.matcher(filter);
+        if (uidMatcher.matches()) {
+            return uidMatcher.group(1);
+        }
+
+        Matcher cnMatcher = CN_PATTERN.matcher(filter);
+        if (cnMatcher.matches()) {
+            return cnMatcher.group(1);
+        }
+
+        Matcher samaaccountnameMatcher = SAMAACCOUNTNAME_PATTERN.matcher(filter);
+        if (samaaccountnameMatcher.matches()) {
+            return samaaccountnameMatcher.group(1);
+        }
+
+        return null;
     }
 }

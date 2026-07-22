@@ -46,7 +46,7 @@ public class UrlEncodedFormRequestTest {
     UrlEncodedFormRequest wrappedRequest = new UrlEncodedFormRequest(originalRequest);
     assertEquals("x", wrappedRequest.getParameter("query1"));
     assertEquals("y", wrappedRequest.getParameter("query2"));
-    assertEquals("payload_client_id", wrappedRequest.getParameter("client_id"));
+    assertEquals("query_client_id", wrappedRequest.getParameter("client_id"));
     assertNull(wrappedRequest.getParameter("a"));
     assertNull(wrappedRequest.getParameter("b"));
     assertArrayEquals(new String[]{"x"}, wrappedRequest.getParameterValues("query1"));

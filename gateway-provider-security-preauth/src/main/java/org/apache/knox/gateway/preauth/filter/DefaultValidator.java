@@ -34,6 +34,16 @@ public class DefaultValidator implements PreAuthValidator {
   }
 
   @Override
+  public void init(FilterConfig filterConfig) throws Exception{
+    //NOP
+  }
+
+  @Override
+  public void destroy() {
+    //NOP
+  }
+
+  @Override
   public boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig) throws PreAuthValidationException {
     return true;
   }

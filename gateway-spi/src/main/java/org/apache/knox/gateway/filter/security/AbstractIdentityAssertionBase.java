@@ -23,6 +23,8 @@ import javax.security.auth.Subject;
 
 public class AbstractIdentityAssertionBase {
 
+  public static final String ROLES_LOOKUP_EXECUTED = "ROLES_LOOKUP_EXECUTED";
+
   /**
    * Retrieve the principal to represent the asserted identity from
    * the provided Subject.

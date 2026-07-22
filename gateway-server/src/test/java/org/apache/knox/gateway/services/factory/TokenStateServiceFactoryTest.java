@@ -21,11 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
-import org.apache.knox.gateway.services.token.impl.AliasBasedTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
 import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
-import org.apache.knox.gateway.services.token.impl.JournalBasedTokenStateService;
-import org.apache.knox.gateway.services.token.impl.ZookeeperTokenStateService;
 import org.junit.Test;
 
 public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
@@ -58,29 +55,6 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
         tokenStateService.stop();
       }
     }
-  }
-
-  @Test
-  public void shouldReturnAliasBasedTokenStateService() throws Exception {
-    initConfig();
-    final TokenStateService tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig,
-        options, AliasBasedTokenStateService.class.getName());
-    assertTrue(tokenStateService instanceof AliasBasedTokenStateService);
-    assertTrue(isAliasServiceSet(tokenStateService));
-  }
-
-  @Test
-  public void shouldReturnJournalTokenStateService() throws Exception {
-    initConfig();
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
-        JournalBasedTokenStateService.class.getName()) instanceof JournalBasedTokenStateService);
-  }
-
-  @Test
-  public void shouldReturnZookeeperTokenStateService() throws Exception {
-    initConfig();
-    assertTrue(serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
-        ZookeeperTokenStateService.class.getName()) instanceof ZookeeperTokenStateService);
   }
 
   @Test

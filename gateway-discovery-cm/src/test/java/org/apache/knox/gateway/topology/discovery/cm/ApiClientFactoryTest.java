@@ -16,10 +16,12 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.util.TruststorePasswordSetter;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -46,16 +48,20 @@ public class ApiClientFactoryTest {
 
     @Test
     public void testSystemPropertySetWhenAliasExists() throws AliasServiceException {
-        testGetApiClient(true);
+        testGetApiClient(true, "changeit");
     }
 
     @Test
     public void testSystemPropertyNotSetWhenAliasNotExists() throws AliasServiceException {
-        testGetApiClient(false);
+        testGetApiClient(false, null);
     }
 
-    private void testGetApiClient(final boolean shouldSetSystemProperty) throws AliasServiceException {
-        final String trustStorePassword = "changeit";
+    @Test
+    public void testSystemPropertySetWhenAliasEmpty() throws AliasServiceException {
+        testGetApiClient(true, "");
+    }
+
+    private void testGetApiClient(final boolean shouldSetSystemProperty, String trustStorePassword) throws AliasServiceException {
         final RecordingProperties testProps = new RecordingProperties(originalProps);
         System.setProperties(testProps);
 
@@ -72,9 +78,9 @@ public class ApiClientFactoryTest {
         EasyMock.expect(serviceDiscoveryConfig.getPasswordAlias()).andReturn("myCmPasswordAlias").anyTimes();
         final AliasService aliasService = EasyMock.createMock(AliasService.class);
         if (shouldSetSystemProperty) {
-            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(trustStorePassword.toCharArray()).anyTimes();
+            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(trustStorePassword.toCharArray()).anyTimes();
         } else {
-            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(ApiClientFactory.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
         }
         EasyMock.expect(aliasService.getPasswordFromAliasForGateway("myCmPasswordAlias")).andReturn("myCmPassword".toCharArray()).anyTimes();
         final KeyStore trustStore = EasyMock.createMock(KeyStore.class);
@@ -82,14 +88,14 @@ public class ApiClientFactoryTest {
         EasyMock.replay(aliasService, gatewayConfig, serviceDiscoveryConfig, trustStore);
         ApiClientFactory.getApiClient(gatewayConfig, serviceDiscoveryConfig, aliasService, trustStore);
 
-        if (shouldSetSystemProperty) {
-            Assert.assertEquals(ApiClientFactory.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastSetKey);
+        if (shouldSetSystemProperty && StringUtils.isNotBlank(trustStorePassword)) {
+            Assert.assertEquals(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastSetKey);
             Assert.assertEquals(trustStorePassword, testProps.lastSetValue);
-            Assert.assertEquals(ApiClientFactory.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
+            Assert.assertEquals(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
         } else {
             Assert.assertNull(testProps.lastSetKey);
             Assert.assertNull(testProps.lastSetValue);
-            Assert.assertEquals(ApiClientFactory.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
+            Assert.assertEquals(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_SYSTEM_PROPERTY, testProps.lastRemovedKey);
         }
     }
 

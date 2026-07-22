@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Date;
 import java.util.Properties;
-
+import javax.security.auth.Subject;
 import javax.servlet.FilterConfig;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.easymock.EasyMock;
@@ -87,6 +88,41 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     handler.doFilter(request, response, chain);
 
     EasyMock.verify(response);
+  }
+
+  @Test
+  public void testSubjectCreationWithThirdPartyAppReconciliation() throws Exception {
+    // Scenario 1: thirdPartyApp = true (default) -> principal should be tokenId
+    testSubjectCreation(true);
+
+    // Scenario 2: thirdPartyApp = false -> principal should be userName
+    testSubjectCreation(false);
+  }
+
+  private void testSubjectCreation(boolean thirdPartyApp) throws Exception {
+    final String tokenId = "test-token-id";
+    final String userName = "test-user";
+
+    final TokenMetadata metadataTrue = EasyMock.createNiceMock(TokenMetadata.class);
+    EasyMock.expect(metadataTrue.isClientId()).andReturn(true).anyTimes();
+    EasyMock.expect(metadataTrue.isThirdPartyApp()).andReturn(thirdPartyApp).anyTimes();
+    EasyMock.expect(metadataTrue.getUserName()).andReturn(userName).anyTimes();
+
+    final TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tss.getTokenMetadata(tokenId)).andReturn(metadataTrue).anyTimes();
+    EasyMock.replay(metadataTrue, tss);
+
+    final TestJWTFederationFilter filter = new TestJWTFederationFilter();
+    Properties props = getProperties();
+    props.put(TokenStateService.CONFIG_SERVER_MANAGED, "true");
+    filter.init(new TestFilterConfig(props, tss));
+
+    final Subject subject = filter.createSubjectFromTokenIdentifier(tokenId);
+    assertEquals(thirdPartyApp ? tokenId : userName, subject.getPrincipals().iterator().next().getName());
+    if (!thirdPartyApp) {
+      assertEquals(1, subject.getPrincipals(TokenIdPrincipal.class).size());
+      assertEquals(tokenId, subject.getPrincipals(TokenIdPrincipal.class).iterator().next().getName());
+    }
   }
 
   @Test

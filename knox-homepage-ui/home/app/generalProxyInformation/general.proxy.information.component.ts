@@ -111,6 +111,13 @@ export class GeneralProxyInformationComponent implements OnInit {
         return false;
     }
 
+    getTruststoreType() {
+        if (this.generalProxyInformation && this.generalProxyInformation.truststoreType) {
+            return this.generalProxyInformation.truststoreType;
+        }
+        return 'jks';
+    }
+
     ngOnInit(): void {
         console.debug('GeneralProxyInformationComponent --> ngOnInit() --> ');
         this.homepageService.getGeneralProxyInformation()

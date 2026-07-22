@@ -23,21 +23,18 @@
 <%@ page import="org.apache.commons.text.StringEscapeUtils" %>
 
 <!DOCTYPE html>
-<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
-<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"><![endif]-->
-<!--[if IE 8]><html class="no-js lt-ie9"><![endif]-->
-<!--[if gt IE 8]><!-->
-<html class="no-js">
-    <!--<![endif]-->
+<html lang="en">
     <head>
         <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="description" content="">
-        <meta name="viewport" content="width=device-width">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
 
         <link rel="shortcut icon" href="images/favicon.ico">
+        <!-- Bootstrap 5.3.3 -->
         <link href="styles/bootstrap.min.css" media="all" rel="stylesheet" type="text/css" id="bootstrap-css">
+        <!-- Bootstrap Icons 1.11.3 -->
+        <link href="styles/bootstrap-icons.min.css" media="all" rel="stylesheet" type="text/css">
         <link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
         <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>

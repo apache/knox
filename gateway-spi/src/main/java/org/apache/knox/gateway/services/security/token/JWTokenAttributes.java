@@ -21,10 +21,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class JWTokenAttributes {
   public static final String DEFAULT_ISSUER = "KNOXSSO";
+  public static final String DEFAULT_TYPE = "JWT";
   private final String userName;
   private final List<String> audiences;
   private final String algorithm;
@@ -38,9 +40,21 @@ public class JWTokenAttributes {
   private final Set<String> groups;
   private final String issuer;
   private String kid;
+  private final String clientId;
+  private final List<Map<String, Object>> actorChain;
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
       char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer) {
+    this(userName, audiences, algorithm, expires, signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, null);
+  }
+
+  JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId) {
+    this(userName, audiences, algorithm, expires, signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, null);
+  }
+
+  JWTokenAttributes(String userName, List<String> audiences, String algorithm, long expires, String signingKeystoreName, String signingKeystoreAlias,
+      char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId, List<Map<String, Object>> actorChain) {
     this.userName = userName;
     this.audiences = audiences;
     this.algorithm = algorithm;
@@ -54,6 +68,8 @@ public class JWTokenAttributes {
     this.groups = groups;
     this.kid = kid;
     this.issuer = issuer;
+    this.clientId = clientId;
+    this.actorChain = actorChain;
   }
 
   public String getUserName() {
@@ -122,5 +138,33 @@ public class JWTokenAttributes {
 
   public String getIssuer() {
     return issuer;
+  }
+
+  public String getClientId() {
+    return clientId;
+  }
+
+  /**
+   * Get the actor chain for RFC 8693 token exchange.
+   *
+   * <p>The actor chain represents the complete delegation history for this token.
+   * Each element in the list is a Map of identity claims (such as 'sub' and 'iss')
+   * that identify an actor in the delegation chain. The list is ordered from most
+   * recent actor (first element) to oldest actor (last element).</p>
+   *
+   * <p>According to RFC 8693 Section 4.1, identity claims within the 'act' claim
+   * identify the actor. Common claims include:</p>
+   * <ul>
+   *   <li>'sub' - the subject/identity of the actor</li>
+   *   <li>'iss' - the issuer of the actor's identity</li>
+   * </ul>
+   *
+   * <p>Non-identity claims (e.g., 'exp', 'nbf', 'aud') should NOT be used within
+   * actor claims as they are not relevant to the validity of the containing JWT.</p>
+   *
+   * @return the actor chain, or null if no delegation has occurred
+   */
+  public List<Map<String, Object>> getActorChain() {
+    return actorChain;
   }
 }

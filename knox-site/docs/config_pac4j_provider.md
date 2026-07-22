@@ -187,6 +187,8 @@ This results in a URL that looks something like:
 This also means that the SP Entity ID should also include this query parameter as appropriate for your provider.
 Often something like the above URL is used for both the SSO URL and SP Entity ID.
 
+NOTE: ECDH-ES-encrypted SAML assertion decryption is not supported in FIPS mode (empty NamedCurveRegistry). RSA-signed and RSA-OAEP-encrypted SAML flows work identically in FIPS and non-FIPS.
+
 ##### For OpenID Connect support:
 
 Name | Value

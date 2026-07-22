@@ -51,6 +51,23 @@ public class OracleDataSourceFactory extends AbstractDataSourceFactory {
             oracleDataSource.setUser(dbUser);
             oracleDataSource.setPassword(dbPassword);
         }
+
+        configureSsl(gatewayConfig, aliasService, oracleDataSource);
+
         return oracleDataSource;
+    }
+
+    private void configureSsl(GatewayConfig gatewayConfig, AliasService aliasService, oracle.jdbc.pool.OracleDataSource oracleDataSource) throws AliasServiceException, SQLException {
+        if (gatewayConfig.isDatabaseSslEnabled()) {
+            oracleDataSource.setNetworkProtocol("tcps");
+            if (gatewayConfig.verifyDatabaseSslServerCertificate()) {
+                oracleDataSource.setConnectionProperty("javax.net.ssl.trustStore", gatewayConfig.getDatabaseSslTruststoreFileName());
+                oracleDataSource.setConnectionProperty("javax.net.ssl.trustStoreType", gatewayConfig.getDatabaseSslTruststoreType());
+                final String truststorePassword = getDatabaseAlias(aliasService, DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME);
+                if (truststorePassword != null) {
+                    oracleDataSource.setConnectionProperty("javax.net.ssl.trustStorePassword", truststorePassword);
+                }
+            }
+        }
     }
 }

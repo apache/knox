@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.security.token;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class JWTokenAttributesBuilder {
@@ -37,6 +38,8 @@ public class JWTokenAttributesBuilder {
   private Set<String> groups;
   private String kid;
   private String issuer = JWTokenAttributes.DEFAULT_ISSUER;
+  private String clientId;
+  private List<Map<String, Object>> actorChain;
 
   public JWTokenAttributesBuilder setUserName(String userName) {
     this.userName = userName;
@@ -107,8 +110,42 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
+  public JWTokenAttributesBuilder setClientId(String clientId) {
+    this.clientId = clientId;
+    return this;
+  }
+
+  /**
+   * Set the actor chain for RFC 8693 token exchange.
+   *
+   * <p>The actor chain represents the complete delegation history. Each element in the list
+   * is a Map of identity claims that identify an actor. The list should be ordered from most
+   * recent actor (first element) to oldest actor (last element).</p>
+   *
+   * <p>According to RFC 8693 Section 4.1, each actor should be identified using identity claims
+   * such as 'sub' (subject) and 'iss' (issuer). Non-identity claims (e.g., 'exp', 'nbf', 'aud')
+   * should NOT be included.</p>
+   *
+   * <p>Example:</p>
+   * <pre>
+   * List&lt;Map&lt;String, Object&gt;&gt; chain = new ArrayList&lt;&gt;();
+   * Map&lt;String, Object&gt; actor1 = new HashMap&lt;&gt;();
+   * actor1.put("sub", "service-a");
+   * actor1.put("iss", "https://issuer.example.com");
+   * chain.add(actor1);
+   * builder.setActorChain(chain);
+   * </pre>
+   *
+   * @param actorChain the actor chain, ordered from most recent to oldest
+   * @return this builder
+   */
+  public JWTokenAttributesBuilder setActorChain(List<Map<String, Object>> actorChain) {
+    this.actorChain = actorChain;
+    return this;
+  }
+
   public JWTokenAttributes build() {
     return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer);
+        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, actorChain);
   }
 }

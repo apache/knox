@@ -3,3 +3,26 @@ td {
     padding: 8px;
     vertical-align: top;
 }
+
+.services-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.service-checkbox {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 4px 0;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.service-checkbox input[type="checkbox"] {
+    flex-shrink: 0;
+}
+
+.service-checkbox span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

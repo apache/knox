@@ -209,6 +209,20 @@ public class RemoteAliasService extends AbstractAliasService {
   }
 
   @Override
+  public char[] getHttpClientKeyPassphrase() throws AliasServiceException {
+    char[] password = null;
+    if(remoteAliasServiceImpl != null) {
+      password = remoteAliasServiceImpl.getHttpClientKeyPassphrase();
+    }
+
+    if(password == null) {
+      password = localAliasService.getHttpClientKeyPassphrase();
+    }
+
+    return password;
+  }
+
+  @Override
   public char[] getGatewayIdentityKeystorePassword() throws AliasServiceException {
     char[] password = null;
     if(remoteAliasServiceImpl != null) {

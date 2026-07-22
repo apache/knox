@@ -70,8 +70,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -121,7 +123,7 @@ public class TokenResource {
   protected static final String BEARER = "Bearer";
   private static final String TOKEN_PARAM_PREFIX = "knox.token.";
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
-  private static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
+  public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
@@ -145,6 +147,7 @@ public class TokenResource {
   static final String KNOX_TOKEN_USER_LIMIT_PER_USER = TOKEN_PARAM_PREFIX + "limit.per.user";
   static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = TOKEN_PARAM_PREFIX + "user.limit.exceeded.action";
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
+  private static final String TOKEN_ENABLE_DELEGATED_AUTH = TOKEN_PARAM_PREFIX + "enable.delegated.auth";
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -187,6 +190,7 @@ public class TokenResource {
   private int tokenLimitPerUser;
   private boolean includeGroupsInTokenAllowed;
   private String tokenIssuer;
+  private boolean enableDelegatedAuth;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
 
@@ -269,10 +273,15 @@ public class TokenResource {
             ? true
             : Boolean.parseBoolean(includeGroupsInTokenAllowedParam);
 
+    String enableDelegatedAuthParam = context.getInitParameter(TOKEN_ENABLE_DELEGATED_AUTH);
+    enableDelegatedAuth = enableDelegatedAuthParam != null && Boolean.parseBoolean(enableDelegatedAuthParam);
+
     this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
             : context.getInitParameter(KNOX_TOKEN_ISSUER);
-    this.tokenType = context.getInitParameter(TOKEN_TYPE_PARAM);
+    this.tokenType = StringUtils.isBlank(context.getInitParameter(TOKEN_TYPE_PARAM))
+            ? JWTokenAttributes.DEFAULT_TYPE
+            : context.getInitParameter(TOKEN_TYPE_PARAM);
 
     tokenTTLAsText = getTokenTTLAsText();
 
@@ -1091,9 +1100,48 @@ public class TokenResource {
       jwtAttributesBuilder.setGroups(groups());
     }
 
+    final Subject subject = SubjectUtils.getCurrentSubject();
+    if (subject != null) {
+      Set<TokenIdPrincipal> tokenIdPrincipals = subject.getPrincipals(TokenIdPrincipal.class);
+      if (!tokenIdPrincipals.isEmpty()) {
+        jwtAttributesBuilder.setClientId(tokenIdPrincipals.iterator().next().getName());
+      }
+
+      // RFC 8693 Token Exchange: Build the actor chain if delegated auth is enabled
+      handleDelegatedAuthentication(subject, jwtAttributesBuilder);
+    }
+
     jwtAttributes = jwtAttributesBuilder.build();
     token = ts.issueToken(jwtAttributes);
     return token;
+  }
+
+  private void handleDelegatedAuthentication(Subject subject, JWTokenAttributesBuilder jwtAttributesBuilder) {
+    if (enableDelegatedAuth) {
+      // First check if there's an existing actor chain from a previous token exchange
+      Set<ActorChainPrincipal> actorChainPrincipals = subject.getPrincipals(ActorChainPrincipal.class);
+      List<Map<String, Object>> existingChain = null;
+      if (!actorChainPrincipals.isEmpty()) {
+        existingChain = actorChainPrincipals.iterator().next().getActorChain();
+        log.generalInfoMessage("Found existing actor chain with " + existingChain.size() + " actors");
+      }
+
+      // Check if impersonation is occurring to add a new actor to the chain
+      if (SubjectUtils.isImpersonating(subject)) {
+        String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
+        String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
+        if (primaryPrincipalName != null && impersonatedPrincipalName != null && !primaryPrincipalName.equals(impersonatedPrincipalName)) {
+          // Build the new actor chain by adding the current actor (primary principal) to the existing chain
+          List<Map<String, Object>> newActorChain = TokenUtils.addActorToChain(existingChain, primaryPrincipalName);
+          jwtAttributesBuilder.setActorChain(newActorChain);
+          log.addingActorClaimToToken(primaryPrincipalName, impersonatedPrincipalName);
+        }
+      } else if (existingChain != null && !existingChain.isEmpty()) {
+        // No new impersonation, but preserve existing actor chain
+        jwtAttributesBuilder.setActorChain(existingChain);
+        log.generalInfoMessage("Preserving existing actor chain without adding new actor");
+      }
+    }
   }
 
   private boolean shouldIncludeGroups() {

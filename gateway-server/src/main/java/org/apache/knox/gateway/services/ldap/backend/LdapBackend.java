@@ -18,10 +18,11 @@
 package org.apache.knox.gateway.services.ldap.backend;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Interface for pluggable LDAP backends.
@@ -32,16 +33,28 @@ import java.util.Map;
  * - REST APIs (Knox, Ranger, etc.)
  */
 public interface LdapBackend {
+
     /**
-     * Get the name of this backend implementation
+     * Get the name of this backend
      */
     String getName();
 
     /**
-     * Initialize the backend with configuration
-     * @param config Configuration properties
+     * Get the type of this backend implementation
      */
-    void initialize(Map<String, String> config) throws Exception;
+    String getType();
+
+    /**
+     * Get the base dn of this backend
+     */
+    String getBaseDn();
+
+    /**
+     * Returns whether a search base is supported by this backend
+     * @param searchBase the base dn for a search
+     * @return True if the base dn is supported by this backend
+     */
+    boolean isSupportedSearchBase(String searchBase);
 
     /**
      * Get a user entry by username
@@ -54,9 +67,10 @@ public interface LdapBackend {
     /**
      * Get groups for a user
      * @param username The username
-     * @return List of group names
+     * @param schemaManager Schema manager for creating entries
+     * @return List of group names or null if not found
      */
-    List<String> getUserGroups(String username) throws Exception;
+    List<String> getUserGroups(String username, SchemaManager schemaManager) throws Exception;
 
     /**
      * Search for users matching a filter
@@ -65,4 +79,23 @@ public interface LdapBackend {
      * @return List of matching entries
      */
     List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception;
+
+    /**
+     * Search for entries matching a filter
+     * @param searchBase The base DN for the search
+     * @param searchScope The scope of the search
+     * @param filter LDAP filter string (simplified)
+     * @param schemaManager Schema manager for creating entries
+     * @return List of matching entries
+     */
+    List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception;
+
+    /**
+     * Authenticate a user with password
+     *
+     * @param userDn   The user's Distinguished Name
+     * @param password The user's password
+     * @return true if authentication is successful, false otherwise
+     */
+    boolean authenticate(Dn userDn, String password);
 }

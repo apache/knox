@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,8 +68,10 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
+import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
+import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
@@ -385,6 +388,8 @@ public abstract class AbstractJWTFilter implements Filter {
     if (expectedPrincipalClaim != null) {
       claimvalue = token.getClaim(expectedPrincipalClaim);
     }
+    // Extract actor chain from the JWT token if present (RFC 8693)
+    List<Map<String, Object>> actorChain = TokenUtils.extractActorChain(token);
     // The newly constructed Sets check whether this Subject has been set read-only
     // before permitting subsequent modifications. The newly created Sets also prevent
     // illegal modifications by ensuring that callers have sufficient permissions.
@@ -392,7 +397,7 @@ public abstract class AbstractJWTFilter implements Filter {
     // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
     // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    return createSubjectFromTokenData(principal, claimvalue);
+    return createSubjectFromTokenData(principal, claimvalue, null, actorChain);
   }
 
   public Subject createSubjectFromTokenIdentifier(final String tokenId) throws UnknownTokenException {
@@ -405,15 +410,32 @@ public abstract class AbstractJWTFilter implements Filter {
       // token id until it is created, the username is always the same
       // in the record. Using the token id makes it a unique username for
       // audit and the like.
-      final String username = metadata.isClientId() ? tokenId : metadata.getUserName();
-
-      return createSubjectFromTokenData(username, null);
+      // However, in case of service-to-service communications, it might
+      // be useful to return the actual userName during the token exchange
+      // step in the client credentials flow (this is controlled by the thirdPartyApp)
+      // flag that was (or wasn't) submitted while the client credentials were created
+      final String userName = (metadata.isClientId() && metadata.isThirdPartyApp()) ? tokenId : metadata.getUserName();
+      final String clientId = (metadata.isClientId() && !metadata.isThirdPartyApp()) ? tokenId : null;
+      return createSubjectFromTokenData(userName, null, clientId);
     }
     return null;
   }
 
   @SuppressWarnings("rawtypes")
   protected Subject createSubjectFromTokenData(final String principal, final String expectedPrincipalClaimValue) {
+    return createSubjectFromTokenData(principal, expectedPrincipalClaimValue, null, null);
+  }
+
+  @SuppressWarnings("rawtypes")
+  protected Subject createSubjectFromTokenData(final String principal, final String expectedPrincipalClaimValue, final String tokenId) {
+    return createSubjectFromTokenData(principal, expectedPrincipalClaimValue, tokenId, null);
+  }
+
+  @SuppressWarnings("rawtypes")
+  protected Subject createSubjectFromTokenData(final String principal,
+                                               final String expectedPrincipalClaimValue,
+                                               final String tokenId,
+                                               final List<Map<String, Object>> actorChain) {
     String claimValue =
               (expectedPrincipalClaimValue != null) ? expectedPrincipalClaimValue.toLowerCase(Locale.ROOT) : null;
 
@@ -421,6 +443,14 @@ public abstract class AbstractJWTFilter implements Filter {
     Set<Principal> principals = new HashSet<>();
     Principal p = new PrimaryPrincipal(claimValue != null ? claimValue : principal);
     principals.add(p);
+    if (tokenId != null) {
+      principals.add(new TokenIdPrincipal(tokenId));
+    }
+
+    // Add ActorChainPrincipal if an actor chain is present (RFC 8693 token exchange)
+    if (actorChain != null && !actorChain.isEmpty()) {
+      principals.add(new ActorChainPrincipalImpl(actorChain));
+    }
 
     // The newly constructed Sets check whether this Subject has been set read-only
     // before permitting subsequent modifications. The newly created Sets also prevent
