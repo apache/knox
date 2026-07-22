@@ -30,7 +30,7 @@
 # - DATABASE_CONNECTION_PASSWORD - (optional) gateway database password
 # - DATABASE_CONNECTION_TRUSTSTORE_PASSWORD - (optional) gateway database ssl truststore password
 # - CUSTOM_CERT - (optional) the location of a file containing the custom certs
-# - IMPORT_DEFAULT_STAGING_CERTS - (optional) when 'true' (default), download Let's Encrypt staging root
+# - IMPORT_LETS_ENCRYPT_STAGING_CERTS - (optional) when 'true' (default), download Let's Encrypt staging root
 #   CAs into /home/knox/cacrts at startup and import them into the gateway truststore. Set to 'false' to
 #   skip staging CA download and import (Amazon and ISRG production roots in TRUSTSTORE_IMPORTS are unaffected).
 # - TRUSTSTORE_IMPORTS - (optional) - a string containing  one or more of the following: {aliasIdForImport:PEMEncodedTrustCertificateFileLocation} separated by space(s).
@@ -43,8 +43,8 @@
 set -e
 set -o pipefail
 
-# Default: false, download and import Let's Encrypt staging root CAs (see IMPORT_DEFAULT_STAGING_CERTS above).
-IMPORT_DEFAULT_STAGING_CERTS="${IMPORT_DEFAULT_STAGING_CERTS:-false}"
+# Default: false, download and import Let's Encrypt staging root CAs (see IMPORT_LETS_ENCRYPT_STAGING_CERTS above).
+IMPORT_LETS_ENCRYPT_STAGING_CERTS="${IMPORT_LETS_ENCRYPT_STAGING_CERTS:-true}"
 
 ## Helper function used to import certs into truststore
 ## Function takes cert file as argument
@@ -82,8 +82,8 @@ importMultipleCerts() {
   return "$import_failed"
 }
 
-## Download Let's Encrypt staging root CAs (best-effort) when IMPORT_DEFAULT_STAGING_CERTS is true.
-downloadDefaultStagingCerts() {
+## Download Let's Encrypt staging root CAs (best-effort) when IMPORT_LETS_ENCRYPT_STAGING_CERTS is true.
+downloadLetEncryptStagingCerts() {
   local cacrts_dir="/home/knox/cacrts"
   mkdir -p "${cacrts_dir}"
   echo "Downloading default Let's Encrypt staging root CAs into ${cacrts_dir} ..."
@@ -250,9 +250,9 @@ then
      isrgrootx2:/home/knox/cacrts/isrg-root-x2.pem"
 fi
 
-if [[ "${IMPORT_DEFAULT_STAGING_CERTS}" == "true" ]]
+if [[ "${IMPORT_LETS_ENCRYPT_STAGING_CERTS}" == "true" ]]
 then
-  downloadDefaultStagingCerts
+  downloadLetEncryptStagingCerts
   TRUSTSTORE_IMPORTS="${TRUSTSTORE_IMPORTS}
      letsencrypt-stg-root-x1:/home/knox/cacrts/letsencrypt-stg-root-x1.pem
      letsencrypt-stg-root-x2:/home/knox/cacrts/letsencrypt-stg-root-x2.pem
