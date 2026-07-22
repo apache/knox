@@ -470,6 +470,13 @@ public class KnoxLDAPServerManager {
                             int commaIdx = groupDn.indexOf(',');
                             if (commaIdx > 0) {
                                 groups.add(groupDn.substring(3, commaIdx));
+                            } else if (hasRolesLookupInterceptor) {
+                                // When the roles lookup interceptor is active and no template
+                                // group DN was available, roles are stored as a bare RDN
+                                // (cn=role) with no trailing DN components (see
+                                // LDAPRolesLookupInterceptor#addRoleAttribute). Take everything
+                                // after "cn=".
+                                groups.add(groupDn.substring(3));
                             }
                         }
 
