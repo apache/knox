@@ -27,6 +27,7 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
 import org.apache.directory.api.ldap.model.message.SearchScope;
@@ -56,7 +57,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -465,14 +465,19 @@ public class KnoxLDAPServerManager {
                 Attribute memberOf = entry.get("memberOf");
                 if (memberOf != null) {
                     for (Value value : memberOf) {
-                        String groupDn = value.getString();
-                        if (groupDn.toLowerCase(Locale.ROOT).startsWith("cn=")) {
-                            int commaIdx = groupDn.indexOf(',');
-                            if (commaIdx > 0) {
-                                groups.add(groupDn.substring(3, commaIdx));
+                        try {
+                            Dn groupDn = new Dn(value.getString());
+                            String groupName = LdapUtils.extractGroupName(groupDn);
+                            // A full group DN (cn=role,ou=groups,...) is always resolved. A bare
+                            // RDN (cn=role) is only produced by the roles lookup interceptor when
+                            // no template group DN was available (see LDAPRolesLookupInterceptor#addRoleAttribute),
+                            // so only accept it when that interceptor is active.
+                            if (groupName != null && (groupDn.size() > 1 || hasRolesLookupInterceptor)) {
+                                groups.add(groupName);
                             }
+                        } catch (LdapInvalidDnException e) {
+                            // Skip memberOf values that are not valid DNs
                         }
-
                     }
                 }
             }
