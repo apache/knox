@@ -130,18 +130,18 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   @Override
   public boolean isTrusted(String issuerUrl) {
-    return registrySnapshot.get().containsKey(issuerUrl);
+    return registrySnapshot.get().containsKey(normalizeIssuerUrl(issuerUrl));
   }
 
   @Override
   public boolean isDynamicJwks(String issuerUrl) {
-    final TrustedOidcIssuer entry = registrySnapshot.get().get(issuerUrl);
+    final TrustedOidcIssuer entry = registrySnapshot.get().get(normalizeIssuerUrl(issuerUrl));
     return entry != null && entry.isDynamicJwks();
   }
 
   @Override
   public Optional<String> resolveJwksUri(String issuerUrl) {
-    return discoveryHelper.discoverJwksUri(issuerUrl);
+    return discoveryHelper.discoverJwksUri(normalizeIssuerUrl(issuerUrl));
   }
 
   @Override
@@ -150,31 +150,34 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
       throw new IllegalStateException(
           "Cannot register issuer: MAX_TRUSTED_ISSUERS (" + maxTrustedIssuers + ") reached");
     }
+    final TrustedOidcIssuer normalized = normalizeIssuer(issuer);
     try {
-      database.insert(issuer);
+      database.insert(normalized);
     } catch (SQLException e) {
-      LOG.errorRegisteringIssuer(issuer.getIssuerUrl(), e.getMessage(), e);
-      throw new RuntimeException("Error registering trusted OIDC issuer: " + issuer.getIssuerUrl(), e);
+      LOG.errorRegisteringIssuer(normalized.getIssuerUrl(), e.getMessage(), e);
+      throw new RuntimeException("Error registering trusted OIDC issuer: " + normalized.getIssuerUrl(), e);
     }
     reloadRegistrySnapshot();
   }
 
   @Override
   public synchronized void deregister(String issuerUrl) {
+    final String normalizedUrl = normalizeIssuerUrl(issuerUrl);
     try {
-      database.delete(issuerUrl);
+      database.delete(normalizedUrl);
     } catch (SQLException e) {
-      LOG.errorDeregisteringIssuer(issuerUrl, e.getMessage(), e);
-      throw new RuntimeException("Error deregistering trusted OIDC issuer: " + issuerUrl, e);
+      LOG.errorDeregisteringIssuer(normalizedUrl, e.getMessage(), e);
+      throw new RuntimeException("Error deregistering trusted OIDC issuer: " + normalizedUrl, e);
     }
     reloadRegistrySnapshot();
-    discoveryHelper.invalidate(issuerUrl);
+    discoveryHelper.invalidate(normalizedUrl);
   }
 
   @Override
   public void refreshJwksUri(String issuerUrl) {
-    if (isDynamicJwks(issuerUrl)) {
-      discoveryHelper.invalidate(issuerUrl);
+    final String normalizedUrl = normalizeIssuerUrl(issuerUrl);
+    if (isDynamicJwks(normalizedUrl)) {
+      discoveryHelper.invalidate(normalizedUrl);
     }
   }
 
@@ -187,6 +190,10 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
    * Rebuilds the registry snapshot from the current DB state.
    * Called on init, after register, and after deregister.
    * Synchronized on this to prevent concurrent rebuilds from interleaving with mutations.
+   * <p>
+   * Propagates any failure rather than swallowing it: a reload that fails after a committed
+   * write would otherwise leave the in-memory snapshot silently diverged from the DB while
+   * the mutating call returned success. Callers (init/register/deregister) surface the error.
    */
   private synchronized void reloadRegistrySnapshot() {
     try {
@@ -195,6 +202,35 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
       registrySnapshot.set(Collections.unmodifiableMap(fresh));
     } catch (Exception e) {
       LOG.errorReloadingRegistrySnapshot(e.getMessage(), e);
+      throw new RuntimeException("Error reloading trusted OIDC issuer registry snapshot", e);
     }
+  }
+
+  /**
+   * Canonicalizes an issuer URL for registry storage and lookup by stripping a single
+   * trailing slash, so that {@code https://issuer.example.com/} and
+   * {@code https://issuer.example.com} are treated as the same issuer. This matches the
+   * trailing-slash stripping {@link OIDCDiscoveryHelper} already applies when building the
+   * discovery URL. Null-safe.
+   */
+  private static String normalizeIssuerUrl(String issuerUrl) {
+    if (issuerUrl == null) {
+      return null;
+    }
+    return issuerUrl.endsWith("/") ? issuerUrl.substring(0, issuerUrl.length() - 1) : issuerUrl;
+  }
+
+  /**
+   * Returns a copy of the given issuer with its URL normalized via
+   * {@link #normalizeIssuerUrl(String)}, or the original instance if the URL is already
+   * canonical.
+   */
+  private static TrustedOidcIssuer normalizeIssuer(TrustedOidcIssuer issuer) {
+    final String normalizedUrl = normalizeIssuerUrl(issuer.getIssuerUrl());
+    if (normalizedUrl != null && normalizedUrl.equals(issuer.getIssuerUrl())) {
+      return issuer;
+    }
+    return new TrustedOidcIssuer(normalizedUrl, issuer.isDynamicJwks(),
+        issuer.getClusterName(), issuer.getRegisteredAt(), issuer.getRegisteredBy());
   }
 }

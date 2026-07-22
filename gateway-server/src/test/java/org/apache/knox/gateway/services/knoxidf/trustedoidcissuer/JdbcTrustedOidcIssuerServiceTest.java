@@ -112,6 +112,31 @@ public class JdbcTrustedOidcIssuerServiceTest {
     assertFalse(service.isTrusted("https://other.example.com"));
   }
 
+  /**
+   * An issuer registered with a trailing slash must match a lookup without one, and
+   * vice versa: the URL is canonicalized (single trailing slash stripped) on both write
+   * and lookup.
+   */
+  @Test
+  public void testIssuerUrlTrailingSlashNormalized() {
+    service.register(issuer("https://issuer.example.com/", true));
+
+    // Registered with slash, looked up without
+    assertTrue(service.isTrusted("https://issuer.example.com"));
+    assertTrue(service.isDynamicJwks("https://issuer.example.com"));
+    // Registered with slash, looked up with slash
+    assertTrue(service.isTrusted("https://issuer.example.com/"));
+
+    // Canonical form is persisted (no trailing slash)
+    assertEquals(1, service.list().size());
+    assertEquals("https://issuer.example.com", service.list().get(0).getIssuerUrl());
+
+    // Deregister using the non-canonical form still removes it
+    service.deregister("https://issuer.example.com/");
+    assertFalse(service.isTrusted("https://issuer.example.com"));
+    assertTrue(service.list().isEmpty());
+  }
+
   @Test
   public void testDeregisterClearsSnapshot() {
     service.register(issuer("https://issuer.example.com", false));

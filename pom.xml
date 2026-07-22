@@ -259,8 +259,8 @@
         <mina.version>2.2.8</mina.version>
         <netty.version>4.1.127.Final</netty.version>
         <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
-        <oauth2-oidc-sdk.version>11.37.2</oauth2-oidc-sdk.version>
         <nodejs.version>v22.20.0</nodejs.version>
+        <oauth2-oidc-sdk.version>11.37.2</oauth2-oidc-sdk.version>
         <okhttp.version>4.12.0</okhttp.version>
         <opensaml.version>5.2.2</opensaml.version>
         <pac4j.version>6.5.3</pac4j.version>
