@@ -36,8 +36,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.Arrays;
@@ -142,8 +140,8 @@ public class TrustedOidcIssuersResourceTest {
 
   @Test
   public void testRegisterMissingIssuerUrl() {
-    // issuerUrl field absent from JSON → sentinel "(missing)" used as audit resource name.
-    expectAudit("(missing)", ActionOutcome.FAILURE, "issuer_registered");
+    // issuerUrl field absent from JSON → sentinel UNKNOWN_ISSUER used as audit resource name.
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_registered");
     EasyMock.replay(mockService, mockAuditor);
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(),
@@ -153,8 +151,8 @@ public class TrustedOidcIssuersResourceTest {
 
   @Test
   public void testRegisterEmptyIssuerUrl() {
-    // Empty string issuerUrl → same sentinel "(missing)" as null case.
-    expectAudit("(missing)", ActionOutcome.FAILURE, "issuer_registered");
+    // Empty string issuerUrl → same sentinel UNKNOWN_ISSUER as null case.
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_registered");
     EasyMock.replay(mockService, mockAuditor);
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(),
@@ -164,8 +162,8 @@ public class TrustedOidcIssuersResourceTest {
 
   @Test
   public void testRegisterInvalidJson() {
-    // JSON parse failure before URL is known → sentinel "(invalid)" as audit resource name.
-    expectAudit("(invalid)", ActionOutcome.FAILURE, "issuer_registered");
+    // JSON parse failure before URL is known → sentinel INVALID_REQUEST as audit resource name.
+    expectAudit("INVALID_REQUEST", ActionOutcome.FAILURE, "issuer_registered");
     EasyMock.replay(mockService, mockAuditor);
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(),
@@ -254,7 +252,7 @@ public class TrustedOidcIssuersResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // DELETE /{issuerUrl}
+  // DELETE /
   // ---------------------------------------------------------------------------
 
   @Test
@@ -277,18 +275,41 @@ public class TrustedOidcIssuersResourceTest {
   }
 
   @Test
-  public void testUrlDecodingOnDelete() {
-    // Jersey does not decode %2F; resource must decode explicitly.
-    // Encoding ISSUER_A gives https%3A%2F%2Fissuer-a.example.com.
-    // EasyMock.verify() confirms deregister was called with the decoded value.
-    final String encoded = URLEncoder.encode(ISSUER_A, StandardCharsets.UTF_8);
-    mockService.deregister(ISSUER_A);
-    EasyMock.expectLastCall().once();
-    expectAudit(ISSUER_A, ActionOutcome.SUCCESS, "issuer_removed");
+  public void testRemoveMissingIssuerUrl() {
+    // Null models a request where ?issuerUrl= was omitted entirely (JAX-RS injects null).
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_removed");
     EasyMock.replay(mockService, mockAuditor);
 
-    assertEquals(Response.Status.NO_CONTENT.getStatusCode(),
-        resource.removeIssuer(encoded).getStatus());
+    final Response response = resource.removeIssuer(null);
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRemoveEmptyIssuerUrl() {
+    // Empty string models ?issuerUrl= with no value.
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_removed");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.removeIssuer("");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRemoveWhitespaceIssuerUrl() {
+    // Whitespace-only is not a valid HTTPS URL; fail fast rather than propagating to the service.
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_removed");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.removeIssuer("   ");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
     EasyMock.verify(mockService, mockAuditor);
   }
 
@@ -304,22 +325,9 @@ public class TrustedOidcIssuersResourceTest {
     EasyMock.verify(mockService, mockAuditor);
   }
 
-  @Test
-  public void testRemoveInvalidEncoding() {
-    // %GG is not a valid percent-encoding sequence; URLDecoder throws IllegalArgumentException.
-    // The audit resource name falls back to "(invalid-encoding)".
-    expectAudit("(invalid-encoding)", ActionOutcome.FAILURE, "issuer_removed");
-    EasyMock.replay(mockService, mockAuditor);
-
-    final Response response = resource.removeIssuer("https%GGinvalid.example.com");
-
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    assertErrorField(response, "invalid_request");
-    EasyMock.verify(mockService, mockAuditor);
-  }
 
   // ---------------------------------------------------------------------------
-  // POST /{issuerUrl}/refresh-jwks
+  // POST /refresh-jwks
   // ---------------------------------------------------------------------------
 
   @Test
@@ -342,15 +350,38 @@ public class TrustedOidcIssuersResourceTest {
   }
 
   @Test
-  public void testUrlDecodingOnRefresh() {
-    final String encoded = URLEncoder.encode(ISSUER_A, StandardCharsets.UTF_8);
-    mockService.refreshJwksUri(ISSUER_A);
-    EasyMock.expectLastCall().once();
-    expectAudit(ISSUER_A, ActionOutcome.SUCCESS, "issuer_jwks_refreshed");
+  public void testRefreshMissingIssuerUrl() {
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_jwks_refreshed");
     EasyMock.replay(mockService, mockAuditor);
 
-    assertEquals(Response.Status.NO_CONTENT.getStatusCode(),
-        resource.refreshJwksUri(encoded).getStatus());
+    final Response response = resource.refreshJwksUri(null);
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRefreshEmptyIssuerUrl() {
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_jwks_refreshed");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.refreshJwksUri("");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRefreshWhitespaceIssuerUrl() {
+    expectAudit("UNKNOWN_ISSUER", ActionOutcome.FAILURE, "issuer_jwks_refreshed");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.refreshJwksUri("   ");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
     EasyMock.verify(mockService, mockAuditor);
   }
 
@@ -366,17 +397,6 @@ public class TrustedOidcIssuersResourceTest {
     EasyMock.verify(mockService, mockAuditor);
   }
 
-  @Test
-  public void testRefreshInvalidEncoding() {
-    expectAudit("(invalid-encoding)", ActionOutcome.FAILURE, "issuer_jwks_refreshed");
-    EasyMock.replay(mockService, mockAuditor);
-
-    final Response response = resource.refreshJwksUri("https%GGinvalid.example.com");
-
-    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    assertErrorField(response, "invalid_request");
-    EasyMock.verify(mockService, mockAuditor);
-  }
 
   // ---------------------------------------------------------------------------
   // GET /

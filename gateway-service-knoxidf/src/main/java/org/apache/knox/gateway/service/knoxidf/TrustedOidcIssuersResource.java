@@ -26,6 +26,7 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuer;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.util.JsonUtils;
@@ -38,16 +39,14 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -64,7 +63,6 @@ public class TrustedOidcIssuersResource {
   static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/admin/trusted-oidc-issuers";
 
   // Non-final and package-private to allow test injection of a mock Auditor.
-  // Tests in the same package capture the original value and restore it in @After.
   static Auditor auditor = AuditServiceFactory.getAuditService()
       .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
@@ -87,7 +85,7 @@ public class TrustedOidcIssuersResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   public Response registerIssuer(String body) {
-    String issuerUrl = "(invalid)";
+    String issuerUrl = "INVALID_REQUEST";
     final String operatorId = getOperatorId();
     String outcome = ActionOutcome.FAILURE;
 
@@ -100,7 +98,7 @@ public class TrustedOidcIssuersResource {
       }
 
       final String rawUrl = (String) parsed.get("issuerUrl");
-      issuerUrl = (rawUrl != null && !rawUrl.isEmpty()) ? rawUrl : "(missing)";
+      issuerUrl = (rawUrl != null && !rawUrl.isEmpty()) ? rawUrl : "UNKNOWN_ISSUER";
 
       if (rawUrl == null || rawUrl.isEmpty()) {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request", "issuerUrl is required");
@@ -131,21 +129,15 @@ public class TrustedOidcIssuersResource {
   }
 
   @DELETE
-  @Path("/{issuerUrl}")
-  public Response removeIssuer(@PathParam("issuerUrl") String encodedIssuerUrl) {
+  public Response removeIssuer(@QueryParam("issuerUrl") String issuerUrl) {
     final String operatorId = getOperatorId();
-    String issuerUrl = "(invalid)";
+    final String auditIssuerUrl = StringUtils.isBlank(issuerUrl) ? "UNKNOWN_ISSUER" : issuerUrl;
     String outcome = ActionOutcome.FAILURE;
 
     try {
-      // Jersey does not decode %2F in path segments; explicit decode is required for issuer URLs
-      // containing '://'. Malformed percent-encoding raises IllegalArgumentException here.
-      try {
-        issuerUrl = URLDecoder.decode(encodedIssuerUrl, StandardCharsets.UTF_8);
-      } catch (IllegalArgumentException | NullPointerException e) {
-        issuerUrl = "(invalid-encoding)";
+      if (StringUtils.isBlank(issuerUrl)) {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
-            "Invalid issuer URL encoding");
+            "issuerUrl query parameter is required");
       }
 
       // deregister is idempotent at the service layer: it returns silently if the issuer is
@@ -158,7 +150,7 @@ public class TrustedOidcIssuersResource {
       return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error",
           "Failed to remove issuer");
     } finally {
-      auditor.audit(Action.DELEGATION_LIFECYCLE, issuerUrl, ResourceType.TRUSTED_ISSUER,
+      auditor.audit(Action.DELEGATION_LIFECYCLE, auditIssuerUrl, ResourceType.TRUSTED_ISSUER,
           outcome, "event_type=issuer_removed performed_by=" + auditLabel(operatorId));
     }
   }
@@ -172,19 +164,16 @@ public class TrustedOidcIssuersResource {
   }
 
   @POST
-  @Path("/{issuerUrl}/refresh-jwks")
-  public Response refreshJwksUri(@PathParam("issuerUrl") String encodedIssuerUrl) {
+  @Path("/refresh-jwks")
+  public Response refreshJwksUri(@QueryParam("issuerUrl") String issuerUrl) {
     final String operatorId = getOperatorId();
-    String issuerUrl = "(invalid)";
+    final String auditIssuerUrl = StringUtils.isBlank(issuerUrl) ? "UNKNOWN_ISSUER" : issuerUrl;
     String outcome = ActionOutcome.FAILURE;
 
     try {
-      try {
-        issuerUrl = URLDecoder.decode(encodedIssuerUrl, StandardCharsets.UTF_8);
-      } catch (IllegalArgumentException | NullPointerException e) {
-        issuerUrl = "(invalid-encoding)";
+      if (StringUtils.isBlank(issuerUrl)) {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
-            "Invalid issuer URL encoding");
+            "issuerUrl query parameter is required");
       }
 
       // No-op at the service layer if the issuer is not registered or not configured for
@@ -196,7 +185,7 @@ public class TrustedOidcIssuersResource {
       return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error",
           "Failed to refresh JWKS URI");
     } finally {
-      auditor.audit(Action.DELEGATION_LIFECYCLE, issuerUrl, ResourceType.TRUSTED_ISSUER,
+      auditor.audit(Action.DELEGATION_LIFECYCLE, auditIssuerUrl, ResourceType.TRUSTED_ISSUER,
           outcome, "event_type=issuer_jwks_refreshed performed_by=" + auditLabel(operatorId));
     }
   }
