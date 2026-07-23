@@ -30,6 +30,9 @@
 # - DATABASE_CONNECTION_PASSWORD - (optional) gateway database password
 # - DATABASE_CONNECTION_TRUSTSTORE_PASSWORD - (optional) gateway database ssl truststore password
 # - CUSTOM_CERT - (optional) the location of a file containing the custom certs
+# - IMPORT_LETS_ENCRYPT_STAGING_CERTS - (optional) when 'true' (default), download Let's Encrypt staging root
+#   CAs into /home/knox/cacrts at startup and import them into the gateway truststore. Set to 'false' to
+#   skip staging CA download and import (Amazon and ISRG production roots in TRUSTSTORE_IMPORTS are unaffected).
 # - TRUSTSTORE_IMPORTS - (optional) - a string containing  one or more of the following: {aliasIdForImport:PEMEncodedTrustCertificateFileLocation} separated by space(s).
 #   Example:
 #   TRUSTSTORE_IMPORTS="myRootCA:/mountedpath/enterprise_root_cert.pem myBizPartnerCA:/mountedpath/mybiz_partner_cert.pem"
@@ -41,6 +44,9 @@
 
 set -e
 set -o pipefail
+
+# Default: false, download and import Let's Encrypt staging root CAs (see IMPORT_LETS_ENCRYPT_STAGING_CERTS above).
+IMPORT_LETS_ENCRYPT_STAGING_CERTS="${IMPORT_LETS_ENCRYPT_STAGING_CERTS:-true}"
 
 ## Helper function used to import certs into truststore
 ## Function takes cert file as argument
@@ -76,6 +82,27 @@ importMultipleCerts() {
   done
 
   return "$import_failed"
+}
+
+## Download Let's Encrypt staging root CAs (best-effort) when IMPORT_LETS_ENCRYPT_STAGING_CERTS is true.
+downloadLetEncryptStagingCerts() {
+  local cacrts_dir="/home/knox/cacrts"
+  mkdir -p "${cacrts_dir}"
+  echo "Downloading default Let's Encrypt staging root CAs into ${cacrts_dir} ..."
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-x1.pem" \
+    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem || true
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-x2.pem" \
+    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2.pem || true
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-x2-signed-by-x1.pem" \
+    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2-signed-by-x1.pem || true
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-ye.pem" \
+    https://letsencrypt.org/certs/staging/gen-y/root-ye.pem || true
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-ye-by-x2.pem" \
+    https://letsencrypt.org/certs/staging/gen-y/root-ye-by-x2.pem || true
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-yr.pem" \
+    https://letsencrypt.org/certs/staging/gen-y/root-yr.pem || true
+  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-yr-by-x1.pem" \
+    https://letsencrypt.org/certs/staging/gen-y/root-yr-by-x1.pem || true
 }
 
 ## Helper function to save an alias
@@ -270,6 +297,19 @@ then
      isrgrootx2:/home/knox/cacrts/isrg-root-x2.pem"
 fi
 
+if [[ "${IMPORT_LETS_ENCRYPT_STAGING_CERTS}" == "true" ]]
+then
+  downloadLetEncryptStagingCerts
+  TRUSTSTORE_IMPORTS="${TRUSTSTORE_IMPORTS}
+     letsencrypt-stg-root-x1:/home/knox/cacrts/letsencrypt-stg-root-x1.pem
+     letsencrypt-stg-root-x2:/home/knox/cacrts/letsencrypt-stg-root-x2.pem
+     letsencrypt-stg-root-x2-signed-by-x1:/home/knox/cacrts/letsencrypt-stg-root-x2-signed-by-x1.pem
+     letsencrypt-stg-root-ye:/home/knox/cacrts/letsencrypt-stg-root-ye.pem
+     letsencrypt-stg-root-ye-by-x2:/home/knox/cacrts/letsencrypt-stg-root-ye-by-x2.pem
+     letsencrypt-stg-root-yr:/home/knox/cacrts/letsencrypt-stg-root-yr.pem
+     letsencrypt-stg-root-yr-by-x1:/home/knox/cacrts/letsencrypt-stg-root-yr-by-x1.pem"
+fi
+
 for certinfo in ${TRUSTSTORE_IMPORTS}
 do
     aliasId=$(echo "${certinfo}" | awk -F: '{ print $1 }')
@@ -294,7 +334,16 @@ do
     fi
 done
 
-export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS} -Djavax.net.ssl.trustStore=${KEYSTORE_DIR}/truststore.jks -Djavax.net.ssl.trustStorePassword=${ALIAS_PASSPHRASE}"
+# To avoid leaking password into the process command line 
+# we pass the trust options through a 0600 Java argument file. 
+# Java launcher expands @file after exec, so only "@<path>" appears in the process args.
+TRUSTSTORE_JVM_OPTS_FILE="${KEYSTORE_DIR}/truststore-jvm.options"
+cat > "${TRUSTSTORE_JVM_OPTS_FILE}" <<EOF
+-Djavax.net.ssl.trustStore=${KEYSTORE_DIR}/truststore.jks
+-Djavax.net.ssl.trustStorePassword="${ALIAS_PASSPHRASE}"
+EOF
+chmod 600 "${TRUSTSTORE_JVM_OPTS_FILE}"
+export KNOX_GATEWAY_DBG_OPTS="${KNOX_GATEWAY_DBG_OPTS} @${TRUSTSTORE_JVM_OPTS_FILE}"
 
 echo "Starting Knox gateway ..."
 /home/knox/knox/bin/gateway.sh start

@@ -57,7 +57,8 @@ ARG ENTRYPOINT
 COPY --chown=8000:0 ${ENTRYPOINT} /home/knox/knox/entrypoint.sh
 RUN chmod +x /home/knox/knox/entrypoint.sh
 
-# Add the Amazon Root CA and Let's Encrypt production certificates (best-effort)
+# Add the Amazon Root CA and Let's Encrypt production root certificates (best-effort).
+# Staging roots are downloaded at runtime when IMPORT_LETS_ENCRYPT_STAGING_CERTS=true (default).
 RUN mkdir /home/knox/cacrts && \
     curl -sSLo /home/knox/cacrts/AmazonRootCA1.cer  https://www.amazontrust.com/repository/AmazonRootCA1.cer  || true && \
     curl -sSLo /home/knox/cacrts/AmazonRootCA2.cer  https://www.amazontrust.com/repository/AmazonRootCA2.cer  || true && \
