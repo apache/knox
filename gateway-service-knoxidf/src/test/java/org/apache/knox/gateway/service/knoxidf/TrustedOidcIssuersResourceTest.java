@@ -196,13 +196,47 @@ public class TrustedOidcIssuersResourceTest {
     mockAuditor.audit(
         EasyMock.eq(Action.DELEGATION_LIFECYCLE), EasyMock.eq(ISSUER_A),
         EasyMock.eq(ResourceType.TRUSTED_ISSUER), EasyMock.eq(ActionOutcome.SUCCESS),
-        EasyMock.contains("performed_by=unknown"));
+        EasyMock.contains("performed_by=ANONYMOUS"));
     EasyMock.expectLastCall().once();
     EasyMock.replay(mockService, mockAuditor);
 
     assertEquals(Response.Status.CREATED.getStatusCode(),
         res.registerIssuer(buildRegisterBody(ISSUER_A, false, null)).getStatus());
-    assertEquals("unknown", capturedIssuer.getValue().getRegisteredBy());
+    assertNull(capturedIssuer.getValue().getRegisteredBy());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRemoveNullPrincipalAuditsAnonymous() throws Exception {
+    final TrustedOidcIssuersResource res = buildResource(null);
+    mockService.deregister(ISSUER_A);
+    EasyMock.expectLastCall().once();
+    mockAuditor.audit(
+        EasyMock.eq(Action.DELEGATION_LIFECYCLE), EasyMock.eq(ISSUER_A),
+        EasyMock.eq(ResourceType.TRUSTED_ISSUER), EasyMock.eq(ActionOutcome.SUCCESS),
+        EasyMock.contains("performed_by=ANONYMOUS"));
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(mockService, mockAuditor);
+
+    assertEquals(Response.Status.NO_CONTENT.getStatusCode(),
+        res.removeIssuer(ISSUER_A).getStatus());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRefreshJwksNullPrincipalAuditsAnonymous() throws Exception {
+    final TrustedOidcIssuersResource res = buildResource(null);
+    mockService.refreshJwksUri(ISSUER_A);
+    EasyMock.expectLastCall().once();
+    mockAuditor.audit(
+        EasyMock.eq(Action.DELEGATION_LIFECYCLE), EasyMock.eq(ISSUER_A),
+        EasyMock.eq(ResourceType.TRUSTED_ISSUER), EasyMock.eq(ActionOutcome.SUCCESS),
+        EasyMock.contains("performed_by=ANONYMOUS"));
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(mockService, mockAuditor);
+
+    assertEquals(Response.Status.NO_CONTENT.getStatusCode(),
+        res.refreshJwksUri(ISSUER_A).getStatus());
     EasyMock.verify(mockService, mockAuditor);
   }
 
