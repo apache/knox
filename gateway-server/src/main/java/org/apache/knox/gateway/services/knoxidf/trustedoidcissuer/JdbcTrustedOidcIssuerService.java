@@ -195,6 +195,7 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
       registrySnapshot.set(Collections.unmodifiableMap(fresh));
     } catch (Exception e) {
       LOG.errorReloadingRegistrySnapshot(e.getMessage(), e);
+      throw new RuntimeException("Error reloading trusted OIDC issuer registry snapshot", e);
     }
   }
 }
