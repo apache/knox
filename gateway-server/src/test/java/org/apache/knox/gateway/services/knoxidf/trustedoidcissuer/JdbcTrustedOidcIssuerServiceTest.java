@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.services.knoxidf.trustedoidcissuer;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.database.AbstractDataSourceFactory;
@@ -277,6 +278,45 @@ public class JdbcTrustedOidcIssuerServiceTest {
   @Test
   public void testRefreshJwksUriForUnregisteredIsNoOp() {
     service.refreshJwksUri("https://unknown.example.com"); // must not throw
+  }
+
+  // ------------------------------------------------------------------
+  // SQL exception error paths
+  // ------------------------------------------------------------------
+
+  @Test(expected = RuntimeException.class)
+  public void testDeregisterSqlExceptionOnDeleteThrowsRuntimeException() throws Exception {
+    final TrustedOidcIssuerDatabase mockDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    mockDb.delete(EasyMock.anyString());
+    EasyMock.expectLastCall().andThrow(new java.sql.SQLException("delete failed"));
+    EasyMock.replay(mockDb);
+    FieldUtils.writeField(service, "database", mockDb, true);
+
+    service.deregister("https://any.example.com");
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testRegisterSqlExceptionOnSnapshotReloadPropagates() throws Exception {
+    final TrustedOidcIssuerDatabase mockDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    mockDb.insert(EasyMock.anyObject(TrustedOidcIssuer.class));
+    EasyMock.expectLastCall();
+    EasyMock.expect(mockDb.selectAll()).andThrow(new java.sql.SQLException("selectAll failed"));
+    EasyMock.replay(mockDb);
+    FieldUtils.writeField(service, "database", mockDb, true);
+
+    service.register(issuer("https://any.example.com", false));
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testDeregisterSqlExceptionOnSnapshotReloadPropagates() throws Exception {
+    final TrustedOidcIssuerDatabase mockDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    mockDb.delete(EasyMock.anyString());
+    EasyMock.expectLastCall();
+    EasyMock.expect(mockDb.selectAll()).andThrow(new java.sql.SQLException("selectAll failed"));
+    EasyMock.replay(mockDb);
+    FieldUtils.writeField(service, "database", mockDb, true);
+
+    service.deregister("https://any.example.com");
   }
 
   // ------------------------------------------------------------------
