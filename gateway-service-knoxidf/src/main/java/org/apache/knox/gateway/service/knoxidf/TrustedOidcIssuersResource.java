@@ -126,7 +126,7 @@ public class TrustedOidcIssuersResource {
           "Failed to register issuer");
     } finally {
       auditor.audit(Action.DELEGATION_LIFECYCLE, issuerUrl, ResourceType.TRUSTED_ISSUER,
-          outcome, "event_type=issuer_registered performed_by=" + operatorId);
+          outcome, "event_type=issuer_registered performed_by=" + auditLabel(operatorId));
     }
   }
 
@@ -159,7 +159,7 @@ public class TrustedOidcIssuersResource {
           "Failed to remove issuer");
     } finally {
       auditor.audit(Action.DELEGATION_LIFECYCLE, issuerUrl, ResourceType.TRUSTED_ISSUER,
-          outcome, "event_type=issuer_removed performed_by=" + operatorId);
+          outcome, "event_type=issuer_removed performed_by=" + auditLabel(operatorId));
     }
   }
 
@@ -197,13 +197,17 @@ public class TrustedOidcIssuersResource {
           "Failed to refresh JWKS URI");
     } finally {
       auditor.audit(Action.DELEGATION_LIFECYCLE, issuerUrl, ResourceType.TRUSTED_ISSUER,
-          outcome, "event_type=issuer_jwks_refreshed performed_by=" + operatorId);
+          outcome, "event_type=issuer_jwks_refreshed performed_by=" + auditLabel(operatorId));
     }
   }
 
   private String getOperatorId() {
     final Principal principal = request.getUserPrincipal();
-    return principal != null ? principal.getName() : "unknown";
+    return principal != null ? principal.getName() : null;
+  }
+
+  private static String auditLabel(String operatorId) {
+    return operatorId != null ? operatorId : "ANONYMOUS";
   }
 
   private Map<String, Object> issuerToMap(TrustedOidcIssuer issuer) {
