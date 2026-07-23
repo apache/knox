@@ -16,13 +16,11 @@
  */
 package org.apache.knox.gateway.services.knoxidf.trustedoidcissuer;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.DataSourceProvider;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -55,9 +53,6 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
   private static final TrustedOidcIssuerServiceMessages LOG =
       MessagesFactory.get(TrustedOidcIssuerServiceMessages.class);
 
-  static final String MAX_TRUSTED_ISSUERS_CONFIG = "gateway.trustedoidcissuer.max.issuers";
-  private static final int DEFAULT_MAX_TRUSTED_ISSUERS = 10_000;
-
   private final AtomicBoolean initialized = new AtomicBoolean(false);
   private final Lock initLock = new ReentrantLock(true);
 
@@ -78,27 +73,11 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
           throw new ServiceLifecycleException("The required AliasService reference has not been set.");
         }
         try {
-          int maxIssuers = DEFAULT_MAX_TRUSTED_ISSUERS;
-          long cacheTtlSecs = KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_CACHE_TTL_SECS;
-          int connectTimeoutMs = KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_CONNECT_TIMEOUT_MS;
-          int readTimeoutMs = KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_READ_TIMEOUT_MS;
-
-          if (config instanceof Configuration) {
-            final Configuration conf = (Configuration) config;
-            maxIssuers = conf.getInt(MAX_TRUSTED_ISSUERS_CONFIG, DEFAULT_MAX_TRUSTED_ISSUERS);
-            cacheTtlSecs = conf.getLong(KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS,
-                KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_CACHE_TTL_SECS);
-            connectTimeoutMs = conf.getInt(KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS,
-                KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_CONNECT_TIMEOUT_MS);
-            readTimeoutMs = conf.getInt(KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS,
-                KnoxIDFConstants.TRUSTED_OIDC_ISSUER_DEFAULT_DISCOVERY_READ_TIMEOUT_MS);
-          }
-
-          this.maxTrustedIssuers = maxIssuers;
+          this.maxTrustedIssuers = config.getTrustedOidcIssuerMaxTrustedIssuers();
           this.database = new TrustedOidcIssuerDatabase(
               DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
-          this.discoveryHelper = new OIDCDiscoveryHelper(this, cacheTtlSecs,
-              OIDCDiscoveryHelper.buildHttpClient(connectTimeoutMs, readTimeoutMs));
+          this.discoveryHelper = new OIDCDiscoveryHelper(this, config.getTrustedOidcIssuerDiscoveryCacheTtlSecs(),
+              OIDCDiscoveryHelper.buildHttpClient(config.getTrustedOidcIssuerDiscoveryConnectTimeoutMs(), config.getTrustedOidcIssuerDiscoveryReadTimeoutMs()));
           reloadRegistrySnapshot();
           initialized.set(true);
         } catch (ServiceLifecycleException e) {
@@ -195,6 +174,7 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
       registrySnapshot.set(Collections.unmodifiableMap(fresh));
     } catch (Exception e) {
       LOG.errorReloadingRegistrySnapshot(e.getMessage(), e);
+      throw new RuntimeException("Error reloading trusted OIDC issuer registry snapshot", e);
     }
   }
 }

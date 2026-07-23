@@ -16,8 +16,8 @@
  */
 package org.apache.knox.gateway.services.knoxidf.trustedoidcissuer;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -48,9 +48,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
   private static final String DERBY_URL = "jdbc:derby:memory:" + DB_NAME;
   private static final String DERBY_SHUTDOWN_URL = "jdbc:derby:memory:" + DB_NAME + ";shutdown=true";
 
-  private static GatewayConfig gatewayConfig;
-  private static AliasService aliasService;
-
+  private GatewayConfig gatewayConfig;
+  private AliasService aliasService;
   private JdbcTrustedOidcIssuerService service;
 
   @BeforeClass
@@ -59,18 +58,6 @@ public class JdbcTrustedOidcIssuerServiceTest {
     java.util.Locale.setDefault(java.util.Locale.US);
     // Create the Derby in-memory DB so DerbyDataSourceFactory can connect to it
     DriverManager.getConnection(DERBY_CREATE_URL).close();
-
-    gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
-    EasyMock.replay(gatewayConfig);
-
-    aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(
-        AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
-    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(
-        AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
-    EasyMock.replay(aliasService);
   }
 
   @AfterClass
@@ -86,7 +73,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
   }
 
   @Before
-  public void setUp() throws ServiceLifecycleException, SQLException {
+  public void setUp() throws Exception {
     // Clear table between tests
     try (Connection conn = DriverManager.getConnection(DERBY_URL);
          PreparedStatement ps = conn.prepareStatement("DELETE FROM TRUSTED_OIDC_ISSUERS")) {
@@ -94,6 +81,19 @@ public class JdbcTrustedOidcIssuerServiceTest {
     } catch (SQLException e) {
       // Table may not exist yet on first setUp; service.init() will create it
     }
+
+    gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(gatewayConfig.getTrustedOidcIssuerMaxTrustedIssuers() ).andReturn(10).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
+    aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(
+            AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(
+            AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
+    EasyMock.replay(aliasService);
 
     service = new JdbcTrustedOidcIssuerService();
     service.setAliasService(aliasService);
@@ -217,12 +217,13 @@ public class JdbcTrustedOidcIssuerServiceTest {
     assertTrue(service.list().isEmpty());
   }
 
-  @Test
+  @Test(expected = IllegalStateException.class)
   public void testMaxTrustedIssuers() throws ServiceLifecycleException {
-    final GatewayConfigImpl limitedConfig = new GatewayConfigImpl();
-    limitedConfig.set(JdbcTrustedOidcIssuerService.MAX_TRUSTED_ISSUERS_CONFIG, "2");
-    limitedConfig.set(GatewayConfigImpl.GATEWAY_DATABASE_TYPE, DatabaseType.DERBY.type());
-    limitedConfig.set(GatewayConfigImpl.GATEWAY_DATABASE_NAME, "memory:" + DB_NAME);
+    final GatewayConfig limitedConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(limitedConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+    EasyMock.expect(limitedConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(limitedConfig.getTrustedOidcIssuerMaxTrustedIssuers() ).andReturn(2).anyTimes();
+    EasyMock.replay(limitedConfig);
 
     final JdbcTrustedOidcIssuerService limitedService = new JdbcTrustedOidcIssuerService();
     limitedService.setAliasService(aliasService);
@@ -234,13 +235,9 @@ public class JdbcTrustedOidcIssuerServiceTest {
     limitedService.register(issuer("https://b.example.com", false));
     assertEquals("Second registration must succeed", 2, limitedService.list().size());
 
-    try {
-      limitedService.register(issuer("https://c.example.com", false));
-      fail("Expected IllegalStateException when exceeding max issuers limit");
-    } catch (IllegalStateException e) {
-      assertEquals("Prior registrations must be unaffected by the rejected call",
-          2, limitedService.list().size());
-    }
+    // this one should fail (see expected error on the test annotation)
+    limitedService.register(issuer("https://c.example.com", false));
+    fail("Expected IllegalStateException when exceeding max issuers limit");
   }
 
   @Test
@@ -277,6 +274,45 @@ public class JdbcTrustedOidcIssuerServiceTest {
   @Test
   public void testRefreshJwksUriForUnregisteredIsNoOp() {
     service.refreshJwksUri("https://unknown.example.com"); // must not throw
+  }
+
+  // ------------------------------------------------------------------
+  // SQL exception error paths
+  // ------------------------------------------------------------------
+
+  @Test(expected = RuntimeException.class)
+  public void testDeregisterSqlExceptionOnDeleteThrowsRuntimeException() throws Exception {
+    final TrustedOidcIssuerDatabase mockDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    mockDb.delete(EasyMock.anyString());
+    EasyMock.expectLastCall().andThrow(new java.sql.SQLException("delete failed"));
+    EasyMock.replay(mockDb);
+    FieldUtils.writeField(service, "database", mockDb, true);
+
+    service.deregister("https://any.example.com");
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testRegisterSqlExceptionOnSnapshotReloadPropagates() throws Exception {
+    final TrustedOidcIssuerDatabase mockDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    mockDb.insert(EasyMock.anyObject(TrustedOidcIssuer.class));
+    EasyMock.expectLastCall();
+    EasyMock.expect(mockDb.selectAll()).andThrow(new java.sql.SQLException("selectAll failed"));
+    EasyMock.replay(mockDb);
+    FieldUtils.writeField(service, "database", mockDb, true);
+
+    service.register(issuer("https://any.example.com", false));
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testDeregisterSqlExceptionOnSnapshotReloadPropagates() throws Exception {
+    final TrustedOidcIssuerDatabase mockDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    mockDb.delete(EasyMock.anyString());
+    EasyMock.expectLastCall();
+    EasyMock.expect(mockDb.selectAll()).andThrow(new java.sql.SQLException("selectAll failed"));
+    EasyMock.replay(mockDb);
+    FieldUtils.writeField(service, "database", mockDb, true);
+
+    service.deregister("https://any.example.com");
   }
 
   // ------------------------------------------------------------------

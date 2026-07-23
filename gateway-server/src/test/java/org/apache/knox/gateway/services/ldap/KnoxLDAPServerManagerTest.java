@@ -33,7 +33,10 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 import org.easymock.EasyMock;
+import org.apache.directory.api.ldap.model.entry.DefaultEntry;
+import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptor;
 import org.junit.Test;
 import org.junit.Before;
@@ -46,6 +49,7 @@ import javax.net.ssl.X509TrustManager;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.security.KeyPair;
@@ -427,6 +431,40 @@ public class KnoxLDAPServerManagerTest {
         assertTrue(controlFactoryMap.get(SchemaConstants.ROLES_LOOKUP_BYPASS_CONTROL_OID) instanceof RolesLookupBypassControlFactory);
     }
 
+    @Test
+    public void testGetUserGroupsResolvesBareRdnRolesWhenRolesLookupActive() throws Exception {
+        serverManager.initialize(createNoInterceptorConfig());
+        serverManager.start();
+
+        // The roles lookup interceptor stores roles that have no template group DN as a bare
+        // RDN (cn=role) with no trailing DN components - exactly the "no groups at all" case.
+        addUserWithMemberOf("sam", "cn=platform:admin-sam", "cn=ml-workspace-abc:viewer-sam");
+        setRolesLookupInterceptorFlag(true);
+
+        List<String> groups = serverManager.getUserGroups("sam");
+
+        assertEquals("Both bare-RDN roles should be resolved as groups", 2, groups.size());
+        assertTrue("Expected platform:admin-sam among " + groups, groups.contains("platform:admin-sam"));
+        assertTrue("Expected ml-workspace-abc:viewer-sam among " + groups, groups.contains("ml-workspace-abc:viewer-sam"));
+    }
+
+    @Test
+    public void testGetUserGroupsIgnoresBareRdnWhenRolesLookupInactive() throws Exception {
+        serverManager.initialize(createNoInterceptorConfig());
+        serverManager.start();
+
+        // A real group DN (with a comma) alongside a bare cn= RDN. Without the roles lookup
+        // interceptor a bare RDN is unexpected data and must be skipped, while the full DN
+        // group is still resolved.
+        addUserWithMemberOf("sam", "cn=analysts,ou=groups,dc=test,dc=com", "cn=platform:admin-sam");
+        setRolesLookupInterceptorFlag(false);
+
+        List<String> groups = serverManager.getUserGroups("sam");
+
+        assertEquals("Only the full-DN group should be resolved when roles lookup is inactive",
+                List.of("analysts"), groups);
+    }
+
     @Test(expected = LdapException.class)
     public void testBindRequiredRejectsAnonymous() throws Exception {
         useBindPassword(BIND_PASSWORD);
@@ -624,6 +662,38 @@ public class KnoxLDAPServerManagerTest {
                 .andReturn(password == null ? null : password.toCharArray()).anyTimes();
         replay(aliasService);
         return aliasService;
+    }
+
+    /** A minimal config that starts the embedded server with base partitions and no interceptors. */
+    private GatewayConfig createNoInterceptorConfig() {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getAbsolutePath()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
+        replay(mockConfig);
+        return mockConfig;
+    }
+
+    /** Add a user under ou=people,dc=test,dc=com carrying the given memberOf values. */
+    private void addUserWithMemberOf(String uid, String... memberOf) throws Exception {
+        SchemaManager schemaManager = serverManager.directoryService.getSchemaManager();
+        Entry entry = new DefaultEntry(schemaManager, new Dn(schemaManager, "uid=" + uid + ",ou=people,dc=test,dc=com"));
+        entry.add("objectClass", "top", "person", "organizationalPerson", "inetOrgPerson");
+        entry.add("cn", uid);
+        entry.add("sn", uid);
+        entry.add("uid", uid);
+        for (String value : memberOf) {
+            entry.add("memberOf", value);
+        }
+        serverManager.directoryService.getAdminSession().add(entry);
+    }
+
+    /** Toggle the private flag that gates lenient bare-RDN parsing in getUserGroups. */
+    private void setRolesLookupInterceptorFlag(boolean value) throws Exception {
+        Field field = KnoxLDAPServerManager.class.getDeclaredField("hasRolesLookupInterceptor");
+        field.setAccessible(true);
+        field.setBoolean(serverManager, value);
     }
 
     private Map<String, String> createFileBackendInterceptorConfig() {

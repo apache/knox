@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.ldap.backend;
 
+import static java.util.Locale.ROOT;
+
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
@@ -225,6 +227,18 @@ public class LdapProxyBackend implements LdapBackend {
     @Override
     public String getBaseDn() {
         return remoteBaseDn;
+    }
+
+    @Override
+    public boolean isSupportedSearchBase(String searchBase) {
+        // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
+        // Only support user and group searches against either the proxy or remote base Dn.
+        if (searchBase == null) {
+            return false;
+        }
+        String searchBaseLowerCase = searchBase.toLowerCase(ROOT);
+        return searchBaseLowerCase.endsWith(proxyBaseDn.toLowerCase(ROOT)) ||
+                searchBaseLowerCase.endsWith(remoteBaseDn.toLowerCase(ROOT));
     }
 
     /**

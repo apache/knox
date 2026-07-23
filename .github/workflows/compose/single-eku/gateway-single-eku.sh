@@ -35,13 +35,16 @@ PASS="horton"
 #   - gateway-truststore-password             : server truststore password
 #   - gateway-identity-keystore-password      : server identity keystore password
 #   - gateway-identity-passphrase             : server identity key passphrase
-for alias in \
-    gateway-httpclient-keystore-password \
-    gateway-httpclient-truststore-password \
-    gateway-truststore-password \
-    gateway-identity-keystore-password \
-    gateway-identity-passphrase; do
-  /knox-runtime/bin/knoxcli.sh create-alias "$alias" --value "$PASS"
-done
+#
+# Use the batch create-aliases command so all five aliases are created in a
+# SINGLE knoxcli JVM boot. Creating them one-per-invocation cost ~6s of JVM
+# startup each (~30s total), which delayed the gateway bind past the CI wait
+# window and caused flaky "connection refused" failures in the mTLS suite.
+/knox-runtime/bin/knoxcli.sh create-aliases \
+    --alias gateway-httpclient-keystore-password --value "$PASS" \
+    --alias gateway-httpclient-truststore-password --value "$PASS" \
+    --alias gateway-truststore-password --value "$PASS" \
+    --alias gateway-identity-keystore-password --value "$PASS" \
+    --alias gateway-identity-passphrase --value "$PASS"
 
 exec java -jar /knox-runtime/bin/gateway.jar

@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.Locale.ROOT;
-
 /**
  * Interceptor for LDAP operations to proxy user searches to backends when not found locally
  */
@@ -100,7 +98,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         // Only forward to the backend when the search base is under the backend's namespace.
         // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
-        if (isUnderBackendBaseDn(baseDn)) {
+        if (backend.isSupportedSearchBase(baseDn)) {
             try {
                 entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
             } catch (Exception e) {
@@ -110,14 +108,6 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         // Return cursor with our results - use a simple approach
         return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
-    }
-
-    private boolean isUnderBackendBaseDn(String searchBase) {
-        final String backendBase = backend.getBaseDn();
-        if (searchBase == null || searchBase.isEmpty() || backendBase == null || backendBase.isEmpty()) {
-            return false;
-        }
-        return searchBase.toLowerCase(ROOT).endsWith(backendBase.toLowerCase(ROOT));
     }
 
     @Override

@@ -198,4 +198,90 @@ public class ConfigurableHADispatchTest {
     Assert.assertEquals(DigestUtils.sha256Hex(activeURL), captureCookieValue.getValue().getValue());
   }
 
+  /**
+   * Test that a failure while copying an already-received backend response to the client
+   * (e.g. a parse/rewrite error thrown from writeOutboundResponse) does NOT trigger a failover.
+   * The backend has already served the request, so replaying it against another node would be wrong.
+   */
+  @Test
+  public void testNoFailoverWhenResponseCopyFails() throws Exception {
+    String serviceName = "OOZIE";
+    HaDescriptor descriptor = HaDescriptorFactory.createDescriptor();
+    descriptor.addServiceConfig(HaDescriptorFactory.createServiceConfig(serviceName, "true", "1", "1000", null, null, null, null, null, null, null));
+    HaProvider provider = new DefaultHaProvider(descriptor);
+    URI uri1 = new URI( "http://host1.valid" );
+    URI uri2 = new URI( "http://host2.valid" );
+    ArrayList<String> urlList = new ArrayList<>();
+    urlList.add(uri1.toString());
+    urlList.add(uri2.toString());
+    provider.addHaService(serviceName, urlList);
+
+    BasicHttpParams params = new BasicHttpParams();
+
+    HttpUriRequest outboundRequest = EasyMock.createNiceMock(HttpRequestBase.class);
+    EasyMock.expect(outboundRequest.getMethod()).andReturn( "GET" ).anyTimes();
+    EasyMock.expect(outboundRequest.getURI()).andReturn( uri1 ).anyTimes();
+    EasyMock.expect(outboundRequest.getParams()).andReturn( params ).anyTimes();
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getRequestURL()).andReturn( new StringBuffer(uri1.toString()) ).anyTimes();
+    EasyMock.expect(inboundRequest.getAttribute("dispatch.ha.failover.counter")).andReturn(new AtomicInteger(0)).anyTimes();
+
+    /* backend response */
+    CloseableHttpResponse inboundResponse = EasyMock.createNiceMock(CloseableHttpResponse.class);
+    final StatusLine statusLine = EasyMock.createNiceMock(StatusLine.class);
+    final HttpEntity entity = EasyMock.createNiceMock(HttpEntity.class);
+    final Header header = EasyMock.createNiceMock(Header.class);
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    final ByteArrayInputStream backendResponse = new ByteArrayInputStream("knox-backend".getBytes(
+            StandardCharsets.UTF_8));
+
+    EasyMock.expect(inboundResponse.getStatusLine()).andReturn(statusLine).anyTimes();
+    EasyMock.expect(statusLine.getStatusCode()).andReturn(HttpStatus.SC_OK).anyTimes();
+    EasyMock.expect(inboundResponse.getEntity()).andReturn(entity).anyTimes();
+    EasyMock.expect(inboundResponse.getAllHeaders()).andReturn(new Header[0]).anyTimes();
+    EasyMock.expect(inboundRequest.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.expect(entity.getContent()).andReturn(backendResponse).anyTimes();
+    EasyMock.expect(entity.getContentType()).andReturn(header).anyTimes();
+    EasyMock.expect(header.getElements()).andReturn(new HeaderElement[]{}).anyTimes();
+    EasyMock.expect(entity.getContentLength()).andReturn(4L).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+
+    HttpServletResponse outboundResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(outboundResponse.getOutputStream()).andAnswer( new IAnswer<SynchronousServletOutputStreamAdapter>() {
+      @Override
+      public SynchronousServletOutputStreamAdapter answer() {
+        return new SynchronousServletOutputStreamAdapter() {
+          @Override
+          public void write( int b ) throws IOException {
+            throw new IOException( "response copy failed" );
+          }
+        };
+      }
+    }).once();
+
+    CloseableHttpClient mockHttpClient = EasyMock.createNiceMock(CloseableHttpClient.class);
+    EasyMock.expect(mockHttpClient.execute(outboundRequest)).andReturn(inboundResponse).once();
+
+    EasyMock.replay(outboundRequest, inboundRequest, outboundResponse, mockHttpClient, inboundResponse,
+            statusLine, entity, header, context, config);
+
+    ConfigurableHADispatch dispatch = new ConfigurableHADispatch();
+    dispatch.setHttpClient(mockHttpClient);
+    dispatch.setHaProvider(provider);
+    dispatch.setServiceRole(serviceName);
+    dispatch.init();
+
+    try {
+      dispatch.executeRequestWrapper(outboundRequest, inboundRequest, outboundResponse);
+      Assert.fail("Expected the response-copy IOException to propagate");
+    } catch (IOException e) {
+      Assert.assertEquals("response copy failed", e.getMessage());
+    }
+
+    EasyMock.verify(mockHttpClient);
+    Assert.assertEquals(uri1.toString(), provider.getActiveURL(serviceName));
+  }
+
 }
