@@ -39,7 +39,6 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -143,15 +142,5 @@ public class SSEHaDispatch extends SSEDispatch implements CommonHaDispatch {
     @Override
     protected void outboundResponseWrapper(final HttpUriRequest outboundRequest, final HttpServletRequest inboundRequest, final HttpServletResponse outboundResponse) {
         setKnoxHaCookie(outboundRequest, inboundRequest, outboundResponse, sslEnabled);
-    }
-
-    @Override
-    protected void shiftCallback(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
-        /*
-            Due to the async behavior shifting has to take place after a successful response-received event
-            and not in the executeRequest method. This is the same as in a sync dispatch.
-        */
-        boolean userAgentDisabled = isUserAgentDisabled(inboundRequest);
-        shiftActiveURL(userAgentDisabled, userAgentDisabled ? Optional.empty() : getBackendFromHaCookie(outboundRequest, inboundRequest));
     }
 }

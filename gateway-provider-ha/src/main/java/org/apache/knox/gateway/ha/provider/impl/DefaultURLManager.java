@@ -102,4 +102,14 @@ public class DefaultURLManager implements URLManager {
     String head = urls.poll();
     urls.offer(head);
   }
+
+  @Override
+  public synchronized String getActiveURLAndAdvance() {
+    String head = urls.poll();
+    if (head == null) {
+      return null;
+    }
+    urls.offer(head);
+    return head;
+  }
 }

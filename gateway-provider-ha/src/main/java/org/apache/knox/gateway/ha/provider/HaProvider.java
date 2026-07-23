@@ -73,6 +73,17 @@ public interface HaProvider {
   void makeNextActiveURLAvailable(String serviceName);
 
   /**
+   * Returns the current active URL for the service and advances the rotation to the next
+   * URL, as a single atomic operation: concurrent callers are guaranteed to observe
+   * different values as long as more than one URL is configured.
+   *
+   * @param serviceName the name of the service
+   * @return the URL that was active at the time of the call, or {@code null} if no URLs
+   *         are configured for the service
+   */
+  String getActiveURLAndAdvance(String serviceName);
+
+  /**
    * This method puts gets all the currently
    * available URLs for the service.
    *

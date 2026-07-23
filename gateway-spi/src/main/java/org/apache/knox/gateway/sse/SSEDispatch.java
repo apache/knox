@@ -163,10 +163,6 @@ public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
         return (statusCode >= HttpStatus.SC_OK && statusCode < 300);
     }
 
-    protected void shiftCallback(HttpUriRequest outboundRequest, HttpServletRequest inboundRequest) {
-        // No need to shift the URL for non-HA SSE requests
-    }
-
     protected class SSECharConsumer extends AsyncCharConsumer<SSEResponse> {
         private SSEResponse sseResponse;
         private final HttpServletResponse outboundResponse;
@@ -192,7 +188,6 @@ public class SSEDispatch extends ConfigurableDispatch implements AsyncDispatch {
             } else {
                 handleErrorResponse(outboundResponse, url, inboundResponse);
             }
-            shiftCallback(outboundRequest, inboundRequest);
         }
 
         @Override

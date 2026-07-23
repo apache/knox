@@ -135,7 +135,7 @@ public interface CommonHaDispatch {
                     // Make sure that the url provided is actually a valid backend url
                     if (getHaConfigurations().getHaProvider().getURLs(getServiceRole()).contains(backendURL)) {
                         try {
-                            return Optional.of(updateHostURL(outboundRequest.getURI(), backendURL));
+                            return Optional.of(updateBackendURL(outboundRequest.getURI(), backendURL));
                         } catch (URISyntaxException ignore) {
                             // The cookie was invalid so we just don't set it. Knox will pick a backend automatically
                         }
@@ -169,6 +169,79 @@ public interface CommonHaDispatch {
         return uriBuilder.build();
     }
 
+    /**
+     * Re-targets a rewritten URI at a different backend, carrying over the backend's base
+     * path in addition to scheme, host and port.
+     */
+    default URI updateBackendURL(final URI source, final String newBackend) throws URISyntaxException {
+        final URI newUri = new URI(newBackend);
+        final URIBuilder uriBuilder = new URIBuilder(source);
+        uriBuilder.setScheme(newUri.getScheme());
+        uriBuilder.setHost(newUri.getHost());
+        uriBuilder.setPort(newUri.getPort());
+        final String newBasePath = normalizeBasePath(newUri.getPath());
+        final String oldBasePath = matchConfiguredBasePath(source);
+        if (oldBasePath != null && !oldBasePath.equals(newBasePath)) {
+            final String sourcePath = source.getPath() == null ? "" : source.getPath();
+            uriBuilder.setPath(newBasePath + sourcePath.substring(oldBasePath.length()));
+        }
+        return uriBuilder.build();
+    }
+
+    default String matchConfiguredBasePath(final URI source) {
+        if (source.getHost() == null) {
+            return null;
+        }
+        final String sourcePath = source.getPath() == null ? "" : source.getPath();
+        String best = null;
+        for (String url : getHaConfigurations().getHaProvider().getURLs(getServiceRole())) {
+            try {
+                final URI poolUri = new URI(url);
+                if (!source.getHost().equals(poolUri.getHost()) || effectivePort(source) != effectivePort(poolUri)) {
+                    continue;
+                }
+                final String basePath = normalizeBasePath(poolUri.getPath());
+                if (isPathPrefix(sourcePath, basePath) && (best == null || basePath.length() > best.length())) {
+                    best = basePath;
+                }
+            } catch (URISyntaxException ignore) {
+                // a malformed pool entry cannot be the URL the rewriter used
+            }
+        }
+        return best;
+    }
+
+    static int effectivePort(final URI uri) {
+        final int port = uri.getPort();
+        if (port != -1) {
+            return port;
+        }
+        final String scheme = uri.getScheme();
+        if ("http".equalsIgnoreCase(scheme)) {
+            return 80;
+        }
+        if ("https".equalsIgnoreCase(scheme)) {
+            return 443;
+        }
+        return -1;
+    }
+
+    static String normalizeBasePath(final String path) {
+        if (path == null) {
+            return "";
+        }
+        String normalized = path;
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
+    }
+
+    static boolean isPathPrefix(final String path, final String prefix) {
+        return path.startsWith(prefix)
+                && (path.length() == prefix.length() || path.charAt(prefix.length()) == '/');
+    }
+
     default void setupUrlHashLookup() {
         for (String url : getHaConfigurations().getHaProvider().getURLs(getServiceRole())) {
             String urlHash = hash(url);
@@ -199,44 +272,31 @@ public interface CommonHaDispatch {
             backendURI.ifPresent(uri -> ((HttpRequestBase) outboundRequest).setURI(uri));
         }
 
-        /**
-         * case where loadbalancing is enabled
-         * and we have a HTTP request configured not to use LB
-         * use the activeURL
-         */
-        if (getHaConfigurations().isLoadBalancingEnabled() && userAgentDisabled) {
-            try {
-                ((HttpRequestBase) outboundRequest).setURI(updateHostURL(outboundRequest.getURI(), getActiveURL().get()));
-            } catch (final URISyntaxException e) {
-                LOG.errorSettingActiveUrl();
+        if (getHaConfigurations().isLoadBalancingEnabled()) {
+            if (userAgentDisabled) {
+                /**
+                 * case where loadbalancing is enabled
+                 * and we have a HTTP request configured not to use LB
+                 * use the activeURL
+                 */
+                try {
+                    ((HttpRequestBase) outboundRequest).setURI(updateHostURL(outboundRequest.getURI(), getActiveURL().get()));
+                } catch (final URISyntaxException e) {
+                    LOG.errorSettingActiveUrl();
+                }
+            } else if (!backendURI.isPresent()) {
+                String nextURL = getHaConfigurations().getHaProvider().getActiveURLAndAdvance(getServiceRole());
+                if (nextURL != null) {
+                    try {
+                        ((HttpRequestBase) outboundRequest).setURI(updateBackendURL(outboundRequest.getURI(), nextURL));
+                    } catch (final URISyntaxException e) {
+                        LOG.errorSettingActiveUrl();
+                    }
+                }
             }
         }
 
         return backendURI;
-    }
-
-    default void shiftActiveURL(boolean userAgentDisabled, Optional<URI> backendURI) {
-        /**
-         * 1. Load balance when loadbalancing is enabled and there are no overrides (disableLB)
-         * 2. Loadbalance only when sticky session is enabled but cookie not detected
-         *    i.e. when loadbalancing is enabled every request that does not have BACKEND cookie
-         *    needs to be loadbalanced. If a request has BACKEND coookie and Loadbalance=on then
-         *    there should be no loadbalancing.
-         */
-        if (getHaConfigurations().isLoadBalancingEnabled() && !userAgentDisabled) {
-            /* check sticky session enabled */
-            if (getHaConfigurations().isStickySessionEnabled()) {
-                /* loadbalance only when sticky session enabled and no backend url cookie */
-                if (!backendURI.isPresent()) {
-                    getHaConfigurations().getHaProvider().makeNextActiveURLAvailable(getServiceRole());
-                } else {
-                    /* sticky session enabled and backend url cookie is valid no need to loadbalance */
-                    /* do nothing */
-                }
-            } else {
-                getHaConfigurations().getHaProvider().makeNextActiveURLAvailable(getServiceRole());
-            }
-        }
     }
 
     /**
@@ -271,8 +331,19 @@ public interface CommonHaDispatch {
         inboundRequest.setAttribute(AbstractGatewayFilter.TARGET_REQUEST_URL_ATTRIBUTE_NAME, null);
         // Make sure to remove the ha cookie from the request
         inboundRequest = new StickySessionCookieRemovedRequest(getHaConfigurations().getStickySessionCookieName(), inboundRequest);
-        URI uri = getDispatchUrl(inboundRequest);
-        ((HttpRequestBase) outboundRequest).setURI(uri);
+        ((HttpRequestBase) outboundRequest).setURI(getDispatchUrl(inboundRequest));
+
+        if (getHaConfigurations().isLoadBalancingEnabled() && !isUserAgentDisabled(inboundRequest)) {
+            final String nextURL = getHaConfigurations().getHaProvider().getActiveURLAndAdvance(getServiceRole());
+            if (nextURL != null) {
+                try {
+                    ((HttpRequestBase) outboundRequest).setURI(updateBackendURL(outboundRequest.getURI(), nextURL));
+                } catch (final URISyntaxException e) {
+                    LOG.errorSettingActiveUrl();
+                }
+            }
+        }
+
         if (getHaConfigurations().getFailoverSleep() > 0) {
             try {
                 Thread.sleep(getHaConfigurations().getFailoverSleep());

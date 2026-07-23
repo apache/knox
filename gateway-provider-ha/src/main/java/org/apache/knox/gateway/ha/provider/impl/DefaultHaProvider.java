@@ -125,6 +125,28 @@ public class DefaultHaProvider implements HaProvider {
     }
   }
 
+  /*
+   * The pick-and-advance methods deliberately take the READ lock even though they rotate
+   * the URL queue: their atomicity is provided by the URLManager's own synchronization,
+   * and the provider-level rwl only guards cross-method consistency with markFailedURL /
+   * setActiveURL. Taking the write lock here would serialize every load-balanced request
+   * across all services behind a single gateway-wide lock — and hold it while ZooKeeper-
+   * backed managers refresh their URL list (a blocking remote call).
+   */
+  @Override
+  public String getActiveURLAndAdvance(String serviceName) {
+    rwl.readLock().lock();
+    try {
+      if (haServices.containsKey(serviceName)) {
+        return haServices.get(serviceName).getActiveURLAndAdvance();
+      }
+      LOG.noActiveUrlFound(serviceName);
+      return null;
+    } finally {
+      rwl.readLock().unlock();
+    }
+  }
+
   @Override
   public List<String> getURLs(String serviceName) {
     if ( haServices.containsKey(serviceName) ) {

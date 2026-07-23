@@ -122,6 +122,19 @@ public abstract class BaseZookeeperURLManager implements URLManager {
   }
 
   @Override
+  public synchronized String getActiveURLAndAdvance() {
+    if (urls.isEmpty()) {
+      setURLs(lookupURLs());
+    }
+    String head = urls.poll();
+    if (head == null) {
+      return null;
+    }
+    urls.offer(head);
+    return head;
+  }
+
+  @Override
   public synchronized void setURLs(List<String> urls) {
     if ((urls != null) && (!(urls.isEmpty()))) {
       this.urls.clear();
