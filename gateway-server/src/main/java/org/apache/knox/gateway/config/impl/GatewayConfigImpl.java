@@ -1888,4 +1888,24 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
   }
+
+  @Override
+  public int getTrustedOidcIssuerMaxTrustedIssuers() {
+    return getInt(TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS, TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryCacheTtlSecs() {
+    return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS, TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryConnectTimeoutMs() {
+    return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS, TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryReadTimeoutMs() {
+    return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS, TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT);
+  }
 }
