@@ -158,6 +158,18 @@ public interface GatewayConfig {
   String LDAP_MAX_SIZE_LIMIT = "gateway.ldap.max.size.limit";
   String LDAP_MAX_TIME_LIMIT = "gateway.ldap.max.time.limit";
 
+  // TrustedOidcIssuerService gateway-level params and their default values
+  String TRUSTED_OIDC_ISSUER_PREFIX = "gateway.trusted.oidc.issuer.";
+  String TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS = TRUSTED_OIDC_ISSUER_PREFIX + "max.issuers";
+  int TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS_DEFAULT = 10_000;
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX = TRUSTED_OIDC_ISSUER_PREFIX + "discovery.";
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX + "cache.ttl.secs";
+  int TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS_DEFAULT = 600;
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX + "connect.timeout.ms";
+  int TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT = 3000;
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX+ "read.timeout.ms";
+  int TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT = 10000;
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -1229,4 +1241,13 @@ public interface GatewayConfig {
   Set<String> getPropertyNames();
 
   boolean getGroupUIServicesOnHomepage();
+
+  int getTrustedOidcIssuerMaxTrustedIssuers();
+
+  int getTrustedOidcIssuerDiscoveryCacheTtlSecs();
+
+  int getTrustedOidcIssuerDiscoveryConnectTimeoutMs();
+
+  int getTrustedOidcIssuerDiscoveryReadTimeoutMs();
+
 }
