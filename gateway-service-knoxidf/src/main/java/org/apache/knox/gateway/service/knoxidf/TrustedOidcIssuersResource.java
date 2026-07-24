@@ -60,6 +60,8 @@ public class TrustedOidcIssuersResource {
 
   static final String RESOURCE_PATH = "knoxidf/issuers-admin/v1/trusted-oidc-issuers";
 
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+
   // Non-final and package-private to allow test injection of a mock Auditor.
   static Auditor auditor = AuditServiceFactory.getAuditService()
       .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
@@ -90,7 +92,7 @@ public class TrustedOidcIssuersResource {
     try {
       final Map<String, Object> parsed;
       try {
-        parsed = new ObjectMapper().readValue(body, new TypeReference<Map<String, Object>>() {});
+        parsed = MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {});
       } catch (IOException e) {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request", "Malformed JSON body");
       }
