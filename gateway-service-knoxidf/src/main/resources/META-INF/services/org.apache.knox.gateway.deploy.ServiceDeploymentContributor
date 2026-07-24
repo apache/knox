@@ -16,3 +16,4 @@
 # limitations under the License.
 ##########################################################################
 org.apache.knox.gateway.service.knoxidf.deploy.KnoxIDFServiceDeploymentContributor
+org.apache.knox.gateway.service.knoxidf.deploy.KnoxIDFAdminServiceDeploymentContributor
