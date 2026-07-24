@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -248,6 +247,42 @@ public class TrustedOidcIssuersResourceTest {
 
     assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
         resource.registerIssuer(buildRegisterBody(ISSUER_A, false, null)).getStatus());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterWrongTypeFieldReturnsBadRequest() {
+    // A syntactically valid JSON body with a type-mismatched field (clusterName as an
+    // array instead of a string). Binding to the typed RegisterIssuerRequest bean makes
+    // Jackson reject this during deserialization, so it is a 400 invalid_request rather
+    // than a ClassCastException surfacing as a 500. No service calls are expected; audit
+    // fires with the INVALID_REQUEST sentinel because parsing failed before the URL was read.
+    expectAudit("INVALID_REQUEST", ActionOutcome.FAILURE, "issuer_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerIssuer(
+        "{\"issuerUrl\":\"" + ISSUER_A + "\",\"clusterName\":[1,2,3]}");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterIssuerLimitReached() {
+    // The service throws IllegalStateException when MAX_TRUSTED_ISSUERS is reached. This is
+    // an operator-facing capacity condition and must map to 409 issuer_limit_reached, not
+    // the generic 500 storage_error used for genuine storage failures.
+    EasyMock.expect(mockService.isTrusted(ISSUER_A)).andReturn(false).once();
+    mockService.register(EasyMock.anyObject(TrustedOidcIssuer.class));
+    EasyMock.expectLastCall().andThrow(new IllegalStateException("MAX_TRUSTED_ISSUERS (100) reached")).once();
+    expectAudit(ISSUER_A, ActionOutcome.FAILURE, "issuer_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerIssuer(buildRegisterBody(ISSUER_A, false, null));
+
+    assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertErrorField(response, "issuer_limit_reached");
     EasyMock.verify(mockService, mockAuditor);
   }
 
@@ -531,8 +566,9 @@ public class TrustedOidcIssuersResourceTest {
         body.contains(expectedError));
   }
 
+  @SuppressWarnings("unchecked")
   private static List<Map<String, Object>> parseJsonList(String json) throws Exception {
-    return new ObjectMapper().readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+    return new ObjectMapper().readValue(json, List.class);
   }
 
   private static Map<String, Object> findByIssuerUrl(List<Map<String, Object>> list,
