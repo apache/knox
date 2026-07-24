@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -567,8 +566,9 @@ public class TrustedOidcIssuersResourceTest {
         body.contains(expectedError));
   }
 
+  @SuppressWarnings("unchecked")
   private static List<Map<String, Object>> parseJsonList(String json) throws Exception {
-    return new ObjectMapper().readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+    return new ObjectMapper().readValue(json, List.class);
   }
 
   private static Map<String, Object> findByIssuerUrl(List<Map<String, Object>> list,
