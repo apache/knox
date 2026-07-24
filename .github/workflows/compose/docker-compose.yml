@@ -87,7 +87,7 @@ services:
 
   knox:
     image: apache/knox-dev:${IMAGE_TAG:-master}
-    command: /gateway.sh
+    command: sh -c "cp -a /knox-runtime/knoxshell/. /shared-knoxshell/ && /gateway.sh"
     environment:
       # Point the fabric8 client used by the k8s ServiceAccountValidator at k3s.
       - KUBECONFIG=/k3s/knox-kubeconfig.yaml
@@ -96,6 +96,7 @@ services:
       - ./logs:/knox-runtime/logs
 #      - ./knoxshell:/knoxshell
       - k3s-output:/k3s:ro
+      - knoxshell-vol:/shared-knoxshell
     depends_on:
       ldap:
         condition: service_started
@@ -107,10 +108,12 @@ services:
     working_dir: /tests
     volumes:
       - ../tests:/tests
+      - knoxshell-vol:/knoxshell
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >
-      bash -c "pip install -r requirements.txt
+      bash -c "apt-get update && apt-get install -y openjdk-17-jre
+      && pip install -r requirements.txt
       && pylint *.py
       && echo 'Waiting for knox...'
       && sleep 30
@@ -119,4 +122,5 @@ services:
       - knox
 
 volumes:
+  knoxshell-vol:
   k3s-output:
