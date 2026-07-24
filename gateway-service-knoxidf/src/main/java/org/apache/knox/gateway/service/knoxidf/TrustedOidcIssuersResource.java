@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -90,14 +89,15 @@ public class TrustedOidcIssuersResource {
     String outcome = ActionOutcome.FAILURE;
 
     try {
-      final Map<String, Object> parsed;
+      final RegisterIssuerRequest parsed;
       try {
-        parsed = MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {});
+        parsed = MAPPER.readValue(body, RegisterIssuerRequest.class);
       } catch (IOException e) {
-        return errorResponse(Response.Status.BAD_REQUEST, "invalid_request", "Malformed JSON body");
+        return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
+            "Malformed or invalid JSON body");
       }
 
-      final String rawUrl = (String) parsed.get("issuerUrl");
+      final String rawUrl = parsed.getIssuerUrl();
       issuerUrl = (rawUrl != null && !rawUrl.isEmpty()) ? rawUrl : "UNKNOWN_ISSUER";
 
       if (rawUrl == null || rawUrl.isEmpty()) {
@@ -112,13 +112,17 @@ public class TrustedOidcIssuersResource {
             "Issuer already registered: " + rawUrl);
       }
 
-      final boolean dynamicJwks = Boolean.TRUE.equals(parsed.get("dynamicJwks"));
-      final String clusterName = (String) parsed.get("clusterName");
-
-      trustedIssuers.register(new TrustedOidcIssuer(rawUrl, dynamicJwks, clusterName,
-          Instant.now(), operatorId));
+      trustedIssuers.register(new TrustedOidcIssuer(rawUrl, parsed.isDynamicJwks(),
+          parsed.getClusterName(), Instant.now(), operatorId));
       outcome = ActionOutcome.SUCCESS;
       return Response.status(Response.Status.CREATED).build();
+    } catch (IllegalStateException e) {
+      // The service throws IllegalStateException when the configured maximum number of
+      // registered issuers (MAX_TRUSTED_ISSUERS) is reached. This is an operator-facing
+      // capacity condition, distinct from an internal storage failure, so report it as a
+      // 409 rather than lumping it into the generic 500 storage_error path below.
+      return errorResponse(Response.Status.CONFLICT, "issuer_limit_reached",
+          "Maximum number of registered trusted issuers reached");
     } catch (RuntimeException e) {
       return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error",
           "Failed to register issuer");
