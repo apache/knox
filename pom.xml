@@ -27,7 +27,7 @@
 
     <groupId>org.apache.knox</groupId>
     <artifactId>gateway</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
     <packaging>pom</packaging>
 
     <name>gateway</name>
@@ -415,7 +415,7 @@
                             <dependency>
                                 <groupId>org.apache.knox</groupId>
                                 <artifactId>build-tools</artifactId>
-                                <version>3.0.0-SNAPSHOT</version>
+                                <version>3.0.0</version>
                             </dependency>
                         </dependencies>
                     </plugin>
@@ -703,7 +703,7 @@
                     <dependency>
                         <groupId>org.apache.knox</groupId>
                         <artifactId>build-tools</artifactId>
-                        <version>3.0.0-SNAPSHOT</version>
+                        <version>3.0.0</version>
                     </dependency>
                     <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
                     <dependency>
@@ -739,7 +739,7 @@
                         <signaturesArtifact>
                             <groupId>org.apache.knox</groupId>
                             <artifactId>build-tools</artifactId>
-                            <version>3.0.0-SNAPSHOT</version>
+                            <version>3.0.0</version>
                             <type>jar</type>
                             <path>build-tools/forbiddenapis/signatures.txt</path>
                         </signaturesArtifact>
@@ -778,7 +778,7 @@
                     <dependency>
                         <groupId>org.apache.knox</groupId>
                         <artifactId>build-tools</artifactId>
-                        <version>3.0.0-SNAPSHOT</version>
+                        <version>3.0.0</version>
                     </dependency>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
@@ -908,7 +908,7 @@
                     <dependency>
                         <groupId>org.apache.knox</groupId>
                         <artifactId>build-tools</artifactId>
-                        <version>3.0.0-SNAPSHOT</version>
+                        <version>3.0.0</version>
                     </dependency>
                 </dependencies>
             </plugin>

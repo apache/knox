@@ -28,7 +28,7 @@
     
     <groupId>org.apache.knox</groupId>
     <artifactId>build-tools</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
 
     <name>build-tools</name>
     <description>The Apache Knox Project Build Tools</description>
