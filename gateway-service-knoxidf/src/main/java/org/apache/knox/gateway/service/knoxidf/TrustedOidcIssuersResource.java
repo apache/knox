@@ -54,13 +54,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
-
 @Path(TrustedOidcIssuersResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class TrustedOidcIssuersResource {
 
-  static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/admin/trusted-oidc-issuers";
+  static final String RESOURCE_PATH = "knoxidf/issuers-admin/v1/trusted-oidc-issuers";
 
   // Non-final and package-private to allow test injection of a mock Auditor.
   static Auditor auditor = AuditServiceFactory.getAuditService()

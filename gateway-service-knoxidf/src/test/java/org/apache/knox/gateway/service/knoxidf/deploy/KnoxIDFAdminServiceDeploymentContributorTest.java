@@ -72,10 +72,11 @@ public class KnoxIDFAdminServiceDeploymentContributorTest {
         new KnoxIDFAdminServiceDeploymentContributor();
     final String[] patterns = c.getPatterns();
     assertNotNull(patterns);
-    // Same prefix as KnoxIDFServiceDeploymentContributor so both roles can coexist in a single
-    // topology; Jersey disambiguates by @Path annotation.
-    assertTrue("Expected knoxidf/api/**?** in patterns",
-        Arrays.asList(patterns).contains("knoxidf/api/**?**"));
+    // Distinct from KnoxIDFServiceDeploymentContributor's "knoxidf/api/**?**" so that the
+    // KNOXIDF role cannot accidentally serve admin endpoints, and so that per-role AclsAuthz
+    // params (KNOXIDF_ADMIN.acl) apply only to trusted-issuer admin requests.
+    assertTrue("Expected knoxidf/issuers-admin/**?** in patterns",
+        Arrays.asList(patterns).contains("knoxidf/issuers-admin/**?**"));
   }
 
   @Test
@@ -139,6 +140,6 @@ public class KnoxIDFAdminServiceDeploymentContributorTest {
     contributor.contributeService(context, service);
 
     assertEquals("KNOXIDF_ADMIN", capturedRole.getValue());
-    assertEquals("knoxidf/api/**?**", capturedPattern.getValue());
+    assertEquals("knoxidf/issuers-admin/**?**", capturedPattern.getValue());
   }
 }

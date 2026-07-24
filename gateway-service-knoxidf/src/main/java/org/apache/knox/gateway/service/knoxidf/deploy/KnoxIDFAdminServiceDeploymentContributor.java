@@ -20,9 +20,12 @@ import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
 /**
  * Deployment contributor for the KNOXIDF_ADMIN service role, which hosts the
- * Knox IDF admin REST API. This contributor initially registers
- * {@link org.apache.knox.gateway.service.knoxidf.TrustedOidcIssuersResource};
- * it will be extended in a later task to also register DelegationAdminResource.
+ * trusted OIDC issuer admin REST API. This contributor registers
+ * {@link org.apache.knox.gateway.service.knoxidf.TrustedOidcIssuersResource}
+ * under the {@code knoxidf/issuers-admin/**?**} pattern, which is disjoint from
+ * the KNOXIDF role's {@code knoxidf/api/**?**} pattern. This ensures the KNOXIDF
+ * role cannot serve admin endpoints, and that per-role AclsAuthz authorization
+ * ({@code KNOXIDF_ADMIN.acl}) applies only to trusted-issuer admin requests.
  */
 public class KnoxIDFAdminServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
@@ -43,6 +46,6 @@ public class KnoxIDFAdminServiceDeploymentContributor extends JerseyServiceDeplo
 
   @Override
   protected String[] getPatterns() {
-    return new String[] { "knoxidf/api/**?**" };
+    return new String[] { "knoxidf/issuers-admin/**?**" };
   }
 }
