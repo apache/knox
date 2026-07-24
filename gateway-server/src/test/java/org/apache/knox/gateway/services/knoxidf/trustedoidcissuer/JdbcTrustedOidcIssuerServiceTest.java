@@ -38,8 +38,8 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class JdbcTrustedOidcIssuerServiceTest {
 
@@ -217,7 +217,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
     assertTrue(service.list().isEmpty());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testMaxTrustedIssuers() throws ServiceLifecycleException {
     final GatewayConfig limitedConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(limitedConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
@@ -235,9 +235,11 @@ public class JdbcTrustedOidcIssuerServiceTest {
     limitedService.register(issuer("https://b.example.com", false));
     assertEquals("Second registration must succeed", 2, limitedService.list().size());
 
-    // this one should fail (see expected error on the test annotation)
-    limitedService.register(issuer("https://c.example.com", false));
-    fail("Expected IllegalStateException when exceeding max issuers limit");
+    assertThrows(IllegalStateException.class,
+            () -> limitedService.register(issuer("https://c.example.com", false)));
+
+    assertEquals("Prior registrations must be unaffected by the rejected call",
+            2, limitedService.list().size());
   }
 
   @Test
