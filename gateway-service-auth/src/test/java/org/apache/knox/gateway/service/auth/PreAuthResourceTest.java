@@ -170,6 +170,33 @@ public class PreAuthResourceTest {
   }
 
   @Test
+  public void testExplicitGroupsHeaderTakesPrecedenceOverPrefix() throws Exception {
+    final String explicitGroupsHeader = "X-Knox-Actor-Groups";
+    subject.getPrincipals().add(new GroupPrincipal("group1"));
+
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_GROUPS_HEADER_NAME)).andReturn(explicitGroupsHeader).anyTimes();
+    // a prefix is configured as well, to prove the explicit header wins and no index suffix is appended
+    EasyMock.expect(context.getInitParameter(PreAuthResource.AUTH_ACTOR_GROUPS_HEADER_PREFIX)).andReturn("X-Knox-Prefixed-Groups").anyTimes();
+    request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED)).andReturn(false).anyTimes();
+    response = EasyMock.createNiceMock(HttpServletResponse.class);
+    response.setHeader(PreAuthResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, USER_NAME);
+    EasyMock.expectLastCall();
+    // the explicit header name is used directly, without an index suffix
+    response.addHeader(EasyMock.eq(explicitGroupsHeader), EasyMock.anyString());
+    EasyMock.expectLastCall().times(1);
+    EasyMock.replay(context, request, response);
+
+    final PreAuthResource preAuthResource = new PreAuthResource();
+    preAuthResource.context = context;
+    preAuthResource.response = response;
+    preAuthResource.request = request;
+    executeResourceWithSubject(preAuthResource);
+    EasyMock.verify(response);
+  }
+
+  @Test
   public void testPopulatingGroupsWithRoles() throws Exception {
     final String rolesHeader = "X-Knox-Roles";
     final GatewayServices gatewayServices = configureLdapRolesLookupExpectations(false);
