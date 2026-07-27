@@ -43,6 +43,7 @@ import static javax.ws.rs.core.Response.status;
 
 public abstract class AbstractAuthResource {
   public static final String AUTH_ACTOR_ID_HEADER_NAME = "preauth.auth.header.actor.id.name";
+  public static final String AUTH_ACTOR_GROUPS_HEADER_NAME = "preauth.auth.header.actor.groups";
   public static final String AUTH_ACTOR_GROUPS_HEADER_PREFIX = "preauth.auth.header.actor.groups.prefix";
   public static final String GROUP_HEADER_LENGTH_LIMIT = "preauth.auth.header.groups.length.limit";
   public static final String GROUP_HEADER_SIZE_LIMIT = "preauth.auth.header.groups.size.limit";
@@ -60,6 +61,7 @@ public abstract class AbstractAuthResource {
   private static final String ACTOR_GROUPS_HEADER_FORMAT = "%s-%d";
 
   protected String authHeaderActorIDName;
+  protected String authHeaderActorGroupsName;
   protected String authHeaderActorGroupsPrefix;
   private int groupHeaderLengthLimit;
   private int groupHeaderSizeLimit;
@@ -69,6 +71,7 @@ public abstract class AbstractAuthResource {
 
   protected void initialize() {
     authHeaderActorIDName = getInitParameter(AUTH_ACTOR_ID_HEADER_NAME, DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
+    authHeaderActorGroupsName = getInitParameter(AUTH_ACTOR_GROUPS_HEADER_NAME, null);
     authHeaderActorGroupsPrefix = getInitParameter(AUTH_ACTOR_GROUPS_HEADER_PREFIX, DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX);
     groupHeaderLengthLimit = Integer.parseInt(getInitParameter(GROUP_HEADER_LENGTH_LIMIT, DEFAULT_GROUP_HEADER_LENGTH_LIMIT));
     groupHeaderSizeLimit = Integer.parseInt(getInitParameter(GROUP_HEADER_SIZE_LIMIT, DEFAULT_GROUP_HEADER_SIZE_LIMIT));
@@ -114,11 +117,21 @@ public abstract class AbstractAuthResource {
       final boolean useRoles = !roles.isEmpty();
       final List<String> groupStrings = GroupUtils.getGroupStrings(useRoles ? roles : matchingGroupNames, groupHeaderLengthLimit, groupHeaderSizeLimit);
       for (int i = 0; i < groupStrings.size(); i++) {
-        final String headerName = useRoles || rolesLookupExecuted() ? authHeaderActorGroupsPrefix : String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, i + 1);
-        getResponse().addHeader(headerName, groupStrings.get(i));
+        getResponse().addHeader(createGroupsHeaderName(useRoles, i), groupStrings.get(i));
       }
     }
     return ok().build();
+  }
+
+  private String createGroupsHeaderName(boolean useRoles, int index) {
+    if (authHeaderActorGroupsName != null) {
+      // explicit groups header takes precedence over the prefix and is used directly, without an index suffix
+      return authHeaderActorGroupsName;
+    } else if (useRoles || rolesLookupExecuted()) {
+      return authHeaderActorGroupsPrefix;
+    } else {
+      return String.format(Locale.ROOT, ACTOR_GROUPS_HEADER_FORMAT, authHeaderActorGroupsPrefix, index + 1);
+    }
   }
 
   private Collection<String> lookupRoles(String userName, Collection<String> groups) {
