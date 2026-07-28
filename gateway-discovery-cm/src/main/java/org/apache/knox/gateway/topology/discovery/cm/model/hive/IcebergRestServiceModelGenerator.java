@@ -37,6 +37,7 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
   static final String HTTP_PATH = "hive_metastore_catalog_servlet_path";
   static final String REST_CATALOG_ENABLED = "hive_rest_catalog_enabled";
   static final String SSL_ENABLED    = "hive_metastore_enable_ssl";
+  static final String ENCRYPT_ALL_PORTS_ENV_VAR_NAME = "ENCRYPT_ALL_PORTS";
 
   static final String DEFAULT_HTTP_PATH = "icecli";
 
@@ -75,7 +76,9 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
                                       ApiRole role,
                                       ApiConfigList roleConfig, ApiServiceConfig coreSettingsConfig) throws ApiException {
     String hostname = role.getHostRef().getHostname();
-    boolean sslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    final boolean hmsSslEnabled = Boolean.parseBoolean(getServiceConfigValue(serviceConfig, SSL_ENABLED));
+    final boolean encryptAllPorts = isEncryptAllPorts();
+    final boolean sslEnabled = hmsSslEnabled && encryptAllPorts;
     String scheme = sslEnabled ? "https" : "http";
     String port = getHttpPort(serviceConfig);
     String httpPath = getHttpPath(serviceConfig);
@@ -86,12 +89,17 @@ public class IcebergRestServiceModelGenerator extends AbstractServiceModelGenera
 
     ServiceModel model =
         createServiceModel(String.format(Locale.getDefault(), "%s://%s:%s/%s", scheme, hostname, port, httpPath));
-    model.addServiceProperty(HTTP_PORT, getHttpPort(serviceConfig));
-    model.addServiceProperty(HTTP_PATH, getHttpPath(serviceConfig));
+    model.addServiceProperty(HTTP_PORT, port);
+    model.addServiceProperty(HTTP_PATH, httpPath);
     model.addServiceProperty(REST_CATALOG_ENABLED, getRestCatalogEnabled(serviceConfig));
-    model.addServiceProperty(SSL_ENABLED, Boolean.toString(sslEnabled));
+    model.addServiceProperty(SSL_ENABLED, Boolean.toString(hmsSslEnabled));
+    model.addServiceProperty(ENCRYPT_ALL_PORTS_ENV_VAR_NAME, Boolean.toString(encryptAllPorts));
 
     return model;
+  }
+
+  boolean isEncryptAllPorts() {
+    return Boolean.parseBoolean(System.getenv(ENCRYPT_ALL_PORTS_ENV_VAR_NAME));
   }
 
   protected String getHttpPort(ApiServiceConfig serviceConfig) {
