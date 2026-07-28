@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.cm.model.hive;
 
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.AbstractServiceModelGeneratorTest;
 import org.junit.Test;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -54,6 +56,7 @@ public class IcebergRestServiceModelGeneratorTest extends AbstractServiceModelGe
     serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PATH, "icecli");
     serviceConfig.put(IcebergRestServiceModelGenerator.REST_CATALOG_ENABLED, "true");
     serviceConfig.put(IcebergRestServiceModelGenerator.SSL_ENABLED, "false");
+    serviceConfig.put(IcebergRestServiceModelGenerator.ENCRYPT_ALL_PORTS_ENV_VAR_NAME, "false");
 
     final Map<String, String> roleConfig = Collections.emptyMap();
 
@@ -62,15 +65,36 @@ public class IcebergRestServiceModelGeneratorTest extends AbstractServiceModelGe
 
   @Test
   public void testServiceModelSslEnabled() {
+    testServiceModelSsl(true);
+  }
+
+  @Test
+  public void testServiceModelSslDisabledWhenEncryptionDisabled() {
+    testServiceModelSsl(false);
+  }
+
+  private void testServiceModelSsl(boolean encryptionEnabled) {
     final Map<String, String> serviceConfig = new HashMap<>();
     serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PORT, "8091");
     serviceConfig.put(IcebergRestServiceModelGenerator.HTTP_PATH, "icecli2");
     serviceConfig.put(IcebergRestServiceModelGenerator.REST_CATALOG_ENABLED, "false");
     serviceConfig.put(IcebergRestServiceModelGenerator.SSL_ENABLED, "true");
+    serviceConfig.put(IcebergRestServiceModelGenerator.ENCRYPT_ALL_PORTS_ENV_VAR_NAME, Boolean.toString(encryptionEnabled));
 
     final Map<String, String> roleConfig = Collections.emptyMap();
 
-    validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
+    final ServiceModel model = createServiceModel(new IcebergRestServiceModelGenerator() {
+      @Override
+      boolean isEncryptAllPorts() {
+        return encryptionEnabled;
+      }
+    }, serviceConfig, roleConfig);
+
+    validateServiceModel(model, serviceConfig, roleConfig);
+
+    // HTTPS is only used when HMS SSL is enabled AND all ports are encrypted.
+    final String expectedScheme = encryptionEnabled ? "https" : "http";
+    assertEquals(expectedScheme + "://localhost:8091/icecli2", model.getServiceUrl());
   }
 
   @Override
