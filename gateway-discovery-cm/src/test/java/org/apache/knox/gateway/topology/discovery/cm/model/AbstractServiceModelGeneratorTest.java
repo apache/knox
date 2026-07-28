@@ -79,9 +79,13 @@ public abstract class AbstractServiceModelGeneratorTest extends AbstractCMDiscov
 
 
   protected ServiceModel createServiceModel(Map<String, String> serviceConfig, Map<String, String> roleConfig) {
+    return createServiceModel(newGenerator(), serviceConfig, roleConfig);
+  }
+
+  protected ServiceModel createServiceModel(ServiceModelGenerator generator, Map<String, String> serviceConfig, Map<String, String> roleConfig) {
     ServiceModel model = null;
     try {
-      model = newGenerator().generateService(createApiServiceMock(getServiceType()),
+      model = generator.generateService(createApiServiceMock(getServiceType()),
                                              createApiServiceConfigMock(serviceConfig),
                                              createApiRoleMock(getRoleType()),
                                              createApiConfigListMock(roleConfig),
