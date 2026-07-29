@@ -465,6 +465,7 @@ public class KnoxLDAPServerManagerTest {
                 List.of("analysts"), groups);
     }
 
+    @Test
     public void testStartSetsMaxSizeAndTime() throws Exception {
         final int expectedMaxSize = 3158;
         final int expectedMaxTime = 245000;
