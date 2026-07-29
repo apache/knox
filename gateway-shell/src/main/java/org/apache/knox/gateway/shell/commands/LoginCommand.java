@@ -21,11 +21,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.KnoxSession;
 
 import org.apache.groovy.groovysh.jline.GroovyEngine;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
@@ -51,40 +50,18 @@ public class LoginCommand extends AbstractKnoxShellCommand {
     KnoxSession session = null;
 
     try {
-      LineReader reader = LineReaderBuilder.builder()
-      .terminal(terminal)
-      .build();
-
-      // 1. Prompt for Username (Clear text)
-      String username = reader.readLine("Username: ");
-      if (username == null || username.trim().isEmpty()) {
-        terminal.writer().println("Login cancelled: Username cannot be empty.");
-        terminal.writer().flush();
-        return null;
-      }
-
-      // 2. Prompt for Password (Masked with '*')
-      // JLine 3 intercepts keystrokes and prints the mask char instead of the actual key
-      String password = reader.readLine("Password: ", '*');
-
-      if (password != null) {
-        // Create the session
-        session = KnoxSession.login(url, username, password);
-
-        // Inject the session into the Groovy 5 environment
+      KnoxLoginDialog dlg = new KnoxLoginDialog();
+      dlg.collect();
+      if (dlg.ok) {
+        session = KnoxSession.login(url, dlg.username, new String(dlg.pass));
         engine.put("__knoxsession", session);
-
         terminal.writer().println("Session established for: " + url);
         terminal.writer().flush();
       } else {
         terminal.writer().println("Login cancelled.");
         terminal.writer().flush();
       }
-
-    } catch (URISyntaxException e) {
-      terminal.writer().println("Invalid URL syntax: " + e.getMessage());
-      terminal.writer().flush();
-    } catch (Exception e) {
+    } catch (CredentialCollectionException | URISyntaxException e) {
       terminal.writer().println("Failed to establish session: " + e.getMessage());
       e.printStackTrace(terminal.writer());
       terminal.writer().flush();
