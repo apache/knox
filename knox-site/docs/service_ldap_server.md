@@ -44,6 +44,8 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). |
 | `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint. |
 | `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
+| `gateway.ldap.roles.max.size.limit` | 1000 | The maximum size limit for search requests. |
+| `gateway.ldap.roles.max.time.limit` | 60000 | The maximum time limit for search requests in milliseconds. |
 
 ### Bind Credentials
 
@@ -198,6 +200,7 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.groupMemberAttribute` | `memberUid` | Attribute used for group membership (e.g., `member` for AD). |
 | `gateway.ldap.interceptor.<name>.useMemberOf` | `false` | If `true`, use the `memberOf` attribute for efficient group lookups. |
 | `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
+| `gateway.ldap.interceptor.<name>.pageSize` | `1000` | Page size for search requests. |
 
 ## Active Directory (AD) Integration
 

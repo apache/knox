@@ -101,6 +101,14 @@ public interface LdapMessages {
             text = "LDAP Search: {0} | {1}")
     void ldapSearch(String baseDn, String filter);
 
+    @Message(level = MessageLevel.DEBUG,
+            text = "LDAP Paged Search: {0} | {1}, page size {2}, page {3}")
+    void ldapPagedSearch(String baseDn, String filter, int pageSize, int pageNumber);
+
+    @Message(level = MessageLevel.DEBUG,
+            text = "LDAP Paged Search Completed: {0} | {1}")
+    void ldapPagedSearchCompleted(String baseDn, String filter);
+
     @Message(level = MessageLevel.ERROR,
             text = "LDAP Search failed: {0} | {1}, {2}")
     void ldapSearchFailed(String baseDn, String filter, @StackTrace(level = MessageLevel.DEBUG) Exception e);
@@ -133,9 +141,9 @@ public interface LdapMessages {
             text = "Backend user not found: {0}")
     void ldapUserNull(String username);
 
-    @Message(level = MessageLevel.ERROR,
+    @Message(level = MessageLevel.DEBUG,
             text = "Failed to copy attribute: {0}")
-    void ldapAttributeCopyError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+    void ldapAttributeCopyError(@StackTrace(level = MessageLevel.TRACE) Exception e);
 
     @Message(level = MessageLevel.DEBUG, text = "LDAP authentication succeeded for user: {0}")
     void ldapAuthSucceeded(String user);
