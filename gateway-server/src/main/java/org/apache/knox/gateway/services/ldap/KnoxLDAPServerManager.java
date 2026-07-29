@@ -72,7 +72,8 @@ public class KnoxLDAPServerManager {
 
     @VisibleForTesting
     DirectoryService directoryService;
-    private LdapServer ldapServer;
+    @VisibleForTesting
+    LdapServer ldapServer;
     private GatewayConfig gatewayConfig;
     private List<Interceptor> interceptors;
     private boolean hasRolesLookupInterceptor;
@@ -87,6 +88,8 @@ public class KnoxLDAPServerManager {
     private List<String> sslEnabledCipherSuites;
     // Collection of DNs for the proxied backend LDAP servers
     private Set<String> baseDns;
+    private int maxSizeLimit;
+    private int maxTimeLimit;
 
     KnoxLDAPServerManager(AliasService aliasService) {
         this(aliasService, null);
@@ -137,6 +140,9 @@ public class KnoxLDAPServerManager {
         }
 
         workDir.mkdirs();
+
+        maxSizeLimit = config.getLDAPMaxSizeLimit();
+        maxTimeLimit = config.getLDAPMaxTimeLimit();
     }
 
     private void createInterceptors(GatewayConfig config) throws Exception {
@@ -240,6 +246,9 @@ public class KnoxLDAPServerManager {
         }
         ldapServer.setTransports(transport);
         ldapServer.setDirectoryService(directoryService);
+
+        ldapServer.setMaxSizeLimit(maxSizeLimit);
+        ldapServer.setMaxTimeLimit(maxTimeLimit);
 
         ldapServer.start();
 

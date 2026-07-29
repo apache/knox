@@ -21,12 +21,20 @@ import static java.util.Locale.ROOT;
 
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
+import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.message.Response;
+import org.apache.directory.api.ldap.model.message.SearchRequest;
+import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
+import org.apache.directory.api.ldap.model.message.SearchResultDone;
+import org.apache.directory.api.ldap.model.message.SearchResultEntry;
 import org.apache.directory.api.ldap.model.message.SearchScope;
+import org.apache.directory.api.ldap.model.message.controls.PagedResults;
+import org.apache.directory.api.ldap.model.message.controls.PagedResultsImpl;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
@@ -50,7 +58,6 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -96,6 +103,7 @@ public class LdapProxyBackend implements LdapBackend {
     private boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
     private boolean recursiveGroupResolution;
     private int recursiveGroupResolutionMaxDepth;
+    private int pageSize;
 
     private final String proxyEntryGroupMembershipAttributeType = "memberOf";
 
@@ -183,6 +191,9 @@ public class LdapProxyBackend implements LdapBackend {
         useMemberOf = Boolean.parseBoolean(config.getOrDefault("useMemberOf", "false"));
         recursiveGroupResolution = Boolean.parseBoolean(config.getOrDefault("recursiveGroupResolution", "false"));
         recursiveGroupResolutionMaxDepth = Integer.parseInt(config.getOrDefault("recursiveGroupResolutionMaxDepth", "3"));
+
+        // Configure search parameters
+        pageSize = Integer.parseInt(config.getOrDefault("pageSize", "1000"));
 
         // Configure secure transport (LDAPS) to the remote server. An ldaps:// URL enables it
         // by default; an explicit useSsl setting always wins.
@@ -490,15 +501,14 @@ public class LdapProxyBackend implements LdapBackend {
             return List.of();
         }
 
-        LdapConnection connection = null;
-        try {
-            connection = getConnection();
-            List<Entry> groups = getUserGroupsEntries(connection, user, createEntryCache(), createResolvedParentsCache());
-            List<String> cns = getCnsFromEntries(groups);
-            return cns;
-        } finally {
-            releaseConnection(connection);
+        List<String> groups = new ArrayList<>();
+        Attribute groupsAttribute = user.get(proxyEntryGroupMembershipAttributeType);
+        if (groupsAttribute != null) {
+            for (Value value : groupsAttribute) {
+                groups.add(new Dn(value.getString()).getRdn().getValue());
+            }
         }
+        return groups;
     }
 
     @Override
@@ -511,12 +521,10 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             String ldapFilter = "(" + remoteUserIdentifierAttribute + "=" + filter.trim() + ")";
-            try (EntryCursor cursor = connection.search(remoteUserSearchBase, ldapFilter, SearchScope.SUBTREE, "*")) {
-                while (cursor.next()) {
-                    Entry sourceEntry = cursor.get();
-                    addGroupMemberships(sourceEntry, connection, entryCache, resolvedParentsCache);
-                    results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(sourceEntry, schemaManager));
-                }
+            List<Entry> searchResults = performPagedSearch(connection, remoteUserSearchBase, ldapFilter, SearchScope.SUBTREE, "*");
+            for (Entry sourceEntry : searchResults) {
+                addGroupMemberships(sourceEntry, connection, entryCache, resolvedParentsCache);
+                results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(sourceEntry, schemaManager));
             }
             return results;
         } finally {
@@ -535,14 +543,10 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
-            try (EntryCursor cursor = connection.search(remoteSearchBase, remoteFilter, searchScope, "*")) {
-                while (cursor.next()) {
-                    Entry entry = cursor.get();
-                    addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
-                    results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
-                }
-            } catch (LdapException e) {
-                LOG.ldapSearchFailed(remoteSearchBase, remoteFilter, e);
+            List<Entry> searchResults = performPagedSearch(connection, remoteSearchBase, remoteFilter, searchScope, "*");
+            for (Entry entry : searchResults) {
+                addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
+                results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
             }
             return results;
         } finally {
@@ -721,21 +725,19 @@ public class LdapProxyBackend implements LdapBackend {
                 }
                 String filter = buildMultipleGroupMemberFilter(groupDns.toArray(new Dn[0]));
 
-                try (EntryCursor cursor = connection.search(remoteGroupSearchBase, filter, SearchScope.SUBTREE, "cn", "memberUid", "member", "uniqueMember")) {
-                    while (cursor.next()) {
-                        Entry parentGroup = cursor.get();
-                        String parentDn = parentGroup.getDn().getNormName();
+                List<Entry> searchResults = performPagedSearch(connection, remoteGroupSearchBase, filter, SearchScope.SUBTREE, "cn", "memberUid", "member", "uniqueMember");
+                for (Entry parentGroup : searchResults) {
+                    String parentDn = parentGroup.getDn().getNormName();
 
-                        // Update cache for all groups found in this search
-                        updateCache(entryCache, resolvedParentsCache, groupsToSearch, parentGroup);
+                    // Update cache for all groups found in this search
+                    updateCache(entryCache, resolvedParentsCache, groupsToSearch, parentGroup);
 
-                        if (!allGroupDns.contains(parentDn)) {
-                            allGroupDns.add(parentDn);
-                            allGroups.add(parentGroup);
-                            nextLevelGroups.add(parentGroup);
-                        } else {
-                            LOG.ldapRecursiveGroupSearchCycleDetected(entryName, parentDn);
-                        }
+                    if (!allGroupDns.contains(parentDn)) {
+                        allGroupDns.add(parentDn);
+                        allGroups.add(parentGroup);
+                        nextLevelGroups.add(parentGroup);
+                    } else {
+                        LOG.ldapRecursiveGroupSearchCycleDetected(entryName, parentDn);
                     }
                 }
 
@@ -839,13 +841,65 @@ public class LdapProxyBackend implements LdapBackend {
 
         String filter = buildMultipleGroupMemberFilter(dns);
 
-        try (EntryCursor cursor = connection.search(remoteGroupSearchBase, filter, SearchScope.SUBTREE, "cn")) {
-            while (cursor.next()) {
-                groups.add(cursor.get());
-            }
-        }
+        groups.addAll(performPagedSearch(connection, remoteGroupSearchBase, filter, SearchScope.SUBTREE, "cn"));
 
         return groups;
+    }
+
+    protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, String... attributes ) throws LdapException, CursorException, IOException {
+        List<Entry> results = new ArrayList<>();
+
+        // 1. Setup basic search parameters
+        SearchRequest searchRequest = new SearchRequestImpl();
+        searchRequest.setBase(new Dn(baseDn));
+        searchRequest.setFilter(filter);
+        searchRequest.setScope(scope);
+        searchRequest.addAttributes(attributes);
+
+        // 2. Initialize the PagedResults control
+        PagedResults pagedControl = new PagedResultsImpl();
+        pagedControl.setSize(pageSize);
+        searchRequest.addControl(pagedControl);
+
+        byte[] cookie = null;
+
+        // 3. Loop until no more pages remain
+        int pageNumber = 1;
+        do {
+            // Update cookie for the subsequent pages
+            if (cookie != null) {
+                pagedControl.setCookie(cookie);
+            }
+
+            try (SearchCursor cursor = connection.search(searchRequest)) {
+                LOG.ldapPagedSearch(baseDn, filter, pageSize, pageNumber);
+                while (cursor.next()) {
+                    Response response = cursor.get();
+
+                    // Process matching entries
+                    if (response instanceof SearchResultEntry) {
+                        Entry entry = ((SearchResultEntry) response).getEntry();
+                        results.add(entry);
+                    }
+                }
+                if (cursor.isDone()) {
+                    SearchResultDone done = cursor.getSearchResultDone();
+                    PagedResults responseControl = (PagedResults) done.getControl(PagedResults.OID);
+
+                    if (responseControl != null) {
+                        cookie = responseControl.getCookie();
+                    } else {
+                        cookie = null;
+                    }
+                }
+                pageNumber++;
+            } catch (LdapException e) {
+                LOG.ldapSearchFailed(baseDn, filter, e);
+            }
+        } while (cookie != null && cookie.length > 0);
+        LOG.ldapPagedSearchCompleted(baseDn, filter);
+
+        return results;
     }
 
     private String buildMultipleGroupMemberFilter(Dn... dns) {
@@ -875,21 +929,6 @@ public class LdapProxyBackend implements LdapBackend {
         }
         filterBuilder.append(")");
         return filterBuilder.toString();
-    }
-
-    private List<String> getCnsFromEntries(Collection<Entry> entries) throws LdapException {
-        List<String> cns = new ArrayList<>();
-        for (Entry entry : entries) {
-            Attribute cnAttr = entry.get("cn");
-            if (cnAttr != null) {
-                cns.add(cnAttr.getString());
-            } else if (entry.getDn() != null && entry.getDn().getRdn() != null) {
-                // Fall back to the CN carried in the DN when the entry was fetched without the
-                // cn attribute, so resolved groups are not silently dropped from the result.
-                cns.add(entry.getDn().getRdn().getValue());
-            }
-        }
-        return cns;
     }
 
     protected Map<String, Entry> createEntryCache() {

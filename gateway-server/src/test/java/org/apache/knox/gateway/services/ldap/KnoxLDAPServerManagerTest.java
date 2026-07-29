@@ -465,6 +465,26 @@ public class KnoxLDAPServerManagerTest {
                 List.of("analysts"), groups);
     }
 
+    public void testStartSetsMaxSizeAndTime() throws Exception {
+        final int expectedMaxSize = 3158;
+        final int expectedMaxTime = 245000;
+
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=test,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of()).anyTimes();
+        expect(mockConfig.getLDAPMaxSizeLimit()).andReturn(expectedMaxSize).anyTimes();
+        expect(mockConfig.getLDAPMaxTimeLimit()).andReturn(expectedMaxTime).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+        serverManager.start();
+
+        assertEquals(expectedMaxSize, serverManager.ldapServer.getMaxSizeLimit());
+        assertEquals(expectedMaxTime, serverManager.ldapServer.getMaxTimeLimit());
+    }
+
     @Test(expected = LdapException.class)
     public void testBindRequiredRejectsAnonymous() throws Exception {
         useBindPassword(BIND_PASSWORD);
