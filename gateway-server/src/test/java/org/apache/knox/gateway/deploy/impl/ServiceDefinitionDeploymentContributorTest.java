@@ -366,6 +366,48 @@ public class ServiceDefinitionDeploymentContributorTest {
     assertEquals("test2def", fparamKeyVal.get("test2"));
   }
 
+  /*
+   * A service definition need not declare routes. Services carried by a
+   * non-servlet listener — Spark Connect over gRPC — have no path for the servlet
+   * pipeline to match and exist as definitions only so the role is known to the
+   * registry. JAXB leaves the route list null when <routes> is absent, and
+   * iterating it threw, which failed the whole topology deployment rather than
+   * just that service.
+   */
+  @Test
+  public void testServiceDefinitionWithoutRoutesContributesNothing() throws Exception {
+    UrlRewriteRulesDescriptor clusterRules = EasyMock.createNiceMock(UrlRewriteRulesDescriptor.class);
+    EasyMock.replay(clusterRules);
+
+    ServiceDefinition svcDef = EasyMock.createNiceMock(ServiceDefinition.class);
+    EasyMock.expect(svcDef.getRole()).andReturn("SPARKCONNECT").anyTimes();
+    // Exactly what JAXB produces for a definition with no <routes> element.
+    EasyMock.expect(svcDef.getRoutes()).andReturn(null).anyTimes();
+    EasyMock.expect(svcDef.getDispatch()).andReturn(null).anyTimes();
+    EasyMock.replay(svcDef);
+
+    ServiceDefinitionDeploymentContributor sddc =
+        new ServiceDefinitionDeploymentContributor(svcDef, null);
+
+    DeploymentContext context = EasyMock.createNiceMock(DeploymentContext.class);
+    EasyMock.expect(context.getDescriptor("rewrite")).andReturn(clusterRules).anyTimes();
+    TestGatewayDescriptor gd = new TestGatewayDescriptor();
+    EasyMock.expect(context.getGatewayDescriptor()).andReturn(gd).anyTimes();
+    EasyMock.replay(context);
+
+    Service service = EasyMock.createNiceMock(Service.class);
+    EasyMock.expect(service.getRole()).andReturn("SPARKCONNECT").anyTimes();
+    EasyMock.replay(service);
+
+    // Must not throw; a throw here becomes a DeploymentException and takes the
+    // entire topology down, including its other services.
+    sddc.contributeService(context, service);
+
+    assertNotNull(gd.resources());
+    assertEquals("a routeless definition should contribute no resources",
+        0, gd.resources().size());
+  }
+
   private static class TestGatewayDescriptor extends GatewayDescriptorImpl {
   }
 

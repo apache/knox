@@ -126,6 +126,12 @@
             <artifactId>gateway-test-utils</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- GatewayTestConfig, for exercising configuration changes. -->
+        <dependency>
+            <groupId>org.apache.knox</groupId>
+            <artifactId>gateway-spi-common</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

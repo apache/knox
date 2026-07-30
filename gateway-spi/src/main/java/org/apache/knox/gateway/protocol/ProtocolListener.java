@@ -91,4 +91,21 @@ public interface ProtocolListener {
    * @return the bound port, or -1 if the listener is not running
    */
   int getPort();
+
+  /**
+   * Notifies the listener that topologies have been redeployed, so anything it
+   * derived from topology configuration must be recomputed.
+   * <p>
+   * Knox reloads topologies from disk while running, and listeners on this path
+   * do not go through the webapp redeployment that refreshes the servlet filter
+   * chains. A listener that caches anything from a topology — authorization
+   * rules, provider parameters — will therefore keep serving stale configuration
+   * until it is told otherwise, which for security configuration means an
+   * administrator's change silently not taking effect.
+   * <p>
+   * Called for every topology event, so implementations should be cheap:
+   * invalidate and recompute lazily rather than rebuilding here.
+   */
+  default void reload() {
+  }
 }

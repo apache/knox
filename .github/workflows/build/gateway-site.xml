@@ -212,4 +212,17 @@ limitations under the License.
         <value>member</value>
     </property>
 
+    <!-- Spark Connect (gRPC) listener, exercised by test_spark_connect.py. -->
+    <property>
+        <name>gateway.sparkconnect.enabled</name>
+        <value>true</value>
+    </property>
+    <!-- No default topology on purpose: the tests cover the case where a client
+         sends no knox-topology parameter, which must be refused rather than
+         silently routed somewhere. -->
+    <property>
+        <name>gateway.sparkconnect.add.artifacts.mode</name>
+        <value>DENY</value>
+    </property>
+
 </configuration>

@@ -85,6 +85,47 @@ services:
     depends_on:
       - k3s
 
+  # One-shot: generates Python protobuf/gRPC stubs from the same vendored
+  # spark/connect/*.proto files the gateway compiles against, into a volume
+  # shared by the mock backend and the tests. Generating rather than depending on
+  # pyspark keeps the images small and means a proto refresh that broke the wire
+  # contract would break these tests too.
+  sparkconnect-protos:
+    image: python:3.10-slim
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - |
+        set -e
+        pip install --no-cache-dir --quiet grpcio-tools==1.60.0
+        python -m grpc_tools.protoc -I/protos \
+          --python_out=/out --grpc_python_out=/out \
+          /protos/spark/connect/*.proto
+        # Generated modules import each other as spark.connect.*, so the output
+        # has to be an importable package.
+        touch /out/spark/__init__.py /out/spark/connect/__init__.py
+        echo 'spark connect stubs generated'
+    volumes:
+      - ../../../gateway-service-sparkconnect/src/main/proto:/protos:ro
+      - sparkconnect-protos:/out
+
+  # Stands in for a Spark Connect server on a private network. Plaintext, which
+  # is what Knox's grpc:// backend scheme describes.
+  sparkconnect-mock:
+    image: python:3.10-slim
+    environment:
+      - PYTHONPATH=/stubs
+    volumes:
+      - ./sparkconnect:/mock:ro
+      - sparkconnect-protos:/stubs:ro
+    command: >
+      sh -c "pip install --no-cache-dir --quiet grpcio==1.60.0 protobuf==4.25.8
+      && python /mock/mock_server.py"
+    depends_on:
+      sparkconnect-protos:
+        condition: service_completed_successfully
+
   knox:
     image: apache/knox-dev:${IMAGE_TAG:-master}
     command: /gateway.sh
@@ -101,14 +142,21 @@ services:
         condition: service_started
       k8s-bootstrap:
         condition: service_completed_successfully
+      sparkconnect-mock:
+        condition: service_started
 
   tests:
     image: python:3.10-slim
     working_dir: /tests
     volumes:
       - ../tests:/tests
+      - sparkconnect-protos:/stubs:ro
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
+      - KNOX_SPARKCONNECT_HOST=knox
+      - KNOX_SPARKCONNECT_PORT=15002
+      # Generated Spark Connect stubs, shared with the mock backend.
+      - PYTHONPATH=/stubs
     command: >
       bash -c "pip install -r requirements.txt
       && pylint *.py
@@ -120,3 +168,4 @@ services:
 
 volumes:
   k3s-output:
+  sparkconnect-protos:

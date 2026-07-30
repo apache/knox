@@ -17,16 +17,22 @@
  */
 package org.apache.knox.gateway.sparkconnect;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.grpc.BackendChannelProvider;
 import org.apache.knox.gateway.grpc.GrpcGatewayListener;
+import org.apache.knox.gateway.grpc.GrpcGatewayMessages;
 import org.apache.knox.gateway.grpc.GrpcListenerSettings;
 import org.apache.knox.gateway.grpc.HeaderRewriter;
 import org.apache.knox.gateway.grpc.MessageInterceptor;
 import org.apache.knox.gateway.grpc.ProxyCallHandler;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import com.google.protobuf.Message;
 
@@ -59,7 +65,9 @@ import org.apache.spark.connect.proto.SparkConnectServiceGrpc;
 // volatile: the message-level policy is captured at start-up and read by request
 // threads thereafter.
 @SuppressWarnings("PMD.AvoidUsingVolatile")
-public class SparkConnectListener extends GrpcGatewayListener {
+public class SparkConnectListener extends GrpcGatewayListener implements GatewayConfigChangeListener {
+
+  private static final GrpcGatewayMessages LOG = MessagesFactory.get(GrpcGatewayMessages.class);
 
   private static final String LISTENER_NAME = "SparkConnect";
   private static final String SERVICE_ROLE = "SPARKCONNECT";
@@ -68,8 +76,12 @@ public class SparkConnectListener extends GrpcGatewayListener {
   private static final String CONFIG_METHOD = "Config";
   private static final String ADD_ARTIFACTS_METHOD = "AddArtifacts";
 
-  private volatile String reservedConfigPrefix;
-  private volatile AddArtifactsGuard addArtifactsGuard;
+  /**
+   * The message-level controls, replaced wholesale when configuration changes.
+   * Handlers read it per call rather than capturing a guard, which is what makes
+   * a change take effect without rebuilding the gRPC service.
+   */
+  private volatile SparkConnectPolicy policy;
 
   @Override
   public String getName() {
@@ -88,12 +100,9 @@ public class SparkConnectListener extends GrpcGatewayListener {
 
   @Override
   protected GrpcListenerSettings createSettings(GatewayConfig config) {
-    // Capture the message-level policy at start-up, alongside the transport
-    // settings, so a call never has to consult configuration mid-stream.
-    this.reservedConfigPrefix = config.getSparkConnectReservedConfigPrefix();
-    this.addArtifactsGuard = new AddArtifactsGuard(
-        config.getSparkConnectAddArtifactsMode(),
-        config.getSparkConnectAddArtifactsAllowedUsers());
+    // Message-level policy can change later; the transport settings below cannot,
+    // because they are built into the bound server.
+    this.policy = SparkConnectPolicy.from(config);
 
     return new GrpcListenerSettings()
         .name(LISTENER_NAME)
@@ -150,14 +159,79 @@ public class SparkConnectListener extends GrpcGatewayListener {
         new ProxyCallHandler<>(channels, interceptor, headers));
   }
 
-  private MessageInterceptor<Message> interceptorFor(String methodName) {
+  /**
+   * The guards indirect through {@link #policy} on every call rather than being
+   * captured here. Handlers are registered once when the server is built, so a
+   * guard captured at that moment could never be replaced — which is what made
+   * these settings silently restart-only before.
+   */
+  // Package-private so tests can assert that a policy change reaches an
+  // interceptor built before the change.
+  MessageInterceptor<Message> interceptorFor(String methodName) {
     if (CONFIG_METHOD.equals(methodName)) {
-      return new SparkConnectMessageInterceptor(new ReservedConfigGuard(reservedConfigPrefix));
+      return new SparkConnectMessageInterceptor(
+          (message, principal) -> policy.reservedConfigGuard().check(message, principal));
     }
     if (ADD_ARTIFACTS_METHOD.equals(methodName)) {
-      return new SparkConnectMessageInterceptor(addArtifactsGuard);
+      return new SparkConnectMessageInterceptor(
+          (message, principal) -> policy.addArtifactsGuard().check(message, principal));
     }
     return new SparkConnectMessageInterceptor(null);
+  }
+
+  /**
+   * Applies a changed {@code gateway-reloadable.xml} to the controls that can
+   * move on a running gateway.
+   * <p>
+   * Only the message-level policy is refreshed. The transport settings are built
+   * into the bound server and cannot change without a restart, so rather than
+   * accept them silently and do nothing — which looks like it worked — any
+   * attempt to change one is named in the log.
+   */
+  @Override
+  public void onGatewayConfigChanged(GatewayConfig config) {
+    final SparkConnectPolicy updated = SparkConnectPolicy.from(config);
+    if (updated.differsFrom(policy)) {
+      this.policy = updated;
+      LOG.reloadedPolicy(LISTENER_NAME, updated.toString());
+    }
+    warnAboutRestartOnlyChanges(config);
+  }
+
+  private void warnAboutRestartOnlyChanges(GatewayConfig config) {
+    final GrpcListenerSettings running = getSettings();
+    if (running == null) {
+      return;
+    }
+    final List<String> changed = new ArrayList<>();
+    if (config.getSparkConnectPort() != running.getPort()) {
+      changed.add("port");
+    }
+    if (config.getSparkConnectMaxMessageSize() != running.getMaxMessageSize()) {
+      changed.add("max.message.size");
+    }
+    if (config.getSparkConnectMaxConcurrentCallsPerConnection()
+        != running.getMaxConcurrentCallsPerConnection()) {
+      changed.add("max.concurrent.calls.per.connection");
+    }
+    if (config.getSparkConnectPermitKeepAliveTime() != running.getPermitKeepAliveTimeMillis()) {
+      changed.add("permit.keepalive.time");
+    }
+    if (config.isSparkConnectPermitKeepAliveWithoutCalls() != running.isPermitKeepAliveWithoutCalls()) {
+      changed.add("permit.keepalive.without.calls");
+    }
+    if (config.getSparkConnectChannelIdleTimeout() != running.getChannelIdleTimeoutMillis()) {
+      changed.add("channel.idle.timeout");
+    }
+    if (config.getSparkConnectDrainTimeout() != running.getDrainTimeoutMillis()) {
+      changed.add("drain.timeout");
+    }
+    if (!Objects.equals(config.getSparkConnectBackendTokenAlias(), running.getBackendTokenAlias())) {
+      changed.add("backend.token.alias");
+    }
+    if (!changed.isEmpty()) {
+      LOG.restartOnlyConfigChanged(LISTENER_NAME, String.join(", ", changed));
+    }
   }
 
   private static String bareMethodName(String fullMethodName) {

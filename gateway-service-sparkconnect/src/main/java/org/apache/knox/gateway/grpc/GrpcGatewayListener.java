@@ -300,6 +300,7 @@ public abstract class GrpcGatewayListener implements ProtocolListener {
   }
 
   /** Drops cached topology ACLs so a redeployed topology takes effect. */
+  @Override
   public void reload() {
     final AuthorizationInterceptor interceptor = authorizationInterceptor;
     if (interceptor != null) {

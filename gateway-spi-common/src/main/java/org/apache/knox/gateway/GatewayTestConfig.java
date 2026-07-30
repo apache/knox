@@ -70,6 +70,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String sparkConnectDefaultTopology;
   private String sparkConnectBackendTokenAlias;
   private String sparkConnectAddArtifactsMode = DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE;
+  private String sparkConnectReservedConfigPrefix = DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX;
   private List<String> sparkConnectAddArtifactsAllowedUsers = Collections.emptyList();
 
 
@@ -784,7 +785,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getSparkConnectReservedConfigPrefix() {
-    return DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX;
+    return sparkConnectReservedConfigPrefix;
+  }
+
+  public void setSparkConnectReservedConfigPrefix(String sparkConnectReservedConfigPrefix) {
+    this.sparkConnectReservedConfigPrefix = sparkConnectReservedConfigPrefix;
   }
 
   @Override

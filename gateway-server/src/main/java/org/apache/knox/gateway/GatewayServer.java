@@ -174,6 +174,12 @@ public class GatewayServer {
    */
   private final List<ProtocolListener> protocolListeners = new ArrayList<>();
 
+  /**
+   * Listeners present on the classpath but switched off at startup. Held only so
+   * that switching one on later can be reported as needing a restart.
+   */
+  private final List<ProtocolListener> inactiveProtocolListeners = new ArrayList<>();
+
   private final Set<String> inactiveTopologies = new HashSet<>();
 
   public static void main( String[] args ) {
@@ -821,22 +827,91 @@ public class GatewayServer {
   private void startProtocolListeners() throws Exception {
     for (ProtocolListener listener : ServiceLoader.load(ProtocolListener.class)) {
       if (!listener.isEnabled(config)) {
+        // Kept so that switching it on later can be reported rather than ignored.
+        inactiveProtocolListeners.add(listener);
         continue;
       }
       try {
         listener.start(config, services);
         protocolListeners.add(listener);
+        // A listener that tracks gateway configuration opts in by implementing
+        // GatewayConfigChangeListener; registering after a successful start keeps
+        // a failed listener from receiving refreshes.
+        if (listener instanceof GatewayConfigChangeListener) {
+          registerConfigChangeListener((GatewayConfigChangeListener) listener);
+        }
         log.startedProtocolListener(listener.getName(), convertPortToString(listener.getPort()));
       } catch (Exception e) {
         log.failedToStartProtocolListener(listener.getName(), e);
         throw e;
       }
     }
+    if (!protocolListeners.isEmpty() || !inactiveProtocolListeners.isEmpty()) {
+      registerConfigChangeListener(enablementWatcher);
+    }
+  }
+
+  /**
+   * Reports an attempt to switch a protocol listener on or off in a running
+   * gateway.
+   * <p>
+   * Whether a listener runs is decided once, at startup: an enabled one binds its
+   * socket, a disabled one is never started. Neither can change without a
+   * restart. Enablement is the gateway's decision rather than the listener's, so
+   * it is watched here instead of in each listener — and reported rather than
+   * silently ignored, because an operator who edits the property and sees nothing
+   * in the log has no way to tell the setting was not applied.
+   */
+  private final GatewayConfigChangeListener enablementWatcher =
+      refreshed -> warnAboutEnablementChanges(refreshed, protocolListeners, inactiveProtocolListeners);
+
+  /**
+   * Logs a warning for each listener whose enablement changed, in either
+   * direction.
+   *
+   * @param refreshed the reloaded configuration
+   * @param running listeners started at gateway startup
+   * @param inactive listeners on the classpath that were switched off at startup
+   * @return the names of the listeners reported, for testing
+   */
+  static List<String> warnAboutEnablementChanges(GatewayConfig refreshed,
+                                                 List<ProtocolListener> running,
+                                                 List<ProtocolListener> inactive) {
+    final List<String> reported = new ArrayList<>();
+    for (ProtocolListener listener : running) {
+      if (!listener.isEnabled(refreshed)) {
+        log.protocolListenerCannotBeStopped(listener.getName());
+        reported.add(listener.getName());
+      }
+    }
+    for (ProtocolListener listener : inactive) {
+      if (listener.isEnabled(refreshed)) {
+        log.protocolListenerCannotBeStarted(listener.getName());
+        reported.add(listener.getName());
+      }
+    }
+    return reported;
+  }
+
+  private void notifyProtocolListeners() {
+    for (ProtocolListener listener : protocolListeners) {
+      try {
+        listener.reload();
+      } catch (Exception e) {
+        // A listener that cannot refresh must not block the redeployment of the
+        // topologies the rest of the gateway serves.
+        log.failedToReloadProtocolListener(listener.getName(), e);
+      }
+    }
   }
 
   private void stopProtocolListeners() {
+    unregisterConfigChangeListener(enablementWatcher);
     for (ProtocolListener listener : protocolListeners) {
       try {
+        if (listener instanceof GatewayConfigChangeListener) {
+          unregisterConfigChangeListener((GatewayConfigChangeListener) listener);
+        }
         listener.stop();
       } catch (Exception e) {
         // One listener refusing to stop must not keep the rest of the gateway up.
@@ -844,6 +919,7 @@ public class GatewayServer {
       }
     }
     protocolListeners.clear();
+    inactiveProtocolListeners.clear();
   }
 
   private void handleHadoopXmlResources() {
@@ -1171,6 +1247,10 @@ public class GatewayServer {
             handleCreateDeployment(topology, deployDir);
           }
         }
+        // Protocol listeners bypass the webapp redeployment that refreshes the
+        // servlet filter chains, so anything they cached from a topology has to
+        // be invalidated explicitly or an edited topology never takes effect.
+        notifyProtocolListeners();
       }
     }
 

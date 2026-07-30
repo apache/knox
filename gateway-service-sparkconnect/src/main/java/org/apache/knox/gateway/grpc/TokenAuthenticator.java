@@ -115,7 +115,19 @@ public class TokenAuthenticator {
       validator.setTokenStateService(services.getService(ServiceType.TOKEN_STATE_SERVICE));
     }
 
-    if (!validator.validate()) {
+    final boolean valid;
+    try {
+      valid = validator.validate();
+    } catch (RuntimeException e) {
+      // Validation reaches third-party JOSE code, which signals some malformed
+      // credentials by throwing rather than returning false — a token signed with
+      // an unexpected algorithm family, for instance. Treat any such failure as a
+      // failed authentication: a credential that provokes an error is emphatically
+      // not one that passed, and letting the exception escape would answer an
+      // attacker probing for it differently from an ordinary rejection.
+      throw new AuthenticationException("Bearer token could not be validated", e);
+    }
+    if (!valid) {
       throw new AuthenticationException("Bearer token failed validation");
     }
 

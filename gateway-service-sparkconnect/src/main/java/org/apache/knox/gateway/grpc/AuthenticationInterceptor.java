@@ -67,6 +67,13 @@ public class AuthenticationInterceptor implements ServerInterceptor {
       user = authenticator.authenticate(serializedToken);
     } catch (TokenAuthenticator.AuthenticationException e) {
       return reject(call, method, e.getMessage());
+    } catch (RuntimeException e) {
+      // Belt and braces: whatever goes wrong while examining a credential, the
+      // answer is that the call is not authenticated. Letting an exception escape
+      // would hand the caller UNKNOWN instead of UNAUTHENTICATED, which both
+      // leaks that the input was unusual and lets a malformed token cost the
+      // gateway a stack trace on every request.
+      return reject(call, method, "token validation failed: " + e.getClass().getSimpleName());
     }
 
     final GrpcCallContext callContext = GrpcCallContext.current();

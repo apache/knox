@@ -113,6 +113,15 @@ public class ServiceDefinitionDeploymentContributor extends ServiceDeploymentCon
   private void contributeResources(DeploymentContext context, Service service) {
     Map<String, String> filterParams = new HashMap<>();
     List<Route> bindings = serviceDefinition.getRoutes();
+    if ( bindings == null ) {
+      // A service definition need not declare routes. Services carried by a
+      // non-servlet listener — Spark Connect over gRPC, for instance — have no
+      // path for the servlet pipeline to match, and exist as definitions only so
+      // the role is known to the registry and to tooling. JAXB leaves the list
+      // null when <routes> is absent, and iterating it would fail the whole
+      // topology deployment, not merely this service.
+      return;
+    }
     for ( Route binding : bindings ) {
       List<Rewrite> filters = binding.getRewrites();
       if ( filters != null && !filters.isEmpty() ) {

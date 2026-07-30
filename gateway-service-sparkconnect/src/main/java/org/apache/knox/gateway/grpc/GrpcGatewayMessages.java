@@ -79,6 +79,15 @@ public interface GrpcGatewayMessages {
   @Message(level = MessageLevel.WARN, text = "Could not resolve the backend token alias {0}")
   void missingBackendTokenAlias(String alias);
 
+  @Message(level = MessageLevel.INFO,
+      text = "Reloaded the {0} listener message policy: {1}")
+  void reloadedPolicy(String name, String policy);
+
+  @Message(level = MessageLevel.WARN,
+      text = "The {0} listener cannot apply changes to [{1}] without a gateway restart; "
+          + "the running values remain in effect")
+  void restartOnlyConfigChanged(String name, String properties);
+
   @Message(level = MessageLevel.DEBUG, text = "{0}")
   void debugLog(String message);
 }
