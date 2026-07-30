@@ -125,6 +125,7 @@
         <module>gateway-service-storm</module>
         <module>gateway-service-remoteconfig</module>
         <module>gateway-service-restcatalog</module>
+        <module>gateway-service-sparkconnect</module>
         <module>gateway-service-definitions</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
@@ -208,6 +209,9 @@
         <fabric8.kubernetes-client.version>7.7.0</fabric8.kubernetes-client.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <gethostname4j.version>1.0.0</gethostname4j.version>  <!-- See here: https://github.com/mattsheppard/gethostname4j -->
+        <!-- grpc-java 1.80.x is the line that depends on protobuf-java ${protobuf.version};
+             keep the two in step when bumping either. -->
+        <grpc.version>1.80.0</grpc.version>
         <glassfish-jaxb.version>4.0.5</glassfish-jaxb.version>
         <gson.version>2.10.1</gson.version>
         <gsonfire.version>1.9.0</gsonfire.version>
@@ -261,6 +265,7 @@
         <nodejs.version>v22.20.0</nodejs.version>
         <okhttp.version>4.12.0</okhttp.version>
         <opensaml.version>5.2.2</opensaml.version>
+        <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <pac4j.version>6.5.3</pac4j.version>
         <postgresql.version>42.7.11</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
@@ -268,6 +273,7 @@
         <okio.version>3.6.0</okio.version>
         <oracle.version>23.26.0.0.0</oracle.version>
         <protobuf.version>3.25.8</protobuf.version>
+        <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <powermock.version>2.0.9</powermock.version>
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
         <pty4j.version>0.12.4</pty4j.version>
@@ -1291,6 +1297,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
+                <artifactId>gateway-service-sparkconnect</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.knox</groupId>
                 <artifactId>gateway-server</artifactId>
                 <version>${project.version}</version>
                 <exclusions>
@@ -1794,6 +1805,17 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+
+            <!-- Imports version management for every io.grpc artifact. Only
+                 gateway-service-sparkconnect depends on them; grpc-netty-shaded keeps
+                 grpc's Netty off the gateway classpath. -->
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-bom</artifactId>
+                <version>${grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <dependency>

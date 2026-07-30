@@ -25,7 +25,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
-import org.apache.knox.gateway.websockets.JWTValidator;
+import org.apache.knox.gateway.provider.federation.jwt.JWTValidator;
 import org.apache.knox.gateway.websockets.WebsocketLogMessages;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockSupport;

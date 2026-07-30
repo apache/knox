@@ -38,6 +38,7 @@ import org.apache.knox.gateway.filter.HSTSHandler;
 import org.apache.knox.gateway.filter.PortMappingHelperHandler;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
+import org.apache.knox.gateway.protocol.ProtocolListener;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
@@ -165,6 +166,13 @@ public class GatewayServer {
   private Map<String, WebAppContext> deployments;
   private AtomicBoolean stopped = new AtomicBoolean(false);
   private GatewayStatusService gatewayStatusService;
+
+  /**
+   * Listeners for protocols the servlet pipeline cannot carry, each on its own
+   * port. Discovered with ServiceLoader so the server keeps no compile-time
+   * dependency on their transport libraries.
+   */
+  private final List<ProtocolListener> protocolListeners = new ArrayList<>();
 
   private final Set<String> inactiveTopologies = new HashSet<>();
 
@@ -765,6 +773,10 @@ public class GatewayServer {
 
     cleanupTopologyDeployments();
 
+    // Started after Jetty and after topologies are deployed, so a listener can
+    // resolve backends from the service registry as it comes up.
+    startProtocolListeners();
+
     // Start the topology monitor.
     monitor.startMonitor();
 
@@ -799,6 +811,41 @@ public class GatewayServer {
     }
   }
 
+  /**
+   * Starts every enabled protocol listener on the classpath.
+   * <p>
+   * A listener that fails to start fails the gateway, the same as a Jetty
+   * connector would: a deployment that asked for a listener and silently did not
+   * get one is worse than one that refuses to come up.
+   */
+  private void startProtocolListeners() throws Exception {
+    for (ProtocolListener listener : ServiceLoader.load(ProtocolListener.class)) {
+      if (!listener.isEnabled(config)) {
+        continue;
+      }
+      try {
+        listener.start(config, services);
+        protocolListeners.add(listener);
+        log.startedProtocolListener(listener.getName(), convertPortToString(listener.getPort()));
+      } catch (Exception e) {
+        log.failedToStartProtocolListener(listener.getName(), e);
+        throw e;
+      }
+    }
+  }
+
+  private void stopProtocolListeners() {
+    for (ProtocolListener listener : protocolListeners) {
+      try {
+        listener.stop();
+      } catch (Exception e) {
+        // One listener refusing to stop must not keep the rest of the gateway up.
+        log.failedToStopProtocolListener(listener.getName(), e);
+      }
+    }
+    protocolListeners.clear();
+  }
+
   private void handleHadoopXmlResources() {
     final HadoopXmlResourceParser hadoopXmlResourceParser = new HadoopXmlResourceParser(config);
     final HadoopXmlResourceMonitor hadoopXmlResourceMonitor = new HadoopXmlResourceMonitor(config, hadoopXmlResourceParser);
@@ -811,6 +858,9 @@ public class GatewayServer {
         log.stoppingGateway();
         services.stop();
         monitor.stopMonitor();
+        // Drain before Jetty stops: long-lived streams get a bounded window to
+        // finish rather than being cut the moment shutdown begins.
+        stopProtocolListeners();
         jetty.stop();
         jetty.join();
         log.stoppedGateway();

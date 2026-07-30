@@ -85,4 +85,10 @@ limitations under the License.
     <Class name="org.apache.knox.gateway.audit.log4j.correlation.Log4jCorrelationService" />
     <Bug pattern="OBJECT_DESERIALIZATION" />
   </Match>
+
+  <!-- Spark Connect protobuf/gRPC stubs generated at build time from the vendored
+       spark/connect/*.proto files. Generated code, not hand-maintained. -->
+  <Match>
+    <Package name="~org\.apache\.spark\.connect\.proto.*" />
+  </Match>
 </FindBugsFilter>

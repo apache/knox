@@ -164,6 +164,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
   public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
+  /* @since 3.0.0 Spark Connect (gRPC) listener config variables */
+  public static final String SPARKCONNECT_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.enabled";
+  public static final String SPARKCONNECT_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.port";
+  public static final String SPARKCONNECT_DEFAULT_TOPOLOGY = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.default.topology";
+  public static final String SPARKCONNECT_MAX_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.max.message.size";
+  public static final String SPARKCONNECT_PERMIT_KEEPALIVE_TIME = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.permit.keepalive.time";
+  public static final String SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.permit.keepalive.without.calls";
+  public static final String SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.max.concurrent.calls.per.connection";
+  public static final String SPARKCONNECT_CHANNEL_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.channel.idle.timeout";
+  public static final String SPARKCONNECT_DRAIN_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.drain.timeout";
+  public static final String SPARKCONNECT_BACKEND_TOKEN_ALIAS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.backend.token.alias";
+  public static final String SPARKCONNECT_ADD_ARTIFACTS_MODE = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.add.artifacts.mode";
+  public static final String SPARKCONNECT_ADD_ARTIFACTS_ALLOWED_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.add.artifacts.allowed.users";
+  public static final String SPARKCONNECT_RESERVED_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.reserved.config.prefix";
+
 
   /* @since 2.0.0 WebShell config variables */
   public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
@@ -226,6 +241,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+
+  /* Spark Connect defaults */
+  public static final boolean DEFAULT_SPARKCONNECT_FEATURE_ENABLED = false;
+  /* The port the Spark Connect server itself listens on; clients default to it too. */
+  public static final int DEFAULT_SPARKCONNECT_PORT = 15002;
+  /* Matches Spark's own 128 MB default. */
+  public static final int DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE = 134217728;
+  /* grpc-java's server-side floor; clients ping every 60s by default. */
+  public static final long DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME = 10000L;
+  public static final boolean DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS = true;
+  public static final int DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
+  public static final long DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT = 1800000L;
+  public static final long DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT = 30000L;
+  public static final String DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE = "ALLOW";
+  public static final String DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX = "knox.";
 
   public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
   public static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
@@ -1112,6 +1142,75 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketMaxWaitBufferCount() {
     return getInt( WEBSOCKET_MAX_WAIT_BUFFER_COUNT, DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT);
+  }
+
+  @Override
+  public boolean isSparkConnectEnabled() {
+    return getBoolean(SPARKCONNECT_FEATURE_ENABLED, DEFAULT_SPARKCONNECT_FEATURE_ENABLED);
+  }
+
+  @Override
+  public int getSparkConnectPort() {
+    return getInt(SPARKCONNECT_PORT, DEFAULT_SPARKCONNECT_PORT);
+  }
+
+  @Override
+  public String getSparkConnectDefaultTopology() {
+    return get(SPARKCONNECT_DEFAULT_TOPOLOGY);
+  }
+
+  @Override
+  public int getSparkConnectMaxMessageSize() {
+    return getInt(SPARKCONNECT_MAX_MESSAGE_SIZE, DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE);
+  }
+
+  @Override
+  public long getSparkConnectPermitKeepAliveTime() {
+    return getLong(SPARKCONNECT_PERMIT_KEEPALIVE_TIME, DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME);
+  }
+
+  @Override
+  public boolean isSparkConnectPermitKeepAliveWithoutCalls() {
+    return getBoolean(SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS, DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS);
+  }
+
+  @Override
+  public int getSparkConnectMaxConcurrentCallsPerConnection() {
+    return getInt(SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION, DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION);
+  }
+
+  @Override
+  public long getSparkConnectChannelIdleTimeout() {
+    return getLong(SPARKCONNECT_CHANNEL_IDLE_TIMEOUT, DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT);
+  }
+
+  @Override
+  public long getSparkConnectDrainTimeout() {
+    return getLong(SPARKCONNECT_DRAIN_TIMEOUT, DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT);
+  }
+
+  @Override
+  public String getSparkConnectBackendTokenAlias() {
+    return get(SPARKCONNECT_BACKEND_TOKEN_ALIAS);
+  }
+
+  @Override
+  public String getSparkConnectAddArtifactsMode() {
+    return get(SPARKCONNECT_ADD_ARTIFACTS_MODE, DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE);
+  }
+
+  @Override
+  public List<String> getSparkConnectAddArtifactsAllowedUsers() {
+    final String value = get(SPARKCONNECT_ADD_ARTIFACTS_ALLOWED_USERS);
+    if (value == null || value.trim().isEmpty()) {
+      return Collections.emptyList();
+    }
+    return Arrays.asList(value.trim().split("\\s*,\\s*"));
+  }
+
+  @Override
+  public String getSparkConnectReservedConfigPrefix() {
+    return get(SPARKCONNECT_RESERVED_CONFIG_PREFIX, DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX);
   }
 
   @Override

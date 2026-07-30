@@ -33,7 +33,7 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
-import org.apache.knox.gateway.websockets.JWTValidator;
+import org.apache.knox.gateway.provider.federation.jwt.JWTValidator;
 import org.apache.knox.gateway.websockets.ProxyWebSocketAdapter;
 import org.eclipse.jetty.websocket.api.Session;
 

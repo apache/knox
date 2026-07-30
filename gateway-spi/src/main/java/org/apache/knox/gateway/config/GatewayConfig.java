@@ -546,6 +546,119 @@ public interface GatewayConfig {
    */
   int getWebsocketMaxWaitBufferCount();
 
+  /**
+   * Returns true if the Spark Connect (gRPC) listener is enabled, else false.
+   * Default is false.
+   * @since 3.0.0
+   * @return true if the Spark Connect listener should be started
+   */
+  boolean isSparkConnectEnabled();
+
+  /**
+   * The port the Spark Connect gRPC listener binds to. This is a dedicated
+   * socket, separate from the gateway's Jetty connectors, because gRPC needs
+   * HTTP/2 with ALPN.
+   * @since 3.0.0
+   * @return the listener port
+   */
+  int getSparkConnectPort();
+
+  /**
+   * The topology used when no other discriminator selects one. Spark Connect
+   * clients cannot put a path in an {@code sc://} URL, so Knox's usual
+   * {@code /gateway/{topology}/{service}} routing is unavailable and the
+   * topology must come from elsewhere.
+   * @since 3.0.0
+   * @return the default topology name, or null if unset
+   */
+  String getSparkConnectDefaultTopology();
+
+  /**
+   * Maximum inbound message size in bytes, applied to both legs. Spark's own
+   * default is 128 MB and grpc-java materializes whole messages, so this bounds
+   * per-message heap.
+   * @since 3.0.0
+   * @return max message size in bytes
+   */
+  int getSparkConnectMaxMessageSize();
+
+  /**
+   * The minimum interval the listener will tolerate between client keepalive
+   * pings before treating them as abusive, in milliseconds.
+   * @since 3.0.0
+   * @return permitted keepalive interval in milliseconds
+   */
+  long getSparkConnectPermitKeepAliveTime();
+
+  /**
+   * Whether clients may send keepalive pings with no active calls. Spark Connect
+   * clients ping idle channels, so this defaults to true.
+   * @since 3.0.0
+   * @return true if keepalives without calls are permitted
+   */
+  boolean isSparkConnectPermitKeepAliveWithoutCalls();
+
+  /**
+   * Maximum concurrent gRPC streams per client connection.
+   * @since 3.0.0
+   * @return max concurrent calls per connection
+   */
+  int getSparkConnectMaxConcurrentCallsPerConnection();
+
+  /**
+   * How long an unused backend channel is kept before being shut down, in
+   * milliseconds.
+   * @since 3.0.0
+   * @return backend channel idle timeout in milliseconds
+   */
+  long getSparkConnectChannelIdleTimeout();
+
+  /**
+   * How long to let in-flight RPCs finish when the gateway is shutting down,
+   * in milliseconds. Long-running {@code ExecutePlan} streams are severed once
+   * this elapses; clients recover through their own reattach logic.
+   * @since 3.0.0
+   * @return drain timeout in milliseconds
+   */
+  long getSparkConnectDrainTimeout();
+
+  /**
+   * The alias holding the pre-shared token Knox presents to the Spark Connect
+   * backend ({@code spark.connect.authenticate.token}). Besides authenticating
+   * Knox to Spark, this stops clients bypassing the gateway when they have
+   * network reachability to the backend port.
+   * @since 3.0.0
+   * @return the alias name, or null if the backend requires no token
+   */
+  String getSparkConnectBackendTokenAlias();
+
+  /**
+   * Governs the {@code AddArtifacts} RPC: {@code ALLOW}, {@code DENY}, or
+   * {@code ALLOW_LISTED_USERS}. User-supplied jars run with the Spark
+   * application's own storage credentials, so this is defense in depth rather
+   * than an authorization boundary.
+   * @since 3.0.0
+   * @return the gating mode
+   */
+  String getSparkConnectAddArtifactsMode();
+
+  /**
+   * Users permitted to call {@code AddArtifacts} when the gating mode is
+   * {@code ALLOW_LISTED_USERS}.
+   * @since 3.0.0
+   * @return the permitted user names; empty if none configured
+   */
+  List<String> getSparkConnectAddArtifactsAllowedUsers();
+
+  /**
+   * The session-configuration key prefix reserved for Knox. Clients are denied
+   * {@code Set}/{@code Unset} on keys under this prefix so they cannot forge the
+   * identity Knox publishes into the session.
+   * @since 3.0.0
+   * @return the reserved key prefix
+   */
+  String getSparkConnectReservedConfigPrefix();
+
   boolean isMetricsEnabled();
 
   boolean isJmxMetricsReportingEnabled();

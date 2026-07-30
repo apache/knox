@@ -124,6 +124,7 @@ nav:
           - Admin API: admin_api.md
           - Monitoring API: dev-guide/knox_monitoring_api.md
       - Advanced Topics:
+          - Spark Connect Support: spark-connect-support.md
           - SSE Support: sse-support.md
           - WebSocket Support: websocket-support.md
           - X-Forwarded Headers: x-forwarded-headers.md

@@ -55,6 +55,23 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
   public static final int  DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
 
+  /* Spark Connect defaults */
+  public static final int DEFAULT_SPARKCONNECT_PORT = 15002;
+  public static final int DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE = 134217728;
+  public static final long DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME = 10000L;
+  public static final int DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
+  public static final long DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT = 1800000L;
+  public static final long DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT = 30000L;
+  public static final String DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE = "ALLOW";
+  public static final String DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX = "knox.";
+
+  private boolean sparkConnectEnabled;
+  private int sparkConnectPort = DEFAULT_SPARKCONNECT_PORT;
+  private String sparkConnectDefaultTopology;
+  private String sparkConnectBackendTokenAlias;
+  private String sparkConnectAddArtifactsMode = DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE;
+  private List<String> sparkConnectAddArtifactsAllowedUsers = Collections.emptyList();
+
 
 
   private Path gatewayHomePath = Paths.get("gateway-home");
@@ -679,6 +696,95 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketMaxWaitBufferCount() {
     return DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
+  }
+
+  @Override
+  public boolean isSparkConnectEnabled() {
+    return sparkConnectEnabled;
+  }
+
+  public void setSparkConnectEnabled(boolean sparkConnectEnabled) {
+    this.sparkConnectEnabled = sparkConnectEnabled;
+  }
+
+  @Override
+  public int getSparkConnectPort() {
+    return sparkConnectPort;
+  }
+
+  public void setSparkConnectPort(int sparkConnectPort) {
+    this.sparkConnectPort = sparkConnectPort;
+  }
+
+  @Override
+  public String getSparkConnectDefaultTopology() {
+    return sparkConnectDefaultTopology;
+  }
+
+  public void setSparkConnectDefaultTopology(String sparkConnectDefaultTopology) {
+    this.sparkConnectDefaultTopology = sparkConnectDefaultTopology;
+  }
+
+  @Override
+  public int getSparkConnectMaxMessageSize() {
+    return DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE;
+  }
+
+  @Override
+  public long getSparkConnectPermitKeepAliveTime() {
+    return DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME;
+  }
+
+  @Override
+  public boolean isSparkConnectPermitKeepAliveWithoutCalls() {
+    return true;
+  }
+
+  @Override
+  public int getSparkConnectMaxConcurrentCallsPerConnection() {
+    return DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
+  }
+
+  @Override
+  public long getSparkConnectChannelIdleTimeout() {
+    return DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT;
+  }
+
+  @Override
+  public long getSparkConnectDrainTimeout() {
+    return DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT;
+  }
+
+  @Override
+  public String getSparkConnectBackendTokenAlias() {
+    return sparkConnectBackendTokenAlias;
+  }
+
+  public void setSparkConnectBackendTokenAlias(String sparkConnectBackendTokenAlias) {
+    this.sparkConnectBackendTokenAlias = sparkConnectBackendTokenAlias;
+  }
+
+  @Override
+  public String getSparkConnectAddArtifactsMode() {
+    return sparkConnectAddArtifactsMode;
+  }
+
+  public void setSparkConnectAddArtifactsMode(String sparkConnectAddArtifactsMode) {
+    this.sparkConnectAddArtifactsMode = sparkConnectAddArtifactsMode;
+  }
+
+  @Override
+  public List<String> getSparkConnectAddArtifactsAllowedUsers() {
+    return sparkConnectAddArtifactsAllowedUsers;
+  }
+
+  public void setSparkConnectAddArtifactsAllowedUsers(List<String> allowedUsers) {
+    this.sparkConnectAddArtifactsAllowedUsers = allowedUsers;
+  }
+
+  @Override
+  public String getSparkConnectReservedConfigPrefix() {
+    return DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX;
   }
 
   @Override
