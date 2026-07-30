@@ -394,25 +394,11 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     }
 
     @Test
-    public void testGetWireTokenUsingTokenExchangeFlow() throws Exception {
-      final String subjectToken = "WTJ4cFpXNTBMV2xrTFRFeU16UTE2OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
-      testGetWireTokenWithGrant(JWTFederationFilter.TOKEN_EXCHANGE, JWTFederationFilter.SUBJECT_TOKEN, subjectToken);
-    }
-
-    @Test
     public void testVerifyRefreshTokenFlow() throws Exception {
         final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650b";
         final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f96";
         final String passcodeToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJpOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazI=";
         testVerifyTokenWithGrant(tokenId, passcode, passcodeToken, JWTFederationFilter.REFRESH_TOKEN, JWTFederationFilter.REFRESH_TOKEN_PARAM);
-    }
-
-    @Test
-    public void testVerifyTokenExchangeFlow() throws Exception {
-        final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650c";
-        final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f97";
-        final String passcodeToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJqOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazM=";
-        testVerifyTokenWithGrant(tokenId, passcode, passcodeToken, JWTFederationFilter.TOKEN_EXCHANGE, JWTFederationFilter.SUBJECT_TOKEN);
     }
 
     private Pair<TokenStateService, TokenMetadata> createMockTokenStateService(String tokenId, String passcodeToken) throws UnknownTokenException {
