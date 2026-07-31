@@ -104,6 +104,7 @@ public class LdapProxyBackend implements LdapBackend {
     private boolean recursiveGroupResolution;
     private int recursiveGroupResolutionMaxDepth;
     private int pageSize;
+    private int maxResultSetSize;
 
     private final String proxyEntryGroupMembershipAttributeType = "memberOf";
 
@@ -194,6 +195,8 @@ public class LdapProxyBackend implements LdapBackend {
 
         // Configure search parameters
         pageSize = Integer.parseInt(config.getOrDefault("pageSize", "1000"));
+        maxResultSetSize = Integer.parseInt(config.getOrDefault("maxResultSetSize", "0")); // 0 means unlimited
+        LOG.ldapInterceptorConfiguring(name, "maxResultSetSize", Integer.toString(maxResultSetSize));
 
         // Configure secure transport (LDAPS) to the remote server. An ldaps:// URL enables it
         // by default; an explicit useSsl setting always wins.
@@ -893,11 +896,15 @@ public class LdapProxyBackend implements LdapBackend {
                     }
                 }
                 pageNumber++;
-            } catch (LdapException e) {
-                LOG.ldapSearchFailed(baseDn, filter, e);
             }
-        } while (cookie != null && cookie.length > 0);
-        LOG.ldapPagedSearchCompleted(baseDn, filter);
+        } while (cookie != null && cookie.length > 0 &&
+                (maxResultSetSize == 0 || results.size() < maxResultSetSize));
+
+        if (maxResultSetSize != 0 && results.size() >= maxResultSetSize) {
+            LOG.ldapPagedSearchExceededMaxResultSetSize(results.size(), maxResultSetSize);
+        } else {
+            LOG.ldapPagedSearchCompleted(baseDn, filter);
+        }
 
         return results;
     }

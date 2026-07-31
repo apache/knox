@@ -276,11 +276,28 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
+        assertEquals(3, userGroups.size());
         int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
                 .filter(request -> request.getBase().getName().equals("ou=groups,dc=hadoop,dc=apache,dc=org") &&
                         request.getFilter().toString().contains("ldaptest1"))
                 .count();
         assertEquals(2, matchingRequests);
+    }
+
+    @Test
+    public void testGetUserGroupsPagingExceedsMaxResultSetSize() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("pageSize", Integer.toString(PAGE_SIZE));
+        config.put("maxResultSetSize", "1");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
+        assertEquals(PAGE_SIZE, userGroups.size()); // only retrieve 1 page because that will exceed the maxResultSetSize
+        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
+                .filter(request -> request.getBase().getName().equals("ou=groups,dc=hadoop,dc=apache,dc=org") &&
+                        request.getFilter().toString().contains("ldaptest1"))
+                .count();
+        assertEquals(1, matchingRequests);
     }
 
     @Test
@@ -376,7 +393,21 @@ public class LdapProxyBackendTest {
         assertEquals(2, matchingRequests);
     }
 
+    @Test
+    public void testSearchUsersWithPagingExceedsMaxResultSetSize() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("pageSize", Integer.toString(PAGE_SIZE));
+        config.put("maxResultSetSize", "1");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
+        List<Entry> entries = ldapProxyBackend.searchUsers("*", schemaManager);
+        assertEquals(PAGE_SIZE, entries.size()); // only expect 1 page of results
+        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
+                .filter(request -> request.getBase().getName().equals("ou=people,dc=hadoop,dc=apache,dc=org") &&
+                        request.getFilter().toString().contains("uid=*"))
+                .count();
+        assertEquals(1, matchingRequests);
+    }
 
     @Test
     public void testSearchUsersPartial() throws Exception {
@@ -529,6 +560,21 @@ public class LdapProxyBackendTest {
                         request.getFilter().toString().contains("uid=*"))
                 .count();
         assertEquals(2, matchingRequests);
+    }
+
+    @Test
+    public void testSearchWithPagingExceedsMaxResultSize() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("pageSize", Integer.toString(PAGE_SIZE));
+        config.put("maxResultSetSize", "1");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=*)", schemaManager);
+        assertEquals(PAGE_SIZE, entries.size()); // only expect 1 page because that will exceed the maxResultSetSize
+        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
+                .filter(request -> request.getBase().getName().equals("ou=people,dc=hadoop,dc=apache,dc=org") &&
+                        request.getFilter().toString().contains("uid=*"))
+                .count();
+        assertEquals(1, matchingRequests);
     }
 
     @Test
@@ -894,7 +940,6 @@ public class LdapProxyBackendTest {
         @Override
         public void handle(LdapSession session, SearchRequest message) throws Exception {
             requests.add(message);
-            System.out.println(message.toString());
             delegate.handle(session, message);
         }
     }
