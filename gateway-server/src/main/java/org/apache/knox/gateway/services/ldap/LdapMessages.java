@@ -74,6 +74,10 @@ public interface LdapMessages {
     void ldapInterceptorCreating(String interceptorName, String source);
 
     @Message(level = MessageLevel.INFO,
+            text = "Configuring LDAP interceptor {0}: {1} = {2})")
+    void ldapInterceptorConfiguring(String interceptorNamee, String configName, String configValue);
+
+    @Message(level = MessageLevel.INFO,
             text = "Loading backend: {0} (via {1})")
     void ldapBackendLoading(String backendName, String source);
 
@@ -104,6 +108,10 @@ public interface LdapMessages {
     @Message(level = MessageLevel.DEBUG,
             text = "LDAP Paged Search: {0} | {1}, page size {2}, page {3}")
     void ldapPagedSearch(String baseDn, String filter, int pageSize, int pageNumber);
+
+    @Message(level = MessageLevel.ERROR,
+            text = "LDAP Paged Search Exceeded Max Result Set Size: {0} | {1}")
+    void ldapPagedSearchExceededMaxResultSetSize(int resultSetSize, int maxResultSetSize);
 
     @Message(level = MessageLevel.DEBUG,
             text = "LDAP Paged Search Completed: {0} | {1}")

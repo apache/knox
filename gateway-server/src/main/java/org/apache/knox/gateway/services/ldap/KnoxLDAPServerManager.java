@@ -117,6 +117,9 @@ public class KnoxLDAPServerManager {
         this.baseDn = config.getLDAPBaseDN();
         this.bindUser = config.getLDAPBindUser();
 
+        maxSizeLimit = config.getLDAPMaxSizeLimit();
+        maxTimeLimit = config.getLDAPMaxTimeLimit();
+
         // Secure (LDAPS) transport configuration. When enabled but no dedicated keystore is
         // configured, fall back to the gateway identity keystore so the embedded server can
         // reuse the gateway's own TLS material out of the box.
@@ -140,9 +143,6 @@ public class KnoxLDAPServerManager {
         }
 
         workDir.mkdirs();
-
-        maxSizeLimit = config.getLDAPMaxSizeLimit();
-        maxTimeLimit = config.getLDAPMaxTimeLimit();
     }
 
     private void createInterceptors(GatewayConfig config) throws Exception {
@@ -154,6 +154,13 @@ public class KnoxLDAPServerManager {
 
             // Add common configuration
             interceptorConfig.put("baseDn", baseDn);
+            if (!interceptorConfig.containsKey("maxResultSetSize")) {
+                // Set the backend to return more results than the proxy's size limit.
+                // This will ensure that the proxy will return "Size limit exceeded"
+                if (maxSizeLimit != 0) {
+                    interceptorConfig.put("maxResultSetSize", Integer.toString(maxSizeLimit + 1));
+                }
+            }
 
             // Add common LDAP Proxy configurations to backends
             if ("backend".equalsIgnoreCase(interceptorConfig.get("interceptorType"))) {
