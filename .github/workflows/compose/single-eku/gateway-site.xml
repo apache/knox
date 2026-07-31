@@ -212,6 +212,14 @@ limitations under the License.
         <value>dc=proxy,dc=org</value>
     </property>
     <property>
+        <name>gateway.ldap.max.size.limit</name>
+        <value>1000</value>
+    </property>
+    <property>
+        <name>gateway.ldap.max.time.limit</name>
+        <value>60000</value>
+    </property>
+    <property>
         <name>gateway.ldap.recursive.group.resolution</name>
         <value>true</value>
     </property>
@@ -256,6 +264,11 @@ limitations under the License.
     <property>
         <name>gateway.ldap.interceptor.demoldap.groupMemberAttribute</name>
         <value>member</value>
+    </property>
+    <!-- Set an unnaturally low page size to ensure that paging is used in tests -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.pageSize</name>
+        <value>3</value>
     </property>
 
 </configuration>

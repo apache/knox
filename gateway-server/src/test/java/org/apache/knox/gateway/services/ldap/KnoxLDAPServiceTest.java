@@ -180,6 +180,8 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPBindUser()).andReturn(null).anyTimes();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend")).atLeastOnce();
         expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
+        expect(mockConfig.getLDAPMaxSizeLimit()).andReturn(1000).atLeastOnce();
+        expect(mockConfig.getLDAPMaxTimeLimit()).andReturn(60000).atLeastOnce();
         replay(mockConfig);
     }
 

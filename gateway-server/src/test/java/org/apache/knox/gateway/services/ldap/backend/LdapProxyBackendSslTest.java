@@ -158,7 +158,8 @@ public class LdapProxyBackendSslTest {
         assertEquals("ldaptest1", entry.get("uid").getString());
         validateMemberOf(entry, Set.of(
                 "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org"));
+                "cn=group2,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "cn=group3,ou=groups,dc=hadoop,dc=apache,dc=org"));
     }
 
     @Test
@@ -168,6 +169,7 @@ public class LdapProxyBackendSslTest {
         List<String> groups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
         assertTrue(groups.contains("group1"));
         assertTrue(groups.contains("group2"));
+        assertTrue(groups.contains("group3"));
     }
 
     @Test
