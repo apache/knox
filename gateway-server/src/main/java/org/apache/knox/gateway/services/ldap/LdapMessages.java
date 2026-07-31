@@ -74,8 +74,8 @@ public interface LdapMessages {
     void ldapInterceptorCreating(String interceptorName, String source);
 
     @Message(level = MessageLevel.INFO,
-            text = "Configuring LDAP interceptor {0}: {1} = {2})")
-    void ldapInterceptorConfiguring(String interceptorNamee, String configName, String configValue);
+            text = "Configuring LDAP interceptor {0}: {1} = {2}")
+    void ldapInterceptorConfiguring(String interceptorName, String configName, String configValue);
 
     @Message(level = MessageLevel.INFO,
             text = "Loading backend: {0} (via {1})")
