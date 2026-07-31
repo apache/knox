@@ -113,6 +113,7 @@ public class SparkConnectListener extends GrpcGatewayListener implements Gateway
         .permitKeepAliveWithoutCalls(config.isSparkConnectPermitKeepAliveWithoutCalls())
         .channelIdleTimeoutMillis(config.getSparkConnectChannelIdleTimeout())
         .drainTimeoutMillis(config.getSparkConnectDrainTimeout())
+        .topologyMetadataKey(config.getSparkConnectTopologyMetadataKey())
         .backendTokenAlias(config.getSparkConnectBackendTokenAlias());
   }
 

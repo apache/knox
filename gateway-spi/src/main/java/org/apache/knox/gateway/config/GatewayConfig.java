@@ -659,6 +659,16 @@ public interface GatewayConfig {
    */
   String getSparkConnectReservedConfigPrefix();
 
+  /**
+   * The name of the call-metadata entry a client uses to select a topology,
+   * which is also the connection-string parameter users write. Configurable so a
+   * deployment can choose a name that suits its users rather than one that names
+   * the gateway reading it.
+   * @since 3.0.0
+   * @return the metadata key name
+   */
+  String getSparkConnectTopologyMetadataKey();
+
   boolean isMetricsEnabled();
 
   boolean isJmxMetricsReportingEnabled();

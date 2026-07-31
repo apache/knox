@@ -43,6 +43,7 @@ public class BackendHeaderRewriter implements HeaderRewriter {
   private static final GrpcGatewayMessages LOG = MessagesFactory.get(GrpcGatewayMessages.class);
 
   private final String backendAuthorization;
+  private final Metadata.Key<String> topologyKey;
 
   /**
    * @param aliasService used to resolve the backend token; may be null when no
@@ -50,8 +51,10 @@ public class BackendHeaderRewriter implements HeaderRewriter {
    * @param backendTokenAlias the alias holding the backend's pre-shared token, or
    *        null if the backend requires no token
    */
-  public BackendHeaderRewriter(AliasService aliasService, String backendTokenAlias) {
+  public BackendHeaderRewriter(AliasService aliasService, String backendTokenAlias,
+                               Metadata.Key<String> topologyKey) {
     this.backendAuthorization = resolveBackendToken(aliasService, backendTokenAlias);
+    this.topologyKey = topologyKey;
   }
 
   private static String resolveBackendToken(AliasService aliasService, String alias) {
@@ -74,7 +77,7 @@ public class BackendHeaderRewriter implements HeaderRewriter {
   @Override
   public void rewrite(Metadata headers) {
     headers.removeAll(GrpcMetadataKeys.AUTHORIZATION);
-    headers.removeAll(GrpcMetadataKeys.TOPOLOGY);
+    headers.removeAll(topologyKey);
     if (backendAuthorization != null) {
       headers.put(GrpcMetadataKeys.AUTHORIZATION, backendAuthorization);
     }

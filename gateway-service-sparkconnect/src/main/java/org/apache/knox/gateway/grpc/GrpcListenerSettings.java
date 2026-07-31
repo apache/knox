@@ -41,6 +41,7 @@ public class GrpcListenerSettings {
   private long channelIdleTimeoutMillis = 1800000L;
   private long drainTimeoutMillis = 30000L;
   private String backendTokenAlias;
+  private String topologyMetadataKey = GrpcMetadataKeys.DEFAULT_TOPOLOGY_KEY;
 
   public String getName() {
     return name;
@@ -111,6 +112,22 @@ public class GrpcListenerSettings {
 
   public GrpcListenerSettings drainTimeoutMillis(long value) {
     this.drainTimeoutMillis = value;
+    return this;
+  }
+
+  /**
+   * The metadata entry a client uses to select a topology. It is also the
+   * connection-string parameter users write, so a deployment may prefer a name
+   * that describes the choice rather than the gateway making it.
+   *
+   * @return the metadata key name
+   */
+  public String getTopologyMetadataKey() {
+    return topologyMetadataKey;
+  }
+
+  public GrpcListenerSettings topologyMetadataKey(String value) {
+    this.topologyMetadataKey = value;
     return this;
   }
 

@@ -79,6 +79,18 @@ public interface GrpcGatewayMessages {
   @Message(level = MessageLevel.WARN, text = "Could not resolve the backend token alias {0}")
   void missingBackendTokenAlias(String alias);
 
+  // DEBUG, not WARN: a listener enabled ahead of any backend is a legitimate
+  // steady state. Deployments that switch the listener on by default and create a
+  // topology only when someone provisions a cluster would otherwise carry a
+  // warning forever, which is how warnings stop being read. The actionable signal
+  // for a genuine misconfiguration is the per-call rejection, which names the
+  // missing configuration directly.
+  @Message(level = MessageLevel.DEBUG,
+      text = "The {0} listener is running but no deployed topology declares a {1} service, "
+          + "so calls will be rejected until one does. Add a <service><role>{1}</role>"
+          + "<url>...</url></service> to a topology; topologies are picked up without a restart.")
+  void noTopologyDeclaresService(String name, String role);
+
   @Message(level = MessageLevel.INFO,
       text = "Reloaded the {0} listener message policy: {1}")
   void reloadedPolicy(String name, String policy);

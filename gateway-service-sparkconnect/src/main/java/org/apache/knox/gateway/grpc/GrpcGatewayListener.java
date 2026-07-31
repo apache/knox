@@ -35,7 +35,11 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.topology.TopologyService;
+import org.apache.knox.gateway.topology.Service;
+import org.apache.knox.gateway.topology.Topology;
 
+import io.grpc.Metadata;
 import io.grpc.Server;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerMethodDefinition;
@@ -144,9 +148,14 @@ public abstract class GrpcGatewayListener implements ProtocolListener {
       return channels.getChannel(callContext.getBackendUrl());
     };
 
+    // Built once, and validated here rather than on the first call: a bad key
+    // name should stop the gateway starting, not surprise the first user.
+    final Metadata.Key<String> topologyKey =
+        GrpcMetadataKeys.topologyKey(listenerSettings.getTopologyMetadataKey());
+
     final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
     final HeaderRewriter headerRewriter =
-        new BackendHeaderRewriter(aliasService, listenerSettings.getBackendTokenAlias());
+        new BackendHeaderRewriter(aliasService, listenerSettings.getBackendTokenAlias(), topologyKey);
 
     this.authorizationInterceptor = new AuthorizationInterceptor(config, services, getServiceRole());
 
@@ -156,7 +165,7 @@ public abstract class GrpcGatewayListener implements ProtocolListener {
     final List<ServerInterceptor> interceptors = Arrays.asList(
         new AuditInterceptor(),
         new AuthenticationInterceptor(new TokenAuthenticator(config, services)),
-        new RoutingInterceptor(config, services, getServiceRole()),
+        new RoutingInterceptor(config, services, getServiceRole(), topologyKey),
         authorizationInterceptor);
 
     final NettyServerBuilder builder = NettyServerBuilder.forPort(listenerSettings.getPort())
@@ -190,6 +199,35 @@ public abstract class GrpcGatewayListener implements ProtocolListener {
       throw e;
     }
     LOG.startedListener(listenerSettings.getName(), getPort());
+    warnIfNoTopologyDeclaresTheRole(listenerSettings, services);
+  }
+
+  /**
+   * Notes, at debug level, that the listener is running with nothing to route to.
+   * <p>
+   * Enabling the listener and declaring a backend are separate steps in separate
+   * files, so it is possible to do the first and forget the second — but it is
+   * equally possible to do the first deliberately and wait. A deployment that
+   * enables the listener as a matter of course, and adds a topology only when
+   * someone provisions a Spark Connect cluster, is in this state normally and
+   * perhaps permanently. That is why this is debug rather than a warning: it
+   * helps when someone is asking why calls are refused, without nagging every
+   * deployment that is simply waiting.
+   */
+  private void warnIfNoTopologyDeclaresTheRole(GrpcListenerSettings listenerSettings,
+                                               GatewayServices services) {
+    final TopologyService topologyService = services.getService(ServiceType.TOPOLOGY_SERVICE);
+    if (topologyService == null) {
+      return;
+    }
+    for (Topology topology : topologyService.getTopologies()) {
+      for (Service service : topology.getServices()) {
+        if (getServiceRole().equals(service.getRole())) {
+          return;
+        }
+      }
+    }
+    LOG.noTopologyDeclaresService(listenerSettings.getName(), getServiceRole());
   }
 
   /**

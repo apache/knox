@@ -39,7 +39,8 @@ import io.grpc.Status;
  * therefore has to come from something else a vanilla client can send. Two
  * discriminators are supported:
  * <ol>
- *   <li>a {@code knox-topology} metadata entry, which the client supplies as an
+ *   <li>a metadata entry, named by configuration and {@code knox-topology} by
+ *       default, which the client supplies as an
  *       extra {@code sc://} connection-string parameter;</li>
  *   <li>the configured default topology, for the single-topology case.</li>
  * </ol>
@@ -60,11 +61,14 @@ public class RoutingInterceptor implements ServerInterceptor {
   private final GatewayConfig config;
   private final GatewayServices services;
   private final String serviceRole;
+  private final Metadata.Key<String> topologyKey;
 
-  public RoutingInterceptor(GatewayConfig config, GatewayServices services, String serviceRole) {
+  public RoutingInterceptor(GatewayConfig config, GatewayServices services, String serviceRole,
+                            Metadata.Key<String> topologyKey) {
     this.config = config;
     this.services = services;
     this.serviceRole = serviceRole;
+    this.topologyKey = topologyKey;
   }
 
   @Override
@@ -76,8 +80,8 @@ public class RoutingInterceptor implements ServerInterceptor {
     final String topology = resolveTopology(headers);
     if (StringUtils.isBlank(topology)) {
       return reject(call, method, Status.UNIMPLEMENTED,
-          "no topology selected; set a knox-topology connection parameter or configure "
-              + "gateway.sparkconnect.default.topology");
+          "no topology selected; set a " + topologyKey.name()
+              + " connection parameter or configure a default topology");
     }
 
     final ServiceRegistry registry = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
@@ -97,7 +101,7 @@ public class RoutingInterceptor implements ServerInterceptor {
   }
 
   private String resolveTopology(Metadata headers) {
-    final String requested = headers.get(GrpcMetadataKeys.TOPOLOGY);
+    final String requested = headers.get(topologyKey);
     if (StringUtils.isNotBlank(requested)) {
       return requested.trim();
     }

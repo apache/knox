@@ -178,6 +178,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String SPARKCONNECT_ADD_ARTIFACTS_MODE = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.add.artifacts.mode";
   public static final String SPARKCONNECT_ADD_ARTIFACTS_ALLOWED_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.add.artifacts.allowed.users";
   public static final String SPARKCONNECT_RESERVED_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.reserved.config.prefix";
+  public static final String SPARKCONNECT_TOPOLOGY_METADATA_KEY = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.topology.metadata.key";
 
 
   /* @since 2.0.0 WebShell config variables */
@@ -256,6 +257,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final long DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT = 30000L;
   public static final String DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE = "ALLOW";
   public static final String DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX = "knox.";
+  public static final String DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY = "knox-topology";
 
   public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
   public static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
@@ -1211,6 +1213,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getSparkConnectReservedConfigPrefix() {
     return get(SPARKCONNECT_RESERVED_CONFIG_PREFIX, DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX);
+  }
+
+  @Override
+  public String getSparkConnectTopologyMetadataKey() {
+    return get(SPARKCONNECT_TOPOLOGY_METADATA_KEY, DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY);
   }
 
   @Override

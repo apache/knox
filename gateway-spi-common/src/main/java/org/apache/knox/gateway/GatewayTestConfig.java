@@ -64,6 +64,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final long DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT = 30000L;
   public static final String DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE = "ALLOW";
   public static final String DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX = "knox.";
+  public static final String DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY = "knox-topology";
 
   private boolean sparkConnectEnabled;
   private int sparkConnectPort = DEFAULT_SPARKCONNECT_PORT;
@@ -71,6 +72,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private String sparkConnectBackendTokenAlias;
   private String sparkConnectAddArtifactsMode = DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE;
   private String sparkConnectReservedConfigPrefix = DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX;
+  private String sparkConnectTopologyMetadataKey = DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY;
   private List<String> sparkConnectAddArtifactsAllowedUsers = Collections.emptyList();
 
 
@@ -790,6 +792,15 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   public void setSparkConnectReservedConfigPrefix(String sparkConnectReservedConfigPrefix) {
     this.sparkConnectReservedConfigPrefix = sparkConnectReservedConfigPrefix;
+  }
+
+  @Override
+  public String getSparkConnectTopologyMetadataKey() {
+    return sparkConnectTopologyMetadataKey;
+  }
+
+  public void setSparkConnectTopologyMetadataKey(String sparkConnectTopologyMetadataKey) {
+    this.sparkConnectTopologyMetadataKey = sparkConnectTopologyMetadataKey;
   }
 
   @Override
