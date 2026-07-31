@@ -2220,4 +2220,55 @@ public class TokenServiceResourceTest {
 
     EasyMock.verify(request, context);
   }
+
+  /**
+   * KNOX-3403: On a NON-server-managed topology, an impersonated request (traditional doAs or RFC 8693
+   * token exchange, where the actor is the primary principal and the subject is the impersonated one)
+   * must still issue a token whose {@code sub} is the impersonated subject. Previously buildUserContext
+   * only applied the impersonated identity when {@code tokenStateService != null}, so on a non-managed
+   * topology the {@code sub} incorrectly fell back to the primary principal (the actor).
+   */
+  @Test
+  @SuppressForbidden
+  public void testImpersonatedTokenSubjectOnNonServerManagedTopology() throws Exception {
+    final String primaryUser = "admin";      // primary principal (authenticated caller / actor)
+    final String impersonatedUser = "bob";  // impersonated subject (distinct from USER_NAME)
+
+    // No serverManagedTssEnabled argument -> token state service is absent (non-server-managed).
+    configureCommonExpectations(createDelegatedAuthContextExpectations(true, true));
+    Subject subject = createSubjectWithOptionalImpersonation(primaryUser, impersonatedUser);
+    JWTToken parsedToken = getTokenWithSubject(subject);
+
+    // The token subject must be the impersonated user, not the primary.
+    assertEquals("Non-server-managed impersonated token must use the impersonated subject as sub",
+            impersonatedUser, parsedToken.getSubject());
+
+    // The 'act' claim still records the primary user (delegated auth enabled).
+    Object actClaim = parsedToken.getClaimAsObject(JWTToken.ACT_CLAIM);
+    assertNotNull("RFC 8693 'act' claim should be present", actClaim);
+    assertTrue("'act' claim should be a Map", actClaim instanceof Map);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> actClaimMap = (Map<String, Object>) actClaim;
+    assertEquals("'act' claim should contain the primary user's subject", primaryUser, actClaimMap.get("sub"));
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * KNOX-3403: sanity check that decoupling the impersonated-sub from server-managed does not change
+   * the non-impersonating case - the token {@code sub} remains the authenticated (primary) user on a
+   * non-server-managed topology.
+   */
+  @Test
+  @SuppressForbidden
+  public void testNonImpersonatedTokenSubjectOnNonServerManagedTopology() throws Exception {
+    configureCommonExpectations(createDelegatedAuthContextExpectations(true, false));
+    Subject subject = createSubjectWithOptionalImpersonation(USER_NAME, null);
+    JWTToken parsedToken = getTokenWithSubject(subject);
+
+    assertEquals(USER_NAME, parsedToken.getSubject());
+    assertNull("'act' claim should NOT be present without impersonation", parsedToken.getClaimAsObject(JWTToken.ACT_CLAIM));
+
+    EasyMock.verify(request, context);
+  }
 }

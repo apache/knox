@@ -920,18 +920,19 @@ public class TokenResource {
   protected UserContext buildUserContext(HttpServletRequest request) {
     String userName = request.getUserPrincipal().getName();
     String createdBy = null;
-    // checking the doAs user only makes sense if tokens are managed (this is where we store the userName/createdBy information)
-    // and if impersonation was enabled before (on HadoopAuth or identity-assertion level) so the the current subject has at least one ImpersonatedPrincipal principal
-    if (tokenStateService != null) {
-      final Subject subject = SubjectUtils.getCurrentSubject();
-      if (subject != null && SubjectUtils.isImpersonating(subject)) {
-        String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
-        String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
-        if (!primaryPrincipalName.equals(impersonatedPrincipalName)) {
-          createdBy = primaryPrincipalName;
-          userName = impersonatedPrincipalName;
-          log.tokenImpersonationSuccess(createdBy, userName);
-        }
+    // When impersonation is in effect, the issued token's subject must be the effective (impersonated)
+    // identity, not the primary principal. This applies to traditional doAs as well as RFC 8693 token
+    // exchange (where the actor is the primary principal and the subject is the impersonated one).
+    // This is independent of server-managed state: createdBy is only persisted for managed tokens (see
+    // persistTokenDetails), so computing it here is harmless when there is no token state service.
+    final Subject subject = SubjectUtils.getCurrentSubject();
+    if (subject != null && SubjectUtils.isImpersonating(subject)) {
+      String primaryPrincipalName = SubjectUtils.getPrimaryPrincipalName(subject);
+      String impersonatedPrincipalName = SubjectUtils.getImpersonatedPrincipalName(subject);
+      if (!primaryPrincipalName.equals(impersonatedPrincipalName)) {
+        createdBy = primaryPrincipalName;
+        userName = impersonatedPrincipalName;
+        log.tokenImpersonationSuccess(createdBy, userName);
       }
     }
     return new UserContext(userName, createdBy);
