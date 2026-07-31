@@ -72,7 +72,8 @@ public class KnoxLDAPServerManager {
 
     @VisibleForTesting
     DirectoryService directoryService;
-    private LdapServer ldapServer;
+    @VisibleForTesting
+    LdapServer ldapServer;
     private GatewayConfig gatewayConfig;
     private List<Interceptor> interceptors;
     private boolean hasRolesLookupInterceptor;
@@ -87,6 +88,8 @@ public class KnoxLDAPServerManager {
     private List<String> sslEnabledCipherSuites;
     // Collection of DNs for the proxied backend LDAP servers
     private Set<String> baseDns;
+    private int maxSizeLimit;
+    private int maxTimeLimit;
 
     KnoxLDAPServerManager(AliasService aliasService) {
         this(aliasService, null);
@@ -113,6 +116,9 @@ public class KnoxLDAPServerManager {
         this.port = config.getLDAPPort();
         this.baseDn = config.getLDAPBaseDN();
         this.bindUser = config.getLDAPBindUser();
+
+        maxSizeLimit = config.getLDAPMaxSizeLimit();
+        maxTimeLimit = config.getLDAPMaxTimeLimit();
 
         // Secure (LDAPS) transport configuration. When enabled but no dedicated keystore is
         // configured, fall back to the gateway identity keystore so the embedded server can
@@ -148,6 +154,13 @@ public class KnoxLDAPServerManager {
 
             // Add common configuration
             interceptorConfig.put("baseDn", baseDn);
+            if (!interceptorConfig.containsKey("maxResultSetSize")) {
+                // Set the backend to return more results than the proxy's size limit.
+                // This will ensure that the proxy will return "Size limit exceeded"
+                if (maxSizeLimit != 0) {
+                    interceptorConfig.put("maxResultSetSize", Integer.toString(maxSizeLimit + 1));
+                }
+            }
 
             // Add common LDAP Proxy configurations to backends
             if ("backend".equalsIgnoreCase(interceptorConfig.get("interceptorType"))) {
@@ -240,6 +253,9 @@ public class KnoxLDAPServerManager {
         }
         ldapServer.setTransports(transport);
         ldapServer.setDirectoryService(directoryService);
+
+        ldapServer.setMaxSizeLimit(maxSizeLimit);
+        ldapServer.setMaxTimeLimit(maxTimeLimit);
 
         ldapServer.start();
 

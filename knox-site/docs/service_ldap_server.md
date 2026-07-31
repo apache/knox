@@ -44,6 +44,8 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). |
 | `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint. |
 | `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
+| `gateway.ldap.max.size.limit` | 1000 | The maximum size limit of the result set returned by search requests. |
+| `gateway.ldap.max.time.limit` | 60000 | The maximum time limit for search requests in milliseconds. |
 
 ### Bind Credentials
 
@@ -198,6 +200,10 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.groupMemberAttribute` | `memberUid` | Attribute used for group membership (e.g., `member` for AD). |
 | `gateway.ldap.interceptor.<name>.useMemberOf` | `false` | If `true`, use the `memberOf` attribute for efficient group lookups. |
 | `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
+| `gateway.ldap.interceptor.<name>.pageSize` | `1000` | Page size for search requests. |
+| `gateway.ldap.interceptor.<name>.maxResultSetSize` | `0` | Maximum number of results to return from a search, regardless of paging. 0 means unlimited. |
+
+NOTE: If this value is undefined and the interceptor was created by the KnoxLDAPServerManager, the KnoxLDAPServerManager will set the `gateway.ldap.interceptor.<name>.maxResultSetSize` value to be 1 greater than the proxy's `gateway.ldap.max.size.limit` configuration. This will ensure that the proxy returns a "Size limit exceeded" result if the backend has more results than the proxy's limit.
 
 ## Active Directory (AD) Integration
 

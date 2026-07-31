@@ -392,6 +392,13 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String STRICT_TRANSPORT_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".strict.transport.enabled";
   public static final String STRICT_TRANSPORT_OPTION = GATEWAY_CONFIG_FILE_PREFIX + ".strict.transport.option";
 
+  // Gateway LDAP Properties
+  public static final int DEFAULT_LDAP_PORT = 3890;
+  public static final String DEFAULT_LDAP_BASE_DN = "dc=proxy,dc=com";
+  public static final int DEFAULT_LDAP_MAX_SIZE_LIMIT = 1000;
+  /* The default max time for LDAP search in milliseconds */
+  public static final int DEFAULT_LDAP_MAX_TIME_LIMIT = 60 * 1000;
+
   public GatewayConfigImpl() {
     init();
   }
@@ -1775,17 +1782,17 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   // LDAP Service Configuration
   @Override
   public boolean isLDAPEnabled() {
-    return Boolean.parseBoolean(get(LDAP_ENABLED, "false"));
+    return getBoolean(LDAP_ENABLED, false);
   }
 
   @Override
   public int getLDAPPort() {
-    return Integer.parseInt(get(LDAP_PORT, "3890"));
+    return getInt(LDAP_PORT, DEFAULT_LDAP_PORT);
   }
 
   @Override
   public String getLDAPBaseDN() {
-    return get(LDAP_BASE_DN, "dc=proxy,dc=com");
+    return get(LDAP_BASE_DN, DEFAULT_LDAP_BASE_DN);
   }
 
   @Override
@@ -1840,7 +1847,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isLDAPRecursiveGroupResolutionEnabled() {
-    return Boolean.parseBoolean(get(LDAP_RECURSIVE_GROUP_RESOLUTION, "false"));
+    return getBoolean(LDAP_RECURSIVE_GROUP_RESOLUTION, false);
   }
 
   @Override
@@ -1865,7 +1872,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public boolean isLDAPSSLEnabled() {
-    return Boolean.parseBoolean(get(LDAP_SSL_ENABLED, "false"));
+    return getBoolean(LDAP_SSL_ENABLED, false);
   }
 
   @Override
@@ -1882,6 +1889,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public List<String> getLDAPSSLEnabledCipherSuites() {
     final List<String> cipherSuites = splitConfigValueToList(LDAP_SSL_ENABLED_CIPHER_SUITES);
     return cipherSuites == null ? Collections.emptyList() : cipherSuites;
+  }
+
+  @Override
+  public int getLDAPMaxSizeLimit() {
+    return getInt(LDAP_MAX_SIZE_LIMIT, DEFAULT_LDAP_MAX_SIZE_LIMIT);
+  }
+
+  @Override
+  public int getLDAPMaxTimeLimit() {
+    return getInt(LDAP_MAX_TIME_LIMIT, DEFAULT_LDAP_MAX_TIME_LIMIT);
   }
 
   @Override
