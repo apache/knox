@@ -155,6 +155,8 @@ public interface GatewayConfig {
   String LDAP_SSL_KEYSTORE_PATH = "gateway.ldap.ssl.keystore.path";
   String LDAP_SSL_KEYSTORE_PASSWORD_ALIAS = "gateway.ldap.ssl.keystore.password.alias";
   String LDAP_SSL_ENABLED_CIPHER_SUITES = "gateway.ldap.ssl.enabled.cipher.suites";
+  String LDAP_MAX_SIZE_LIMIT = "gateway.ldap.max.size.limit";
+  String LDAP_MAX_TIME_LIMIT = "gateway.ldap.max.time.limit";
 
   /**
    * The location of the gateway configuration.
@@ -1210,6 +1212,16 @@ public interface GatewayConfig {
    * or an empty list to use the JVM defaults
    */
   List<String> getLDAPSSLEnabledCipherSuites();
+
+  /**
+   * @return the maximum size limit for LDAP search
+   */
+  int getLDAPMaxSizeLimit();
+
+  /**
+   * @return the maximum time limit for LDAP search in milliseconds
+   */
+  int getLDAPMaxTimeLimit();
 
   /**
    * @return set of all property names in the configuration

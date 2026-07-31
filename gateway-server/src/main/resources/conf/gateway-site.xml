@@ -57,6 +57,18 @@ limitations under the License.
     </property>
 
     <property>
+        <name>gateway.ldap.max.size.limit</name>
+        <value>1000</value>
+        <description>Maximum number of entries returned by a search request.</description>
+    </property>
+
+    <property>
+        <name>gateway.ldap.max.time.limit</name>
+        <value>60000</value>
+        <description>Maximum time for a search request in milliseconds.</description>
+    </property>
+
+    <property>
         <name>gateway.ldap.recursive.group.resolution</name>
         <value>false</value>
         <desciption>Boolean value indicating whether recursive group resolution is enabled in KnoxLDAPService.</desciption>
