@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 @Produces(MediaType.APPLICATION_JSON)
 public class TrustedOidcIssuersResource {
 
-  static final String RESOURCE_PATH = "knoxidf/issuers-admin/v1/trusted-oidc-issuers";
+  static final String RESOURCE_PATH = "knoxidf/admin/v1/trusted-oidc-issuers";
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
 

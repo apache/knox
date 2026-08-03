@@ -72,11 +72,12 @@ public class KnoxIDFAdminServiceDeploymentContributorTest {
         new KnoxIDFAdminServiceDeploymentContributor();
     final String[] patterns = c.getPatterns();
     assertNotNull(patterns);
-    // Distinct from KnoxIDFServiceDeploymentContributor's "knoxidf/api/**?**" so that the
-    // KNOXIDF role cannot accidentally serve admin endpoints, and so that per-role AclsAuthz
-    // params (KNOXIDF_ADMIN.acl) apply only to trusted-issuer admin requests.
-    assertTrue("Expected knoxidf/issuers-admin/**?** in patterns",
-        Arrays.asList(patterns).contains("knoxidf/issuers-admin/**?**"));
+    // Single broad pattern covers all KnoxIDF admin resources (trusted-issuers, delegation-policies, etc.).
+    // Disjoint from KnoxIDFServiceDeploymentContributor's "knoxidf/api/**?**" so the KNOXIDF role
+    // cannot serve admin endpoints. Per-endpoint ACLs are configured via PathAclsAuthz rules in
+    // the topology descriptor (e.g., KNOXIDF_ADMIN.rule_issuers.path.acl).
+    assertTrue("Expected knoxidf/admin/**?** in patterns",
+        Arrays.asList(patterns).contains("knoxidf/admin/**?**"));
   }
 
   @Test
@@ -140,6 +141,6 @@ public class KnoxIDFAdminServiceDeploymentContributorTest {
     contributor.contributeService(context, service);
 
     assertEquals("KNOXIDF_ADMIN", capturedRole.getValue());
-    assertEquals("knoxidf/issuers-admin/**?**", capturedPattern.getValue());
+    assertEquals("knoxidf/admin/**?**", capturedPattern.getValue());
   }
 }
