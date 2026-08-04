@@ -135,6 +135,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.RELOADABLE_CONFIG_FILENAME;
 
@@ -292,7 +293,15 @@ public class GatewayServer {
           config.reloadConfiguration();
           log.refreshedGatewayConfig();
           for (GatewayConfigChangeListener listener : configChangeListeners) {
-            listener.onGatewayConfigChanged(config);
+            try {
+              listener.onGatewayConfigChanged(config);
+            } catch (Exception e) {
+              // This runs on a scheduleAtFixedRate task, where an escaping
+              // exception cancels every future execution. One listener choking on
+              // a bad value must not silently stop configuration refresh for the
+              // whole gateway.
+              log.unableToReloadGatewayConfig(e);
+            }
           }
         }
       }
@@ -840,7 +849,11 @@ public class GatewayServer {
         if (listener instanceof GatewayConfigChangeListener) {
           registerConfigChangeListener((GatewayConfigChangeListener) listener);
         }
-        log.startedProtocolListener(listener.getName(), convertPortToString(listener.getPort()));
+        // A listener may bind several ports; report all of them, since a
+        // deployment that configured N endpoints wants to see N came up.
+        log.startedProtocolListener(listener.getName(), listener.getPorts().stream()
+            .map(GatewayServer::convertPortToString)
+            .collect(Collectors.joining(", ")));
       } catch (Exception e) {
         log.failedToStartProtocolListener(listener.getName(), e);
         throw e;

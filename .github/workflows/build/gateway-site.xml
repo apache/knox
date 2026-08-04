@@ -212,17 +212,32 @@ limitations under the License.
         <value>member</value>
     </property>
 
-    <!-- Spark Connect (gRPC) listener, exercised by test_spark_connect.py. -->
+    <!-- gRPC listener, configured for Spark Connect and exercised by
+         test_spark_connect.py. Everything Spark-specific is a value here: the
+         gateway itself compiles against no Spark protos. -->
     <property>
-        <name>gateway.sparkconnect.enabled</name>
+        <name>gateway.grpc.enabled</name>
         <value>true</value>
+    </property>
+    <property>
+        <name>gateway.grpc.service.role</name>
+        <value>SPARKCONNECT</value>
+    </property>
+    <property>
+        <name>gateway.grpc.proto.services</name>
+        <value>spark.connect.SparkConnectService</value>
+    </property>
+    <!-- Spark Connect: user_context = 2, holding user_id = 1 and user_name = 2.
+         Both carry the authenticated principal; the display name is descriptive
+         on the server, but leaving a self-asserted value there would put an
+         unverified name alongside a verified id. -->
+    <property>
+        <name>gateway.grpc.identity.rules</name>
+        <value>2.1=principal,2.2=principal</value>
     </property>
     <!-- No default topology on purpose: the tests cover the case where a client
          sends no knox-topology parameter, which must be refused rather than
-         silently routed somewhere. -->
-    <property>
-        <name>gateway.sparkconnect.add.artifacts.mode</name>
-        <value>DENY</value>
-    </property>
+         silently routed somewhere. Method denial is left to the per-topology
+         rule in sparkconnect-fgac.xml. -->
 
 </configuration>

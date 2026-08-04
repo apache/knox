@@ -45,6 +45,7 @@ ADD .github/workflows/build/conf/topologies/remoteauth.xml /knox-runtime/conf/to
 ADD .github/workflows/build/conf/topologies/k8sauth.xml /knox-runtime/conf/topologies/k8sauth.xml
 ADD .github/workflows/build/conf/topologies/sparkconnect.xml /knox-runtime/conf/topologies/sparkconnect.xml
 ADD .github/workflows/build/conf/topologies/sparkconnect-restricted.xml /knox-runtime/conf/topologies/sparkconnect-restricted.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect-fgac.xml /knox-runtime/conf/topologies/sparkconnect-fgac.xml
 
 RUN chown -R gateway /knox-runtime/
 

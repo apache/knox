@@ -164,21 +164,23 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
   public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
-  /* @since 3.0.0 Spark Connect (gRPC) listener config variables */
-  public static final String SPARKCONNECT_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.enabled";
-  public static final String SPARKCONNECT_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.port";
-  public static final String SPARKCONNECT_DEFAULT_TOPOLOGY = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.default.topology";
-  public static final String SPARKCONNECT_MAX_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.max.message.size";
-  public static final String SPARKCONNECT_PERMIT_KEEPALIVE_TIME = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.permit.keepalive.time";
-  public static final String SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.permit.keepalive.without.calls";
-  public static final String SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.max.concurrent.calls.per.connection";
-  public static final String SPARKCONNECT_CHANNEL_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.channel.idle.timeout";
-  public static final String SPARKCONNECT_DRAIN_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.drain.timeout";
-  public static final String SPARKCONNECT_BACKEND_TOKEN_ALIAS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.backend.token.alias";
-  public static final String SPARKCONNECT_ADD_ARTIFACTS_MODE = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.add.artifacts.mode";
-  public static final String SPARKCONNECT_ADD_ARTIFACTS_ALLOWED_USERS = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.add.artifacts.allowed.users";
-  public static final String SPARKCONNECT_RESERVED_CONFIG_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.reserved.config.prefix";
-  public static final String SPARKCONNECT_TOPOLOGY_METADATA_KEY = GATEWAY_CONFIG_FILE_PREFIX + ".sparkconnect.topology.metadata.key";
+  /* @since 3.0.0 gRPC listener config variables */
+  public static final String GRPC_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.enabled";
+  public static final String GRPC_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.port";
+  public static final String GRPC_SERVICE_ROLE = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.service.role";
+  public static final String GRPC_IDENTITY_RULES = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.identity.rules";
+  public static final String GRPC_IDENTITY_SCAN_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.identity.scan.limit";
+  public static final String GRPC_DEFAULT_TOPOLOGY = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.default.topology";
+  public static final String GRPC_TOPOLOGY_METADATA_KEY = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.topology.metadata.key";
+  public static final String GRPC_METHODS_DENY = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.methods.deny";
+  public static final String GRPC_METHODS_ALLOW = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.methods.allow";
+  public static final String GRPC_MAX_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.max.message.size";
+  public static final String GRPC_PERMIT_KEEPALIVE_TIME = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.permit.keepalive.time";
+  public static final String GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.permit.keepalive.without.calls";
+  public static final String GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.max.concurrent.calls.per.connection";
+  public static final String GRPC_CHANNEL_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.channel.idle.timeout";
+  public static final String GRPC_DRAIN_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.drain.timeout";
+  public static final String GRPC_BACKEND_TOKEN_ALIAS = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.backend.token.alias";
 
 
   /* @since 2.0.0 WebShell config variables */
@@ -243,21 +245,20 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
 
-  /* Spark Connect defaults */
-  public static final boolean DEFAULT_SPARKCONNECT_FEATURE_ENABLED = false;
-  /* The port the Spark Connect server itself listens on; clients default to it too. */
-  public static final int DEFAULT_SPARKCONNECT_PORT = 15002;
-  /* Matches Spark's own 128 MB default. */
-  public static final int DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE = 134217728;
-  /* grpc-java's server-side floor; clients ping every 60s by default. */
-  public static final long DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME = 10000L;
-  public static final boolean DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS = true;
-  public static final int DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
-  public static final long DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT = 1800000L;
-  public static final long DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT = 30000L;
-  public static final String DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE = "ALLOW";
-  public static final String DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX = "knox.";
-  public static final String DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY = "knox-topology";
+  /* gRPC listener defaults. The port and identity layout come from Spark
+     Connect, the protocol this was first built for. */
+  public static final boolean DEFAULT_GRPC_FEATURE_ENABLED = false;
+  public static final int DEFAULT_GRPC_PORT = 15002;
+  public static final String DEFAULT_GRPC_SERVICE_ROLE = "GRPC";
+  /** 128 KiB; see IdentityRewritePolicy for why the rewrite is bounded at all. */
+  public static final int DEFAULT_GRPC_IDENTITY_SCAN_LIMIT = 131072;
+  public static final int DEFAULT_GRPC_MAX_MESSAGE_SIZE = 134217728;
+  public static final long DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME = 10000L;
+  public static final boolean DEFAULT_GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS = true;
+  public static final int DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
+  public static final long DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT = 1800000L;
+  public static final long DEFAULT_GRPC_DRAIN_TIMEOUT = 30000L;
+  public static final String DEFAULT_GRPC_TOPOLOGY_METADATA_KEY = "knox-topology";
 
   public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
   public static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
@@ -1147,77 +1148,118 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public boolean isSparkConnectEnabled() {
-    return getBoolean(SPARKCONNECT_FEATURE_ENABLED, DEFAULT_SPARKCONNECT_FEATURE_ENABLED);
+  public boolean isGrpcEnabled() {
+    return getBoolean(GRPC_FEATURE_ENABLED, DEFAULT_GRPC_FEATURE_ENABLED);
   }
 
   @Override
-  public int getSparkConnectPort() {
-    return getInt(SPARKCONNECT_PORT, DEFAULT_SPARKCONNECT_PORT);
+  public int getGrpcPort() {
+    return getInt(GRPC_PORT, DEFAULT_GRPC_PORT);
   }
 
   @Override
-  public String getSparkConnectDefaultTopology() {
-    return get(SPARKCONNECT_DEFAULT_TOPOLOGY);
+  public String getGrpcServiceRole() {
+    return get(GRPC_SERVICE_ROLE, DEFAULT_GRPC_SERVICE_ROLE);
   }
 
   @Override
-  public int getSparkConnectMaxMessageSize() {
-    return getInt(SPARKCONNECT_MAX_MESSAGE_SIZE, DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE);
-  }
-
-  @Override
-  public long getSparkConnectPermitKeepAliveTime() {
-    return getLong(SPARKCONNECT_PERMIT_KEEPALIVE_TIME, DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME);
-  }
-
-  @Override
-  public boolean isSparkConnectPermitKeepAliveWithoutCalls() {
-    return getBoolean(SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS, DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_WITHOUT_CALLS);
-  }
-
-  @Override
-  public int getSparkConnectMaxConcurrentCallsPerConnection() {
-    return getInt(SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION, DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION);
-  }
-
-  @Override
-  public long getSparkConnectChannelIdleTimeout() {
-    return getLong(SPARKCONNECT_CHANNEL_IDLE_TIMEOUT, DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT);
-  }
-
-  @Override
-  public long getSparkConnectDrainTimeout() {
-    return getLong(SPARKCONNECT_DRAIN_TIMEOUT, DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT);
-  }
-
-  @Override
-  public String getSparkConnectBackendTokenAlias() {
-    return get(SPARKCONNECT_BACKEND_TOKEN_ALIAS);
-  }
-
-  @Override
-  public String getSparkConnectAddArtifactsMode() {
-    return get(SPARKCONNECT_ADD_ARTIFACTS_MODE, DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE);
-  }
-
-  @Override
-  public List<String> getSparkConnectAddArtifactsAllowedUsers() {
-    final String value = get(SPARKCONNECT_ADD_ARTIFACTS_ALLOWED_USERS);
-    if (value == null || value.trim().isEmpty()) {
+  public List<String> getGrpcListenerNames() {
+    final String configured = get(GRPC_LISTENER_NAMES);
+    if (configured == null || configured.trim().isEmpty()) {
       return Collections.emptyList();
     }
-    return Arrays.asList(value.trim().split("\\s*,\\s*"));
+    final List<String> names = new ArrayList<>();
+    for (String name : configured.trim().split("\\s*,\\s*")) {
+      if (!name.isEmpty()) {
+        names.add(name);
+      }
+    }
+    return names;
   }
 
   @Override
-  public String getSparkConnectReservedConfigPrefix() {
-    return get(SPARKCONNECT_RESERVED_CONFIG_PREFIX, DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX);
+  public Map<String, String> getGrpcListenerConfig(String listenerName) {
+    final Map<String, String> listenerConfig = new HashMap<>();
+    final String prefix = GATEWAY_CONFIG_FILE_PREFIX + ".grpc." + listenerName + ".";
+    for (String key : getPropertyNames()) {
+      if (key != null && key.startsWith(prefix)) {
+        final String value = get(key);
+        if (value != null) {
+          listenerConfig.put(key.substring(prefix.length()), value);
+        }
+      }
+    }
+    return listenerConfig;
   }
 
   @Override
-  public String getSparkConnectTopologyMetadataKey() {
-    return get(SPARKCONNECT_TOPOLOGY_METADATA_KEY, DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY);
+  public String getGrpcProtoServices() {
+    return get(GRPC_PROTO_SERVICES);
+  }
+
+  @Override
+  public String getGrpcIdentityRules() {
+    return get(GRPC_IDENTITY_RULES);
+  }
+
+  @Override
+  public int getGrpcIdentityScanLimit() {
+    return getInt(GRPC_IDENTITY_SCAN_LIMIT, DEFAULT_GRPC_IDENTITY_SCAN_LIMIT);
+  }
+
+  @Override
+  public String getGrpcDefaultTopology() {
+    return get(GRPC_DEFAULT_TOPOLOGY);
+  }
+
+  @Override
+  public String getGrpcTopologyMetadataKey() {
+    return get(GRPC_TOPOLOGY_METADATA_KEY, DEFAULT_GRPC_TOPOLOGY_METADATA_KEY);
+  }
+
+  @Override
+  public String getGrpcMethodsDeny() {
+    return get(GRPC_METHODS_DENY);
+  }
+
+  @Override
+  public String getGrpcMethodsAllow() {
+    return get(GRPC_METHODS_ALLOW);
+  }
+
+  @Override
+  public int getGrpcMaxMessageSize() {
+    return getInt(GRPC_MAX_MESSAGE_SIZE, DEFAULT_GRPC_MAX_MESSAGE_SIZE);
+  }
+
+  @Override
+  public long getGrpcPermitKeepAliveTime() {
+    return getLong(GRPC_PERMIT_KEEPALIVE_TIME, DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME);
+  }
+
+  @Override
+  public boolean isGrpcPermitKeepAliveWithoutCalls() {
+    return getBoolean(GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS, DEFAULT_GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS);
+  }
+
+  @Override
+  public int getGrpcMaxConcurrentCallsPerConnection() {
+    return getInt(GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION, DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION);
+  }
+
+  @Override
+  public long getGrpcChannelIdleTimeout() {
+    return getLong(GRPC_CHANNEL_IDLE_TIMEOUT, DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT);
+  }
+
+  @Override
+  public long getGrpcDrainTimeout() {
+    return getLong(GRPC_DRAIN_TIMEOUT, DEFAULT_GRPC_DRAIN_TIMEOUT);
+  }
+
+  @Override
+  public String getGrpcBackendTokenAlias() {
+    return get(GRPC_BACKEND_TOKEN_ALIAS);
   }
 
   @Override

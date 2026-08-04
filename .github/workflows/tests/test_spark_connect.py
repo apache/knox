@@ -47,6 +47,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 TOPOLOGY_METADATA_KEY = "knox-topology"
 OPEN_TOPOLOGY = "sparkconnect"
 RESTRICTED_TOPOLOGY = "sparkconnect-restricted"
+# Any user may reach it, but AddArtifacts is denied by method name.
+FGAC_TOPOLOGY = "sparkconnect-fgac"
 # Present in the demo LDAP the compose environment starts.
 KNOX_USER = "guest"
 KNOX_PASSWORD = "guest-password"
@@ -220,36 +222,54 @@ class TestSparkConnectStreaming(SparkConnectTestBase):
         self.assertEqual(KNOX_USER, responses[0].operation_id)
 
 
-class TestSparkConnectMessageGating(SparkConnectTestBase):
-    """Per-RPC gating is enforced at the gateway, before the backend."""
+class TestSparkConnectMethodGating(SparkConnectTestBase):
+    """Whole RPCs can be refused by name, which needs no message parsing."""
 
-    def test_add_artifacts_is_denied_when_configured_to_deny(self):
-        """Artifact upload gating is enforced at the gateway."""
-        def upload():
-            channel, metadata = self._channel(token=self.token, topology=OPEN_TOPOLOGY)
-            with channel:
-                stub = base_pb2_grpc.SparkConnectServiceStub(channel)
-                request = base_pb2.AddArtifactsRequest(session_id="itest-artifacts")
-                request.user_context.user_id = "root"
-                return stub.AddArtifacts(iter([request]), metadata=metadata, timeout=30)
+    def _upload(self, topology):
+        """Attempts an AddArtifacts call against the given topology."""
+        channel, metadata = self._channel(token=self.token, topology=topology)
+        with channel:
+            stub = base_pb2_grpc.SparkConnectServiceStub(channel)
+            request = base_pb2.AddArtifactsRequest(session_id="itest-artifacts")
+            request.user_context.user_id = "root"
+            return stub.AddArtifacts(iter([request]), metadata=metadata, timeout=30)
 
-        # gateway.sparkconnect.add.artifacts.mode is DENY in gateway-site.xml.
-        self.assert_rpc_code(grpc.StatusCode.PERMISSION_DENIED, upload)
+    def test_add_artifacts_is_denied_in_a_topology_that_denies_it(self):
+        """A topology relying on plan-level policy can refuse code upload."""
+        # SPARKCONNECT.methods.deny in sparkconnect-fgac.xml; the gateway reads
+        # only the method name from the request path to decide this.
+        self.assert_rpc_code(grpc.StatusCode.PERMISSION_DENIED,
+                             lambda: self._upload(FGAC_TOPOLOGY))
 
-    def test_reserved_config_key_cannot_be_set_by_a_client(self):
-        """Clients cannot write the session keys Knox reserves for itself."""
-        def set_reserved():
-            channel, metadata = self._channel(token=self.token, topology=OPEN_TOPOLOGY)
-            with channel:
-                stub = base_pb2_grpc.SparkConnectServiceStub(channel)
-                request = base_pb2.ConfigRequest(session_id="itest-reserved")
-                request.user_context.user_id = "root"
-                pair = request.operation.set.pairs.add()
-                pair.key = "knox.principal"
-                pair.value = "root"
-                return stub.Config(request, metadata=metadata, timeout=30)
+    def test_add_artifacts_is_permitted_where_it_is_not_denied(self):
+        """The same user and RPC succeed in a topology with no such rule."""
+        self._upload(OPEN_TOPOLOGY)
 
-        self.assert_rpc_code(grpc.StatusCode.PERMISSION_DENIED, set_reserved)
+    def test_other_rpcs_still_work_in_the_denying_topology(self):
+        """Denying one method must not disturb the rest of the service."""
+        response = self._analyze(token=self.token, topology=FGAC_TOPOLOGY)
+        self.assertEqual(KNOX_USER, response.explain.explain_string)
+
+    def test_config_rpc_still_carries_the_asserted_identity(self):
+        """Config is relayed like any other RPC, with the identity replaced.
+
+        Knox no longer screens session configuration keys: the gateway reads only
+        the identity fields, by field number, and makes no assumption about the
+        Config RPC's internal shape. Protecting a reserved key is the job of a
+        component inside the backend, which can recompute the identity per
+        request rather than trusting a key a client could also write.
+        """
+        channel, metadata = self._channel(token=self.token, topology=OPEN_TOPOLOGY)
+        with channel:
+            stub = base_pb2_grpc.SparkConnectServiceStub(channel)
+            request = base_pb2.ConfigRequest(session_id="itest-config-identity")
+            request.user_context.user_id = "root"
+            pair = request.operation.set.pairs.add()
+            pair.key = "spark.sql.shuffle.partitions"
+            pair.value = "8"
+            response = stub.Config(request, metadata=metadata, timeout=30)
+        # The mock echoes back the user_id it received.
+        self.assertEqual(KNOX_USER, response.pairs[0].value)
 
 
 if __name__ == "__main__":

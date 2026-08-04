@@ -125,7 +125,7 @@
         <module>gateway-service-storm</module>
         <module>gateway-service-remoteconfig</module>
         <module>gateway-service-restcatalog</module>
-        <module>gateway-service-sparkconnect</module>
+        <module>gateway-service-grpc</module>
         <module>gateway-service-definitions</module>
         <module>gateway-shell</module>
         <module>gateway-shell-launcher</module>
@@ -1297,7 +1297,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.knox</groupId>
-                <artifactId>gateway-service-sparkconnect</artifactId>
+                <artifactId>gateway-service-grpc</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -1808,7 +1808,7 @@
             </dependency>
 
             <!-- Imports version management for every io.grpc artifact. Only
-                 gateway-service-sparkconnect depends on them; grpc-netty-shaded keeps
+                 gateway-service-grpc depends on them; grpc-netty-shaded keeps
                  grpc's Netty off the gateway classpath. -->
             <dependency>
                 <groupId>io.grpc</groupId>

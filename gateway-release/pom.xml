@@ -526,7 +526,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
-            <artifactId>gateway-service-sparkconnect</artifactId>
+            <artifactId>gateway-service-grpc</artifactId>
         </dependency>
     </dependencies>
 </project>

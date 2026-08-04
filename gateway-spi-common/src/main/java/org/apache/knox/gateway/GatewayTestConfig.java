@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -55,25 +56,29 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
   public static final int  DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
 
-  /* Spark Connect defaults */
-  public static final int DEFAULT_SPARKCONNECT_PORT = 15002;
-  public static final int DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE = 134217728;
-  public static final long DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME = 10000L;
-  public static final int DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
-  public static final long DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT = 1800000L;
-  public static final long DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT = 30000L;
-  public static final String DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE = "ALLOW";
-  public static final String DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX = "knox.";
-  public static final String DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY = "knox-topology";
+  /* gRPC listener defaults */
+  public static final int DEFAULT_GRPC_PORT = 15002;
+  public static final String DEFAULT_GRPC_SERVICE_ROLE = "GRPC";
+  public static final int DEFAULT_GRPC_MAX_MESSAGE_SIZE = 134217728;
+  public static final long DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME = 10000L;
+  public static final int DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
+  public static final long DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT = 1800000L;
+  public static final long DEFAULT_GRPC_DRAIN_TIMEOUT = 30000L;
+  public static final String DEFAULT_GRPC_TOPOLOGY_METADATA_KEY = "knox-topology";
 
-  private boolean sparkConnectEnabled;
-  private int sparkConnectPort = DEFAULT_SPARKCONNECT_PORT;
-  private String sparkConnectDefaultTopology;
-  private String sparkConnectBackendTokenAlias;
-  private String sparkConnectAddArtifactsMode = DEFAULT_SPARKCONNECT_ADD_ARTIFACTS_MODE;
-  private String sparkConnectReservedConfigPrefix = DEFAULT_SPARKCONNECT_RESERVED_CONFIG_PREFIX;
-  private String sparkConnectTopologyMetadataKey = DEFAULT_SPARKCONNECT_TOPOLOGY_METADATA_KEY;
-  private List<String> sparkConnectAddArtifactsAllowedUsers = Collections.emptyList();
+  private boolean grpcEnabled;
+  private int grpcPort = DEFAULT_GRPC_PORT;
+  private String grpcServiceRole = DEFAULT_GRPC_SERVICE_ROLE;
+  private String grpcProtoServices;
+  private String grpcIdentityRules;
+  private List<String> grpcListenerNames = new ArrayList<>();
+  private final Map<String, Map<String, String>> grpcListenerConfig = new HashMap<>();
+  private int grpcIdentityScanLimit = 131072;
+  private String grpcDefaultTopology;
+  private String grpcTopologyMetadataKey = DEFAULT_GRPC_TOPOLOGY_METADATA_KEY;
+  private String grpcMethodsDeny;
+  private String grpcMethodsAllow;
+  private String grpcBackendTokenAlias;
 
 
 
@@ -702,105 +707,151 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
-  public boolean isSparkConnectEnabled() {
-    return sparkConnectEnabled;
+  public boolean isGrpcEnabled() {
+    return grpcEnabled;
   }
 
-  public void setSparkConnectEnabled(boolean sparkConnectEnabled) {
-    this.sparkConnectEnabled = sparkConnectEnabled;
-  }
-
-  @Override
-  public int getSparkConnectPort() {
-    return sparkConnectPort;
-  }
-
-  public void setSparkConnectPort(int sparkConnectPort) {
-    this.sparkConnectPort = sparkConnectPort;
+  public void setGrpcEnabled(boolean grpcEnabled) {
+    this.grpcEnabled = grpcEnabled;
   }
 
   @Override
-  public String getSparkConnectDefaultTopology() {
-    return sparkConnectDefaultTopology;
+  public int getGrpcPort() {
+    return grpcPort;
   }
 
-  public void setSparkConnectDefaultTopology(String sparkConnectDefaultTopology) {
-    this.sparkConnectDefaultTopology = sparkConnectDefaultTopology;
-  }
-
-  @Override
-  public int getSparkConnectMaxMessageSize() {
-    return DEFAULT_SPARKCONNECT_MAX_MESSAGE_SIZE;
+  public void setGrpcPort(int grpcPort) {
+    this.grpcPort = grpcPort;
   }
 
   @Override
-  public long getSparkConnectPermitKeepAliveTime() {
-    return DEFAULT_SPARKCONNECT_PERMIT_KEEPALIVE_TIME;
+  public String getGrpcServiceRole() {
+    return grpcServiceRole;
+  }
+
+  public void setGrpcServiceRole(String grpcServiceRole) {
+    this.grpcServiceRole = grpcServiceRole;
   }
 
   @Override
-  public boolean isSparkConnectPermitKeepAliveWithoutCalls() {
+  public String getGrpcProtoServices() {
+    return grpcProtoServices;
+  }
+
+  public void setGrpcProtoServices(String grpcProtoServices) {
+    this.grpcProtoServices = grpcProtoServices;
+  }
+
+  @Override
+  public List<String> getGrpcListenerNames() {
+    return grpcListenerNames;
+  }
+
+  public void setGrpcListenerNames(List<String> grpcListenerNames) {
+    this.grpcListenerNames = grpcListenerNames;
+  }
+
+  @Override
+  public Map<String, String> getGrpcListenerConfig(String listenerName) {
+    final Map<String, String> config = grpcListenerConfig.get(listenerName);
+    return config == null ? new HashMap<>() : config;
+  }
+
+  public void setGrpcListenerConfig(String listenerName, Map<String, String> config) {
+    this.grpcListenerConfig.put(listenerName, config);
+  }
+
+  @Override
+  public String getGrpcIdentityRules() {
+    return grpcIdentityRules;
+  }
+
+  public void setGrpcIdentityRules(String grpcIdentityRules) {
+    this.grpcIdentityRules = grpcIdentityRules;
+  }
+
+  @Override
+  public int getGrpcIdentityScanLimit() {
+    return grpcIdentityScanLimit;
+  }
+
+  public void setGrpcIdentityScanLimit(int grpcIdentityScanLimit) {
+    this.grpcIdentityScanLimit = grpcIdentityScanLimit;
+  }
+
+  @Override
+  public String getGrpcDefaultTopology() {
+    return grpcDefaultTopology;
+  }
+
+  public void setGrpcDefaultTopology(String grpcDefaultTopology) {
+    this.grpcDefaultTopology = grpcDefaultTopology;
+  }
+
+  @Override
+  public String getGrpcTopologyMetadataKey() {
+    return grpcTopologyMetadataKey;
+  }
+
+  public void setGrpcTopologyMetadataKey(String grpcTopologyMetadataKey) {
+    this.grpcTopologyMetadataKey = grpcTopologyMetadataKey;
+  }
+
+  @Override
+  public String getGrpcMethodsDeny() {
+    return grpcMethodsDeny;
+  }
+
+  public void setGrpcMethodsDeny(String grpcMethodsDeny) {
+    this.grpcMethodsDeny = grpcMethodsDeny;
+  }
+
+  @Override
+  public String getGrpcMethodsAllow() {
+    return grpcMethodsAllow;
+  }
+
+  public void setGrpcMethodsAllow(String grpcMethodsAllow) {
+    this.grpcMethodsAllow = grpcMethodsAllow;
+  }
+
+  @Override
+  public int getGrpcMaxMessageSize() {
+    return DEFAULT_GRPC_MAX_MESSAGE_SIZE;
+  }
+
+  @Override
+  public long getGrpcPermitKeepAliveTime() {
+    return DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME;
+  }
+
+  @Override
+  public boolean isGrpcPermitKeepAliveWithoutCalls() {
     return true;
   }
 
   @Override
-  public int getSparkConnectMaxConcurrentCallsPerConnection() {
-    return DEFAULT_SPARKCONNECT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
+  public int getGrpcMaxConcurrentCallsPerConnection() {
+    return DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION;
   }
 
   @Override
-  public long getSparkConnectChannelIdleTimeout() {
-    return DEFAULT_SPARKCONNECT_CHANNEL_IDLE_TIMEOUT;
+  public long getGrpcChannelIdleTimeout() {
+    return DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT;
   }
 
   @Override
-  public long getSparkConnectDrainTimeout() {
-    return DEFAULT_SPARKCONNECT_DRAIN_TIMEOUT;
+  public long getGrpcDrainTimeout() {
+    return DEFAULT_GRPC_DRAIN_TIMEOUT;
   }
 
   @Override
-  public String getSparkConnectBackendTokenAlias() {
-    return sparkConnectBackendTokenAlias;
+  public String getGrpcBackendTokenAlias() {
+    return grpcBackendTokenAlias;
   }
 
-  public void setSparkConnectBackendTokenAlias(String sparkConnectBackendTokenAlias) {
-    this.sparkConnectBackendTokenAlias = sparkConnectBackendTokenAlias;
-  }
-
-  @Override
-  public String getSparkConnectAddArtifactsMode() {
-    return sparkConnectAddArtifactsMode;
-  }
-
-  public void setSparkConnectAddArtifactsMode(String sparkConnectAddArtifactsMode) {
-    this.sparkConnectAddArtifactsMode = sparkConnectAddArtifactsMode;
-  }
-
-  @Override
-  public List<String> getSparkConnectAddArtifactsAllowedUsers() {
-    return sparkConnectAddArtifactsAllowedUsers;
-  }
-
-  public void setSparkConnectAddArtifactsAllowedUsers(List<String> allowedUsers) {
-    this.sparkConnectAddArtifactsAllowedUsers = allowedUsers;
-  }
-
-  @Override
-  public String getSparkConnectReservedConfigPrefix() {
-    return sparkConnectReservedConfigPrefix;
-  }
-
-  public void setSparkConnectReservedConfigPrefix(String sparkConnectReservedConfigPrefix) {
-    this.sparkConnectReservedConfigPrefix = sparkConnectReservedConfigPrefix;
-  }
-
-  @Override
-  public String getSparkConnectTopologyMetadataKey() {
-    return sparkConnectTopologyMetadataKey;
-  }
-
-  public void setSparkConnectTopologyMetadataKey(String sparkConnectTopologyMetadataKey) {
-    this.sparkConnectTopologyMetadataKey = sparkConnectTopologyMetadataKey;
+  public void setGrpcBackendTokenAlias(String grpcBackendTokenAlias) {
+    this.grpcBackendTokenAlias = grpcBackendTokenAlias;
   }
 
   @Override

@@ -107,7 +107,7 @@ services:
         touch /out/spark/__init__.py /out/spark/connect/__init__.py
         echo 'spark connect stubs generated'
     volumes:
-      - ../../../gateway-service-sparkconnect/src/main/proto:/protos:ro
+      - ../../../gateway-service-grpc/src/test/proto:/protos:ro
       - sparkconnect-protos:/out
 
   # Stands in for a Spark Connect server on a private network. Plaintext, which

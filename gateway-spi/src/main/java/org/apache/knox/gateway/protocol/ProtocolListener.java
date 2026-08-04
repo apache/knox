@@ -17,6 +17,9 @@
  */
 package org.apache.knox.gateway.protocol;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 
@@ -91,6 +94,16 @@ public interface ProtocolListener {
    * @return the bound port, or -1 if the listener is not running
    */
   int getPort();
+
+  /**
+   * Every port this listener bound, for implementations that run more than one
+   * server. Reported at startup so an operator can see what came up.
+   *
+   * @return the bound ports; by default the single {@link #getPort()}
+   */
+  default List<Integer> getPorts() {
+    return Collections.singletonList(getPort());
+  }
 
   /**
    * Notifies the listener that topologies have been redeployed, so anything it
