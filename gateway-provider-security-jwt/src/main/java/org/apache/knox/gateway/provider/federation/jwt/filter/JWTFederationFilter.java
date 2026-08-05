@@ -22,6 +22,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -42,11 +45,14 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -244,6 +250,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     final String scope = token.getClaim(KnoxIDFConstants.SCOPE);
     if (scope != null) {
       request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, token.getClaim(scope));
+    }
+    final String issuer = token.getIssuer();
+    if (issuer != null) {
+      request.setAttribute(KnoxIDFConstants.TOKEN_ISS_ATTRIBUTE, issuer);
     }
   }
 
@@ -451,6 +461,33 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
     // Validation failed - error response already sent by validateToken
     return null;
+  }
+
+  @Override
+  protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
+    if (!TOKEN_EXCHANGE.equals(request.getParameter(GRANT_TYPE))) {
+      return Set.of();
+    }
+    final GatewayServices gws = (GatewayServices)
+        request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (gws != null) {
+      final TrustedOidcIssuerService issuerSvc = gws.getService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE);
+      // isDynamicJwks() is the combined guard: true only if the issuer is both registered as
+      // trusted AND configured for dynamic JWKS discovery. If the issuer is not registered, or
+      // registered without dynamic JWKS, it is not actionable through this path.
+      if (issuerSvc != null && issuerSvc.isDynamicJwks(issuer)) {
+        // resolveJwksUri() performs OIDC discovery
+        final Optional<String> jwksUri = issuerSvc.resolveJwksUri(issuer);
+        if (jwksUri.isPresent()) {
+          try {
+            return Set.of(new URI(jwksUri.get()));
+          } catch (URISyntaxException e) {
+            LOGGER.unableToVerifyToken(e);
+          }
+        }
+      }
+    }
+    return Set.of();
   }
 
   @Override
