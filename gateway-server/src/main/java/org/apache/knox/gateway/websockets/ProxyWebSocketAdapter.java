@@ -53,6 +53,13 @@ import org.eclipse.jetty.websocket.api.StatusCode;
  *
  * @since 0.10
  */
+// TODO (KNOX-3238): ProxyWebSocketAdapter uses AbstractAutoDemanding which auto-calls demand() after
+// each onWebSocketText/onWebSocketPong returns, meaning the next backend message can be dispatched
+// before the previous frontendSession.sendText/sendPing callback has fired. This violates the Jetty 12
+// WebSocket API contract ("you cannot initiate another send until the previous send is completed").
+// The fix is to switch to manual demand management (Session.Listener) and call session.demand() only
+// from the send callback's success path, mirroring the pattern in Jetty's own WebSocketProxy:
+// jetty.project/jetty-core/jetty-websocket/jetty-websocket-jetty-tests/.../proxy/WebSocketProxy.java
 public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemanding {
   protected static final WebsocketLogMessages LOG = MessagesFactory.get(WebsocketLogMessages.class);
 
@@ -300,6 +307,8 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
           flushBufferedMessages();
 
           LOG.debugLog("Sending current message [From Backend <---]: " + message);
+          // TODO (KNOX-3238): Callback.NOOP silently discards send failures — restoring error handling
+          // requires switching to manual demand management first (see class-level TODO).
           frontendSession.sendText(message, Callback.NOOP);
         } finally {
           remoteLock.unlock();
@@ -326,6 +335,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
           flushBufferedMessages();
 
           LOG.logMessage("Sending current PING [From Backend <---]: ");
+          // TODO (KNOX-3238): same as above — Callback.NOOP loses send failures.
           frontendSession.sendPing(message.getApplicationData(), Callback.NOOP);
         } finally {
           remoteLock.unlock();

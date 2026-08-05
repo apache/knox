@@ -119,6 +119,11 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             cleanup();
             return;
         }
+        // TODO (KNOX-3238): The failure lambda runs on a Jetty I/O thread while blockingReadFromHost
+        // runs on the pool thread — both can call cleanup() concurrently, racing on the session field.
+        // The fix is to use manual demand management (Session.Listener) so that demand() is called only
+        // from the send callback, serializing sends and eliminating the cross-thread race.
+        // See also the class-level TODO in ProxyWebSocketAdapter.
         session.sendText(message, Callback.from(
         () -> { /* success: nothing to do */ },
         t -> {
