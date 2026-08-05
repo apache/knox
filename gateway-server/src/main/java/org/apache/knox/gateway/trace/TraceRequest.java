@@ -52,7 +52,6 @@ class TraceRequest extends Request.Wrapper {
     Content.Chunk chunk = super.read();
     if (chunk != null && log.isTraceEnabled()) {
       if (Content.Chunk.isFailure(chunk)) {
-        // Log that the request failed if you want
         return chunk;
       }
       ByteBuffer data = chunk.getByteBuffer();

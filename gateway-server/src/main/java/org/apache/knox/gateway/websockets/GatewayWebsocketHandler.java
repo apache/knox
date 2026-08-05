@@ -68,18 +68,15 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
       throw new IllegalStateException("GatewayWebsocketHandler must be attached to a Server before starting");
     }
 
-    // 1. Get or create the global ServerWebSocketContainer (no ContextHandler needed)
     ServerWebSocketContainer container = ServerWebSocketContainer.ensure(server, null);
     configureServerWebSocketContainer(container);
 
-    // 3. Create the UpgradeHandler.
     this.wsHandler = new WebSocketUpgradeHandler(container);
 
-    // 4. PRESERVE THE CHAIN: This handler currently wraps PortMappingHelperHandler.
+    // Preserve the chain: this handler currently wraps PortMappingHelperHandler.
     // We must ensure the internal wsHandler also wraps it, so HTTP traffic flows downwards.
     this.wsHandler.setHandler(getHandler());
 
-    // Start the internal handler
     this.wsHandler.start();
 
     super.doStart();
@@ -108,23 +105,9 @@ public class GatewayWebsocketHandler extends Handler.Wrapper {
 
     container.setIdleTimeout(Duration.ofMillis(config.getWebsocketIdleTimeout()));
 
-    // 2. Map ALL incoming requests to our custom Knox routing creator
+    // Map all incoming requests to our custom Knox routing creator.
     // "regex|^/.*" acts as a catch-all interceptor.
     container.addMapping("regex|^/.*", new KnoxWebSocketCreator(config, services));
-
-    //removed in Jetty 12 container.setMaxBinaryMessageBufferSize(config.getWebsocketMaxBinaryMessageBufferSize());
-    //removed in Jetty 12 container.setMaxTextMessageBufferSize(config.getWebsocketMaxTextMessageBufferSize());
-
-    //removed in Jetty 12 container.setAsyncWriteTimeout(config.getWebsocketAsyncWriteTimeout());
-    // handled by the core HTTP connection idle timeouts and
-    // one can apply it directly to the asynchronous write execution
-    // (e.g., using CompletableFuture.orTimeout(duration, TimeUnit) when we call session.sendText(...)).
-
-    // removed, idle timeout is used or specified in send() methods:
-    // container.setAsyncSendTimeout(config.getWebsocketAsyncWriteTimeout());
-
-    //same as setIdleTimeout: container.setDefaultMaxSessionIdleTimeout(config.getWebsocketIdleTimeout());
-
   }
 
 }

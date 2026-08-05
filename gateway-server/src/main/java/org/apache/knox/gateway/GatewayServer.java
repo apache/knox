@@ -902,7 +902,7 @@ public class GatewayServer {
     context.setInitParameter("org.eclipse.jetty.ee10.servlet.Default.dirAllowed", "false");
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
-    // NOTE: In Jetty 12 the max form content size and max form keys are
+    // In Jetty 12 the max form content size and max form keys are
     // configured server-wide via FormFields.MAX_LENGTH_ATTRIBUTE and
     // FormFields.MAX_FIELDS_ATTRIBUTE (see createJetty()). The per-context
     // setters were removed; server-level settings apply to all WebApps.

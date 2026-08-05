@@ -120,9 +120,6 @@ public class WebsocketServerInitiatedMessageTest extends WebsocketEchoTestBase {
     public void onWebSocketOpen(Session session) {
       super.onWebSocketOpen(session);
 
-      // In Jetty 12, we send the text directly on the session and provide a Callback.
-      // We use Callback.NOOP since the original code passed null and ignored success/failure.
-      // BatchMode and manual flushing are handled automatically by the Jetty engine.
       session.sendText("echo", org.eclipse.jetty.websocket.api.Callback.NOOP);
     }
   }

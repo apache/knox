@@ -101,12 +101,10 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
     @Override
     public Object createWebSocket(ServerUpgradeRequest req, ServerUpgradeResponse resp, Callback callback) throws Exception {
         try {
-            // 1. Get the raw HTTP URI from the Jetty 12 Request and convert it to ws URI
             final URI requestURI = WSURI.toWebsocket(req.getHttpURI().toURI());
 
-            // Now Knox's regex will work
             if (isWebshellRequest(requestURI)) {
-                return handleWebshellRequest(req); // Note: Update handleWebshellRequest to accept ServerUpgradeRequest
+                return handleWebshellRequest(req);
             }
 
             final String backendURL = getMatchedBackendURL(requestURI);
@@ -165,7 +163,6 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
             @Override
             public void beforeRequest(final Map<String, List<String>> headers) {
 
-                // 1. Safely iterate over Jetty 12 HttpFields and copy them to the Jakarta map
                 for (HttpField field : req.getHeaders()) {
                     String headerName = field.getName();
                     if (!IGNORED_HEADERS.contains(headerName.toLowerCase(Locale.ROOT))) {
@@ -174,7 +171,6 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
                     }
                 }
 
-                // 2. Properly construct and override the Host header
                 try {
                     final URI backendURI = new URI(backendURL);
 

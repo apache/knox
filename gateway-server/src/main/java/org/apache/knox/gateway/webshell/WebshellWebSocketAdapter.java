@@ -119,8 +119,6 @@ public class WebshellWebSocketAdapter extends ProxyWebSocketAdapter  {
             cleanup();
             return;
         }
-        // In Jetty 12 the send is asynchronous: report send failures via the Callback,
-        // preserving the old IOException-based error handling semantics.
         session.sendText(message, Callback.from(
         () -> { /* success: nothing to do */ },
         t -> {

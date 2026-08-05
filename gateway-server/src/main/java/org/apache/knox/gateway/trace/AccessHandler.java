@@ -36,17 +36,17 @@ public class AccessHandler extends AbstractLifeCycle implements RequestLog {
       TraceUtil.appendCorrelationContext(sb);
       long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - request.getBeginNanoTime());
       sb.append('|')
-      .append(Request.getRemoteAddr(request)) // Static helper or request.getConnectionMetaData().getRemoteSocketAddress()
+      .append(Request.getRemoteAddr(request))
       .append('|')
       .append(request.getMethod())
       .append('|')
       .append(request.getHttpURI().toString())
       .append('|')
-      .append(request.getLength()) // .getContentLength() is now .getLength()
+      .append(request.getLength())
       .append('|')
       .append(response.getStatus())
       .append('|')
-      .append(Response.getContentBytesWritten(response)) // Use static helper for bytes written
+      .append(Response.getContentBytesWritten(response))
       .append('|')
       .append(durationMillis);
       log.trace(sb);

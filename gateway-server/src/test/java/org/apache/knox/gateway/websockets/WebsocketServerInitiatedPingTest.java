@@ -91,8 +91,6 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
     try (jakarta.websocket.Session session = container.connectToServer(client,
     new URI(serverUri.toString() + "gateway/websocket/123foo456bar/channels"))) {
       assertThat(session.isOpen(), is(true));
-      //session.getBasicRemote().sendText("Echo");
-      // Wait for the backend server to receive the automatic PONG from Knox's JSR-356 container
       String pongPayload = pingHandler.socket.pongFuture.get(10000, TimeUnit.MILLISECONDS);
 
       assertThat(pongPayload, is("PingPong"));
@@ -141,15 +139,11 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
       final ByteBuffer binaryMessage = ByteBuffer.wrap(
       textMessage.getBytes(StandardCharsets.UTF_8));
 
-      // In Jetty 12, we send the ping directly on the session and provide a Callback.
-      // We use Callback.NOOP since the original code didn't do anything on success/failure.
-      // BatchMode and manual flushing are handled automatically by the Jetty engine.
       session.sendPing(binaryMessage, org.eclipse.jetty.websocket.api.Callback.NOOP);
     }
 
     @Override
     public void onWebSocketFrame(Frame frame, org.eclipse.jetty.websocket.api.Callback callback) {
-      // Intercept PONG frames returning from Knox
       if (frame.getOpCode() == OpCode.PONG) {
         ByteBuffer payload = frame.getPayload();
         if (payload != null) {

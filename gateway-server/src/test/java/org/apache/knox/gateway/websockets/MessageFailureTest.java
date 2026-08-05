@@ -92,7 +92,7 @@ public class MessageFailureTest {
    */
   @Test(timeout = 8000)
   public void testMessageBiggerThanDefault() throws Exception {
-    //Note: default is WebSocketConstants.DEFAULT_MAX_TEXT_MESSAGE_SIZE = 65536
+    // WebSocketConstants.DEFAULT_MAX_TEXT_MESSAGE_SIZE = 65536
     final String bigMessage = RandomStringUtils.randomAscii(66000);
 
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
