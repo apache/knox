@@ -23,7 +23,6 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
-import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
@@ -436,14 +435,20 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   /**
    * Handle RFC 8693 token exchange flow.
    *
-   * <p>This method validates both the subject_token and actor_token parameters,
-   * creates a TokenExchangePrincipal with the identity information from both tokens,
-   * and establishes a Subject with the actor as the PrimaryPrincipal.</p>
+   * <p>Validates the required subject_token and, when present, the optional actor_token.
+   * Builds a Subject carrying the appropriate principals and establishes the security
+   * context for downstream filters.</p>
    *
-   * <p>The TokenExchangePrincipal signals to the identity assertion layer that
+   * <p>When actor_token is present, the Subject has the actor as PrimaryPrincipal and a
+   * TokenExchangePrincipal that signals the identity assertion layer that
    * impersonation should be established with the subject as the ImpersonatedPrincipal.</p>
    *
-   * @param request the HTTP request containing subject_token and actor_token parameters
+   * <p>When actor_token is absent, the Subject has the subject itself as PrimaryPrincipal
+   * with no TokenExchangePrincipal. RFC 8693 requires the actor token to be optional.
+   * Note that headless delegation using ImpersonatedPrincipal is currently not represented
+   * in this path.</p>
+   *
+   * @param request the HTTP request containing subject_token and optional actor_token parameters
    * @param response the HTTP response
    * @param chain the filter chain
    * @throws IOException if an I/O error occurs
@@ -459,13 +464,18 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return;
     }
 
-    // Extract actor_token (required for proper token exchange)
+    // actor_token is optional per RFC 8693 §2.1. When absent, the exchange is either
+    // a same-subject exchange (no delegation) or a headless delegation exchange where
+    // the actor is the subject itself and the target subject is in requested_subject.
+    // Downstream processing determines the exchange type from request parameters.
+    //
+    // If a future generic Knox topology uses grant_type=token-exchange for
+    // Hadoop-proxy delegation, headless delegation
+    // (actor_token absent, requested_subject != subject_token.sub) would also need
+    // a TokenExchangePrincipal so that AbstractIdentityAssertionFilter can set up
+    // Hadoop doAs impersonation. The filter would need to read requested_subject here
+    // and compare it to subject_token.sub to detect this case.
     String actorTokenValue = request.getParameter(ACTOR_TOKEN);
-    if (actorTokenValue == null || actorTokenValue.isEmpty()) {
-      handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "RFC 8693 token exchange requires actor_token parameter");
-      return;
-    }
 
     try {
       // Parse and validate subject_token
@@ -476,13 +486,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
 
       // Parse and validate actor_token
-      JWT actorToken = parseAndValidateJWT(request, response, chain, actorTokenValue);
-      if (actorToken == null) {
-        // Validation failed, error response already sent
-        return;
+      JWT actorToken = null;
+      if (actorTokenValue != null && !actorTokenValue.isEmpty()) {
+        actorToken = parseAndValidateJWT(request, response, chain, actorTokenValue);
+        if (actorToken == null) {
+          // Validation failed, error response already sent
+          return;
+        }
       }
 
-      // Create Subject with actor as PrimaryPrincipal and TokenExchangePrincipal
       Subject subject = createSubjectForTokenExchange(subjectToken, actorToken);
 
       continueWithEstablishedSecurityContext(subject, request, response, chain);
@@ -520,36 +532,44 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   /**
    * Create a Subject for RFC 8693 token exchange with proper principal setup.
    *
-   * @param subjectToken the validated subject token
-   * @param actorToken the validated actor token
-   * @return a Subject configured for token exchange
+   * <p>When actorToken is non-null (delegated exchange), the Subject has the actor as
+   * PrimaryPrincipal and a TokenExchangePrincipal carrying both subject and actor identities.
+   * The TokenExchangePrincipal signals the identity assertion layer to set up doAs
+   * impersonation with the subject as the delegated identity.</p>
+   *
+   * <p>When actorToken is null (same-subject or headless delegation exchange), the Subject
+   * has the subject itself as PrimaryPrincipal with no TokenExchangePrincipal, so the
+   * identity assertion layer performs no impersonation for this exchange.</p>
+   *
+   * <p>In both cases, if the subject_token carries an {@code act} claim, the delegation
+   * chain is preserved as an ActorChainPrincipal.</p>
+   *
+   * @param subjectToken the validated subject token (required)
+   * @param actorToken the validated actor token, or null if actor_token was not provided
+   * @return a Subject configured for the token exchange
    */
   private Subject createSubjectForTokenExchange(JWT subjectToken, JWT actorToken) {
-    // Extract identities from the tokens
     String subjectPrincipalName = subjectToken.getSubject();
-    String subjectIssuer = subjectToken.getIssuer();
-    String actorPrincipalName = actorToken.getSubject();
-    String actorIssuer = actorToken.getIssuer();
-    // Create principals for the Subject
-    // PrimaryPrincipal is the ACTOR (the authenticated party)
-    PrimaryPrincipal primaryPrincipal =
-        new PrimaryPrincipal(actorPrincipalName);
-
-    // TokenExchangePrincipal carries metadata for identity assertion layer
-    TokenExchangePrincipal tokenExchangePrincipal =
-        new TokenExchangePrincipalImpl(
-            subjectPrincipalName, subjectIssuer, actorPrincipalName, actorIssuer);
-
-    // Extract actor chain from subject_token (if present) using existing logic
-    List<Map<String, Object>> actorChain =
-        TokenUtils.extractActorChain(subjectToken);
-
-    // Create Subject with all necessary principals
     Set<Principal> principals = new HashSet<>();
-    principals.add(primaryPrincipal);
-    principals.add(tokenExchangePrincipal);
 
-    // Add ActorChainPrincipal if actor chain exists in subject_token
+    if (actorToken != null) {
+      // Delegated exchange: actor acts on behalf of subject.
+      // PrimaryPrincipal is the actor (the authenticated party performing the exchange).
+      // TokenExchangePrincipal carries both identities for the identity assertion layer.
+      String subjectIssuer = subjectToken.getIssuer();
+      String actorPrincipalName = actorToken.getSubject();
+      String actorIssuer = actorToken.getIssuer();
+      principals.add(new PrimaryPrincipal(actorPrincipalName));
+      principals.add(new TokenExchangePrincipalImpl(subjectPrincipalName, subjectIssuer, actorPrincipalName, actorIssuer));
+    } else {
+      // No actor_token: same-subject or headless delegation exchange.
+      // PrimaryPrincipal is the subject itself; no TokenExchangePrincipal is created,
+      // so the identity assertion layer does not set up doAs impersonation.
+      principals.add(new PrimaryPrincipal(subjectPrincipalName));
+    }
+
+    // Preserve the delegation chain from the subject_token act claim, if present.
+    List<Map<String, Object>> actorChain = TokenUtils.extractActorChain(subjectToken);
     if (!actorChain.isEmpty()) {
       principals.add(new ActorChainPrincipalImpl(actorChain));
     }

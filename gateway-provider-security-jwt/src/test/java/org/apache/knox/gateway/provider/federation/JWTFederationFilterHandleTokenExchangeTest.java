@@ -22,6 +22,7 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.CommonTokenConstants;
+import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
@@ -190,6 +191,35 @@ public class JWTFederationFilterHandleTokenExchangeTest extends AbstractJWTFilte
   }
 
   /**
+   * With no actor_token provided, the filter proceeds successfully and the resulting Subject
+   * has the subject itself as PrimaryPrincipal, no TokenExchangePrincipal, and no
+   * ImpersonatedPrincipal.
+   */
+  @Test
+  public void testSubjectTokenOnlySucceeds() throws Exception {
+    SignedJWT subjectJwt = getJWT(JWT_DEFAULT_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000), privateKey);
+
+    HttpServletRequest request = buildTokenExchangeRequestSubjectOnly(subjectJwt.serialize());
+    EasyMock.replay(request);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(response);
+
+    TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("doFilterCalled should be true", chain.doFilterCalled);
+    Set<PrimaryPrincipal> principals = chain.subject.getPrincipals(PrimaryPrincipal.class);
+    Assert.assertEquals("Expected exactly one PrimaryPrincipal", 1, principals.size());
+    Assert.assertEquals("Subject should be its own PrimaryPrincipal", "k8s-sa",
+        ((java.security.Principal) principals.toArray()[0]).getName());
+    Assert.assertNull("No TokenExchangePrincipal expected for subject-only exchange",
+        SubjectUtils.getTokenExchangePrincipal(chain.subject));
+    Assert.assertTrue("ImpersonatedPrincipal set should be empty",
+        chain.subject.getPrincipals(ImpersonatedPrincipal.class).isEmpty());
+  }
+
+  /**
    * Builds a token-exchange request mock with both subject_token and actor_token parameters.
    * The caller must call {@code EasyMock.replay(request)} before using the returned mock.
    *
@@ -207,6 +237,26 @@ public class JWTFederationFilterHandleTokenExchangeTest extends AbstractJWTFilte
         .andReturn(subjectToken).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN))
         .andReturn(actorToken).anyTimes();
+    return request;
+  }
+
+  /**
+   * Builds a token-exchange request mock with subject_token only. The actor_token parameter
+   * is not mocked, so the NiceMock returns null for {@code getParameter(ACTOR_TOKEN)}.
+   * The caller must call {@code EasyMock.replay(request)} before using the returned mock.
+   *
+   * @param subjectToken serialized subject JWT
+   * @return a NiceMock HttpServletRequest configured for a subject-only token-exchange grant
+   */
+  private HttpServletRequest buildTokenExchangeRequestSubjectOnly(String subjectToken) {
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL())
+        .andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getParameter(CommonTokenConstants.GRANT_TYPE))
+        .andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN))
+        .andReturn(subjectToken).anyTimes();
+    // ACTOR_TOKEN not mocked — NiceMock returns null for getParameter(ACTOR_TOKEN)
     return request;
   }
 }
