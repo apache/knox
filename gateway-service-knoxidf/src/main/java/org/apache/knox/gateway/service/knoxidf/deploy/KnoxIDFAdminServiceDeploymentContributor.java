@@ -19,13 +19,17 @@ package org.apache.knox.gateway.service.knoxidf.deploy;
 import org.apache.knox.gateway.jersey.JerseyServiceDeploymentContributorBase;
 
 /**
- * Deployment contributor for the KNOXIDF_ADMIN service role, which hosts the
- * trusted OIDC issuer admin REST API. This contributor registers
- * {@link org.apache.knox.gateway.service.knoxidf.TrustedOidcIssuersResource}
- * under the {@code knoxidf/issuers-admin/**?**} pattern, which is disjoint from
- * the KNOXIDF role's {@code knoxidf/api/**?**} pattern. This ensures the KNOXIDF
- * role cannot serve admin endpoints, and that per-role AclsAuthz authorization
- * ({@code KNOXIDF_ADMIN.acl}) applies only to trusted-issuer admin requests.
+ * Deployment contributor for the KNOXIDF_ADMIN service role, which hosts all
+ * KnoxIDF admin REST APIs under a single {@code knoxidf/admin/**?**} URL pattern.
+ * Current resources: {@link org.apache.knox.gateway.service.knoxidf.TrustedOidcIssuersResource}.
+ *
+ * <p>The {@code knoxidf/admin/**?**} pattern is disjoint from the KNOXIDF role's
+ * {@code knoxidf/api/**?**} pattern, preventing KNOXIDF from serving admin endpoints.</p>
+ *
+ * <p>Authorization: use {@code PathAclsAuthz} in the topology to assign independent
+ * ACLs to each admin endpoint (e.g., {@code KNOXIDF_ADMIN.rule_issuers.path.acl}
+ * for trusted-issuers). Alternatively, {@code AclsAuthz} with {@code KNOXIDF_ADMIN.acl}
+ * applies a single ACL to all endpoints under this role.</p>
  */
 public class KnoxIDFAdminServiceDeploymentContributor extends JerseyServiceDeploymentContributorBase {
 
@@ -46,6 +50,6 @@ public class KnoxIDFAdminServiceDeploymentContributor extends JerseyServiceDeplo
 
   @Override
   protected String[] getPatterns() {
-    return new String[] { "knoxidf/issuers-admin/**?**" };
+    return new String[] { "knoxidf/admin/**?**" };
   }
 }
