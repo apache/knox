@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,6 +36,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.eclipse.jetty.io.RuntimeIOException;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.BatchMode;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
@@ -100,21 +102,17 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     container.setAsyncSendTimeout(frontEndSession.getPolicy().getAsyncWriteTimeout());
     container.setDefaultMaxSessionIdleTimeout(frontEndSession.getPolicy().getIdleTimeout());
 
-    KeyStore ks = null;
-    if(clientConfig != null) {
-      ks = (KeyStore) clientConfig.getUserProperties().get("org.apache.knox.gateway.websockets.truststore");
-    }
-
     /*
        Currently javax.websocket API has no provisions to configure SSL
        https://github.com/eclipse-ee4j/websocket-api/issues/210
        Until that gets fixed we'll have to resort to this.
     */
-    if(container instanceof org.eclipse.jetty.websocket.jsr356.ClientContainer &&
+    if(clientConfig != null &&
+        container instanceof org.eclipse.jetty.websocket.jsr356.ClientContainer &&
         ((org.eclipse.jetty.websocket.jsr356.ClientContainer)container).getClient() != null &&
         ((org.eclipse.jetty.websocket.jsr356.ClientContainer)container).getClient().getSslContextFactory() != null ) {
-      ((org.eclipse.jetty.websocket.jsr356.ClientContainer)container).getClient().getHttpClient().getSslContextFactory().setTrustStore(ks);
-      LOG.logMessage("Truststore for websocket setup");
+      configureSsl(((org.eclipse.jetty.websocket.jsr356.ClientContainer)container).getClient().getHttpClient().getSslContextFactory(), clientConfig);
+      LOG.logMessage("SSL for websocket setup");
     }
 
     final ProxyInboundClient backendSocket = new ProxyInboundClient(getMessageCallback());
@@ -157,6 +155,31 @@ public class ProxyWebSocketAdapter extends WebSocketAdapter {
     finally
     {
       remoteLock.unlock();
+    }
+  }
+
+  /**
+   * Configures the WebSocket client's SslContextFactory from the values the
+   * handler placed in the ClientEndpointConfig user properties: the truststore
+   * (unchanged behavior, may be null) and, when two-way SSL supplied one, the
+   * client identity keystore plus its key-manager password.
+   */
+  static void configureSsl(final SslContextFactory sslContextFactory,
+                           final ClientEndpointConfig clientConfig) {
+    final Map<String, Object> userProperties = clientConfig.getUserProperties();
+
+    sslContextFactory.setTrustStore(
+        (KeyStore) userProperties.get(GatewayWebsocketHandler.TRUSTSTORE_USER_PROPERTY));
+
+    final KeyStore identityKeystore =
+        (KeyStore) userProperties.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY);
+    if (identityKeystore != null) {
+      sslContextFactory.setKeyStore(identityKeystore);
+      final char[] passphrase =
+          (char[]) userProperties.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY);
+      if (passphrase != null) {
+        sslContextFactory.setKeyManagerPassword(new String(passphrase));
+      }
     }
   }
 

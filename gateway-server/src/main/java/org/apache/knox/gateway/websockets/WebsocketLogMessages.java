@@ -60,4 +60,9 @@ public interface WebsocketLogMessages {
       text = "{0}")
   void debugLog(String message);
 
+  @Message(level = MessageLevel.WARN,
+      text = "Two-way SSL is enabled but no client identity keystore was found; "
+          + "the outbound WebSocket connection will not present a client certificate")
+  void noClientIdentityForTwoWaySsl();
+
 }

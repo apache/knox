@@ -27,6 +27,9 @@ import org.apache.knox.gateway.i18n.GatewaySpiMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -44,8 +47,10 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.security.KeyStore;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -166,6 +171,100 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.replay(gatewayServices,gatewayConfig);
         GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
         gatewayWebsocketHandler.createWebSocket(req,resp);
+    }
+
+    @Test
+    public void testConfigureClientIdentityTwoWaySslGatewayIdentity() throws Exception {
+        GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(true).anyTimes();
+        EasyMock.expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+
+        KeyStore identity = KeyStore.getInstance(KeyStore.getDefaultType());
+        identity.load(null, null);
+        char[] passphrase = "gateway-secret".toCharArray();
+
+        KeystoreService keystoreService = EasyMock.createNiceMock(KeystoreService.class);
+        EasyMock.expect(keystoreService.getKeystoreForGateway()).andReturn(identity).anyTimes();
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getGatewayIdentityPassphrase()).andReturn(passphrase).anyTimes();
+
+        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+        EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
+
+        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        Map<String, Object> props = new HashMap<>();
+        handler.configureClientIdentity(props);
+
+        Assert.assertSame(identity, props.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
+        Assert.assertSame(passphrase, props.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+    }
+
+    @Test
+    public void testConfigureClientIdentityTwoWaySslSingleEku() throws Exception {
+        GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(true).anyTimes();
+        EasyMock.expect(gatewayConfig.isSingleEkuEnabled()).andReturn(true).anyTimes();
+
+        KeyStore clientIdentity = KeyStore.getInstance(KeyStore.getDefaultType());
+        clientIdentity.load(null, null);
+        char[] passphrase = "client-secret".toCharArray();
+
+        KeystoreService keystoreService = EasyMock.createNiceMock(KeystoreService.class);
+        EasyMock.expect(keystoreService.getKeystoreForHttpClient()).andReturn(clientIdentity).anyTimes();
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        EasyMock.expect(aliasService.getHttpClientKeyPassphrase()).andReturn(passphrase).anyTimes();
+
+        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+        EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
+
+        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        Map<String, Object> props = new HashMap<>();
+        handler.configureClientIdentity(props);
+
+        Assert.assertSame(clientIdentity, props.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
+        Assert.assertSame(passphrase, props.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+    }
+
+    @Test
+    public void testConfigureClientIdentityDisabledWhenNotTwoWaySsl() throws Exception {
+        GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(false).anyTimes();
+        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.replay(gatewayConfig, services);
+
+        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        Map<String, Object> props = new HashMap<>();
+        handler.configureClientIdentity(props);
+
+        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+    }
+
+    @Test
+    public void testConfigureClientIdentityTwoWaySslNullKeystoreContributesNothing() throws Exception {
+        GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gatewayConfig.isHttpClientTwoWaySslEnabled()).andReturn(true).anyTimes();
+        EasyMock.expect(gatewayConfig.isSingleEkuEnabled()).andReturn(false).anyTimes();
+
+        KeystoreService keystoreService = EasyMock.createNiceMock(KeystoreService.class);
+        EasyMock.expect(keystoreService.getKeystoreForGateway()).andReturn(null).anyTimes();
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+
+        GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
+        EasyMock.expect(services.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(keystoreService).anyTimes();
+        EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+        EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
+
+        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        Map<String, Object> props = new HashMap<>();
+        handler.configureClientIdentity(props);
+
+        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     private ServletUpgradeRequest createServletUpgradeRequest(String url) throws Exception {
