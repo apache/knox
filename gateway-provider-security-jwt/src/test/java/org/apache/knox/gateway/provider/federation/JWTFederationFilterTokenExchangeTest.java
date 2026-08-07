@@ -17,7 +17,6 @@
 package org.apache.knox.gateway.provider.federation;
 
 import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
-import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
@@ -25,7 +24,6 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.Capture;
@@ -39,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
-import java.security.PublicKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,13 +60,11 @@ import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
  * URI is used exclusively for signature verification. All other validation (expiry, audiences,
  * nbf, token state) runs via the same {@code doFullTokenValidation} helper as the static path.
  *
- * <p> NOTE: If both subject and actor tokens are present on a token-exchange request, both
- * are validated through the same {@code validateToken()} path. It does not matter if only
- * the subject token is present, both are present, or which use dynamic or static issuers
- * for these validateToken tests. Only the paths through the validateToken method are tested.
- * For the delegation use case, when both subject token and actor token are present, we
- * expect the actor token to have the external issuer and the subject token to have the Knox
- * issuer for the typical use case, so a specific test is added for this use case.
+ * <p> NOTE: Tests are simplified to single-token form (subject_token only) wherever
+ * actor_token was not the subject of the test. Only two tests retain both tokens:
+ * {@link #testDynamicIssuerAllowedActorExternal}, which specifically tests the actor_token
+ * dynamic JWKS path, and {@link #testDynamicPathUsesRegistryJwksNotStaticJwks}, which
+ * verifies that both tokens are validated against the correct JWKS source independently.
  *
  * <p>NOTE: We do not test the specific failure modes {@code isTokenEnabled} or
  * {@code isIdleTimeoutLimitNotExceeded} in the dynamic JWKS path. It would require more complex
@@ -119,10 +114,9 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   // ---------------------------------------------------------------------------
 
   /**
-   * Subject token from EXTERNAL_ISSUER (not in static list); actor token from KNOX_ISSUER
-   * (static path). The authority mock verifies the dynamic path calls verifyToken with the
-   * resolved JWKS URI, configured sig-alg, and type-verifier. The static path calls
-   * verifyToken with only the token (instance-key, no PEM or JWKS URLs configured).
+   * Subject token from EXTERNAL_ISSUER (not in static list); no actor token. The authority mock
+   * verifies the dynamic path calls verifyToken with the resolved JWKS URI, configured sig-alg,
+   * and type-verifier.
    */
   @Test
   public void testDynamicIssuerAllowedSubjectExternal() throws Exception {
@@ -130,20 +124,16 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
         new Date(System.currentTimeMillis() + 60000));
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
 
     final Capture<JWT> capturedDynamicJwt = EasyMock.newCapture();
-    final Capture<JWT> capturedStaticJwt = EasyMock.newCapture();
 
     final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
     EasyMock.expect(mockAuth.verifyToken(
         EasyMock.capture(capturedDynamicJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
-        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG), // configured sig-alg
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))       // filter-configured type verifier
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
         .andReturn(true).once();
-    EasyMock.expect(mockAuth.verifyToken(EasyMock.capture(capturedStaticJwt))).andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
 
@@ -152,7 +142,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        subjectJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     EasyMock.replay(request, response, issuerSvc);
 
@@ -161,7 +151,6 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
     Assert.assertEquals(EXTERNAL_ISSUER, capturedDynamicJwt.getValue().getIssuer());
-    Assert.assertEquals(KNOX_ISSUER, capturedStaticJwt.getValue().getIssuer());
     EasyMock.verify(mockAuth, issuerSvc);
   }
 
@@ -228,15 +217,13 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "some-subject",
         new Date(System.currentTimeMillis() + 60000));
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
 
     final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
     EasyMock.expect(mockAuth.verifyToken(
         EasyMock.anyObject(JWT.class),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
-        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG), // configured sig-alg
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))       // filter-configured type verifier
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
         .andReturn(false).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -246,7 +233,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        subjectJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
     EasyMock.expectLastCall().once();
@@ -260,27 +247,36 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   }
 
   /**
-   * Dynamic JWKS resolved, but the token is expired. {@code DynamicJwksPassTokenAuthority}
-   * makes JWKS signature verification always succeed, so the "Token has expired" rejection
-   * is the guaranteed outcome regardless of the order in which expiry and signature are checked.
-   * {@code verify(issuerSvc)} confirms the dynamic path was entered before the expiry check.
+   * Dynamic JWKS resolved, but the token is expired. The strict mock with {@code .times(0, 1)}
+   * allows JWKS signature verification to happen 0 or 1 times (validation order is not
+   * guaranteed), so the "Token has expired" rejection is the guaranteed outcome. If the JWKS
+   * call occurs, the captured JWT must have EXTERNAL_ISSUER. {@code verify(issuerSvc)} confirms
+   * the dynamic path was entered before the expiry check.
    */
   @Test
   public void testExpiredTokenRejectedOnDynamicPath() throws Exception {
-    ((TestJWTFederationFilter) handler).setTokenService(new DynamicJwksPassTokenAuthority(publicKey));
     handler.init(new TestFilterConfig(getProperties()));
 
     final SignedJWT expiredJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
         new Date(System.currentTimeMillis() - 60000));
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JWT> capturedJwt = EasyMock.newCapture();
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.capture(capturedJwt),
+        EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        .andReturn(true).times(0, 1);
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        expiredJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+        expiredJwt.serialize(), buildContextWithIssuerService(issuerSvc));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
     EasyMock.expectLastCall().once();
@@ -290,32 +286,43 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     handler.doFilter(request, response, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(issuerSvc, response);
+    if (capturedJwt.hasCaptured()) {
+      Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
+    }
+    EasyMock.verify(mockAuth, issuerSvc, response);
   }
 
   /**
-   * Dynamic JWKS resolved, but the token's NotBefore is in the future.
-   * {@code DynamicJwksPassTokenAuthority} makes JWKS signature verification always succeed,
-   * so the "NotBefore check failed" rejection is the guaranteed outcome regardless of the
-   * order in which nbf and signature are checked.
+   * Dynamic JWKS resolved, but the token's NotBefore is in the future. The strict mock with
+   * {@code .times(0, 1)} allows JWKS signature verification to happen 0 or 1 times (validation
+   * order is not guaranteed), so the "NotBefore check failed" rejection is the guaranteed
+   * outcome. If the JWKS call occurs, the captured JWT must have EXTERNAL_ISSUER.
    */
   @Test
   public void testFutureNbfRejectedOnDynamicPath() throws Exception {
-    ((TestJWTFederationFilter) handler).setTokenService(new DynamicJwksPassTokenAuthority(publicKey));
     handler.init(new TestFilterConfig(getProperties()));
 
     final Date futureNbf = new Date(System.currentTimeMillis() + 300000);
     final Date futureExpiry = new Date(System.currentTimeMillis() + 600000);
     final SignedJWT nbfJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa", futureExpiry, futureNbf, privateKey, "RS256");
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JWT> capturedJwt = EasyMock.newCapture();
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.capture(capturedJwt),
+        EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        .andReturn(true).times(0, 1);
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        nbfJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+        nbfJwt.serialize(), buildContextWithIssuerService(issuerSvc));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request: the NotBefore check failed");
     EasyMock.expectLastCall().once();
@@ -325,32 +332,44 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     handler.doFilter(request, response, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(issuerSvc, response);
+    if (capturedJwt.hasCaptured()) {
+      Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
+    }
+    EasyMock.verify(mockAuth, issuerSvc, response);
   }
 
   /**
-   * Dynamic JWKS resolved, but the token's audience does not match the required audience.
-   * {@code DynamicJwksPassTokenAuthority} makes signature verification always succeed, so
-   * the audience rejection is the guaranteed outcome regardless of validation order.
+   * Dynamic JWKS resolved, but the token's audience does not match the required audience. The
+   * strict mock with {@code .times(0, 1)} allows JWKS signature verification to happen 0 or 1
+   * times (validation order is not guaranteed), so the audience rejection is the guaranteed
+   * outcome. If the JWKS call occurs, the captured JWT must have EXTERNAL_ISSUER.
    */
   @Test
   public void testAudienceMismatchRejectedOnDynamicPath() throws Exception {
-    ((TestJWTFederationFilter) handler).setTokenService(new DynamicJwksPassTokenAuthority(publicKey));
     final Properties props = getProperties();
     props.setProperty(JWTFederationFilter.KNOX_TOKEN_AUDIENCES, "required-audience");
     handler.init(new TestFilterConfig(props));
 
     final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
         new Date(System.currentTimeMillis() + 60000)); // default aud="bar", not "required-audience"
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JWT> capturedJwt = EasyMock.newCapture();
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.capture(capturedJwt),
+        EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        .andReturn(true).times(0, 1);
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        subjectJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request: missing required token audience");
     EasyMock.expectLastCall().once();
@@ -360,7 +379,10 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     handler.doFilter(request, response, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(issuerSvc, response);
+    if (capturedJwt.hasCaptured()) {
+      Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
+    }
+    EasyMock.verify(mockAuth, issuerSvc, response);
   }
 
   // ---------------------------------------------------------------------------
@@ -378,15 +400,13 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "some-subject",
         new Date(System.currentTimeMillis() + 60000));
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(false).once();
     // resolveJwksUri not expected — any call fails verify(), proving no HTTP fetch attempted
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        subjectJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
     EasyMock.expectLastCall().once();
@@ -409,15 +429,13 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "some-subject",
         new Date(System.currentTimeMillis() + 60000));
-    final SignedJWT actorJwt = getJWT(KNOX_ISSUER, "actor-svc",
-        new Date(System.currentTimeMillis() + 60000));
 
     final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(gws.getService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE)).andReturn(null).anyTimes();
     EasyMock.replay(gws);
 
     final HttpServletRequest request = buildTokenExchangeRequest(
-        subjectJwt.serialize(), actorJwt.serialize(), buildServletContext(gws));
+        subjectJwt.serialize(), buildServletContext(gws));
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
     EasyMock.expectLastCall().once();
@@ -566,6 +584,33 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   // ---------------------------------------------------------------------------
 
   /**
+   * Token-exchange request with a Knox-issuer (static) subject token and no actor token. The
+   * strict issuerSvc mock with no expectations proves isDynamicJwks is never called for a
+   * static-issuer token, even in a token-exchange grant.
+   */
+  @Test
+  public void testTokenExchangeWithStaticIssuerSubjectSucceeds() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT subjectJwt = getJWT(KNOX_ISSUER, "some-user",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final TrustedOidcIssuerService strictIssuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.replay(strictIssuerSvc);
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(strictIssuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
+    EasyMock.verify(strictIssuerSvc);
+  }
+
+  /**
    * Bearer JWT from KNOX_ISSUER (in static expectedIssuers). validateToken() returns from the
    * static-issuer branch before resolveRegisteredIssuerJwks is reached. The strict issuerSvc
    * mock with no expectations proves the hook was not called: any service method call would
@@ -661,6 +706,16 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     return ctx;
   }
 
+  private HttpServletRequest buildTokenExchangeRequest(String subjectToken, ServletContext ctx) {
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    // ACTOR_TOKEN not mocked — niceMock returns null, making actor_token absent
+    EasyMock.expect(request.getServletContext()).andReturn(ctx).anyTimes();
+    return request;
+  }
+
   private HttpServletRequest buildTokenExchangeRequest(String subjectToken, String actorToken,
       ServletContext ctx) {
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
@@ -672,25 +727,4 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     return request;
   }
 
-  // ---------------------------------------------------------------------------
-  // Inner classes
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Token authority that always passes JWKS-URI-based verification and uses real RSA for the
-   * instance-key path. Allows tests to focus on non-signature failures (expiry, nbf, audiences)
-   * without binding the test outcome to the current order of validation checks.
-   */
-  private static class DynamicJwksPassTokenAuthority extends TestJWTokenAuthority {
-
-    DynamicJwksPassTokenAuthority(PublicKey pk) {
-      super(pk);
-    }
-
-    @Override
-    public boolean verifyToken(JWT token, Set<URI> jwksurls, String algorithm,
-        JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
-      return true;
-    }
-  }
 }
