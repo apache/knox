@@ -36,40 +36,83 @@
         <!-- Knox Theme Loader (Inline & Blocking to prevent FOUC) -->
         <script type="text/javascript">
            (function() {
+               // Theme names are attacker-influenced (URL parameter and localStorage), so
+               // every candidate is validated before it is stored or used to build a URL.
+               // Rejecting quotes, angle brackets, dots and path separators means the only
+               // URL this can ever produce is styles/themes/<name>/theme.css - so the set
+               // of themes actually installed on the server is the effective allowlist,
+               // and an unknown name simply 404s and leaves the base styles in place.
+               var THEME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+
+               function sanitize(candidate) {
+                   return (candidate && THEME_PATTERN.test(candidate)) ? candidate : null;
+               }
+
                // Load theme based on: deployment lock > URL parameter > localStorage > deployment default
-               var urlParams = new URLSearchParams(window.location.search);
                var theme;
+               var fromSavedPreference = false;
 
                // Check if theme is locked (admin-enforced theme)
                if (typeof KNOX_THEME_LOCKED !== 'undefined' && KNOX_THEME_LOCKED === true) {
                    // Theme is locked, use deployment default only
-                   theme = KNOX_DEFAULT_THEME || 'default';
+                   theme = sanitize(KNOX_DEFAULT_THEME) || 'default';
                } else {
                    // Normal mode: URL parameter > localStorage > deployment default
-                   theme = urlParams.get('theme');
+                   var urlParams = new URLSearchParams(window.location.search);
+                   var requested = sanitize(urlParams.get('theme'));
 
-                   // If theme parameter exists, save to localStorage for persistence
-                   if (theme) {
+                   if (requested) {
+                       // Only a validated theme is persisted for future visits
                        try {
-                           localStorage.setItem('knox-auth-theme', theme);
+                           localStorage.setItem('knox-auth-theme', requested);
                        } catch (e) {
                            // LocalStorage may be disabled, continue without saving
                        }
+                       theme = requested;
                    } else {
-                       // Try to load from localStorage, fallback to deployment default
+                       // Try to load from localStorage, fallback to deployment default.
+                       // Stored values are re-validated so an entry saved before this
+                       // validation existed cannot take effect, and is discarded.
                        try {
-                           theme = localStorage.getItem('knox-auth-theme') || KNOX_DEFAULT_THEME || 'default';
+                           var saved = localStorage.getItem('knox-auth-theme');
+                           theme = sanitize(saved);
+                           if (saved && !theme) {
+                               localStorage.removeItem('knox-auth-theme');
+                           }
+                           fromSavedPreference = theme !== null;
                        } catch (e) {
                            // LocalStorage may be disabled, use deployment default
-                           theme = KNOX_DEFAULT_THEME || 'default';
+                           theme = null;
                        }
+                       theme = theme || sanitize(KNOX_DEFAULT_THEME) || 'default';
                    }
                }
 
-               // Load theme CSS if specified and not default
-               // Use document.write to load synchronously and prevent FOUC
-               if (theme && theme !== 'default') {
-                   document.write('<link rel="stylesheet" type="text/css" href="styles/themes/' + theme + '/theme.css" id="knox-theme">');
+               // Load theme CSS if specified and not default.
+               // Built with DOM APIs rather than document.write so the theme name can
+               // never be interpreted as markup; appending to head during head parsing
+               // is still render-blocking, which is what prevents FOUC.
+               if (theme !== 'default') {
+                   var link = document.createElement('link');
+                   link.rel = 'stylesheet';
+                   link.type = 'text/css';
+                   link.id = 'knox-theme';
+                   // The server is the authority on which themes exist. If a theme taken
+                   // from the saved preference fails to load, it is not installed here,
+                   // so forget it rather than retrying it on every visit. A failure of an
+                   // admin-configured theme is left alone - that is a deployment problem
+                   // to fix, not the user's preference to discard.
+                   if (fromSavedPreference) {
+                       link.onerror = function() {
+                           try {
+                               localStorage.removeItem('knox-auth-theme');
+                           } catch (e) {
+                               // LocalStorage may be disabled, nothing to clean up
+                           }
+                       };
+                   }
+                   link.href = 'styles/themes/' + theme + '/theme.css';
+                   document.head.appendChild(link);
                }
            })();
         </script>
