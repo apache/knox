@@ -35,8 +35,8 @@ class FederatedIdentityDatabase extends KnoxDatabase {
             + " (id, user_id, provider, external_subject, external_issuer, created_at) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String ADD_FEDERATED_IDENTITY_ATTR_SQL = "INSERT INTO " + FEDERATED_IDENTITY_ATTRIBUTES_TABLE_NAME +
             " (identity_id, attr_key, attr_value) VALUES (?, ?, ?)";
-    private static final String FETCH_FEDERATED_IDENTITY_BY_PROV_ISS_SUB_SQL = "SELECT * FROM " + FEDERATED_IDENTITY_TABLE_NAME +
-            " WHERE provider = ? AND external_issuer = ? AND external_subject = ?";
+    private static final String FETCH_FEDERATED_IDENTITY_BY_PROV_ISS_SUB_SQL = "SELECT id, user_id, provider, external_subject, external_issuer, created_at FROM "
+            + FEDERATED_IDENTITY_TABLE_NAME + " WHERE provider = ? AND external_issuer = ? AND external_subject = ?";
     private static final String FETCH_FEDERATED_IDENTITY_SQL_BY_ID = "SELECT id, user_id, provider, external_subject, external_issuer, created_at FROM "
             + FEDERATED_IDENTITY_TABLE_NAME + " WHERE id = ?";
     private static final String FETCH_FEDERATED_IDENTITY_ATTR_SQL = "SELECT attr_key, attr_value FROM " + FEDERATED_IDENTITY_ATTRIBUTES_TABLE_NAME + " WHERE identity_id = ?";
@@ -49,26 +49,42 @@ class FederatedIdentityDatabase extends KnoxDatabase {
     }
 
     void addFederatedIdentity(FederatedIdentity identity) throws SQLException {
-        // save core metadata first
-        try (Connection connection = dataSource.getConnection(); PreparedStatement addFederatedIdentityStatement = connection.prepareStatement(ADD_FEDERATED_IDENTITY_SQL)) {
-            addFederatedIdentityStatement.setString(1, identity.getId());
-            addFederatedIdentityStatement.setString(2, identity.getUserId());
-            addFederatedIdentityStatement.setString(3, identity.getProvider());
-            addFederatedIdentityStatement.setString(4, identity.getExternalSubject());
-            addFederatedIdentityStatement.setString(5, identity.getExternalIssuer());
-            addFederatedIdentityStatement.setTimestamp(6, Timestamp.from(identity.getCreatedAt()));
-            addFederatedIdentityStatement.executeUpdate();
-        }
+        // Persist the core identity row and its attribute rows atomically on a single connection
+        // with autocommit off: either the identity and all its attributes commit together, or the
+        // whole write rolls back. Previously each INSERT ran on its own auto-committed connection,
+        // so a failure between them could leave an identity persisted without its attributes.
+        try (Connection connection = dataSource.getConnection()) {
+            final boolean previousAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                // save core metadata first
+                try (PreparedStatement addFederatedIdentityStatement = connection.prepareStatement(ADD_FEDERATED_IDENTITY_SQL)) {
+                    addFederatedIdentityStatement.setString(1, identity.getId());
+                    addFederatedIdentityStatement.setString(2, identity.getUserId());
+                    addFederatedIdentityStatement.setString(3, identity.getProvider());
+                    addFederatedIdentityStatement.setString(4, identity.getExternalSubject());
+                    addFederatedIdentityStatement.setString(5, identity.getExternalIssuer());
+                    addFederatedIdentityStatement.setTimestamp(6, Timestamp.from(identity.getCreatedAt()));
+                    addFederatedIdentityStatement.executeUpdate();
+                }
 
-        // save attributes
-        try (Connection connection = dataSource.getConnection(); PreparedStatement addFederatedIdentityAttrStatement = connection.prepareStatement(ADD_FEDERATED_IDENTITY_ATTR_SQL)) {
-            for (var attribute : identity.getAttributes().entrySet()) {
-                addFederatedIdentityAttrStatement.setString(1, identity.getId());
-                addFederatedIdentityAttrStatement.setString(2, attribute.getKey());
-                addFederatedIdentityAttrStatement.setString(3, attribute.getValue());
-                addFederatedIdentityAttrStatement.addBatch();
+                // save attributes
+                try (PreparedStatement addFederatedIdentityAttrStatement = connection.prepareStatement(ADD_FEDERATED_IDENTITY_ATTR_SQL)) {
+                    for (var attribute : identity.getAttributes().entrySet()) {
+                        addFederatedIdentityAttrStatement.setString(1, identity.getId());
+                        addFederatedIdentityAttrStatement.setString(2, attribute.getKey());
+                        addFederatedIdentityAttrStatement.setString(3, attribute.getValue());
+                        addFederatedIdentityAttrStatement.addBatch();
+                    }
+                    addFederatedIdentityAttrStatement.executeBatch();
+                }
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(previousAutoCommit);
             }
-            addFederatedIdentityAttrStatement.executeBatch();
         }
     }
 

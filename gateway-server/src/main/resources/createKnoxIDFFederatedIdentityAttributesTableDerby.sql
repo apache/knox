@@ -14,8 +14,8 @@
 --  the License.
 
 CREATE TABLE FEDERATED_IDENTITY_ATTR (
-    identity_id VARCHAR(36),
-    attr_key    VARCHAR(128),
+    identity_id VARCHAR(36)  NOT NULL,
+    attr_key    VARCHAR(128) NOT NULL,
     attr_value  CLOB,
     PRIMARY KEY (identity_id, attr_key),
     CONSTRAINT fk_fed_attr FOREIGN KEY (identity_id) REFERENCES FEDERATED_IDENTITY(id) ON DELETE CASCADE

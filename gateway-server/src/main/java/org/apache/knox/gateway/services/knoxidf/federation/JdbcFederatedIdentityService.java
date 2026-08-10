@@ -23,6 +23,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,14 +43,18 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
         if (!initialized.get()) {
             initLock.lock();
             try {
-                if (aliasService == null) {
-                    throw new ServiceLifecycleException("The required AliasService reference has not been set.");
-                }
-                try {
-                    this.federatedIdentityDatabase = new FederatedIdentityDatabase(DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
-                    initialized.set(true);
-                } catch (Exception e) {
-                    throw new ServiceLifecycleException("Error while initiating JDBCTokenStateService: " + e, e);
+                // Double-checked locking: re-test under the lock so a thread that blocked while
+                // another was initialising does not re-initialise the database a second time.
+                if (!initialized.get()) {
+                    if (aliasService == null) {
+                        throw new ServiceLifecycleException("The required AliasService reference has not been set.");
+                    }
+                    try {
+                        this.federatedIdentityDatabase = new FederatedIdentityDatabase(DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
+                        initialized.set(true);
+                    } catch (Exception e) {
+                        throw new ServiceLifecycleException("Error while initiating JdbcFederatedIdentityService: " + e, e);
+                    }
                 }
             } finally {
                 initLock.unlock();
@@ -75,14 +80,41 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
 
     @Override
     public void addFederatedIdentity(FederatedIdentity identity) {
+        // Insert-and-catch rather than check-then-insert: the UNIQUE(provider, external_issuer,
+        // external_subject) index is the atomic arbiter, so two concurrent requests for the same
+        // external identity cannot both insert. A unique-constraint violation means the row already
+        // exists, which is exactly the desired end state, so it is treated as benign rather than
+        // surfaced as an error (closing the prior TOCTOU race between the pre-check and the insert).
         try {
-            if (findByProviderAndSubject(identity.getProvider(), identity.getExternalIssuer(), identity.getExternalSubject()).isEmpty()) {
-                federatedIdentityDatabase.addFederatedIdentity(identity);
-            }
+            federatedIdentityDatabase.addFederatedIdentity(identity);
         } catch (SQLException e) {
+            if (isUniqueConstraintViolation(e)) {
+                LOG.federatedIdentityAlreadyExists(identity.getProvider(), identity.getExternalIssuer(), identity.getExternalSubject());
+                return;
+            }
             LOG.errorSavingFederatedIdentityInDatabase(identity.getId(), e.getMessage(), e);
             throw new FederatedIdentityServiceException("An error occurred while saving Federated Identity " + identity.getId() + " in the database", e);
         }
+    }
+
+    /**
+     * Recognises a unique/primary-key constraint violation across dialects: either a
+     * {@link SQLIntegrityConstraintViolationException} or any {@link SQLException} in the cause
+     * chain whose SQLState is in the {@code 23} (integrity constraint violation) class.
+     */
+    private static boolean isUniqueConstraintViolation(SQLException e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof SQLIntegrityConstraintViolationException) {
+                return true;
+            }
+            if (t instanceof SQLException) {
+                final String sqlState = ((SQLException) t).getSQLState();
+                if (sqlState != null && sqlState.startsWith("23")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

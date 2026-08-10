@@ -81,10 +81,18 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 @Produces(MediaType.APPLICATION_JSON)
 public class TokenResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/token";
+
+    // Per-request stash for the auth-code TokenMetadata read during validation. The code is
+    // atomically consumed (deleted) BEFORE token issuance to close the replay window, so the
+    // issuance steps (buildUserContext/addArbitraryTokenMetadata/buildResponseMap) can no longer
+    // re-read it from the store; they read this request attribute instead. This resource is a
+    // singleton, but the @Context request is a per-request proxy, so the attribute is request-scoped.
+    private static final String AUTH_CODE_METADATA_ATTR = "knoxidf.authCode.metadata";
+
     private UserParamsProvider userParamsProvider;
 
     @Context
-    private HttpServletRequest request;
+    HttpServletRequest request; // package-private for test injection; @Context injection is reflective
 
     @Context
     private ServletContext servletContext;
@@ -140,8 +148,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     protected UserContext buildUserContext(HttpServletRequest request) {
         try {
-            final String code = getRequestParam(CODE);
-            final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(code);
+            final TokenMetadata tokenMetadata = getAuthCodeMetadata();
             final String scope = tokenMetadata.getMetadata(SCOPE);
             final Map<String, Object> userParams = userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope);
             userParams.put(SCOPE, scope);
@@ -158,7 +165,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             super.addArbitraryTokenMetadata(tokenMetadata);
             final String code = getRequestParam(CODE);
             if (StringUtils.isNotBlank(code)) {
-                final TokenMetadata authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
+                final TokenMetadata authCodeTokenMetadata = getAuthCodeMetadata();
 
                 //if the auth code token was a result of a federated OIDC call, we need to save the associated
                 //federated identity ID in the JWT too (so that it can be looked up while fetching user info)
@@ -181,7 +188,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
         TokenMetadata authCodeTokenMetadata = null;
         if (StringUtils.isNotBlank(code)) {
             try {
-                authCodeTokenMetadata = tokenStateService.getTokenMetadata(code);
+                authCodeTokenMetadata = getAuthCodeMetadata();
             } catch (UnknownTokenException e) {
                 //NOP
             }
@@ -251,25 +258,49 @@ public class TokenResource extends PasscodeTokenResourceBase {
         }
     }
 
-    private Response handleAuthorizationCodeFlow() {
+    // Package-private for testability (single-use replay guard is exercised by
+    // TokenResourceAuthCodeReplayTest); not part of the public resource API.
+    Response handleAuthorizationCodeFlow() {
         final String code = getRequestParam(CODE);
         final String redirectUri = getRequestParam(REDIRECT_URI);
 
+        final TokenMetadata authCodeMetadata;
         try {
-            validateAuthCode(code, redirectUri);
-            return getAuthenticationToken();
+            authCodeMetadata = validateAuthCode(code, redirectUri);
         } catch (AuthTokenValidationError e) {
             return error("Auth code validation error", e.getMessage());
-        } finally {
-            try {
-                tokenStateService.revokeToken(code);
-            } catch (UnknownTokenException e) {
-                //NOP: this should have been handled by the above UnknownTokenException already
-            }
         }
+
+        // Enforce single-use: atomically consume the code BEFORE issuing any token. Of N concurrent
+        // redemptions of the same code, exactly one wins the consume and proceeds; the losers get
+        // invalid_grant. This closes the replay window that existed when the code was only revoked
+        // in a finally block AFTER issuance. A code that fails validation above is deliberately NOT
+        // consumed here, so replaying with bad params cannot burn a victim's still-valid code.
+        if (!tokenStateService.consumeToken(code)) {
+            return error("invalid_grant", "Authorization code has already been redeemed");
+        }
+
+        // The code is now gone from the store; hand the already-validated metadata to the issuance
+        // path via a request attribute (see getAuthCodeMetadata) so it need not re-read the code.
+        request.setAttribute(AUTH_CODE_METADATA_ATTR, authCodeMetadata);
+        return getAuthenticationToken();
     }
 
-    private void validateAuthCode(String code, String redirectUri) throws AuthTokenValidationError {
+    /**
+     * Returns the auth-code {@link TokenMetadata} captured at validation time and stashed in a
+     * request attribute by {@link #handleAuthorizationCodeFlow()}. Because the code is consumed
+     * (deleted) before token issuance, the issuance steps can no longer re-read it from the store;
+     * this serves the cached copy, falling back to a store read only if the attribute is absent.
+     */
+    private TokenMetadata getAuthCodeMetadata() throws UnknownTokenException {
+        final Object cached = request.getAttribute(AUTH_CODE_METADATA_ATTR);
+        if (cached instanceof TokenMetadata) {
+            return (TokenMetadata) cached;
+        }
+        return tokenStateService.getTokenMetadata(getRequestParam(CODE));
+    }
+
+    private TokenMetadata validateAuthCode(String code, String redirectUri) throws AuthTokenValidationError {
         try {
             if (code == null || code.isEmpty()) {
                 throw new AuthTokenValidationError("Invalid request: missing code");
@@ -316,6 +347,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             } else if (!isValidClientSecret(clientId, getRequestParam(CLIENT_SECRET))) {
                 throw new AuthTokenValidationError("Invalid client authentication");
             }
+            return authCodeTokenMetadata;
         } catch (UnknownTokenException e) {
             throw new AuthTokenValidationError("Unknown auth_code");
         }

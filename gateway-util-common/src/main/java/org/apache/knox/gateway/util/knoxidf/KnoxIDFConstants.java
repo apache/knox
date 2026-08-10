@@ -52,8 +52,6 @@ public interface KnoxIDFConstants {
     String SCOPE_ATTRIBUTE = "X-Token-Scope";
 
     String FEDERATED_IDENTITY_ID = "federated_identity_id";
-    String FEDERATED_ID_TOKEN_PREFIX = "fed_id_";
-    String FEDERATED_ACCESS_TOKEN_PREFIX = "fed_access_";
     String FEDERATED_OP_CONFIG_PREFIX = "federated.op.";
     String FEDERATED_OP_CONFIG_NAMES = FEDERATED_OP_CONFIG_PREFIX + "names";
 

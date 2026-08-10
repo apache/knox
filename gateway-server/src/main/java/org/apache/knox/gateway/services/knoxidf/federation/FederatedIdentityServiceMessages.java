@@ -32,4 +32,7 @@ public interface FederatedIdentityServiceMessages {
 
     @Message(level = MessageLevel.ERROR, text = "An error occurred while fetching federated identity ({0}) from the database : {1}")
     void errorFetchingFederatedIdentityFromDatabase(String id, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.DEBUG, text = "Federated identity ({0} / {1} / {2}) already exists; skipping insert")
+    void federatedIdentityAlreadyExists(String provider, String issuer, String subject);
 }

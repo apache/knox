@@ -23,6 +23,7 @@ public class FederatedOpConfiguration {
     private final String name;
     private final String clientId;
     private final String clientSecret;
+    private final String clientSecretAlias;
     private final String tokenEndpoint;
     private final String authorizeEndpoint;
     private final String userInfoEndpoint;
@@ -41,6 +42,10 @@ public class FederatedOpConfiguration {
         this.enabled = Boolean.parseBoolean(servletContext.getInitParameter(prefix + "enabled"));
         this.clientId = servletContext.getInitParameter(prefix + "clientId");
         this.clientSecret = servletContext.getInitParameter(prefix + "clientSecret");
+        // Preferred, secure source for the OP client secret: an AliasService credential alias.
+        // Resolved at point of use (AuthorizeResource) since this holder has no access to services.
+        // When set it takes precedence over the plaintext clientSecret param above.
+        this.clientSecretAlias = servletContext.getInitParameter(prefix + "clientSecret.alias");
         this.tokenEndpoint = servletContext.getInitParameter(prefix + "token.endpoint");
         this.authorizeEndpoint = servletContext.getInitParameter(prefix + "authorize.endpoint");
         this.authorizeCallback = servletContext.getInitParameter(prefix + "authorize.callback");
@@ -68,6 +73,15 @@ public class FederatedOpConfiguration {
 
     public String getClientSecret() {
         return clientSecret;
+    }
+
+    /**
+     * @return the name of the AliasService credential alias holding this OP's client secret, or
+     * {@code null}/blank when the deployment supplies the secret via the plaintext
+     * {@code clientSecret} param instead. When set, the alias is authoritative.
+     */
+    public String getClientSecretAlias() {
+        return clientSecretAlias;
     }
 
     String getAuthorizeEndpoint() {

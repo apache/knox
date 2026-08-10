@@ -37,6 +37,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentity;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -51,7 +52,6 @@ import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
-import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -66,6 +66,8 @@ import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.KeyStore;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -189,7 +191,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     private boolean hasConsent(final AuthorizeRequestMetadata authorizeRequestMetadata) {
         try {
             final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(authorizeRequestMetadata.getClientId());
-            final String consentKey = "consentAccepted_" + authorizeRequestMetadata.getSubject();
+            final String consentKey = consentMetadataKey(authorizeRequestMetadata.getSubject());
             final String storedScopes = tokenMetadata.getMetadataMap().get(consentKey);
             if (storedScopes == null || storedScopes.isEmpty()) {
                 return false;
@@ -204,8 +206,34 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
 
     private void markConsentAccepted(AuthorizeRequestMetadata authorizeRequestMetadata) {
         final TokenMetadata consentAcceptedMetadata = new TokenMetadata();
-        consentAcceptedMetadata.add("consentAccepted_" + authorizeRequestMetadata.getSubject(), authorizeRequestMetadata.getJoinedRequestedScopes());
+        consentAcceptedMetadata.add(consentMetadataKey(authorizeRequestMetadata.getSubject()), authorizeRequestMetadata.getJoinedRequestedScopes());
         tokenStateService.addMetadata(authorizeRequestMetadata.getClientId(), consentAcceptedMetadata);
+    }
+
+    /**
+     * Derives the metadata key under which a subject's granted consent scopes are stored. Consent is
+     * persisted in {@code KNOX_TOKEN_METADATA.md_name}, which is {@code VARCHAR(32)}; the previous
+     * {@code "consentAccepted_" + subject} key overflowed that for realistic subjects (federated
+     * UUID subjects, long usernames), silently truncating or failing the write on strict dialects.
+     * This derives a fixed-width key {@code "consent_" + first-20-hex-chars(SHA-256(subject))} = 28
+     * chars, comfortably within the column. ~80 bits of hash is collision-safe for any realistic
+     * user population, and the derivation is uniform for plain usernames and UUID subjects alike.
+     * {@link #hasConsent} and {@link #markConsentAccepted} both route through here so read and write
+     * always agree on the key.
+     */
+    static String consentMetadataKey(final String subject) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            final byte[] hash = digest.digest((subject == null ? "" : subject).getBytes(StandardCharsets.UTF_8));
+            final StringBuilder hex = new StringBuilder("consent_");
+            for (int i = 0; i < 10; i++) { // 10 bytes -> 20 hex chars
+                hex.append(String.format(Locale.US, "%02x", hash[i]));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 is a required algorithm on every JRE; its absence is unrecoverable.
+            throw new IllegalStateException("SHA-256 is required but unavailable", e);
+        }
     }
 
     private Response getAuthCodeFromKnox(final AuthorizeRequestMetadata authorizeRequestMetadata, final Pair<String, String> federatedTokens) {
@@ -307,8 +335,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             authCodeTokenMap.put(CODE_CHALLENGE_METHOD, authorizeRequestMetadata.getCodeChallengeMethod());
         }
         if (federatedTokens != null) {
+            // Persist only the pointer to the (separately stored) federated identity. The OP's
+            // access token (federatedTokens.getRight()) is deliberately NOT persisted: nothing reads
+            // it back, and storing an OP bearer secret in plaintext token metadata is a secret-at-rest
+            // exposure. If a future feature needs it, store it encrypted, not in the clear.
             authCodeTokenMap.put(FEDERATED_IDENTITY_ID, federatedTokens.getLeft());
-            authCodeTokenMap.putAll(KnoxIDFUtils.splitFederatedToken(federatedTokens.getRight(), false));
         }
         tokenStateService.addMetadata(tokenId, new TokenMetadata(authCodeTokenMap));
     }
@@ -413,13 +444,41 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
     }
 
+    /**
+     * Resolves the federated OP's client secret for the back-channel token request. An
+     * {@code AliasService} credential alias ({@code federated.op.<name>.clientSecret.alias}) is the
+     * preferred, secure source and takes precedence: when it resolves to a value, that value is
+     * used and the plaintext {@code clientSecret} topology param is never consulted. The plaintext
+     * param remains supported as a fallback only when no alias is configured, so existing
+     * deployments keep working. If an alias is configured but cannot be resolved we fail closed
+     * (return {@code null}) rather than silently leaking through to the plaintext param, so a
+     * misconfigured alias surfaces as an auth failure instead of masking the intended secure source.
+     */
+    private String resolveClientSecret(final FederatedOpConfiguration opConfig) {
+        final String alias = opConfig.getClientSecretAlias();
+        if (StringUtils.isBlank(alias)) {
+            return opConfig.getClientSecret();
+        }
+        try {
+            final AliasService aliasService = getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
+            String clusterName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+            if (StringUtils.isBlank(clusterName)) {
+                clusterName = AliasService.NO_CLUSTER_NAME;
+            }
+            final char[] secret = aliasService.getPasswordFromAliasForCluster(clusterName, alias, false);
+            return secret == null ? null : new String(secret);
+        } catch (AliasServiceException e) {
+            return null;
+        }
+    }
+
     private Response fetchFederatedTokens(final String code, FederatedOpConfiguration opConfig) {
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(CODE, code));
         params.add(new BasicNameValuePair(REDIRECT_URI, opConfig.getAuthorizeCallback()));
         params.add(new BasicNameValuePair(GRANT_TYPE, "authorization_code"));
         params.add(new BasicNameValuePair(CLIENT_ID, opConfig.getClientId()));
-        params.add(new BasicNameValuePair(CLIENT_SECRET, opConfig.getClientSecret()));
+        params.add(new BasicNameValuePair(CLIENT_SECRET, resolveClientSecret(opConfig)));
 
         try (CloseableHttpClient httpClient = createFederatedHttpClient()) {
             HttpPost post = new HttpPost(opConfig.getTokenEndpoint());

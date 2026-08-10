@@ -25,41 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 public class KnoxIDFUtils {
-
-    private static final int CHUNK_SIZE = 255;
-
-    public static Map<String, String> splitFederatedToken(String token, boolean idToken) {
-        final String prefix = idToken ? KnoxIDFConstants.FEDERATED_ID_TOKEN_PREFIX : KnoxIDFConstants.FEDERATED_ACCESS_TOKEN_PREFIX;
-        final Map<String, String> parts = new LinkedHashMap<>();
-        int i = 0, part = 1;
-        while (i < token.length()) {
-            int end = Math.min(i + CHUNK_SIZE, token.length());
-            parts.put(prefix + part++, token.substring(i, end));
-            i = end;
-        }
-        return parts;
-    }
-
-    public static String joinFederatedToken(Map<String, String> tokenMetadataMap, boolean idToken) {
-        final String prefix = idToken ? KnoxIDFConstants.FEDERATED_ID_TOKEN_PREFIX : KnoxIDFConstants.FEDERATED_ACCESS_TOKEN_PREFIX;
-        return tokenMetadataMap.entrySet().stream()
-                .filter(e -> e.getKey().startsWith(prefix))
-                .sorted(Map.Entry.comparingByKey(
-                        Comparator.comparingInt(k -> Integer.parseInt(k.replace(prefix, "")))
-                ))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.joining());
-    }
 
     public static Response error(String error, String description) {
         final Map<String, String> errorMap = new HashMap<>();

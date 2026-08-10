@@ -163,6 +163,42 @@ public class DefaultTokenStateServiceTest {
   }
 
   @Test
+  public void testConsumeToken_SingleUse() throws Exception {
+    // Single-use semantics for auth codes: the first consume wins, a second consume of the same
+    // id loses (the token is already gone), and the token state is actually removed.
+    final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
+    final TokenStateService tss = createTokenStateService();
+    final String tokenId = TokenUtils.getTokenId(token);
+
+    addToken(tss, token, System.currentTimeMillis());
+
+    assertTrue("First consume should win.", tss.consumeToken(tokenId));
+    assertFalse("Second consume of the same token must lose.", tss.consumeToken(tokenId));
+  }
+
+  @Test(expected = UnknownTokenException.class)
+  public void testConsumeToken_RemovesState() throws Exception {
+    final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
+    final TokenStateService tss = createTokenStateService();
+    final String tokenId = TokenUtils.getTokenId(token);
+
+    addToken(tss, token, System.currentTimeMillis());
+    assertTrue(tss.consumeToken(tokenId));
+
+    // The token must no longer be known after being consumed.
+    tss.getTokenExpiration(tokenId);
+  }
+
+  @Test
+  public void testConsumeToken_UnknownToken() throws Exception {
+    // An id that was never stored cannot be "won" - consume reports false rather than throwing.
+    final JWTToken token = createMockToken(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60));
+    final TokenStateService tss = createTokenStateService();
+
+    assertFalse(tss.consumeToken(TokenUtils.getTokenId(token)));
+  }
+
+  @Test
   public void testRenewal() throws Exception {
     final JWTToken token = createMockToken(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(60));
     final TokenStateService tss = createTokenStateService();

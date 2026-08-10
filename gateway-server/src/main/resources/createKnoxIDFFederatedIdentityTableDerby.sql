@@ -15,11 +15,11 @@
 
 CREATE TABLE FEDERATED_IDENTITY (
     id               VARCHAR(36) PRIMARY KEY,
-    user_id          VARCHAR(36),
-    provider         VARCHAR(64),
-    external_subject VARCHAR(255),
-    external_issuer  VARCHAR(255),
-    created_at       TIMESTAMP
+    user_id          VARCHAR(36)  NOT NULL,
+    provider         VARCHAR(64)  NOT NULL,
+    external_subject VARCHAR(255) NOT NULL,
+    external_issuer  VARCHAR(255) NOT NULL,
+    created_at       TIMESTAMP    NOT NULL
 );
 
 CREATE UNIQUE INDEX UX_FED_IDENTITY ON FEDERATED_IDENTITY (provider, external_issuer, external_subject);

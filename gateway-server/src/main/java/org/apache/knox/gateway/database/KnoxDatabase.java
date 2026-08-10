@@ -16,8 +16,6 @@
  */
 package org.apache.knox.gateway.database;
 
-import org.apache.knox.gateway.services.token.impl.TokenStateDatabase;
-
 import javax.sql.DataSource;
 
 public class KnoxDatabase {
@@ -30,7 +28,10 @@ public class KnoxDatabase {
 
     protected void createTableIfNotExists(String tableName, String createSqlFileName) throws Exception {
         if (!JDBCUtils.tableExists(tableName, dataSource)) {
-            JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, TokenStateDatabase.class.getClassLoader());
+            // Resolve the DDL resource via the actual subclass's classloader so each KnoxDatabase
+            // subclass (TokenStateDatabase, FederatedIdentityDatabase) loads its own create*.sql
+            // rather than being coupled to one hardcoded sibling class's classloader.
+            JDBCUtils.createTableFromSQL(createSqlFileName, dataSource, getClass().getClassLoader());
         }
     }
 }

@@ -60,6 +60,31 @@ public class FederatedOpConfigurationTest {
   }
 
   @Test
+  public void testClientSecretAliasIsRead() {
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter(PREFIX + "clientSecret")).andReturn("plaintext-secret").anyTimes();
+    EasyMock.expect(context.getInitParameter(PREFIX + "clientSecret.alias")).andReturn("keycloak-op-secret").anyTimes();
+    EasyMock.replay(context);
+
+    final FederatedOpConfiguration config = new FederatedOpConfiguration(context, OP);
+
+    // Both are exposed; AuthorizeResource#resolveClientSecret decides precedence (alias wins).
+    assertEquals("plaintext-secret", config.getClientSecret());
+    assertEquals("keycloak-op-secret", config.getClientSecretAlias());
+  }
+
+  @Test
+  public void testClientSecretAliasAbsentByDefault() {
+    final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.replay(context);
+
+    final FederatedOpConfiguration config = new FederatedOpConfiguration(context, OP);
+
+    // No alias configured -> resolveClientSecret falls back to the plaintext clientSecret param.
+    assertNull(config.getClientSecretAlias());
+  }
+
+  @Test
   public void testVerificationParamsAbsentByDefault() {
     final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
     EasyMock.replay(context);
