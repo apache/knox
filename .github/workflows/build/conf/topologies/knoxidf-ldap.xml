@@ -60,6 +60,13 @@
             <value>-1</value>
         </param>
         <param>
+            <!-- This sample topology intentionally allows open, unauthenticated client
+                 registration (the endpoint is wired as 'anon' above). Registration refuses
+                 anonymous callers unless this is explicitly set to true. -->
+            <name>knoxidf.client.registration.anonymous.allowed</name>
+            <value>true</value>
+        </param>
+        <param>
             <name>token.exchange.topology.name</name>
             <value>knoxidf-token</value>
         </param>

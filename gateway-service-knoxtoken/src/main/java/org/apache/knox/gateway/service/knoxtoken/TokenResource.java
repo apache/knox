@@ -1169,12 +1169,16 @@ public class TokenResource {
       handleDelegatedAuthentication(subject, jwtAttributesBuilder);
     }
 
+    // This resource is a @Singleton, so hardCodedClaimMappings is shared across all requests and
+    // must never be mutated per-request. Merge the topology-configured mappings with this request's
+    // user params into a fresh map; otherwise one user's params would leak into other users' tokens.
+    final Map<String, Object> customAttributes = new HashMap<>(hardCodedClaimMappings);
     if (userContext.userParams != null) {
-      hardCodedClaimMappings.putAll(userContext.userParams);
+      customAttributes.putAll(userContext.userParams);
     }
 
-    if (!hardCodedClaimMappings.isEmpty()) {
-      jwtAttributesBuilder.setCustomAttributes(hardCodedClaimMappings);
+    if (!customAttributes.isEmpty()) {
+      jwtAttributesBuilder.setCustomAttributes(customAttributes);
     }
 
     jwtAttributes = jwtAttributesBuilder.build();

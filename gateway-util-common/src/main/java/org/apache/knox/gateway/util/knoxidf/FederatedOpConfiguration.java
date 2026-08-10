@@ -28,6 +28,12 @@ public class FederatedOpConfiguration {
     private final String userInfoEndpoint;
     private final String discoveryEndpoint;
     private final String authorizeCallback;
+    private final String jwksEndpoint;
+    private final String issuer;
+    private final String signatureAlgorithm;
+
+    // Default signature algorithm expected for the OP's id_token when not explicitly configured.
+    static final String DEFAULT_SIGNATURE_ALGORITHM = "RS256";
 
     public FederatedOpConfiguration(final ServletContext servletContext, final String opName) {
         this.name = opName;
@@ -40,6 +46,12 @@ public class FederatedOpConfiguration {
         this.authorizeCallback = servletContext.getInitParameter(prefix + "authorize.callback");
         this.userInfoEndpoint = servletContext.getInitParameter(prefix + "userinfo.endpoint");
         this.discoveryEndpoint = servletContext.getInitParameter(prefix + "discovery.endpoint");
+        // Used to validate the OP's id_token (signature via JWKS, expected issuer). See
+        // AuthorizeResource#validateFederatedIdToken - federated login fails closed without these.
+        this.jwksEndpoint = servletContext.getInitParameter(prefix + "jwks.endpoint");
+        this.issuer = servletContext.getInitParameter(prefix + "issuer");
+        final String configuredAlg = servletContext.getInitParameter(prefix + "signature.algorithm");
+        this.signatureAlgorithm = configuredAlg == null || configuredAlg.isEmpty() ? DEFAULT_SIGNATURE_ALGORITHM : configuredAlg;
     }
 
     public String getName() {
@@ -76,6 +88,18 @@ public class FederatedOpConfiguration {
 
     public String getDiscoveryEndpoint() {
         return discoveryEndpoint;
+    }
+
+    public String getJwksEndpoint() {
+        return jwksEndpoint;
+    }
+
+    public String getIssuer() {
+        return issuer;
+    }
+
+    public String getSignatureAlgorithm() {
+        return signatureAlgorithm;
     }
 
 }

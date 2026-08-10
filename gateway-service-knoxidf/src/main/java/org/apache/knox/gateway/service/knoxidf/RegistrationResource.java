@@ -18,6 +18,7 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.service.knoxtoken.ClientCredentialsResource;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasServiceException;
@@ -25,12 +26,14 @@ import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.glassfish.jersey.process.internal.RequestScoped;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -41,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
@@ -49,13 +53,22 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 public class RegistrationResource extends ClientCredentialsResource {
 
     static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/client";
+    private static final String ANONYMOUS_PRINCIPAL = "anonymous";
+
     private List<String> redirectUris;
     private List<String> allowedScopes;
+    boolean anonymousRegistrationAllowed;
+
+    @Context
+    private ServletContext servletContext;
 
     @PostConstruct
     @Override
     public void init() throws ServletException, AliasServiceException, ServiceLifecycleException, KeyLengthException {
         super.init();
+        // Secure by default: unless the deployment explicitly opts in, an anonymous caller cannot
+        // register a client even when the topology wires this endpoint as 'anon'.
+        this.anonymousRegistrationAllowed = Boolean.parseBoolean(servletContext.getInitParameter(CLIENT_REGISTRATION_ANONYMOUS_ALLOWED));
     }
 
     @Override
@@ -75,6 +88,13 @@ public class RegistrationResource extends ClientCredentialsResource {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response registerClient(@FormParam("redirect_uris") String redirectUris,
                                    @FormParam("allowed_scopes") String allowedScopes) {
+        if (anonymousRegistrationDenied()) {
+            return error("access_denied", "Anonymous client registration is disabled. Set '"
+                    + CLIENT_REGISTRATION_ANONYMOUS_ALLOWED + "' to true in the KNOXIDF service configuration to enable it.");
+        }
+        if (StringUtils.isBlank(redirectUris)) {
+            return error("invalid_request", "redirect_uris must be provided");
+        }
         this.redirectUris = Arrays.asList(redirectUris.split(","));
         final Response redirectUriVerificationResponse = verifyRedirectUris();
         if (redirectUriVerificationResponse != null) {
@@ -90,6 +110,18 @@ public class RegistrationResource extends ClientCredentialsResource {
             }
         }
         return super.doPost();
+    }
+
+    /**
+     * @return {@code true} when the request must be rejected because an anonymous caller is
+     * attempting to register a client while open registration has not been explicitly enabled.
+     */
+    boolean anonymousRegistrationDenied() {
+        return !anonymousRegistrationAllowed && isAnonymousCaller();
+    }
+
+    private boolean isAnonymousCaller() {
+        return ANONYMOUS_PRINCIPAL.equalsIgnoreCase(SubjectUtils.getCurrentEffectivePrincipalName());
     }
 
     private Response verifyRedirectUris() {

@@ -34,11 +34,15 @@ import org.apache.knox.gateway.service.knoxtoken.PasscodeTokenResourceBase;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentity;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenMetadataType;
+import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -58,14 +62,17 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.security.KeyStore;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +94,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOP
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.FEDERATED_IDENTITY_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.NONCE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_S256;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URI;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URIS;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.RESPONSE_TYPE;
@@ -114,6 +122,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     private ServletContext servletContext;
 
     private FederatedIdentityService federatedIdentityService;
+    private boolean autoConsentEnabled;
 
     @PostConstruct
     @Override
@@ -122,6 +131,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         this.authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(tokenTTL);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
+        // Skipping user consent is a server-side deployment decision, never a client-supplied
+        // request parameter: a client must not be able to bypass the consent screen by sending
+        // auto_consent=true.
+        this.autoConsentEnabled = "true".equalsIgnoreCase(servletContext.getInitParameter("knoxidf.auto.consent.enabled"));
     }
 
     @Override
@@ -159,7 +172,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
 
         if (!hasConsent(authorizeRequestMetadata)) {
-            if ("true".equalsIgnoreCase(request.getParameter("auto_consent"))) {
+            if (autoConsentEnabled) {
                 markConsentAccepted(authorizeRequestMetadata);
             } else {
                 final String consentAuthState = UUID.randomUUID().toString();
@@ -224,11 +237,29 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         //This is the callback for the federated OP
         final String federatedAuthCode = request.getParameter(CODE);
         final String state = request.getParameter(STATE);
+        if (StringUtils.isBlank(state) || StringUtils.isBlank(federatedAuthCode)) {
+            return error("invalid_request", "Missing state or code");
+        }
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
-        //at this point, there has to be exactly 1 federated OP config
-        final FederatedOpConfiguration federatedOpConfiguration = federatedOpConfigurationStore.get(state).stream().findFirst().get();
+        if (authorizeRequestMetadata == null) {
+            return error("invalid_request", "Unknown or expired state");
+        }
+        final Set<FederatedOpConfiguration> opConfigs = federatedOpConfigurationStore.get(state);
+        final FederatedOpConfiguration federatedOpConfiguration = opConfigs == null ? null : opConfigs.stream().findFirst().orElse(null);
+        if (federatedOpConfiguration == null) {
+            return error("invalid_request", "No federated OP configuration available for the request");
+        }
         final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
-        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedTokens.getLeft(), federatedOpConfiguration.getName());
+        if (StringUtils.isBlank(federatedTokens.getLeft())) {
+            return error("invalid_request", "Federated OP did not return an id_token");
+        }
+        final JWT federatedIdToken = new JWTToken(federatedTokens.getLeft());
+        // Verify the OP's id_token (signature/issuer/audience/expiry) before trusting any claim in it.
+        final Response validationError = validateFederatedIdToken(federatedIdToken, federatedOpConfiguration);
+        if (validationError != null) {
+            return validationError;
+        }
+        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedIdToken, federatedOpConfiguration.getName());
         return getAuthCodeFromKnox(authorizeRequestMetadata, Pair.of(federatedIdentity.getId(), federatedTokens.getRight()));
     }
 
@@ -272,7 +303,8 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
         if (StringUtils.isNotBlank(authorizeRequestMetadata.getCodeChallenge())) {
             authCodeTokenMap.put(CODE_CHALLENGE, authorizeRequestMetadata.getCodeChallenge());
-            authCodeTokenMap.put(CODE_CHALLENGE_METHOD, StringUtils.defaultIfBlank(authorizeRequestMetadata.getCodeChallengeMethod(), "plain"));
+            // Method is validated to be S256 in verifyParams; store it as-is (no 'plain' default).
+            authCodeTokenMap.put(CODE_CHALLENGE_METHOD, authorizeRequestMetadata.getCodeChallengeMethod());
         }
         if (federatedTokens != null) {
             authCodeTokenMap.put(FEDERATED_IDENTITY_ID, federatedTokens.getLeft());
@@ -313,23 +345,58 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 return error("invalid_scope", "One or more requested scopes are not allowed");
             }
 
+            // PKCE: only the S256 challenge method is supported. 'plain' (and an unspecified method,
+            // which OAuth would default to 'plain') offers no protection and is rejected.
+            if (StringUtils.isNotBlank(authorizeRequestMetadata.getCodeChallenge())
+                    && !PKCE_METHOD_S256.equals(authorizeRequestMetadata.getCodeChallengeMethod())) {
+                return error("invalid_request", "Unsupported code_challenge_method; only S256 is supported");
+            }
+
             return null;
         }
         return basicVerificationResponse;
     }
 
     private boolean matchesRedirectUri(String requestedUri, Set<String> registeredUris) {
+        final URI requested = parseUri(requestedUri);
+        if (requested == null) {
+            return false;
+        }
         for (String registered : registeredUris) {
             if (registered.endsWith("*")) {
-                String prefix = registered.substring(0, registered.length() - 1);
-                if (requestedUri.startsWith(prefix)) {
-                    return true;
+                // Wildcard is a path-prefix match, but the origin (scheme/host/port) must match
+                // exactly. Comparing parsed components prevents a bare startsWith from letting
+                // "https://good.example*" match "https://good.example.evil.com".
+                final URI base = parseUri(registered.substring(0, registered.length() - 1));
+                if (base != null && sameOrigin(base, requested)) {
+                    final String basePath = base.getPath() == null ? "" : base.getPath();
+                    final String reqPath = requested.getPath() == null ? "" : requested.getPath();
+                    if (reqPath.startsWith(basePath)) {
+                        return true;
+                    }
                 }
             } else if (registered.equals(requestedUri)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static URI parseUri(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            return new URI(value);
+        } catch (URISyntaxException e) {
+            return null;
+        }
+    }
+
+    private static boolean sameOrigin(URI a, URI b) {
+        return a.getScheme() != null && a.getScheme().equalsIgnoreCase(b.getScheme())
+                && a.getHost() != null && a.getHost().equalsIgnoreCase(b.getHost())
+                && a.getPort() == b.getPort();
     }
 
     private Pair<String, String> exchangeFederatedAuthCodeToTokens(String federatedAuthCode, FederatedOpConfiguration opConfig) {
@@ -354,7 +421,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         params.add(new BasicNameValuePair(CLIENT_ID, opConfig.getClientId()));
         params.add(new BasicNameValuePair(CLIENT_SECRET, opConfig.getClientSecret()));
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        try (CloseableHttpClient httpClient = createFederatedHttpClient()) {
             HttpPost post = new HttpPost(opConfig.getTokenEndpoint());
             post.setHeader("Content-Type", "application/x-www-form-urlencoded");
             post.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
@@ -369,8 +436,68 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
     }
 
-    private FederatedIdentity resolveFederatedIdentity(String federatedIdToken, String opName) throws ParseException {
-        final JWT jwt = new JWTToken(federatedIdToken);
+    /**
+     * Builds the HTTP client used for the back-channel token request to the federated OP. The
+     * OP's TLS certificate must be validated against the Gateway's configured truststore
+     * ({@code gateway.truststore.*}) rather than the process-wide default, so this mirrors the
+     * outbound-dispatch clients. When no Gateway truststore is configured we fall back to the
+     * default client (JVM default trust material), never to an unvalidated client.
+     */
+    private CloseableHttpClient createFederatedHttpClient() throws Exception {
+        final KeystoreService keystoreService = getGatewayServices().getService(ServiceType.KEYSTORE_SERVICE);
+        final KeyStore trustStore = keystoreService.getTruststoreForHttpClient();
+        if (trustStore != null) {
+            final SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, null).build();
+            return HttpClients.custom().setSSLContext(sslContext).build();
+        }
+        return HttpClients.createDefault();
+    }
+
+    /**
+     * Verifies the federated OP's id_token before any claim in it is trusted:
+     * <ul>
+     *   <li>signature against the OP's JWKS and {@code exp}/{@code nbf} (via {@link JWTokenAuthority});</li>
+     *   <li>{@code iss} equals the configured OP issuer;</li>
+     *   <li>{@code aud} contains our client_id registered at the OP.</li>
+     * </ul>
+     * Fails closed: if the OP is not configured with a JWKS endpoint, expected issuer and client_id,
+     * the token cannot be verified and the federated login is refused.
+     *
+     * @return an error {@link Response} if verification fails, or {@code null} if the token is valid.
+     */
+    private Response validateFederatedIdToken(final JWT idToken, final FederatedOpConfiguration opConfig) {
+        final String jwksEndpoint = opConfig.getJwksEndpoint();
+        final String expectedIssuer = opConfig.getIssuer();
+        final String expectedAudience = opConfig.getClientId();
+        if (StringUtils.isBlank(jwksEndpoint) || StringUtils.isBlank(expectedIssuer) || StringUtils.isBlank(expectedAudience)) {
+            return error("invalid_request", "Federated OP is missing jwks.endpoint/issuer/clientId configuration; cannot verify id_token");
+        }
+
+        try {
+            final JWTokenAuthority authority = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
+            // Verifies the signature against the OP's JWKS and checks exp/nbf.
+            if (!authority.verifyToken(idToken, Collections.singleton(new URI(jwksEndpoint)), opConfig.getSignatureAlgorithm(), null)) {
+                return error("invalid_request", "Federated id_token signature or expiry verification failed");
+            }
+        } catch (URISyntaxException e) {
+            return error("invalid_request", "Invalid jwks.endpoint configured for federated OP");
+        } catch (TokenServiceException e) {
+            return error("invalid_request", "Federated id_token verification error");
+        }
+
+        if (!expectedIssuer.equals(idToken.getIssuer())) {
+            return error("invalid_request", "Federated id_token issuer mismatch");
+        }
+
+        final String[] audiences = idToken.getAudienceClaims();
+        if (audiences == null || !Arrays.asList(audiences).contains(expectedAudience)) {
+            return error("invalid_request", "Federated id_token audience mismatch");
+        }
+
+        return null;
+    }
+
+    private FederatedIdentity resolveFederatedIdentity(final JWT jwt, String opName) {
         final String issuer = jwt.getIssuer();
         final String subject = jwt.getSubject();
         return federatedIdentityService.findByProviderAndSubject(opName.toUpperCase(Locale.US), issuer, subject).orElseGet(() -> persistFederatedIdentity(jwt, opName));

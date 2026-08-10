@@ -59,6 +59,11 @@ public interface KnoxIDFConstants {
 
     String TOKEN_EXCHANGE_TOPOLOGY_NAME = "token.exchange.topology.name";
 
+    // When false (the default), the dynamic client-registration endpoint refuses anonymous callers
+    // even if the topology wires it as 'anon'. Deployments that intend open, unauthenticated
+    // registration must explicitly set this to true (see the sample knoxidf topologies).
+    String CLIENT_REGISTRATION_ANONYMOUS_ALLOWED = "knoxidf.client.registration.anonymous.allowed";
+
     // TrustedOidcIssuerService gateway-level params (read from GatewayConfig / gateway-site.xml)
     String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS =
         "gateway.trustedoidcissuer.discovery.cache.ttl.secs";

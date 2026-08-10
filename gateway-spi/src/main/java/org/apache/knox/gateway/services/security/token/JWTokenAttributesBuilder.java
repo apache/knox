@@ -28,7 +28,10 @@ public class JWTokenAttributesBuilder {
   private String userName;
   private List<String> audiences;
   private String algorithm;
-  private long issueTime;
+  // Default to the builder's creation time so every issued token carries a correct 'iat'.
+  // Callers that need a specific issue time (e.g. managed-token flows) override this via
+  // setIssueTime(). Without this default, JWTToken would emit iat=epoch-0 (1970).
+  private long issueTime = System.currentTimeMillis();
   private long expires;
   private String signingKeystoreName;
   private String signingKeystoreAlias;

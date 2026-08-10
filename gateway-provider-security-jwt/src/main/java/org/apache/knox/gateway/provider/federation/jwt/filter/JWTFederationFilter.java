@@ -258,7 +258,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, TokenUtils.getTokenId(token));
     final String scope = token.getClaim(KnoxIDFConstants.SCOPE);
     if (scope != null) {
-      request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, token.getClaim(scope));
+      request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, scope);
     }
     final String issuer = token.getIssuer();
     if (issuer != null) {

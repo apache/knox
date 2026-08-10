@@ -18,6 +18,7 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
 import org.apache.knox.gateway.service.knoxtoken.PasscodeTokenResourceBase;
@@ -26,6 +27,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentity;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -35,6 +37,7 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.ServletRequestUtils;
 
 import javax.annotation.PostConstruct;
@@ -55,6 +58,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.AUTH_CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
@@ -65,7 +69,6 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLEN
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_VERIFIER;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.FEDERATED_IDENTITY_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_PLAIN;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_S256;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URI;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REFRESH_TOKEN;
@@ -88,6 +91,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
     private FederatedIdentityService federatedIdentityService;
     private long refreshTokenTTL;
+    TokenMAC tokenMAC;
 
     @Override
     public String getPrefix() {
@@ -102,6 +106,13 @@ public class TokenResource extends PasscodeTokenResourceBase {
         this.userParamsProvider = UserParamsProviderFactory.getUserParamsProvider(servletContext);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
+        // Build the same passcode MAC the JWTFederationFilter uses so the token endpoint can
+        // independently authenticate a client_secret (see validateAuthCode). The HMAC key alias is
+        // guaranteed to exist by this point (PasscodeTokenResourceBase#setupTokenStateService
+        // generates it if absent).
+        final GatewayConfig gatewayConfig = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+        final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+        this.tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
         setRefreshTokenTTL();
     }
 
@@ -276,15 +287,22 @@ public class TokenResource extends PasscodeTokenResourceBase {
                 throw new AuthTokenValidationError("Invalid auth_code: expired");
             } else if (!associateRedirectUri.equals(redirectUri)) {
                 throw new AuthTokenValidationError("Invalid redirect_uri: " + redirectUri);
-            } else {
-                final String associatedClientId = authCodeTokenMetadata.getMetadata(CLIENT_ID);
-                final String clientId = getRequestParam(CLIENT_ID);
-                if (!associatedClientId.equals(clientId)) {
-                    throw new AuthTokenValidationError("Invalid client_id: " + clientId);
-                }
             }
 
-            // PKCE validation
+            final String associatedClientId = authCodeTokenMetadata.getMetadata(CLIENT_ID);
+            final String clientId = getRequestParam(CLIENT_ID);
+            if (!associatedClientId.equals(clientId)) {
+                throw new AuthTokenValidationError("Invalid client_id: " + clientId);
+            }
+
+            // Client authentication (defense in depth). A stolen auth code must not be redeemable by
+            // a party that merely holds some valid Knox JWT: the JWTProvider (JWTFederationFilter)
+            // Bearer path forwards such a request to this endpoint without ever checking
+            // client_secret. So the token endpoint independently binds the redemption to the
+            // legitimate client here. The caller must prove client identity via EITHER:
+            //   - PKCE: a code_verifier matching the challenge stored at authorize time (S256), or
+            //   - the client's client_secret (constant-time compared against the stored passcode).
+            // A code is rejected when neither is satisfiable.
             final String codeChallenge = authCodeTokenMetadata.getMetadata(CODE_CHALLENGE);
             if (StringUtils.isNotBlank(codeChallenge)) {
                 final String codeChallengeMethod = authCodeTokenMetadata.getMetadata(CODE_CHALLENGE_METHOD);
@@ -295,16 +313,63 @@ public class TokenResource extends PasscodeTokenResourceBase {
                 if (!validatePKCE(codeVerifier, codeChallenge, codeChallengeMethod)) {
                     throw new AuthTokenValidationError("Invalid code_verifier");
                 }
+            } else if (!isValidClientSecret(clientId, getRequestParam(CLIENT_SECRET))) {
+                throw new AuthTokenValidationError("Invalid client authentication");
             }
         } catch (UnknownTokenException e) {
             throw new AuthTokenValidationError("Unknown auth_code");
         }
     }
 
+    /**
+     * Authenticates a confidential client on the token endpoint by validating the presented
+     * {@code client_secret} against the stored passcode of the client identified by {@code clientId}.
+     * <p>
+     * The wire format of {@code client_secret} matches what registration returns and what
+     * {@link org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter} expects:
+     * {@code Base64(Base64(tokenId)::Base64(rawPasscode))}. The embedded {@code tokenId} must equal
+     * {@code clientId}, and {@code HMAC(tokenId, issueTime, userName, rawPasscode)} must equal the
+     * stored passcode hash. The comparison is constant-time.
+     *
+     * @return {@code true} only if the secret is well-formed, bound to {@code clientId}, and matches.
+     */
+    boolean isValidClientSecret(final String clientId, final String clientSecret) {
+        if (StringUtils.isBlank(clientId) || StringUtils.isBlank(clientSecret)) {
+            return false;
+        }
+        try {
+            final String[] tokenIdAndPasscode = decodeBase64(clientSecret).split("::");
+            if (tokenIdAndPasscode.length != 2) {
+                return false;
+            }
+            final String tokenId = decodeBase64(tokenIdAndPasscode[0]);
+            final String rawPasscode = decodeBase64(tokenIdAndPasscode[1]);
+            // The client_secret must belong to exactly the client redeeming the code.
+            if (!tokenId.equals(clientId)) {
+                return false;
+            }
+            final TokenMetadata clientMetadata = tokenStateService.getTokenMetadata(tokenId);
+            final String storedPasscode = clientMetadata == null ? null : clientMetadata.getPasscode();
+            if (StringUtils.isBlank(storedPasscode)) {
+                return false;
+            }
+            final long issueTime = tokenStateService.getTokenIssueTime(tokenId);
+            final String userName = clientMetadata.getUserName();
+            final byte[] computed = tokenMAC.hash(tokenId, issueTime, userName, rawPasscode).getBytes(StandardCharsets.UTF_8);
+            return MessageDigest.isEqual(computed, storedPasscode.getBytes(StandardCharsets.UTF_8));
+        } catch (UnknownTokenException | RuntimeException e) {
+            return false;
+        }
+    }
+
+    private String decodeBase64(final String value) {
+        return new String(Base64.getDecoder().decode(value.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+    }
+
     private boolean validatePKCE(String codeVerifier, String codeChallenge, String method) {
-        if (PKCE_METHOD_PLAIN.equals(method)) {
-            return codeVerifier.equals(codeChallenge);
-        } else if (PKCE_METHOD_S256.equals(method)) {
+        // Only S256 is supported. 'plain' provides no protection and is rejected (the authorize
+        // endpoint already refuses to store a non-S256 challenge; this is defense in depth).
+        if (PKCE_METHOD_S256.equals(method)) {
             try {
                 return generateS256Challenge(codeVerifier).equals(codeChallenge);
             } catch (NoSuchAlgorithmException e) {

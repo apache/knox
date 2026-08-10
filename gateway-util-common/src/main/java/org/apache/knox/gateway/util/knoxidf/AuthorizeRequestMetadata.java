@@ -71,6 +71,13 @@ public final class AuthorizeRequestMetadata {
             return error("invalid_request", "Missing redirect_uri");
         }
 
+        // Require state for CSRF protection: it is echoed back on the redirect and the client
+        // must match it against the value it generated. Without it the auth-code flow is open to
+        // login-CSRF, and redirectToAuthSuccess would NPE URL-encoding a null state.
+        if (state == null || state.isEmpty()) {
+            return error("invalid_request", "Missing state");
+        }
+
         // Verify scope(s)
         if (requestedScopes == null || requestedScopes.isEmpty()) {
             return error("invalid_scope", "Missing scopes");

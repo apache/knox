@@ -30,6 +30,7 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.Rdn;
 import javax.servlet.ServletContext;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,7 +99,10 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         try {
             ctx = createSystemContext();
 
-            String userDn = String.format(Locale.US, ldapUserDnTemplate, subjectName);
+            // Escape the subject before interpolating it into the DN template. Without escaping a
+            // crafted subject (e.g. "x,ou=admins") could inject additional DN components (LDAP
+            // injection). Rdn.escapeValue escapes the RDN value per RFC 2253.
+            String userDn = String.format(Locale.US, ldapUserDnTemplate, Rdn.escapeValue(subjectName));
 
             SearchControls controls = new SearchControls();
             controls.setSearchScope(SearchControls.OBJECT_SCOPE);
