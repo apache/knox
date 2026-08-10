@@ -52,7 +52,6 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     private static final String DEFAULT_BASE_DN = "dc=hadoop,dc=apache,dc=org";
     private static final String DEFAULT_USER_DN_TEMPLATE = "uid=%s,ou=people," + DEFAULT_BASE_DN;
     private static final String DEFAULT_SYSTEM_USER = "uid=admin,ou=people," + DEFAULT_BASE_DN;
-    private static final String DEFAULT_SYSTEM_PASSWORD = "admin-password";
 
     private static final String[] ATTRIBUTES = {"cn", "sn", "givenName", "mail"};
 
@@ -80,9 +79,11 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
         try {
             final char[] systemPassword = aliasService.getPasswordFromAliasForGateway(LDAP_SYSTEM_PASSWORD_ALIAS);
-            return systemPassword == null ? DEFAULT_SYSTEM_PASSWORD : new String(systemPassword);
+            // No hardcoded fallback: if the alias is absent/unresolvable, return null so the LDAP
+            // bind fails fast rather than silently binding with a well-known demo password.
+            return systemPassword == null ? null : new String(systemPassword);
         } catch (AliasServiceException e) {
-            return DEFAULT_SYSTEM_PASSWORD;
+            return null;
         }
     }
 
@@ -179,6 +180,10 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     }
 
     private LdapContext createSystemContext() throws Exception {
+        if (ldapSystemPassword == null) {
+            throw new IllegalStateException("No LDAP system password configured. Set the '"
+                    + LDAP_SYSTEM_PASSWORD_ALIAS + "' alias; there is no default password.");
+        }
         Hashtable<String, Object> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, ldapUrl);

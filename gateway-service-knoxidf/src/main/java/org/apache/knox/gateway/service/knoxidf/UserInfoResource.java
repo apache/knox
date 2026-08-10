@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.SCOPE_ATTRIBUTE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_ID_ATTRIBUTE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
@@ -53,7 +53,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 @Produces(MediaType.APPLICATION_JSON)
 public class UserInfoResource {
 
-    static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/userinfo";
+    static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/userinfo";
     private UserParamsProvider userParamsProvider;
 
     @Context
@@ -117,11 +117,8 @@ public class UserInfoResource {
             claims.put("federated_sub", federatedIdentity.getExternalSubject());
             claims.put("federated_iss", federatedIdentity.getExternalIssuer());
 
-            // Add nonce if available
-            String nonce = tokenMetadata.getMetadata("nonce");
-            if (StringUtils.isNotBlank(nonce)) {
-                claims.put("nonce", nonce);
-            }
+            // Note: nonce is deliberately NOT returned here. Per OIDC it belongs in the id_token
+            // only; echoing it from the UserInfo endpoint is a spec violation and serves no purpose.
 
             userInfo.putAll(claims);
         } else {

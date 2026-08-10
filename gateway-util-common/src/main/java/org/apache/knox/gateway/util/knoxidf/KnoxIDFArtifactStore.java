@@ -26,6 +26,10 @@ public abstract class KnoxIDFArtifactStore<T> {
     private final Cache<String, T> cache;
 
     protected KnoxIDFArtifactStore(long ttl) {
+        // Entries live for twice the caller's TTL as a deliberate grace window: an artifact (e.g. an
+        // in-flight authorize/consent request) is created against the token TTL but must survive the
+        // extra round-trip through the browser/consent screen before it is consumed. Callers that
+        // finish with an entry earlier should remove() it rather than wait for expiry.
         this.cache = Caffeine.newBuilder().expireAfterWrite(ttl * 2, TimeUnit.MILLISECONDS).build();
     }
 
@@ -35,5 +39,10 @@ public abstract class KnoxIDFArtifactStore<T> {
 
     public T get(String key) {
         return cache.getIfPresent(key);
+    }
+
+    /** Invalidates an entry so a single-use artifact cannot be replayed within its TTL grace window. */
+    public void remove(String key) {
+        cache.invalidate(key);
     }
 }

@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
@@ -52,7 +52,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 @RequestScoped //this is important because redirectUris/allowedScopes are part of the state of this class
 public class RegistrationResource extends ClientCredentialsResource {
 
-    static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/client";
+    static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/client";
     private static final String ANONYMOUS_PRINCIPAL = "anonymous";
 
     private List<String> redirectUris;
@@ -125,6 +125,12 @@ public class RegistrationResource extends ClientCredentialsResource {
     }
 
     private Response verifyRedirectUris() {
+        return verifyRedirectUris(redirectUris);
+    }
+
+    // Package-private and list-parameterized so the redirect-URI policy (https-only except loopback,
+    // no wildcard host, restricted path/query/fragment wildcards) is unit-testable in isolation.
+    static Response verifyRedirectUris(List<String> redirectUris) {
         if (redirectUris == null || redirectUris.isEmpty()) {
             return error("invalid_request", "redirect_uris must be provided");
         }
@@ -137,14 +143,18 @@ public class RegistrationResource extends ClientCredentialsResource {
                 return error("invalid_request", "Invalid redirect URI: " + uriStr);
             }
 
-            // Scheme check
-            if (!"https".equalsIgnoreCase(uri.getScheme()) && !"http".equalsIgnoreCase(uri.getScheme())) {
-                return error("invalid_request", "Redirect URI must use HTTPS or HTTP as scheme: " + uriStr);
-            }
-
             // Host check (no wildcard allowed)
             if (uri.getHost() == null || uri.getHost().contains("*")) {
                 return error("invalid_request", "Wildcard not allowed in host: " + uriStr);
+            }
+
+            // Scheme check: require HTTPS per RFC 8252, allowing plain HTTP only for loopback
+            // (localhost / 127.0.0.1 / ::1) native-app dev. Any other http:// redirect is rejected.
+            final String scheme = uri.getScheme();
+            final boolean https = "https".equalsIgnoreCase(scheme);
+            final boolean loopbackHttp = "http".equalsIgnoreCase(scheme) && isLoopbackHost(uri.getHost());
+            if (!https && !loopbackHttp) {
+                return error("invalid_request", "Redirect URI must use HTTPS (plain HTTP allowed only for localhost): " + uriStr);
             }
 
             // Path wildcard check
@@ -160,6 +170,15 @@ public class RegistrationResource extends ClientCredentialsResource {
             }
         }
         return null;
+    }
+
+    private static boolean isLoopbackHost(String host) {
+        if (host == null) {
+            return false;
+        }
+        // Strip brackets from an IPv6 literal (e.g. [::1]).
+        final String h = host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
+        return "localhost".equalsIgnoreCase(h) || "127.0.0.1".equals(h) || "::1".equals(h);
     }
 
     @Override

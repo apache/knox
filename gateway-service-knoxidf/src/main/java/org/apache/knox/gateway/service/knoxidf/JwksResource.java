@@ -24,12 +24,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 
 @Path(JwksResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class JwksResource extends JWKSResource {
-    static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/jwks";
+    static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/jwks";
 
     @GET
     public Response getKeys() {

@@ -32,10 +32,10 @@ import javax.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_EXCHANGE_TOPOLOGY_NAME;
 
-@Path(BASE_RESORCE_PATH + "/.well-known/openid-configuration")
+@Path(BASE_RESOURCE_PATH + "/.well-known/openid-configuration")
 @Produces(MediaType.APPLICATION_JSON)
 public class DiscoveryResource {
     private String currentTopologyName;
@@ -59,8 +59,10 @@ public class DiscoveryResource {
         String tokenEndpoint = baseUrl + TokenResource.RESOURCE_PATH;
         String userInfoEndpoint = baseUrl + UserInfoResource.RESOURCE_PATH;
         if (tokenExchangeTopologyName != null) {
-            tokenEndpoint = tokenEndpoint.replaceAll(currentTopologyName, tokenExchangeTopologyName);
-            userInfoEndpoint = userInfoEndpoint.replaceAll(currentTopologyName, tokenExchangeTopologyName);
+            // Literal substitution: the topology name is data, not a regex. replaceAll would treat
+            // any regex metacharacter in the topology name as a pattern.
+            tokenEndpoint = tokenEndpoint.replace(currentTopologyName, tokenExchangeTopologyName);
+            userInfoEndpoint = userInfoEndpoint.replace(currentTopologyName, tokenExchangeTopologyName);
         }
         config.put("token_endpoint", tokenEndpoint);
         config.put("userinfo_endpoint", userInfoEndpoint);

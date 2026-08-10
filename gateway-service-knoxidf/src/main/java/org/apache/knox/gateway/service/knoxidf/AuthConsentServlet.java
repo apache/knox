@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -114,7 +116,9 @@ public class AuthConsentServlet extends HttpServlet {
             case "calendar.write":
                 return "Modify your calendar events";
             default:
-                return scope;
+                // Unknown scopes are echoed into the HTML consent page. Escape them so an
+                // attacker-influenced scope value cannot inject markup (defense in depth).
+                return StringEscapeUtils.escapeHtml4(scope);
         }
     }
 

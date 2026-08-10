@@ -23,7 +23,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentitityService;
+import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.JdbcFederatedIdentityService;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -36,7 +36,7 @@ import java.util.Map;
 public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
     private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
-    private static final String DEFAULT_IMPLEMENTATION = EmptyFederatedIdentitityService.class.getName();
+    private static final String DEFAULT_IMPLEMENTATION = EmptyFederatedIdentityService.class.getName();
 
     @Override
     protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
@@ -52,8 +52,8 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
         FederatedIdentityService service = null;
         if (shouldCreateService(implementationToUse)) {
-            if (matchesImplementation(implementationToUse, EmptyFederatedIdentitityService.class, true)) {
-                service = new EmptyFederatedIdentitityService();
+            if (matchesImplementation(implementationToUse, EmptyFederatedIdentityService.class, true)) {
+                service = new EmptyFederatedIdentityService();
             } else if (matchesImplementation(implementationToUse, JdbcFederatedIdentityService.class)) {
                 try {
                     try {
@@ -62,7 +62,7 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
                         service.init(gatewayConfig, options);
                     } catch (ServiceLifecycleException e) {
                         LOG.errorInitializingService(implementationToUse, e.getMessage(), e);
-                        service =  new EmptyFederatedIdentitityService();
+                        service =  new EmptyFederatedIdentityService();
                     }
                 } catch (Exception e) {
                     throw new ServiceLifecycleException("Error while creating Federated Identity Service: " + e, e);

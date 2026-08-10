@@ -144,7 +144,7 @@ public class TokenResourceAuthCodeReplayTest {
     final Response response = resource.handleAuthorizationCodeFlow();
 
     assertEquals("A code already consumed by a concurrent redemption must be rejected.",
-        Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
+        Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     assertTrue("The error body should identify the invalid_grant condition.",
         String.valueOf(response.getEntity()).contains("invalid_grant"));
     assertEquals("A losing redemption must not mint any token.", 0, issuedCount.get());

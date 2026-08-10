@@ -22,7 +22,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import java.util.Map;
 import java.util.Optional;
 
-public class EmptyFederatedIdentitityService implements FederatedIdentityService {
+public class EmptyFederatedIdentityService implements FederatedIdentityService {
     @Override
     public void addFederatedIdentity(FederatedIdentity identity) {
     }

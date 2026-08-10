@@ -87,7 +87,7 @@ import java.util.stream.Collectors;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.ALLOWED_SCOPES;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
@@ -107,7 +107,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 @Path(AuthorizeResource.RESOURCE_PATH)
 public class AuthorizeResource extends PasscodeTokenResourceBase {
-    static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/authorize";
+    static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/authorize";
     private static final UUID KNOX_NAMESPACE = UUID.fromString("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
     private static final NameBasedGenerator UUID_V5 = Generators.nameBasedGenerator(KNOX_NAMESPACE);
     public static final Set<String> ALLOWED_CLAIMS = Set.of("preferred_username", "email", "email_verified",
@@ -166,7 +166,8 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                                String codeChallenge,
                                String codeChallengeMethod) {
         final String subject = SubjectUtils.getCurrentEffectivePrincipalName();
-        final Set<String> requestedScopes = StringUtils.isBlank(scope) ? DEFAULT_SCOPES : new HashSet<>(Arrays.asList(scope.split("\\s+")));
+        // DEFAULT_SCOPES is an ImmutableSet; copy it into a mutable set so downstream mutation is safe.
+        final Set<String> requestedScopes = StringUtils.isBlank(scope) ? new HashSet<>(DEFAULT_SCOPES) : new HashSet<>(Arrays.asList(scope.split("\\s+")));
         final AuthorizeRequestMetadata authorizeRequestMetadata = new AuthorizeRequestMetadata(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce, codeChallenge, codeChallengeMethod);
         final Response verificationErrorResponse = verifyParams(authorizeRequestMetadata);
         if (verificationErrorResponse != null) {
@@ -180,8 +181,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 final String consentAuthState = UUID.randomUUID().toString();
                 authorizeRequestMetadataStore.put(consentAuthState, authorizeRequestMetadata);
                 final String baseUri = servletContext.getContextPath() + "/authConsent";
+                // Every value placed into the consent redirect's query string must be percent-encoded;
+                // a client_id containing '&', '=' or '#' would otherwise split or corrupt the URL.
+                final String clientIdParam = URLEncoder.encode(clientId, StandardCharsets.UTF_8);
                 final String scopeParam = URLEncoder.encode(authorizeRequestMetadata.getJoinedRequestedScopes(), StandardCharsets.UTF_8);
-                final String redirect = String.format(Locale.US, "%s?client_id=%s&state=%s&scope=%s", baseUri, clientId, consentAuthState, scopeParam);
+                final String redirect = String.format(Locale.US, "%s?client_id=%s&state=%s&scope=%s", baseUri, clientIdParam, consentAuthState, scopeParam);
                 return Response.seeOther(java.net.URI.create(redirect)).build();
             }
         }
@@ -277,6 +281,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         if (federatedOpConfiguration == null) {
             return error("invalid_request", "No federated OP configuration available for the request");
         }
+        // The federated callback state is single-use: invalidate it in both stores now that it has
+        // been validated and captured, so a replayed callback with the same state is rejected.
+        authorizeRequestMetadataStore.remove(state);
+        federatedOpConfigurationStore.remove(state);
         final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
         if (StringUtils.isBlank(federatedTokens.getLeft())) {
             return error("invalid_request", "Federated OP did not return an id_token");
@@ -297,8 +305,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         final String state = request.getParameter(STATE);
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
         if (authorizeRequestMetadata == null) {
-            return error("Consent cannot be accepted", "Invalid state");
+            return error("invalid_request", "Invalid state");
         }
+        // Single-use consent state: invalidate it so the accepted-consent redirect cannot be replayed.
+        authorizeRequestMetadataStore.remove(state);
         markConsentAccepted(authorizeRequestMetadata);
         return authorize(authorizeRequestMetadata.getResponseType(),
                 authorizeRequestMetadata.getClientId(),

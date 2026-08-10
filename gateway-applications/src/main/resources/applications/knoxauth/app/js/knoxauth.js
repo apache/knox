@@ -74,12 +74,14 @@ var loadFederatedOpLinks = function() {
 	}
 
 	ops.forEach(op => {
-		container.append(`
-            <div class="fed-op-btn" onclick="loginWithOp('${op}')">
-                <span class="fed-op-icon">🌐</span>
-                <span class="fed-op-label">Continue with ${op}</span>
-            </div>
-        `);
+		// Build the element via the DOM API and bind the handler in JS rather than interpolating
+		// the (attacker-controllable) op name into an HTML string / inline onclick attribute.
+		// .text() escapes the label; the click closure captures op without string injection.
+		const btn = $('<div class="fed-op-btn"></div>');
+		$('<span class="fed-op-icon"></span>').text("🌐").appendTo(btn);
+		$('<span class="fed-op-label"></span>').text("Continue with " + op).appendTo(btn);
+		btn.on("click", function() { loginWithOp(op); });
+		container.append(btn);
 	});
 };
 

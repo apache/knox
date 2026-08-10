@@ -61,7 +61,7 @@ import java.util.Map;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.AUTH_CODE;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESORCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
@@ -80,7 +80,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 @Path(TokenResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class TokenResource extends PasscodeTokenResourceBase {
-    static final String RESOURCE_PATH = BASE_RESORCE_PATH + "/token";
+    static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/token";
 
     // Per-request stash for the auth-code TokenMetadata read during validation. The code is
     // atomically consumed (deleted) BEFORE token issuance to close the replay window, so the
@@ -228,7 +228,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
         } catch (UnknownTokenException e) {
             return error("invalid_grant", "Unknown refresh_token");
         } catch (RefreshTokenValidationError e) {
-            return error("Refresh token validation error", e.getMessage());
+            return error("invalid_grant", e.getMessage());
         }
 
     }
@@ -246,6 +246,12 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
         if (refreshTokenMetadata == null || !TokenMetadataType.REFRESH_TOKEN.name().equals(refreshTokenMetadata.getType())) {
             throw new RefreshTokenValidationError("Invalid grant: invalid refresh_token");
+        }
+
+        // A refresh token that has been administratively disabled (revoked) must not mint new tokens,
+        // even if it has not yet expired.
+        if (!refreshTokenMetadata.isEnabled()) {
+            throw new RefreshTokenValidationError("Invalid grant: refresh_token disabled");
         }
 
         if (tokenStateService.getTokenExpiration(refreshTokenId) <= System.currentTimeMillis()) {
@@ -268,7 +274,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
         try {
             authCodeMetadata = validateAuthCode(code, redirectUri);
         } catch (AuthTokenValidationError e) {
-            return error("Auth code validation error", e.getMessage());
+            return error("invalid_grant", e.getMessage());
         }
 
         // Enforce single-use: atomically consume the code BEFORE issuing any token. Of N concurrent

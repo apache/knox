@@ -16,22 +16,25 @@
  */
 package org.apache.knox.gateway.util.knoxidf;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
 public interface KnoxIDFConstants {
-    String BASE_RESORCE_PATH = "knoxidf/api/v1";
+    String BASE_RESOURCE_PATH = "knoxidf/api/v1";
     String AUTH_CODE = "authorization_code";
     String CLIENT_ID = "client_id";
     String REDIRECT_URI = "redirect_uri";
     String REDIRECT_URIS = "redirect_uris";
     String RESPONSE_TYPE = "response_type";
-    Set<String> ALLOWED_RESPONSE_TYPES = Sets.newHashSet("code", "id_token", "code id_token");
+    // Immutable: an interface field is implicitly public static final, but a mutable HashSet would
+    // still let any caller add()/remove() on the shared instance. ImmutableSet forbids that.
+    Set<String> ALLOWED_RESPONSE_TYPES = ImmutableSet.of("code", "id_token", "code id_token");
     String SCOPE = "scope";
     String ALLOWED_SCOPES = "allowed_scopes";
     String OFFLINE_ACCESS_SCOPE = "offline_access";
-    Set<String> DEFAULT_SCOPES = Sets.newHashSet("openid", "profile", "email", OFFLINE_ACCESS_SCOPE);
+    // Immutable shared constant; callers that need a mutable working set copy it (new HashSet<>(...)).
+    Set<String> DEFAULT_SCOPES = ImmutableSet.of("openid", "profile", "email", OFFLINE_ACCESS_SCOPE);
     String OPENID_SCOPE = SCOPE + "=openid";
     String STATE = "state";
     String CODE = "code";

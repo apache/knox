@@ -23,6 +23,8 @@ import org.apache.knox.gateway.util.JsonUtils;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,11 +35,42 @@ import java.util.Set;
 
 public class KnoxIDFUtils {
 
+    /**
+     * Builds an OAuth 2.0 error response, deriving the HTTP status from the error code per
+     * RFC 6749 §5.2 (rather than the previous always-401). Most protocol errors are client errors
+     * (400); {@code invalid_client} is an authentication failure (401), {@code access_denied} is a
+     * policy denial (403), and {@code server_error} is 500. Use the three-arg overload to override
+     * the status explicitly when a call site needs a status the code alone does not imply.
+     */
     public static Response error(String error, String description) {
+        return error(error, description, statusForError(error));
+    }
+
+    public static Response error(String error, String description, Response.Status status) {
         final Map<String, String> errorMap = new HashMap<>();
         errorMap.put("error", error);
         errorMap.put("error_description", description);
-        return Response.status(Response.Status.UNAUTHORIZED).entity(JsonUtils.renderAsJsonString(errorMap)).build();
+        return Response.status(status).entity(JsonUtils.renderAsJsonString(errorMap)).build();
+    }
+
+    private static Response.Status statusForError(String error) {
+        if (error == null) {
+            return Response.Status.BAD_REQUEST;
+        }
+        switch (error) {
+            case "invalid_client":
+                return Response.Status.UNAUTHORIZED;            // 401
+            case "access_denied":
+                return Response.Status.FORBIDDEN;               // 403
+            case "server_error":
+                return Response.Status.INTERNAL_SERVER_ERROR;   // 500
+            case "temporarily_unavailable":
+                return Response.Status.SERVICE_UNAVAILABLE;     // 503
+            default:
+                // invalid_request, invalid_grant, invalid_scope, unsupported_grant_type,
+                // unsupported_response_type, unauthorized_client are all 400s.
+                return Response.Status.BAD_REQUEST;             // 400
+        }
     }
 
     public static String getRequestParamSafe(final HttpServletRequest request, final String key) {
@@ -59,7 +92,9 @@ public class KnoxIDFUtils {
         final String responseType = request.getParameter(KnoxIDFConstants.RESPONSE_TYPE);
         final String redirectUri = request.getParameter(KnoxIDFConstants.REDIRECT_URI);
         final String scope = request.getParameter(KnoxIDFConstants.SCOPE);
-        final Set<String> requestedScopes = StringUtils.isBlank(scope) ? KnoxIDFConstants.DEFAULT_SCOPES : new HashSet<>(Arrays.asList(scope.split("\\s+")));
+        // Copy DEFAULT_SCOPES into a mutable set: the constant is now an ImmutableSet, and callers
+        // downstream may add/remove scopes on the returned set.
+        final Set<String> requestedScopes = StringUtils.isBlank(scope) ? new HashSet<>(KnoxIDFConstants.DEFAULT_SCOPES) : new HashSet<>(Arrays.asList(scope.split("\\s+")));
         final String state = request.getParameter(KnoxIDFConstants.STATE);
         final String nonce = request.getParameter(KnoxIDFConstants.NONCE);
         final String codeChallenge = request.getParameter(KnoxIDFConstants.CODE_CHALLENGE);
@@ -68,12 +103,20 @@ public class KnoxIDFUtils {
     }
 
     public static String buildFederatedOpAuthRedirect(final FederatedOpConfiguration federatedOpConfiguration, final String federatedState) {
+        // URL-encode every value placed into the query string. client_id and the callback URI
+        // (which itself contains ':' '/' '?' etc.) and the state must be percent-encoded or the
+        // OP receives a malformed/parameter-split URL. CODE_RESPONSE_TYPE and OPENID_SCOPE are
+        // fixed "key=value" literals with no reserved characters, so they are appended as-is.
         return federatedOpConfiguration.getAuthorizeEndpoint()
-                + "?" + KnoxIDFConstants.CLIENT_ID + "=" + federatedOpConfiguration.getClientId()
-                + "&" + KnoxIDFConstants.REDIRECT_URI + "=" + federatedOpConfiguration.getAuthorizeCallback()
+                + "?" + KnoxIDFConstants.CLIENT_ID + "=" + urlEncode(federatedOpConfiguration.getClientId())
+                + "&" + KnoxIDFConstants.REDIRECT_URI + "=" + urlEncode(federatedOpConfiguration.getAuthorizeCallback())
                 + "&" + KnoxIDFConstants.CODE_RESPONSE_TYPE
                 + "&" + KnoxIDFConstants.OPENID_SCOPE
-                + "&" + KnoxIDFConstants.STATE + "=" + federatedState;
+                + "&" + KnoxIDFConstants.STATE + "=" + urlEncode(federatedState);
+    }
+
+    private static String urlEncode(final String value) {
+        return value == null ? "" : URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
 }
