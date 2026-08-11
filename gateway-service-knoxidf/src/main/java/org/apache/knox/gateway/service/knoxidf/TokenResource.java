@@ -204,20 +204,31 @@ public class TokenResource extends PasscodeTokenResourceBase {
         return responseMap;
     }
 
-    private Response handleRefreshToken() {
+    // Package-private for testability (the single-use rotation guard is exercised by
+    // TokenResourceRefreshTokenRotationTest); not part of the public resource API.
+    Response handleRefreshToken() {
         try {
             final String refreshTokenParam = getRequestParam(REFRESH_TOKEN);
             final String refreshTokenId = TokenUtils.getTokenId(refreshTokenParam);
             final TokenMetadata refreshTokenMetadata = tokenStateService.getTokenMetadata(refreshTokenId);
             validateRefreshTokenGrant(refreshTokenParam, refreshTokenId, refreshTokenMetadata);
-            // Valid refresh token -> issue new access token and new refresh token (rotation)
+
+            // Rotation is single-use: atomically consume (revoke) the presented refresh token BEFORE
+            // issuing its replacement. consumeToken is an atomic claim -- exactly one of N concurrent
+            // redemptions wins -- so two concurrent refreshes cannot both mint a new token pair from
+            // the same refresh token. (DefaultTokenStateService otherwise has a check-then-act race in
+            // revokeToken; the JDBC path is already atomic via a PK DELETE.) A lost claim means another
+            // request already redeemed/rotated this token, so reject it as invalid_grant. This mirrors
+            // the consume-before-issue guard on the authorization_code grant (see handleAuthorizationCodeFlow).
+            if (!tokenStateService.consumeToken(refreshTokenId)) {
+                return error("invalid_grant", "Refresh token has already been redeemed");
+            }
+
+            // Valid, freshly-consumed refresh token -> issue new access token and new refresh token (rotation)
             final String userName = refreshTokenMetadata.getUserName();
             final String scope = refreshTokenMetadata.getMetadata(SCOPE);
             final Map<String, Object> userParams = userParamsProvider.getParamsFor(userName, scope);
             userParams.put(SCOPE, scope);
-
-            // Revoke old refresh token (rotation)
-            tokenStateService.revokeToken(refreshTokenId);
 
             // Build new tokens
             final UserContext userContext = new UserContext(userName, null, userParams);
