@@ -332,13 +332,29 @@ Organizations with branding requirements or compliance needs should use `KNOX_TH
 
 ### Theme Name Validation
 
-The theme loader only loads files from `styles/themes/THEME_NAME/theme.css`. Path traversal attacks (e.g., `?theme=../../etc/passwd`) are prevented by the URL structure.
+The `?theme=` parameter and the saved localStorage preference are attacker-influenceable,
+so the theme loader validates every candidate against `^[a-zA-Z0-9_-]{1,64}$` before it is
+stored or used. This rejects quotes, angle brackets, dots and path separators, which
+blocks both markup injection and path traversal (e.g. `?theme=../../etc/passwd`).
+Validation is applied to values read back from localStorage as well as to the URL
+parameter, so a value saved by an earlier visit cannot bypass it, and the stylesheet
+element is built with DOM APIs rather than string concatenation.
+
+Because the only URL the loader can produce is `styles/themes/THEME_NAME/theme.css`, the
+themes actually installed on the server are the effective allowlist. A name that does not
+match an installed theme fails to load, the base Knox styles remain in effect, and the
+saved preference is discarded.
 
 ### Content Security Policy
 
 If you have strict CSP, ensure it allows:
 - Loading CSS from same origin
 - Loading fonts from Google Fonts (if using modern theme)
+
+A policy can be applied to the knoxauth route with the WebAppSec provider's
+`SecurityHeaderFilter`, which emits arbitrary response headers from its init
+parameters. Note that `login.html` currently uses inline scripts and inline event
+handlers, so a policy for this page needs `'unsafe-inline'` for `script-src`.
 
 Example CSP:
 ```
