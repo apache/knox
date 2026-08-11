@@ -18,16 +18,16 @@ package org.apache.knox.gateway.services.factory;
 
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.federation.DerbyDBFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.JdbcFederatedIdentityService;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.knox.gateway.topology.Topology;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,46 +43,71 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
             throws ServiceLifecycleException {
 
         String implementationToUse = implementation;
-        // If implementation is empty, check if we should auto-enable JdbcFederatedIdentityService
-        if (isEmptyDefaultImplementation(implementationToUse)) {
-            if (isKnoxIdfEnabledInAnyTopology(gatewayServices)) {
-                implementationToUse = JdbcFederatedIdentityService.class.getName();
-            }
+        // No explicit impl configured: auto-select a persistence backend when KnoxIDF is deployed.
+        // Otherwise honor the configured impl (very likely a prod JDBC store).
+        if (isEmptyDefaultImplementation(implementationToUse) && isKnoxIdfEnabledInAnyTopology(gatewayServices, gatewayConfig)) {
+            implementationToUse = chooseAutoImplementation(gatewayConfig);
         }
 
         FederatedIdentityService service = null;
         if (shouldCreateService(implementationToUse)) {
             if (matchesImplementation(implementationToUse, EmptyFederatedIdentityService.class, true)) {
                 service = new EmptyFederatedIdentityService();
+            } else if (matchesImplementation(implementationToUse, DerbyDBFederatedIdentityService.class)) {
+                service = createDerbyService(gatewayServices, gatewayConfig, options);
             } else if (matchesImplementation(implementationToUse, JdbcFederatedIdentityService.class)) {
-                try {
-                    try {
-                        service = new JdbcFederatedIdentityService();
-                        ((JdbcFederatedIdentityService) service).setAliasService(getAliasService(gatewayServices));
-                        service.init(gatewayConfig, options);
-                    } catch (ServiceLifecycleException e) {
-                        LOG.errorInitializingService(implementationToUse, e.getMessage(), e);
-                        service =  new EmptyFederatedIdentityService();
-                    }
-                } catch (Exception e) {
-                    throw new ServiceLifecycleException("Error while creating Federated Identity Service: " + e, e);
-                }
+                service = createJdbcService(gatewayServices, gatewayConfig, options);
             }
             logServiceUsage(service.getClass().getName(), serviceType);
         }
         return service;
     }
 
-    private boolean isKnoxIdfEnabledInAnyTopology(GatewayServices gatewayServices) {
-        final TopologyService topologyService = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
-        if (topologyService != null) {
-            for (Topology topology : topologyService.getTopologies()) {
-                if (topology.getServices().stream().anyMatch(service -> "KNOXIDF".equals(service.getRole()))) {
-                    return true;
-                }
-            }
+    /**
+     * Chooses the auto-enabled implementation when KnoxIDF is deployed with no explicit impl: an
+     * operator-configured external database wins (very likely a prod JDBC store), otherwise a
+     * self-provisioning embedded Derby store (the {@code none}/{@code derbydb} default) so
+     * federation works out of the box without any extra infrastructure.
+     */
+    String chooseAutoImplementation(GatewayConfig gatewayConfig) {
+        return isExternalDatabaseConfigured(gatewayConfig)
+                ? JdbcFederatedIdentityService.class.getName()
+                : DerbyDBFederatedIdentityService.class.getName();
+    }
+
+    private boolean isExternalDatabaseConfigured(GatewayConfig gatewayConfig) {
+        final String databaseType = gatewayConfig.getDatabaseType();
+        try {
+            return DatabaseType.fromString(databaseType) != DatabaseType.DERBY;
+        } catch (IllegalArgumentException e) {
+            // "none" (the default) or any unrecognized value: no real external DB -> use Derby.
+            return false;
         }
-        return false;
+    }
+
+    private FederatedIdentityService createDerbyService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
+        try {
+            final DerbyDBFederatedIdentityService derbyService = new DerbyDBFederatedIdentityService();
+            derbyService.setAliasService(getAliasService(gatewayServices));
+            derbyService.setMasterService(getMasterService(gatewayServices));
+            derbyService.init(gatewayConfig, options);
+            return derbyService;
+        } catch (ServiceLifecycleException e) {
+            LOG.errorInitializingService(DerbyDBFederatedIdentityService.class.getName(), e.getMessage(), e);
+            return new EmptyFederatedIdentityService();
+        }
+    }
+
+    private FederatedIdentityService createJdbcService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
+        try {
+            final JdbcFederatedIdentityService jdbcService = new JdbcFederatedIdentityService();
+            jdbcService.setAliasService(getAliasService(gatewayServices));
+            jdbcService.init(gatewayConfig, options);
+            return jdbcService;
+        } catch (ServiceLifecycleException e) {
+            LOG.errorInitializingService(JdbcFederatedIdentityService.class.getName(), e.getMessage(), e);
+            return new EmptyFederatedIdentityService();
+        }
     }
 
     @Override
@@ -92,6 +117,6 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
     @Override
     protected Collection<String> getKnownImplementations() {
-        return List.of(DEFAULT_IMPLEMENTATION, JdbcFederatedIdentityService.class.getName());
+        return List.of(DEFAULT_IMPLEMENTATION, JdbcFederatedIdentityService.class.getName(), DerbyDBFederatedIdentityService.class.getName());
     }
 }

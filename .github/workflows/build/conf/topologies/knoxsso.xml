@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!--
+  CI-only KnoxSSO topology used by the opt-in KnoxIDF federation E2E test
+  (test_knoxidf_federation.py). It is the authentication front-end that the
+  knoxidf-sso topology's SSOCookieProvider redirects unauthenticated /authorize
+  requests to. The /api/v1/websso/federated/op endpoint (WebSSOResource.federatedOpLogin)
+  must be reachable anonymously so the browser can be bounced on to the external OP
+  (Keycloak) without first logging in locally.
+
+  This overwrites the knoxsso.xml shipped in the release tarball (the ADD in the
+  Dockerfile wins) so the LDAP endpoint matches the CI LDAP (ldaps://localhost:33390)
+  and the redirect whitelist accepts the dot-less "knox" compose hostname.
+-->
+<topology>
+    <gateway>
+        <provider>
+            <role>authentication</role>
+            <name>ShiroProvider</name>
+            <enabled>true</enabled>
+            <param>
+                <name>sessionTimeout</name>
+                <value>30</value>
+            </param>
+            <param>
+                <name>redirectToUrl</name>
+                <value>/${GATEWAY_PATH}/knoxsso/knoxauth/login.html</value>
+            </param>
+            <param>
+                <name>restrictedCookies</name>
+                <value>rememberme,WWW-Authenticate</value>
+            </param>
+            <param>
+                <name>main.ldapRealm</name>
+                <value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>
+            </param>
+            <param>
+                <name>main.ldapRealm.userDnTemplate</name>
+                <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
+            </param>
+            <param>
+                <name>main.ldapRealm.contextFactory.url</name>
+                <value>ldaps://localhost:33390</value>
+            </param>
+            <param>
+                <name>main.ldapRealm.authenticationCachingEnabled</name>
+                <value>false</value>
+            </param>
+            <param>
+                <name>main.ldapRealm.contextFactory.authenticationMechanism</name>
+                <value>simple</value>
+            </param>
+            <param>
+                <name>urls./api/v1/websso/federated/op</name>
+                <value>anon</value>
+            </param>
+            <param>
+                <name>urls./**</name>
+                <value>authcBasic</value>
+            </param>
+        </provider>
+
+        <provider>
+            <role>identity-assertion</role>
+            <name>Default</name>
+            <enabled>true</enabled>
+        </provider>
+    </gateway>
+
+    <application>
+        <name>knoxauth</name>
+    </application>
+
+    <service>
+        <role>KNOXSSO</role>
+        <param>
+            <name>knoxsso.token.ttl</name>
+            <value>86400000</value>
+        </param>
+        <param>
+            <name>knox.token.exp.server-managed</name>
+            <value>false</value>
+        </param>
+        <param>
+            <name>knoxsso.redirect.whitelist.regex</name>
+            <value>^https?://knox:[0-9]+/gateway/.*$</value>
+        </param>
+    </service>
+
+</topology>

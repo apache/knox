@@ -18,4 +18,4 @@ CREATE TABLE FEDERATED_IDENTITY_ATTR (
     attr_value  TEXT,
     PRIMARY KEY (identity_id, attr_key),
     FOREIGN KEY (identity_id) REFERENCES FEDERATED_IDENTITY (id) ON DELETE CASCADE
-);
+)

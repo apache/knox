@@ -26,8 +26,6 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.EmptyTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.JdbcTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.knox.gateway.topology.Topology;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,10 +42,8 @@ public class TrustedOidcIssuerServiceFactory extends AbstractServiceFactory {
       throws ServiceLifecycleException {
 
     String implementationToUse = implementation;
-    if (isEmptyDefaultImplementation(implementationToUse)) {
-      if (isKnoxIdfEnabledInAnyTopology(gatewayServices)) {
-        implementationToUse = JdbcTrustedOidcIssuerService.class.getName();
-      }
+    if (isEmptyDefaultImplementation(implementationToUse) && isKnoxIdfEnabledInAnyTopology(gatewayServices, gatewayConfig)) {
+      implementationToUse = JdbcTrustedOidcIssuerService.class.getName();
     }
 
     TrustedOidcIssuerService service = null;
@@ -73,24 +69,6 @@ public class TrustedOidcIssuerServiceFactory extends AbstractServiceFactory {
       }
     }
     return service;
-  }
-
-  /**
-   * Returns true if any deployed topology contains a service with role {@code KNOXIDF}
-   * or {@code KNOXIDF_ADMIN}. The trusted issuer registry is activated by either role
-   * because the admin API ({@code KNOXIDF_ADMIN}) also needs to persist registrations.
-   */
-  private boolean isKnoxIdfEnabledInAnyTopology(GatewayServices gatewayServices) {
-    final TopologyService topologyService = gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE);
-    if (topologyService != null) {
-      for (Topology topology : topologyService.getTopologies()) {
-        if (topology.getServices().stream().anyMatch(
-            s -> "KNOXIDF".equals(s.getRole()) || "KNOXIDF_ADMIN".equals(s.getRole()))) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Override

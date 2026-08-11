@@ -43,6 +43,7 @@ velocity.log
 # Workflow rules
 .github/workflows/compose/logs/*
 .github/workflows/tests/test-results.xml
+.github/workflows/tests/test-results-federation.xml
 
 
 # other IDEs and editors

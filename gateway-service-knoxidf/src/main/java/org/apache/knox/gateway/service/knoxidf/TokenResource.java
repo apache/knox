@@ -103,7 +103,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
     @Override
     public String getPrefix() {
-        return "knoxidf";
+        return "knoxidf.";
     }
 
     @PostConstruct

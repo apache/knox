@@ -738,6 +738,12 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.ERROR, text = "Error while initializing {0}: {1}")
   void errorInitializingService(String implementation, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.DEBUG, text = "Failed to list topology directory {0} while detecting KnoxIDF: {1}")
+  void failedToListTopologyDirForKnoxIdfDetection(String topologyDir, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG, text = "Failed to read topology file {0} while detecting KnoxIDF: {1}")
+  void failedToReadTopologyFileForKnoxIdfDetection(String topologyFile, String error, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.ERROR,
           text = "Unable to complete service discovery for cluster {0} topology = {1}.")
   void failedToDiscoverClusterServices(String clusterName, String topologyName,

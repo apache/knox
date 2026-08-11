@@ -19,4 +19,4 @@ CREATE TABLE FEDERATED_IDENTITY_ATTR (
     attr_value  CLOB,
     PRIMARY KEY (identity_id, attr_key),
     CONSTRAINT fk_fed_attr FOREIGN KEY (identity_id) REFERENCES FEDERATED_IDENTITY(id) ON DELETE CASCADE
-);
+)

@@ -19,7 +19,6 @@ CREATE TABLE FEDERATED_IDENTITY (
     provider         VARCHAR(64)  NOT NULL,
     external_subject VARCHAR(255) NOT NULL,
     external_issuer  VARCHAR(255) NOT NULL,
-    created_at       TIMESTAMP    NOT NULL
-);
-
-CREATE UNIQUE INDEX UX_FED_IDENTITY ON FEDERATED_IDENTITY (provider, external_issuer, external_subject);
+    created_at       TIMESTAMP    NOT NULL,
+    CONSTRAINT UX_FED_IDENTITY UNIQUE (provider, external_issuer, external_subject)
+)

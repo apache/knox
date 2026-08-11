@@ -18,7 +18,11 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.NameBasedGenerator;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.NameValuePair;
@@ -125,6 +129,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
 
     private FederatedIdentityService federatedIdentityService;
     private boolean autoConsentEnabled;
+
+    @Override
+    public String getPrefix() {
+        return "knoxidf.";
+    }
 
     @PostConstruct
     @Override
@@ -544,8 +553,14 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
 
         try {
             final JWTokenAuthority authority = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
+            // A non-null JWS type verifier is required: federated OP id_tokens carry a "typ" header
+            // (Keycloak and most OPs set typ=JWT), and the shared token authority rejects any typ'd
+            // token outright when no verifier is supplied. Accept "JWT" and a missing typ (typ is
+            // optional per RFC 7519) so we interoperate with the range of conformant OPs.
+            final JOSEObjectTypeVerifier<SecurityContext> typeVerifier =
+                    new DefaultJOSEObjectTypeVerifier<>(new HashSet<>(Arrays.asList(JOSEObjectType.JWT, null)));
             // Verifies the signature against the OP's JWKS and checks exp/nbf.
-            if (!authority.verifyToken(idToken, Collections.singleton(new URI(jwksEndpoint)), opConfig.getSignatureAlgorithm(), null)) {
+            if (!authority.verifyToken(idToken, Collections.singleton(new URI(jwksEndpoint)), opConfig.getSignatureAlgorithm(), typeVerifier)) {
                 return error("invalid_request", "Federated id_token signature or expiry verification failed");
             }
         } catch (URISyntaxException e) {

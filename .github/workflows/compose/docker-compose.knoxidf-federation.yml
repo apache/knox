@@ -1,0 +1,73 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with this
+# work for additional information regarding copyright ownership. The ASF
+# licenses this file to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# <p>
+# http://www.apache.org/licenses/LICENSE-2.0
+# <p>
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Opt-in override that layers a real Keycloak (external OpenID Provider) onto the base
+# compose stack and runs ONLY the KnoxIDF federation E2E test. It is intentionally not part
+# of the default test run (which ignores test_knoxidf_federation.py) because it pulls the
+# Keycloak image and adds minutes of startup.
+#
+# Usage:
+#   cd .github/workflows/compose
+#   IMAGE_TAG=knoxidf docker compose \
+#     -f docker-compose.yml -f docker-compose.knoxidf-federation.yml \
+#     up --build --abort-on-container-exit --exit-code-from tests
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.4
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    volumes:
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    healthcheck:
+      # Keycloak 25+ serves health on the management port (9000). The image has no curl, so
+      # use bash's /dev/tcp per Keycloak's own recommendation.
+      test:
+        - CMD-SHELL
+        - >
+          exec 3<>/dev/tcp/localhost/9000;
+          echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3;
+          cat <&3 | grep -q 'UP'
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  knox:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+
+  tests:
+    environment:
+      - KNOX_GATEWAY_URL=https://knox:8443/
+      - KEYCLOAK_URL=http://keycloak:8080
+    command: >
+      bash -c "pip install -r requirements.txt
+      && echo 'Waiting for knox...'
+      && sleep 30
+      && pytest test_knoxidf_federation.py --junitxml=test-results-federation.xml"
+    depends_on:
+      knox:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
