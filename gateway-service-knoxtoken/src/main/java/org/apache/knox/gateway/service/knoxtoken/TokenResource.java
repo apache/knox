@@ -487,6 +487,14 @@ public class TokenResource {
       final String createdBy = uriInfo.getQueryParameters().getFirst("createdBy");
       final String userNameOrCreatedBy = uriInfo.getQueryParameters().getFirst("userNameOrCreatedBy");
       final boolean allTokens = Boolean.parseBoolean(uriInfo.getQueryParameters().getFirst("allTokens"));
+
+      final String caller = SubjectUtils.getCurrentEffectivePrincipalName();
+      if (!isAuthorizedToSeeTokens(caller, userName, createdBy, userNameOrCreatedBy, allTokens)) {
+        log.unauthorizedGetUserTokensRequest(getTopologyName(), caller);
+        return Response.status(Response.Status.FORBIDDEN)
+            .entity("{\n  \"error\": \"Caller (" + caller + ") is not authorized to see other users' tokens.\"\n}\n").build();
+      }
+
       final Collection<KnoxToken> userTokens;
       if (allTokens) {
         userTokens = tokenStateService.getAllTokens();
@@ -518,6 +526,29 @@ public class TokenResource {
       }
       return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(Collections.singletonMap("tokens", tokens))).build();
     }
+  }
+
+  private boolean isAuthorizedToSeeTokens(String caller, String userName, String createdBy, String userNameOrCreatedBy, boolean allTokens) {
+    if (StringUtils.isBlank(caller)) {
+      return false;
+    }
+    final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (config != null && config.canSeeAllTokens(caller)) {
+      return true;
+    }
+    if (allTokens) {
+      return false;
+    }
+    // an ordinary caller must scope the query to their own tokens
+    final boolean hasIdentifier = userName != null || createdBy != null || userNameOrCreatedBy != null;
+    return hasIdentifier
+        && requestedIsCallerIfPresent(caller, userName)
+        && requestedIsCallerIfPresent(caller, createdBy)
+        && requestedIsCallerIfPresent(caller, userNameOrCreatedBy);
+  }
+
+  private static boolean requestedIsCallerIfPresent(String caller, String requested) {
+    return requested == null || caller.equals(requested);
   }
 
   @GET
