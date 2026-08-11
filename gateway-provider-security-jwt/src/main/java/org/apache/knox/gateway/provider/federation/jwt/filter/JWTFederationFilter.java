@@ -65,6 +65,9 @@ import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHEN
 
 public class JWTFederationFilter extends AbstractJWTFilter {
 
+  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
+  public static final String SUBJECT_TOKEN = "subject_token";
+  public static final String ACTOR_TOKEN = "actor_token";
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
@@ -368,7 +371,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
           return getClientTokenFromParams(unwrappedRequest, REFRESH_TOKEN_PARAM);
-        } else if (TokenExchangeHandler.TOKEN_EXCHANGE.equals(grantType)) {
+        } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // RFC 8693 token exchange: signal it via the token type. doFilter routes this to
           // TokenExchangeHandler, which reads subject_token/actor_token from the unwrapped request.
           return Pair.of(TokenType.TokenExchange, null);

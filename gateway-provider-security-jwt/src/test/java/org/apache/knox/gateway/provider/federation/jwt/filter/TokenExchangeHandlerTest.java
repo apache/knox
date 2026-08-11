@@ -193,9 +193,9 @@ public class TokenExchangeHandlerTest {
   private HttpServletRequest request(String subjectToken, String subjectTokenType,
                                      String actorToken, String actorTokenType) {
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
     EasyMock.expect(request.getParameter(TokenExchangeHandler.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
     EasyMock.expect(request.getParameter(TokenExchangeHandler.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
     EasyMock.replay(request);
     return request;
