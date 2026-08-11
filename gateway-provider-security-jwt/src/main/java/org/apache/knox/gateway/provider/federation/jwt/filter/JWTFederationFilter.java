@@ -64,10 +64,6 @@ import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
-
-  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
-  public static final String SUBJECT_TOKEN = "subject_token";
-  public static final String ACTOR_TOKEN = "actor_token";
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
@@ -78,6 +74,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String CLIENT_ASSERTION_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
   public static final String CLIENT_ASSERTION_TYPE = "client_assertion_type";
   public static final String CLIENT_ASSERTION = "client_assertion";
+  // RFC 8693 constants
+  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
+  public static final String SUBJECT_TOKEN = "subject_token";
+  public static final String ACTOR_TOKEN = "actor_token";
+  public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
+  public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
+  // RFC 8693 section 3 token type identifiers. Only JWT-family types are supported for exchange;
+  // Knox issues JWT access tokens, so the access_token URN is accepted as an alias for jwt.
+  public static final String TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt";
+  public static final String TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
 
   public enum TokenType {
     JWT, Passcode, TokenExchange;

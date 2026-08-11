@@ -712,6 +712,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
     EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE))
+        .andReturn(JWTFederationFilter.TOKEN_TYPE_JWT).anyTimes();
     // ACTOR_TOKEN not mocked — niceMock returns null, making actor_token absent
     EasyMock.expect(request.getServletContext()).andReturn(ctx).anyTimes();
     return request;
@@ -723,7 +725,11 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
     EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE))
+        .andReturn(JWTFederationFilter.TOKEN_TYPE_JWT).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE))
+        .andReturn(JWTFederationFilter.TOKEN_TYPE_JWT).anyTimes();
     EasyMock.expect(request.getServletContext()).andReturn(ctx).anyTimes();
     return request;
   }
