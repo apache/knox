@@ -233,7 +233,9 @@ public class TokenResource extends PasscodeTokenResourceBase {
 
     }
 
-    private void validateRefreshTokenGrant(String refreshTokenParam, String refreshTokenId, TokenMetadata refreshTokenMetadata) throws UnknownTokenException, RefreshTokenValidationError {
+    // Package-private for testability (client-authentication on the refresh grant is exercised by
+    // TokenResourceRefreshTokenClientAuthTest); not part of the public resource API.
+    void validateRefreshTokenGrant(String refreshTokenParam, String refreshTokenId, TokenMetadata refreshTokenMetadata) throws UnknownTokenException, RefreshTokenValidationError {
         final String clientId = getRequestParam(CLIENT_ID);
 
         if (StringUtils.isBlank(refreshTokenParam)) {
@@ -261,6 +263,16 @@ public class TokenResource extends PasscodeTokenResourceBase {
         final String associatedClientId = refreshTokenMetadata.getMetadata(CLIENT_ID);
         if (!clientId.equals(associatedClientId)) {
             throw new RefreshTokenValidationError("Invalid grant: client_id mismatch");
+        }
+
+        // Client authentication (RFC 6749 §6, §10.4). Like the authorization_code grant
+        // (see validateAuthCode), the refresh_token grant must independently prove client identity:
+        // the JWTFederationFilter Bearer path forwards a request to this endpoint without checking
+        // client_secret, so matching client_id alone would let anyone holding a stolen refresh token
+        // redeem and rotate it. KnoxIDF issues every registered client a client_secret, so a
+        // constant-time client_secret check against the stored passcode is required here.
+        if (!isValidClientSecret(clientId, getRequestParam(CLIENT_SECRET))) {
+            throw new RefreshTokenValidationError("Invalid grant: client authentication failed");
         }
     }
 
@@ -547,7 +559,8 @@ public class TokenResource extends PasscodeTokenResourceBase {
         }
     }
 
-    private static class RefreshTokenValidationError extends Exception {
+    // Package-private so TokenResourceRefreshTokenClientAuthTest can assert the specific failure type.
+    static class RefreshTokenValidationError extends Exception {
         RefreshTokenValidationError(String message) {
             super(message);
         }
