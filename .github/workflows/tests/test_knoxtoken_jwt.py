@@ -85,7 +85,7 @@ class TestKnoxTokenJwt(unittest.TestCase):
             expected_username,
         )
 
-    def assert_federation_rejected(self, access_token):
+    def _assert_federation_rejected(self, access_token):
         """Assert that a bearer token is rejected by the JWTProvider topology."""
         response = self._federate(access_token)
         self.assertEqual(
@@ -147,7 +147,7 @@ class TestKnoxTokenJwt(unittest.TestCase):
         self.assertNotEqual(tampered, access_token)
         self.assertEqual(len(tampered.split(".")), 3)
 
-        self.assert_federation_rejected(tampered)
+        self._assert_federation_rejected(tampered)
 
     def test_revoke_is_enforced_at_federation(self):
         """Mint → revoke → re-present must yield 401 (not just a revoked:true response)."""
@@ -167,7 +167,7 @@ class TestKnoxTokenJwt(unittest.TestCase):
         )
         self.assertEqual(revoke.json().get("revoked"), "true")
 
-        self.assert_federation_rejected(access_token)
+        self._assert_federation_rejected(access_token)
 
     def test_renew_extends_and_token_still_federates(self):
         """A whitelisted renewer gets renewed:true and the token still federates."""
@@ -236,7 +236,7 @@ class TestKnoxTokenJwt(unittest.TestCase):
         )
         self.assertEqual(disable.json().get("setEnabledFlag"), "true")
         self.assertEqual(disable.json().get("isEnabled"), "false")
-        self.assert_federation_rejected(access_token)
+        self._assert_federation_rejected(access_token)
 
         enable = knox_put(
             self.token_url + "/enable",
