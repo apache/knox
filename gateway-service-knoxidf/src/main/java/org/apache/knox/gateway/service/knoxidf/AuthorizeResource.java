@@ -422,7 +422,9 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         return basicVerificationResponse;
     }
 
-    private boolean matchesRedirectUri(String requestedUri, Set<String> registeredUris) {
+    // Package-private for testability (wildcard path-traversal matching is exercised by
+    // AuthorizeResourceRedirectUriMatchTest); not part of the public resource API.
+    boolean matchesRedirectUri(String requestedUri, Set<String> registeredUris) {
         final URI requested = parseUri(requestedUri);
         if (requested == null) {
             return false;
@@ -434,8 +436,12 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 // "https://good.example*" match "https://good.example.evil.com".
                 final URI base = parseUri(registered.substring(0, registered.length() - 1));
                 if (base != null && sameOrigin(base, requested)) {
-                    final String basePath = base.getPath() == null ? "" : base.getPath();
-                    final String reqPath = requested.getPath() == null ? "" : requested.getPath();
+                    // Normalize the requested path before the prefix compare so a traversal segment
+                    // cannot escape the registered prefix: a raw startsWith would let
+                    // ".../callback/../admin" match ".../callback/*" and deliver the code to /admin.
+                    // normalize() collapses "/callback/../admin" to "/admin", which no longer matches.
+                    final String basePath = base.normalize().getPath() == null ? "" : base.normalize().getPath();
+                    final String reqPath = requested.normalize().getPath() == null ? "" : requested.normalize().getPath();
                     if (reqPath.startsWith(basePath)) {
                         return true;
                     }
