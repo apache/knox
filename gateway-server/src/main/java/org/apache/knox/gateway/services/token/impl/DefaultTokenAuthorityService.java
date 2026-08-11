@@ -32,14 +32,17 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
@@ -202,14 +205,59 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     try {
       PublicKey key = publicKey;
       if (key == null) {
-        key = keystoreService.getSigningKeystore().getCertificate(getSigningKeyAlias()).getPublicKey();
+        key = selectVerificationKey(token);
       }
       final JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) key);
-      // TODO: interrogate the token for issuer claim in order to determine the public key to use for verification
-      // consider jwk for specifying the key too
       return token.verify(verifier);
     } catch (KeyStoreException | KeystoreServiceException e) {
       throw new TokenServiceException("Cannot verify token.", e);
+    }
+  }
+
+  /**
+   * Selects the public key to verify a gateway-signed RSA token with. When more than one signing
+   * key alias is configured, the token's {@code kid} header is matched against each configured
+   * key's SHA-256 thumbprint so a token signed by a rotated-out key still verifies. When there is a
+   * single configured key, or the token carries no matching {@code kid}, this falls back to the
+   * current signing key — the historical single-key behavior.
+   */
+  private PublicKey selectVerificationKey(JWT token) throws KeyStoreException, KeystoreServiceException {
+    final KeyStore keystore = keystoreService.getSigningKeystore();
+    final List<String> aliases = getVerificationKeyAliases();
+    // Fast path / backward compatibility: a single configured key means no kid selection is needed.
+    if (aliases.size() > 1) {
+      final String kid = extractKid(token);
+      if (kid != null) {
+        for (final String alias : aliases) {
+          final Certificate cert = keystore.getCertificate(alias);
+          if (cert == null || !(cert.getPublicKey() instanceof RSAPublicKey)) {
+            continue;
+          }
+          try {
+            if (kid.equals(TokenUtils.getThumbprint((RSAPublicKey) cert.getPublicKey(), "SHA-256"))) {
+              return cert.getPublicKey();
+            }
+          } catch (JOSEException e) {
+            // Cannot compute this key's thumbprint; skip it and try the next alias.
+            LOG.errorGettingKid(e.toString());
+          }
+        }
+      }
+    }
+    // No kid, no match, or a single key: verify with the current signing key.
+    return keystore.getCertificate(getSigningKeyAlias()).getPublicKey();
+  }
+
+  private List<String> getVerificationKeyAliases() {
+    final List<String> aliases = config == null ? null : config.getSigningKeyAliases();
+    return (aliases == null || aliases.isEmpty()) ? Collections.singletonList(getSigningKeyAlias()) : aliases;
+  }
+
+  private static String extractKid(JWT token) {
+    try {
+      return JWSHeader.parse(token.getHeader()).getKeyID();
+    } catch (ParseException e) {
+      return null;
     }
   }
 

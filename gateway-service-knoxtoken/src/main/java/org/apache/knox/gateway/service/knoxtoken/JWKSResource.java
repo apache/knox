@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -45,6 +46,9 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -80,23 +84,26 @@ public class JWKSResource {
   }
 
   private Response getJwks(final String keystore) {
-    JWKSet jwks;
     try {
-      final RSAPublicKey rsa = getPublicKey(keystore);
-      /* no public cert found, return empty set */
-      if(rsa == null) {
-        return Response.ok()
-            .entity(new JWKSet().toJSONObject().toString()).build();
+      // Publish one JWK per configured signing-key alias (current key first, then any additional
+      // verification keys). Each JWK carries its own 'kid' (SHA-256 thumbprint) so a verifier can
+      // select the right key across a key rotation. A single-key deployment yields exactly one JWK.
+      final List<JWK> keys = new ArrayList<>();
+      for (final String alias : getSigningKeyAliases()) {
+        final RSAPublicKey rsa = getPublicKey(keystore, alias);
+        /* no public cert for this alias, skip it */
+        if (rsa == null) {
+          continue;
+        }
+        final String kid = TokenUtils.getThumbprint(rsa, "SHA-256");
+        keys.add(new RSAKey.Builder(rsa)
+            .keyUse(KeyUse.SIGNATURE)
+            .algorithm(new JWSAlgorithm(this.signatureAlgorithm))
+            .keyID(kid)
+            .build());
       }
-
-      final String kid = TokenUtils.getThumbprint(rsa, "SHA-256");
-      final RSAKey.Builder builder = new RSAKey.Builder(rsa)
-          .keyUse(KeyUse.SIGNATURE)
-          .algorithm(new JWSAlgorithm(this.signatureAlgorithm))
-          .keyID(kid);
-
-      jwks = new JWKSet(builder.build());
-
+      return Response.ok()
+          .entity(new JWKSet(keys).toString()).type(MediaType.APPLICATION_JSON_TYPE).build();
     } catch (KeyStoreException | JOSEException e) {
       return Response.status(500)
           .entity("{\n  \"error\": \"" + e.toString() + "\"\n}\n").build();
@@ -105,19 +112,31 @@ public class JWKSResource {
           "{\n  \"error\": \"" + "keystore " + keystore + " could not be found."
               + "\"\n}\n").build();
     }
-    return Response.ok()
-            .entity(jwks.toString()).type(MediaType.APPLICATION_JSON_TYPE).build();
   }
 
   protected RSAPublicKey getPublicKey(final String keystore) throws KeystoreServiceException, KeyStoreException {
+    return getPublicKey(keystore, getSigningKeyAlias());
+  }
+
+  protected RSAPublicKey getPublicKey(final String keystore, final String alias) throws KeystoreServiceException, KeyStoreException {
     final KeyStore ks = keystoreService.getSigningKeystore(keystore);
-    final Certificate cert = ks.getCertificate(getSigningKeyAlias());
-    return (cert != null) ? (RSAPublicKey) cert.getPublicKey() : null;
+    final Certificate cert = ks.getCertificate(alias);
+    return (cert != null && cert.getPublicKey() instanceof RSAPublicKey) ? (RSAPublicKey) cert.getPublicKey() : null;
+  }
+
+  /**
+   * @return the configured signing-key aliases to publish, falling back to the single default
+   * signing key when none are configured (backward-compatible single-key behavior).
+   */
+  private List<String> getSigningKeyAliases() {
+    final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    final List<String> aliases = (config == null) ? null : config.getSigningKeyAliases();
+    return (aliases == null || aliases.isEmpty()) ? Collections.singletonList(getSigningKeyAlias()) : aliases;
   }
 
   private String getSigningKeyAlias() {
     final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    final String alias = config.getSigningKeyAlias();
+    final String alias = (config == null) ? null : config.getSigningKeyAlias();
     return (alias == null) ? GatewayConfig.DEFAULT_SIGNING_KEY_ALIAS : alias;
   }
 

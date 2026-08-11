@@ -1018,6 +1018,25 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public List<String> getSigningKeyAliases() {
+    final List<String> aliases = new ArrayList<>();
+    final String current = getSigningKeyAlias();
+    if (current != null) {
+      aliases.add(current);
+    }
+    final String additional = get(SIGNING_KEY_ALIASES_ADDITIONAL);
+    if (additional != null && !additional.trim().isEmpty() && !"none".equalsIgnoreCase(additional.trim())) {
+      for (String alias : additional.trim().split("\\s*,\\s*")) {
+        // Skip blanks and de-duplicate so the current key is never published/checked twice.
+        if (!alias.isEmpty() && !aliases.contains(alias)) {
+          aliases.add(alias);
+        }
+      }
+    }
+    return aliases;
+  }
+
+  @Override
   public List<String> getGlobalRulesServices() {
     String value = get( GLOBAL_RULES_SERVICES );
     if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {

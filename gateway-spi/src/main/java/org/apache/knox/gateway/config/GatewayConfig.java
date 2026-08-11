@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +73,10 @@ public interface GatewayConfig {
   String SIGNING_KEYSTORE_PASSWORD_ALIAS = "gateway.signing.keystore.password.alias";
   String SIGNING_KEYSTORE_TYPE = "gateway.signing.keystore.type";
   String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
+  // Comma-separated list of additional signing-keystore aliases whose public keys are published on
+  // the JWKS endpoint and accepted (selected by 'kid') when verifying gateway-signed JWTs. Lets an
+  // operator retain a previous key across a manual key rotation so already-issued tokens still verify.
+  String SIGNING_KEY_ALIASES_ADDITIONAL = "gateway.signing.key.aliases.additional";
   String SIGNING_KEY_PASSPHRASE_ALIAS = "gateway.signing.key.passphrase.alias";
   String DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS = "signing.keystore.password";
   String DEFAULT_SIGNING_KEYSTORE_TYPE = KeyStore.getDefaultType();
@@ -462,6 +467,21 @@ public interface GatewayConfig {
    * @return an alias name
    */
   String getSigningKeyPassphraseAlias();
+
+  /**
+   * Returns the ordered list of signing-keystore aliases whose public keys the gateway publishes on
+   * the JWKS endpoint and accepts (selected by {@code kid}) when verifying gateway-signed JWTs. The
+   * current signing key ({@link #getSigningKeyAlias()}) is always first; any additional
+   * verification-only keys (e.g. a previous key retained across a manual key rotation) follow.
+   * <p>
+   * Implementations that do not support additional keys return just the current signing key, so a
+   * single-key deployment behaves exactly as before.
+   *
+   * @return the current signing key alias followed by any additional verification key aliases
+   */
+  default List<String> getSigningKeyAliases() {
+    return getSigningKeyAlias() == null ? Collections.emptyList() : Collections.singletonList(getSigningKeyAlias());
+  }
 
 
   List<String> getGlobalRulesServices();
