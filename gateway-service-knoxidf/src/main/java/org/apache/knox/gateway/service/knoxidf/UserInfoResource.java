@@ -18,6 +18,9 @@ package org.apache.knox.gateway.service.knoxidf;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -82,59 +85,73 @@ public class UserInfoResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserInfo() {
         final String tokenId = request.getAttribute(TOKEN_ID_ATTRIBUTE) == null ? null : request.getAttribute(TOKEN_ID_ATTRIBUTE).toString();
-        if (tokenId == null) {
-            return error("invalid_request", "Cannot find tokenId");
-        }
-
-        final String scope = request.getAttribute(SCOPE_ATTRIBUTE) == null ? "" : request.getAttribute(SCOPE_ATTRIBUTE).toString();
-        final TokenMetadata tokenMetadata;
+        // Audit the outcome of every /userinfo access exactly once. The resource is the masked
+        // bearer-token id (never the raw token); the reason distinguishes the failure modes.
+        String outcome = ActionOutcome.FAILURE;
+        String detail = "reason=unknown";
         try {
-            tokenMetadata = getReadonlyTokenStateService().getTokenMetadata(tokenId);
-        } catch (UnknownTokenException e) {
-            // Expired, revoked, or otherwise unknown bearer token. Per RFC 6750 the protected
-            // resource must answer 401 with a WWW-Authenticate: Bearer error="invalid_token"
-            // challenge rather than leaking a 500 for what is a client authentication failure.
-            return invalidToken("The access token is expired, revoked, or unknown");
-        }
-        final Map<String, Object> userInfo = new HashMap<>();
-
-        // Check if this token has a federated identity
-        final String federatedIdentityId = tokenMetadata.getMetadata("federated_identity_id");
-
-        if (StringUtils.isNotBlank(federatedIdentityId)) {
-            // Federated user
-            final FederatedIdentity federatedIdentity = federatedIdentityService
-                    .findById(federatedIdentityId)
-                    .orElse(null);
-            if (federatedIdentity == null) {
-                // The token references a federated identity that no longer exists; the bearer token
-                // can no longer be honored, so answer with the RFC 6750 invalid_token challenge.
-                return invalidToken("The access token references an unknown federated identity");
+            if (tokenId == null) {
+                detail = "reason=missing_token_id";
+                return error("invalid_request", "Cannot find tokenId");
             }
 
-            // Include only allowed claims
-            Map<String, Object> claims = federatedIdentity.getAttributes().entrySet().stream()
-                    .filter(e -> AuthorizeResource.ALLOWED_CLAIMS.contains(e.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            final String scope = request.getAttribute(SCOPE_ATTRIBUTE) == null ? "" : request.getAttribute(SCOPE_ATTRIBUTE).toString();
+            final TokenMetadata tokenMetadata;
+            try {
+                tokenMetadata = getReadonlyTokenStateService().getTokenMetadata(tokenId);
+            } catch (UnknownTokenException e) {
+                // Expired, revoked, or otherwise unknown bearer token. Per RFC 6750 the protected
+                // resource must answer 401 with a WWW-Authenticate: Bearer error="invalid_token"
+                // challenge rather than leaking a 500 for what is a client authentication failure.
+                detail = "reason=invalid_token";
+                return invalidToken("The access token is expired, revoked, or unknown");
+            }
+            final Map<String, Object> userInfo = new HashMap<>();
 
-            // Mandatory claims for OIDC
-            claims.put("sub", federatedIdentity.getUserId()); // internal Knox subject
-            claims.put("idp", federatedIdentity.getProvider());
+            // Check if this token has a federated identity
+            final String federatedIdentityId = tokenMetadata.getMetadata("federated_identity_id");
 
-            // Optional: federated info for auditing
-            claims.put("federated_sub", federatedIdentity.getExternalSubject());
-            claims.put("federated_iss", federatedIdentity.getExternalIssuer());
+            if (StringUtils.isNotBlank(federatedIdentityId)) {
+                // Federated user
+                final FederatedIdentity federatedIdentity = federatedIdentityService
+                        .findById(federatedIdentityId)
+                        .orElse(null);
+                if (federatedIdentity == null) {
+                    // The token references a federated identity that no longer exists; the bearer token
+                    // can no longer be honored, so answer with the RFC 6750 invalid_token challenge.
+                    detail = "reason=unknown_federated_identity";
+                    return invalidToken("The access token references an unknown federated identity");
+                }
 
-            // Note: nonce is deliberately NOT returned here. Per OIDC it belongs in the id_token
-            // only; echoing it from the UserInfo endpoint is a spec violation and serves no purpose.
+                // Include only allowed claims
+                Map<String, Object> claims = federatedIdentity.getAttributes().entrySet().stream()
+                        .filter(e -> AuthorizeResource.ALLOWED_CLAIMS.contains(e.getKey()))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            userInfo.putAll(claims);
-        } else {
-            // Local Knox user
-            userInfo.putAll(userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope));
+                // Mandatory claims for OIDC
+                claims.put("sub", federatedIdentity.getUserId()); // internal Knox subject
+                claims.put("idp", federatedIdentity.getProvider());
+
+                // Optional: federated info for auditing
+                claims.put("federated_sub", federatedIdentity.getExternalSubject());
+                claims.put("federated_iss", federatedIdentity.getExternalIssuer());
+
+                // Note: nonce is deliberately NOT returned here. Per OIDC it belongs in the id_token
+                // only; echoing it from the UserInfo endpoint is a spec violation and serves no purpose.
+
+                userInfo.putAll(claims);
+            } else {
+                // Local Knox user
+                userInfo.putAll(userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope));
+            }
+
+            outcome = ActionOutcome.SUCCESS;
+            detail = "reason=served";
+            return Response.ok(JsonUtils.renderAsJsonString(userInfo, true)).build();
+        } finally {
+            KnoxIDFAudit.audit(Action.ACCESS, KnoxIDFAudit.mask(tokenId), ResourceType.URI, outcome,
+                    "event=userinfo " + detail);
         }
-
-        return Response.ok(JsonUtils.renderAsJsonString(userInfo, true)).build();
     }
 
     TokenStateService getReadonlyTokenStateService() {

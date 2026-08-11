@@ -33,6 +33,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.service.knoxtoken.PasscodeTokenResourceBase;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -182,6 +185,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         final AuthorizeRequestMetadata authorizeRequestMetadata = new AuthorizeRequestMetadata(clientId, subject, responseType, redirectUri, requestedScopes, state, nonce, codeChallenge, codeChallengeMethod);
         final Response verificationErrorResponse = verifyParams(authorizeRequestMetadata);
         if (verificationErrorResponse != null) {
+            // The authorization request was rejected (unknown client_id, bad redirect_uri, disallowed
+            // scope, or unsupported PKCE method). Record the rejection with the masked client_id.
+            KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.mask(clientId), ResourceType.PRINCIPAL,
+                    ActionOutcome.FAILURE, "event=authorize subject=" + KnoxIDFAudit.subjectLabel(subject)
+                            + " reason=request_rejected");
             return verificationErrorResponse;
         }
 
@@ -252,13 +260,22 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     }
 
     private Response getAuthCodeFromKnox(final AuthorizeRequestMetadata authorizeRequestMetadata, final Pair<String, String> federatedTokens) {
+        final String clientId = authorizeRequestMetadata.getClientId();
+        final String subject = KnoxIDFAudit.subjectLabel(authorizeRequestMetadata.getSubject());
         final Response tokenResponse = getAuthenticationToken();
         if (tokenResponse.getStatus() == Response.Status.OK.getStatusCode()) {
             final Map<String, String> tokenResponseMap = JsonUtils.getMapFromJsonString(tokenResponse.getEntity().toString());
             final String tokenId = tokenResponseMap.get(TOKEN_ID);
             decorateAuthCodeToken(tokenId, authorizeRequestMetadata, federatedTokens);
+            // An authorization code was issued to the client for this subject. The code is masked;
+            // it is a single-use credential and its full value must never appear in the audit log.
+            KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.mask(clientId), ResourceType.PRINCIPAL,
+                    ActionOutcome.SUCCESS, "event=authorize subject=" + subject + " code=" + KnoxIDFAudit.mask(tokenId)
+                            + (federatedTokens == null ? "" : " federated=true") + " reason=code_issued");
             return redirectToAuthSuccess(authorizeRequestMetadata, tokenId);
         }
+        KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.mask(clientId), ResourceType.PRINCIPAL,
+                ActionOutcome.FAILURE, "event=authorize subject=" + subject + " reason=code_issuance_failed");
         return tokenResponse;
     }
 
@@ -293,54 +310,75 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         //This is the callback for the federated OP
         final String federatedAuthCode = request.getParameter(CODE);
         final String state = request.getParameter(STATE);
-        if (StringUtils.isBlank(state) || StringUtils.isBlank(federatedAuthCode)) {
-            return error("invalid_request", "Missing state or code");
-        }
-        final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
-        if (authorizeRequestMetadata == null) {
-            return error("invalid_request", "Unknown or expired state");
-        }
-        final Set<FederatedOpConfiguration> opConfigs = federatedOpConfigurationStore.get(state);
-        final FederatedOpConfiguration federatedOpConfiguration = opConfigs == null ? null : opConfigs.stream().findFirst().orElse(null);
-        if (federatedOpConfiguration == null) {
-            return error("invalid_request", "No federated OP configuration available for the request");
-        }
-        // The federated callback state is single-use: invalidate it in both stores now that it has
-        // been validated and captured, so a replayed callback with the same state is rejected. The
-        // nonce Knox sent to the OP was stashed under the same key (the login-session id == state);
-        // retrieve and invalidate it too so it cannot be reused.
-        authorizeRequestMetadataStore.remove(state);
-        federatedOpConfigurationStore.remove(state);
-        final String expectedNonce = federatedNonceStore.get(state);
-        federatedNonceStore.remove(state);
-        final Pair<String, String> federatedTokens;
+        // Audit the federated-OP login callback exactly once. The resource is the federated OP name
+        // (once known); the reason distinguishes the failure modes. The federated auth code and the
+        // OP tokens are never logged.
+        String opName = KnoxIDFAudit.UNKNOWN;
+        String outcome = ActionOutcome.FAILURE;
+        String detail = "reason=unknown";
         try {
-            federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
-        } catch (ClientSecretResolutionException e) {
-            // A configured client-secret alias could not be resolved. This is a server-side
-            // misconfiguration, not a client error, and we deliberately never made the OP call.
-            return error("server_error", e.getMessage());
+            if (StringUtils.isBlank(state) || StringUtils.isBlank(federatedAuthCode)) {
+                detail = "reason=missing_state_or_code";
+                return error("invalid_request", "Missing state or code");
+            }
+            final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
+            if (authorizeRequestMetadata == null) {
+                detail = "reason=unknown_state";
+                return error("invalid_request", "Unknown or expired state");
+            }
+            final Set<FederatedOpConfiguration> opConfigs = federatedOpConfigurationStore.get(state);
+            final FederatedOpConfiguration federatedOpConfiguration = opConfigs == null ? null : opConfigs.stream().findFirst().orElse(null);
+            if (federatedOpConfiguration == null) {
+                detail = "reason=no_op_configuration";
+                return error("invalid_request", "No federated OP configuration available for the request");
+            }
+            opName = federatedOpConfiguration.getName();
+            // The federated callback state is single-use: invalidate it in both stores now that it has
+            // been validated and captured, so a replayed callback with the same state is rejected. The
+            // nonce Knox sent to the OP was stashed under the same key (the login-session id == state);
+            // retrieve and invalidate it too so it cannot be reused.
+            authorizeRequestMetadataStore.remove(state);
+            federatedOpConfigurationStore.remove(state);
+            final String expectedNonce = federatedNonceStore.get(state);
+            federatedNonceStore.remove(state);
+            final Pair<String, String> federatedTokens;
+            try {
+                federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
+            } catch (ClientSecretResolutionException e) {
+                // A configured client-secret alias could not be resolved. This is a server-side
+                // misconfiguration, not a client error, and we deliberately never made the OP call.
+                detail = "reason=client_secret_unresolved";
+                return error("server_error", e.getMessage());
+            }
+            if (StringUtils.isBlank(federatedTokens.getLeft())) {
+                detail = "reason=no_id_token";
+                return error("invalid_request", "Federated OP did not return an id_token");
+            }
+            final JWT federatedIdToken = new JWTToken(federatedTokens.getLeft());
+            // Verify the OP's id_token (signature/issuer/audience/expiry) before trusting any claim in it.
+            final Response validationError = validateFederatedIdToken(federatedIdToken, federatedOpConfiguration);
+            if (validationError != null) {
+                detail = "reason=id_token_validation_failed";
+                return validationError;
+            }
+            // Bind the (now signature-verified) id_token to this authorization request (OIDC Core 3.1.2.1):
+            // its nonce claim must equal the nonce Knox generated and sent to the OP for this login session.
+            // This is checked only after the token's authenticity is established, so a forged token cannot
+            // supply its own matching nonce. A missing expected nonce (e.g. expired/replayed state) or a
+            // mismatch fails the flow.
+            final Response nonceError = verifyFederatedNonce(expectedNonce, federatedIdToken);
+            if (nonceError != null) {
+                detail = "reason=nonce_mismatch";
+                return nonceError;
+            }
+            final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedIdToken, federatedOpConfiguration.getName());
+            outcome = ActionOutcome.SUCCESS;
+            detail = "reason=federated_identity_resolved subject=" + KnoxIDFAudit.subjectLabel(federatedIdentity.getId());
+            return getAuthCodeFromKnox(authorizeRequestMetadata, Pair.of(federatedIdentity.getId(), federatedTokens.getRight()));
+        } finally {
+            KnoxIDFAudit.audit(Action.AUTHENTICATION, opName, ResourceType.TRUSTED_ISSUER, outcome,
+                    "event=federated_callback op=" + opName + " " + detail);
         }
-        if (StringUtils.isBlank(federatedTokens.getLeft())) {
-            return error("invalid_request", "Federated OP did not return an id_token");
-        }
-        final JWT federatedIdToken = new JWTToken(federatedTokens.getLeft());
-        // Verify the OP's id_token (signature/issuer/audience/expiry) before trusting any claim in it.
-        final Response validationError = validateFederatedIdToken(federatedIdToken, federatedOpConfiguration);
-        if (validationError != null) {
-            return validationError;
-        }
-        // Bind the (now signature-verified) id_token to this authorization request (OIDC Core 3.1.2.1):
-        // its nonce claim must equal the nonce Knox generated and sent to the OP for this login session.
-        // This is checked only after the token's authenticity is established, so a forged token cannot
-        // supply its own matching nonce. A missing expected nonce (e.g. expired/replayed state) or a
-        // mismatch fails the flow.
-        final Response nonceError = verifyFederatedNonce(expectedNonce, federatedIdToken);
-        if (nonceError != null) {
-            return nonceError;
-        }
-        final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedIdToken, federatedOpConfiguration.getName());
-        return getAuthCodeFromKnox(authorizeRequestMetadata, Pair.of(federatedIdentity.getId(), federatedTokens.getRight()));
     }
 
     @GET
@@ -349,11 +387,18 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         final String state = request.getParameter(STATE);
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
         if (authorizeRequestMetadata == null) {
+            KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.UNKNOWN, ResourceType.PRINCIPAL,
+                    ActionOutcome.FAILURE, "event=consent reason=invalid_or_expired_state");
             return error("invalid_request", "Invalid state");
         }
         // Single-use consent state: invalidate it so the accepted-consent redirect cannot be replayed.
         authorizeRequestMetadataStore.remove(state);
         markConsentAccepted(authorizeRequestMetadata);
+        // Consent was granted by the subject for this client; the ensuing authorize() call audits the
+        // resulting code issuance separately.
+        KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.mask(authorizeRequestMetadata.getClientId()),
+                ResourceType.PRINCIPAL, ActionOutcome.SUCCESS, "event=consent subject="
+                        + KnoxIDFAudit.subjectLabel(authorizeRequestMetadata.getSubject()) + " reason=consent_granted");
         return authorize(authorizeRequestMetadata.getResponseType(),
                 authorizeRequestMetadata.getClientId(),
                 authorizeRequestMetadata.getRedirectUri(),
@@ -367,6 +412,9 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @GET
     @Path("/consentDenied")
     public Response consentDenied() throws Exception {
+        KnoxIDFAudit.audit(Action.AUTHORIZATION,
+                KnoxIDFAudit.subjectLabel(SubjectUtils.getCurrentEffectivePrincipalName()), ResourceType.PRINCIPAL,
+                ActionOutcome.FAILURE, "event=consent reason=consent_denied");
         return Response.status(Response.Status.FORBIDDEN).entity("Consent denied!").build();
     }
 

@@ -18,6 +18,9 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.service.knoxtoken.ClientCredentialsResource;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -88,28 +91,46 @@ public class RegistrationResource extends ClientCredentialsResource {
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response registerClient(@FormParam("redirect_uris") String redirectUris,
                                    @FormParam("allowed_scopes") String allowedScopes) {
-        if (anonymousRegistrationDenied()) {
-            return error("access_denied", "Anonymous client registration is disabled. Set '"
-                    + CLIENT_REGISTRATION_ANONYMOUS_ALLOWED + "' to true in the KNOXIDF service configuration to enable it.");
-        }
-        if (StringUtils.isBlank(redirectUris)) {
-            return error("invalid_request", "redirect_uris must be provided");
-        }
-        this.redirectUris = Arrays.asList(redirectUris.split(","));
-        final Response redirectUriVerificationResponse = verifyRedirectUris();
-        if (redirectUriVerificationResponse != null) {
-            return redirectUriVerificationResponse;
-        }
-
-        if (StringUtils.isBlank(allowedScopes)) {
-            this.allowedScopes = new ArrayList<>(DEFAULT_SCOPES);
-        } else {
-            this.allowedScopes = Arrays.asList(allowedScopes.split(","));
-            if (!this.allowedScopes.contains("openid")) {
-                return error("invalid_request", "allowed_scopes must include 'openid'");
+        // Audit the outcome of every dynamic client-registration attempt exactly once, recording the
+        // caller principal and the reason for a rejection. No secret (the minted client_secret) is
+        // ever logged — only that a client was registered.
+        final String caller = KnoxIDFAudit.subjectLabel(SubjectUtils.getCurrentEffectivePrincipalName());
+        String outcome = ActionOutcome.FAILURE;
+        String detail = "reason=unknown";
+        try {
+            if (anonymousRegistrationDenied()) {
+                detail = "reason=anonymous_denied";
+                return error("access_denied", "Anonymous client registration is disabled. Set '"
+                        + CLIENT_REGISTRATION_ANONYMOUS_ALLOWED + "' to true in the KNOXIDF service configuration to enable it.");
             }
+            if (StringUtils.isBlank(redirectUris)) {
+                detail = "reason=missing_redirect_uris";
+                return error("invalid_request", "redirect_uris must be provided");
+            }
+            this.redirectUris = Arrays.asList(redirectUris.split(","));
+            final Response redirectUriVerificationResponse = verifyRedirectUris();
+            if (redirectUriVerificationResponse != null) {
+                detail = "reason=invalid_redirect_uris";
+                return redirectUriVerificationResponse;
+            }
+
+            if (StringUtils.isBlank(allowedScopes)) {
+                this.allowedScopes = new ArrayList<>(DEFAULT_SCOPES);
+            } else {
+                this.allowedScopes = Arrays.asList(allowedScopes.split(","));
+                if (!this.allowedScopes.contains("openid")) {
+                    detail = "reason=invalid_scope";
+                    return error("invalid_request", "allowed_scopes must include 'openid'");
+                }
+            }
+            final Response response = super.doPost();
+            outcome = ActionOutcome.SUCCESS;
+            detail = "reason=client_registered";
+            return response;
+        } finally {
+            KnoxIDFAudit.audit(Action.AUTHENTICATION, caller, ResourceType.PRINCIPAL, outcome,
+                    "event=client_registration " + detail);
         }
-        return super.doPost();
     }
 
     /**

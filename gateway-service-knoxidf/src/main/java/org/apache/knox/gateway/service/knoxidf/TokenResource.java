@@ -18,6 +18,9 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
@@ -142,6 +145,9 @@ public class TokenResource extends PasscodeTokenResourceBase {
         } else if (AUTH_CODE.equals(grantType)) {
             return handleAuthorizationCodeFlow();
         }
+        KnoxIDFAudit.audit(Action.AUTHENTICATION, KnoxIDFAudit.mask(getRequestParam(CLIENT_ID)),
+                ResourceType.PRINCIPAL, ActionOutcome.FAILURE,
+                "event=token_grant grant_type=" + grantType + " reason=unsupported_grant_type");
         return error("invalid_request", "invalid grant type: " + grantType);
     }
 
@@ -207,9 +213,17 @@ public class TokenResource extends PasscodeTokenResourceBase {
     // Package-private for testability (the single-use rotation guard is exercised by
     // TokenResourceRefreshTokenRotationTest); not part of the public resource API.
     Response handleRefreshToken() {
+        // Audit the outcome of every refresh_token grant exactly once. The resource is the masked
+        // client_id; the masked refresh-token id and a reason are recorded in the message. The raw
+        // refresh token and client_secret are never logged.
+        final String clientId = getRequestParam(CLIENT_ID);
+        String maskedRefreshTokenId = KnoxIDFAudit.UNKNOWN;
+        String outcome = ActionOutcome.FAILURE;
+        String detail = "reason=unknown";
         try {
             final String refreshTokenParam = getRequestParam(REFRESH_TOKEN);
             final String refreshTokenId = TokenUtils.getTokenId(refreshTokenParam);
+            maskedRefreshTokenId = KnoxIDFAudit.mask(refreshTokenId);
             final TokenMetadata refreshTokenMetadata = tokenStateService.getTokenMetadata(refreshTokenId);
             validateRefreshTokenGrant(refreshTokenParam, refreshTokenId, refreshTokenMetadata);
 
@@ -221,6 +235,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             // request already redeemed/rotated this token, so reject it as invalid_grant. This mirrors
             // the consume-before-issue guard on the authorization_code grant (see handleAuthorizationCodeFlow).
             if (!tokenStateService.consumeToken(refreshTokenId)) {
+                detail = "reason=refresh_token_replayed";
                 return error("invalid_grant", "Refresh token has already been redeemed");
             }
 
@@ -233,15 +248,23 @@ public class TokenResource extends PasscodeTokenResourceBase {
             // Build new tokens
             final UserContext userContext = new UserContext(userName, null, userParams);
             final TokenResponseContext resp = getTokenResponse(userContext);
+            outcome = ActionOutcome.SUCCESS;
+            detail = "reason=rotated";
             return resp.build();
         } catch (ParseException e) {
+            detail = "reason=malformed_refresh_token";
             return error("invalid_grant", "Malformed refresh_token");
         } catch (UnknownTokenException e) {
+            detail = "reason=unknown_refresh_token";
             return error("invalid_grant", "Unknown refresh_token");
         } catch (RefreshTokenValidationError e) {
+            detail = "reason=validation_failed";
             return error("invalid_grant", e.getMessage());
+        } finally {
+            KnoxIDFAudit.audit(Action.AUTHENTICATION, KnoxIDFAudit.mask(clientId), ResourceType.PRINCIPAL,
+                    outcome, "event=token_grant grant_type=refresh_token refresh_token_id="
+                            + maskedRefreshTokenId + " " + detail);
         }
-
     }
 
     // Package-private for testability (client-authentication on the refresh grant is exercised by
@@ -292,27 +315,43 @@ public class TokenResource extends PasscodeTokenResourceBase {
     Response handleAuthorizationCodeFlow() {
         final String code = getRequestParam(CODE);
         final String redirectUri = getRequestParam(REDIRECT_URI);
-
-        final TokenMetadata authCodeMetadata;
+        // Audit the outcome of every authorization_code grant exactly once. The resource is the masked
+        // client_id; the masked auth-code id and a reason are recorded in the message. The raw code,
+        // code_verifier and client_secret are never logged.
+        final String clientId = getRequestParam(CLIENT_ID);
+        String outcome = ActionOutcome.FAILURE;
+        String detail = "reason=unknown";
         try {
-            authCodeMetadata = validateAuthCode(code, redirectUri);
-        } catch (AuthTokenValidationError e) {
-            return error("invalid_grant", e.getMessage());
-        }
+            final TokenMetadata authCodeMetadata;
+            try {
+                authCodeMetadata = validateAuthCode(code, redirectUri);
+            } catch (AuthTokenValidationError e) {
+                detail = "reason=validation_failed";
+                return error("invalid_grant", e.getMessage());
+            }
 
-        // Enforce single-use: atomically consume the code BEFORE issuing any token. Of N concurrent
-        // redemptions of the same code, exactly one wins the consume and proceeds; the losers get
-        // invalid_grant. This closes the replay window that existed when the code was only revoked
-        // in a finally block AFTER issuance. A code that fails validation above is deliberately NOT
-        // consumed here, so replaying with bad params cannot burn a victim's still-valid code.
-        if (!tokenStateService.consumeToken(code)) {
-            return error("invalid_grant", "Authorization code has already been redeemed");
-        }
+            // Enforce single-use: atomically consume the code BEFORE issuing any token. Of N concurrent
+            // redemptions of the same code, exactly one wins the consume and proceeds; the losers get
+            // invalid_grant. This closes the replay window that existed when the code was only revoked
+            // in a finally block AFTER issuance. A code that fails validation above is deliberately NOT
+            // consumed here, so replaying with bad params cannot burn a victim's still-valid code.
+            if (!tokenStateService.consumeToken(code)) {
+                detail = "reason=code_replayed";
+                return error("invalid_grant", "Authorization code has already been redeemed");
+            }
 
-        // The code is now gone from the store; hand the already-validated metadata to the issuance
-        // path via a request attribute (see getAuthCodeMetadata) so it need not re-read the code.
-        request.setAttribute(AUTH_CODE_METADATA_ATTR, authCodeMetadata);
-        return getAuthenticationToken();
+            // The code is now gone from the store; hand the already-validated metadata to the issuance
+            // path via a request attribute (see getAuthCodeMetadata) so it need not re-read the code.
+            request.setAttribute(AUTH_CODE_METADATA_ATTR, authCodeMetadata);
+            final Response response = getAuthenticationToken();
+            outcome = ActionOutcome.SUCCESS;
+            detail = "reason=tokens_issued";
+            return response;
+        } finally {
+            KnoxIDFAudit.audit(Action.AUTHENTICATION, KnoxIDFAudit.mask(clientId), ResourceType.PRINCIPAL,
+                    outcome, "event=token_grant grant_type=authorization_code code=" + KnoxIDFAudit.mask(code)
+                            + " " + detail);
+        }
     }
 
     /**
