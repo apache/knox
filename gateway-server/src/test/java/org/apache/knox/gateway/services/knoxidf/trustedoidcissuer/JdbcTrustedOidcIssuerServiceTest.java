@@ -34,10 +34,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -326,6 +329,59 @@ public class JdbcTrustedOidcIssuerServiceTest {
     final JdbcTrustedOidcIssuerService noAliasService = new JdbcTrustedOidcIssuerService();
     // setAliasService NOT called
     noAliasService.init(gatewayConfig, null);
+  }
+
+  /**
+   * Review finding M5: init() must re-check {@code initialized} inside the lock so a thread that
+   * blocked while another was initialising does not re-initialise (overwriting the already-built
+   * database/discoveryHelper). This deterministically reproduces the race window: the test thread
+   * holds the init lock and marks the service initialised (as a "winning" thread would) while a
+   * second init() call is blocked entering the critical section; when it proceeds, the inner recheck
+   * must make it a no-op and leave the sentinel database reference untouched.
+   */
+  @Test
+  public void testConcurrentInitDoesNotReinitialize() throws Exception {
+    final ReentrantLock initLock = (ReentrantLock) FieldUtils.readField(service, "initLock", true);
+    final AtomicBoolean initialized = (AtomicBoolean) FieldUtils.readField(service, "initialized", true);
+
+    // A sentinel that the losing init() must NOT overwrite if the inner recheck is present.
+    final TrustedOidcIssuerDatabase sentinel = EasyMock.createNiceMock(TrustedOidcIssuerDatabase.class);
+    FieldUtils.writeField(service, "database", sentinel, true);
+
+    // Simulate the pre-init state a second racing thread would have observed at the outer check.
+    initialized.set(false);
+
+    // Hold the lock first, then start the racing init(): it passes the outer !initialized check and
+    // blocks entering the critical section until we release the lock.
+    initLock.lock();
+    final AtomicBoolean workerFailed = new AtomicBoolean(false);
+    final Thread worker = new Thread(() -> {
+      try {
+        service.init(gatewayConfig, null);
+      } catch (Exception e) {
+        workerFailed.set(true);
+      }
+    });
+    try {
+      worker.start();
+      // Wait until the worker is actually blocked in the lock queue, i.e. it entered init() while
+      // initialized was still false (the exact race the inner recheck must defend against).
+      final long deadline = System.currentTimeMillis() + 10_000;
+      while (!initLock.hasQueuedThreads() && System.currentTimeMillis() < deadline) {
+        Thread.yield();
+      }
+      assertTrue("Worker should be blocked entering the init critical section", initLock.hasQueuedThreads());
+      // Mimic the winning thread finishing initialisation while we hold the lock.
+      initialized.set(true);
+    } finally {
+      initLock.unlock();
+    }
+    worker.join(10_000);
+
+    assertFalse("Racing init() must not have thrown", workerFailed.get());
+    assertFalse("Worker thread must have finished", worker.isAlive());
+    assertSame("A second init() must not rebuild the database once initialised (inner recheck)",
+        sentinel, FieldUtils.readField(service, "database", true));
   }
 
   // ------------------------------------------------------------------

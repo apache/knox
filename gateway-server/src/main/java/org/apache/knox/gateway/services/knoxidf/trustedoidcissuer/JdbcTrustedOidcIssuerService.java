@@ -70,21 +70,27 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
     if (!initialized.get()) {
       initLock.lock();
       try {
-        if (aliasService == null) {
-          throw new ServiceLifecycleException("The required AliasService reference has not been set.");
-        }
-        try {
-          this.maxTrustedIssuers = config.getTrustedOidcIssuerMaxTrustedIssuers();
-          this.database = new TrustedOidcIssuerDatabase(
-              DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
-          this.discoveryHelper = new OIDCDiscoveryHelper(this, config.getTrustedOidcIssuerDiscoveryCacheTtlSecs(),
-              OIDCDiscoveryHelper.buildHttpClient(config.getTrustedOidcIssuerDiscoveryConnectTimeoutMs(), config.getTrustedOidcIssuerDiscoveryReadTimeoutMs()));
-          reloadRegistrySnapshot();
-          initialized.set(true);
-        } catch (ServiceLifecycleException e) {
-          throw e;
-        } catch (Exception e) {
-          throw new ServiceLifecycleException("Error initializing JdbcTrustedOidcIssuerService: " + e, e);
+        // Double-checked locking: re-test under the lock so a thread that blocked while another was
+        // initialising does not re-initialise the database/discoveryHelper a second time (mirrors
+        // JdbcFederatedIdentityService). Without this inner check a startup race overwrote the
+        // already-built database and discoveryHelper references.
+        if (!initialized.get()) {
+          if (aliasService == null) {
+            throw new ServiceLifecycleException("The required AliasService reference has not been set.");
+          }
+          try {
+            this.maxTrustedIssuers = config.getTrustedOidcIssuerMaxTrustedIssuers();
+            this.database = new TrustedOidcIssuerDatabase(
+                DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
+            this.discoveryHelper = new OIDCDiscoveryHelper(this, config.getTrustedOidcIssuerDiscoveryCacheTtlSecs(),
+                OIDCDiscoveryHelper.buildHttpClient(config.getTrustedOidcIssuerDiscoveryConnectTimeoutMs(), config.getTrustedOidcIssuerDiscoveryReadTimeoutMs()));
+            reloadRegistrySnapshot();
+            initialized.set(true);
+          } catch (ServiceLifecycleException e) {
+            throw e;
+          } catch (Exception e) {
+            throw new ServiceLifecycleException("Error initializing JdbcTrustedOidcIssuerService: " + e, e);
+          }
         }
       } finally {
         initLock.unlock();
