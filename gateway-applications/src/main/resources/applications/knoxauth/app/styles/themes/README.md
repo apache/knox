@@ -441,9 +441,18 @@ Modern CSS features used:
 
 ## Security Considerations
 
-1. **XSS Protection**: Theme names are not executed as code, only used to construct file paths
-2. **Path Traversal**: Theme loader only loads files from `styles/themes/` directory
-3. **Content Security Policy**: Ensure CSP allows loading external fonts if using Google Fonts
+1. **Theme Name Validation**: Theme names arrive from untrusted sources (the `?theme=`
+   URL parameter and the saved localStorage preference), so each candidate must match
+   `^[a-zA-Z0-9_-]{1,64}$` before it is stored or used. Validation is applied on the
+   localStorage read path as well as the URL, and a value that fails is discarded.
+2. **XSS Protection**: The stylesheet element is created with DOM APIs
+   (`document.createElement`) rather than by concatenating markup, so a theme name can
+   never be parsed as HTML.
+3. **Path Traversal**: The validation pattern rejects dots and path separators, so the
+   only URL the loader can produce is `styles/themes/THEME_NAME/theme.css`. A name that
+   does not correspond to an installed theme simply fails to load and the base styles
+   remain in effect - the themes present on the server are the effective allowlist.
+4. **Content Security Policy**: Ensure CSP allows loading external fonts if using Google Fonts
 
 ## Troubleshooting
 
