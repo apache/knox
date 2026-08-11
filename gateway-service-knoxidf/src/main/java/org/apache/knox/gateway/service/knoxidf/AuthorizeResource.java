@@ -116,6 +116,11 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 @Path(AuthorizeResource.RESOURCE_PATH)
 public class AuthorizeResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/authorize";
+    // RFC 4122 "URL" namespace UUID. Used as the fixed namespace for deriving a STABLE Knox
+    // subject (UUIDv5) from a federated identity's issuer+subject (see deriveKnoxSubject), so the
+    // same upstream user always maps to the same Knox 'sub' across logins and gateway restarts.
+    // Must not change once federated identities are persisted -- it would rewrite every existing
+    // federated user's subject.
     private static final UUID KNOX_NAMESPACE = UUID.fromString("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
     private static final NameBasedGenerator UUID_V5 = Generators.nameBasedGenerator(KNOX_NAMESPACE);
     public static final Set<String> ALLOWED_CLAIMS = Set.of("preferred_username", "email", "email_verified",
