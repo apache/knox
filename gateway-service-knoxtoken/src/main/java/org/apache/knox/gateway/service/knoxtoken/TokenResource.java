@@ -785,13 +785,19 @@ public class TokenResource {
   private Response setTokenEnabledFlag(String tokenId, boolean enable, boolean batch) {
     String error = "";
     ErrorCode errorCode = ErrorCode.UNKNOWN;
+    Response.Status errorStatus = Response.Status.BAD_REQUEST;
     if (tokenStateService == null) {
       error = "Unable to " + (enable ? "enable" : "disable") + " tokens because token management is not configured";
       errorCode = ErrorCode.CONFIGURATION_ERROR;
     } else {
       try {
         final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
-        if (!batch && enable && tokenMetadata.isEnabled()) {
+        final String caller = SubjectUtils.getCurrentEffectivePrincipalName();
+        if (!(triesToRevokeOwnToken(tokenId, caller) || tokenRenewalOrRevocationAuthorized(caller))) {
+          errorStatus = Response.Status.FORBIDDEN;
+          error = "Caller (" + caller + ") not authorized to " + (enable ? "enable" : "disable") + " tokens.";
+          errorCode = ErrorCode.UNAUTHORIZED;
+        } else if (!batch && enable && tokenMetadata.isEnabled()) {
           error = "Token is already enabled";
           errorCode = ErrorCode.ALREADY_ENABLED;
         } else if (!batch && !enable && !tokenMetadata.isEnabled()) {
@@ -811,11 +817,12 @@ public class TokenResource {
     }
 
     if (error.isEmpty()) {
+      errorStatus = Response.Status.OK;
       log.setEnabledFlag(getTopologyName(), enable, Tokens.getTokenIDDisplayText(tokenId));
-      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
+      return Response.status(errorStatus).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
     } else {
       log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
-      return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
+      return Response.status(errorStatus).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
     }
   }
 
