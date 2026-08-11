@@ -593,7 +593,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             return error("invalid_request", "Federated id_token audience mismatch");
         }
 
-        return null;
+        return requireFederatedSubject(idToken);
     }
 
     /**
@@ -611,6 +611,23 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
         if (!expectedNonce.equals(idToken.getClaim(NONCE))) {
             return error("invalid_request", "Federated id_token nonce mismatch");
+        }
+        return null;
+    }
+
+    /**
+     * Enforces that a verified federated id_token carries the {@code sub} claim, which OIDC Core 2
+     * marks REQUIRED. Knox derives both the Knox subject and the federated-identity primary key from
+     * it, and the identity tables declare {@code external_subject NOT NULL}. A broken or hostile OP
+     * that omits {@code sub} would otherwise drive a NOT NULL insert failure -> HTTP 500 on every
+     * callback through that OP; reject it as a client/OP error instead. Call only after
+     * {@link #validateFederatedIdToken} has established the token's authenticity.
+     *
+     * @return an error {@link Response} when {@code sub} is absent/blank, or {@code null} otherwise.
+     */
+    Response requireFederatedSubject(final JWT idToken) {
+        if (StringUtils.isBlank(idToken.getSubject())) {
+            return error("invalid_request", "Federated id_token is missing the required sub claim");
         }
         return null;
     }
