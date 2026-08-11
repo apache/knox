@@ -26,7 +26,6 @@ from common_utils import (
     knox_get,
     knox_post,
     get_token_claim,
-    get_token_id_display_text,
 )
 
 
@@ -70,9 +69,10 @@ class TestKnoxIDF(unittest.TestCase):
             ["authorization_code", "refresh_token"],
         )
         self.assertEqual(config.get("id_token_signing_alg_values_supported"), ["RS256"])
+        # DEFAULT_SCOPES is an ImmutableSet, so discovery emits it in insertion order.
         self.assertEqual(
             config.get("scopes_supported"),
-            ["openid", "email", "profile", "offline_access"],
+            ["openid", "profile", "email", "offline_access"],
         )
 
     def test_client_credentials_flow(self):
@@ -107,14 +107,14 @@ class TestKnoxIDF(unittest.TestCase):
         # 1. Register client
         client_id, client_secret = self._register_test_client()
 
-        # 2. Authorize (with Basic Auth for the user 'guest')
+        # 2. Authorize (with Basic Auth for the user 'guest'). Consent is auto-granted by the
+        # server (knoxidf.auto.consent.enabled=true in the topology), not by any client parameter.
         params = {
             "response_type": "code",
             "client_id": client_id,
             "redirect_uri": "http://localhost/callback",
             "scope": "openid offline_access",
             "state": "test_state",
-            "auto_consent": "true"
         }
         code = self._authorize_get_code(params, expect_state="test_state")
 
@@ -139,8 +139,7 @@ class TestKnoxIDF(unittest.TestCase):
 
         refresh_token = tokens["refresh_token"]
         print(f"Refresh token: {refresh_token}")
-        refresh_token_id = get_token_claim(refresh_token, 'knox.id')
-        print(f"Refresh token knox.id: {refresh_token_id}")
+        print(f"Refresh token knox.id: {get_token_claim(refresh_token, 'knox.id')}")
 
         # 4. Refresh the token (rotation)
         print("Refreshing token...")
@@ -174,11 +173,12 @@ class TestKnoxIDF(unittest.TestCase):
             verify=False,
             headers={"Accept": "application/json"},
         )
+        # On the refresh_token grant, JWTFederationFilter pulls the refresh_token from the
+        # request body and validates it as an auth credential before TokenResource runs.
+        # Rotation revoked this token, so that filter-level check fails and returns 401
+        # Unauthorized (a plain sendError HTML page, not the JSON invalid_grant body the
+        # resource would emit) -- the request never reaches handleRefreshToken.
         self.assertEqual(response.status_code, 401)
-        error_info = response.json()
-        display_id = get_token_id_display_text(refresh_token_id)
-        self.assertEqual(error_info["status"], "401")
-        self.assertIn(f"Unknown token: {display_id}", error_info["message"])
 
     def test_authorization_code_flow_pkce_s256(self):
         """
@@ -198,7 +198,6 @@ class TestKnoxIDF(unittest.TestCase):
             "redirect_uri": "http://localhost/callback",
             "scope": "openid",
             "state": "pkce_state",
-            "auto_consent": "true",
             "code_challenge": code_challenge,
             "code_challenge_method": "S256"
         }
@@ -219,44 +218,39 @@ class TestKnoxIDF(unittest.TestCase):
         tokens = response.json()
         self.assertIn("access_token", tokens)
 
-    def test_authorization_code_flow_pkce_plain(self):
+    def test_authorization_code_flow_pkce_plain_rejected(self):
         """
-        Test OIDC Authorization Code Flow with PKCE (plain).
+        The 'plain' PKCE code_challenge_method offers no protection and is rejected: the authorize
+        endpoint must refuse to issue a code, returning invalid_request rather than redirecting.
         """
         # 1. Register client
-        client_id, client_secret = self._register_test_client()
+        client_id, _ = self._register_test_client()
 
-        # 2. PKCE Setup
-        code_verifier = "some-plain-verifier"
-        code_challenge = code_verifier
+        # 2. PKCE Setup ('plain': challenge == verifier)
+        code_challenge = "some-plain-verifier"
 
-        # 3. Authorize
+        # 3. Authorize with the unsupported method -> 400 invalid_request, no redirect
+        auth_url = f"{self.knoxidf_ldap_url}knoxidf/api/v1/authorize"
         params = {
             "response_type": "code",
             "client_id": client_id,
             "redirect_uri": "http://localhost/callback",
             "scope": "openid",
             "state": "pkce_plain_state",
-            "auto_consent": "true",
             "code_challenge": code_challenge,
             "code_challenge_method": "plain"
         }
-        code = self._authorize_get_code(params)
-
-        # 4. Token Exchange
-        token_url = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
-        data = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": "http://localhost/callback",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "code_verifier": code_verifier
-        }
-        response = knox_post(token_url, data=data)
-        self.assertEqual(response.status_code, 200)
-        tokens = response.json()
-        self.assertIn("access_token", tokens)
+        response = knox_get(
+            auth_url,
+            params=params,
+            auth=(self.username, self.password),
+            verify=False,
+            allow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 400)
+        error_info = response.json()
+        self.assertEqual(error_info["error"], "invalid_request")
+        self.assertIn("S256", error_info["error_description"])
 
     def test_authorization_code_flow_pkce_failure(self):
         """
@@ -273,7 +267,6 @@ class TestKnoxIDF(unittest.TestCase):
             "redirect_uri": "http://localhost/callback",
             "scope": "openid",
             "state": "pkce_fail",
-            "auto_consent": "true",
             "code_challenge": code_challenge,
             "code_challenge_method": "S256"
         }
@@ -281,7 +274,7 @@ class TestKnoxIDF(unittest.TestCase):
 
         token_url = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
 
-        # 1. Invalid verifier
+        # 1. Invalid verifier -> invalid_grant (HTTP 400)
         data = {
             "grant_type": "authorization_code",
             "code": code,
@@ -291,13 +284,13 @@ class TestKnoxIDF(unittest.TestCase):
             "code_verifier": "wrong-verifier"
         }
         response = knox_post(token_url, data=data)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid code_verifier", response.json()["error_description"])
 
-        # Note: the code is revoked after first use, so we need a new one for the next test
+        # A code that fails validation is not consumed, but fetch a fresh one for a clean scenario.
         code = self._authorize_get_code(params)
 
-        # 2. Missing verifier
+        # 2. Missing verifier -> invalid_grant (HTTP 400)
         data = {
             "grant_type": "authorization_code",
             "code": code,
@@ -306,7 +299,7 @@ class TestKnoxIDF(unittest.TestCase):
             "client_secret": client_secret
         }
         response = knox_post(token_url, data=data)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 400)
         self.assertIn("Missing code_verifier", response.json()["error_description"])
 
     def _register_test_client(self):

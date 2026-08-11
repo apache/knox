@@ -27,6 +27,13 @@
             <name>knoxidf.knox.token.limit.per.user</name>
             <value>-1</value>
         </param>
+        <param>
+            <!-- Skipping the user-consent screen is a server-side deployment decision, never a
+                 client-supplied request parameter. Kept in sync with knoxidf-ldap.xml so the
+                 KNOXIDF service consents consistently across both topologies. -->
+            <name>knoxidf.auto.consent.enabled</name>
+            <value>true</value>
+        </param>
     </service>
     <service>
         <role>KNOXTOKEN</role>

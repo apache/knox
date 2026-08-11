@@ -67,6 +67,14 @@
             <value>true</value>
         </param>
         <param>
+            <!-- Skipping the user-consent screen is a server-side deployment decision, never a
+                 client-supplied request parameter (a client must not be able to bypass consent by
+                 sending auto_consent=true). This sample/CI topology opts in so the automated
+                 authorization-code flow tests can complete without driving the consent UI. -->
+            <name>knoxidf.auto.consent.enabled</name>
+            <value>true</value>
+        </param>
+        <param>
             <name>token.exchange.topology.name</name>
             <value>knoxidf-token</value>
         </param>
