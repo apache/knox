@@ -113,6 +113,7 @@ import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -150,6 +151,11 @@ public class TokenServiceResourceTest {
 
     publicKey = (RSAPublicKey) KPair.getPublic();
     privateKey = (RSAPrivateKey) KPair.getPrivate();
+  }
+
+  @After
+  public void cleanUp() {
+    this.usersCanSeeAllTokens.clear();
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
