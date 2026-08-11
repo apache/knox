@@ -25,7 +25,6 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentity;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
-import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.util.JsonUtils;
@@ -60,7 +59,7 @@ public class UserInfoResource {
     private ServletContext servletContext;
 
     @Context
-    private HttpServletRequest request;
+    HttpServletRequest request;
 
     private FederatedIdentityService federatedIdentityService;
 
@@ -72,11 +71,7 @@ public class UserInfoResource {
     }
 
     public Response doGet() {
-        try {
-            return getUserInfo();
-        } catch (UnknownTokenException | TokenServiceException e) {
-            throw new RuntimeException(e);
-        }
+        return getUserInfo();
     }
 
     public Response doPost() {
@@ -85,14 +80,22 @@ public class UserInfoResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getUserInfo() throws UnknownTokenException, TokenServiceException {
+    public Response getUserInfo() {
         final String tokenId = request.getAttribute(TOKEN_ID_ATTRIBUTE) == null ? null : request.getAttribute(TOKEN_ID_ATTRIBUTE).toString();
         if (tokenId == null) {
             return error("invalid_request", "Cannot find tokenId");
         }
 
         final String scope = request.getAttribute(SCOPE_ATTRIBUTE) == null ? "" : request.getAttribute(SCOPE_ATTRIBUTE).toString();
-        final TokenMetadata tokenMetadata = getReadonlyTokenStateService().getTokenMetadata(tokenId);
+        final TokenMetadata tokenMetadata;
+        try {
+            tokenMetadata = getReadonlyTokenStateService().getTokenMetadata(tokenId);
+        } catch (UnknownTokenException e) {
+            // Expired, revoked, or otherwise unknown bearer token. Per RFC 6750 the protected
+            // resource must answer 401 with a WWW-Authenticate: Bearer error="invalid_token"
+            // challenge rather than leaking a 500 for what is a client authentication failure.
+            return invalidToken("The access token is expired, revoked, or unknown");
+        }
         final Map<String, Object> userInfo = new HashMap<>();
 
         // Check if this token has a federated identity
@@ -102,7 +105,12 @@ public class UserInfoResource {
             // Federated user
             final FederatedIdentity federatedIdentity = federatedIdentityService
                     .findById(federatedIdentityId)
-                    .orElseThrow(() -> new TokenServiceException("Federated identity not found"));
+                    .orElse(null);
+            if (federatedIdentity == null) {
+                // The token references a federated identity that no longer exists; the bearer token
+                // can no longer be honored, so answer with the RFC 6750 invalid_token challenge.
+                return invalidToken("The access token references an unknown federated identity");
+            }
 
             // Include only allowed claims
             Map<String, Object> claims = federatedIdentity.getAttributes().entrySet().stream()
@@ -129,9 +137,19 @@ public class UserInfoResource {
         return Response.ok(JsonUtils.renderAsJsonString(userInfo, true)).build();
     }
 
-    private TokenStateService getReadonlyTokenStateService() {
+    TokenStateService getReadonlyTokenStateService() {
         GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         return services.getService(ServiceType.TOKEN_STATE_SERVICE);
+    }
+
+    /**
+     * Builds the RFC 6750 §3 response for a bad bearer token: HTTP 401 with a
+     * {@code WWW-Authenticate: Bearer error="invalid_token"} challenge and a matching JSON body.
+     */
+    static Response invalidToken(final String description) {
+        final Response base = error("invalid_token", description, Response.Status.UNAUTHORIZED);
+        final String challenge = "Bearer error=\"invalid_token\", error_description=\"" + description + "\"";
+        return Response.fromResponse(base).header("WWW-Authenticate", challenge).build();
     }
 
 }
