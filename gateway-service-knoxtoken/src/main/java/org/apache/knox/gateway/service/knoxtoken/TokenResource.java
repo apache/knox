@@ -584,7 +584,7 @@ public class TokenResource {
     } else {
       final String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
 
-      if (tokenRenewalOrRevocationAuthorized(renewer)) {
+      if (tokenStateChangeAuthorized(renewer)) {
         try {
           JWTToken jwt = new JWTToken(token);
           if (tokenStateService.isExpired(jwt)) {
@@ -624,7 +624,7 @@ public class TokenResource {
     return resp;
   }
 
-  private boolean tokenRenewalOrRevocationAuthorized(final String principalName) {
+  private boolean tokenStateChangeAuthorized(final String principalName) {
     final boolean userAllowed = allowedRenewers.contains(principalName);
     final boolean groupAllowed = SubjectUtils.getCurrentGroupPrincipals().stream()
             .map(GroupPrincipal::getName)
@@ -675,7 +675,7 @@ public class TokenResource {
           errorStatus = Response.Status.FORBIDDEN;
           error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked.";
           errorCode = ErrorCode.UNAUTHORIZED;
-        } else if (triesToRevokeOwnToken(tokenId, revoker) || tokenRenewalOrRevocationAuthorized(revoker)) {
+        } else if (triesToChangeOwnToken(tokenId, revoker) || tokenStateChangeAuthorized(revoker)) {
           tokenStateService.revokeToken(tokenId);
           log.revokedToken(getTopologyName(),
                   Tokens.getTokenDisplayText(token),
@@ -715,7 +715,7 @@ public class TokenResource {
     return metadata == null ? false : metadata.isKnoxSsoCookie();
   }
 
-  private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
+  private boolean triesToChangeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
     final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
     final String tokenCreatedBy = metadata == null ? "" : metadata.getCreatedBy();
@@ -785,7 +785,7 @@ public class TokenResource {
   private Response setTokenEnabledFlag(String tokenId, boolean enable, boolean batch) {
     String error = "";
     ErrorCode errorCode = ErrorCode.UNKNOWN;
-    Response.Status errorStatus = Response.Status.BAD_REQUEST;
+    Response.Status responseStatus = Response.Status.BAD_REQUEST;
     if (tokenStateService == null) {
       error = "Unable to " + (enable ? "enable" : "disable") + " tokens because token management is not configured";
       errorCode = ErrorCode.CONFIGURATION_ERROR;
@@ -793,8 +793,8 @@ public class TokenResource {
       try {
         final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
         final String caller = SubjectUtils.getCurrentEffectivePrincipalName();
-        if (!(triesToRevokeOwnToken(tokenId, caller) || tokenRenewalOrRevocationAuthorized(caller))) {
-          errorStatus = Response.Status.FORBIDDEN;
+        if (!(triesToChangeOwnToken(tokenId, caller) || tokenStateChangeAuthorized(caller))) {
+          responseStatus = Response.Status.FORBIDDEN;
           error = "Caller (" + caller + ") not authorized to " + (enable ? "enable" : "disable") + " tokens.";
           errorCode = ErrorCode.UNAUTHORIZED;
         } else if (!batch && enable && tokenMetadata.isEnabled()) {
@@ -817,12 +817,12 @@ public class TokenResource {
     }
 
     if (error.isEmpty()) {
-      errorStatus = Response.Status.OK;
+      responseStatus = Response.Status.OK;
       log.setEnabledFlag(getTopologyName(), enable, Tokens.getTokenIDDisplayText(tokenId));
-      return Response.status(errorStatus).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
+      return Response.status(responseStatus).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
     } else {
       log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
-      return Response.status(errorStatus).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
+      return Response.status(responseStatus).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
     }
   }
 
