@@ -54,6 +54,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
+import org.apache.knox.gateway.util.knoxidf.FederatedNonceStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
 
@@ -120,6 +121,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
     private AuthorizeRequestMetadataStore authorizeRequestMetadataStore;
     private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
+    private final FederatedNonceStore federatedNonceStore = FederatedNonceStore.getInstance(120000L);
 
     @Context
     private HttpServletRequest request;
@@ -291,9 +293,13 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             return error("invalid_request", "No federated OP configuration available for the request");
         }
         // The federated callback state is single-use: invalidate it in both stores now that it has
-        // been validated and captured, so a replayed callback with the same state is rejected.
+        // been validated and captured, so a replayed callback with the same state is rejected. The
+        // nonce Knox sent to the OP was stashed under the same key (the login-session id == state);
+        // retrieve and invalidate it too so it cannot be reused.
         authorizeRequestMetadataStore.remove(state);
         federatedOpConfigurationStore.remove(state);
+        final String expectedNonce = federatedNonceStore.get(state);
+        federatedNonceStore.remove(state);
         final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
         if (StringUtils.isBlank(federatedTokens.getLeft())) {
             return error("invalid_request", "Federated OP did not return an id_token");
@@ -303,6 +309,15 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         final Response validationError = validateFederatedIdToken(federatedIdToken, federatedOpConfiguration);
         if (validationError != null) {
             return validationError;
+        }
+        // Bind the (now signature-verified) id_token to this authorization request (OIDC Core 3.1.2.1):
+        // its nonce claim must equal the nonce Knox generated and sent to the OP for this login session.
+        // This is checked only after the token's authenticity is established, so a forged token cannot
+        // supply its own matching nonce. A missing expected nonce (e.g. expired/replayed state) or a
+        // mismatch fails the flow.
+        final Response nonceError = verifyFederatedNonce(expectedNonce, federatedIdToken);
+        if (nonceError != null) {
+            return nonceError;
         }
         final FederatedIdentity federatedIdentity = resolveFederatedIdentity(federatedIdToken, federatedOpConfiguration.getName());
         return getAuthCodeFromKnox(authorizeRequestMetadata, Pair.of(federatedIdentity.getId(), federatedTokens.getRight()));
@@ -578,6 +593,25 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             return error("invalid_request", "Federated id_token audience mismatch");
         }
 
+        return null;
+    }
+
+    /**
+     * Verifies the OIDC {@code nonce} binding for a federated login (OIDC Core 3.1.2.1). The
+     * {@code expectedNonce} is the value Knox generated for this login session and sent to the OP;
+     * it must equal the {@code nonce} claim of the (already signature-verified) id_token. Callers
+     * must invoke this only after {@link #validateFederatedIdToken} succeeds so a forged token cannot
+     * assert its own nonce.
+     *
+     * @return an error {@link Response} on absence/mismatch, or {@code null} when the nonce matches.
+     */
+    Response verifyFederatedNonce(final String expectedNonce, final JWT idToken) {
+        if (StringUtils.isBlank(expectedNonce)) {
+            return error("invalid_request", "Missing or expired federated login nonce");
+        }
+        if (!expectedNonce.equals(idToken.getClaim(NONCE))) {
+            return error("invalid_request", "Federated id_token nonce mismatch");
+        }
         return null;
     }
 

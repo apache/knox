@@ -102,17 +102,20 @@ public class KnoxIDFUtils {
         return new AuthorizeRequestMetadata(clientId, null, responseType, redirectUri, requestedScopes, state, nonce, codeChallenge, codeChallengeMethod);
     }
 
-    public static String buildFederatedOpAuthRedirect(final FederatedOpConfiguration federatedOpConfiguration, final String federatedState) {
+    public static String buildFederatedOpAuthRedirect(final FederatedOpConfiguration federatedOpConfiguration, final String federatedState, final String nonce) {
         // URL-encode every value placed into the query string. client_id and the callback URI
-        // (which itself contains ':' '/' '?' etc.) and the state must be percent-encoded or the
-        // OP receives a malformed/parameter-split URL. CODE_RESPONSE_TYPE and OPENID_SCOPE are
+        // (which itself contains ':' '/' '?' etc.), the state and the nonce must be percent-encoded
+        // or the OP receives a malformed/parameter-split URL. CODE_RESPONSE_TYPE and OPENID_SCOPE are
         // fixed "key=value" literals with no reserved characters, so they are appended as-is.
+        // The nonce binds the returned id_token to this authorization request (OIDC Core 3.1.2.1);
+        // it is verified against the id_token's nonce claim when the OP callback is processed.
         return federatedOpConfiguration.getAuthorizeEndpoint()
                 + "?" + KnoxIDFConstants.CLIENT_ID + "=" + urlEncode(federatedOpConfiguration.getClientId())
                 + "&" + KnoxIDFConstants.REDIRECT_URI + "=" + urlEncode(federatedOpConfiguration.getAuthorizeCallback())
                 + "&" + KnoxIDFConstants.CODE_RESPONSE_TYPE
                 + "&" + KnoxIDFConstants.OPENID_SCOPE
-                + "&" + KnoxIDFConstants.STATE + "=" + urlEncode(federatedState);
+                + "&" + KnoxIDFConstants.STATE + "=" + urlEncode(federatedState)
+                + "&" + KnoxIDFConstants.NONCE + "=" + urlEncode(nonce);
     }
 
     private static String urlEncode(final String value) {

@@ -41,6 +41,7 @@ import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
+import org.apache.knox.gateway.util.knoxidf.FederatedNonceStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
@@ -70,6 +71,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -120,6 +122,7 @@ public class WebSSOResource {
   private String tokenIssuer;
   private TokenStateService tokenStateService;
   private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
+  private final FederatedNonceStore federatedNonceStore = FederatedNonceStore.getInstance(120000L);
 
   private String sameSiteValue;
 
@@ -243,7 +246,12 @@ public class WebSSOResource {
       final FederatedOpConfiguration federatedOpConfiguration = federatedOpConfig.get();
       //keep only the selected federated OP in the cache -> we can easily get it in the AuthorizeResource.authCallback endpoint
       federatedOpConfigurationStore.put(loginSessionId, Set.of(federatedOpConfiguration));
-      final String federatedOpAuthRedirect = KnoxIDFUtils.buildFederatedOpAuthRedirect(federatedOpConfiguration, loginSessionId);
+      // Generate a per-request nonce, send it to the OP, and stash it keyed by the login-session id
+      // (== the state echoed back by the OP). AuthorizeResource.authCallback verifies the returned
+      // id_token's nonce claim against this value, binding the id_token to this authorization request.
+      final String nonce = UUID.randomUUID().toString();
+      federatedNonceStore.put(loginSessionId, nonce);
+      final String federatedOpAuthRedirect = KnoxIDFUtils.buildFederatedOpAuthRedirect(federatedOpConfiguration, loginSessionId, nonce);
       return Response.seeOther(java.net.URI.create(federatedOpAuthRedirect)).build();
     } else {
       return KnoxIDFUtils.error("invalid_request", "Cannot load federated op config associated with login session");
