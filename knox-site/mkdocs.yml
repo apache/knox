@@ -114,6 +114,14 @@ nav:
           - General Troubleshooting: admin_troubleshooting.md
           - Authentication Issues: auth_troubleshooting.md
           - Service-Specific Issues: service_troubleshooting.md
+  - Identity Federation (OIDC Provider):
+      - Overview: knoxidf/index.md
+      - Getting Started: knoxidf/getting_started.md
+      - Endpoint Reference: knoxidf/endpoints.md
+      - Configuration Reference: knoxidf/configuration.md
+      - Security: knoxidf/security.md
+      - Federation: knoxidf/federation.md
+      - Operations: knoxidf/operations.md
   - Developer Guide:
       - Overview: dev-guide/book.md
       - Extending Knox:
@@ -134,7 +142,11 @@ markdown_extensions:
       permalink: true
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
