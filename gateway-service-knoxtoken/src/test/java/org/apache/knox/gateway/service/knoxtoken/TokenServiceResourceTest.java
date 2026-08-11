@@ -134,7 +134,9 @@ public class TokenServiceResourceTest {
 
   private enum TokenLifecycleOperation {
     Renew,
-    Revoke
+    Revoke,
+    Enable,
+    Disable
   }
 
   @BeforeClass
@@ -1013,6 +1015,104 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testTokenDisable_Enabled_NoSubject() throws Exception {
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder().serviceLevelConfig(true).build();
+    final Response response = doTestSetTokenEnabledFlag(configs, false);
+    validateSetEnabledFlagResponse(response, 403, false,
+            "Caller (null) not authorized to disable tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_UnauthorizedCaller() throws Exception {
+    final String caller = "scott";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response response = doTestSetTokenEnabledFlag(configs, false);
+    validateSetEnabledFlagResponse(response, 403, false,
+            "Caller (" + caller + ") not authorized to disable tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_OwnToken() throws Exception {
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(USER_NAME))
+            .build();
+    final Response response = doTestSetTokenEnabledFlag(configs, false);
+    validateSuccessfulSetEnabledFlagResponse(response, false);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_WithRenewerWhitelist() throws Exception {
+    final String caller = "scott";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .renewers("tony, dany,  steve ," + caller)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response response = doTestSetTokenEnabledFlag(configs, false);
+    validateSuccessfulSetEnabledFlagResponse(response, false);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_WithGroupRenewerWhitelist() throws Exception {
+    final String caller = "scott";
+    final String group = "devOps";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .groupRenewers(group)
+            .caller(createTestSubject(caller, group))
+            .build();
+    final Response response = doTestSetTokenEnabledFlag(configs, false);
+    validateSuccessfulSetEnabledFlagResponse(response, false);
+  }
+
+  @Test
+  public void testTokenEnable_UnauthorizedCallerRejectedBeforeStateCheck() throws Exception {
+    final String caller = "scott";
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(caller))
+            .build();
+    final Response response = doTestSetTokenEnabledFlag(configs, true);
+    validateSetEnabledFlagResponse(response, 403, false,
+            "Caller (" + caller + ") not authorized to enable tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
+  }
+
+  @Test
+  public void testTokenEnable_AlreadyEnabled_OwnerGetsStateCheck() throws Exception {
+    final TokenRenewalTestConfigs configs = TokenRenewalTestConfigs.builder()
+            .serviceLevelConfig(true)
+            .caller(createTestSubject(USER_NAME))
+            .build();
+    final Response response = doTestSetTokenEnabledFlag(configs, true);
+    validateSetEnabledFlagResponse(response, 400, false,
+            "Token is already enabled", TokenResource.ErrorCode.ALREADY_ENABLED);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_ImpersonatorCanDisableCreatedToken() throws Exception {
+    final Response response = doTestImpersonatedTokenSetEnabledFlag(createTestSubject(USER_NAME), false);
+    validateSuccessfulSetEnabledFlagResponse(response, false);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_ImpersonatedUserCanDisableOwnToken() throws Exception {
+    final Response response = doTestImpersonatedTokenSetEnabledFlag(createTestSubject("impersonatedUserName"), false);
+    validateSuccessfulSetEnabledFlagResponse(response, false);
+  }
+
+  @Test
+  public void testTokenDisable_Enabled_UnauthorizedCallerCannotDisableImpersonatedToken() throws Exception {
+    final String caller = "scott";
+    final Response response = doTestImpersonatedTokenSetEnabledFlag(createTestSubject(caller), false);
+    validateSetEnabledFlagResponse(response, 403, false,
+            "Caller (" + caller + ") not authorized to disable tokens.", TokenResource.ErrorCode.UNAUTHORIZED);
+  }
+
+  @Test
   public void testKidJkuClaims() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.ttl", "60000");
@@ -1630,6 +1730,42 @@ public class TokenServiceResourceTest {
     return doTestTokenLifecyle(TokenLifecycleOperation.Revoke, configs.isTokenStateServerManaged(), null, configs.getRenewers(), configs.getGroupRenewers(), null, configs.getCaller(), impersonatedUser).getValue();
   }
 
+  private Response doTestSetTokenEnabledFlag(final TokenRenewalTestConfigs configs, final boolean enable) throws Exception {
+    final TokenLifecycleOperation operation = enable ? TokenLifecycleOperation.Enable : TokenLifecycleOperation.Disable;
+    return doTestTokenLifecyle(operation, configs.isTokenStateServerManaged(), null, configs.getRenewers(), configs.getGroupRenewers(), null, configs.getCaller(), null).getValue();
+  }
+
+  /**
+   * Issues a token under an impersonating subject (so the persisted metadata has
+   * userName=impersonated user and createdBy=impersonator) and then attempts to flip its
+   * enabled flag as {@code caller}. Mirrors the impersonated-token creation flow in
+   * {@link #testCreateImpersonatedToken(boolean)}.
+   */
+  private Response doTestImpersonatedTokenSetEnabledFlag(final Subject caller, final boolean enable) throws Exception {
+    final String impersonatedUser = "impersonatedUserName";
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.exp.server-managed", Boolean.TRUE.toString());
+    contextExpectations.put(TokenResource.QUERY_PARAMETER_DOAS, impersonatedUser);
+    contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".users", impersonatedUser);
+    contextExpectations.put(AuthFilterUtils.PROXYUSER_PREFIX + "." + USER_NAME + ".hosts", "*");
+    contextExpectations.put(ContextAttributes.IMPERSONATION_ENABLED_ATTRIBUTE, Boolean.TRUE.toString());
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    final Subject issuer = createTestSubject(USER_NAME);
+    issuer.getPrincipals().add(new ImpersonatedPrincipal(impersonatedUser));
+    final Response issueResponse = Subject.doAs(issuer, (PrivilegedAction<Response>) () -> tr.doGet());
+    assertEquals(200, issueResponse.getStatus());
+    final String accessToken = getTagValue(issueResponse.getEntity().toString(), "access_token");
+    final String tokenId = TokenUtils.getTokenId(new JWTToken(accessToken));
+
+    return requestSetTokenEnabledFlag(tr, tokenId, enable, caller);
+  }
+
   /**
    * @param operation          A TokenLifecycleOperation
    * @param serviceLevelConfig true, if server-side token state management should be enabled at the service level;
@@ -1686,6 +1822,12 @@ public class TokenServiceResourceTest {
       case Revoke:
         response = requestTokenRevocation(tr, accessToken, caller);
         break;
+      case Enable:
+        response = requestSetTokenEnabledFlag(tr, TokenUtils.getTokenId(new JWTToken(accessToken)), true, caller);
+        break;
+      case Disable:
+        response = requestSetTokenEnabledFlag(tr, TokenUtils.getTokenId(new JWTToken(accessToken)), false, caller);
+        break;
       default:
         throw new Exception("Invalid operation: " + operation);
     }
@@ -1729,6 +1871,11 @@ public class TokenServiceResourceTest {
     return response;
   }
 
+  private static Response requestSetTokenEnabledFlag(final TokenResource tr, final String tokenId, final boolean enable, final Subject caller) {
+    final PrivilegedAction<Response> action = () -> enable ? tr.enable(tokenId) : tr.disable(tokenId);
+    return caller != null ? Subject.doAs(caller, action) : action.run();
+  }
+
   private static void validateSuccessfulRenewalResponse(final Response response) throws IOException {
     validateRenewalResponse(response, 200, true, null, null);
   }
@@ -1738,13 +1885,22 @@ public class TokenServiceResourceTest {
                                               final boolean  expectedResult,
                                               final String   expectedMessage,
                                               final TokenResource.ErrorCode expectedCode) throws IOException {
+    validateLifecycleResponse(response, "renewed", expectedStatusCode, expectedResult, expectedMessage, expectedCode);
+  }
+
+  private static void validateLifecycleResponse(final Response response,
+                                                final String   resultField,
+                                                final int      expectedStatusCode,
+                                                final boolean  expectedResult,
+                                                final String   expectedMessage,
+                                                final TokenResource.ErrorCode expectedCode) throws IOException {
     assertEquals(expectedStatusCode, response.getStatus());
     assertTrue(response.hasEntity());
     String responseContent = (String) response.getEntity();
     assertNotNull(responseContent);
     assertFalse(responseContent.isEmpty());
     Map<String, Object> json = parseJSONResponse(responseContent);
-    boolean result = Boolean.valueOf((String)json.get("renewed"));
+    boolean result = Boolean.parseBoolean((String) json.get(resultField));
     assertEquals(expectedResult, result);
     assertEquals(expectedMessage, json.get("error"));
     if (expectedCode != null) {
@@ -1761,18 +1917,21 @@ public class TokenServiceResourceTest {
                                                  final boolean  expectedResult,
                                                  final String   expectedMessage,
                                                  final TokenResource.ErrorCode expectedCode) throws IOException {
-    assertEquals(expectedStatusCode, response.getStatus());
-    assertTrue(response.hasEntity());
-    String responseContent = (String) response.getEntity();
-    assertNotNull(responseContent);
-    assertFalse(responseContent.isEmpty());
-    Map<String, Object> json = parseJSONResponse(responseContent);
-    boolean result = Boolean.valueOf((String)json.get("revoked"));
-    assertEquals(expectedResult, result);
-    assertEquals(expectedMessage, json.get("error"));
-    if (expectedCode != null) {
-      assertEquals(expectedCode.toInt(), json.get("code"));
-    }
+    validateLifecycleResponse(response, "revoked", expectedStatusCode, expectedResult, expectedMessage, expectedCode);
+  }
+
+  private static void validateSuccessfulSetEnabledFlagResponse(final Response response, final boolean enable) throws IOException {
+    validateSetEnabledFlagResponse(response, 200, true, null, null);
+    final Map<String, Object> json = parseJSONResponse((String) response.getEntity());
+    assertEquals(String.valueOf(enable), json.get("isEnabled"));
+  }
+
+  private static void validateSetEnabledFlagResponse(final Response response,
+                                                     final int      expectedStatusCode,
+                                                     final boolean  expectedResult,
+                                                     final String   expectedMessage,
+                                                     final TokenResource.ErrorCode expectedCode) throws IOException {
+    validateLifecycleResponse(response, "setEnabledFlag", expectedStatusCode, expectedResult, expectedMessage, expectedCode);
   }
 
 
