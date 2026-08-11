@@ -300,7 +300,14 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         federatedOpConfigurationStore.remove(state);
         final String expectedNonce = federatedNonceStore.get(state);
         federatedNonceStore.remove(state);
-        final Pair<String, String> federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
+        final Pair<String, String> federatedTokens;
+        try {
+            federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
+        } catch (ClientSecretResolutionException e) {
+            // A configured client-secret alias could not be resolved. This is a server-side
+            // misconfiguration, not a client error, and we deliberately never made the OP call.
+            return error("server_error", e.getMessage());
+        }
         if (StringUtils.isBlank(federatedTokens.getLeft())) {
             return error("invalid_request", "Federated OP did not return an id_token");
         }
@@ -490,25 +497,50 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
      * preferred, secure source and takes precedence: when it resolves to a value, that value is
      * used and the plaintext {@code clientSecret} topology param is never consulted. The plaintext
      * param remains supported as a fallback only when no alias is configured, so existing
-     * deployments keep working. If an alias is configured but cannot be resolved we fail closed
-     * (return {@code null}) rather than silently leaking through to the plaintext param, so a
-     * misconfigured alias surfaces as an auth failure instead of masking the intended secure source.
+     * deployments keep working. If an alias is configured but cannot be resolved we fail closed by
+     * throwing {@link ClientSecretResolutionException} rather than returning {@code null} (which the
+     * form encoder would have serialized to a literal {@code client_secret=null} sent to the OP) or
+     * silently leaking through to the plaintext param. The caller aborts the exchange before any
+     * HTTP request, so a misconfigured alias surfaces as a clear error instead of a bogus OP call.
      */
     private String resolveClientSecret(final FederatedOpConfiguration opConfig) {
         final String alias = opConfig.getClientSecretAlias();
         if (StringUtils.isBlank(alias)) {
             return opConfig.getClientSecret();
         }
+        char[] secret = null;
         try {
             final AliasService aliasService = getGatewayServices().getService(ServiceType.ALIAS_SERVICE);
             String clusterName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
             if (StringUtils.isBlank(clusterName)) {
                 clusterName = AliasService.NO_CLUSTER_NAME;
             }
-            final char[] secret = aliasService.getPasswordFromAliasForCluster(clusterName, alias, false);
-            return secret == null ? null : new String(secret);
+            secret = aliasService.getPasswordFromAliasForCluster(clusterName, alias, false);
         } catch (AliasServiceException e) {
-            return null;
+            // Fall through to the fail-closed check below; an alias was configured but its lookup failed.
+            secret = null;
+        }
+        return requireResolvedAliasSecret(alias, secret);
+    }
+
+    /**
+     * Fail-closed guard for an explicitly configured client-secret alias: returns the resolved secret
+     * or throws {@link ClientSecretResolutionException} when it is absent/empty. Package-private and
+     * pure so the fail-closed decision is unit-testable without a live {@code AliasService}.
+     */
+    static String requireResolvedAliasSecret(final String alias, final char[] secret) {
+        if (secret == null || secret.length == 0) {
+            throw new ClientSecretResolutionException(
+                    "Federated OP client secret alias '" + alias + "' is configured but could not be resolved; "
+                            + "refusing to contact the OP without the intended secret");
+        }
+        return new String(secret);
+    }
+
+    /** Signals that a configured client-secret alias could not be resolved; the exchange must abort. */
+    static final class ClientSecretResolutionException extends RuntimeException {
+        ClientSecretResolutionException(final String message) {
+            super(message);
         }
     }
 
