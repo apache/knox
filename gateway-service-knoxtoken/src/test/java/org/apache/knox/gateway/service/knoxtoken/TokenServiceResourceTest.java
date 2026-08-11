@@ -113,6 +113,7 @@ import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -135,6 +136,7 @@ public class TokenServiceResourceTest {
   private JWTokenAuthority authority;
   private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
+  private final Set<String> usersCanSeeAllTokens = new HashSet<>();
 
   private enum TokenLifecycleOperation {
     Renew,
@@ -151,6 +153,11 @@ public class TokenServiceResourceTest {
 
     publicKey = (RSAPublicKey) KPair.getPublic();
     privateKey = (RSAPrivateKey) KPair.getPrivate();
+  }
+
+  @After
+  public void cleanUp() {
+    this.usersCanSeeAllTokens.clear();
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
@@ -208,6 +215,8 @@ public class TokenServiceResourceTest {
       EasyMock.expect(config.getServiceParameter(tokenStateServiceType, "impl")).andReturn(contextExpectations.get(tokenStateServiceType)).anyTimes();
     }
     EasyMock.expect(config.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
+    EasyMock.expect(config.canSeeAllTokens(EasyMock.anyObject(String.class)))
+        .andAnswer(() -> usersCanSeeAllTokens.contains((String) EasyMock.getCurrentArguments()[0])).anyTimes();
     EasyMock.expect(config.getMaximumNumberOfTokensPerUser())
         .andReturn(contextExpectations.containsKey(KNOX_TOKEN_USER_LIMIT) ? Integer.parseInt(contextExpectations.get(KNOX_TOKEN_USER_LIMIT)) : -1).anyTimes();
     EasyMock.expect(services.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tss).anyTimes();
@@ -1342,12 +1351,86 @@ public class TokenServiceResourceTest {
   }
 
   private Response getUserTokensResponse(TokenResource tokenResource, boolean createdBy) {
+    return getUserTokensResponse(tokenResource, createTestSubject(USER_NAME),
+        Collections.singletonMap(createdBy ? "createdBy" : "userName", USER_NAME));
+  }
+
+  private Response getUserTokensResponse(TokenResource tokenResource, Subject caller, Map<String, String> queryParams) {
     final MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
-    queryParameters.put(createdBy ? "createdBy" : "userName", Arrays.asList(USER_NAME));
+    queryParams.forEach((key, value) -> queryParameters.put(key, Arrays.asList(value)));
     final UriInfo uriInfo = EasyMock.createNiceMock(UriInfo.class);
     EasyMock.expect(uriInfo.getQueryParameters()).andReturn(queryParameters).anyTimes();
     EasyMock.replay(uriInfo);
-    return tokenResource.getUserTokens(uriInfo);
+    return Subject.doAs(caller, (PrivilegedAction<Response>) () -> tokenResource.getUserTokens(uriInfo));
+  }
+
+  private TokenResource createTokenResourceWithTokensFor(String... users) throws Exception {
+    configureCommonExpectations(new HashMap<>(), Boolean.TRUE);
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    for (String user : users) {
+      Subject.doAs(createTestSubject(user), (PrivilegedAction<Response>) () -> tr.doGet());
+    }
+    return tr;
+  }
+
+  @SuppressWarnings("unchecked")
+  private int tokenCount(Response response) {
+    final Collection<Object> tokens = ((Map<String, Collection<Object>>) JsonUtils.getObjectFromJsonString(response.getEntity().toString()))
+        .get("tokens");
+    return tokens.size();
+  }
+
+  @Test
+  public void testGetUserTokensOwnerCanSeeOwnTokens() throws Exception {
+    final TokenResource tr = createTokenResourceWithTokensFor(USER_NAME);
+    final Response response = getUserTokensResponse(tr, createTestSubject(USER_NAME), Collections.singletonMap("userName", USER_NAME));
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(1, tokenCount(response));
+  }
+
+  @Test
+  public void testGetUserTokensUnauthorizedForOtherUser() throws Exception {
+    final TokenResource tr = createTokenResourceWithTokensFor(USER_NAME);
+    final Response response = getUserTokensResponse(tr, createTestSubject("bob"), Collections.singletonMap("userName", USER_NAME));
+    assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
+    assertTrue(response.getEntity().toString().contains("not authorized"));
+  }
+
+  @Test
+  public void testGetUserTokensUnauthorizedForUserNameOrCreatedByOfOtherUser() throws Exception {
+    final TokenResource tr = createTokenResourceWithTokensFor(USER_NAME);
+    final Response response = getUserTokensResponse(tr, createTestSubject("bob"), Collections.singletonMap("userNameOrCreatedBy", USER_NAME));
+    assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
+    assertTrue(response.getEntity().toString().contains("not authorized"));
+  }
+
+  @Test
+  public void testGetUserTokensAllTokensDeniedForOrdinaryUser() throws Exception {
+    final TokenResource tr = createTokenResourceWithTokensFor(USER_NAME);
+    final Response response = getUserTokensResponse(tr, createTestSubject("bob"), Collections.singletonMap("allTokens", "true"));
+    assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
+    assertTrue(response.getEntity().toString().contains("not authorized"));
+  }
+
+  @Test
+  public void testGetUserTokensAdminCanSeeAllTokens() throws Exception {
+    final TokenResource tr = createTokenResourceWithTokensFor(USER_NAME, "bob");
+    usersCanSeeAllTokens.add("admin");
+    final Response response = getUserTokensResponse(tr, createTestSubject("admin"), Collections.singletonMap("allTokens", "true"));
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(2, tokenCount(response));
+  }
+
+  @Test
+  public void testGetUserTokensAdminCanSeeOtherUsersTokens() throws Exception {
+    final TokenResource tr = createTokenResourceWithTokensFor(USER_NAME);
+    usersCanSeeAllTokens.add("admin");
+    final Response response = getUserTokensResponse(tr, createTestSubject("admin"), Collections.singletonMap("userName", USER_NAME));
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    assertEquals(1, tokenCount(response));
   }
 
   @Test
