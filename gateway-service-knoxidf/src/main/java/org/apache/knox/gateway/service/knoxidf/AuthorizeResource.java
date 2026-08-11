@@ -263,15 +263,28 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     }
 
     private Response redirectToAuthSuccess(final AuthorizeRequestMetadata authorizeRequestMetadata, final String code) {
-        final String redirectLocation;
         try {
-            redirectLocation = authorizeRequestMetadata.getRedirectUri()
-                    + "?code=" + URLEncoder.encode(code, UTF_8)
-                    + "&state=" + URLEncoder.encode(authorizeRequestMetadata.getState(), UTF_8);
+            final String redirectLocation = buildSuccessRedirect(
+                    authorizeRequestMetadata.getRedirectUri(), code, authorizeRequestMetadata.getState());
+            return Response.seeOther(URI.create(redirectLocation)).build();
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e); //This should never happen with UTF-8
         }
-        return Response.seeOther(URI.create(redirectLocation)).build();
+    }
+
+    /**
+     * Appends the {@code code} and {@code state} authorization-response params to the client's
+     * registered redirect_uri. Uses {@code &} as the separator when the redirect_uri already carries
+     * a query string and {@code ?} otherwise, so a registered URI such as
+     * {@code https://app.example/cb?ui=1} produces {@code ...?ui=1&code=...&state=...} rather than a
+     * malformed second {@code ?} that the client would fail to parse. Package-private for testing.
+     */
+    static String buildSuccessRedirect(final String redirectUri, final String code, final String state)
+            throws UnsupportedEncodingException {
+        final String separator = redirectUri.contains("?") ? "&" : "?";
+        return redirectUri
+                + separator + "code=" + URLEncoder.encode(code, UTF_8)
+                + "&state=" + URLEncoder.encode(state, UTF_8);
     }
 
     @GET
