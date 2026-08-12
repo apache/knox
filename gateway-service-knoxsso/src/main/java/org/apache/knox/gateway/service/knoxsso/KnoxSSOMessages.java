@@ -61,6 +61,10 @@ public interface KnoxSSOMessages {
       "not valid according to the configured whitelist: {1}. See documentation for KnoxSSO Whitelisting.")
   void whiteListMatchFail(String original, String whitelist);
 
+  @Message( level = MessageLevel.ERROR, text = "The original URL: {0} for redirecting back after authentication " +
+      "embeds userinfo (e.g. user@host) and is therefore rejected.")
+  void userInfoInOriginalURL(String original);
+
   @Message( level = MessageLevel.INFO, text = "Knox Token service ({0}) stored state for token {1} ({2})")
   void storedToken(String topologyName, String tokenDisplayText, String tokenId);
 }
