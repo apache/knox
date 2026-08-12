@@ -269,10 +269,14 @@ public class WebSSOResource {
         // never legitimate; reject it before the host-only whitelist check.
         if (Urls.containsUserInfo(original)) {
           validRedirect = false;
+          LOGGER.userInfoInOriginalURL(Log4jAuditor.maskTokenFromURL(original));
         } else if (whitelist != null) {
           // If there is a whitelist defined, then the original URL must be validated against it.
           // If there is no whitelist, then everything is valid.
           validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
+          if (!validRedirect) {
+            LOGGER.whiteListMatchFail(Log4jAuditor.maskTokenFromURL(original), whitelist);
+          }
         }
       } catch (MalformedURLException e) {
         throw new WebApplicationException("Malformed original URL: " + original,
@@ -280,8 +284,7 @@ public class WebSSOResource {
       }
 
       if (!validRedirect) {
-        LOGGER.whiteListMatchFail(Log4jAuditor.maskTokenFromURL(original), whitelist);
-        throw new WebApplicationException("Original URL not valid according to the configured whitelist.",
+        throw new WebApplicationException("Original URL not valid for redirect.",
                                           Response.Status.BAD_REQUEST);
       }
     } else {
