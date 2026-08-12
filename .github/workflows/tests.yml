@@ -69,6 +69,61 @@ jobs:
           # Run the tests service defined in docker-compose.yml
           docker compose -f ./.github/workflows/compose/docker-compose.yml up --exit-code-from tests tests
 
+      # KnoxIDF federation E2E runs only when the PR carries the 'test-federation'
+      # label. It stands up a real Keycloak (external OpenID Provider) via the
+      # override compose file and pulls a multi-hundred-MB image plus minutes of
+      # realm import, so it is opt-in rather than on every PR. It runs here, before
+      # the single-EKU steps, so 'knox' is still in its base (non-mTLS) config; the
+      # override only adds a keycloak dependency to knox, it does not reconfigure it.
+      - name: Start Keycloak + Knox for federation
+        if: contains(github.event.pull_request.labels.*.name, 'test-federation')
+        run: |
+          # 'up -d knox' blocks until keycloak is service_healthy (override depends_on).
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-federation.yml \
+            up -d knox keycloak
+
+      - name: Wait for federation stack to stabilize
+        if: contains(github.event.pull_request.labels.*.name, 'test-federation')
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run KnoxIDF Federation Tests
+        id: knoxidf_federation_tests
+        if: contains(github.event.pull_request.labels.*.name, 'test-federation')
+        run: |
+          # Emit a distinct JUnit file so it reports as its own test suite.
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-federation.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test_knoxidf_federation.py --junitxml=test-results-federation.xml"
+
+      # Evidence gathering mirrors the single-EKU dumps: on a federation failure,
+      # capture container status and the knox + keycloak logs so a broker-flow
+      # failure (bad callback/issuer/JWKS) can be told apart from a Keycloak that
+      # never came up.
+      - name: Dump federation diagnostics on failure
+        if: failure() && steps.knoxidf_federation_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-federation.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-federation.yml \
+            logs --no-color knox || true
+          echo '===== keycloak container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-federation.yml \
+            logs --no-color keycloak || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+
       # Single-EKU mTLS runs as its own pass. Its override turns on
       # gateway.client.auth.needed=true, which would break the default
       # (no-client-cert) tests above, so the gateway is recreated with the
@@ -170,6 +225,7 @@ jobs:
             .github/workflows/tests/test-results.xml
             .github/workflows/tests/test-results-single-eku.xml
             .github/workflows/tests/test-results-single-eku-no-mtls.xml
+            .github/workflows/tests/test-results-federation.xml
 
       - name: Archive Knox Logs
         if: always()
