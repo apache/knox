@@ -105,4 +105,46 @@ public class DerbyDBFederatedIdentityServiceTest {
         "KEYCLOAK", "https://issuer.example.com/realms/knox", "no-such-subject");
     assertFalse("Did not expect an identity for an unknown subject", missing.isPresent());
   }
+
+  /**
+   * Regression guard for the "Table/View 'FEDERATED_IDENTITY' already exists" failure on restart:
+   * re-initialising against the same on-disk Derby database (as happens on a Knox restart) must not
+   * try to re-create the already-present tables. Before the {@code JDBCUtils.tableExists} casing
+   * fix, the lowercase {@code federated_identity} table name never matched Derby's uppercased
+   * metadata, so init re-ran the CREATE and blew up on the second boot.
+   */
+  @Test
+  public void shouldReinitializeWithoutErrorWhenTablesAlreadyExist() throws Exception {
+    service = newDerbyService();
+    final FederatedIdentity identity = new FederatedIdentity("knox-user-1", "KEYCLOAK", "external-subject-1",
+        "https://issuer.example.com/realms/knox", Instant.now(), new HashMap<>());
+    service.addFederatedIdentity(identity);
+    service.stop();
+
+    // Simulate a restart: a brand-new service instance pointing at the same Derby folder.
+    service = newDerbyService();
+    final Optional<FederatedIdentity> byId = service.findById(identity.getId());
+    assertTrue("Expected the previously-persisted identity to survive a restart", byId.isPresent());
+  }
+
+  private DerbyDBFederatedIdentityService newDerbyService() throws Exception {
+    final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
+    EasyMock.expect(masterService.getMasterSecret()).andReturn("M4st3RSecret!".toCharArray()).anyTimes();
+    EasyMock.replay(masterService);
+
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(securityDir.getAbsolutePath()).anyTimes();
+    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+    EasyMock.expect(config.getDatabaseName()).andReturn(Paths.get(securityDir.getAbsolutePath(), "tokens").toString()).anyTimes();
+    EasyMock.replay(config);
+
+    final DerbyDBFederatedIdentityService svc = new DerbyDBFederatedIdentityService();
+    svc.setAliasService(aliasService);
+    svc.setMasterService(masterService);
+    svc.init(config, Collections.emptyMap());
+    return svc;
+  }
 }

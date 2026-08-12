@@ -36,12 +36,30 @@ public class JDBCUtils {
         boolean exists;
         try (Connection connection = dataSource.getConnection()) {
             final DatabaseMetaData dbMetadata = connection.getMetaData();
-            final String tableNameToCheck = dbMetadata.storesUpperCaseIdentifiers() ? tableName : tableName.toLowerCase(Locale.ROOT);
+            final String tableNameToCheck = normalizeIdentifier(tableName, dbMetadata);
             try (ResultSet tables = dbMetadata.getTables(connection.getCatalog(), null, tableNameToCheck, null)) {
                 exists = tables.next();
             }
         }
         return exists;
+    }
+
+    /**
+     * Normalises an unquoted identifier to the case the driver actually stores it in, so it can be
+     * matched against {@link DatabaseMetaData#getTables}. Derby (and other uppercase-storing
+     * engines) store an unquoted {@code federated_identity} as {@code FEDERATED_IDENTITY}; passing
+     * the name verbatim would match nothing and cause {@code createTableIfNotExists} to re-run the
+     * CREATE and fail with "table already exists". Callers that use already-uppercase constants
+     * (KNOX_TOKENS, KNOX_PROVIDERS, TRUSTED_OIDC_ISSUERS) are unaffected since upper-casing them is
+     * a no-op.
+     */
+    private static String normalizeIdentifier(String identifier, DatabaseMetaData dbMetadata) throws SQLException {
+        if (dbMetadata.storesUpperCaseIdentifiers()) {
+            return identifier.toUpperCase(Locale.ROOT);
+        } else if (dbMetadata.storesLowerCaseIdentifiers()) {
+            return identifier.toLowerCase(Locale.ROOT);
+        }
+        return identifier;
     }
 
     public static void createTableFromSQL(String createSqlFileName, DataSource dataSource, ClassLoader classLoader) throws Exception {
