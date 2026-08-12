@@ -264,15 +264,19 @@ public class WebSSOResource {
 
       boolean validRedirect = true;
 
-      // If there is a whitelist defined, then the original URL must be validated against it.
-      // If there is no whitelist, then everything is valid.
-      if (whitelist != null) {
-        try {
+      try {
+        // A redirect target embedding userinfo (e.g. https://knox-host:8443@evil/) is
+        // never legitimate; reject it before the host-only whitelist check.
+        if (Urls.containsUserInfo(original)) {
+          validRedirect = false;
+        } else if (whitelist != null) {
+          // If there is a whitelist defined, then the original URL must be validated against it.
+          // If there is no whitelist, then everything is valid.
           validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
-        } catch (MalformedURLException e) {
-          throw new WebApplicationException("Malformed original URL: " + original,
-                  Response.Status.BAD_REQUEST);
         }
+      } catch (MalformedURLException e) {
+        throw new WebApplicationException("Malformed original URL: " + original,
+                Response.Status.BAD_REQUEST);
       }
 
       if (!validRedirect) {
