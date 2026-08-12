@@ -278,7 +278,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         // Wrap the request to simulate real-world scenario where wrappers hide parameter access
         final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
-        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
+        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcodeVerificationCacheKey(tokenId, passcode));
 
         final TestFilterChain chain = new TestFilterChain();
         handler.doFilter(request, response, chain);
@@ -387,6 +387,11 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     public void testUnableToParseJWT() throws Exception {
     }
 
+    @Override
+    @Test
+    public void testPasscodeCannotBeReplayedAgainstDifferentTokenId() {
+    }
+
     @Test
     public void testGetWireTokenUsingRefreshTokenFlow() throws Exception {
       final String refreshToken = "WTJ4cFpXNTBMV2xrTFRFeU16UTE6OlkyeHBaVzUwTFhObFkzSmxkQzB4TWpNME5RPT0=";
@@ -470,7 +475,7 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         // Wrap the request to simulate real-world scenario where wrappers hide parameter access
         final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
 
-        SignatureVerificationCache.getInstance("jwt-topology", filterConfig).recordSignatureVerification(passcode);
+        SignatureVerificationCache.getInstance("jwt-topology", filterConfig).recordSignatureVerification(passcodeVerificationCacheKey(tokenId, passcode));
 
         final TestFilterChain chain = new TestFilterChain();
         handler.doFilter(request, response, chain);
