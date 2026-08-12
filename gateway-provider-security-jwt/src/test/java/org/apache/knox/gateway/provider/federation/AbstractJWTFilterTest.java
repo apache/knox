@@ -1520,4 +1520,7 @@ public abstract class AbstractJWTFilterTest  {
       }
   }
 
+  protected String passcodeVerificationCacheKey(final String tokenId, final String passcode) {
+    return tokenId + "::" + passcode;
+  }
 }
