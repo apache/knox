@@ -48,6 +48,7 @@ public interface KnoxIDFConstants {
     String PKCE_METHOD_PLAIN = "plain";
 
     String TOKEN_ID_ATTRIBUTE = "X-Token-Id";
+    String TOKEN_ISS_ATTRIBUTE = "X-Token-Iss";
     String SCOPE_ATTRIBUTE = "X-Token-Scope";
 
     String FEDERATED_IDENTITY_ID = "federated_identity_id";

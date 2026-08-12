@@ -49,8 +49,8 @@ import java.util.Set;
  */
 public class TokenExchangeHandlerTest {
 
-  private static final String JWT_TYPE = TokenExchangeHandler.TOKEN_TYPE_JWT;
-  private static final String ACCESS_TOKEN_TYPE = TokenExchangeHandler.TOKEN_TYPE_ACCESS_TOKEN;
+  private static final String JWT_TYPE = JWTFederationFilter.TOKEN_TYPE_JWT;
+  private static final String ACCESS_TOKEN_TYPE = JWTFederationFilter.TOKEN_TYPE_ACCESS_TOKEN;
   private static final String SAML2_TYPE = "urn:ietf:params:oauth:token-type:saml2";
 
   private RecordingFilter filter;
@@ -193,10 +193,10 @@ public class TokenExchangeHandlerTest {
   private HttpServletRequest request(String subjectToken, String subjectTokenType,
                                      String actorToken, String actorTokenType) {
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
     EasyMock.replay(request);
     return request;
   }

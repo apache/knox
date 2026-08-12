@@ -22,6 +22,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -42,11 +45,14 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -58,7 +64,6 @@ import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
-
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
@@ -69,6 +74,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String CLIENT_ASSERTION_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
   public static final String CLIENT_ASSERTION_TYPE = "client_assertion_type";
   public static final String CLIENT_ASSERTION = "client_assertion";
+  // RFC 8693 constants
+  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
+  public static final String SUBJECT_TOKEN = "subject_token";
+  public static final String ACTOR_TOKEN = "actor_token";
+  public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
+  public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
+  // RFC 8693 section 3 token type identifiers. Only JWT-family types are supported for exchange;
+  // Knox issues JWT access tokens, so the access_token URN is accepted as an alias for jwt.
+  public static final String TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt";
+  public static final String TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
 
   public enum TokenType {
     JWT, Passcode, TokenExchange;
@@ -245,6 +260,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (scope != null) {
       request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, token.getClaim(scope));
     }
+    final String issuer = token.getIssuer();
+    if (issuer != null) {
+      request.setAttribute(KnoxIDFConstants.TOKEN_ISS_ATTRIBUTE, issuer);
+    }
   }
 
   private void validateClientID(HttpServletRequest request, String tokenValue) {
@@ -358,7 +377,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
           return getClientTokenFromParams(unwrappedRequest, REFRESH_TOKEN_PARAM);
-        } else if (TokenExchangeHandler.TOKEN_EXCHANGE.equals(grantType)) {
+        } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // RFC 8693 token exchange: signal it via the token type. doFilter routes this to
           // TokenExchangeHandler, which reads subject_token/actor_token from the unwrapped request.
           return Pair.of(TokenType.TokenExchange, null);
@@ -451,6 +470,33 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     }
     // Validation failed - error response already sent by validateToken
     return null;
+  }
+
+  @Override
+  protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
+    if (!TOKEN_EXCHANGE.equals(request.getParameter(GRANT_TYPE))) {
+      return Set.of();
+    }
+    final GatewayServices gws = (GatewayServices)
+        request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (gws != null) {
+      final TrustedOidcIssuerService issuerSvc = gws.getService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE);
+      // isDynamicJwks() is the combined guard: true only if the issuer is both registered as
+      // trusted AND configured for dynamic JWKS discovery. If the issuer is not registered, or
+      // registered without dynamic JWKS, it is not actionable through this path.
+      if (issuerSvc != null && issuerSvc.isDynamicJwks(issuer)) {
+        // resolveJwksUri() performs OIDC discovery
+        final Optional<String> jwksUri = issuerSvc.resolveJwksUri(issuer);
+        if (jwksUri.isPresent()) {
+          try {
+            return Set.of(new URI(jwksUri.get()));
+          } catch (URISyntaxException e) {
+            LOGGER.unableToVerifyToken(e);
+          }
+        }
+      }
+    }
+    return Set.of();
   }
 
   @Override
