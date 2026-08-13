@@ -47,13 +47,8 @@ public class AuthorizeResourceClientSecretResolutionTest {
     }
   }
 
-  @Test
+  @Test(expected = ClientSecretResolutionException.class)
   public void testEmptyResolvedSecretFailsClosed() {
-    try {
-      AuthorizeResource.requireResolvedAliasSecret("op.secret.alias", new char[0]);
-      fail("An alias resolving to an empty secret must fail closed.");
-    } catch (ClientSecretResolutionException e) {
-      // expected
-    }
+    AuthorizeResource.requireResolvedAliasSecret("op.secret.alias", new char[0]);
   }
 }
