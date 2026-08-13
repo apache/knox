@@ -56,9 +56,9 @@ import org.junit.Test;
  * Representative coverage for the KnoxIDF audit instrumentation (structured audit-log completeness).
  * A capturing {@link Auditor} is injected into {@link KnoxIDFAudit#auditor} so the emitted
  * action/outcome/resource/message can be asserted for a representative SUCCESS path (a rotated
- * refresh-token grant) and a representative FAILURE path (an unsupported grant type). It also pins
- * the security-critical invariant that {@link KnoxIDFAudit#mask(String)} never echoes a raw secret
- * into the record.
+ * refresh-token grant) and a representative FAILURE path (a rejected refresh-token grant). It also
+ * pins the security-critical invariant that {@link KnoxIDFAudit#mask(String)} never echoes a raw
+ * secret into the record.
  */
 public class KnoxIDFAuditTest {
 
@@ -159,20 +159,28 @@ public class KnoxIDFAuditTest {
   }
 
   // ---------------------------------------------------------------------------
-  // Representative FAILURE: unsupported grant type on the token endpoint
+  // Representative FAILURE: a rejected refresh-token grant on the token endpoint.
+  // (Unknown grant types are no longer rejected here -- doPost() delegates them to
+  // the knoxtoken base, which only issues a token for an already-authenticated caller.)
   // ---------------------------------------------------------------------------
 
   @Test
-  public void testUnsupportedGrantTypeEmitsFailureAudit() {
+  public void testRejectedRefreshTokenGrantEmitsFailureAudit() throws Exception {
+    // Missing client_id makes validateRefreshTokenGrant reject the request with invalid_grant,
+    // which must emit exactly one FAILURE audit record for the refresh_token grant.
     final HttpServletRequest req = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(req.getParameter(GRANT_TYPE)).andReturn("password").anyTimes();
-    EasyMock.expect(req.getParameter(CLIENT_ID)).andReturn(CLIENT).anyTimes();
+    EasyMock.expect(req.getParameter(GRANT_TYPE)).andReturn(REFRESH_TOKEN).anyTimes();
+    EasyMock.expect(req.getParameter(REFRESH_TOKEN)).andReturn(REFRESH_TOKEN_ID).anyTimes();
+    EasyMock.expect(req.getParameter(CLIENT_ID)).andReturn(null).anyTimes();
     EasyMock.replay(req);
 
-    final TokenResource resource = new TokenResource();
-    resource.request = req;
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.replay(tokenStateService);
 
-    final Response response = resource.doPost();
+    final TestableTokenResource resource = new TestableTokenResource();
+    resource.inject(tokenStateService, null, req, null);
+
+    final Response response = resource.handleRefreshToken();
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     assertEquals("Exactly one audit record must be emitted.", 1, capturingAuditor.records.size());
@@ -180,10 +188,8 @@ public class KnoxIDFAuditTest {
     assertEquals(Action.AUTHENTICATION, record.action);
     assertEquals(ResourceType.PRINCIPAL, record.resourceType);
     assertEquals(ActionOutcome.FAILURE, record.outcome);
-    assertTrue(record.message.contains("reason=unsupported_grant_type"));
-    assertTrue(record.message.contains("grant_type=password"));
-    // The client_id is masked, never emitted verbatim.
-    assertFalse("client_id must be masked in the audit record", CLIENT.equals(record.resource));
+    assertTrue(record.message.contains("grant_type=refresh_token"));
+    assertTrue(record.message.contains("reason=validation_failed"));
   }
 
   // ---------------------------------------------------------------------------
