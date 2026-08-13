@@ -156,6 +156,10 @@ public class TokenResource extends PasscodeTokenResourceBase {
         return AUTH_CODE.equals(grantType);
     }
 
+    private boolean isRefreshTokenFlow() {
+        return REFRESH_TOKEN.equals(getRequestParam(GRANT_TYPE));
+    }
+
     @Override
     protected UserContext buildUserContext(HttpServletRequest request) {
         if (isAuthCodeFlow()) {
@@ -200,7 +204,10 @@ public class TokenResource extends PasscodeTokenResourceBase {
     protected ResponseMap buildResponseMap(JWT token, long expires) throws TokenServiceException {
         final ResponseMap responseMap = super.buildResponseMap(token, expires);
 
-        if (isAuthCodeFlow()) {
+        // id_token + refresh-token rotation apply to the user-centric grants (authorization_code and
+        // refresh_token). client_credentials and other grants routed to super.doPost() must not get an
+        // id_token (no end user) and never carry offline_access, so they are excluded here.
+        if (isAuthCodeFlow() || isRefreshTokenFlow()) {
             final String code = getRequestParam(CODE);
             TokenMetadata authCodeTokenMetadata = null;
             if (StringUtils.isNotBlank(code)) {
