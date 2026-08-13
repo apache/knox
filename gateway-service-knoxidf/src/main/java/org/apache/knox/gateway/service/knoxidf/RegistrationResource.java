@@ -43,11 +43,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
@@ -57,10 +61,12 @@ public class RegistrationResource extends ClientCredentialsResource {
 
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/client";
     private static final String ANONYMOUS_PRINCIPAL = "anonymous";
+    static final Set<String> DEFAULT_LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "::1");
 
     private List<String> redirectUris;
     private List<String> allowedScopes;
     boolean anonymousRegistrationAllowed;
+    Set<String> loopbackHosts;
 
     @Context
     private ServletContext servletContext;
@@ -72,6 +78,23 @@ public class RegistrationResource extends ClientCredentialsResource {
         // Secure by default: unless the deployment explicitly opts in, an anonymous caller cannot
         // register a client even when the topology wires this endpoint as 'anon'.
         this.anonymousRegistrationAllowed = Boolean.parseBoolean(servletContext.getInitParameter(CLIENT_REGISTRATION_ANONYMOUS_ALLOWED));
+        this.loopbackHosts = parseLoopbackHosts(servletContext.getInitParameter(CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS));
+    }
+
+    // Build the loopback-host set: the hard-coded defaults plus any admin-configured extra hosts from the
+    // comma-separated config (trimmed, lowercased, blanks dropped). Null/blank config => defaults only.
+    static Set<String> parseLoopbackHosts(String customLoopbackHosts) {
+        if (StringUtils.isBlank(customLoopbackHosts)) {
+            return DEFAULT_LOOPBACK_HOSTS;
+        }
+        final Set<String> hosts = new HashSet<>(DEFAULT_LOOPBACK_HOSTS);
+        for (String h : customLoopbackHosts.split(",")) {
+            final String trimmed = h.trim();
+            if (!trimmed.isEmpty()) {
+                hosts.add(trimmed.toLowerCase(Locale.ROOT));
+            }
+        }
+        return hosts;
     }
 
     @Override
@@ -146,12 +169,17 @@ public class RegistrationResource extends ClientCredentialsResource {
     }
 
     private Response verifyRedirectUris() {
-        return verifyRedirectUris(redirectUris);
+        return verifyRedirectUris(redirectUris, loopbackHosts);
     }
 
     // Package-private and list-parameterized so the redirect-URI policy (https-only except loopback,
     // no wildcard host, restricted path/query/fragment wildcards) is unit-testable in isolation.
     static Response verifyRedirectUris(List<String> redirectUris) {
+        return verifyRedirectUris(redirectUris, DEFAULT_LOOPBACK_HOSTS);
+    }
+
+    // loopbackHosts: normalized (lowercase) hosts allowed to use a plain-HTTP redirect_uri.
+    static Response verifyRedirectUris(List<String> redirectUris, Set<String> loopbackHosts) {
         if (redirectUris == null || redirectUris.isEmpty()) {
             return error("invalid_request", "redirect_uris must be provided");
         }
@@ -173,7 +201,7 @@ public class RegistrationResource extends ClientCredentialsResource {
             // (localhost / 127.0.0.1 / ::1) native-app dev. Any other http:// redirect is rejected.
             final String scheme = uri.getScheme();
             final boolean https = "https".equalsIgnoreCase(scheme);
-            final boolean loopbackHttp = "http".equalsIgnoreCase(scheme) && isLoopbackHost(uri.getHost());
+            final boolean loopbackHttp = "http".equalsIgnoreCase(scheme) && isLoopbackHost(uri.getHost(), loopbackHosts);
             if (!https && !loopbackHttp) {
                 return error("invalid_request", "Redirect URI must use HTTPS (plain HTTP allowed only for localhost): " + uriStr);
             }
@@ -193,13 +221,15 @@ public class RegistrationResource extends ClientCredentialsResource {
         return null;
     }
 
-    private static boolean isLoopbackHost(String host) {
+    private static boolean isLoopbackHost(String host, Set<String> loopbackHosts) {
         if (host == null) {
             return false;
         }
         // Strip brackets from an IPv6 literal (e.g. [::1]).
         final String h = host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
-        return "localhost".equalsIgnoreCase(h) || "127.0.0.1".equals(h) || "::1".equals(h);
+        // Exact, case-insensitive match against the single loopback-host set (defaults + configured extras).
+        // No sub/parent-domain widening: only hosts explicitly listed get the plain-HTTP exception.
+        return loopbackHosts.contains(h.toLowerCase(Locale.ROOT));
     }
 
     @Override

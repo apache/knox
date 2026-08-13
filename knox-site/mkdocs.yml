@@ -122,6 +122,9 @@ nav:
       - Security: knoxidf/security.md
       - Federation: knoxidf/federation.md
       - Operations: knoxidf/operations.md
+      - Integrations:
+          - Apache Polaris (Client Credentials): knoxidf/integrations/polaris.md
+          - Apache Polaris Console (Authorization Code): knoxidf/integrations/polaris_console.md
   - Developer Guide:
       - Overview: dev-guide/book.md
       - Extending Knox:

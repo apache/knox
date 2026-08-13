@@ -145,44 +145,54 @@ public class TokenResource extends PasscodeTokenResourceBase {
         } else if (AUTH_CODE.equals(grantType)) {
             return handleAuthorizationCodeFlow();
         }
-        KnoxIDFAudit.audit(Action.AUTHENTICATION, KnoxIDFAudit.mask(getRequestParam(CLIENT_ID)),
-                ResourceType.PRINCIPAL, ActionOutcome.FAILURE,
-                "event=token_grant grant_type=" + grantType + " reason=unsupported_grant_type");
-        return error("invalid_request", "invalid grant type: " + grantType);
+        return super.doPost(); // with this, we don't need an additional KNOXTOKEN service in any KnoxIDF topology
+    }
+
+    private boolean isAuthCodeFlow() {
+        return isAuthCodeFlow(getRequestParam(GRANT_TYPE));
+    }
+
+    private boolean isAuthCodeFlow(String grantType) {
+        return AUTH_CODE.equals(grantType);
     }
 
     @Override
     protected UserContext buildUserContext(HttpServletRequest request) {
-        try {
-            final TokenMetadata tokenMetadata = getAuthCodeMetadata();
-            final String scope = tokenMetadata.getMetadata(SCOPE);
-            final Map<String, Object> userParams = userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope);
-            userParams.put(SCOPE, scope);
-            return new UserContext(tokenMetadata.getUserName(), null, userParams);
-        } catch (UnknownTokenException e) {
-            //this should not happen as we have just validated the auth code
-            throw new RuntimeException(e);
+        if (isAuthCodeFlow()) {
+            try {
+                final TokenMetadata tokenMetadata = getAuthCodeMetadata();
+                final String scope = tokenMetadata.getMetadata(SCOPE);
+                final Map<String, Object> userParams = userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope);
+                userParams.put(SCOPE, scope);
+                return new UserContext(tokenMetadata.getUserName(), null, userParams);
+            } catch (UnknownTokenException e) {
+                //this should not happen as we have just validated the auth code
+                throw new RuntimeException(e);
+            }
         }
+        return super.buildUserContext(request);
     }
 
     @Override
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
-        try {
-            super.addArbitraryTokenMetadata(tokenMetadata);
-            final String code = getRequestParam(CODE);
-            if (StringUtils.isNotBlank(code)) {
-                final TokenMetadata authCodeTokenMetadata = getAuthCodeMetadata();
+        super.addArbitraryTokenMetadata(tokenMetadata);
+        if (isAuthCodeFlow()) {
+            try {
+                final String code = getRequestParam(CODE);
+                if (StringUtils.isNotBlank(code)) {
+                    final TokenMetadata authCodeTokenMetadata = getAuthCodeMetadata();
 
-                //if the auth code token was a result of a federated OIDC call, we need to save the associated
-                //federated identity ID in the JWT too (so that it can be looked up while fetching user info)
-                final String federatedIdentityId = authCodeTokenMetadata.getMetadata(FEDERATED_IDENTITY_ID);
-                if (StringUtils.isNotBlank(federatedIdentityId)) {
-                    tokenMetadata.add(FEDERATED_IDENTITY_ID, federatedIdentityId);
+                    //if the auth code token was a result of a federated OIDC call, we need to save the associated
+                    //federated identity ID in the JWT too (so that it can be looked up while fetching user info)
+                    final String federatedIdentityId = authCodeTokenMetadata.getMetadata(FEDERATED_IDENTITY_ID);
+                    if (StringUtils.isNotBlank(federatedIdentityId)) {
+                        tokenMetadata.add(FEDERATED_IDENTITY_ID, federatedIdentityId);
+                    }
                 }
+            } catch (UnknownTokenException e) {
+                //this should not happen as we have just validated the auth code
+                throw new RuntimeException(e);
             }
-        } catch (UnknownTokenException e) {
-            //this should not happen as we have just validated the auth code
-            throw new RuntimeException(e);
         }
     }
 
@@ -190,21 +200,23 @@ public class TokenResource extends PasscodeTokenResourceBase {
     protected ResponseMap buildResponseMap(JWT token, long expires) throws TokenServiceException {
         final ResponseMap responseMap = super.buildResponseMap(token, expires);
 
-        final String code = getRequestParam(CODE);
-        TokenMetadata authCodeTokenMetadata = null;
-        if (StringUtils.isNotBlank(code)) {
-            try {
-                authCodeTokenMetadata = getAuthCodeMetadata();
-            } catch (UnknownTokenException e) {
-                //NOP
+        if (isAuthCodeFlow()) {
+            final String code = getRequestParam(CODE);
+            TokenMetadata authCodeTokenMetadata = null;
+            if (StringUtils.isNotBlank(code)) {
+                try {
+                    authCodeTokenMetadata = getAuthCodeMetadata();
+                } catch (UnknownTokenException e) {
+                    //NOP
+                }
             }
-        }
 
-        responseMap.map.put("id_token", generateIdToken(token, authCodeTokenMetadata));
+            responseMap.map.put("id_token", generateIdToken(token, authCodeTokenMetadata));
 
-        final String refreshToken = generateRefreshToken(token);
-        if (StringUtils.isNotBlank(refreshToken)) {
-            responseMap.map.put(REFRESH_TOKEN, refreshToken);
+            final String refreshToken = generateRefreshToken(token);
+            if (StringUtils.isNotBlank(refreshToken)) {
+                responseMap.map.put(REFRESH_TOKEN, refreshToken);
+            }
         }
 
         return responseMap;

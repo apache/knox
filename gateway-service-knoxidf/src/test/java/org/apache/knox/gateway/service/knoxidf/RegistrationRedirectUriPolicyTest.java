@@ -16,16 +16,17 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import org.junit.Test;
+
+import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.List;
-
-import javax.ws.rs.core.Response;
-
-import org.junit.Test;
 
 /**
  * Verifies the dynamic-registration redirect-URI policy: HTTPS is required (RFC 8252), plain HTTP is
@@ -34,7 +35,7 @@ import org.junit.Test;
 public class RegistrationRedirectUriPolicyTest {
 
   private static Response verify(String... uris) {
-    return RegistrationResource.verifyRedirectUris(java.util.Arrays.asList(uris));
+    return RegistrationResource.verifyRedirectUris(Arrays.asList(uris));
   }
 
   @Test
@@ -72,5 +73,47 @@ public class RegistrationRedirectUriPolicyTest {
   @Test
   public void testOneBadUriAmongGoodOnesRejectsWhole() {
     assertEquals(400, verify("https://good.example.com/cb", "http://evil.example.com/cb").getStatus());
+  }
+
+  @Test
+  public void testConfiguredLoopbackHostAllowsPlainHttp() {
+    final Set<String> hosts = RegistrationResource.parseLoopbackHosts("host.docker.internal");
+    assertNull("A configured loopback host must be allowed over plain HTTP.",
+        RegistrationResource.verifyRedirectUris(Collections.singletonList("http://host.docker.internal:8443/cb"), hosts));
+  }
+
+  @Test
+  public void testConfiguredLoopbackMatchIsCaseInsensitive() {
+    final Set<String> hosts = RegistrationResource.parseLoopbackHosts("Host.Docker.Internal");
+    assertNull(RegistrationResource.verifyRedirectUris(Collections.singletonList("http://HOST.docker.internal/cb"), hosts));
+  }
+
+  @Test
+  public void testHostNotConfiguredStillRejected() {
+    final Set<String> hosts = RegistrationResource.parseLoopbackHosts("host.docker.internal");
+    assertEquals("A host outside the allowlist must still require HTTPS.", 400,
+        RegistrationResource.verifyRedirectUris(Collections.singletonList("http://evil.docker.internal/cb"), hosts).getStatus());
+  }
+
+  @Test
+  public void testConfiguredLoopbackDoesNotWidenToSubdomains() {
+    final Set<String> hosts = RegistrationResource.parseLoopbackHosts("host.docker.internal");
+    // Exact match only: a sub-domain of an allowlisted host is NOT itself allowlisted.
+    assertEquals(400, RegistrationResource.verifyRedirectUris(Collections.singletonList("http://evil.host.docker.internal/cb"), hosts).getStatus());
+  }
+
+  @Test
+  public void testDefaultsAlwaysPresentAlongsideConfiguredHosts() {
+    final Set<String> hosts = RegistrationResource.parseLoopbackHosts("host.docker.internal");
+    // The three hard-coded loopback hosts survive even when extras are configured.
+    assertNull(RegistrationResource.verifyRedirectUris(Collections.singletonList("http://localhost:8080/cb"), hosts));
+    assertNull(RegistrationResource.verifyRedirectUris(Collections.singletonList("http://127.0.0.1/cb"), hosts));
+  }
+
+  @Test
+  public void testBlankConfigYieldsDefaultsOnly() {
+    assertEquals(RegistrationResource.DEFAULT_LOOPBACK_HOSTS, RegistrationResource.parseLoopbackHosts(null));
+    assertEquals(RegistrationResource.DEFAULT_LOOPBACK_HOSTS, RegistrationResource.parseLoopbackHosts("   "));
+    assertEquals(RegistrationResource.DEFAULT_LOOPBACK_HOSTS, RegistrationResource.parseLoopbackHosts(" , ,"));
   }
 }

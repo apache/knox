@@ -46,7 +46,7 @@ import javax.ws.rs.core.UriInfo;
 @Path(TokenResourceV2.RESOURCE_PATH)
 public class TokenResourceV2 extends TokenResource {
 
-  static final String RESOURCE_PATH = "knoxtoken/api/v2/token";
+  public static final String RESOURCE_PATH = "knoxtoken/api/v2/token";
 
   // REST endpoints with the same HTTP method
 

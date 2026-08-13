@@ -42,9 +42,11 @@ import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+import static org.apache.knox.gateway.security.CommonTokenConstants.AUTH_CODE;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -390,6 +392,78 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     @Override
     @Test
     public void testPasscodeCannotBeReplayedAgainstDifferentTokenId() {
+    }
+
+    @Test
+    public void testGetWireTokenUsingAuthorizationCodeFlowWithoutClientSecret() throws Exception {
+        // A public client redeeming an authorization code with PKCE sends grant_type=authorization_code
+        // with no Authorization header and no client_secret. Unlike client_credentials, the filter must
+        // NOT reject this; it flags TokenType.AuthCode so the request is forwarded to the KnoxIDF token
+        // endpoint, which authenticates the caller via the code_verifier.
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getQueryString()).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(AUTH_CODE).anyTimes();
+        EasyMock.replay(mockRequest);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
+        handler.init(new TestFilterConfig(getProperties()));
+        final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+        EasyMock.verify(mockRequest);
+
+        assertNotNull(wireToken);
+        assertEquals(TokenType.AuthCode, wireToken.getLeft());
+        assertNull(wireToken.getRight());
+    }
+
+    @Test
+    public void testGetWireTokenUsingAuthorizationCodeFlowDoesNotParseClientSecret() throws Exception {
+        // Even when a (confidential) client includes a client_secret on the authorization_code grant,
+        // the filter routes it through the AuthCode pass-through and does NOT try to parse the secret as
+        // a passcode here -- the token endpoint validates it. A non-passcode-formatted secret that would
+        // have triggered INVALID_CLIENT_SECRET on the client_credentials path must not do so here.
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getQueryString()).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(AUTH_CODE).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(CLIENT_SECRET)).andReturn("not-a-passcode").anyTimes();
+        EasyMock.replay(mockRequest);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
+        handler.init(new TestFilterConfig(getProperties()));
+        final Pair<TokenType, String> wireToken = ((TestJWTFederationFilter) handler).getWireToken(request);
+
+        assertNotNull(wireToken);
+        assertEquals(TokenType.AuthCode, wireToken.getLeft());
+        assertNull(wireToken.getRight());
+    }
+
+    @Test
+    public void testAuthorizationCodeFlowForwardsToServiceWithoutClientSecret() throws Exception {
+        // End-to-end at the filter level: a public PKCE client's authorization_code request is forwarded
+        // down the chain with an anonymous subject rather than rejected, so the KnoxIDF token endpoint can
+        // validate the code + code_verifier and issue the token.
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getQueryString()).andReturn(null).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(AUTH_CODE).anyTimes();
+        final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        EasyMock.replay(mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
+        handler.init(new TestFilterConfig(getProperties()));
+        final TestFilterChain chain = new TestFilterChain();
+        handler.doFilter(request, response, chain);
+
+        assertTrue(chain.doFilterCalled);
+        Assert.assertNotNull(chain.subject);
     }
 
     @Test

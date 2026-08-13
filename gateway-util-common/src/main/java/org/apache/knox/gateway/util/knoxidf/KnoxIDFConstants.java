@@ -65,6 +65,13 @@ public interface KnoxIDFConstants {
     // registration must explicitly set this to true (see the sample knoxidf topologies).
     String CLIENT_REGISTRATION_ANONYMOUS_ALLOWED = "knoxidf.client.registration.anonymous.allowed";
 
+    // Comma-separated hostnames that, in addition to the hard-coded loopback set (localhost/127.0.0.1/::1),
+    // are permitted to use a plain-HTTP redirect_uri during dynamic client registration. Intended for
+    // dev setups where the callback host is not literally loopback but is equally trusted (e.g.
+    // 'host.docker.internal'). SECURITY: plain HTTP redirects to these hosts traverse a (virtual)
+    // network, so only add hosts you fully control. Empty/undefined => today's behavior (loopback only).
+    String CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS = "knoxidf.custom.loopback.hosts";
+
     // TrustedOidcIssuerService gateway-level params (read from GatewayConfig / gateway-site.xml)
     String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS =
         "gateway.trustedoidcissuer.discovery.cache.ttl.secs";

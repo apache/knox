@@ -81,6 +81,7 @@ token. This keeps KnoxIDF modular and composable with the rest of Knox.
 - **[Security](security.md)** — client authentication, PKCE, consent, redirect-URI validation, and secret handling.
 - **[Federation](federation.md)** — brokering login to external OIDC Providers.
 - **[Operations](operations.md)** — high availability, rate limiting, signing-key rotation, and auditing.
+- **[Integrations](integrations/polaris.md)** — worked examples of downstream services trusting KnoxIDF (e.g. replacing Keycloak in Apache Polaris).
 
 !!! note "Relationship to KIP-18"
     KnoxIDF was originally proposed and prototyped in

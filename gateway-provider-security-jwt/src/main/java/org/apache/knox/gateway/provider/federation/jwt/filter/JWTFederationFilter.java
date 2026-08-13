@@ -86,7 +86,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
 
   public enum TokenType {
-    JWT, Passcode, TokenExchange;
+    JWT, Passcode, TokenExchange, AuthCode;
   }
 
   public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
@@ -205,6 +205,17 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // so a proxied backend's body is never consumed by the header-authenticated path.
     if (wireToken != null && TokenType.TokenExchange.equals(wireToken.getLeft())) {
       tokenExchangeHandler.handle((HttpServletRequest) request, (HttpServletResponse) response, chain);
+      return;
+    }
+
+    // authorization_code grant: the KnoxIDF token endpoint (TokenResource) authenticates the client
+    // itself -- a PKCE code_verifier for public clients, or a client_secret for confidential clients
+    // -- and binds the code to its client_id and redirect_uri. getWireToken flags this via
+    // TokenType.AuthCode when the grant_type is in the request body and no Bearer/Basic credentials
+    // were presented. Forward to the service without a gateway-established token so that public PKCE
+    // clients (no secret) are not rejected here.
+    if (wireToken != null && TokenType.AuthCode.equals(wireToken.getLeft())) {
+      continueWithAuthorizationCodeGrant(request, response, chain);
       return;
     }
 
@@ -364,7 +375,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
         final String grantType = unwrappedRequest.getParameter(GRANT_TYPE);
         final String clientAssertionType = unwrappedRequest.getParameter(CLIENT_ASSERTION_TYPE);
-        if (CLIENT_CREDENTIALS.equals(grantType) || AUTH_CODE.equals(grantType)) {
+        if (AUTH_CODE.equals(grantType)) {
+          // no client_secret parsed here; the KnoxIDF token endpoint authenticates the client
+          // (see the TokenType.AuthCode handling in doFilter)
+          return Pair.of(TokenType.AuthCode, null);
+        } else if (CLIENT_CREDENTIALS.equals(grantType)) {
           if (CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
             // short lived client assertion token expected
             return getClientTokenFromParams(unwrappedRequest, CLIENT_ASSERTION);
@@ -536,6 +551,22 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           ((HttpServletRequest) request).getRequestURI(), e.toString());
       throw e;
     }
+  }
+
+  /**
+   * Forwards an {@code authorization_code} token request to the KnoxIDF token endpoint without a
+   * gateway-established token. The token endpoint ({@code TokenResource.validateAuthCode})
+   * independently authenticates the client -- a PKCE {@code code_verifier} for public clients, or a
+   * {@code client_secret} for confidential clients -- and binds the code to its {@code client_id}
+   * and {@code redirect_uri}, so this filter only needs to let the request through with an anonymous
+   * subject. The principal of the issued token is derived from the authorization code's stored
+   * metadata, not from this subject.
+   */
+  private void continueWithAuthorizationCodeGrant(final ServletRequest request, final ServletResponse response, final FilterChain chain)
+      throws ServletException, IOException {
+    final Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+    continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
   }
 
   /**

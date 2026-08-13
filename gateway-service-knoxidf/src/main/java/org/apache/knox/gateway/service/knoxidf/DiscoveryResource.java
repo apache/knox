@@ -68,7 +68,7 @@ public class DiscoveryResource {
         config.put("userinfo_endpoint", userInfoEndpoint);
         // Dynamic client registration is served on the current topology (no token-exchange
         // substitution); advertise it so clients can discover it per OIDC Dynamic Client Registration.
-        config.put("registration_endpoint", baseUrl + RegistrationResource.RESOURCE_PATH);
+        config.put("registration_endpoint", baseUrl + RegistrationResource.RESOURCE_PATH + "/register");
         config.put("jwks_uri", baseUrl + JwksResource.RESOURCE_PATH);
         config.put("response_types_supported", new String[]{KnoxIDFConstants.CODE});
         // REQUIRED by OpenID Connect Discovery 1.0. Knox derives 'sub' as a deterministic UUIDv5 over
