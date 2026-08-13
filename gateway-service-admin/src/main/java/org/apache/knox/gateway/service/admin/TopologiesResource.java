@@ -43,6 +43,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -55,8 +56,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -90,7 +89,7 @@ public class TopologiesResource {
   private static final String SINGLE_DESCRIPTOR_API_PATH = DESCRIPTORS_API_PATH + "/{name}";
 
   private static final int     RESOURCE_NAME_LENGTH_MAX = 100;
-  private static final Pattern RESOURCE_NAME_PATTERN    = Pattern.compile("^[\\w-/.]+$");
+  private static final Pattern RESOURCE_NAME_PATTERN    = Pattern.compile("^[\\w.-]+$");
 
   private static GatewaySpiMessages log = MessagesFactory.get(GatewaySpiMessages.class);
 
@@ -171,12 +170,6 @@ public class TopologiesResource {
   public Topology uploadTopology(@PathParam("id") String id, Topology t) {
     Topology result = null;
 
-    try {
-      id = URLDecoder.decode(id, StandardCharsets.UTF_8.name());
-    } catch (Exception e) {
-      // Ignore
-    }
-
     if (!isValidResourceName(id)) {
       log.invalidResourceName(id);
       throw new BadRequestException("Invalid topology name: " + id);
@@ -187,6 +180,17 @@ public class TopologiesResource {
 
     t.setName(id);
     TopologyService ts = gs.getService(ServiceType.TOPOLOGY_SERVICE);
+
+    GatewayConfig config =
+            (GatewayConfig) request.getServletContext().getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (config != null &&
+            config.getReadOnlyOverrideTopologyNames().contains(FilenameUtils.getBaseName(id))) {
+      log.disallowedOverwritingReadOnlyTopology(id);
+      throw new WebApplicationException(
+          status(Response.Status.FORBIDDEN)
+              .entity("{ \"error\" : \"Cannot overwrite read-only topology: " + id + "\" }")
+              .build());
+    }
 
     // Check for existing topology with the same name, to see if it had been generated
     boolean existingGenerated = false;
@@ -338,12 +342,6 @@ public class TopologiesResource {
   public Response uploadProviderConfiguration(@PathParam("name") String name, @Context HttpHeaders headers, String content) {
     Response response = null;
 
-    try {
-      name = URLDecoder.decode(name, StandardCharsets.UTF_8.name());
-    } catch (Exception e) {
-      // Ignore
-    }
-
     if (!isValidResourceName(name)) {
       log.invalidResourceName(name);
       throw new BadRequestException("Invalid provider configuration name: " + name);
@@ -392,12 +390,6 @@ public class TopologiesResource {
                                          @Context HttpHeaders headers,
                                          String content) {
     Response response = null;
-
-    try {
-      name = URLDecoder.decode(name, StandardCharsets.UTF_8.name());
-    } catch (Exception e) {
-      // Ignore
-    }
 
     if (!isValidResourceName(name)) {
       log.invalidResourceName(name);
@@ -554,8 +546,9 @@ public class TopologiesResource {
     return result;
   }
 
-  private static boolean isValidResourceName(final String name) {
+  static boolean isValidResourceName(final String name) {
     return name != null && name.length() <= RESOURCE_NAME_LENGTH_MAX &&
+        !name.contains("..") &&
         RESOURCE_NAME_PATTERN.matcher(name).matches();
   }
 

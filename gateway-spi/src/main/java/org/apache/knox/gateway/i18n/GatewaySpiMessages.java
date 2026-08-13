@@ -76,6 +76,9 @@ public interface GatewaySpiMessages {
   @Message( level = MessageLevel.ERROR, text = "Topology {0} cannot be manually overwritten because it was generated from a simple descriptor." )
   void disallowedOverwritingGeneratedTopology(String topologyName);
 
+  @Message( level = MessageLevel.INFO, text = "Read-only topology {0} cannot be overwritten." )
+  void disallowedOverwritingReadOnlyTopology(String topologyName);
+
   @Message( level = MessageLevel.INFO, text = "Read-only descriptor {0} cannot be overwritten." )
   void disallowedOverwritingGeneratedDescriptor(String name);
 

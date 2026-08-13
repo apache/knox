@@ -19,7 +19,18 @@ package org.apache.knox.gateway.service.admin;
 
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.topology.TopologyService;
+
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
 
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -27,6 +38,9 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class TopologyResourceTest {
 
@@ -174,6 +188,28 @@ public class TopologyResourceTest {
 
   }
 
+  @Test
+  public void testResourceNameValidation() {
+    assertTrue(TopologiesResource.isValidResourceName("foo"));
+    assertTrue(TopologiesResource.isValidResourceName("foo.json"));
+    assertTrue(TopologiesResource.isValidResourceName("my-provider_1"));
+    assertTrue(TopologiesResource.isValidResourceName("a.b.c"));
+
+    assertFalse(TopologiesResource.isValidResourceName("../../etc/passwd"));
+    assertFalse(TopologiesResource.isValidResourceName(".."));
+    assertFalse(TopologiesResource.isValidResourceName("foo/bar"));
+    assertFalse(TopologiesResource.isValidResourceName("a/../../b"));
+    assertFalse(TopologiesResource.isValidResourceName("foo..bar"));
+
+    assertFalse(TopologiesResource.isValidResourceName("%2f"));
+    assertFalse(TopologiesResource.isValidResourceName("%252f"));
+
+    assertFalse(TopologiesResource.isValidResourceName(null));
+    assertFalse(TopologiesResource.isValidResourceName(""));
+    assertFalse(TopologiesResource.isValidResourceName("a".repeat(101)));
+    assertTrue(TopologiesResource.isValidResourceName("a".repeat(100)));
+  }
+
   private void setDefaultExpectations(HttpServletRequest request){
     EasyMock.expect( request.getPathInfo() ).andReturn( pathInfo ).anyTimes();
     EasyMock.expect( request.getContextPath() ).andReturn( reqContext ).anyTimes();
@@ -184,6 +220,78 @@ public class TopologyResourceTest {
 
   private void setMockRequestHeader(HttpServletRequest request, String header, String expected){
     EasyMock.expect( request.getHeader( header ) ).andReturn( expected ).anyTimes();
+  }
+
+  @Test
+  public void testUploadTopologyRefusesReadOnlyOverride() throws Exception {
+    TopologyService ts = EasyMock.createMock(TopologyService.class);
+
+    GatewayServices gs = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gs.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getReadOnlyOverrideTopologyNames())
+        .andReturn(List.of("manager")).anyTimes();
+
+    HttpServletRequest request = mockRequest(gs, config);
+
+    EasyMock.replay(ts, gs, config, request);
+
+    TopologiesResource res = new TopologiesResource();
+    setRequestField(res, request);
+
+    try {
+      res.uploadTopology("manager", new org.apache.knox.gateway.service.admin.beans.Topology());
+      fail("Expected WebApplicationException for read-only override topology");
+    } catch (WebApplicationException e) {
+      assertEquals(Response.Status.FORBIDDEN.getStatusCode(), e.getResponse().getStatus());
+    }
+
+    EasyMock.verify(ts);
+  }
+
+  @Test
+  public void testUploadTopologyAllowedWhenNotReadOnly() throws Exception {
+    TopologyService ts = EasyMock.createMock(TopologyService.class);
+    EasyMock.expect(ts.getTopologies()).andReturn(Collections.emptyList()).anyTimes();
+    ts.deployTopology(EasyMock.anyObject(Topology.class));
+    EasyMock.expectLastCall().once();
+
+    GatewayServices gs = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gs.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+
+    GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getReadOnlyOverrideTopologyNames())
+        .andReturn(Collections.emptyList()).anyTimes();
+
+    HttpServletRequest request = mockRequest(gs, config);
+
+    EasyMock.replay(ts, gs, config, request);
+
+    TopologiesResource res = new TopologiesResource();
+    setRequestField(res, request);
+
+    res.uploadTopology("sandbox", new org.apache.knox.gateway.service.admin.beans.Topology());
+
+    EasyMock.verify(ts);
+  }
+
+  private HttpServletRequest mockRequest(GatewayServices gs, GatewayConfig config) {
+    ServletContext context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE))
+        .andReturn(gs).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE))
+        .andReturn(config).anyTimes();
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(context).anyTimes();
+    EasyMock.replay(context);
+    return request;
+  }
+
+  private void setRequestField(TopologiesResource res, HttpServletRequest request) throws Exception {
+    Field f = TopologiesResource.class.getDeclaredField("request");
+    f.setAccessible(true);
+    f.set(res, request);
   }
 
 }
