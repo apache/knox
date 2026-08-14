@@ -1806,7 +1806,8 @@ public class GatewayAdminTopologyFuncTest {
     String newDescriptorJSON = createDescriptor(clusterName);
 
     // Attempt to PUT the descriptor
-    given().auth().preemptive().basic(username, password)
+    given().urlEncodingEnabled(false)
+           .auth().preemptive().basic(username, password)
            .header("Content-type", MediaType.APPLICATION_JSON)
            .body(newDescriptorJSON.getBytes(StandardCharsets.UTF_8.name()))
            .then()

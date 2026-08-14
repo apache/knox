@@ -596,6 +596,45 @@ public class DefaultTopologyServiceTest {
   }
 
   @Test
+  public void testDeployRejectsPathTraversal() throws Exception {
+    File dir = createDir();
+    File topologyDir = new File(dir, "topologies");
+    topologyDir.mkdirs();
+
+    File descriptorsDir = new File(dir, "descriptors");
+    descriptorsDir.mkdirs();
+
+    File sharedProvidersDir = new File(dir, "shared-providers");
+    sharedProvidersDir.mkdirs();
+
+    try {
+      TopologyService ts = new DefaultTopologyService();
+      Map<String, String> c = new HashMap<>();
+
+      GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.getGatewayConfDir()).andReturn(descriptorsDir.getParentFile().getAbsolutePath()).anyTimes();
+      EasyMock.replay(config);
+
+      ts.init(config, c);
+
+      final String traversalName = "../../evil.json";
+      final File escapeTarget = new File(dir.getParentFile(), "evil.json");
+      assertFalse("precondition: escape target must not pre-exist", escapeTarget.exists());
+
+      assertFalse("deployProviderConfiguration must reject a path-traversal name",
+                  ts.deployProviderConfiguration(traversalName, "malicious"));
+      assertFalse("deployDescriptor must reject a path-traversal name",
+                  ts.deployDescriptor(traversalName, "malicious"));
+
+      assertFalse("no file may be written outside the managed directory", escapeTarget.exists());
+    } finally {
+      FileUtils.deleteQuietly(dir);
+    }
+  }
+
+  @Test
   public void testProviderParamsOrderIsPreserved() {
 
     Provider provider = new Provider();

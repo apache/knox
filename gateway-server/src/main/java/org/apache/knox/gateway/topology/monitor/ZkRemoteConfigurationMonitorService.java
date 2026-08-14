@@ -212,14 +212,14 @@ class ZkRemoteConfigurationMonitorService implements RemoteConfigurationMonitor 
 
     @Override
     public boolean createProvider(String name, String content) {
-        String entryPath = "/knox/config/shared-providers/" + name;
+        String entryPath = "/knox/config/shared-providers/" + FilenameUtils.getName(name);
         client.createEntry(entryPath, content);
         return (client.getEntryData(entryPath) != null);
     }
 
     @Override
     public boolean createDescriptor(String name, String content) {
-        String entryPath = "/knox/config/descriptors/" + name;
+        String entryPath = "/knox/config/descriptors/" + FilenameUtils.getName(name);
         client.createEntry(entryPath, content);
         return (client.getEntryData(entryPath) != null);
     }
