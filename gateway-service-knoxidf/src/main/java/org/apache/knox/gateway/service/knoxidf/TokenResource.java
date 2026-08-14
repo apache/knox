@@ -92,6 +92,13 @@ public class TokenResource extends PasscodeTokenResourceBase {
     // singleton, but the @Context request is a per-request proxy, so the attribute is request-scoped.
     private static final String AUTH_CODE_METADATA_ATTR = "knoxidf.authCode.metadata";
 
+    // Per-request stash for the federated identity id of the current grant. On the authorization_code
+    // grant it is read from the auth-code metadata; on the refresh_token grant it is restored from the
+    // presented refresh token's metadata (see handleRefreshToken). This lets id_token generation keep
+    // emitting federated profile claims, and lets the rotated refresh token carry the id forward, so
+    // federated claims survive an arbitrary number of refresh rotations.
+    private static final String FEDERATED_IDENTITY_ID_ATTR = "knoxidf.federatedIdentityId";
+
     private UserParamsProvider userParamsProvider;
 
     @Context
@@ -264,6 +271,13 @@ public class TokenResource extends PasscodeTokenResourceBase {
             final Map<String, Object> userParams = userParamsProvider.getParamsFor(userName, scope);
             userParams.put(SCOPE, scope);
 
+            // Restore the federated identity id (if any) so id_token generation keeps the federated
+            // profile claims and the rotated refresh token carries the id forward for the next refresh.
+            final String federatedIdentityId = refreshTokenMetadata.getMetadata(FEDERATED_IDENTITY_ID);
+            if (StringUtils.isNotBlank(federatedIdentityId)) {
+                request.setAttribute(FEDERATED_IDENTITY_ID_ATTR, federatedIdentityId);
+            }
+
             // Build new tokens
             final UserContext userContext = new UserContext(userName, null, userParams);
             final TokenResponseContext resp = getTokenResponse(userContext);
@@ -387,6 +401,23 @@ public class TokenResource extends PasscodeTokenResourceBase {
         return tokenStateService.getTokenMetadata(getRequestParam(CODE));
     }
 
+    // Resolves the federated identity id for the current grant, or null for a local (non-federated)
+    // user. On the authorization_code grant it comes from the auth-code metadata; on the refresh_token
+    // grant it is restored from the presented refresh token's metadata via a request attribute
+    // (see handleRefreshToken). This keeps federated profile claims flowing through every refresh.
+    private String resolveFederatedIdentityId() {
+        if (isAuthCodeFlow()) {
+            try {
+                return getAuthCodeMetadata().getMetadata(FEDERATED_IDENTITY_ID);
+            } catch (UnknownTokenException e) {
+                //this should not happen as we have just validated the auth code
+                throw new RuntimeException(e);
+            }
+        }
+        final Object cached = request.getAttribute(FEDERATED_IDENTITY_ID_ATTR);
+        return cached == null ? null : cached.toString();
+    }
+
     private TokenMetadata validateAuthCode(String code, String redirectUri) throws AuthTokenValidationError {
         try {
             if (code == null || code.isEmpty()) {
@@ -505,17 +536,25 @@ public class TokenResource extends PasscodeTokenResourceBase {
     }
 
     private String generateIdToken(JWT accessToken, TokenMetadata authCodeTokenMetadata) throws TokenServiceException {
-        final boolean hasFederatedIdToken = authCodeTokenMetadata != null && StringUtils.isNotBlank(authCodeTokenMetadata.getMetadata(FEDERATED_IDENTITY_ID));
+        // The federated identity id is resolved for the whole grant (auth-code metadata on the
+        // authorization_code grant, restored refresh-token metadata on the refresh_token grant), so a
+        // federated user keeps their profile claims in the id_token across refresh-token rotations.
+        final String federatedIdentityId = resolveFederatedIdentityId();
 
-        if (hasFederatedIdToken) {
-            return generateFederatedIdToken(accessToken, authCodeTokenMetadata);
+        if (StringUtils.isNotBlank(federatedIdentityId)) {
+            // client_id and nonce live on the auth-code metadata for the authorization_code grant; on
+            // the refresh_token grant there is no auth-code metadata, so client_id comes from the
+            // request and there is no nonce to echo (nonce binds the original authorization request).
+            final String clientId = authCodeTokenMetadata != null
+                    ? authCodeTokenMetadata.getMetadata(CLIENT_ID) : getRequestParam(CLIENT_ID);
+            final String nonce = authCodeTokenMetadata != null ? authCodeTokenMetadata.getMetadata("nonce") : null;
+            return generateFederatedIdToken(accessToken, federatedIdentityId, clientId, nonce);
         } else {
             return generateLocalIdToken(accessToken, authCodeTokenMetadata);
         }
     }
 
-    private String generateFederatedIdToken(JWT accessToken, TokenMetadata tokenMetadata) throws TokenServiceException {
-        final String fedIdentityId = tokenMetadata.getMetadata(FEDERATED_IDENTITY_ID);
+    private String generateFederatedIdToken(JWT accessToken, String fedIdentityId, String clientId, String nonce) throws TokenServiceException {
         final FederatedIdentity federatedIdentity = federatedIdentityService
                 .findById(fedIdentityId)
                 .orElseThrow(() -> new TokenServiceException("Federated identity not found"));
@@ -526,11 +565,10 @@ public class TokenResource extends PasscodeTokenResourceBase {
                 .setIssueTime(System.currentTimeMillis())
                 .setExpires(Long.parseLong(accessToken.getExpires()))
                 .setIssuer(accessToken.getIssuer())
-                .setAudiences(tokenMetadata.getMetadata(CLIENT_ID));
+                .setAudiences(clientId);
 
         final Map<String, Object> claims = new HashMap<>(federatedIdentity.getAttributes());
         claims.keySet().retainAll(AuthorizeResource.ALLOWED_CLAIMS);
-        String nonce = tokenMetadata.getMetadata("nonce");
         if (StringUtils.isNotBlank(nonce)) {
             claims.put("nonce", nonce);
         }
@@ -603,6 +641,13 @@ public class TokenResource extends PasscodeTokenResourceBase {
             metadata.setType(TokenMetadataType.REFRESH_TOKEN);
             metadata.add("client_id", clientId);
             metadata.add("scope", scope);
+            // Carry the federated identity id onto the refresh token so that, after rotation, the
+            // refresh_token grant can still emit federated profile claims in the id_token (the rotated
+            // token has no auth code to read the id back from). Blank/absent for local users.
+            final String federatedIdentityId = resolveFederatedIdentityId();
+            if (StringUtils.isNotBlank(federatedIdentityId)) {
+                metadata.add(FEDERATED_IDENTITY_ID, federatedIdentityId);
+            }
             tokenStateService.addMetadata(tokenId, metadata);
         }
 
