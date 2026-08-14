@@ -35,15 +35,4 @@
             <value>true</value>
         </param>
     </service>
-    <service>
-        <role>KNOXTOKEN</role>
-        <param>
-            <name>knox.token.ttl</name>
-            <value>60000</value>
-        </param>
-        <param>
-            <name>knox.token.limit.per.user</name>
-            <value>-1</value>
-        </param>
-    </service>
 </topology>

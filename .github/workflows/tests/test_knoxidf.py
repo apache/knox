@@ -83,7 +83,7 @@ class TestKnoxIDF(unittest.TestCase):
         client_id, client_secret = self._register_test_client()
 
         # 2. Get token via client_credentials
-        token_url = f"{self.knoxidf_token_url}knoxtoken/api/v1/token"
+        token_url = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
         print(f"Getting token at: {token_url}")
         data = {
             "grant_type": "client_credentials",

@@ -71,6 +71,11 @@ public class RegistrationResource extends ClientCredentialsResource {
     @Context
     private ServletContext servletContext;
 
+    @Override
+    public String getPrefix() {
+        return "knoxidf.";
+    }
+
     @PostConstruct
     @Override
     public void init() throws ServletException, AliasServiceException, ServiceLifecycleException, KeyLengthException {
