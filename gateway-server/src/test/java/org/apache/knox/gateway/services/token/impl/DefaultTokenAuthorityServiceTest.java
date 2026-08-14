@@ -18,15 +18,21 @@
 package org.apache.knox.gateway.services.token.impl;
 
 import java.io.File;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.Principal;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
+import com.nimbusds.jose.crypto.RSASSASigner;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.security.impl.DefaultKeystoreService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -34,6 +40,8 @@ import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
+import org.apache.knox.gateway.util.X509CertificateUtil;
 
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -590,6 +598,62 @@ public class DefaultTokenAuthorityServiceTest {
     ta.start();
 
     EasyMock.verify(config, ms, as);
+  }
+
+  /**
+   * A token signed by a rotated-out key still verifies as long as that key's alias remains
+   * configured as an additional signing-key alias: verification selects the key by the token's
+   * {@code kid} header. Without that alias configured (single-key), the same token is rejected.
+   */
+  @Test
+  public void testVerifyTokenSelectsKeyByKidAcrossRotation() throws Exception {
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    final KeyPair currentPair = kpg.generateKeyPair();
+    final KeyPair rotatedOutPair = kpg.generateKeyPair();
+
+    final KeyStore signingKeystore = KeyStore.getInstance("JKS");
+    signingKeystore.load(null, null);
+    signingKeystore.setCertificateEntry("gateway-identity",
+        X509CertificateUtil.generateCertificate("CN=current", currentPair, 365, "SHA256withRSA"));
+    signingKeystore.setCertificateEntry("old-signing-key",
+        X509CertificateUtil.generateCertificate("CN=old", rotatedOutPair, 365, "SHA256withRSA"));
+
+    final KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);
+    EasyMock.expect(ks.getSigningKeystore()).andReturn(signingKeystore).anyTimes();
+    final AliasService as = EasyMock.createNiceMock(AliasService.class);
+
+    // A token signed by the rotated-out key, stamped with that key's kid (as issueToken would).
+    final String rotatedOutKid = TokenUtils.getThumbprint((RSAPublicKey) rotatedOutPair.getPublic(), "SHA-256");
+    final JWT token = new JWTToken(new JWTokenAttributesBuilder().setAlgorithm("RS256").setKid(rotatedOutKid)
+        .setAudiences(Collections.emptyList()).build());
+    token.sign(new RSASSASigner(rotatedOutPair.getPrivate(), true));
+
+    // (1) Rotated-out alias still configured -> kid selection picks it -> verifies.
+    final GatewayConfig multiKeyConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(multiKeyConfig.getSigningKeyAlias()).andReturn("gateway-identity").anyTimes();
+    EasyMock.expect(multiKeyConfig.getSigningKeyAliases())
+        .andReturn(Arrays.asList("gateway-identity", "old-signing-key")).anyTimes();
+    EasyMock.replay(ks, as, multiKeyConfig);
+
+    DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setKeystoreService(ks);
+    ta.setAliasService(as);
+    ta.init(multiKeyConfig, new HashMap<>());
+    assertTrue("Token signed by a still-configured rotated key must verify", ta.verifyToken(token));
+
+    // (2) Only the current key configured (single-key) -> the rotated key's token is rejected.
+    final GatewayConfig singleKeyConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(singleKeyConfig.getSigningKeyAlias()).andReturn("gateway-identity").anyTimes();
+    EasyMock.expect(singleKeyConfig.getSigningKeyAliases())
+        .andReturn(Collections.singletonList("gateway-identity")).anyTimes();
+    EasyMock.replay(singleKeyConfig);
+
+    ta = new DefaultTokenAuthorityService();
+    ta.setKeystoreService(ks);
+    ta.setAliasService(as);
+    ta.init(singleKeyConfig, new HashMap<>());
+    assertFalse("Without the rotated key configured, its token must not verify", ta.verifyToken(token));
   }
 
   /**

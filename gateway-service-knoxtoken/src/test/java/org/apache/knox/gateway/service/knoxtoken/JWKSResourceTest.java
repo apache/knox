@@ -26,6 +26,7 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.Collections;
 
 import javax.servlet.ServletContext;
@@ -37,6 +38,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributesBuilder;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -131,6 +133,61 @@ public class JWKSResourceTest {
     final JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) pk);
     Assert.assertTrue("Cannot verify the token, wrong certificate",
         testToken.verify(verifier));
+  }
+
+  /**
+   * When more than one signing-key alias is configured, the JWKS endpoint must publish one JWK per
+   * alias, each carrying its own 'kid' (SHA-256 thumbprint), so verifiers can select the right key
+   * across a manual key rotation.
+   */
+  @Test
+  public void testMultipleKeysPublished() throws Exception {
+    /* a second, distinct signing key that stands in for a rotated-out key */
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    final RSAPublicKey previousPublicKey = (RSAPublicKey) kpg.generateKeyPair().getPublic();
+
+    final ServletContext ctx = EasyMock.createNiceMock(ServletContext.class);
+    final HttpServletRequest req = EasyMock.createNiceMock(HttpServletRequest.class);
+    final GatewayServices svcs = EasyMock.createNiceMock(GatewayServices.class);
+    final KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);
+    final KeyStoreSpi keyStoreSpi = EasyMock.createNiceMock(KeyStoreSpi.class);
+    final KeyStore keystore = new KeyStoreMock(keyStoreSpi, null, "test");
+    keystore.load(null);
+    EasyMock.expect(ks.getSigningKeystore(null)).andReturn(keystore).anyTimes();
+
+    /* distinct cert per alias: 'gateway-identity' (current) and 'old-signing-key' (rotated-out) */
+    final Certificate currentCert = EasyMock.createNiceMock(Certificate.class);
+    final Certificate previousCert = EasyMock.createNiceMock(Certificate.class);
+    EasyMock.expect(keyStoreSpi.engineGetCertificate("gateway-identity")).andReturn(currentCert).anyTimes();
+    EasyMock.expect(keyStoreSpi.engineGetCertificate("old-signing-key")).andReturn(previousCert).anyTimes();
+    EasyMock.expect(currentCert.getPublicKey()).andReturn(publicKey).anyTimes();
+    EasyMock.expect(previousCert.getPublicKey()).andReturn(previousPublicKey).anyTimes();
+
+    EasyMock.expect(svcs.getService(ServiceType.KEYSTORE_SERVICE)).andReturn(ks).anyTimes();
+    EasyMock.expect(svcs.getService(ServiceType.ALIAS_SERVICE)).andReturn(EasyMock.createNiceMock(AliasService.class)).anyTimes();
+    EasyMock.expect(ctx.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(svcs).anyTimes();
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn("gateway-identity").anyTimes();
+    EasyMock.expect(config.getSigningKeyAliases()).andReturn(Arrays.asList("gateway-identity", "old-signing-key")).anyTimes();
+    EasyMock.expect(ctx.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(config).anyTimes();
+    EasyMock.replay(ctx, req, svcs, ks, keyStoreSpi, currentCert, previousCert, config);
+
+    final JWKSResource jwksResource = new JWKSResource();
+    jwksResource.context = ctx;
+    jwksResource.request = req;
+    jwksResource.init();
+    final Response retResponse = jwksResource.getJwksResponse();
+    Assert.assertEquals(Response.Status.OK.getStatusCode(), retResponse.getStatus());
+
+    final JWKSet jwks = JWKSet.parse(retResponse.getEntity().toString());
+    Assert.assertEquals("Expected one JWK per configured alias", 2, jwks.getKeys().size());
+    /* both keys are present and addressable by their own kid */
+    final String currentKid = TokenUtils.getThumbprint(publicKey, "SHA-256");
+    final String previousKid = TokenUtils.getThumbprint(previousPublicKey, "SHA-256");
+    Assert.assertNotEquals("The two keys must have distinct kids", currentKid, previousKid);
+    Assert.assertNotNull("Current key not published under its kid", jwks.getKeyByKeyId(currentKid));
+    Assert.assertNotNull("Rotated-out key not published under its kid", jwks.getKeyByKeyId(previousKid));
   }
 
   private JWT getTestToken(final String algorithm) {

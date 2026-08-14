@@ -587,6 +587,7 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(JWTFederationFilter.JWKS_URLS)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.TOKEN_PRINCIPAL_CLAIM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.TOKEN_VERIFICATION_PEM)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.JWT_UNAUTHENTICATED_PATHS_PARAM)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_ISSUER)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(AbstractJWTFilter.JWT_EXPECTED_SIGALG)).andReturn(null).anyTimes();

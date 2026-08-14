@@ -1018,6 +1018,25 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public List<String> getSigningKeyAliases() {
+    final List<String> aliases = new ArrayList<>();
+    final String current = getSigningKeyAlias();
+    if (current != null) {
+      aliases.add(current);
+    }
+    final String additional = get(SIGNING_KEY_ALIASES_ADDITIONAL);
+    if (additional != null && !additional.trim().isEmpty() && !"none".equalsIgnoreCase(additional.trim())) {
+      for (String alias : additional.trim().split("\\s*,\\s*")) {
+        // Skip blanks and de-duplicate so the current key is never published/checked twice.
+        if (!alias.isEmpty() && !aliases.contains(alias)) {
+          aliases.add(alias);
+        }
+      }
+    }
+    return aliases;
+  }
+
+  @Override
   public List<String> getGlobalRulesServices() {
     String value = get( GLOBAL_RULES_SERVICES );
     if ( value != null && !value.isEmpty() && !"none".equalsIgnoreCase(value.trim()) ) {
@@ -1904,5 +1923,35 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerMaxTrustedIssuers() {
+    return getInt(TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS, TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryCacheTtlSecs() {
+    return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS, TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryConnectTimeoutMs() {
+    return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS, TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryReadTimeoutMs() {
+    return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS, TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT);
+  }
+
+  @Override
+  public int getKnoxIDFFederatedOpConnectTimeoutMs() {
+    return getInt(KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS, KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT);
+  }
+
+  @Override
+  public int getKnoxIDFFederatedOpReadTimeoutMs() {
+    return getInt(KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS, KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT);
   }
 }

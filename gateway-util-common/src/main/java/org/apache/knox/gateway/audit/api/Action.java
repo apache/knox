@@ -31,5 +31,6 @@ public abstract class Action {
   public static final String DISPATCH = "dispatch";
   public static final String ACCESS = "access";
   public static final String WEBSHELL = "webshell";
+  public static final String DELEGATION_LIFECYCLE = "delegation-lifecycle";
 
 }

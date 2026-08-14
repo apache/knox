@@ -87,6 +87,34 @@ public class JWTTokenTest {
   }
 
   @Test
+  public void testIssueTimeDefaultsToNow() throws Exception {
+    // Regression: JWTToken always emits 'iat'. When a caller does not set the issue time, the
+    // builder must default it to "now" rather than leaving it at epoch-0 (1970).
+    final long before = System.currentTimeMillis();
+    final JWT token = new JWTToken(new JWTokenAttributesBuilder()
+        .setUserName("john.doe@example.com").setAlgorithm("RS256").build());
+    final long after = System.currentTimeMillis();
+
+    final Date issueTime = token.getJWTClaimsSet().getIssueTime();
+    assertNotNull("iat must be present", issueTime);
+    // JWT 'iat' has second precision, so allow the surrounding second as slack.
+    assertTrue("iat must be ~now, not 1970 (was " + issueTime + ")",
+        issueTime.getTime() >= (before - 1000L) && issueTime.getTime() <= (after + 1000L));
+  }
+
+  @Test
+  public void testIssueTimeIsHonouredWhenSet() throws Exception {
+    final long explicit = 1_600_000_000_000L; // 2020-09-13
+    final JWT token = new JWTToken(new JWTokenAttributesBuilder()
+        .setUserName("john.doe@example.com").setAlgorithm("RS256").setIssueTime(explicit).build());
+
+    final Date issueTime = token.getJWTClaimsSet().getIssueTime();
+    assertNotNull(issueTime);
+    // second precision
+    assertEquals(explicit / 1000L, issueTime.getTime() / 1000L);
+  }
+
+  @Test
   public void testPrivateUUIDClaim() throws Exception {
     JWT token = new JWTToken(new JWTokenAttributesBuilder().setAudiences(singletonList("https://login.example.com")).setUserName("john.doe@example.com").setAlgorithm("RS256").build());
 

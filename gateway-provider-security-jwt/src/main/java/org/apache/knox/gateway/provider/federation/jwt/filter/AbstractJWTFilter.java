@@ -469,65 +469,130 @@ public abstract class AbstractJWTFilter implements Filter {
     final String tokenId = TokenUtils.getTokenId(token);
     final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
-    // confirm that issuer matches the intended target
     if (expectedIssuers.contains(token.getIssuer())) {
-      // if there is no expiration data then the lifecycle is tied entirely to
-      // the cookie validity - otherwise ensure that the current time is before
-      // the designated expiration time
-      try {
-        if (tokenIsStillValid(token)) {
-          boolean audValid = validateAudiences(token);
-          if (audValid) {
-            Date nbf = token.getNotBeforeDate();
-            if (nbf == null || new Date().after(nbf)) {
-              final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
-              if (isTokenEnabled(tokenMetadata)) {
-                if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
-                  if (verifyTokenSignature(token)) {
-                    markLastUsedAt(tokenId, tokenMetadata);
-                    return true;
-                  } else {
-                    log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
-                    handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
-                  }
+      // Issuer in the static trusted list: full validation using the provider-configured
+      // PEM/JWKS/instance-key chain. An empty set signals "use verifyTokenSignature()".
+      return doFullTokenValidation(request, response, token, tokenId,
+          displayableToken, displayableTokenId, Set.of());
+    }
+    // For issuers not in the static list, subclasses may resolve JWKS for a runtime-registered issuer.
+    // An empty result means "not applicable for this request" and the token is rejected.
+    // All other validation checks (expiry, audiences, nbf, token state) run identically to the static path.
+    final Set<URI> registeredIssuerJwks = resolveRegisteredIssuerJwks(token.getIssuer(), request);
+    if (!registeredIssuerJwks.isEmpty()) {
+      return doFullTokenValidation(request, response, token, tokenId,
+          displayableToken, displayableTokenId, registeredIssuerJwks);
+    }
+    handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+    return false;
+  }
+
+  /**
+   * Extension point for subclasses to resolve JWKS for an issuer that is registered at runtime
+   * (e.g., in {@code TrustedOidcIssuerService}) but is not in the static
+   * {@code jwt.expected.issuer} topology parameter.
+   *
+   * <p>Return semantics:
+   * <ul>
+   *   <li>Non-empty set — caller runs full token validation using only these JWKS for signature
+   *       verification; the provider-configured PEM/JWKS/instance-key chain is not consulted.</li>
+   *   <li>Empty set — not applicable for this request; caller rejects with 401.</li>
+   * </ul>
+   *
+   * <p>The default implementation always returns an empty set. Subclasses that support a runtime
+   * issuer registry should override this method, applying any request-context checks themselves,
+   * and return a non-empty set only when the issuer is found in the registry and
+   * its JWKS URI has been successfully resolved.
+   */
+  protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
+    return Set.of();
+  }
+
+  /**
+   * Runs the full token validation sequence (expiry, audiences, nbf, token state, signature)
+   * used by both the static-issuer path and the registered-issuer path.
+   *
+   * @param registeredIssuerJwks if non-empty, the signature is verified exclusively against these
+   *     JWKS URIs (resolved for the issuer from the runtime registry); if empty,
+   *     {@link #verifyTokenSignature(JWT)} is used instead (provider-configured PEM / JWKS /
+   *     instance-key chain).
+   */
+  private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
+      final JWT token, final String tokenId, final String displayableToken,
+      final String displayableTokenId, final Set<URI> registeredIssuerJwks)
+      throws IOException, ServletException {
+    try {
+      if (tokenIsStillValid(token)) {
+        if (validateAudiences(token)) {
+          Date nbf = token.getNotBeforeDate();
+          if (nbf == null || new Date().after(nbf)) {
+            final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+            if (isTokenEnabled(tokenMetadata)) {
+              if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
+                final boolean sigOk = registeredIssuerJwks.isEmpty()
+                    ? verifyTokenSignature(token)
+                    : verifyTokenSignatureWithJwks(token, registeredIssuerJwks);
+                if (sigOk) {
+                  markLastUsedAt(tokenId, tokenMetadata);
+                  return true;
                 } else {
-                  log.idleTimoutExceeded(token.getSubject(), displayableTokenId, idleTimeoutSeconds);
-                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, TOKEN_PREFIX + displayableTokenId + IDLE_TIMEOUT_POSTFIX);
+                  log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
+                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
                 }
               } else {
-                log.disabledToken(displayableTokenId);
-                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, TOKEN_PREFIX + displayableTokenId + DISABLED_POSTFIX);
+                log.idleTimoutExceeded(token.getSubject(), displayableTokenId, idleTimeoutSeconds);
+                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
+                    TOKEN_PREFIX + displayableTokenId + IDLE_TIMEOUT_POSTFIX);
               }
             } else {
-              log.notBeforeCheckFailed();
-              handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                      "Bad request: the NotBefore check failed");
+              log.disabledToken(displayableTokenId);
+              handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
+                  TOKEN_PREFIX + displayableTokenId + DISABLED_POSTFIX);
             }
           } else {
-            log.failedToValidateAudience(displayableToken, displayableTokenId);
+            log.notBeforeCheckFailed();
             handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                    "Bad request: missing required token audience");
+                "Bad request: the NotBefore check failed");
           }
         } else {
-          log.tokenHasExpired(displayableToken, displayableTokenId);
-
-          // Explicitly evict the record of this token's signature verification (if present).
-          // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
-          // records for other valid tokens from being prematurely evicted from the cache.
-          removeSignatureVerificationRecord(token.toString());
-
-          handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
-
+          log.failedToValidateAudience(displayableToken, displayableTokenId);
+          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "Bad request: missing required token audience");
         }
-      } catch (UnknownTokenException e) {
-        log.unableToVerifyExpiration(e);
-        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+      } else {
+        log.tokenHasExpired(displayableToken, displayableTokenId);
+        // Explicitly evict the record of this token's signature verification (if present).
+        // There is no value in keeping this record for expired tokens, and explicitly removing them
+        // may prevent records for other valid tokens from being prematurely evicted from the cache.
+        removeSignatureVerificationRecord(token.toString());
+        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
       }
-    } else {
-      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+    } catch (UnknownTokenException e) {
+      log.unableToVerifyExpiration(e);
+      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
     }
-
     return false;
+  }
+
+  /**
+   * Verifies the token's signature against the given JWKS URIs.
+   * Uses the filter's configured signature algorithm and JWS type verifier.
+   */
+  private boolean verifyTokenSignatureWithJwks(final JWT token, final Set<URI> jwksUrls) {
+    final String serializedJWT = token.toString();
+    if (hasSignatureBeenVerified(serializedJWT)) {
+      return true;
+    }
+    try {
+      final boolean verified = authority.verifyToken(token, jwksUrls, expectedSigAlg, typeVerifier);
+      if (verified) {
+        recordSignatureVerification(serializedJWT);
+      }
+      return verified;
+    } catch (TokenServiceException e) {
+      log.unableToVerifyToken(e);
+      return false;
+    }
   }
 
   private boolean isTokenEnabled(TokenMetadata tokenMetadata) throws UnknownTokenException {

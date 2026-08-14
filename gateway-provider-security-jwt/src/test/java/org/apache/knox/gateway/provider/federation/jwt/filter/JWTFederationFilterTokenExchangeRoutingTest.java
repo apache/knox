@@ -64,7 +64,7 @@ public class JWTFederationFilterTokenExchangeRoutingTest {
   @Test
   public void testTokenExchangeGrantRoutesToHandler() throws Exception {
     // grant_type in the body (unwrapped), no Authorization header
-    final HttpServletRequest request = wrapped(bodyRequest(TokenExchangeHandler.TOKEN_EXCHANGE, null));
+    final HttpServletRequest request = wrapped(bodyRequest(JWTFederationFilter.TOKEN_EXCHANGE, null));
 
     filter.doFilter(request, response, chain);
 
