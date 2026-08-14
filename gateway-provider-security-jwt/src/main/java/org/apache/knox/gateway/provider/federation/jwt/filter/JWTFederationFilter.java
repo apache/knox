@@ -22,6 +22,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -29,6 +33,7 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -40,22 +45,25 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.AUTH_CODE;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
-
   private static final JWTMessages LOGGER = MessagesFactory.get( JWTMessages.class );
   /* A semicolon separated list of paths that need to bypass authentication */
   public static final String JWT_UNAUTHENTICATED_PATHS_PARAM = "jwt.unauthenticated.path.list";
@@ -66,9 +74,32 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String CLIENT_ASSERTION_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
   public static final String CLIENT_ASSERTION_TYPE = "client_assertion_type";
   public static final String CLIENT_ASSERTION = "client_assertion";
+  // RFC 8693 constants
+  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
+  public static final String SUBJECT_TOKEN = "subject_token";
+  public static final String ACTOR_TOKEN = "actor_token";
+  public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
+  public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
+
+  // Set by doFilter only when it dispatches a genuine RFC 8693 token-exchange request (identified by
+  // getWireToken from the body-only grant_type). resolveRegisteredIssuerJwks trusts a runtime-registered
+  // external issuer's JWKS only when this attribute is present, binding that decision to the actual
+  // dispatched code path rather than to request.getParameter(GRANT_TYPE) -- which the Servlet API also
+  // populates from the URL query string, letting a plain Bearer request spoof it with ?grant_type=...
+  static final String TOKEN_EXCHANGE_REQUEST_ATTR = "knox.jwt.token.exchange.request";
+  // RFC 8693 section 3 token type identifiers. Only JWT-family types are supported for exchange;
+  // Knox issues JWT access tokens, so the access_token URN is accepted as an alias for jwt.
+  public static final String TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt";
+  public static final String TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
+
+  // Topology provider param. OOTB the JWKS URI resolved via dynamic OIDC discovery for a
+  // runtime-registered external issuer MUST be HTTPS: fetching a token issuer's signing keys over
+  // cleartext would let an on-path attacker substitute their own keys and forge subject tokens.
+  // Set this to "true" on the provider to permit an http:// jwks_uri (e.g. an internal test OP).
+  public static final String TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP = "knox.token.exchange.dynamic.jwks.allow.http";
 
   public enum TokenType {
-    JWT, Passcode, TokenExchange;
+    JWT, Passcode, TokenExchange, AuthCode;
   }
 
   public static final String KNOX_TOKEN_AUDIENCES = "knox.token.audiences";
@@ -90,6 +121,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private String cookieName;
 
   private String paramName;
+  // OOTB false: a non-HTTPS dynamic-discovery JWKS URI is rejected. Only an explicit
+  // TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP="true" flips this, so a typo fails safe (secure).
+  private boolean allowInsecureDynamicJwks;
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
   // Handles RFC 8693 token exchange requests (see doFilter).
@@ -135,6 +169,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (verificationPEM != null) {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
+
+    // Topology toggle for permitting a non-HTTPS dynamic-discovery JWKS URI. Parsed with
+    // Boolean.parseBoolean so anything other than an explicit "true" (including a typo) keeps
+    // HTTPS enforcement on -- the fail-safe direction for a security control.
+    allowInsecureDynamicJwks = Boolean.parseBoolean(
+        filterConfig.getInitParameter(TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP));
 
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
@@ -186,7 +226,21 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // request by the handler. Reading the body only happens on this (header-less) grant-flow path,
     // so a proxied backend's body is never consumed by the header-authenticated path.
     if (wireToken != null && TokenType.TokenExchange.equals(wireToken.getLeft())) {
+      // Bind the "this is token exchange" decision to the dispatched path so that only the
+      // subject_token/actor_token validated inside the handler can unlock registered-issuer JWKS.
+      request.setAttribute(TOKEN_EXCHANGE_REQUEST_ATTR, Boolean.TRUE);
       tokenExchangeHandler.handle((HttpServletRequest) request, (HttpServletResponse) response, chain);
+      return;
+    }
+
+    // authorization_code grant: the KnoxIDF token endpoint (TokenResource) authenticates the client
+    // itself -- a PKCE code_verifier for public clients, or a client_secret for confidential clients
+    // -- and binds the code to its client_id and redirect_uri. getWireToken flags this via
+    // TokenType.AuthCode when the grant_type is in the request body and no Bearer/Basic credentials
+    // were presented. Forward to the service without a gateway-established token so that public PKCE
+    // clients (no secret) are not rejected here.
+    if (wireToken != null && TokenType.AuthCode.equals(wireToken.getLeft())) {
+      continueWithAuthorizationCodeGrant(request, response, chain);
       return;
     }
 
@@ -199,6 +253,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue);
           if (token != null) {
             Subject subject = createSubjectFromToken(token);
+            addKnoxIDFAttributes(request, token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
         } catch (ParseException | UnknownTokenException ex) {
@@ -220,7 +275,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         }
         if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
-            Subject subject = createSubjectFromTokenIdentifier(tokenId);
+            final Subject subject = createSubjectFromTokenIdentifier(tokenId);
+            request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, tokenId);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           } catch (UnknownTokenException e) {
             ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -231,6 +287,18 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // no token provided in header
       log.missingTokenFromHeader(wireToken);
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+  }
+
+  private static void addKnoxIDFAttributes(ServletRequest request, JWT token) {
+    request.setAttribute(KnoxIDFConstants.TOKEN_ID_ATTRIBUTE, TokenUtils.getTokenId(token));
+    final String scope = token.getClaim(KnoxIDFConstants.SCOPE);
+    if (scope != null) {
+      request.setAttribute(KnoxIDFConstants.SCOPE_ATTRIBUTE, scope);
+    }
+    final String issuer = token.getIssuer();
+    if (issuer != null) {
+      request.setAttribute(KnoxIDFConstants.TOKEN_ISS_ATTRIBUTE, issuer);
     }
   }
 
@@ -332,8 +400,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
         final String grantType = unwrappedRequest.getParameter(GRANT_TYPE);
         final String clientAssertionType = unwrappedRequest.getParameter(CLIENT_ASSERTION_TYPE);
-        if (CLIENT_CREDENTIALS.equals(grantType)) {
-          if (clientAssertionType != null && CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
+        if (AUTH_CODE.equals(grantType)) {
+          // no client_secret parsed here; the KnoxIDF token endpoint authenticates the client
+          // (see the TokenType.AuthCode handling in doFilter)
+          return Pair.of(TokenType.AuthCode, null);
+        } else if (CLIENT_CREDENTIALS.equals(grantType)) {
+          if (CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
             // short lived client assertion token expected
             return getClientTokenFromParams(unwrappedRequest, CLIENT_ASSERTION);
           }
@@ -345,7 +417,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
           return getClientTokenFromParams(unwrappedRequest, REFRESH_TOKEN_PARAM);
-        } else if (TokenExchangeHandler.TOKEN_EXCHANGE.equals(grantType)) {
+        } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // RFC 8693 token exchange: signal it via the token type. doFilter routes this to
           // TokenExchangeHandler, which reads subject_token/actor_token from the unwrapped request.
           return Pair.of(TokenType.TokenExchange, null);
@@ -441,6 +513,44 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   }
 
   @Override
+  protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
+    // Only a genuine token-exchange dispatch (see doFilter) may trust a runtime-registered external
+    // issuer's JWKS. Reading the request attribute -- not getParameter(GRANT_TYPE) -- prevents a
+    // ?grant_type=<token-exchange> query param on a plain Bearer request from unlocking this path.
+    if (!Boolean.TRUE.equals(request.getAttribute(TOKEN_EXCHANGE_REQUEST_ATTR))) {
+      return Set.of();
+    }
+    final GatewayServices gws = (GatewayServices)
+        request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+    if (gws != null) {
+      final TrustedOidcIssuerService issuerSvc = gws.getService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE);
+      // isDynamicJwks() is the combined guard: true only if the issuer is both registered as
+      // trusted AND configured for dynamic JWKS discovery. If the issuer is not registered, or
+      // registered without dynamic JWKS, it is not actionable through this path.
+      if (issuerSvc != null && issuerSvc.isDynamicJwks(issuer)) {
+        // resolveJwksUri() performs OIDC discovery
+        final Optional<String> jwksUri = issuerSvc.resolveJwksUri(issuer);
+        if (jwksUri.isPresent()) {
+          try {
+            final URI uri = new URI(jwksUri.get());
+            // OOTB the discovered JWKS URI must be HTTPS (see TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP):
+            // signing keys fetched over cleartext could be swapped by an on-path attacker to forge
+            // subject tokens. Reject anything non-HTTPS unless the operator opted in.
+            if (!allowInsecureDynamicJwks && !"https".equalsIgnoreCase(uri.getScheme())) {
+              LOGGER.rejectedInsecureDynamicJwksUri(jwksUri.get(), issuer);
+              return Set.of();
+            }
+            return Set.of(uri);
+          } catch (URISyntaxException e) {
+            LOGGER.unableToVerifyToken(e);
+          }
+        }
+      }
+    }
+    return Set.of();
+  }
+
+  @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
     if (error != null) {
@@ -477,6 +587,22 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           ((HttpServletRequest) request).getRequestURI(), e.toString());
       throw e;
     }
+  }
+
+  /**
+   * Forwards an {@code authorization_code} token request to the KnoxIDF token endpoint without a
+   * gateway-established token. The token endpoint ({@code TokenResource.validateAuthCode})
+   * independently authenticates the client -- a PKCE {@code code_verifier} for public clients, or a
+   * {@code client_secret} for confidential clients -- and binds the code to its {@code client_id}
+   * and {@code redirect_uri}, so this filter only needs to let the request through with an anonymous
+   * subject. The principal of the issued token is derived from the authorization code's stored
+   * metadata, not from this subject.
+   */
+  private void continueWithAuthorizationCodeGrant(final ServletRequest request, final ServletResponse response, final FilterChain chain)
+      throws ServletException, IOException {
+    final Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal("anonymous"));
+    continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
   }
 
   /**

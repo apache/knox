@@ -103,6 +103,32 @@ public interface TokenStateService extends Service {
   void revokeToken(String tokenId) throws UnknownTokenException;
 
   /**
+   * Atomically consume (revoke) the specified token, reporting whether <em>this</em> caller
+   * performed the removal. This enforces single-use semantics (e.g. OAuth authorization codes)
+   * under concurrent redemption: of N callers racing to consume the same token, exactly one
+   * receives {@code true} and all others receive {@code false} because the token was already gone.
+   * Unlike {@link #revokeToken(String)}, an absent token is reported as {@code false} rather than
+   * raising {@link UnknownTokenException}.
+   * <p>
+   * The default implementation delegates to {@link #revokeToken(String)} and is only as atomic as
+   * that method; implementations backed by a store that can remove-and-report atomically (a
+   * concurrent-map removal or a primary-key {@code DELETE}) should override this to provide a true
+   * single-winner guarantee.
+   *
+   * @param tokenId The token unique identifier.
+   * @return {@code true} iff this invocation removed a present token; {@code false} if it was
+   *         already absent (never existed, or consumed by a concurrent caller).
+   */
+  default boolean consumeToken(String tokenId) {
+    try {
+      revokeToken(tokenId);
+      return true;
+    } catch (UnknownTokenException e) {
+      return false;
+    }
+  }
+
+  /**
    * Extend the lifetime of the specified token by the default amount of time.
    *
    * @param token The token.

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<topology>
+    <gateway>
+      <provider>
+         <role>federation</role>
+         <name>JWTProvider</name>
+         <enabled>true</enabled>
+         <param>
+            <name>knox.token.exp.server-managed</name>
+            <value>true</value>
+         </param>
+      </provider>
+      <provider>
+            <role>identity-assertion</role>
+            <name>Default</name>
+            <enabled>true</enabled>
+      </provider>
+    </gateway>
+
+    <service>
+        <role>KNOXIDF</role>
+        <param>
+           <name>knoxidf.knox.token.ttl</name>
+           <value>86400000</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.limit.per.user</name>
+            <value>-1</value>
+        </param>
+        <param>
+            <!-- Skipping the user-consent screen is a server-side deployment decision, never a
+                 client-supplied request parameter. Kept in sync with knoxidf-ldap.xml so the
+                 KNOXIDF service consents consistently across both topologies. -->
+            <name>knoxidf.auto.consent.enabled</name>
+            <value>true</value>
+        </param>
+    </service>
+</topology>

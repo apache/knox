@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +73,10 @@ public interface GatewayConfig {
   String SIGNING_KEYSTORE_PASSWORD_ALIAS = "gateway.signing.keystore.password.alias";
   String SIGNING_KEYSTORE_TYPE = "gateway.signing.keystore.type";
   String SIGNING_KEY_ALIAS = "gateway.signing.key.alias";
+  // Comma-separated list of additional signing-keystore aliases whose public keys are published on
+  // the JWKS endpoint and accepted (selected by 'kid') when verifying gateway-signed JWTs. Lets an
+  // operator retain a previous key across a manual key rotation so already-issued tokens still verify.
+  String SIGNING_KEY_ALIASES_ADDITIONAL = "gateway.signing.key.aliases.additional";
   String SIGNING_KEY_PASSPHRASE_ALIAS = "gateway.signing.key.passphrase.alias";
   String DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS = "signing.keystore.password";
   String DEFAULT_SIGNING_KEYSTORE_TYPE = KeyStore.getDefaultType();
@@ -157,6 +162,26 @@ public interface GatewayConfig {
   String LDAP_SSL_ENABLED_CIPHER_SUITES = "gateway.ldap.ssl.enabled.cipher.suites";
   String LDAP_MAX_SIZE_LIMIT = "gateway.ldap.max.size.limit";
   String LDAP_MAX_TIME_LIMIT = "gateway.ldap.max.time.limit";
+
+  // TrustedOidcIssuerService gateway-level params and their default values
+  String TRUSTED_OIDC_ISSUER_PREFIX = "gateway.trusted.oidc.issuer.";
+  String TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS = TRUSTED_OIDC_ISSUER_PREFIX + "max.issuers";
+  int TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS_DEFAULT = 10_000;
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX = TRUSTED_OIDC_ISSUER_PREFIX + "discovery.";
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX + "cache.ttl.secs";
+  int TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS_DEFAULT = 600;
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX + "connect.timeout.ms";
+  int TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT = 3000;
+  String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX+ "read.timeout.ms";
+  int TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT = 10000;
+
+  // KnoxIDF federated-OP back-channel (token exchange) HTTP client timeouts. Without these an
+  // unresponsive external OP token endpoint pins the calling request thread indefinitely.
+  String KNOXIDF_FEDERATED_OP_PREFIX = "gateway.knoxidf.federated.op.";
+  String KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS = KNOXIDF_FEDERATED_OP_PREFIX + "connect.timeout.ms";
+  int KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT = 3000;
+  String KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS = KNOXIDF_FEDERATED_OP_PREFIX + "read.timeout.ms";
+  int KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT = 10000;
 
   /**
    * The location of the gateway configuration.
@@ -450,6 +475,21 @@ public interface GatewayConfig {
    * @return an alias name
    */
   String getSigningKeyPassphraseAlias();
+
+  /**
+   * Returns the ordered list of signing-keystore aliases whose public keys the gateway publishes on
+   * the JWKS endpoint and accepts (selected by {@code kid}) when verifying gateway-signed JWTs. The
+   * current signing key ({@link #getSigningKeyAlias()}) is always first; any additional
+   * verification-only keys (e.g. a previous key retained across a manual key rotation) follow.
+   * <p>
+   * Implementations that do not support additional keys return just the current signing key, so a
+   * single-key deployment behaves exactly as before.
+   *
+   * @return the current signing key alias followed by any additional verification key aliases
+   */
+  default List<String> getSigningKeyAliases() {
+    return getSigningKeyAlias() == null ? Collections.emptyList() : Collections.singletonList(getSigningKeyAlias());
+  }
 
 
   List<String> getGlobalRulesServices();
@@ -1229,4 +1269,17 @@ public interface GatewayConfig {
   Set<String> getPropertyNames();
 
   boolean getGroupUIServicesOnHomepage();
+
+  int getTrustedOidcIssuerMaxTrustedIssuers();
+
+  int getTrustedOidcIssuerDiscoveryCacheTtlSecs();
+
+  int getTrustedOidcIssuerDiscoveryConnectTimeoutMs();
+
+  int getTrustedOidcIssuerDiscoveryReadTimeoutMs();
+
+  int getKnoxIDFFederatedOpConnectTimeoutMs();
+
+  int getKnoxIDFFederatedOpReadTimeoutMs();
+
 }

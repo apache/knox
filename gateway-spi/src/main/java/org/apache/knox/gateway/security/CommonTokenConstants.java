@@ -27,4 +27,6 @@ public interface CommonTokenConstants {
 
     String CLIENT_SECRET = "client_secret";
 
+    String AUTH_CODE = "authorization_code";
+
 }

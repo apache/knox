@@ -21,9 +21,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +40,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Unit tests for {@link TokenExchangeHandler} covering the RFC 8693 request-validation and
@@ -46,8 +49,8 @@ import java.util.Map;
  */
 public class TokenExchangeHandlerTest {
 
-  private static final String JWT_TYPE = TokenExchangeHandler.TOKEN_TYPE_JWT;
-  private static final String ACCESS_TOKEN_TYPE = TokenExchangeHandler.TOKEN_TYPE_ACCESS_TOKEN;
+  private static final String JWT_TYPE = JWTFederationFilter.TOKEN_TYPE_JWT;
+  private static final String ACCESS_TOKEN_TYPE = JWTFederationFilter.TOKEN_TYPE_ACCESS_TOKEN;
   private static final String SAML2_TYPE = "urn:ietf:params:oauth:token-type:saml2";
 
   private RecordingFilter filter;
@@ -153,6 +156,22 @@ public class TokenExchangeHandlerTest {
   }
 
   @Test
+  public void testSubjectTokenWithActClaimCreatesActorChainPrincipal() throws Exception {
+    // subject_token already carries a prior delegation chain (an 'act' claim) ...
+    filter.valid.put("subtok", jwtWithActClaim("alice", "KNOXSSO", Map.of("sub", "prior-actor")));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    // ... which is preserved as an ActorChainPrincipal in the exchanged Subject
+    final Set<ActorChainPrincipal> actorChainPrincipals =
+        filter.establishedSubject.getPrincipals(ActorChainPrincipal.class);
+    assertFalse("ActorChainPrincipal should be present", actorChainPrincipals.isEmpty());
+    assertEquals("prior-actor", actorChainPrincipals.iterator().next().getCurrentActor());
+  }
+
+  @Test
   public void testSubjectValidationFailureDoesNotEstablishContext() throws Exception {
     // "subtok" is not in the valid map -> parseAndValidateJWT returns null (error already sent)
     handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
@@ -174,10 +193,10 @@ public class TokenExchangeHandlerTest {
   private HttpServletRequest request(String subjectToken, String subjectTokenType,
                                      String actorToken, String actorTokenType) {
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
-    EasyMock.expect(request.getParameter(TokenExchangeHandler.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
     EasyMock.replay(request);
     return request;
   }
@@ -188,6 +207,16 @@ public class TokenExchangeHandlerTest {
     EasyMock.expect(jwt.getIssuer()).andReturn(issuer).anyTimes();
     // no actor chain in the token
     EasyMock.expect(jwt.getClaimAsObject(EasyMock.anyString())).andReturn(null).anyTimes();
+    EasyMock.replay(jwt);
+    return jwt;
+  }
+
+  private static JWT jwtWithActClaim(String subject, String issuer, Map<String, Object> actClaim) {
+    final JWT jwt = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwt.getSubject()).andReturn(subject).anyTimes();
+    EasyMock.expect(jwt.getIssuer()).andReturn(issuer).anyTimes();
+    // subject_token carries a prior delegation chain via its 'act' claim
+    EasyMock.expect(jwt.getClaimAsObject(JWTToken.ACT_CLAIM)).andReturn(actClaim).anyTimes();
     EasyMock.replay(jwt);
     return jwt;
   }

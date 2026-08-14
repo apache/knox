@@ -266,6 +266,22 @@ public class DefaultTokenStateService implements TokenStateService {
   }
 
   @Override
+  public boolean consumeToken(final String tokenId) {
+    validateTokenIdentifier(tokenId);
+    // Atomic single-use claim: ConcurrentHashMap#remove returns the prior value to exactly one
+    // caller, so concurrent redemptions of the same token can never both observe it as present.
+    final boolean claimed = tokenExpirations.remove(tokenId) != null;
+    if (claimed) {
+      // Evict the remaining per-token state (idempotent for a token we won the race for).
+      tokenIssueTimes.remove(tokenId);
+      maxTokenLifetimes.remove(tokenId);
+      metadataMap.remove(tokenId);
+      log.revokedToken(Tokens.getTokenIDDisplayText(tokenId));
+    }
+    return claimed;
+  }
+
+  @Override
   public boolean isExpired(final JWTToken token) throws UnknownTokenException {
     return getTokenExpiration(token) <= System.currentTimeMillis();
   }

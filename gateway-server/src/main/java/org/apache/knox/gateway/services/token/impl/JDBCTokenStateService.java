@@ -241,6 +241,25 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService i
   }
 
   @Override
+  public boolean consumeToken(String tokenId) {
+    // The single-row primary-key DELETE is the atomic arbiter: only the caller whose statement
+    // actually removed the row observes rowsAffected == 1, so exactly one concurrent redemption
+    // wins. Fail closed on a SQL error (report "not consumed by us") rather than the inherited
+    // removeToken() behaviour of swallowing the exception, which would falsely signal a win.
+    try {
+      final boolean removed = tokenDatabase.removeToken(tokenId);
+      if (removed) {
+        super.removeTokens(Collections.singleton(tokenId)); // evict the in-memory cache copy
+        log.removedTokenFromDatabase(Tokens.getTokenIDDisplayText(tokenId));
+      }
+      return removed;
+    } catch (SQLException e) {
+      log.errorRemovingTokenFromDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      return false;
+    }
+  }
+
+  @Override
   protected void evictExpiredTokens() {
     try {
       final long expirationLimit = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(tokenEvictionGracePeriod);

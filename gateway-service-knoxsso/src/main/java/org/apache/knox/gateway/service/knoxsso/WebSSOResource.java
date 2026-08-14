@@ -17,35 +17,6 @@
  */
 package org.apache.knox.gateway.service.knoxsso;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.annotation.PostConstruct;
-import javax.servlet.ServletContext;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-
 import com.nimbusds.jose.JOSEObjectType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.log4j.audit.Log4jAuditor;
@@ -70,6 +41,41 @@ import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.WhitelistUtils;
+import org.apache.knox.gateway.util.knoxidf.FederatedNonceStore;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static org.apache.knox.gateway.services.GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE;
 
 @Path( WebSSOResource.RESOURCE_PATH )
 public class WebSSOResource {
@@ -108,13 +114,15 @@ public class WebSSOResource {
   private String tokenType;
   private String whitelist;
   private String domainSuffix;
-  private List<String> targetAudiences = new ArrayList<>();
+  private final List<String> targetAudiences = new ArrayList<>();
   private boolean enableSession;
   private String signatureAlgorithm;
   private List<String> ssoExpectedparams = new ArrayList<>();
   private String clusterName;
   private String tokenIssuer;
   private TokenStateService tokenStateService;
+  private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
+  private final FederatedNonceStore federatedNonceStore = FederatedNonceStore.getInstance(120000L);
 
   private String sameSiteValue;
 
@@ -224,6 +232,30 @@ public class WebSSOResource {
     }
     final String configuredTokenType = context.getInitParameter(SSO_COOKIE_TOKEN_TYPE_PARAM);
     tokenType = StringUtils.isBlank(configuredTokenType) ? JOSEObjectType.JWT.getType() : configuredTokenType;
+  }
+
+  @Path("/federated/op")
+  @GET
+  public Response federatedOpLogin() {
+    final String loginSessionId = request.getParameter("fedOpSid");
+    final String opName = request.getParameter("fedOpName");
+    final Optional<FederatedOpConfiguration> federatedOpConfig = federatedOpConfigurationStore.get(loginSessionId).stream()
+            .filter(federatedOpConfiguration -> federatedOpConfiguration.getName().equals(opName))
+            .findFirst();
+    if (federatedOpConfig.isPresent()) {
+      final FederatedOpConfiguration federatedOpConfiguration = federatedOpConfig.get();
+      //keep only the selected federated OP in the cache -> we can easily get it in the AuthorizeResource.authCallback endpoint
+      federatedOpConfigurationStore.put(loginSessionId, Set.of(federatedOpConfiguration));
+      // Generate a per-request nonce, send it to the OP, and stash it keyed by the login-session id
+      // (== the state echoed back by the OP). AuthorizeResource.authCallback verifies the returned
+      // id_token's nonce claim against this value, binding the id_token to this authorization request.
+      final String nonce = UUID.randomUUID().toString();
+      federatedNonceStore.put(loginSessionId, nonce);
+      final String federatedOpAuthRedirect = KnoxIDFUtils.buildFederatedOpAuthRedirect(federatedOpConfiguration, loginSessionId, nonce);
+      return Response.seeOther(java.net.URI.create(federatedOpAuthRedirect)).build();
+    } else {
+      return KnoxIDFUtils.error("invalid_request", "Cannot load federated op config associated with login session");
+    }
   }
 
   @GET

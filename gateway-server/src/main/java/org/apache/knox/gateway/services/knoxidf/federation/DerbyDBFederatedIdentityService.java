@@ -1,0 +1,101 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with this
+ * work for additional information regarding copyright ownership. The ASF
+ * licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package org.apache.knox.gateway.services.knoxidf.federation;
+
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_DATABASE_NAME;
+import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.GATEWAY_DATABASE_TYPE;
+import static org.apache.knox.gateway.database.AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME;
+import static org.apache.knox.gateway.database.AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME;
+import static org.apache.knox.gateway.database.DatabaseType.DERBY;
+import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.security.MasterService;
+import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
+import org.apache.knox.gateway.shell.jdbc.derby.DerbyDatabase;
+
+/**
+ * A self-provisioning, embedded-Derby backed {@link FederatedIdentityService}. This is the
+ * auto-enabled default when KnoxIDF is deployed without an operator-configured external database,
+ * mirroring how {@link DerbyDBTokenStateService} is the default token-state service.
+ * <p>
+ * It reuses the single embedded Derby database that the token-state service already provisions
+ * under {@code ${securityDir}/tokens} (the {@code ;create=true} JDBC URL is idempotent, so
+ * connecting to an already-booted database simply connects), sets the shared {@link GatewayConfig}
+ * to point at it, ensures the connection user/password aliases exist, and then delegates all
+ * persistence to {@link JdbcFederatedIdentityService} (which builds the
+ * {@link FederatedIdentityDatabase} and self-creates its tables).
+ */
+public class DerbyDBFederatedIdentityService extends JdbcFederatedIdentityService {
+
+  private DerbyDatabase derbyDatabase;
+  private Path derbyDatabaseFolder;
+  private MasterService masterService;
+
+  public void setMasterService(MasterService masterService) {
+    this.masterService = masterService;
+  }
+
+  @Override
+  public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
+    try {
+      derbyDatabaseFolder = Paths.get(config.getGatewaySecurityDir(), DerbyDBTokenStateService.DB_NAME);
+      startDerby();
+      ((Configuration) config).set(GATEWAY_DATABASE_TYPE, DERBY.type());
+      ((Configuration) config).set(GATEWAY_DATABASE_NAME, derbyDatabaseFolder.toString());
+      getAliasService().addAliasForCluster(NO_CLUSTER_NAME, DATABASE_USER_ALIAS_NAME, getDatabaseUserName());
+      getAliasService().addAliasForCluster(NO_CLUSTER_NAME, DATABASE_PASSWORD_ALIAS_NAME, getDatabasePassword());
+      super.init(config, options);
+    } catch (Exception e) {
+      throw new ServiceLifecycleException("Error while initiating DerbyDBFederatedIdentityService: " + e, e);
+    }
+  }
+
+  private void startDerby() throws Exception {
+    derbyDatabase = new DerbyDatabase(derbyDatabaseFolder.toString());
+    derbyDatabase.create();
+    TimeUnit.SECONDS.sleep(1); // give a bit of time for the server to start
+  }
+
+  private String getDatabasePassword() throws Exception {
+    final char[] dbPasswordAliasValue = getAliasService().getPasswordFromAliasForGateway(DATABASE_PASSWORD_ALIAS_NAME);
+    return dbPasswordAliasValue != null ? new String(dbPasswordAliasValue) : new String(masterService.getMasterSecret());
+  }
+
+  private String getDatabaseUserName() throws Exception {
+    final char[] dbUserAliasValue = getAliasService().getPasswordFromAliasForGateway(DATABASE_USER_ALIAS_NAME);
+    return dbUserAliasValue != null ? new String(dbUserAliasValue) : DerbyDBTokenStateService.DEFAULT_TOKEN_DB_USER_NAME;
+  }
+
+  @Override
+  public void stop() throws ServiceLifecycleException {
+    try {
+      if (derbyDatabase != null) {
+        derbyDatabase.shutdown();
+      }
+    } catch (Exception e) {
+      throw new ServiceLifecycleException("Error while shutting down Derby Database", e);
+    }
+  }
+}

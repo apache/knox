@@ -38,6 +38,7 @@ import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -824,5 +825,32 @@ public class GatewayConfigImplTest {
     } finally {
       System.clearProperty("KNOX_GATEWAY_CONF_DIR");
     }
+  }
+
+  @Test
+  public void testSigningKeyAliases() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // Default: only the current signing key, so a single-key deployment is unchanged.
+    assertEquals(Collections.singletonList(config.getSigningKeyAlias()), config.getSigningKeyAliases());
+
+    // Additional aliases follow the current key, in order.
+    config.set(GatewayConfig.SIGNING_KEY_ALIASES_ADDITIONAL, "old-key-1, old-key-2");
+    List<String> aliases = config.getSigningKeyAliases();
+    assertEquals(3, aliases.size());
+    assertEquals(config.getSigningKeyAlias(), aliases.get(0));
+    assertTrue(aliases.contains("old-key-1"));
+    assertTrue(aliases.contains("old-key-2"));
+
+    // "none" disables additional aliases.
+    config.set(GatewayConfig.SIGNING_KEY_ALIASES_ADDITIONAL, "none");
+    assertEquals(Collections.singletonList(config.getSigningKeyAlias()), config.getSigningKeyAliases());
+
+    // The current alias is never published/checked twice, even if listed as additional.
+    config.set(GatewayConfig.SIGNING_KEY_ALIASES_ADDITIONAL, config.getSigningKeyAlias() + ", old-key-1");
+    aliases = config.getSigningKeyAliases();
+    assertEquals(2, aliases.size());
+    assertEquals(config.getSigningKeyAlias(), aliases.get(0));
+    assertTrue(aliases.contains("old-key-1"));
   }
 }

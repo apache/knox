@@ -39,6 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.ACTOR_TOKEN_TYPE;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.SUBJECT_TOKEN_TYPE;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.TOKEN_TYPE_ACCESS_TOKEN;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.TOKEN_TYPE_JWT;
 /**
  * Handles RFC 8693 (OAuth 2.0 Token Exchange) requests on behalf of {@link JWTFederationFilter}.
  *
@@ -55,16 +59,6 @@ import java.util.Set;
  * simply exchanged for a token representing the subject.</p>
  */
 class TokenExchangeHandler {
-
-  public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
-  public static final String SUBJECT_TOKEN = "subject_token";
-  public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
-  public static final String ACTOR_TOKEN = "actor_token";
-  public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
-  // RFC 8693 section 3 token type identifiers. Only JWT-family types are supported for exchange;
-  // Knox issues JWT access tokens, so the access_token URN is accepted as an alias for jwt.
-  public static final String TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt";
-  public static final String TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
 
   private final JWTFederationFilter filter;
 
@@ -88,9 +82,9 @@ class TokenExchangeHandler {
     // unchanged.
     final HttpServletRequest bodyRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
 
-    final String subjectTokenValue = bodyRequest.getParameter(SUBJECT_TOKEN);
+    final String subjectTokenValue = bodyRequest.getParameter(JWTFederationFilter.SUBJECT_TOKEN);
     final String subjectTokenType = bodyRequest.getParameter(SUBJECT_TOKEN_TYPE);
-    final String actorTokenValue = bodyRequest.getParameter(ACTOR_TOKEN);
+    final String actorTokenValue = bodyRequest.getParameter(JWTFederationFilter.ACTOR_TOKEN);
     final String actorTokenType = bodyRequest.getParameter(ACTOR_TOKEN_TYPE);
     final boolean hasActorToken = actorTokenValue != null && !actorTokenValue.isEmpty();
     final boolean hasActorTokenType = actorTokenType != null && !actorTokenType.isEmpty();

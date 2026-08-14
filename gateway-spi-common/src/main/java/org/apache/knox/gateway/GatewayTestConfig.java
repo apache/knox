@@ -1369,4 +1369,35 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   public boolean getGroupUIServicesOnHomepage() {
     return false;
   }
+
+  @Override
+  public int getTrustedOidcIssuerMaxTrustedIssuers() {
+    return 0;
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryCacheTtlSecs() {
+    return 0;
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryConnectTimeoutMs() {
+    return 0;
+  }
+
+  @Override
+  public int getTrustedOidcIssuerDiscoveryReadTimeoutMs() {
+    return 0;
+  }
+
+  @Override
+  public int getKnoxIDFFederatedOpConnectTimeoutMs() {
+    return KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT;
+  }
+
+  @Override
+  public int getKnoxIDFFederatedOpReadTimeoutMs() {
+    return KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT;
+  }
+
 }

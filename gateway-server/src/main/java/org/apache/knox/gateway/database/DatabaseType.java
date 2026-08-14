@@ -22,37 +22,55 @@ public enum DatabaseType {
             AbstractDataSourceFactory.POSTGRES_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.POSTGRES_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL
     ),
     MYSQL("mysql",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL
     ),
     MARIADB("mariadb",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL
     ),
     HSQL("hsql",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL
     ),
     DERBY("derbydb",
             AbstractDataSourceFactory.DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.DERBY_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.DERBY_KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.DERBY_KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.DERBY_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL
     ),
     ORACLE("oracle",
             AbstractDataSourceFactory.ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.ORACLE_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME
+            AbstractDataSourceFactory.ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.ORACLE_KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.ORACLE_KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
+            AbstractDataSourceFactory.ORACLE_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL
     );
 
     private final String type;
@@ -60,13 +78,21 @@ public enum DatabaseType {
     private final String metadataTableSql;
     private final String providersTableSql;
     private final String descriptorsTableSql;
+    private final String federatedIdentityTableSql;
+    private final String federatedIdentityAttrTableSql;
+    private final String trustedOidcIssuersTableSql;
 
-    DatabaseType(String type, String tokensTableSql, String metadataTableSql,  String providersTableSql, String descriptorsTableSql) {
+    DatabaseType(String type, String tokensTableSql, String metadataTableSql, String providersTableSql,
+        String descriptorsTableSql, String federatedIdentityTableSql, String federatedIdentityAttrTableSql,
+        String trustedOidcIssuersTableSql) {
         this.type = type;
         this.tokensTableSql = tokensTableSql;
         this.metadataTableSql = metadataTableSql;
         this.providersTableSql = providersTableSql;
         this.descriptorsTableSql = descriptorsTableSql;
+        this.federatedIdentityTableSql = federatedIdentityTableSql;
+        this.federatedIdentityAttrTableSql = federatedIdentityAttrTableSql;
+        this.trustedOidcIssuersTableSql = trustedOidcIssuersTableSql;
     }
 
     public String type() {
@@ -87,6 +113,18 @@ public enum DatabaseType {
 
     public String descriptorsTableSql() {
         return descriptorsTableSql;
+    }
+
+    public String federatedIdentityTableSql() {
+        return federatedIdentityTableSql;
+    }
+
+    public String federatedIdentityAttrTableSql() {
+        return federatedIdentityAttrTableSql;
+    }
+
+    public String trustedOidcIssuersTableSql() {
+        return trustedOidcIssuersTableSql;
     }
 
     public static DatabaseType fromString(String dbType) {
