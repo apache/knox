@@ -76,14 +76,19 @@ public class AuthConsentServlet extends HttpServlet {
                 out.println("</ul>");
             }
 
+            // Accept/deny POST directly to the JAX-RS consent endpoints (which require POST) via each
+            // button's formaction, so accepting consent is never triggerable by a passive GET (prefetch,
+            // history re-nav, a leaked consent-state URL). The base path is derived from the servlet
+            // context and a compile-time constant, so it needs no escaping.
+            final String consentBasePath = request.getServletContext().getContextPath() + "/" + AuthorizeResource.RESOURCE_PATH;
             out.println("<form method='post' onsubmit='return confirmAction();'>");
             // Render state in a double-quoted attribute: getRequestParamSafe escapes via escapeHtml4,
             // which encodes '"' (&quot;) but NOT a single quote, so a single-quoted attribute here
             // would let an attacker-supplied state break out of the attribute and inject markup.
             out.printf(Locale.US, "<input type=\"hidden\" name=\"state\" value=\"%s\"/>%n", state);
             out.println("<div style='display: flex; justify-content: center; gap: 20px;'>");
-            out.println("<button type='submit' name='action' value='accept' class='accept'>Accept</button>");
-            out.println("<button type='submit' name='action' value='deny' class='deny'>Deny</button>");
+            out.printf(Locale.US, "<button type='submit' name='action' value='accept' class='accept' formaction=\"%s/consentAccepted\">Accept</button>%n", consentBasePath);
+            out.printf(Locale.US, "<button type='submit' name='action' value='deny' class='deny' formaction=\"%s/consentDenied\">Deny</button>%n", consentBasePath);
             out.println("</div>");
             out.println("</form>");
             out.println("</div>");
@@ -123,17 +128,6 @@ public class AuthConsentServlet extends HttpServlet {
                 // attacker-influenced scope value cannot inject markup (defense in depth).
                 return StringEscapeUtils.escapeHtml4(scope);
         }
-    }
-
-    //Redirect target is application-local and state is encoded/controlled
-    @SuppressWarnings("UNVALIDATED_REDIRECT")
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        final String action = request.getParameter("action");
-        final String state = request.getParameter("state");
-        final String redirectUri = request.getServletContext().getContextPath() + "/" + AuthorizeResource.RESOURCE_PATH +
-                ("accept".equals(action) ? "/consentAccepted?state=" + state : "/consentDenied");
-        response.sendRedirect(redirectUri);
     }
 
 }

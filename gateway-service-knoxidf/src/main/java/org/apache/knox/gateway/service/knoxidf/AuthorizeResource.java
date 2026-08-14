@@ -388,7 +388,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         }
     }
 
-    @GET
+    // POST, not GET: accepting consent persists a consent record and issues an authorization code, so
+    // it must not be triggerable by passive browser navigation (img/link prefetch, history re-nav) or
+    // by a leaked consent-state URL. Requiring a form POST puts it under the browser's same-origin/CSRF
+    // model.
+    @POST
     @Path("/consentAccepted")
     public Response consentAccepted() throws Exception {
         final String state = request.getParameter(STATE);
@@ -398,6 +402,20 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                     ActionOutcome.FAILURE, "event=consent reason=invalid_or_expired_state");
             return error("invalid_request", "Invalid state");
         }
+
+        // Bind consent to the subject that initiated the authorization request. Without this, user B
+        // (authenticated) could replay user A's consent-state URL and have consent recorded for A while
+        // an auth code is minted for B and sent to A's redirect_uri (cross-user consent / mis-routed
+        // code). The consent state is single-use, so consume it before rejecting a mismatch too.
+        final String currentSubject = SubjectUtils.getCurrentEffectivePrincipalName();
+        if (currentSubject == null || !currentSubject.equals(authorizeRequestMetadata.getSubject())) {
+            authorizeRequestMetadataStore.remove(state);
+            KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.mask(authorizeRequestMetadata.getClientId()),
+                    ResourceType.PRINCIPAL, ActionOutcome.FAILURE, "event=consent subject="
+                            + KnoxIDFAudit.subjectLabel(currentSubject) + " reason=subject_mismatch");
+            return error("access_denied", "Consent subject mismatch");
+        }
+
         // Single-use consent state: invalidate it so the accepted-consent redirect cannot be replayed.
         authorizeRequestMetadataStore.remove(state);
         markConsentAccepted(authorizeRequestMetadata);
@@ -416,7 +434,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 authorizeRequestMetadata.getCodeChallengeMethod());
     }
 
-    @GET
+    @POST
     @Path("/consentDenied")
     public Response consentDenied() throws Exception {
         KnoxIDFAudit.audit(Action.AUTHORIZATION,
