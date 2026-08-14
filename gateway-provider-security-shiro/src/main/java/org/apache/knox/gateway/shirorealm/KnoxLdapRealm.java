@@ -700,10 +700,10 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
               "(&(objectclass=%1$s)(%2$s=%3$s))",
               getUserObjectClass(),
               userSearchAttributeName,
-              expandTemplate( getUserSearchAttributeTemplate(), matchedPrincipal ) );
+              expandTemplate(getUserSearchAttributeTemplate(), matchedPrincipal, true));
         }
       } else {
-        searchFilter = expandTemplate( userSearchFilter, matchedPrincipal );
+        searchFilter = expandTemplate(userSearchFilter, matchedPrincipal, true);
       }
       SearchControls searchControls = getUserSearchControls();
 
@@ -749,17 +749,57 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsHash.getSalt(), getName());
     }
 
-  private static String expandTemplate( final String template, final Matcher input ) {
+  private static String expandTemplate(final String template, final Matcher input) {
+    return expandTemplate(template, input, false);
+  }
+
+  private static String expandTemplate( final String template, final Matcher input, final boolean escapeForLdapFilter ) {
     String output = template;
     Matcher matcher = TEMPLATE_PATTERN.matcher( output );
     while( matcher.find() ) {
       String lookupStr = matcher.group( 1 );
       int lookupIndex = Integer.parseInt( lookupStr );
       String lookupValue = input.group( lookupIndex );
-      output = matcher.replaceFirst( lookupValue == null ? "" : lookupValue );
+      if (lookupValue == null) {
+          lookupValue = "";
+      } else if (escapeForLdapFilter) {
+          lookupValue = escapeLdapSearchFilterValue(lookupValue);
+      }
+      // quoteReplacement is required: replaceFirst treats '\' and '$' in the replacement specially
+      output = matcher.replaceFirst(Matcher.quoteReplacement(lookupValue));
       matcher = TEMPLATE_PATTERN.matcher( output );
     }
     return output;
+  }
+
+  private static String escapeLdapSearchFilterValue(final String value) {
+    if (value == null) {
+      return null;
+    }
+    final StringBuilder sb = new StringBuilder(value.length());
+    for (int i = 0; i < value.length(); i++) {
+      final char c = value.charAt(i);
+      switch (c) {
+        case '\\':
+          sb.append("\\5c");
+          break;
+        case '*':
+          sb.append("\\2a");
+          break;
+        case '(':
+          sb.append("\\28");
+          break;
+        case ')':
+          sb.append("\\29");
+          break;
+        case '\0':
+          sb.append("\\00");
+          break;
+        default:
+          sb.append(c);
+      }
+    }
+    return sb.toString();
   }
 
 }
