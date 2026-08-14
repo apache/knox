@@ -19,12 +19,82 @@
 
 package org.apache.knox.gateway.shirorealm;
 
+import org.apache.shiro.realm.ldap.LdapContextFactory;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.junit.Test;
+
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapContext;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class KnoxLdapRealmTest {
+
+  private static String captureSearchFilter(KnoxLdapRealm realm, String principal) throws Exception {
+    LdapContextFactory factory = EasyMock.createNiceMock(LdapContextFactory.class);
+    LdapContext ctx = EasyMock.createNiceMock(LdapContext.class);
+    NamingEnumeration<SearchResult> results = EasyMock.createNiceMock(NamingEnumeration.class);
+
+    EasyMock.expect(factory.getSystemLdapContext()).andReturn(ctx).anyTimes();
+    Capture<String> filter = EasyMock.newCapture();
+    EasyMock.expect(ctx.search(EasyMock.anyString(), EasyMock.capture(filter),
+        EasyMock.anyObject(SearchControls.class))).andReturn(results);
+    EasyMock.expect(results.hasMore()).andReturn(false).anyTimes();
+    EasyMock.replay(factory, ctx, results);
+
+    realm.setContextFactory(factory);
+    try {
+      realm.getUserDn(principal);
+    } catch (IllegalArgumentException expected) {
+      // mock returns no entry, so getUserDn throws after the search; we only need the filter
+    }
+    return filter.getValue();
+  }
+
+  private static KnoxLdapRealm searchModeRealm() {
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setSearchBase("dc=hadoop,dc=apache,dc=org");
+    realm.setUserSearchBase("ou=people,dc=hadoop,dc=apache,dc=org");
+    realm.setUserSearchAttributeName("uid");
+    realm.setUserObjectClass("person");
+    return realm;
+  }
+
+  @Test
+  public void getUserDnEscapesLdapFilterMetacharacters() throws Exception {
+    String filter = captureSearchFilter(searchModeRealm(), "*)(uid=admin");
+    assertEquals("(&(objectclass=person)(uid=\\2a\\29\\28uid=admin))", filter);
+  }
+
+  @Test
+  public void getUserDnEscapesWildcard() throws Exception {
+    String filter = captureSearchFilter(searchModeRealm(), "*");
+    assertEquals("(&(objectclass=person)(uid=\\2a))", filter);
+  }
+
+  @Test
+  public void getUserDnEscapesBackslash() throws Exception {
+    String filter = captureSearchFilter(searchModeRealm(), "a\\b");
+    assertEquals("(&(objectclass=person)(uid=a\\5cb))", filter);
+  }
+
+  @Test
+  public void getUserDnLeavesLegitimateUsernameUnchanged() throws Exception {
+    String filter = captureSearchFilter(searchModeRealm(), "sam");
+    assertEquals("(&(objectclass=person)(uid=sam))", filter);
+  }
+
+  @Test
+  public void getUserDnEscapesValueButPreservesOperatorFilterStructure() throws Exception {
+    KnoxLdapRealm realm = searchModeRealm();
+    realm.setUserSearchFilter("(uid={0})");
+    String filter = captureSearchFilter(realm, "a)(b");
+    assertEquals("(uid=a\\29\\28b)", filter);
+  }
 
   @Test
   public void setGetSearchBase() {
