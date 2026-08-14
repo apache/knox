@@ -57,6 +57,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class SSOCookieFederationFilter extends AbstractJWTFilter {
@@ -348,7 +349,13 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
 
     final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request);
     if (!enabledFederatedOpConfigs.isEmpty()) {
-      final String loginSessionId = request.getSession().getId();
+      // A fresh random id per authorization flow. This value becomes the OIDC 'state' sent to the
+      // external OP and the key for the in-flight authorize/OP-config/nonce stores, so it must NOT be
+      // the HTTP session id: reusing JSESSIONID would (a) collide across concurrent flows in the same
+      // browser session (last-writer-wins on the shared stores) and (b) leak the session id to the OP
+      // via the state parameter (OP logs, URL bar, Referer). A per-flow UUID is unpredictable and
+      // unique, which is what 'state' is meant to be.
+      final String loginSessionId = UUID.randomUUID().toString();
       authorizeRequestMetadataStore.put(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
       federatedOpConfigurationStore.put(loginSessionId, enabledFederatedOpConfigs);
       final List<String> opNames = enabledFederatedOpConfigs.stream()
