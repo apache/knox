@@ -356,6 +356,12 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 // misconfiguration, not a client error, and we deliberately never made the OP call.
                 detail = "reason=client_secret_unresolved";
                 return error("server_error", e.getMessage());
+            } catch (FederatedTokenExchangeException e) {
+                // The OP's token endpoint returned a non-200. Audit the real cause (the OP status,
+                // without its response body) and return a generic server_error instead of letting the
+                // exception escape as a 500 that could leak the OP's error body.
+                detail = "reason=federated_token_exchange_failed op_status=" + e.getOpStatus();
+                return error("server_error", "Federated authentication failed");
             }
             if (StringUtils.isBlank(federatedTokens.getLeft())) {
                 detail = "reason=no_id_token";
@@ -573,7 +579,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             federatedAccessToken = federatedTokenExchangeResponseBodyMap.get("access_token");
             return Pair.of(federatedIdToken, federatedAccessToken);
         } else {
-            throw new RuntimeException("Error fetching Federated Tokens from Federated Auth Code: " + federatedTokenExchangeResponse.getEntity());
+            // Do not embed the OP's response body in the exception: it can carry internal diagnostic
+            // codes and would otherwise surface in the audit log or a leaked 500 body. Carry only the
+            // HTTP status, which the caller audits and maps to a generic server_error.
+            throw new FederatedTokenExchangeException(federatedTokenExchangeResponse.getStatus());
         }
     }
 
@@ -627,6 +636,24 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     static final class ClientSecretResolutionException extends RuntimeException {
         ClientSecretResolutionException(final String message) {
             super(message);
+        }
+    }
+
+    /**
+     * Signals that the federated OP's token endpoint returned a non-200 response. Carries only the
+     * HTTP status (safe to audit); the OP's response body is deliberately not propagated so it cannot
+     * leak into the audit log or an error response.
+     */
+    static final class FederatedTokenExchangeException extends RuntimeException {
+        private final int opStatus;
+
+        FederatedTokenExchangeException(final int opStatus) {
+            super("Federated OP token endpoint returned HTTP " + opStatus);
+            this.opStatus = opStatus;
+        }
+
+        int getOpStatus() {
+            return opStatus;
         }
     }
 
