@@ -57,6 +57,26 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.INFO, text = "Failed to stopped gateway." )
   void failedToStopGateway(@StackTrace( level = MessageLevel.INFO ) Exception e);
 
+  @Message( level = MessageLevel.INFO, text = "Started the {0} protocol listener on port {1}." )
+  void startedProtocolListener( String name, String port );
+
+  @Message( level = MessageLevel.FATAL, text = "Failed to start the {0} protocol listener: {1}" )
+  void failedToStartProtocolListener( String name, @StackTrace( level = MessageLevel.FATAL ) Exception e );
+
+  @Message( level = MessageLevel.WARN, text = "Failed to stop the {0} protocol listener: {1}" )
+  void failedToStopProtocolListener( String name, @StackTrace( level = MessageLevel.WARN ) Exception e );
+
+  @Message( level = MessageLevel.WARN, text = "Failed to reload the {0} protocol listener after a topology change: {1}" )
+  void failedToReloadProtocolListener( String name, @StackTrace( level = MessageLevel.WARN ) Exception e );
+
+  @Message( level = MessageLevel.WARN,
+      text = "The {0} protocol listener is enabled in the refreshed configuration but cannot be started without a gateway restart." )
+  void protocolListenerCannotBeStarted( String name );
+
+  @Message( level = MessageLevel.WARN,
+      text = "The {0} protocol listener is disabled in the refreshed configuration but cannot be stopped without a gateway restart." )
+  void protocolListenerCannotBeStopped( String name );
+
   @Message( level = MessageLevel.INFO, text = "Loading configuration resource {0}" )
   void loadingConfigurationResource( String res );
 

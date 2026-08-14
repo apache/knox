@@ -43,6 +43,9 @@ ADD .github/workflows/build/conf/topologies/health.xml /knox-runtime/conf/topolo
 ADD .github/workflows/build/conf/topologies/knoxldap.xml /knox-runtime/conf/topologies/knoxldap.xml
 ADD .github/workflows/build/conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
 ADD .github/workflows/build/conf/topologies/k8sauth.xml /knox-runtime/conf/topologies/k8sauth.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect.xml /knox-runtime/conf/topologies/sparkconnect.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect-restricted.xml /knox-runtime/conf/topologies/sparkconnect-restricted.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect-fgac.xml /knox-runtime/conf/topologies/sparkconnect-fgac.xml
 
 RUN chown -R gateway /knox-runtime/
 

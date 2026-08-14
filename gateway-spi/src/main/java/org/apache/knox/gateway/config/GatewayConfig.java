@@ -548,6 +548,178 @@ public interface GatewayConfig {
    */
   int getWebsocketMaxWaitBufferCount();
 
+  String GRPC_PROTO_SERVICES = "gateway.grpc.proto.services";
+  String GRPC_LISTENER_NAMES = "gateway.grpc.listener.names";
+
+  /**
+   * The gRPC listeners to run, each on its own port with its own TLS identity.
+   * Several exist to serve several hostnames from one gateway, which is what a
+   * platform PKI that cannot issue multi-name certificates forces; they are not a
+   * policy boundary, since each still routes to every topology its clients
+   * select. An empty list means one listener configured entirely from the plain
+   * {@code gateway.grpc.*} properties.
+   * @since 3.0.0
+   * @return the configured listener names, possibly empty; never null
+   */
+  List<String> getGrpcListenerNames();
+
+  /**
+   * Properties set for one gRPC listener: everything under
+   * {@code gateway.grpc.{listenerName}.} with the prefix stripped. A property a
+   * listener does not set falls back to the plain {@code gateway.grpc.} one, so
+   * shared settings are written once.
+   * @since 3.0.0
+   * @param listenerName the listener name
+   * @return the listener's own properties, possibly empty; never null
+   */
+  Map<String, String> getGrpcListenerConfig(String listenerName);
+
+  /**
+   * Returns true if the gRPC listener is enabled, else false. Default is false.
+   * @since 3.0.0
+   * @return true if the listener should be started
+   */
+  boolean isGrpcEnabled();
+
+  /**
+   * The port the gRPC listener binds to. This is a dedicated socket, separate
+   * from the gateway's Jetty connectors, because gRPC needs HTTP/2 with ALPN.
+   * @since 3.0.0
+   * @return the listener port
+   */
+  int getGrpcPort();
+
+  /**
+   * The Knox service role that ties this listener to a topology. Topologies
+   * declare a service with this role and its backend URL, and its ACLs are keyed
+   * on it.
+   * @since 3.0.0
+   * @return the service role
+   */
+  String getGrpcServiceRole();
+
+  /**
+   * The fully qualified proto service names to proxy, comma separated. Calls to
+   * anything else are answered {@code UNIMPLEMENTED}, so this is a closed list.
+   * @since 3.0.0
+   * @return the proto service names
+   */
+  String getGrpcProtoServices();
+
+  /**
+   * Where the authenticated identity is written in a request: a comma-separated
+   * list of {@code path=subject} rules, where each path is one or more protobuf
+   * field numbers separated by dots, for example
+   * {@code 2.1=principal,2.2=principal}. Naming numbers rather than compiling
+   * against generated classes is what keeps the gateway independent of any
+   * protocol version. Empty means requests are relayed without inspection.
+   * @since 3.0.0
+   * @return the identity rewrite rules, or null for none
+   */
+  String getGrpcIdentityRules();
+
+  /**
+   * The maximum offset, in bytes, at which an identity field being rewritten may
+   * end. Rewriting a nested field means slicing it out and rebuilding it, so
+   * without a bound a client could put an arbitrarily large payload inside the
+   * identity container and make the gateway copy it several times over. A
+   * request whose identity lies beyond the limit is refused rather than
+   * partially asserted.
+   * @since 3.0.0
+   * @return the scan limit in bytes
+   */
+  int getGrpcIdentityScanLimit();
+
+  /**
+   * The topology used when no other discriminator selects one. gRPC clients
+   * cannot put a path in the connection URL, so Knox's usual
+   * {@code /gateway/{topology}/{service}} routing is unavailable and the topology
+   * must come from elsewhere.
+   * @since 3.0.0
+   * @return the default topology name, or null if unset
+   */
+  String getGrpcDefaultTopology();
+
+  /**
+   * The name of the call-metadata entry a client uses to select a topology,
+   * which is also the connection-string parameter users write.
+   * @since 3.0.0
+   * @return the metadata key name
+   */
+  String getGrpcTopologyMetadataKey();
+
+  /**
+   * RPCs refused by default, by bare or fully qualified method name. gRPC carries
+   * the method in the request path, so this needs no knowledge of message
+   * contents. Topologies may override it.
+   * @since 3.0.0
+   * @return a comma-separated method list, or null
+   */
+  String getGrpcMethodsDeny();
+
+  /**
+   * When set, the only RPCs permitted by default; anything else is refused.
+   * Topologies may override it.
+   * @since 3.0.0
+   * @return a comma-separated method list, or null
+   */
+  String getGrpcMethodsAllow();
+
+  /**
+   * Maximum inbound message size in bytes, applied to both legs. grpc-java
+   * materializes whole messages, so this bounds per-message heap.
+   * @since 3.0.0
+   * @return max message size in bytes
+   */
+  int getGrpcMaxMessageSize();
+
+  /**
+   * The minimum interval the listener tolerates between client keepalive pings
+   * before treating them as abusive, in milliseconds.
+   * @since 3.0.0
+   * @return permitted keepalive interval in milliseconds
+   */
+  long getGrpcPermitKeepAliveTime();
+
+  /**
+   * Whether clients may send keepalive pings with no active calls.
+   * @since 3.0.0
+   * @return true if keepalives without calls are permitted
+   */
+  boolean isGrpcPermitKeepAliveWithoutCalls();
+
+  /**
+   * Maximum concurrent gRPC streams per client connection.
+   * @since 3.0.0
+   * @return max concurrent calls per connection
+   */
+  int getGrpcMaxConcurrentCallsPerConnection();
+
+  /**
+   * How long an unused backend channel is kept before being shut down, in
+   * milliseconds.
+   * @since 3.0.0
+   * @return backend channel idle timeout in milliseconds
+   */
+  long getGrpcChannelIdleTimeout();
+
+  /**
+   * How long to let in-flight RPCs finish when the gateway is shutting down, in
+   * milliseconds. Long-lived streams are severed once this elapses.
+   * @since 3.0.0
+   * @return drain timeout in milliseconds
+   */
+  long getGrpcDrainTimeout();
+
+  /**
+   * The alias holding a pre-shared token Knox presents to the backend. Besides
+   * authenticating the gateway, this stops clients bypassing it when they have
+   * network reachability to the backend port.
+   * @since 3.0.0
+   * @return the alias name, or null if the backend requires no token
+   */
+  String getGrpcBackendTokenAlias();
+
   boolean isMetricsEnabled();
 
   boolean isJmxMetricsReportingEnabled();

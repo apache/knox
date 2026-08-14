@@ -98,6 +98,13 @@ public class DefaultServiceDefinitionRegistry implements ServiceDefinitionRegist
 
     for (ServiceDefinition serviceDefinition : getServices()) {
       List<Route> routes = serviceDefinition.getRoutes();
+      if (routes == null) {
+        // A service carried by a non-servlet listener has no path for the
+        // servlet pipeline to match and so declares no routes, contributing no
+        // URL templates here. This registry walks every definition on the
+        // classpath at startup, so failing on one would stop the whole gateway.
+        continue;
+      }
       for (Route route : routes) {
         try {
           Template template = Parser.parseTemplate(route.getPath());

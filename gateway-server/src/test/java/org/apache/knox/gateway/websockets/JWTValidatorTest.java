@@ -26,6 +26,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.provider.federation.jwt.JWTValidator;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;

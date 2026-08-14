@@ -164,6 +164,24 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final String WEBSOCKET_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.idle.timeout";
   public static final String WEBSOCKET_MAX_WAIT_BUFFER_COUNT = GATEWAY_CONFIG_FILE_PREFIX + ".websocket.max.wait.buffer.count";
 
+  /* @since 3.0.0 gRPC listener config variables */
+  public static final String GRPC_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.enabled";
+  public static final String GRPC_PORT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.port";
+  public static final String GRPC_SERVICE_ROLE = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.service.role";
+  public static final String GRPC_IDENTITY_RULES = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.identity.rules";
+  public static final String GRPC_IDENTITY_SCAN_LIMIT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.identity.scan.limit";
+  public static final String GRPC_DEFAULT_TOPOLOGY = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.default.topology";
+  public static final String GRPC_TOPOLOGY_METADATA_KEY = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.topology.metadata.key";
+  public static final String GRPC_METHODS_DENY = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.methods.deny";
+  public static final String GRPC_METHODS_ALLOW = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.methods.allow";
+  public static final String GRPC_MAX_MESSAGE_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.max.message.size";
+  public static final String GRPC_PERMIT_KEEPALIVE_TIME = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.permit.keepalive.time";
+  public static final String GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.permit.keepalive.without.calls";
+  public static final String GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.max.concurrent.calls.per.connection";
+  public static final String GRPC_CHANNEL_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.channel.idle.timeout";
+  public static final String GRPC_DRAIN_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.drain.timeout";
+  public static final String GRPC_BACKEND_TOKEN_ALIAS = GATEWAY_CONFIG_FILE_PREFIX + ".grpc.backend.token.alias";
+
 
   /* @since 2.0.0 WebShell config variables */
   public static final String WEBSHELL_FEATURE_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".webshell.feature.enabled";
@@ -226,6 +244,21 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_WEBSOCKET_ASYNC_WRITE_TIMEOUT = 60000;
   public static final int DEFAULT_WEBSOCKET_IDLE_TIMEOUT = 300000;
   public static final int DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT = 100;
+
+  /* gRPC listener defaults. The port and identity layout come from Spark
+     Connect, the protocol this was first built for. */
+  public static final boolean DEFAULT_GRPC_FEATURE_ENABLED = false;
+  public static final int DEFAULT_GRPC_PORT = 15002;
+  public static final String DEFAULT_GRPC_SERVICE_ROLE = "GRPC";
+  /** 128 KiB; see IdentityRewritePolicy for why the rewrite is bounded at all. */
+  public static final int DEFAULT_GRPC_IDENTITY_SCAN_LIMIT = 131072;
+  public static final int DEFAULT_GRPC_MAX_MESSAGE_SIZE = 134217728;
+  public static final long DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME = 10000L;
+  public static final boolean DEFAULT_GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS = true;
+  public static final int DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
+  public static final long DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT = 1800000L;
+  public static final long DEFAULT_GRPC_DRAIN_TIMEOUT = 30000L;
+  public static final String DEFAULT_GRPC_TOPOLOGY_METADATA_KEY = "knox-topology";
 
   public static final boolean DEFAULT_WEBSHELL_FEATURE_ENABLED = false;
   public static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
@@ -1119,6 +1152,121 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketMaxWaitBufferCount() {
     return getInt( WEBSOCKET_MAX_WAIT_BUFFER_COUNT, DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT);
+  }
+
+  @Override
+  public boolean isGrpcEnabled() {
+    return getBoolean(GRPC_FEATURE_ENABLED, DEFAULT_GRPC_FEATURE_ENABLED);
+  }
+
+  @Override
+  public int getGrpcPort() {
+    return getInt(GRPC_PORT, DEFAULT_GRPC_PORT);
+  }
+
+  @Override
+  public String getGrpcServiceRole() {
+    return get(GRPC_SERVICE_ROLE, DEFAULT_GRPC_SERVICE_ROLE);
+  }
+
+  @Override
+  public List<String> getGrpcListenerNames() {
+    final String configured = get(GRPC_LISTENER_NAMES);
+    if (configured == null || configured.trim().isEmpty()) {
+      return Collections.emptyList();
+    }
+    final List<String> names = new ArrayList<>();
+    for (String name : configured.trim().split("\\s*,\\s*")) {
+      if (!name.isEmpty()) {
+        names.add(name);
+      }
+    }
+    return names;
+  }
+
+  @Override
+  public Map<String, String> getGrpcListenerConfig(String listenerName) {
+    final Map<String, String> listenerConfig = new HashMap<>();
+    final String prefix = GATEWAY_CONFIG_FILE_PREFIX + ".grpc." + listenerName + ".";
+    for (String key : getPropertyNames()) {
+      if (key != null && key.startsWith(prefix)) {
+        final String value = get(key);
+        if (value != null) {
+          listenerConfig.put(key.substring(prefix.length()), value);
+        }
+      }
+    }
+    return listenerConfig;
+  }
+
+  @Override
+  public String getGrpcProtoServices() {
+    return get(GRPC_PROTO_SERVICES);
+  }
+
+  @Override
+  public String getGrpcIdentityRules() {
+    return get(GRPC_IDENTITY_RULES);
+  }
+
+  @Override
+  public int getGrpcIdentityScanLimit() {
+    return getInt(GRPC_IDENTITY_SCAN_LIMIT, DEFAULT_GRPC_IDENTITY_SCAN_LIMIT);
+  }
+
+  @Override
+  public String getGrpcDefaultTopology() {
+    return get(GRPC_DEFAULT_TOPOLOGY);
+  }
+
+  @Override
+  public String getGrpcTopologyMetadataKey() {
+    return get(GRPC_TOPOLOGY_METADATA_KEY, DEFAULT_GRPC_TOPOLOGY_METADATA_KEY);
+  }
+
+  @Override
+  public String getGrpcMethodsDeny() {
+    return get(GRPC_METHODS_DENY);
+  }
+
+  @Override
+  public String getGrpcMethodsAllow() {
+    return get(GRPC_METHODS_ALLOW);
+  }
+
+  @Override
+  public int getGrpcMaxMessageSize() {
+    return getInt(GRPC_MAX_MESSAGE_SIZE, DEFAULT_GRPC_MAX_MESSAGE_SIZE);
+  }
+
+  @Override
+  public long getGrpcPermitKeepAliveTime() {
+    return getLong(GRPC_PERMIT_KEEPALIVE_TIME, DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME);
+  }
+
+  @Override
+  public boolean isGrpcPermitKeepAliveWithoutCalls() {
+    return getBoolean(GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS, DEFAULT_GRPC_PERMIT_KEEPALIVE_WITHOUT_CALLS);
+  }
+
+  @Override
+  public int getGrpcMaxConcurrentCallsPerConnection() {
+    return getInt(GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION, DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION);
+  }
+
+  @Override
+  public long getGrpcChannelIdleTimeout() {
+    return getLong(GRPC_CHANNEL_IDLE_TIMEOUT, DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT);
+  }
+
+  @Override
+  public long getGrpcDrainTimeout() {
+    return getLong(GRPC_DRAIN_TIMEOUT, DEFAULT_GRPC_DRAIN_TIMEOUT);
+  }
+
+  @Override
+  public String getGrpcBackendTokenAlias() {
+    return get(GRPC_BACKEND_TOKEN_ALIAS);
   }
 
   @Override
