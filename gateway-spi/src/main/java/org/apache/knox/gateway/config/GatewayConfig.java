@@ -175,6 +175,14 @@ public interface GatewayConfig {
   String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX+ "read.timeout.ms";
   int TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT = 10000;
 
+  // KnoxIDF federated-OP back-channel (token exchange) HTTP client timeouts. Without these an
+  // unresponsive external OP token endpoint pins the calling request thread indefinitely.
+  String KNOXIDF_FEDERATED_OP_PREFIX = "gateway.knoxidf.federated.op.";
+  String KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS = KNOXIDF_FEDERATED_OP_PREFIX + "connect.timeout.ms";
+  int KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT = 3000;
+  String KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS = KNOXIDF_FEDERATED_OP_PREFIX + "read.timeout.ms";
+  int KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT = 10000;
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -1269,5 +1277,9 @@ public interface GatewayConfig {
   int getTrustedOidcIssuerDiscoveryConnectTimeoutMs();
 
   int getTrustedOidcIssuerDiscoveryReadTimeoutMs();
+
+  int getKnoxIDFFederatedOpConnectTimeoutMs();
+
+  int getKnoxIDFFederatedOpReadTimeoutMs();
 
 }

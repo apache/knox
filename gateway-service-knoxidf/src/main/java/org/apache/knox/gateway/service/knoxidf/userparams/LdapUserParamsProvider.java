@@ -109,36 +109,44 @@ public class LdapUserParamsProvider implements UserParamsProvider {
             controls.setSearchScope(SearchControls.OBJECT_SCOPE);
             controls.setReturningAttributes(ATTRIBUTES);
 
+            // Always close the enumeration: LdapContext.close() alone does not release the
+            // per-search cursor, so leaking these under load can exhaust server-side resources
+            // and start throwing NamingException. NamingEnumeration is not AutoCloseable, hence
+            // the explicit try/finally rather than try-with-resources.
             NamingEnumeration<SearchResult> results = ctx.search(userDn, "(objectClass=*)", controls);
-            if (results.hasMore()) {
-                SearchResult sr = results.next();
-                Attributes attrs = sr.getAttributes();
+            try {
+                if (results.hasMore()) {
+                    SearchResult sr = results.next();
+                    Attributes attrs = sr.getAttributes();
 
-                // --- OIDC standard claims ---
-                if (requestedClaims.contains("sub")) {
-                    userParams.put("sub", subjectName);
-                }
-                if (requestedClaims.contains("name")) {
-                    userParams.put("name", getAttr(attrs, "cn"));
-                }
-                if (requestedClaims.contains("family_name")) {
-                    userParams.put("family_name", getAttr(attrs, "sn"));
-                }
-                if (requestedClaims.contains("given_name")) {
-                    userParams.put("given_name", getAttr(attrs, "givenName"));
-                }
-                if (requestedClaims.contains("email")) {
-                    userParams.put("email", getAttr(attrs, "mail"));
-                }
-                if (requestedClaims.contains("email_verified")) {
-                    userParams.put("email_verified", Boolean.TRUE);
-                }
+                    // --- OIDC standard claims ---
+                    if (requestedClaims.contains("sub")) {
+                        userParams.put("sub", subjectName);
+                    }
+                    if (requestedClaims.contains("name")) {
+                        userParams.put("name", getAttr(attrs, "cn"));
+                    }
+                    if (requestedClaims.contains("family_name")) {
+                        userParams.put("family_name", getAttr(attrs, "sn"));
+                    }
+                    if (requestedClaims.contains("given_name")) {
+                        userParams.put("given_name", getAttr(attrs, "givenName"));
+                    }
+                    if (requestedClaims.contains("email")) {
+                        userParams.put("email", getAttr(attrs, "mail"));
+                    }
+                    if (requestedClaims.contains("email_verified")) {
+                        userParams.put("email_verified", Boolean.TRUE);
+                    }
 
-                // --- Custom: roles ---
-                if (requestedClaims.contains("roles")) {
-                    List<String> roles = fetchRoles(ctx, userDn);
-                    userParams.put("roles", roles);
+                    // --- Custom: roles ---
+                    if (requestedClaims.contains("roles")) {
+                        List<String> roles = fetchRoles(ctx, userDn);
+                        userParams.put("roles", roles);
+                    }
                 }
+            } finally {
+                closeEnumeration(results);
             }
 
         } catch (Exception e) {
@@ -158,23 +166,31 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         groupControls.setReturningAttributes(new String[]{"cn", "member"});
 
         String groupsBase = "ou=groups," + ldapBaseDn;
+        // Close both the group search cursor and each member enumeration; see getParamsFor.
         NamingEnumeration<SearchResult> groupResults =
                 ctx.search(groupsBase, "(objectClass=groupOfNames)", groupControls);
-
-        while (groupResults.hasMore()) {
-            SearchResult group = groupResults.next();
-            Attributes groupAttrs = group.getAttributes();
-            Attribute members = groupAttrs.get("member");
-            if (members != null) {
-                NamingEnumeration<?> e = members.getAll();
-                while (e.hasMore()) {
-                    String memberDn = (String) e.next();
-                    if (memberDn.equalsIgnoreCase(userDn)) {
-                        roles.add(getAttr(groupAttrs, "cn"));
-                        break;
+        try {
+            while (groupResults.hasMore()) {
+                SearchResult group = groupResults.next();
+                Attributes groupAttrs = group.getAttributes();
+                Attribute members = groupAttrs.get("member");
+                if (members != null) {
+                    NamingEnumeration<?> e = members.getAll();
+                    try {
+                        while (e.hasMore()) {
+                            String memberDn = (String) e.next();
+                            if (memberDn.equalsIgnoreCase(userDn)) {
+                                roles.add(getAttr(groupAttrs, "cn"));
+                                break;
+                            }
+                        }
+                    } finally {
+                        closeEnumeration(e);
                     }
                 }
             }
+        } finally {
+            closeEnumeration(groupResults);
         }
         return roles;
     }
@@ -202,6 +218,15 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         if (ctx != null) {
             try {
                 ctx.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void closeEnumeration(NamingEnumeration<?> enumeration) {
+        if (enumeration != null) {
+            try {
+                enumeration.close();
             } catch (Exception ignored) {
             }
         }

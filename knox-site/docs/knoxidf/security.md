@@ -151,6 +151,13 @@ The set of external issuers Knox will accept `id_token`s from is administered th
 role), which should be exposed only on an administrator-restricted topology. Registered issuer
 URLs must be HTTPS, and there is a configurable upper bound on the number of trusted issuers.
 
+During token exchange, the JWKS URI resolved from a trusted issuer's discovery document is also
+required to be HTTPS — a non-HTTPS `jwks_uri` is rejected and the exchange fails with `401`, so a
+tampered discovery document cannot point key resolution at an attacker-controlled plaintext
+endpoint. This check can be relaxed for development with
+`knox.token.exchange.dynamic.jwks.allow.http=true` on the token-exchange `JWTProvider` (see the
+[Configuration Reference](configuration.md#provider-related-properties-sample-topologies)).
+
 ## Secret handling
 
 - **Federated OP client secrets** can be resolved from Knox's `AliasService` rather than being

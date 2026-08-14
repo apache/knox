@@ -1390,4 +1390,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return 0;
   }
 
+  @Override
+  public int getKnoxIDFFederatedOpConnectTimeoutMs() {
+    return KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT;
+  }
+
+  @Override
+  public int getKnoxIDFFederatedOpReadTimeoutMs() {
+    return KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT;
+  }
+
 }

@@ -77,7 +77,10 @@ public class AuthConsentServlet extends HttpServlet {
             }
 
             out.println("<form method='post' onsubmit='return confirmAction();'>");
-            out.printf(Locale.US, "<input type='hidden' name='state' value='%s'/>%n", state);
+            // Render state in a double-quoted attribute: getRequestParamSafe escapes via escapeHtml4,
+            // which encodes '"' (&quot;) but NOT a single quote, so a single-quoted attribute here
+            // would let an attacker-supplied state break out of the attribute and inject markup.
+            out.printf(Locale.US, "<input type=\"hidden\" name=\"state\" value=\"%s\"/>%n", state);
             out.println("<div style='display: flex; justify-content: center; gap: 20px;'>");
             out.println("<button type='submit' name='action' value='accept' class='accept'>Accept</button>");
             out.println("<button type='submit' name='action' value='deny' class='deny'>Deny</button>");

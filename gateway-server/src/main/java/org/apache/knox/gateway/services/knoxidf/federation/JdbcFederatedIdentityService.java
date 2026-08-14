@@ -79,7 +79,7 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
     }
 
     @Override
-    public void addFederatedIdentity(FederatedIdentity identity) {
+    public FederatedIdentity addFederatedIdentity(FederatedIdentity identity) {
         // Insert-and-catch rather than check-then-insert: the UNIQUE(provider, external_issuer,
         // external_subject) index is the atomic arbiter, so two concurrent requests for the same
         // external identity cannot both insert. A unique-constraint violation means the row already
@@ -87,10 +87,16 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
         // surfaced as an error (closing the prior TOCTOU race between the pre-check and the insert).
         try {
             federatedIdentityDatabase.addFederatedIdentity(identity);
+            return identity;
         } catch (SQLException e) {
             if (isUniqueConstraintViolation(e)) {
                 LOG.federatedIdentityAlreadyExists(identity.getProvider(), identity.getExternalIssuer(), identity.getExternalSubject());
-                return;
+                // The concurrent winner owns the canonical primary key; our in-memory identity carries a
+                // different random id (UUID.randomUUID) that was never persisted. Return the stored row so
+                // callers never mint a token/auth-code against a phantom id. Fall back to the local copy
+                // only if the re-query itself fails (findByProviderAndSubject swallows read errors).
+                return findByProviderAndSubject(identity.getProvider(), identity.getExternalIssuer(),
+                        identity.getExternalSubject()).orElse(identity);
             }
             LOG.errorSavingFederatedIdentityInDatabase(identity.getId(), e.getMessage(), e);
             throw new FederatedIdentityServiceException("An error occurred while saving Federated Identity " + identity.getId() + " in the database", e);

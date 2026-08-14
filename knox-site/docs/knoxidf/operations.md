@@ -179,4 +179,5 @@ enabled, fronted by the rate-limiting filter above.
 - [ ] Federated OP client secrets stored as aliases, not plaintext.
 - [ ] Trusted-issuer registry (`KNOXIDF_ADMIN`) exposed only on an administrator-restricted topology.
 - [ ] Rate limiting enabled (WebAppSec provider on the topology, and/or at the edge) for the token / authorize / registration endpoints.
+- [ ] Federated-OP back-channel timeouts (`gateway.knoxidf.federated.op.connect.timeout.ms` / `.read.timeout.ms`) reviewed for your OP.
 - [ ] Audit log retention configured.

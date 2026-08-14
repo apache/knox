@@ -450,10 +450,10 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   }
 
   /**
-   * Bearer JWT from EXTERNAL_ISSUER with no grant_type — not a token-exchange request. The
-   * hook checks grant_type first and returns without consulting the registry. EXTERNAL_ISSUER
-   * is not in expectedIssuers, so the filter rejects. The strict mock proves no service method
-   * was called.
+   * Bearer JWT from EXTERNAL_ISSUER with no grant_type — not a token-exchange request. Because
+   * doFilter never marked this request as a token-exchange dispatch, resolveRegisteredIssuerJwks
+   * returns empty without consulting the registry. EXTERNAL_ISSUER is not in expectedIssuers, so
+   * the filter rejects. The strict mock proves no service method was called.
    */
   @Test
   public void testNonTokenExchangeRegistryIssuerRejected() throws Exception {
@@ -479,6 +479,129 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertFalse(chain.doFilterCalled);
     EasyMock.verify(strictIssuerSvc);
+  }
+
+  /**
+   * Regression test for the grant_type query-param bypass: a plain Bearer JWT from a
+   * registry-registered dynamic-JWKS issuer, carrying a spoofed {@code grant_type=token-exchange}
+   * request parameter (as HttpServletRequest.getParameter would surface from the URL query string).
+   * Because a Bearer header is present, getWireToken routes this down the JWT branch — not the
+   * token-exchange branch — so doFilter never sets TOKEN_EXCHANGE_REQUEST_ATTR. The old code checked
+   * getParameter(GRANT_TYPE) here and would have resolved the registry JWKS and accepted the token;
+   * the attribute-based guard rejects it. The strict issuer service (no expectations) proves the
+   * registry is never even consulted.
+   */
+  @Test
+  public void testSpoofedGrantTypeQueryParamDoesNotUnlockRegistry() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT jwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final TrustedOidcIssuerService strictIssuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.replay(strictIssuerSvc);
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getHeader("Authorization"))
+        .andReturn(JWTFederationFilter.BEARER + " " + jwt.serialize()).anyTimes();
+    // Attacker-controlled query parameter: getParameter merges query string and body, so this is
+    // what a ?grant_type=<token-exchange> on the request URL would look like to the filter.
+    EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
+    EasyMock.expect(request.getServletContext())
+        .andReturn(buildContextWithIssuerService(strictIssuerSvc)).anyTimes();
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertFalse("Spoofed grant_type query param must not authenticate the token", chain.doFilterCalled);
+    EasyMock.verify(strictIssuerSvc);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dynamic registry path — discovered JWKS URI must be HTTPS (OOTB)
+  // ---------------------------------------------------------------------------
+
+  private static final String INSECURE_JWKS_URI = "http://external.oidc.example.com/.well-known/jwks.json";
+
+  /**
+   * OOTB (knox.token.exchange.dynamic.jwks.allow.http unset) a non-HTTPS JWKS URI resolved via
+   * dynamic discovery for a registered issuer must be rejected: fetching signing keys over cleartext
+   * would let an on-path attacker substitute keys and forge subject tokens. The registry is consulted
+   * (isDynamicJwks + resolveJwksUri), but the strict authority mock with no expectations proves
+   * verifyToken is never called against the insecure URI, and the request is rejected (401).
+   */
+  @Test
+  public void testInsecureDynamicJwksUriRejectedByDefault() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.replay(mockAuth); // no expectations: verifyToken must never be reached
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
+    EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(INSECURE_JWKS_URI)).once();
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response, issuerSvc);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertFalse("Insecure (non-HTTPS) dynamic JWKS URI must be rejected OOTB", chain.doFilterCalled);
+    EasyMock.verify(mockAuth, issuerSvc);
+  }
+
+  /**
+   * Opt-in bypass: with knox.token.exchange.dynamic.jwks.allow.http=true on the provider, an http
+   * JWKS URI resolved via dynamic discovery is accepted and used exclusively for signature
+   * verification (e.g. an internal test OP). Mirrors testDynamicIssuerAllowedSubjectExternal but with
+   * the insecure URI and the toggle enabled.
+   */
+  @Test
+  public void testInsecureDynamicJwksUriAllowedWhenConfigured() throws Exception {
+    final Properties props = getProperties();
+    props.put(JWTFederationFilter.TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP, "true");
+    handler.init(new TestFilterConfig(props));
+
+    final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JWT> capturedDynamicJwt = EasyMock.newCapture();
+
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.capture(capturedDynamicJwt),
+        EasyMock.eq(Set.of(new URI(INSECURE_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        .andReturn(true).once();
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
+    EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(INSECURE_JWKS_URI)).once();
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response, issuerSvc);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("allow.http=true must permit the http JWKS URI", chain.doFilterCalled);
+    Assert.assertEquals(EXTERNAL_ISSUER, capturedDynamicJwt.getValue().getIssuer());
+    EasyMock.verify(mockAuth, issuerSvc);
   }
 
   // ---------------------------------------------------------------------------
@@ -716,6 +839,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         .andReturn(JWTFederationFilter.TOKEN_TYPE_JWT).anyTimes();
     // ACTOR_TOKEN not mocked — niceMock returns null, making actor_token absent
     EasyMock.expect(request.getServletContext()).andReturn(ctx).anyTimes();
+    mockRequestAttributeStore(request);
     return request;
   }
 
@@ -731,7 +855,25 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE))
         .andReturn(JWTFederationFilter.TOKEN_TYPE_JWT).anyTimes();
     EasyMock.expect(request.getServletContext()).andReturn(ctx).anyTimes();
+    mockRequestAttributeStore(request);
     return request;
+  }
+
+  /**
+   * Makes {@code getAttribute}/{@code setAttribute} behave like a real attribute map on an EasyMock
+   * nice mock. doFilter marks a genuine token-exchange dispatch by setting
+   * {@code TOKEN_EXCHANGE_REQUEST_ATTR}, and resolveRegisteredIssuerJwks now reads that attribute
+   * (rather than the spoofable grant_type request parameter), so the mock must round-trip it.
+   */
+  private static void mockRequestAttributeStore(final HttpServletRequest request) {
+    final Map<String, Object> attrs = new HashMap<>();
+    request.setAttribute(EasyMock.anyString(), EasyMock.anyObject());
+    EasyMock.expectLastCall().andAnswer(() -> {
+      attrs.put((String) EasyMock.getCurrentArguments()[0], EasyMock.getCurrentArguments()[1]);
+      return null;
+    }).anyTimes();
+    EasyMock.expect(request.getAttribute(EasyMock.anyString()))
+        .andAnswer(() -> attrs.get(EasyMock.getCurrentArguments()[0])).anyTimes();
   }
 
 }

@@ -1944,4 +1944,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public int getTrustedOidcIssuerDiscoveryReadTimeoutMs() {
     return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS, TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT);
   }
+
+  @Override
+  public int getKnoxIDFFederatedOpConnectTimeoutMs() {
+    return getInt(KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS, KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT);
+  }
+
+  @Override
+  public int getKnoxIDFFederatedOpReadTimeoutMs() {
+    return getInt(KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS, KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT);
+  }
 }

@@ -80,10 +80,23 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String ACTOR_TOKEN = "actor_token";
   public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
   public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
+
+  // Set by doFilter only when it dispatches a genuine RFC 8693 token-exchange request (identified by
+  // getWireToken from the body-only grant_type). resolveRegisteredIssuerJwks trusts a runtime-registered
+  // external issuer's JWKS only when this attribute is present, binding that decision to the actual
+  // dispatched code path rather than to request.getParameter(GRANT_TYPE) -- which the Servlet API also
+  // populates from the URL query string, letting a plain Bearer request spoof it with ?grant_type=...
+  static final String TOKEN_EXCHANGE_REQUEST_ATTR = "knox.jwt.token.exchange.request";
   // RFC 8693 section 3 token type identifiers. Only JWT-family types are supported for exchange;
   // Knox issues JWT access tokens, so the access_token URN is accepted as an alias for jwt.
   public static final String TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt";
   public static final String TOKEN_TYPE_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token";
+
+  // Topology provider param. OOTB the JWKS URI resolved via dynamic OIDC discovery for a
+  // runtime-registered external issuer MUST be HTTPS: fetching a token issuer's signing keys over
+  // cleartext would let an on-path attacker substitute their own keys and forge subject tokens.
+  // Set this to "true" on the provider to permit an http:// jwks_uri (e.g. an internal test OP).
+  public static final String TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP = "knox.token.exchange.dynamic.jwks.allow.http";
 
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
@@ -108,6 +121,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private String cookieName;
 
   private String paramName;
+  // OOTB false: a non-HTTPS dynamic-discovery JWKS URI is rejected. Only an explicit
+  // TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP="true" flips this, so a typo fails safe (secure).
+  private boolean allowInsecureDynamicJwks;
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
   // Handles RFC 8693 token exchange requests (see doFilter).
@@ -153,6 +169,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     if (verificationPEM != null) {
       publicKey = CertificateUtils.parseRSAPublicKey(verificationPEM);
     }
+
+    // Topology toggle for permitting a non-HTTPS dynamic-discovery JWKS URI. Parsed with
+    // Boolean.parseBoolean so anything other than an explicit "true" (including a typo) keeps
+    // HTTPS enforcement on -- the fail-safe direction for a security control.
+    allowInsecureDynamicJwks = Boolean.parseBoolean(
+        filterConfig.getInitParameter(TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP));
 
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
@@ -204,6 +226,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // request by the handler. Reading the body only happens on this (header-less) grant-flow path,
     // so a proxied backend's body is never consumed by the header-authenticated path.
     if (wireToken != null && TokenType.TokenExchange.equals(wireToken.getLeft())) {
+      // Bind the "this is token exchange" decision to the dispatched path so that only the
+      // subject_token/actor_token validated inside the handler can unlock registered-issuer JWKS.
+      request.setAttribute(TOKEN_EXCHANGE_REQUEST_ATTR, Boolean.TRUE);
       tokenExchangeHandler.handle((HttpServletRequest) request, (HttpServletResponse) response, chain);
       return;
     }
@@ -489,7 +514,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   @Override
   protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
-    if (!TOKEN_EXCHANGE.equals(request.getParameter(GRANT_TYPE))) {
+    // Only a genuine token-exchange dispatch (see doFilter) may trust a runtime-registered external
+    // issuer's JWKS. Reading the request attribute -- not getParameter(GRANT_TYPE) -- prevents a
+    // ?grant_type=<token-exchange> query param on a plain Bearer request from unlocking this path.
+    if (!Boolean.TRUE.equals(request.getAttribute(TOKEN_EXCHANGE_REQUEST_ATTR))) {
       return Set.of();
     }
     final GatewayServices gws = (GatewayServices)
@@ -504,7 +532,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         final Optional<String> jwksUri = issuerSvc.resolveJwksUri(issuer);
         if (jwksUri.isPresent()) {
           try {
-            return Set.of(new URI(jwksUri.get()));
+            final URI uri = new URI(jwksUri.get());
+            // OOTB the discovered JWKS URI must be HTTPS (see TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP):
+            // signing keys fetched over cleartext could be swapped by an on-path attacker to forge
+            // subject tokens. Reject anything non-HTTPS unless the operator opted in.
+            if (!allowInsecureDynamicJwks && !"https".equalsIgnoreCase(uri.getScheme())) {
+              LOGGER.rejectedInsecureDynamicJwksUri(jwksUri.get(), issuer);
+              return Set.of();
+            }
+            return Set.of(uri);
           } catch (URISyntaxException e) {
             LOGGER.unableToVerifyToken(e);
           }

@@ -26,6 +26,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -33,6 +34,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.ResourceType;
@@ -643,11 +645,33 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     private CloseableHttpClient createFederatedHttpClient() throws Exception {
         final KeystoreService keystoreService = getGatewayServices().getService(ServiceType.KEYSTORE_SERVICE);
         final KeyStore trustStore = keystoreService.getTruststoreForHttpClient();
+        // Bound every back-channel call to the OP: without connect/socket timeouts an unresponsive
+        // external OP token endpoint pins the calling request thread indefinitely, so enough hung
+        // federated logins can exhaust the gateway's request threads (availability DoS). Mirrors the
+        // timeout handling of the trusted-issuer discovery client (OIDCDiscoveryHelper).
+        final RequestConfig requestConfig = federatedRequestConfig();
         if (trustStore != null) {
             final SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, null).build();
-            return HttpClients.custom().setSSLContext(sslContext).build();
+            return HttpClients.custom().setSSLContext(sslContext).setDefaultRequestConfig(requestConfig).build();
         }
-        return HttpClients.createDefault();
+        return HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
+    }
+
+    private RequestConfig federatedRequestConfig() {
+        final GatewayConfig config = servletContext == null
+                ? null
+                : (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+        final int connectTimeoutMs = config == null
+                ? GatewayConfig.KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT
+                : config.getKnoxIDFFederatedOpConnectTimeoutMs();
+        final int readTimeoutMs = config == null
+                ? GatewayConfig.KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT
+                : config.getKnoxIDFFederatedOpReadTimeoutMs();
+        return RequestConfig.custom()
+                .setConnectTimeout(connectTimeoutMs)
+                .setConnectionRequestTimeout(connectTimeoutMs)
+                .setSocketTimeout(readTimeoutMs)
+                .build();
     }
 
     /**
@@ -761,9 +785,10 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 attributes
         );
 
-        federatedIdentityService.addFederatedIdentity(federatedIdentity);
-
-        return federatedIdentity;
+        // Return whatever the service persisted: on a concurrent first-login race this is the row the
+        // winning request inserted, not our local copy, so the downstream auth code is keyed to the id
+        // that actually exists in the identity table.
+        return federatedIdentityService.addFederatedIdentity(federatedIdentity);
     }
 
     private String deriveKnoxSubject(String subject, String issuer) {

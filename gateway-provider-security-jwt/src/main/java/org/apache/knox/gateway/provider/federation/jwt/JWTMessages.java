@@ -127,6 +127,9 @@ public interface JWTMessages {
   @Message(level = MessageLevel.ERROR, text = "Invalid URL ignored. Not a valid JWKS url {0}")
   void invalidJwksUrl(String jwksUrl);
 
+  @Message(level = MessageLevel.WARN, text = "Rejected insecure (non-HTTPS) dynamic JWKS URI {0} resolved for issuer {1}. Set knox.token.exchange.dynamic.jwks.allow.http=true on the provider to permit it.")
+  void rejectedInsecureDynamicJwksUri(String jwksUri, String issuer);
+
   @Message(level = MessageLevel.ERROR, text = "Original redirect URL is not in the whitelist {0}")
   void invalidOriginalUrlDomain(String originalMainDomain);
 

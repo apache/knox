@@ -157,14 +157,27 @@ Database credentials are supplied as aliases (`gateway_database_user`,
 | `gateway.trustedoidcissuer.discovery.read.timeout.ms` | `10000` | Read timeout for the same fetch. |
 | `gateway.trusted.oidc.issuer.max.issuers` | `10000` | Upper bound on the number of registered trusted issuers. Registration returns `409 issuer_limit_reached` once reached. |
 
+### Federated OP back-channel
+
+Timeouts for the HTTP client KnoxIDF uses for the [back-channel token exchange](federation.md)
+against an external OP's `token.endpoint`. Without them an unresponsive OP endpoint would pin the
+calling request thread indefinitely, so enough hung federated logins could exhaust the gateway's
+request threads.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `gateway.knoxidf.federated.op.connect.timeout.ms` | `3000` | Connect timeout (also used as the connection-pool request timeout) for the federated-OP token-exchange call. |
+| `gateway.knoxidf.federated.op.read.timeout.ms` | `10000` | Socket/read timeout for the same call. |
+
 ### Provider-related properties (sample topologies)
 
 These are not KnoxIDF parameters but appear in the sample federation topologies:
 
-| Property | Description |
-|----------|-------------|
-| `jwt.expected.issuer` | Expected issuer enforced by a `JWTProvider` fronting the token-exchange topology. |
-| `sso.unauthenticated.path.list` | On an `SSOCookieProvider` front topology, the `;`-separated list of KnoxIDF paths reachable before login (callback, JWKS, discovery, registration). See [Federation](federation.md#front-topology-for-federation). |
+| Property | Default | Description |
+|----------|---------|-------------|
+| `jwt.expected.issuer` | — | Expected issuer enforced by a `JWTProvider` fronting the token-exchange topology. |
+| `knox.token.exchange.dynamic.jwks.allow.http` | `false` | On a `JWTProvider` fronting the token-exchange topology, whether a JWKS URI resolved from a trusted issuer's discovery document may use plain HTTP. Defaults to `false` (HTTPS enforced); a non-HTTPS dynamic JWKS URI is rejected and the exchange fails with `401`. Set to `true` only for development against an HTTP issuer. |
+| `sso.unauthenticated.path.list` | — | On an `SSOCookieProvider` front topology, the `;`-separated list of KnoxIDF paths reachable before login (callback, JWKS, discovery, registration). See [Federation](federation.md#front-topology-for-federation). |
 
 ## See also
 

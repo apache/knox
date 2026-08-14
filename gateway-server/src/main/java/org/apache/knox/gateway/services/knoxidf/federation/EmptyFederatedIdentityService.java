@@ -24,7 +24,8 @@ import java.util.Optional;
 
 public class EmptyFederatedIdentityService implements FederatedIdentityService {
     @Override
-    public void addFederatedIdentity(FederatedIdentity identity) {
+    public FederatedIdentity addFederatedIdentity(FederatedIdentity identity) {
+        return identity;
     }
 
     @Override

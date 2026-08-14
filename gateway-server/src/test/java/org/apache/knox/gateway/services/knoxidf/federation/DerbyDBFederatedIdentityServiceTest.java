@@ -18,6 +18,8 @@ package org.apache.knox.gateway.services.knoxidf.federation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -125,6 +127,37 @@ public class DerbyDBFederatedIdentityServiceTest {
     service = newDerbyService();
     final Optional<FederatedIdentity> byId = service.findById(identity.getId());
     assertTrue("Expected the previously-persisted identity to survive a restart", byId.isPresent());
+  }
+
+  /**
+   * Regression guard for the concurrent-first-login phantom-id race: two callbacks for the same
+   * external identity each build a FederatedIdentity with a distinct random primary key. The first
+   * wins the insert; the second violates UNIQUE(provider, external_issuer, external_subject).
+   * addFederatedIdentity must return the already-stored row (the winner's id), never the losing
+   * thread's in-memory object whose random id was never persisted -- otherwise the downstream auth
+   * code is keyed to an id absent from the table, surfacing later as a token-exchange 500.
+   */
+  @Test
+  public void shouldReturnPersistedRowWhenExternalIdentityAlreadyExists() throws Exception {
+    service = newDerbyService();
+
+    final FederatedIdentity first = new FederatedIdentity("knox-user-1", "KEYCLOAK", "external-subject-1",
+        "https://issuer.example.com/realms/knox", Instant.now(), new HashMap<>());
+    final FederatedIdentity firstStored = service.addFederatedIdentity(first);
+    assertSame("Happy path must return the same instance it persisted (no re-query)", first, firstStored);
+
+    // The losing thread of a concurrent first login: same external identity, brand-new object with a
+    // different random primary key that never gets persisted.
+    final FederatedIdentity duplicate = new FederatedIdentity("knox-user-1", "KEYCLOAK", "external-subject-1",
+        "https://issuer.example.com/realms/knox", Instant.now(), new HashMap<>());
+    assertNotEquals("Test setup: the duplicate must carry a different random id",
+        first.getId(), duplicate.getId());
+
+    final FederatedIdentity stored = service.addFederatedIdentity(duplicate);
+    assertEquals("On unique-constraint conflict the canonical persisted id must be returned",
+        first.getId(), stored.getId());
+    assertFalse("The losing thread's random id must not exist in the table",
+        service.findById(duplicate.getId()).isPresent());
   }
 
   private DerbyDBFederatedIdentityService newDerbyService() throws Exception {

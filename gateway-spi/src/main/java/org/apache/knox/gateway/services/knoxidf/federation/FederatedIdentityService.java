@@ -22,7 +22,12 @@ import java.util.Optional;
 
 public interface FederatedIdentityService extends Service {
 
-    void addFederatedIdentity(FederatedIdentity identity);
+    /**
+     * Persists the identity and returns the canonical stored row. If a concurrent request already
+     * inserted the same external identity, the returned identity is the one that won the race
+     * (the row actually in the table), never the caller's in-memory copy.
+     */
+    FederatedIdentity addFederatedIdentity(FederatedIdentity identity);
 
     Optional<FederatedIdentity> findById(String identityId);
 
