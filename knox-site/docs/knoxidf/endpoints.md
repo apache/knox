@@ -50,7 +50,8 @@ The administrative endpoints (service role `KNOXIDF_ADMIN`) live under a separat
 | [UserInfo](#userinfo-endpoint) | `knoxidf/api/v1/userinfo` | GET | `KNOXIDF` |
 | [JWKS](#jwks-endpoint) | `knoxidf/api/v1/jwks` | GET | `KNOXIDF` |
 | [Client Registration](#client-registration-endpoint) | `knoxidf/api/v1/client/register` | POST | `KNOXIDF` |
-| [Consent page](#consent-page) | `authConsent` | GET, POST | `KNOXIDF` |
+| [Consent page](#consent-page) | `authConsent` | GET | `KNOXIDF` |
+| [Consent decision](#consent-page) | `knoxidf/api/v1/authorize/consentAccepted`, `…/consentDenied` | POST | `KNOXIDF` |
 | [Trusted OIDC Issuers (admin)](#trusted-oidc-issuers-admin) | `knoxidf/admin/v1/trusted-oidc-issuers` | GET, POST, DELETE | `KNOXIDF_ADMIN` |
 
 ---
@@ -269,14 +270,20 @@ use on `/token`), and the stored `redirect_uris` and `allowed_scopes`.
 
 ## Consent page
 
-`GET|POST /{topology}/authConsent`
+`GET /{topology}/authConsent`
 
 An HTML consent page (a lightweight servlet, registered only when the topology includes the
 `KNOXIDF` service). `GET` renders the requesting `client_id` and a human-readable description of
-each requested scope with **Accept** / **Deny** buttons. `POST` records the decision and
-redirects to `authorize/consentAccepted` (issues the code) or `authorize/consentDenied`
-(`403`). Consent is one-time per (user, client, scopes) — see
-[Security → Consent](security.md#consent).
+each requested scope with **Accept** / **Deny** buttons.
+
+The decision is submitted with an HTTP **POST** — the **Accept** and **Deny** buttons post the
+form directly to `authorize/consentAccepted` and `authorize/consentDenied` respectively. Both
+endpoints are **POST-only**, so accepting consent (which persists a consent record and issues an
+authorization code) can never be triggered by passive `GET` navigation such as link prefetch,
+history re-navigation, or a leaked consent-URL. `consentAccepted` also verifies that the
+authenticated user matches the subject that initiated the authorization request, rejecting a
+replayed consent form from a different user with `403`; `consentDenied` returns `403`. Consent is
+one-time per (user, client, scopes) — see [Security → Consent](security.md#consent).
 
 ![The KnoxIDF consent page: "Application Consent Required", listing the requesting client and the scopes it will be granted, with Accept and Deny buttons.](../assets/images/knoxidf/consent_page.png)
 

@@ -101,6 +101,15 @@ topology parameter `knoxidf.auto.consent.enabled`. It is read from the topology 
 startup and is **never** read from the incoming HTTP request — a client cannot bypass the consent
 screen by sending an `auto_consent=true` parameter.
 
+Accepting consent is a **POST** and is **bound to the initiating subject**. Because acceptance
+persists a consent record and issues an authorization code, it must not be reachable by passive
+`GET` navigation, so the accept/deny endpoints are POST-only and the consent form posts directly
+to them. In addition, `consentAccepted` verifies that the currently authenticated user is the same
+subject that started the authorization request; a consent-URL replayed by a different authenticated
+user is rejected with `403`. Without this binding, a leaked consent URL could otherwise record one
+user's consent while routing an authorization code minted for a different user to the client's
+`redirect_uri`.
+
 Consent records are stored as metadata on the client's token record, under a fixed-width key
 derived as `"consent_"` + the first 20 hex characters of `SHA-256(subject)` (28 characters
 total). Hashing the subject keeps the key within the storage column width regardless of how long
