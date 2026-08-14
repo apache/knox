@@ -41,18 +41,21 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ALLOWED_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OIDC_STANDARD_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 @Path(RegistrationResource.RESOURCE_PATH)
@@ -67,6 +70,7 @@ public class RegistrationResource extends ClientCredentialsResource {
     private List<String> allowedScopes;
     boolean anonymousRegistrationAllowed;
     Set<String> loopbackHosts;
+    Set<String> registerableScopes;
 
     @Context
     private ServletContext servletContext;
@@ -84,6 +88,25 @@ public class RegistrationResource extends ClientCredentialsResource {
         // register a client even when the topology wires this endpoint as 'anon'.
         this.anonymousRegistrationAllowed = Boolean.parseBoolean(servletContext.getInitParameter(CLIENT_REGISTRATION_ANONYMOUS_ALLOWED));
         this.loopbackHosts = parseLoopbackHosts(servletContext.getInitParameter(CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS));
+        this.registerableScopes = parseRegisterableScopes(servletContext.getInitParameter(CLIENT_REGISTRATION_ALLOWED_SCOPES));
+    }
+
+    // Build the set of scopes a client is permitted to register: the operator-configured whitelist
+    // (comma-separated, trimmed, blanks dropped) or, when unset/blank, the OIDC-standard scope set.
+    // 'openid' is always registerable regardless of the configured value.
+    static Set<String> parseRegisterableScopes(String configured) {
+        if (StringUtils.isBlank(configured)) {
+            return OIDC_STANDARD_SCOPES;
+        }
+        final Set<String> scopes = new HashSet<>();
+        for (String s : configured.split(",")) {
+            final String trimmed = s.trim();
+            if (!trimmed.isEmpty()) {
+                scopes.add(trimmed);
+            }
+        }
+        scopes.add("openid");
+        return scopes;
     }
 
     // Build the loopback-host set: the hard-coded defaults plus any admin-configured extra hosts from the
@@ -143,13 +166,29 @@ public class RegistrationResource extends ClientCredentialsResource {
             }
 
             if (StringUtils.isBlank(allowedScopes)) {
-                this.allowedScopes = new ArrayList<>(DEFAULT_SCOPES);
+                // No scopes requested: grant the built-in defaults, bounded by the server-side
+                // whitelist so a narrower operator policy is honored even for the default case.
+                this.allowedScopes = DEFAULT_SCOPES.stream()
+                        .filter(registerableScopes::contains)
+                        .collect(Collectors.toList());
             } else {
-                this.allowedScopes = Arrays.asList(allowedScopes.split(","));
-                if (!this.allowedScopes.contains("openid")) {
+                final List<String> requestedScopes = Arrays.asList(allowedScopes.split(","));
+                if (!requestedScopes.contains("openid")) {
                     detail = "reason=invalid_scope";
                     return error("invalid_request", "allowed_scopes must include 'openid'");
                 }
+                // Server-side whitelist: a client cannot self-assign a scope outside the registerable
+                // set, so it cannot mint tokens carrying a privileged scope a downstream service trusts.
+                final Optional<String> disallowedScope = requestedScopes.stream()
+                        .map(String::trim)
+                        .filter(scope -> !scope.isEmpty())
+                        .filter(scope -> !registerableScopes.contains(scope))
+                        .findFirst();
+                if (disallowedScope.isPresent()) {
+                    detail = "reason=scope_not_registerable";
+                    return error("invalid_scope", "Scope '" + disallowedScope.get() + "' is not permitted for registration");
+                }
+                this.allowedScopes = requestedScopes;
             }
             final Response response = super.doPost();
             outcome = ActionOutcome.SUCCESS;

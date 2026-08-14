@@ -35,6 +35,11 @@ public interface KnoxIDFConstants {
     String OFFLINE_ACCESS_SCOPE = "offline_access";
     // Immutable shared constant; callers that need a mutable working set copy it (new HashSet<>(...)).
     Set<String> DEFAULT_SCOPES = ImmutableSet.of("openid", "profile", "email", OFFLINE_ACCESS_SCOPE);
+    // The OIDC-standard scope set (OIDC Core 5.4 + offline_access). Used as the default bound on what
+    // scopes a client may register when the operator has not configured an explicit whitelist. Matches
+    // the baseline registerable set of well-known OPs (Okta/Auth0/Keycloak), so no standards-compliant
+    // client is rejected, while non-standard scopes (e.g. 'admin') are refused unless explicitly allowed.
+    Set<String> OIDC_STANDARD_SCOPES = ImmutableSet.of("openid", "profile", "email", "address", "phone", OFFLINE_ACCESS_SCOPE);
     String OPENID_SCOPE = SCOPE + "=openid";
     String STATE = "state";
     String CODE = "code";
@@ -71,6 +76,13 @@ public interface KnoxIDFConstants {
     // 'host.docker.internal'). SECURITY: plain HTTP redirects to these hosts traverse a (virtual)
     // network, so only add hosts you fully control. Empty/undefined => today's behavior (loopback only).
     String CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS = "knoxidf.custom.loopback.hosts";
+
+    // Comma-separated server-side whitelist of scopes a client is permitted to register in its
+    // allowed_scopes. A client cannot self-assign a scope outside this set, so it cannot mint tokens
+    // carrying a privileged scope name that a downstream service might trust. Undefined/blank =>
+    // defaults to the OIDC-standard scope set (see OIDC_STANDARD_SCOPES). 'openid' is always required
+    // in a client's allowed_scopes regardless of this list.
+    String CLIENT_REGISTRATION_ALLOWED_SCOPES = "knoxidf.registration.allowed.scopes";
 
     // TrustedOidcIssuerService gateway-level params (read from GatewayConfig / gateway-site.xml)
     String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS =

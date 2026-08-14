@@ -132,6 +132,25 @@ The default is **`false`** (secure by default). When open registration is enable
 token-endpoint client authentication described above is what still prevents a
 registered-but-unauthenticated client from redeeming another client's authorization code.
 
+### Registerable-scope whitelist
+
+A client cannot self-assign an arbitrary scope at registration. The server bounds the scopes a
+client may put in its `allowed_scopes` by a whitelist, so a client cannot register (and then mint
+tokens carrying) a privileged scope name — e.g. `admin` — that a downstream service might trust.
+
+- The whitelist is configured with the topology parameter `knoxidf.registration.allowed.scopes`
+  (comma-separated). An explicit value is **authoritative**: it *replaces* the default rather than
+  extending it, so a narrower operator policy is honored exactly as written.
+- When the parameter is **unset or blank**, the whitelist defaults to the **OIDC-standard scope
+  set** (`openid`, `profile`, `email`, `address`, `phone`, `offline_access`). This matches the
+  baseline registerable set of well-known OPs, so no standards-compliant client is rejected out of
+  the box, while a non-standard scope must be explicitly allowed.
+- `openid` is **always** registerable regardless of the configured list (it is required in every
+  client's `allowed_scopes`).
+- A registration request naming any scope outside the whitelist is rejected with
+  `invalid_scope`. A request that omits `allowed_scopes` receives the built-in defaults
+  **intersected with** the whitelist, so the default grant can never exceed operator policy.
+
 ## Federated id_token validation
 
 When Knox brokers login to an external OIDC Provider, the OP's `id_token` is **fully validated

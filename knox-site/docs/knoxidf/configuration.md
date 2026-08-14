@@ -60,6 +60,7 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 | `refresh.token.ttl` | `86400000` (24 h) | Refresh-token lifetime in milliseconds. Refresh tokens are issued only when the `offline_access` scope is granted, and are rotated on each use. |
 | `knoxidf.auto.consent.enabled` | `false` | When `true`, the [consent screen](security.md#consent) is skipped. This is a **server-side** decision and is never read from a client request parameter. |
 | `knoxidf.client.registration.anonymous.allowed` | `false` | When `true`, [dynamic client registration](security.md#dynamic-client-registration) accepts anonymous callers. Secure by default. |
+| `knoxidf.registration.allowed.scopes` | OIDC-standard set | Comma-separated server-side whitelist of scopes a client may put in its `allowed_scopes` at [registration](security.md#registerable-scope-whitelist). An explicit value is **authoritative** (replaces the default). `openid` is always registerable. Blank/unset ⇒ `openid,profile,email,address,phone,offline_access`. |
 | `token.exchange.topology.name` | (none) | Name of the token-exchange topology (fronted by `JWTProvider`) to which the `token_endpoint` and `userinfo_endpoint` are redirected in discovery. See the [two-topology model](getting_started.md#3-deploy-the-knoxidf-topologies). |
 | `federated.op.names` | (none) | Comma-separated list of federated OP logical names to enable. See [Federated OP parameters](#federated-op-parameters). |
 
