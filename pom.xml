@@ -218,7 +218,7 @@
         <hamcrest.version>2.2</hamcrest.version>
         <hamcrest-json.version>0.2</hamcrest-json.version>
         <httpclient.version>4.5.13</httpclient.version>
-        <httpclient5.version>5.4.3</httpclient5.version>
+        <httpclient5.version>5.6.3</httpclient5.version>
         <httpcore.version>4.4.14</httpcore.version>
         <httpcore5.version>5.4.3</httpcore5.version>
         <jackson.version>2.18.9</jackson.version>
