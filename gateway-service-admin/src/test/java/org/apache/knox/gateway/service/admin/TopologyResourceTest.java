@@ -30,7 +30,6 @@ import javax.ws.rs.core.Response;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.List;
 
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -206,8 +205,8 @@ public class TopologyResourceTest {
 
     assertFalse(TopologiesResource.isValidResourceName(null));
     assertFalse(TopologiesResource.isValidResourceName(""));
-    assertFalse(TopologiesResource.isValidResourceName("a".repeat(101)));
-    assertTrue(TopologiesResource.isValidResourceName("a".repeat(100)));
+    assertFalse(TopologiesResource.isValidResourceName(repeat("a", 101)));
+    assertTrue(TopologiesResource.isValidResourceName(repeat("a", 100)));
   }
 
   private void setDefaultExpectations(HttpServletRequest request){
@@ -222,6 +221,14 @@ public class TopologyResourceTest {
     EasyMock.expect( request.getHeader( header ) ).andReturn( expected ).anyTimes();
   }
 
+  private static String repeat(String s, int count) {
+    StringBuilder sb = new StringBuilder(s.length() * count);
+    for (int i = 0; i < count; i++) {
+      sb.append(s);
+    }
+    return sb.toString();
+  }
+
   @Test
   public void testUploadTopologyRefusesReadOnlyOverride() throws Exception {
     TopologyService ts = EasyMock.createMock(TopologyService.class);
@@ -231,7 +238,7 @@ public class TopologyResourceTest {
 
     GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(config.getReadOnlyOverrideTopologyNames())
-        .andReturn(List.of("manager")).anyTimes();
+        .andReturn(Collections.singletonList("manager")).anyTimes();
 
     HttpServletRequest request = mockRequest(gs, config);
 
