@@ -79,7 +79,10 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3366] - Upgrade mina-core to 2.2.8
     * [KNOX-3376] - Use DefultAliasService OOTB
     * [KNOX-3385] - Knox LDAP Proxy accepts proxy base dn
+    * [KNOX-3386] - Knox LDAP Proxy supports paging to backends
     * [KNOX-3388] - Single-EKU test gateway startup is slow/flaky: batch credential-store alias creation
+    * [KNOX-3398] - Iceberg REST catalog CM service discovery should consider ENCRYPT_ALL_PORTS ENV variable when setting up scheme
+    * [KNOX-3409] - Validate knoxauth theme name to Harden the Branding Support
 
 ** Bug
     * [KNOX-2957] - Upgrade Groovy version >= 3.0.8 to support knoxshell on JDK17 cluster
@@ -123,6 +126,16 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3380] - Wrong SSL enabled flag is used while discovering the ICEBERG-REST service in CM
     * [KNOX-3381] - HADispatch retries on IOException during writeOutboundResponse
     * [KNOX-3389] - Embedded LDAP getUserGroups drops roles-lookup roles that have no backing group
+    * [KNOX-3397] - Remove index suffix from actor groups header explicitly in AbstractAuthResource
+    * [KNOX-3399] - RFC 8693 token exchange (handleTokenExchange) unreachable for x-www-form-urlencoded POSTs
+    * [KNOX-3403] - RFC 8693 token exchange: issued token 'sub' is the actor instead of the subject on non-server-managed topologies
+    * [KNOX-3407] - mTLS Support for Websockets
+    * [KNOX-3410] - KnoxToken enable/disable endpoints perform no caller authorization
+    * [KNOX-3411] - KnoxToken getUserTokens returns every user's token metadata without a caller authorization check
+    * [KNOX-3413] - KnoxToken passcode verification accepts a valid passcode for a different token
+    * [KNOX-3416] - KnoxSSO redirects to untrusted site
+    * [KNOX-3417] - KnoxLdapRealm builds the LDAP search filter from the client username without RFC-4515 escaping
+    * [KNOX-3418] - Path traversal → arbitrary file write/overwrite in the Apache Knox Admin API
 
 ** Test
     * [KNOX-3225] - New integration test for global HSTS headers
