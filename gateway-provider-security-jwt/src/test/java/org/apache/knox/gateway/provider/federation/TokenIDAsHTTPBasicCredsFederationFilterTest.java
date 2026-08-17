@@ -20,6 +20,7 @@ package org.apache.knox.gateway.provider.federation;
 
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
@@ -259,6 +260,55 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
         } catch (ServletException se) {
             fail("Should NOT have thrown a ServletException.");
         }
+    }
+
+    @Test
+    public void testPasscodeCannotBeReplayedAgainstDifferentTokenId() throws Exception {
+        Properties props = getProperties();
+        handler.init(new TestFilterConfig(props));
+
+        final long issueTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+        final Date expiry = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5));
+
+        final SignedJWT attackerJwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "attacker", expiry, privateKey);
+        final String attackerPasscode = (String) attackerJwt.getJWTClaimsSet().getClaims().get(PASSCODE_CLAIM);
+        addTokenState(attackerJwt, issueTime, "attacker", attackerPasscode);
+
+        final SignedJWT victimJwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "bob", expiry, privateKey);
+        final String victimPasscode = (String) victimJwt.getJWTClaimsSet().getClaims().get(PASSCODE_CLAIM);
+        addTokenState(victimJwt, issueTime, "bob", victimPasscode);
+        final String victimTokenId = getTokenId(victimJwt);
+
+        final TestFilterChain seedChain = new TestFilterChain();
+        handler.doFilter(newPasscodeRequest(generatePasscodeField(getTokenId(attackerJwt), attackerPasscode)),
+                newResponse(), seedChain);
+        Assert.assertTrue("Precondition: the attacker's own passcode should authenticate.", seedChain.doFilterCalled);
+
+        final TestFilterChain attackChain = new TestFilterChain();
+        handler.doFilter(newPasscodeRequest(generatePasscodeField(victimTokenId, attackerPasscode)),
+                newResponse(), attackChain);
+
+        Assert.assertFalse("A passcode must not authenticate when paired with a different token id "
+                + "(identity-assertion / authentication bypass).", attackChain.doFilterCalled);
+        Assert.assertNull("No subject should have been established for the replayed passcode.", attackChain.getSubject());
+    }
+
+    private HttpServletRequest newPasscodeRequest(final String passcodeField) {
+        final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+        setTokenOnRequest(request, JWTFederationFilter.PASSCODE, passcodeField);
+        EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+        EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+        EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+        EasyMock.replay(request);
+        return request;
+    }
+
+    private HttpServletResponse newResponse() throws IOException {
+        final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL).anyTimes();
+        EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
+        EasyMock.replay(response);
+        return response;
     }
 
     @Override

@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -132,6 +133,7 @@ public class TokenResource {
   private static final String TOKEN_EXP_RENEWAL_MAX_LIFETIME = TOKEN_PARAM_PREFIX + "exp.max-lifetime";
   private static final String TOKEN_EXP_TOKENGEN_ALLOWED_TSS_BACKENDS = TOKEN_PARAM_PREFIX + "exp.tokengen.allowed.tss.backends";
   private static final String TOKEN_RENEWER_WHITELIST = TOKEN_PARAM_PREFIX + "renewer.whitelist";
+  private static final String TOKEN_RENEWER_GROUP_WHITELIST = TOKEN_PARAM_PREFIX + "renewer.group.whitelist";
   private static final String TSS_STATUS_IS_MANAGEMENT_ENABLED = "tokenManagementEnabled";
   private static final String TSS_STATUS_CONFIFURED_BACKEND = "configuredTssBackend";
   private static final String TSS_STATUS_ACTUAL_BACKEND = "actualTssBackend";
@@ -190,6 +192,7 @@ public class TokenResource {
   private UserLimitExceededAction userLimitExceededAction = UserLimitExceededAction.RETURN_ERROR;
 
   private List<String> allowedRenewers;
+  private Set<String> allowedRenewerGroups;
 
   @Context
   HttpServletRequest request;
@@ -333,6 +336,14 @@ public class TokenResource {
       } else {
         log.noRenewersConfigured(topologyName);
       }
+
+      final String renewerGroups = context.getInitParameter(TOKEN_RENEWER_GROUP_WHITELIST);
+      allowedRenewerGroups = StringUtils.isBlank(renewerGroups)
+              ? new HashSet<>()
+              : Arrays.stream(renewerGroups.split(","))
+              .map(String::trim)
+              .filter(s -> !s.isEmpty())
+              .collect(Collectors.toSet());
     }
     setTokenStateServiceStatusMap();
   }
@@ -476,6 +487,14 @@ public class TokenResource {
       final String createdBy = uriInfo.getQueryParameters().getFirst("createdBy");
       final String userNameOrCreatedBy = uriInfo.getQueryParameters().getFirst("userNameOrCreatedBy");
       final boolean allTokens = Boolean.parseBoolean(uriInfo.getQueryParameters().getFirst("allTokens"));
+
+      final String caller = SubjectUtils.getCurrentEffectivePrincipalName();
+      if (!isAuthorizedToSeeTokens(caller, userName, createdBy, userNameOrCreatedBy, allTokens)) {
+        log.unauthorizedGetUserTokensRequest(getTopologyName(), caller);
+        return Response.status(Response.Status.FORBIDDEN)
+            .entity("{\n  \"error\": \"Caller (" + caller + ") is not authorized to see other users' tokens.\"\n}\n").build();
+      }
+
       final Collection<KnoxToken> userTokens;
       if (allTokens) {
         userTokens = tokenStateService.getAllTokens();
@@ -507,6 +526,29 @@ public class TokenResource {
       }
       return Response.status(Response.Status.OK).entity(JsonUtils.renderAsJsonString(Collections.singletonMap("tokens", tokens))).build();
     }
+  }
+
+  private boolean isAuthorizedToSeeTokens(String caller, String userName, String createdBy, String userNameOrCreatedBy, boolean allTokens) {
+    if (StringUtils.isBlank(caller)) {
+      return false;
+    }
+    final GatewayConfig config = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+    if (config != null && config.canSeeAllTokens(caller)) {
+      return true;
+    }
+    if (allTokens) {
+      return false;
+    }
+    // an ordinary caller must scope the query to their own tokens
+    final boolean hasIdentifier = userName != null || createdBy != null || userNameOrCreatedBy != null;
+    return hasIdentifier
+        && requestedIsCallerIfPresent(caller, userName)
+        && requestedIsCallerIfPresent(caller, createdBy)
+        && requestedIsCallerIfPresent(caller, userNameOrCreatedBy);
+  }
+
+  private static boolean requestedIsCallerIfPresent(String caller, String requested) {
+    return requested == null || caller.equals(requested);
   }
 
   @GET
@@ -551,8 +593,9 @@ public class TokenResource {
         errorCode = ErrorCode.INTERNAL_ERROR;
       }
     } else {
-      String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
-      if (allowedRenewers.contains(renewer)) {
+      final String renewer = SubjectUtils.getCurrentEffectivePrincipalName();
+
+      if (tokenStateChangeAuthorized(renewer)) {
         try {
           JWTToken jwt = new JWTToken(token);
           if (tokenStateService.isExpired(jwt)) {
@@ -590,6 +633,14 @@ public class TokenResource {
     }
 
     return resp;
+  }
+
+  private boolean tokenStateChangeAuthorized(final String principalName) {
+    final boolean userAllowed = allowedRenewers.contains(principalName);
+    final boolean groupAllowed = SubjectUtils.getCurrentGroupPrincipals().stream()
+            .map(GroupPrincipal::getName)
+            .anyMatch(allowedRenewerGroups::contains);
+    return userAllowed || groupAllowed;
   }
 
   @DELETE
@@ -635,7 +686,7 @@ public class TokenResource {
           errorStatus = Response.Status.FORBIDDEN;
           error = "SSO cookie (" + Tokens.getTokenIDDisplayText(tokenId) + ") cannot not be revoked.";
           errorCode = ErrorCode.UNAUTHORIZED;
-        } else if (triesToRevokeOwnToken(tokenId, revoker) || allowedRenewers.contains(revoker)) {
+        } else if (triesToChangeOwnToken(tokenId, revoker) || tokenStateChangeAuthorized(revoker)) {
           tokenStateService.revokeToken(tokenId);
           log.revokedToken(getTopologyName(),
                   Tokens.getTokenDisplayText(token),
@@ -675,7 +726,7 @@ public class TokenResource {
     return metadata == null ? false : metadata.isKnoxSsoCookie();
   }
 
-  private boolean triesToRevokeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
+  private boolean triesToChangeOwnToken(String tokenId, String revoker) throws UnknownTokenException {
     final TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
     final String tokenUserName = metadata == null ? "" : metadata.getUserName();
     final String tokenCreatedBy = metadata == null ? "" : metadata.getCreatedBy();
@@ -745,13 +796,19 @@ public class TokenResource {
   private Response setTokenEnabledFlag(String tokenId, boolean enable, boolean batch) {
     String error = "";
     ErrorCode errorCode = ErrorCode.UNKNOWN;
+    Response.Status responseStatus = Response.Status.BAD_REQUEST;
     if (tokenStateService == null) {
       error = "Unable to " + (enable ? "enable" : "disable") + " tokens because token management is not configured";
       errorCode = ErrorCode.CONFIGURATION_ERROR;
     } else {
       try {
         final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
-        if (!batch && enable && tokenMetadata.isEnabled()) {
+        final String caller = SubjectUtils.getCurrentEffectivePrincipalName();
+        if (!(triesToChangeOwnToken(tokenId, caller) || tokenStateChangeAuthorized(caller))) {
+          responseStatus = Response.Status.FORBIDDEN;
+          error = "Caller (" + caller + ") not authorized to " + (enable ? "enable" : "disable") + " tokens.";
+          errorCode = ErrorCode.UNAUTHORIZED;
+        } else if (!batch && enable && tokenMetadata.isEnabled()) {
           error = "Token is already enabled";
           errorCode = ErrorCode.ALREADY_ENABLED;
         } else if (!batch && !enable && !tokenMetadata.isEnabled()) {
@@ -771,11 +828,12 @@ public class TokenResource {
     }
 
     if (error.isEmpty()) {
+      responseStatus = Response.Status.OK;
       log.setEnabledFlag(getTopologyName(), enable, Tokens.getTokenIDDisplayText(tokenId));
-      return Response.status(Response.Status.OK).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
+      return Response.status(responseStatus).entity("{\n  \"setEnabledFlag\": \"true\",\n  \"isEnabled\": \"" + enable + "\"\n}\n").build();
     } else {
       log.badSetEnabledFlagRequest(getTopologyName(), Tokens.getTokenIDDisplayText(tokenId), error);
-      return Response.status(Response.Status.BAD_REQUEST).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
+      return Response.status(responseStatus).entity("{\n  \"setEnabledFlag\": \"false\",\n  \"error\": \"" + error + "\",\n  \"code\": " + errorCode.toInt() + "\n}\n").build();
     }
   }
 

@@ -299,13 +299,17 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   public void deployTopology(Topology t){
 
     try {
+      File topology = new File(topologiesDirectory.getAbsolutePath() + "/" + t.getName() + ".xml");
+      if (!topology.getCanonicalFile().toPath().startsWith(topologiesDirectory.getCanonicalFile().toPath())) {
+        throw new IOException("Resolved topology path escapes managed directory: " + t.getName());
+      }
+
       File temp = new File(topologiesDirectory.getAbsolutePath() + "/" + t.getName() + ".xml.temp");
       Marshaller mr = jaxbContext.createMarshaller();
 
       mr.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
       mr.marshal(t, temp);
 
-      File topology = new File(topologiesDirectory.getAbsolutePath() + "/" + t.getName() + ".xml");
       if(!temp.renameTo(topology)) {
         FileUtils.forceDelete(temp);
         throw new IOException("Could not rename temp file");
@@ -709,8 +713,15 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
 
     File destFile = new File(dest, name);
     try {
-      FileUtils.writeStringToFile(destFile, content, StandardCharsets.UTF_8);
-      log.wroteConfigurationFile(destFile.getAbsolutePath());
+      final File canonicalDest = dest.getCanonicalFile();
+      final File canonicalFile = destFile.getCanonicalFile();
+      if (!canonicalFile.toPath().startsWith(canonicalDest.toPath())) {
+        log.failedToWriteConfigurationFile(destFile.getAbsolutePath(),
+            new IOException("Resolved path escapes managed directory: " + name));
+        return false;
+      }
+      FileUtils.writeStringToFile(canonicalFile, content, StandardCharsets.UTF_8);
+      log.wroteConfigurationFile(canonicalFile.getAbsolutePath());
       result = true;
     } catch (IOException e) {
       log.failedToWriteConfigurationFile(destFile.getAbsolutePath(), e);

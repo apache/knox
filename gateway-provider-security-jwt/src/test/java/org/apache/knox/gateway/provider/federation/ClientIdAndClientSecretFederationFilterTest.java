@@ -110,7 +110,7 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
 //        EasyMock.expectLastCall().once();
         EasyMock.replay(tokenStateService, tokenMetadata, request, response);
 
-        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
+        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcodeVerificationCacheKey(tokenId, passcode));
 
         final TestFilterChain chain = new TestFilterChain();
         handler.doFilter(request, response, chain);
@@ -155,7 +155,7 @@ public class ClientIdAndClientSecretFederationFilterTest extends TokenIDAsHTTPBa
         EasyMock.expectLastCall().once();
         EasyMock.replay(tokenStateService, tokenMetadata, request, response);
 
-        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcode);
+        SignatureVerificationCache.getInstance(topologyName, filterConfig).recordSignatureVerification(passcodeVerificationCacheKey(tokenId, passcode));
 
         final TestFilterChain chain = new TestFilterChain();
         handler.doFilter(request, response, chain);

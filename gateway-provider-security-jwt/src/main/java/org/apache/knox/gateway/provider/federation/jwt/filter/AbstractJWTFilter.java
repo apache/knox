@@ -501,7 +501,7 @@ public abstract class AbstractJWTFilter implements Filter {
             final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
             if (isTokenEnabled(tokenMetadata)) {
               if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
-                if (hasSignatureBeenVerified(passcode) || validatePasscode(tokenId, passcode)) {
+                if (hasSignatureBeenVerified(passcodeVerificationCacheKey(tokenId, passcode)) || validatePasscode(tokenId, passcode)) {
                   markLastUsedAt(tokenId, tokenMetadata);
                   return true;
                 } else {
@@ -522,7 +522,7 @@ public abstract class AbstractJWTFilter implements Filter {
             // Explicitly evict the record of this token's signature verification (if present).
             // There is no value in keeping this record for expired tokens, and explicitly removing them may prevent
             // records for other valid tokens from being prematurely evicted from the cache.
-            removeSignatureVerificationRecord(passcode);
+            removeSignatureVerificationRecord(passcodeVerificationCacheKey(tokenId, passcode));
             handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
           }
         } else {
@@ -548,7 +548,7 @@ public abstract class AbstractJWTFilter implements Filter {
     final byte[] storedPasscode = tokenMetadata == null ? null : tokenMetadata.getPasscode().getBytes(UTF_8);
     final boolean validPasscode = Arrays.equals(tokenMAC.hash(tokenId, issueTime, userName, passcode).getBytes(UTF_8), storedPasscode);
     if (validPasscode) {
-      recordSignatureVerification(passcode);
+      recordSignatureVerification(passcodeVerificationCacheKey(tokenId, passcode));
     }
     return validPasscode;
   }
@@ -640,4 +640,7 @@ public abstract class AbstractJWTFilter implements Filter {
   protected abstract void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                                 String error) throws IOException;
 
+  private String passcodeVerificationCacheKey(final String tokenId, final String passcode) {
+    return tokenId + "::" + passcode;
+  }
 }
