@@ -13,7 +13,7 @@ This directory contains Python integration tests that run as part of the GitHub 
    Create a new Python file in this directory (`.github/workflows/tests/`). The filename **must** start with `test_` (e.g., `test_auth.py`) to be automatically discovered by the test runner.
 
 2. **Implement Test Logic**:
-   Use the `unittest` framework to structure your tests. You can include multiple test methods in a single class, and multiple classes in a single file. Each method starting with `test_` will be executed as a separate test case.
+   Use `pytest` to structure your tests. Test functions must start with `test_`; test classes must start with `Test` and must not define an `__init__` method. Existing `unittest.TestCase` tests are also supported by pytest.
 
    ```python
    # Licensed to the Apache Software Foundation (ASF) under one or more
@@ -31,42 +31,37 @@ This directory contains Python integration tests that run as part of the GitHub 
    # See the License for the specific language governing permissions and
    # limitations under the License.
    
-   import unittest
-   import requests
    import os
+
+   import requests
    import urllib3
 
    # Suppress InsecureRequestWarning since we use verify=False for self-signed certs
    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-   class TestMyFeature(unittest.TestCase):
-       def setUp(self):
-           # Get the Knox Gateway URL from environment variables
-           # Default to localhost for local debugging outside Docker
-           self.base_url = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
+   # Default to localhost for local debugging outside Docker.
+   BASE_URL = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
 
-       def test_my_endpoint(self):
-           """
-           Description of what this test checks.
-           """
-           url = f"{self.base_url}gateway/sandbox/webhdfs/v1/?op=LISTSTATUS"
-           
-           print(f"Testing URL: {url}")
-           
-           # Make the request
-           # verify=False is needed for the dev environment's self-signed certs
-           response = requests.get(url, verify=False)
-           
-           # Assertions
-           self.assertEqual(response.status_code, 200)
-           # Add more assertions as needed
 
-       def test_another_endpoint(self):
-           """
-           Another test case in the same class.
-           """
-           # ... implementation ...
-           pass
+   def test_my_endpoint():
+       """Verify that the WebHDFS endpoint returns a successful response."""
+       url = f"{BASE_URL}gateway/sandbox/webhdfs/v1/?op=LISTSTATUS"
+
+       # verify=False is needed for the dev environment's self-signed certificate.
+       response = requests.get(url, verify=False, timeout=30)
+
+       assert response.status_code == 200
+
+
+   def test_another_endpoint():
+       """Add another independently discovered test."""
+       response = requests.get(
+           f"{BASE_URL}gateway/health/v1/ping",
+           verify=False,
+           timeout=30,
+       )
+
+       assert response.status_code == 200
    ```
 
 3. **Add Dependencies**:
@@ -74,10 +69,10 @@ This directory contains Python integration tests that run as part of the GitHub 
 
 ## Organizing Tests in Subdirectories
 
-You can organize tests into subdirectories (e.g., `tests/auth/`, `tests/proxy/`). For the test runner to discover them:
+You can organize tests into subdirectories (e.g., `tests/auth/`, `tests/proxy/`). Pytest recursively discovers matching test files:
 
-1. The subdirectory **must** contain an `__init__.py` file (it can be empty).
-2. The test files inside must still match the `test_*.py` pattern.
+1. Test files must match the `test_*.py` pattern.
+2. An `__init__.py` file is optional unless the tests need the directory to be importable as a package.
 
 **Example structure:**
 
@@ -85,10 +80,8 @@ You can organize tests into subdirectories (e.g., `tests/auth/`, `tests/proxy/`)
 tests/
 ├── test_health.py
 ├── auth/
-│   ├── __init__.py
 │   └── test_auth.py
 └── proxy/
-    ├── __init__.py
     └── test_proxy.py
 ```
 
@@ -98,8 +91,8 @@ The tests run in a dedicated Docker container defined in `../compose/docker-comp
 
 1. The `tests` service mounts this directory (`.github/workflows/tests/`) to `/tests` inside the container.
 2. It installs dependencies from `requirements.txt`.
-3. It waits for the `knox` service to be ready.
-4. It runs `python -m unittest discover -p 'test_*.py'` to find and execute all test files.
+3. It waits briefly for the `knox` service to start.
+4. It runs `pytest`, excluding the single-EKU suites that are executed separately by the workflow.
 
 ## Skipping Tests on Pull Requests
 
