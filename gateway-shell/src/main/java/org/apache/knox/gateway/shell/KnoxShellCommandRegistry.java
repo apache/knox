@@ -40,11 +40,6 @@ public class KnoxShellCommandRegistry implements CommandRegistry {
     }
 
     @Override
-    public String name() {
-        return "";
-    }
-
-    @Override
     public boolean hasCommand(String command) {
         return commands.containsKey(command) || aliases.containsKey(command);
     }
