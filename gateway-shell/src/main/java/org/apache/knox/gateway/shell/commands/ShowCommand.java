@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Shows variables, classes or imports in the current shell session.
@@ -93,7 +94,7 @@ public class ShowCommand extends AbstractKnoxShellCommand {
     }
 
     private void showImports() {
-        java.util.Set<String> imports = engine.getImports().keySet();
+        Set<String> imports = engine.getImports().keySet();
         if (imports.isEmpty()) {
             terminal.writer().println("No imports registered.");
         } else {

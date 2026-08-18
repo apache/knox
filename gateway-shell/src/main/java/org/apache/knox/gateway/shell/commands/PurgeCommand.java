@@ -23,6 +23,7 @@ import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -91,13 +92,14 @@ public class PurgeCommand extends AbstractKnoxShellCommand {
     }
 
     private int clearVariables() {
-        java.util.Map<String, Object> variables = engine.find();
+
+        Map<String, Object> variables = engine.find();
         if (variables == null || variables.isEmpty()) {
             return 0;
         }
 
         int count = 0;
-        List<String> keysToDelete = new java.util.ArrayList<>();
+        List<String> keysToDelete = new ArrayList<>();
         for (String variableName : variables.keySet()) {
             // Preserve internal Knox bindings
             if (variableName != null && !variableName.startsWith(KNOX_INTERNAL_PREFIX)) {

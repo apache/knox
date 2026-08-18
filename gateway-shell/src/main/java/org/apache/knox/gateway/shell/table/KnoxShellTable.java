@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.SortOrder;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -334,8 +335,7 @@ public class KnoxShellTable {
     return new KnoxShellTableBuilder();
   }
 
-  private static final java.util.concurrent.atomic.AtomicLong LAST_TIME_MS =
-  new java.util.concurrent.atomic.AtomicLong(System.currentTimeMillis());
+  private static final AtomicLong LAST_TIME_MS = new AtomicLong(System.currentTimeMillis());
 
   static long getUniqueTableId() {
     return LAST_TIME_MS.updateAndGet(lastTime -> {
