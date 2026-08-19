@@ -276,11 +276,11 @@ public class Shell {
         }
 
         if (HELP_COMMANDS.stream().anyMatch(h -> trimmed.equalsIgnoreCase(h) || trimmed.startsWith(h + " "))) {
-          String[] helpParts = trimmed.split("\\s+");
+          List<String> helpParts = reader.getParser().parse(trimmed, 0).words();
 
-          if (helpParts.length > 1) {
+          if (helpParts.size() > 1) {
             // Detailed help for a specific command (e.g., ":help :fs")
-            String targetCmd = helpParts[1];
+            String targetCmd = helpParts.get(1);
             if (registry.containsKey(targetCmd)) {
               AbstractKnoxShellCommand cmd = registry.get(targetCmd);
               terminal.writer().println(cmd.getDescription());
@@ -309,17 +309,14 @@ public class Shell {
         }
 
         // Route custom Knox commands
-        String[] parts = trimmed.split("\\s+");
-        String commandName = parts[0];
+        List<String> parts = reader.getParser().parse(trimmed, 0).words();
+        String commandName = parts.get(0);
 
         if (registry.containsKey(commandName)) {
           AbstractKnoxShellCommand cmd = registry.get(commandName);
 
-          // Extract arguments to pass to the command
-          List<String> cmdArgs = new ArrayList<>();
-          if (parts.length > 1) {
-            cmdArgs.addAll(Arrays.asList(parts).subList(1, parts.length));
-          }
+          // Extract arguments to pass to the command (quotes stripped by parser)
+          List<String> cmdArgs = parts.size() > 1 ? new ArrayList<>(parts.subList(1, parts.size())) : new ArrayList<>();
 
           Object res = cmd.execute(cmdArgs);
           if (res != null) {
