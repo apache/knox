@@ -17,46 +17,63 @@
  */
 package org.apache.knox.gateway.shell.commands;
 
+import java.util.Collections;
 import java.util.List;
 
+import org.apache.groovy.groovysh.jline.GroovyEngine;
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.CredentialCollector;
-import org.apache.groovy.groovysh.CommandSupport;
-import org.apache.groovy.groovysh.Groovysh;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.NullCompleter;
+import org.jline.terminal.Terminal;
 
-public abstract class AbstractKnoxShellCommand extends CommandSupport {
-  static final String KNOXSQLHISTORY = "__knoxsqlhistory";
-  protected static final String KNOXDATASOURCES = "__knoxdatasources";
+public abstract class AbstractKnoxShellCommand {
+
+  protected final GroovyEngine engine;
+  protected final Terminal terminal;
+  private final String name;
+  private final String shortcut;
+
   private String description;
   private String usage;
   private String help;
 
-  public AbstractKnoxShellCommand(Groovysh shell, String name, String shortcut) {
-    super(shell, name, shortcut);
-  }
-
-  public AbstractKnoxShellCommand(Groovysh shell, String name, String shortcut,
-      String desc, String usage, String help) {
-    super(shell, name, shortcut);
+  public AbstractKnoxShellCommand(GroovyEngine engine, Terminal terminal, String name, String shortcut,
+                                  String desc, String usage, String help) {
+    this.engine = engine;
+    this.terminal = terminal;
+    this.name = name;
+    this.shortcut = shortcut;
     this.description = desc;
     this.usage = usage;
     this.help = help;
   }
 
-  @Override
-  public String getDescription() {
-      return description;
+  public String getName() {
+    return name;
   }
 
-  @Override
+  public String getShortcut() {
+    return shortcut;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
   public String getUsage() {
     return usage;
   }
 
-  @Override
   public String getHelp() {
     return help;
   }
+
+  public List<Completer> getCompleters() {
+    return Collections.singletonList(NullCompleter.INSTANCE);
+  }
+
+  public abstract Object execute(List<String> args) throws Exception;
 
   protected String getBindingVariableNameForResultingTable(List<String> args) {
     String variableName = null;
@@ -76,6 +93,9 @@ public abstract class AbstractKnoxShellCommand extends CommandSupport {
   protected CredentialCollector login() throws CredentialCollectionException {
     KnoxLoginDialog dlg = new KnoxLoginDialog();
     dlg.collect();
+    if (!dlg.ok) {
+      throw new CredentialCollectionException("Login cancelled by user.");
+    }
     return dlg;
   }
 }

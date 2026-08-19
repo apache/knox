@@ -23,36 +23,64 @@ import java.util.List;
 
 import org.apache.knox.gateway.shell.CredentialCollectionException;
 import org.apache.knox.gateway.shell.KnoxSession;
-import org.apache.groovy.groovysh.CommandSupport;
-import org.apache.groovy.groovysh.Groovysh;
 
-public class LoginCommand extends CommandSupport {
+import org.apache.groovy.groovysh.jline.GroovyEngine;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
-  public LoginCommand(Groovysh shell) {
-    super(shell, ":login", ":lgn");
+public class LoginCommand extends AbstractKnoxShellCommand {
+
+  public LoginCommand(GroovyEngine engine, Terminal terminal) {
+    super(engine, terminal, ":login", ":lgn",
+    "Establishes a Knox session",
+    "Usage: :login <url>",
+    "Establishes a Knox session using terminal credentials");
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Object execute(List<String> args) {
+    if (args == null || args.isEmpty()) {
+      terminal.writer().println("Error: Knox Gateway URL required.");
+      terminal.writer().println(getUsage());
+      terminal.writer().flush();
+      return null;
+    }
+
+    String url = args.get(0);
     KnoxSession session = null;
-    KnoxLoginDialog dlg = new KnoxLoginDialog();
+
     try {
+      KnoxLoginDialog dlg = new KnoxLoginDialog();
       dlg.collect();
       if (dlg.ok) {
-        session = KnoxSession.login(args.get(0), dlg.username, new String(dlg.pass));
-        getVariables().put("__knoxsession", session);
+        session = KnoxSession.login(url, dlg.username, new String(dlg.pass));
+        engine.put("__knoxsession", session);
+        terminal.writer().println("Session established for: " + url);
+        terminal.writer().flush();
+      } else {
+        terminal.writer().println("Login cancelled.");
+        terminal.writer().flush();
       }
     } catch (CredentialCollectionException | URISyntaxException e) {
-      e.printStackTrace();
+      terminal.writer().println("Failed to establish session: " + e.getMessage());
+      e.printStackTrace(terminal.writer());
+      terminal.writer().flush();
     }
-    return "Session established for: " + args.get(0);
+
+    return session;
   }
 
   public static void main(String[] args) {
-    LoginCommand cmd = new LoginCommand(new Groovysh());
-    List<String> args2 = new ArrayList<>();
-    args2.add("https://localhost:8443/gateway");
-    cmd.execute(args2);
+    try {
+      Terminal terminal = TerminalBuilder.builder().system(true).build();
+      GroovyEngine engine = new GroovyEngine();
+      LoginCommand cmd = new LoginCommand(engine, terminal);
+
+      List<String> args2 = new ArrayList<>();
+      args2.add("https://localhost:8443/gateway/sandbox");
+      cmd.execute(args2);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

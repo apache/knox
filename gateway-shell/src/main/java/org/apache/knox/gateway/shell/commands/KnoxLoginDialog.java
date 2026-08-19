@@ -62,39 +62,13 @@ public class KnoxLoginDialog implements CredentialCollector {
     }
   }
 
-  @Override
-  public String string() {
-    return new String(pass);
-  }
-
-  @Override
-  public char[] chars() {
-    return pass;
-  }
-
-  @Override
-  public byte[] bytes() {
-    return null;
-  }
-
-  @Override
-  public String type() {
-    return "dialog";
-  }
-
-  @Override
-  public String name() {
-    return username;
-  }
-
-  @Override
-  public void setPrompt(String prompt) {
-  }
-
-  @Override
-  public void setName(String name) {
-    this.name = name;
-  }
+  @Override public String string()  { return new String(pass); }
+  @Override public char[]  chars()  { return pass; }
+  @Override public byte[]  bytes()  { return null; }
+  @Override public String  type()   { return "dialog"; }
+  @Override public String  name()   { return username; }
+  @Override public void setPrompt(String prompt) {}
+  @Override public void setName(String name) { this.name = name; }
 
   public static void main(String[] args) {
     KnoxLoginDialog dlg = new KnoxLoginDialog();
