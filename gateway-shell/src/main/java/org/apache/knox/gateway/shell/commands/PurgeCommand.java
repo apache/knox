@@ -37,8 +37,9 @@ import java.util.Map;
  * <ul>
  * <li>:purge                - clears user variables (preserves internal Knox state)</li>
  * <li>:purge variables      - same as above</li>
- * <li>:purge imports        - clears user-added imports (preserves built-in Knox imports)</li>
- * <li>:purge all            - clears both variables and user imports</li>
+ * <li>:purge imports        - clears ALL imports, including the built-in Knox
+ *                             convenience imports; restart the shell to restore them</li>
+ * <li>:purge all            - clears user variables and ALL imports (see above)</li>
  * </ul>
  * </p>
  */
@@ -50,8 +51,8 @@ public class PurgeCommand extends AbstractKnoxShellCommand {
     private static final String USAGE    = "Usage: :purge [variables|imports|all]";
     private static final String HELP     = USAGE + "\n"
     + "  variables  - purge user variables, keep internal Knox state\n"
-    + "  imports    - purge user-added imports, keep built-in Knox imports\n"
-    + "  all        - purge both variables and user imports";
+    + "  imports    - purge ALL imports, including built-in Knox imports (restart to restore)\n"
+    + "  all        - purge user variables and ALL imports";
 
     /** Prefix used by Knox internal bindings (__knoxdatasource, __knoxsession, etc.) */
     private static final String KNOX_INTERNAL_PREFIX = "__knox";

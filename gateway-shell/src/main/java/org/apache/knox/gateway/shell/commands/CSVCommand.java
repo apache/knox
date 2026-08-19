@@ -30,7 +30,7 @@ public class CSVCommand extends AbstractKnoxShellCommand {
   private static final String DESC = "Build table from CSV file located at provided URL or KnoxShell $variable-name";
 
   public CSVCommand(GroovyEngine engine, Terminal terminal) {
-    super(engine, terminal, ":CSV", ":csv", DESC, USAGE, DESC);
+    super(engine, terminal, ":CSV", ":csv", DESC, USAGE, USAGE);
   }
 
   @Override

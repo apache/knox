@@ -284,7 +284,7 @@ public class Shell {
             if (registry.containsKey(targetCmd)) {
               AbstractKnoxShellCommand cmd = registry.get(targetCmd);
               terminal.writer().println(cmd.getDescription());
-              terminal.writer().println(cmd.getUsage());
+              terminal.writer().println(cmd.getHelp());
             } else {
               terminal.writer().println("Unknown command: " + targetCmd);
             }

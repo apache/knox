@@ -60,7 +60,7 @@ public class WebHDFSCommand extends AbstractKnoxShellCommand {
   private Map<String, KnoxSession> sessions = new HashMap<>();
 
   public WebHDFSCommand(GroovyEngine engine, Terminal terminal) {
-    super(engine, terminal, ":filesystem", ":fs", DESC, USAGE, DESC);
+    super(engine, terminal, ":filesystem", ":fs", DESC, USAGE, USAGE);
   }
 
   @Override
