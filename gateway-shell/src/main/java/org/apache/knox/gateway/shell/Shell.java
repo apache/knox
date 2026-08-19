@@ -332,9 +332,10 @@ public class Shell {
 
         terminal.writer().flush();
 
-      } catch (UserInterruptException | EndOfFileException e) {
-        // Ctrl+C or Ctrl+D cleanly exits the shell
-        return;
+      } catch (UserInterruptException e) {
+        continue; // Ctrl+C: discard current line, return to prompt
+      } catch (EndOfFileException e) {
+        return; // Ctrl+D: exit
       } catch (Throwable e) {
         // Shell should not exit (similar to legacy GroovySh)
         terminal.writer().println("Error: " + e.getMessage());
