@@ -95,9 +95,8 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.config.ConfigurationException;
 import org.apache.shiro.config.Ini;
-import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.env.BasicIniEnvironment;
 import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.Factory;
 import org.apache.shiro.util.ThreadContext;
 import org.eclipse.persistence.oxm.MediaType;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
@@ -1866,9 +1865,7 @@ public class KnoxCLI extends Configured implements Tool {
     protected Subject getSubject(Ini config) throws BadSubjectException {
       try {
         ThreadContext.unbindSubject();
-        @SuppressWarnings("deprecation")
-        Factory factory = new IniSecurityManagerFactory(config);
-        org.apache.shiro.mgt.SecurityManager securityManager = (org.apache.shiro.mgt.SecurityManager) factory.getInstance();
+        org.apache.shiro.mgt.SecurityManager securityManager = new BasicIniEnvironment(config).getSecurityManager();
         SecurityUtils.setSecurityManager(securityManager);
         Subject subject = SecurityUtils.getSubject();
         if( subject != null) {

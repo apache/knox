@@ -36,16 +36,15 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.crypto.hash.DefaultHashService;
-import org.apache.shiro.crypto.hash.Hash;
-import org.apache.shiro.crypto.hash.HashRequest;
-import org.apache.shiro.crypto.hash.HashService;
+import org.apache.shiro.crypto.SecureRandomNumberGenerator;
+import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.realm.ldap.DefaultLdapRealm;
 import org.apache.shiro.realm.ldap.LdapContextFactory;
 import org.apache.shiro.realm.ldap.LdapUtils;
 import org.apache.shiro.subject.MutablePrincipalCollection;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.util.StringUtils;
+import org.apache.shiro.lang.util.ByteSource;
+import org.apache.shiro.lang.util.StringUtils;
 
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
@@ -61,6 +60,7 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.PagedResultsControl;
 import javax.naming.ldap.PagedResultsResponseControl;
+import javax.naming.ldap.Rdn;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -151,6 +151,15 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
 
     private static final String HASHING_ALGORITHM = "SHA-256";
 
+    /*
+     * KNOX-3421: Shiro 2.x's DefaultHashService applies a large per-algorithm default
+     * iteration count (e.g. 50000 for SHA-256), whereas HashedCredentialsMatcher still
+     * defaults to a single iteration. To keep the credential round-trip consistent under
+     * the SHA-256 scheme, the stored hash is computed here with an explicit salt and this
+     * pinned iteration count, which matches the matcher configured in the constructor.
+     */
+    private static final int HASHING_ITERATIONS = 1;
+
     static {
           SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
           ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
@@ -186,10 +195,9 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
     private String userSearchAttributeName;
     private String userObjectClass = "person";
 
-    private HashService hashService = new DefaultHashService();
-
     public KnoxLdapRealm() {
       HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
+      credentialsMatcher.setHashIterations(HASHING_ITERATIONS);
       setCredentialsMatcher(credentialsMatcher);
     }
 
@@ -258,7 +266,7 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       String userDn;
       if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
         // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
-        userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+        userDn = memberAttributeValuePrefix + escapeDnValue(userName) + memberAttributeValueSuffix;
       } else {
         userDn = getUserDn(userName);
       }
@@ -684,13 +692,13 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
           ( userSearchAttributeName == null &&
               userSearchFilter == null &&
               !"object".equalsIgnoreCase( userSearchScope ) ) ) {
-        userDn = expandTemplate( userDnTemplate, matchedPrincipal );
+        userDn = expandTemplate( userDnTemplate, matchedPrincipal, EscapeMode.DN );
         LOG.computedUserDn( userDn, principal );
         return userDn;
       }
 
       // Create the searchBase and searchFilter from config.
-      String searchBase = expandTemplate( getUserSearchBase(), matchedPrincipal );
+      String searchBase = expandTemplate( getUserSearchBase(), matchedPrincipal, EscapeMode.DN );
       String searchFilter;
       if ( userSearchFilter == null ) {
         if ( userSearchAttributeName == null ) {
@@ -700,10 +708,10 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
               "(&(objectclass=%1$s)(%2$s=%3$s))",
               getUserObjectClass(),
               userSearchAttributeName,
-              expandTemplate(getUserSearchAttributeTemplate(), matchedPrincipal, true));
+              expandTemplate(getUserSearchAttributeTemplate(), matchedPrincipal, EscapeMode.FILTER));
         }
       } else {
-        searchFilter = expandTemplate(userSearchFilter, matchedPrincipal, true);
+        searchFilter = expandTemplate(userSearchFilter, matchedPrincipal, EscapeMode.FILTER);
       }
       SearchControls searchControls = getUserSearchControls();
 
@@ -744,16 +752,15 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
 
     @Override
     protected AuthenticationInfo createAuthenticationInfo(AuthenticationToken token, Object ldapPrincipal, Object ldapCredentials, LdapContext ldapContext) throws NamingException {
-      HashRequest.Builder builder = new HashRequest.Builder();
-      Hash credentialsHash = hashService.computeHash(builder.setSource(token.getCredentials()).setAlgorithmName(HASHING_ALGORITHM).build());
-      return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsHash.getSalt(), getName());
+      final ByteSource credentialsSalt = new SecureRandomNumberGenerator().nextBytes();
+      final SimpleHash credentialsHash = new SimpleHash(HASHING_ALGORITHM, token.getCredentials(), credentialsSalt, HASHING_ITERATIONS);
+      return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsSalt, getName());
     }
 
-  private static String expandTemplate(final String template, final Matcher input) {
-    return expandTemplate(template, input, false);
-  }
+  /** How a substituted template value must be escaped for its target context. */
+  private enum EscapeMode { NONE, FILTER, DN }
 
-  private static String expandTemplate( final String template, final Matcher input, final boolean escapeForLdapFilter ) {
+  private static String expandTemplate( final String template, final Matcher input, final EscapeMode escapeMode ) {
     String output = template;
     Matcher matcher = TEMPLATE_PATTERN.matcher( output );
     while( matcher.find() ) {
@@ -762,8 +769,10 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       String lookupValue = input.group( lookupIndex );
       if (lookupValue == null) {
           lookupValue = "";
-      } else if (escapeForLdapFilter) {
+      } else if (escapeMode == EscapeMode.FILTER) {
           lookupValue = escapeLdapSearchFilterValue(lookupValue);
+      } else if (escapeMode == EscapeMode.DN) {
+          lookupValue = escapeDnValue(lookupValue);
       }
       // quoteReplacement is required: replaceFirst treats '\' and '$' in the replacement specially
       output = matcher.replaceFirst(Matcher.quoteReplacement(lookupValue));
@@ -800,6 +809,15 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       }
     }
     return sb.toString();
+  }
+
+  // RFC 4514 DN-value escaping (escapes ',', '=', '+', '"', '\\', '<', '>', ';',
+  // leading/trailing space, and a leading '#'), preventing DN injection.
+  static String escapeDnValue(final String value) {
+    if (value == null) {
+      return null;
+    }
+    return Rdn.escapeValue(value);
   }
 
 }

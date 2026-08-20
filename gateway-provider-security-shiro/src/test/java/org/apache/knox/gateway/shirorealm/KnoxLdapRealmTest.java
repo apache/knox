@@ -55,6 +55,27 @@ public class KnoxLdapRealmTest {
     return filter.getValue();
   }
 
+  private static String captureSearchBase(KnoxLdapRealm realm, String principal) throws Exception {
+    LdapContextFactory factory = EasyMock.createNiceMock(LdapContextFactory.class);
+    LdapContext ctx = EasyMock.createNiceMock(LdapContext.class);
+    NamingEnumeration<SearchResult> results = EasyMock.createNiceMock(NamingEnumeration.class);
+
+    EasyMock.expect(factory.getSystemLdapContext()).andReturn(ctx).anyTimes();
+    Capture<String> base = EasyMock.newCapture();
+    EasyMock.expect(ctx.search(EasyMock.capture(base), EasyMock.anyString(),
+        EasyMock.anyObject(SearchControls.class))).andReturn(results);
+    EasyMock.expect(results.hasMore()).andReturn(false).anyTimes();
+    EasyMock.replay(factory, ctx, results);
+
+    realm.setContextFactory(factory);
+    try {
+      realm.getUserDn(principal);
+    } catch (IllegalArgumentException expected) {
+      // mock returns no entry, so getUserDn throws after the search; we only need the base
+    }
+    return base.getValue();
+  }
+
   private static KnoxLdapRealm searchModeRealm() {
     KnoxLdapRealm realm = new KnoxLdapRealm();
     realm.setSearchBase("dc=hadoop,dc=apache,dc=org");
@@ -94,6 +115,17 @@ public class KnoxLdapRealmTest {
     realm.setUserSearchFilter("(uid={0})");
     String filter = captureSearchFilter(realm, "a)(b");
     assertEquals("(uid=a\\29\\28b)", filter);
+  }
+
+  @Test
+  public void getUserDnEscapesSearchBaseTemplateValue() throws Exception {
+    KnoxLdapRealm realm = searchModeRealm();
+    // A userSearchBase that substitutes the raw principal into the base DN.
+    realm.setUserSearchBase("ou={0},dc=hadoop,dc=apache,dc=org");
+    // Injection metacharacters in the username must be DN-escaped so they
+    // cannot add or rewrite RDNs in the search base.
+    String base = captureSearchBase(realm, "people,dc=evil");
+    assertEquals("ou=people\\,dc\\=evil,dc=hadoop,dc=apache,dc=org", base);
   }
 
   @Test
