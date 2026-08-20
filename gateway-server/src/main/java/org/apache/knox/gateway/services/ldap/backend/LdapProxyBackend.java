@@ -28,7 +28,10 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapOperationException;
+import org.apache.directory.api.ldap.model.message.LdapResult;
 import org.apache.directory.api.ldap.model.message.Response;
+import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
 import org.apache.directory.api.ldap.model.message.SearchResultDone;
@@ -489,13 +492,15 @@ public class LdapProxyBackend implements LdapBackend {
             connection = getConnection();
             // Search for user using configurable attribute
             String filter = userSearchFilter.replace("{username}", username);
+            Entry sourceEntry = null;
             try (EntryCursor cursor = connection.search(remoteUserSearchBase, filter, SearchScope.SUBTREE, "*")) {
                 if (cursor.next()) {
-                    Entry sourceEntry = cursor.get();
-                    addGroupMemberships(sourceEntry, connection, createEntryCache(), createResolvedParentsCache());
-                    return remoteSchemaConverter.convertRemoteEntryToProxyEntry(sourceEntry, schemaManager);
-
+                    sourceEntry = cursor.get();
                 }
+            }
+            if (sourceEntry != null) {
+                addGroupMemberships(sourceEntry, connection, createEntryCache(), createResolvedParentsCache());
+                return remoteSchemaConverter.convertRemoteEntryToProxyEntry(sourceEntry, schemaManager);
             }
             return null;
         } finally {
@@ -563,7 +568,7 @@ public class LdapProxyBackend implements LdapBackend {
         }
     }
 
-    private void addGroupMemberships(Entry entry, LdapConnection connection, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws Exception {
+    private void addGroupMemberships(Entry entry, LdapConnection connection, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws LdapException, CursorException, IOException {
         // The memberOf attribute is already populated on the entry. Further work is only needed
         // when using recursive group resolution or non using memberOf to find groups
         if (recursiveGroupResolution || !useMemberOf) {
@@ -574,7 +579,7 @@ public class LdapProxyBackend implements LdapBackend {
         }
     }
 
-    private List<Entry> getUserGroupsEntries(LdapConnection connection, Entry user, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws Exception {
+    private List<Entry> getUserGroupsEntries(LdapConnection connection, Entry user, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws LdapException, CursorException, IOException {
         List<Entry> groups = new ArrayList<>();
         if (useMemberOf) {
             // Use memberOf attribute for efficient AD lookups
@@ -893,6 +898,11 @@ public class LdapProxyBackend implements LdapBackend {
                 }
                 if (cursor.isDone()) {
                     SearchResultDone done = cursor.getSearchResultDone();
+
+                    LdapResult ldapResult = done.getLdapResult();
+                    if (ldapResult.getResultCode() != ResultCodeEnum.SUCCESS) {
+                        throw new LdapOperationException(ldapResult.getResultCode(), ldapResult.getDiagnosticMessage());
+                    }
                     PagedResults responseControl = (PagedResults) done.getControl(PagedResults.OID);
 
                     if (responseControl != null) {
@@ -909,7 +919,7 @@ public class LdapProxyBackend implements LdapBackend {
         if (maxResultSetSize != 0 && results.size() >= maxResultSetSize) {
             LOG.ldapPagedSearchExceededMaxResultSetSize(results.size(), maxResultSetSize);
         } else {
-            LOG.ldapPagedSearchCompleted(baseDn, filter);
+            LOG.ldapPagedSearchCompleted(baseDn, filter, results.size());
         }
 
         return results;

@@ -68,7 +68,7 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
             knox_host(), port=KNOX_LDAP_PORT, use_ssl=True, tls=tls, get_info=ldap3.NONE
         )
         self.connection = ldap3.Connection(
-            server, user=BIND_DN, password=BIND_PASSWORD, auto_bind=True
+            server, user=BIND_DN, password=BIND_PASSWORD, auto_bind=True, raise_exceptions=True
         )
 
     def tearDown(self) -> None:
