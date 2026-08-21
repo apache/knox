@@ -128,6 +128,17 @@ public class KnoxLdapRealmTest {
     assertEquals("ou=people\\,dc\\=evil,dc=hadoop,dc=apache,dc=org", base);
   }
 
+  @Test
+  public void getUserDnWithDefaultTemplateReturnsFullDnUnescaped() {
+    // The default userDnTemplate is "{0}", meaning the principal IS the complete bind DN
+    // (the system-bind case, e.g. KnoxCLI system-user-auth-test). DN-escaping would turn
+    // the ','/'=' separators into '\,'/'\=' and corrupt the DN, so this template must pass
+    // the principal through unescaped. Embedded templates ("uid={0},...") still escape.
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    String dn = realm.getUserDn("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org");
+    assertEquals("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org", dn);
+  }
+
   @Test(timeout = 5000, expected = IllegalArgumentException.class)
   public void getUserDnRejectsTemplatePlaceholderAsUsername() {
     // A username of "{0}" substituted into a template would re-introduce a "{0}" token

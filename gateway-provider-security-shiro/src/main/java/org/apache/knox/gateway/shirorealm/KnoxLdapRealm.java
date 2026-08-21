@@ -695,7 +695,13 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
           ( userSearchAttributeName == null &&
               userSearchFilter == null &&
               !"object".equalsIgnoreCase( userSearchScope ) ) ) {
-        userDn = expandTemplate( userDnTemplate, matchedPrincipal, EscapeMode.DN );
+        // When the template is exactly "{0}" the principal IS the full DN (e.g. a system
+        // bind DN), so DN-escaping it would corrupt the DN and break the bind. Escaping is
+        // only needed when the placeholder is embedded within surrounding DN structure
+        // (e.g. "uid={0},ou=people,..."), where the principal is a single RDN value that
+        // could otherwise inject additional RDNs.
+        final EscapeMode escapeMode = "{0}".equals( userDnTemplate.trim() ) ? EscapeMode.NONE : EscapeMode.DN;
+        userDn = expandTemplate( userDnTemplate, matchedPrincipal, escapeMode );
         LOG.computedUserDn( userDn, principal );
         return userDn;
       }
