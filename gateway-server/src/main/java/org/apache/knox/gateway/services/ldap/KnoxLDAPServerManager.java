@@ -37,8 +37,11 @@ import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.DnFactory;
 import org.apache.directory.server.core.api.InstanceLayout;
+import org.apache.directory.server.core.api.InterceptorEnum;
 import org.apache.directory.server.core.api.interceptor.Interceptor;
 import org.apache.directory.server.core.api.schema.SchemaPartition;
+import org.apache.directory.server.core.authn.AuthenticationInterceptor;
+import org.apache.directory.server.core.authn.Authenticator;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.ldap.LdapServer;
@@ -46,6 +49,7 @@ import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ldap.authn.InMemoryBindAuthenticator;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptor;
@@ -56,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -116,6 +121,7 @@ public class KnoxLDAPServerManager {
         this.port = config.getLDAPPort();
         this.baseDn = config.getLDAPBaseDN();
         this.bindUser = config.getLDAPBindUser();
+        validateBindUser();
 
         maxSizeLimit = config.getLDAPMaxSizeLimit();
         maxTimeLimit = config.getLDAPMaxTimeLimit();
@@ -143,6 +149,19 @@ public class KnoxLDAPServerManager {
         }
 
         workDir.mkdirs();
+    }
+
+    /**
+     * Validates that the bind dn, if configured, matches the base dn for the embedded
+     * LDAP service (e.g. {@code ou=system} or {@code ou=people,<baseDn>}).
+     */
+    private void validateBindUser() throws Exception {
+        if (!StringUtils.isBlank(bindUser)) {
+            Dn bindUserDn = new Dn(bindUser);
+            if (!(bindUserDn.isDescendantOf("ou=system") || bindUserDn.isDescendantOf("ou=people," + this.baseDn))) {
+                throw new IllegalArgumentException("Bind user must be a descendant of ou=system or ou=people" + this.baseDn);
+            }
+        }
     }
 
     private void createInterceptors(GatewayConfig config) throws Exception {
@@ -233,17 +252,16 @@ public class KnoxLDAPServerManager {
         final String bindPassword = bindPasswordChars == null ? null : new String(bindPasswordChars);
         final boolean requireBind = StringUtils.isNotBlank(bindUser) && StringUtils.isNotBlank(bindPassword);
         directoryService.setAllowAnonymousAccess(!requireBind);
+        if (requireBind) {
+            configureInMemoryBindUser(bindPassword);
+            LOG.ldapBindUserConfigured(bindUser);
+        }
 
         // Start the service
         directoryService.startup();
 
         // Add base entries to the partitions
         createBaseEntries(baseDns, schemaManager);
-
-        if (requireBind) {
-            createBindUser(schemaManager, bindPassword);
-            LOG.ldapBindUserConfigured(bindUser);
-        }
 
         // Create LDAP server on configured port
         ldapServer = new LdapServer();
@@ -435,22 +453,24 @@ public class KnoxLDAPServerManager {
     }
 
     /**
-     * Create the entry used by external clients to bind against the embedded LDAP server.
-     * The bind DN's parent container (e.g. {@code ou=system} or {@code ou=people,<baseDn>})
-     * must already exist. The entry is added using the privileged admin session, which is
-     * unaffected by the anonymous-access setting.
+     * Configure the Authenticator used by external clients to bind against the embedded LDAP server.
      */
-    private void createBindUser(SchemaManager schemaManager, String bindPassword) throws Exception {
-        Dn bindDn = new Dn(schemaManager, bindUser);
-        if (!directoryService.getAdminSession().exists(bindDn)) {
-            String rdnValue = bindDn.getRdn().getValue();
-            Entry bindEntry = new DefaultEntry(schemaManager);
-            bindEntry.setDn(bindDn);
-            bindEntry.add("objectClass", "top", "person", "organizationalPerson", "inetOrgPerson");
-            bindEntry.add("cn", rdnValue);
-            bindEntry.add("sn", rdnValue);
-            bindEntry.add("userPassword", bindPassword);
-            directoryService.getAdminSession().add(bindEntry);
+    private void configureInMemoryBindUser(String bindPassword) throws Exception {
+        String id = "inmemoryuser";
+        Dn bindDn = new Dn(directoryService.getSchemaManager(), bindUser);
+
+        Interceptor interceptor = directoryService.getInterceptor(InterceptorEnum.AUTHENTICATION_INTERCEPTOR.getName());
+        if (interceptor instanceof AuthenticationInterceptor authInterceptor) {
+            InMemoryBindAuthenticator inMemoryBindAuthenticator = new InMemoryBindAuthenticator(bindDn,  bindPassword);
+
+            // Create an ordered set so that in-memory authenticator will have priority over
+            // the default SIMPLE authenticator.
+            Set<Authenticator> authenticators = new LinkedHashSet<>();
+            authenticators.add(inMemoryBindAuthenticator);
+            authenticators.addAll(authInterceptor.getAuthenticators());
+            authInterceptor.setAuthenticators(authenticators);
+        } else {
+            throw new IllegalStateException("Unable to configure AuthenticationInterceptor for bind user");
         }
     }
 

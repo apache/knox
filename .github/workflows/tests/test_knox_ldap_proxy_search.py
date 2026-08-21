@@ -48,8 +48,8 @@ PROXY_PEOPLE_BASE = f"ou=people,{PROXY_BASE_DN}"
 PROXY_GROUPS_BASE = f"ou=groups,{PROXY_BASE_DN}"
 
 # A valid backend user used to bind to the proxy before searching.
-BIND_DN = f"uid=guest,{PEOPLE_BASE}"
-BIND_PASSWORD = "guest-password"
+BIND_DN = f"uid=bind,{PROXY_PEOPLE_BASE}"
+BIND_PASSWORD = "bind-password"
 
 
 def knox_host() -> str:
@@ -83,6 +83,23 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
             first_rdn = entry.entry_dn.split(",", 1)[0]
             values.append(first_rdn.split("=", 1)[1])
         return values
+
+    def test_anonymous_search_rejected(self) -> None:
+        """Anonymous search not allowed when bind user configured."""
+        # Self-signed dev certificate in CI: connect over TLS but skip validation.
+        tls = ldap3.Tls(validate=ssl.CERT_NONE)
+        server = ldap3.Server(
+            knox_host(), port=KNOX_LDAP_PORT, use_ssl=True, tls=tls, get_info=ldap3.NONE
+        )
+        with self.assertRaises(ldap3.core.exceptions.LDAPInvalidCredentialsResult):
+            try:
+                connection = ldap3.Connection(
+                    server, auto_bind=ldap3.AUTO_BIND_NONE, raise_exceptions=True
+                )
+                connection.bind()
+            finally:
+                if connection.bound:
+                    connection.unbind()
 
     def test_search_all_users_by_objectclass(self) -> None:
         """All inetOrgPerson entries under ou=people are returned."""

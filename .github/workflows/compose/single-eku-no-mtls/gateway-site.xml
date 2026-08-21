@@ -158,6 +158,10 @@ limitations under the License.
         <value>dc=proxy,dc=org</value>
     </property>
     <property>
+        <name>gateway.ldap.bind.user</name>
+        <value>uid=bind,ou=people,dc=proxy,dc=org</value>
+    </property>
+    <property>
         <name>gateway.ldap.max.size.limit</name>
         <value>1000</value>
     </property>
