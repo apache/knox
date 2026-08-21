@@ -128,6 +128,16 @@ public class KnoxLdapRealmTest {
     assertEquals("ou=people\\,dc\\=evil,dc=hadoop,dc=apache,dc=org", base);
   }
 
+  @Test(timeout = 5000, expected = IllegalArgumentException.class)
+  public void getUserDnRejectsTemplatePlaceholderAsUsername() {
+    // A username of "{0}" substituted into a template would re-introduce a "{0}" token
+    // and loop forever. It must be rejected (auth failure), not expanded. The timeout
+    // guards against regression of the infinite loop.
+    KnoxLdapRealm realm = new KnoxLdapRealm();
+    realm.setUserDnTemplate("uid={0},ou=people,dc=hadoop,dc=apache,dc=org");
+    realm.getUserDn("{0}");
+  }
+
   @Test
   public void setGetSearchBase() {
     KnoxLdapRealm realm = new KnoxLdapRealm();

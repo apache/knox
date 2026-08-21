@@ -160,6 +160,9 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
      */
     private static final int HASHING_ITERATIONS = 1;
 
+    /** How a substituted template value must be escaped for its target context. */
+    private enum EscapeMode { NONE, FILTER, DN }
+
     static {
           SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
           ONELEVEL_SCOPE.setSearchScope(SearchControls.ONELEVEL_SCOPE);
@@ -757,9 +760,6 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsSalt, getName());
     }
 
-  /** How a substituted template value must be escaped for its target context. */
-  private enum EscapeMode { NONE, FILTER, DN }
-
   private static String expandTemplate( final String template, final Matcher input, final EscapeMode escapeMode ) {
     String output = template;
     Matcher matcher = TEMPLATE_PATTERN.matcher( output );
@@ -773,6 +773,12 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
           lookupValue = escapeLdapSearchFilterValue(lookupValue);
       } else if (escapeMode == EscapeMode.DN) {
           lookupValue = escapeDnValue(lookupValue);
+      }
+      // A substituted value that itself contains a template token (e.g. a username of
+      // "{0}") would be re-matched on the next scan and expand forever. No legitimate
+      // principal contains a "{<digits>}" token, so reject it rather than loop.
+      if (TEMPLATE_PATTERN.matcher(lookupValue).find()) {
+          throw new IllegalArgumentException("Illegal template placeholder in substituted value");
       }
       // quoteReplacement is required: replaceFirst treats '\' and '$' in the replacement specially
       output = matcher.replaceFirst(Matcher.quoteReplacement(lookupValue));

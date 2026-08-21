@@ -91,11 +91,13 @@ import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.config.ConfigurationException;
 import org.apache.shiro.config.Ini;
 import org.apache.shiro.env.BasicIniEnvironment;
+import org.apache.shiro.lang.util.LifecycleUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.eclipse.persistence.oxm.MediaType;
@@ -1768,6 +1770,8 @@ public class KnoxCLI extends Configured implements Tool {
       } catch ( Exception e ) {
         out.println(e.getCause());
         out.println(e.toString());
+      } finally {
+        destroySecurityManager();
       }
       return result;
     }
@@ -1877,6 +1881,25 @@ public class KnoxCLI extends Configured implements Tool {
         out.println(e.toString());
       }
       throw new BadSubjectException("Subject could not be created with Shiro Config at " + config);
+    }
+
+    /**
+     * Releases the Shiro {@link org.apache.shiro.mgt.SecurityManager} created for the
+     * current command by {@link #getSubject(Ini)}. The {@code DefaultSecurityManager}
+     * built by {@link BasicIniEnvironment} is {@code Destroyable} and can hold
+     * resources such as a cache manager and a session-validation scheduler thread, so
+     * it must be destroyed once the Subject is no longer needed to avoid leaking them.
+     * Null-safe and safe to call when no SecurityManager is currently set.
+     */
+    protected void destroySecurityManager() {
+      final org.apache.shiro.mgt.SecurityManager securityManager;
+      try {
+        securityManager = SecurityUtils.getSecurityManager();
+      } catch (UnavailableSecurityManagerException e) {
+        return; // nothing was set, nothing to release
+      }
+      LifecycleUtils.destroy(securityManager);
+      SecurityUtils.setSecurityManager(null);
     }
 
     protected Subject getSubject(String config) throws ConfigurationException {
@@ -2115,6 +2138,8 @@ public class KnoxCLI extends Configured implements Tool {
         if(debug){
           e.printStackTrace();
         }
+      } finally {
+        destroySecurityManager();
       }
       return groups;
     }
