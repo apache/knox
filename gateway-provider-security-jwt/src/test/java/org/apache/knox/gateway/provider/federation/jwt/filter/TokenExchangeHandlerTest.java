@@ -71,7 +71,8 @@ public class TokenExchangeHandlerTest {
   public void testSubjectTokenRequired() throws Exception {
     handler.handle(request(null, JWT_TYPE, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertTrue(filter.errorMessage.contains("subject_token"));
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("subject_token"));
     assertFalse(filter.continued);
   }
 
@@ -79,7 +80,8 @@ public class TokenExchangeHandlerTest {
   public void testSubjectTokenTypeRequired() throws Exception {
     handler.handle(request("subtok", null, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertTrue(filter.errorMessage.contains("subject_token_type"));
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("subject_token_type"));
     assertFalse(filter.continued);
   }
 
@@ -88,7 +90,8 @@ public class TokenExchangeHandlerTest {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     handler.handle(request("subtok", JWT_TYPE, "acttok", null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertTrue(filter.errorMessage.contains("actor_token_type is required"));
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("actor_token_type is required"));
     assertFalse(filter.continued);
   }
 
@@ -96,7 +99,8 @@ public class TokenExchangeHandlerTest {
   public void testActorTokenTypeForbiddenWithoutActor() throws Exception {
     handler.handle(request("subtok", JWT_TYPE, null, JWT_TYPE), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertTrue(filter.errorMessage.contains("must not be present"));
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("must not be present"));
     assertFalse(filter.continued);
   }
 
@@ -104,7 +108,8 @@ public class TokenExchangeHandlerTest {
   public void testUnsupportedSubjectTokenType() throws Exception {
     handler.handle(request("subtok", SAML2_TYPE, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertTrue(filter.errorMessage.contains("unsupported_token_type"));
+    assertEquals("unsupported_token_type", filter.error);
+    assertTrue(filter.errorDescription.contains("subject_token_type"));
     assertFalse(filter.continued);
   }
 
@@ -113,7 +118,8 @@ public class TokenExchangeHandlerTest {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     handler.handle(request("subtok", JWT_TYPE, "acttok", SAML2_TYPE), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertTrue(filter.errorMessage.contains("unsupported_token_type"));
+    assertEquals("unsupported_token_type", filter.error);
+    assertTrue(filter.errorDescription.contains("actor_token_type"));
     assertFalse(filter.continued);
   }
 
@@ -228,7 +234,8 @@ public class TokenExchangeHandlerTest {
   private static final class RecordingFilter extends JWTFederationFilter {
     private final Map<String, JWT> valid = new HashMap<>();
     private int errorStatus = -1;
-    private String errorMessage;
+    private String error;
+    private String errorDescription;
     private boolean continued;
     private Subject establishedSubject;
 
@@ -254,10 +261,11 @@ public class TokenExchangeHandlerTest {
     }
 
     @Override
-    protected void handleValidationError(HttpServletRequest request, HttpServletResponse response,
-                                         int status, String error) {
+    void handleValidationError(HttpServletRequest request, HttpServletResponse response,
+                               int status, String error, String description) {
       this.errorStatus = status;
-      this.errorMessage = error == null ? "" : error;
+      this.error = error == null ? "" : error;
+      this.errorDescription = description == null ? "" : description;
     }
   }
 }

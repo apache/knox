@@ -37,6 +37,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
@@ -235,16 +238,16 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-    EasyMock.expectLastCall().once();
-    EasyMock.replay(request, response, issuerSvc);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(mockAuth, issuerSvc, response);
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    EasyMock.verify(mockAuth, issuerSvc);
   }
 
   /**
@@ -278,19 +281,20 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         expiredJwt.serialize(), buildContextWithIssuerService(issuerSvc));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
-    EasyMock.expectLastCall().once();
-    EasyMock.replay(request, response, issuerSvc);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
     if (capturedJwt.hasCaptured()) {
       Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
     }
-    EasyMock.verify(mockAuth, issuerSvc, response);
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    Assert.assertTrue(response.body(), response.body().contains("Token has expired"));
+    EasyMock.verify(mockAuth, issuerSvc);
   }
 
   /**
@@ -324,19 +328,20 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         nbfJwt.serialize(), buildContextWithIssuerService(issuerSvc));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request: the NotBefore check failed");
-    EasyMock.expectLastCall().once();
-    EasyMock.replay(request, response, issuerSvc);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
     if (capturedJwt.hasCaptured()) {
       Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
     }
-    EasyMock.verify(mockAuth, issuerSvc, response);
+    Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
+    Assert.assertTrue(response.body(), response.body().contains("the NotBefore check failed"));
+    EasyMock.verify(mockAuth, issuerSvc);
   }
 
   /**
@@ -371,19 +376,20 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request: missing required token audience");
-    EasyMock.expectLastCall().once();
-    EasyMock.replay(request, response, issuerSvc);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
     if (capturedJwt.hasCaptured()) {
       Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
     }
-    EasyMock.verify(mockAuth, issuerSvc, response);
+    Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
+    Assert.assertTrue(response.body(), response.body().contains("missing required token audience"));
+    EasyMock.verify(mockAuth, issuerSvc);
   }
 
   // ---------------------------------------------------------------------------
@@ -408,16 +414,16 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-    EasyMock.expectLastCall().once();
-    EasyMock.replay(request, response, issuerSvc);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(issuerSvc, response);
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    EasyMock.verify(issuerSvc);
   }
 
   /**
@@ -437,16 +443,15 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildServletContext(gws));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-    EasyMock.expectLastCall().once();
-    EasyMock.replay(request, response);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(response);
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
   }
 
   /**
@@ -550,13 +555,15 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
-    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-    EasyMock.replay(request, response, issuerSvc);
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
 
     final TestFilterChain chain = new TestFilterChain();
-    handler.doFilter(request, response, chain);
+    handler.doFilter(request, response.mock, chain);
 
     Assert.assertFalse("Insecure (non-HTTPS) dynamic JWKS URI must be rejected OOTB", chain.doFilterCalled);
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
     EasyMock.verify(mockAuth, issuerSvc);
   }
 
@@ -810,6 +817,33 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     Assert.assertEquals(KNOX_ISSUER, capturedAttrs.get(KnoxIDFConstants.TOKEN_ISS_ATTRIBUTE));
   }
 
+  @Test
+  public void testTokenExchangeParamErrorEmitsRfcJsonError() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    // grant_type marks a token-exchange dispatch, but subject_token is absent (niceMock returns null).
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(JWTFederationFilter.TOKEN_EXCHANGE).anyTimes();
+    EasyMock.expect(request.getServletContext())
+        .andReturn(buildContextWithIssuerService(EasyMock.createNiceMock(TrustedOidcIssuerService.class))).anyTimes();
+    mockRequestAttributeStore(request);
+
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response.mock, chain);
+
+    Assert.assertFalse(chain.doFilterCalled);
+    Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status());
+    Assert.assertEquals("application/json; charset=UTF-8", response.contentType());
+    Assert.assertEquals("no-store", response.header("Cache-Control"));
+    Assert.assertEquals("no-cache", response.header("Pragma"));
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
+    Assert.assertTrue(response.body(), response.body().contains("subject_token"));
+  }
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -874,6 +908,44 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     }).anyTimes();
     EasyMock.expect(request.getAttribute(EasyMock.anyString()))
         .andAnswer(() -> attrs.get(EasyMock.getCurrentArguments()[0])).anyTimes();
+  }
+
+  private static final class JsonErrorResponse {
+    private final HttpServletResponse mock;
+    private final StringWriter body = new StringWriter();
+    private final Capture<Integer> status = EasyMock.newCapture();
+    private final Capture<String> contentType = EasyMock.newCapture();
+    private final Map<String, String> headers = new HashMap<>();
+
+    JsonErrorResponse() throws IOException {
+      mock = EasyMock.createNiceMock(HttpServletResponse.class);
+      mock.setStatus(EasyMock.captureInt(status));
+      EasyMock.expectLastCall().anyTimes();
+      mock.setContentType(EasyMock.capture(contentType));
+      EasyMock.expectLastCall().anyTimes();
+      mock.setHeader(EasyMock.anyString(), EasyMock.anyString());
+      EasyMock.expectLastCall().andAnswer(() -> {
+        headers.put((String) EasyMock.getCurrentArguments()[0], (String) EasyMock.getCurrentArguments()[1]);
+        return null;
+      }).anyTimes();
+      EasyMock.expect(mock.getWriter()).andReturn(new PrintWriter(body)).anyTimes();
+    }
+
+    int status() {
+      return status.getValue();
+    }
+
+    String body() {
+      return body.toString();
+    }
+
+    String contentType() {
+      return contentType.hasCaptured() ? contentType.getValue() : null;
+    }
+
+    String header(String name) {
+      return headers.get(name);
+    }
   }
 
 }

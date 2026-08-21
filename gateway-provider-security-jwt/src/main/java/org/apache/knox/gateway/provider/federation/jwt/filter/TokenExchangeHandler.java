@@ -92,35 +92,35 @@ class TokenExchangeHandler {
     // RFC 8693 section 2.1: subject_token and subject_token_type are REQUIRED.
     if (subjectTokenValue == null || subjectTokenValue.isEmpty()) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request: the subject_token parameter is required");
+          "invalid_request", "the subject_token parameter is required");
       return;
     }
     if (subjectTokenType == null || subjectTokenType.isEmpty()) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request: the subject_token_type parameter is required");
+          "invalid_request", "the subject_token_type parameter is required");
       return;
     }
     // RFC 8693 section 2.1: actor_token_type is REQUIRED when actor_token is present and MUST NOT
     // be present otherwise.
     if (hasActorToken && !hasActorTokenType) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request: actor_token_type is required when actor_token is present");
+          "invalid_request", "actor_token_type is required when actor_token is present");
       return;
     }
     if (!hasActorToken && hasActorTokenType) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request: actor_token_type must not be present without actor_token");
+          "invalid_request", "actor_token_type must not be present without actor_token");
       return;
     }
     // Only JWT-family token types are supported.
     if (isNotSupportedTokenType(subjectTokenType)) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "unsupported_token_type: unsupported subject_token_type " + subjectTokenType);
+          "unsupported_token_type", "unsupported subject_token_type " + subjectTokenType);
       return;
     }
     if (hasActorToken && isNotSupportedTokenType(actorTokenType)) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "unsupported_token_type: unsupported actor_token_type " + actorTokenType);
+          "unsupported_token_type", "unsupported actor_token_type " + actorTokenType);
       return;
     }
 
@@ -148,7 +148,7 @@ class TokenExchangeHandler {
       filter.continueWithEstablishedSecurityContext(subject, request, response, chain);
     } catch (ParseException | UnknownTokenException e) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
-          "Failed to parse token in token exchange: " + e.getMessage());
+          "invalid_grant", "Failed to parse token in token exchange: " + e.getMessage());
     }
   }
 
