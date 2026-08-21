@@ -39,10 +39,9 @@ import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.crypto.hash.DefaultHashService;
-import org.apache.shiro.crypto.hash.Hash;
-import org.apache.shiro.crypto.hash.HashRequest;
-import org.apache.shiro.crypto.hash.HashService;
+import org.apache.shiro.crypto.SecureRandomNumberGenerator;
+import org.apache.shiro.crypto.hash.SimpleHash;
+import org.apache.shiro.lang.util.ByteSource;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -82,6 +81,14 @@ import org.jvnet.libpam.UnixUser;
  */
 public class KnoxPamRealm extends AuthorizingRealm {
   private static final String HASHING_ALGORITHM = "SHA-256";
+  /*
+   * KNOX-3421: Shiro 2.x's DefaultHashService applies a large per-algorithm default
+   * iteration count (e.g. 50000 for SHA-256), whereas HashedCredentialsMatcher still
+   * defaults to a single iteration. To keep the credential round-trip consistent under
+   * the SHA-256 scheme, the stored hash is computed here with an explicit salt and this
+   * pinned iteration count, which matches the matcher configured in the constructor.
+   */
+  private static final int HASHING_ITERATIONS = 1;
   private static final String SUBJECT_USER_ROLES = "subject.userRoles";
   private static final String SUBJECT_USER_GROUPS = "subject.userGroups";
 
@@ -89,7 +96,6 @@ public class KnoxPamRealm extends AuthorizingRealm {
   private static final Auditor auditor = auditService.getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
       AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
 
-  private final HashService hashService = new DefaultHashService();
   private final KnoxShiroMessages shiroLog = MessagesFactory.get(KnoxShiroMessages.class);
   private final GatewayMessages gatewayLog = MessagesFactory.get(GatewayMessages.class);
 
@@ -97,6 +103,7 @@ public class KnoxPamRealm extends AuthorizingRealm {
 
   public KnoxPamRealm() {
     HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher(HASHING_ALGORITHM);
+    credentialsMatcher.setHashIterations(HASHING_ITERATIONS);
     setCredentialsMatcher(credentialsMatcher);
   }
 
@@ -147,18 +154,13 @@ public class KnoxPamRealm extends AuthorizingRealm {
       }
     }
 
-    HashRequest hashRequest = new HashRequest.Builder()
-                                  .setSource(token.getCredentials())
-                                  .setAlgorithmName(HASHING_ALGORITHM)
-                                  .build();
-    Hash credentialsHash = hashService.computeHash(hashRequest);
+    return createAuthenticationInfo(token, new UnixUserPrincipal(user));
+  }
 
-    /* Coverity Scan CID 1361684 */
-    if (credentialsHash == null) {
-      handleAuthFailure(token, "Failed to compute hash", null);
-    }
-    return new SimpleAuthenticationInfo(new UnixUserPrincipal(user), credentialsHash.toHex(),
-        credentialsHash.getSalt(), getName());
+  protected AuthenticationInfo createAuthenticationInfo(AuthenticationToken token, Object principal) {
+    final ByteSource credentialsSalt = new SecureRandomNumberGenerator().nextBytes();
+    final SimpleHash credentialsHash = new SimpleHash(HASHING_ALGORITHM, token.getCredentials(), credentialsSalt, HASHING_ITERATIONS);
+    return new SimpleAuthenticationInfo(principal, credentialsHash.toHex(), credentialsSalt, getName());
   }
 
   private void handleAuthFailure(AuthenticationToken token, String errorMessage, Exception e) {

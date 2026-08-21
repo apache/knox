@@ -25,6 +25,7 @@ from typing import Any
 
 import requests
 import urllib3
+from requests.auth import HTTPBasicAuth
 
 # Default timeout for HTTP calls to the gateway (self-signed TLS, CI).
 KNOX_REQUEST_TIMEOUT = 30
@@ -46,6 +47,11 @@ def knox_get(url: str, **kwargs: Any) -> requests.Response:
     opts: dict[str, Any] = {"verify": False, "timeout": KNOX_REQUEST_TIMEOUT}
     opts.update(kwargs)
     return requests.get(url, **opts)
+
+
+def basic_auth_get(url: str, username: str, password: str) -> requests.Response:
+    """GET url with HTTP Basic credentials (verify off, default timeout)."""
+    return knox_get(url, auth=HTTPBasicAuth(username, password))
 
 
 def knox_post(url: str, **kwargs: Any) -> requests.Response:
