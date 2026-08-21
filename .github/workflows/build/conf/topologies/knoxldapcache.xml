@@ -1,0 +1,105 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+  Mirror of knoxldap.xml, but with Shiro authentication caching turned on so
+  the KnoxCacheManager / EhcacheShiro path is exercised end to end. Repeated
+  authentications of the same principal are served from the EhcacheShiro cache
+  after the first bind. Used by test_knox_ldap_cache.py.
+-->
+<topology>
+	<gateway>
+		<provider>
+			<role>authentication</role>
+			<name>ShiroProvider</name>
+			<enabled>true</enabled>
+			<param>
+				<name>sessionTimeout</name>
+				<value>30</value>
+			</param>
+			<param>
+				<name>main.ldapRealm</name>
+				<value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.userDnTemplate</name>
+				<value>uid={0},ou=people,dc=proxy,dc=org</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory.url</name>
+				<value>ldaps://localhost:33390</value>  <!-- Local Knox LDAP service (LDAPS); configured to proxy to the demo LDAP as a backend -->
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory.authenticationMechanism</name>
+				<value>simple</value>
+			</param>
+			<!-- Wire the Knox Ehcache-backed Shiro cache manager and enable
+			     authentication caching so repeat logins hit the cache. -->
+			<param>
+				<name>main.cacheManager</name>
+				<value>org.apache.knox.gateway.shirorealm.KnoxCacheManager</value>
+			</param>
+			<param>
+				<name>main.securityManager.cacheManager</name>
+				<value>$cacheManager</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.authenticationCachingEnabled</name>
+				<value>true</value>
+			</param>
+			<param>
+				<name>urls./**</name>
+				<value>authcBasic</value>
+			</param>
+		</provider>
+		<provider>
+			<role>identity-assertion</role>
+			<name>HadoopGroupProvider</name>
+			<enabled>true</enabled>
+			<param>
+				<name>group.principal.mapping</name>
+				<value>admin=longGroupName1,longGroupName2,longGroupName3,longGroupName4</value>
+			</param>
+			<param>
+				<name>CENTRAL_GROUP_CONFIG_PREFIX</name>
+				<value>gateway.group.config.</value>
+			</param>
+		</provider>
+	</gateway>
+	<service>
+		<role>KNOXTOKEN</role>
+		<param>
+			<name>knoxsso.token.ttl</name>
+			<value>86400000</value>
+		</param>
+	</service>
+	<service>
+		<role>KNOX-AUTH-SERVICE</role>
+		<param>
+			<name>preauth.auth.header.actor.id.name</name>
+			<value>x-knox-actor-username</value>
+		</param>
+		<param>
+			<name>preauth.auth.header.actor.groups.prefix</name>
+			<value>x-knox-actor-groups</value>
+		</param>
+		<param>
+			<name>preauth.group.filter.pattern</name>
+			<value>[^\s]+</value>
+		</param>
+	</service>
+</topology>
