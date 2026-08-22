@@ -874,7 +874,6 @@ public class GatewayServer {
   private KnoxErrorHandler createErrorHandler() {
     KnoxErrorHandler errorHandler = new KnoxErrorHandler();
     errorHandler.setShowStacks( false );
-    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
     return errorHandler;
   }
 

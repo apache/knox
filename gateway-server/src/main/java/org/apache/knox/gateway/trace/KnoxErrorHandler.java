@@ -17,37 +17,8 @@
  */
 package org.apache.knox.gateway.trace;
 
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.util.Callback;
-
-import java.util.Set;
 
 public class KnoxErrorHandler extends ErrorHandler {
-
-  private Set<Integer> bodyFilter;
-
-  public void setTracedBodyFilter( String s ) {
-    bodyFilter = TraceUtil.parseIntegerSet( s );
-  }
-
-  @Override
-  public boolean handle(Request request, Response response, Callback callback) throws Exception {
-    TraceResponse newResponse = new TraceResponse(request, response, bodyFilter);
-    Callback wrappedCallback = new Callback() {
-      @Override
-      public void succeeded() {
-        newResponse.ensureTraced();
-        callback.succeeded();
-      }
-      @Override
-      public void failed(Throwable x) {
-        newResponse.ensureTraced();
-        callback.failed(x);
-      }
-    };
-    return super.handle(request, newResponse, wrappedCallback);
-  }
 
 }
