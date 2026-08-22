@@ -43,9 +43,23 @@ public class TraceHandler extends Handler.Wrapper {
 
   @Override
   public boolean handle(Request request, Response response, Callback callback) throws Exception {
-    Request newRequest = new TraceRequest(request);
-    Response newResponse = new TraceResponse(request, response, bodyFilter);
-    return super.handle(newRequest, newResponse, callback);
+    TraceRequest newRequest = new TraceRequest(request);
+    TraceResponse newResponse = new TraceResponse(request, response, bodyFilter);
+    // Wrap the callback so responses that produce no body (204, 3xx redirects) still
+    // get their status/headers logged — write() would never fire in those cases.
+    Callback wrappedCallback = new Callback() {
+      @Override
+      public void succeeded() {
+        newResponse.ensureTraced();
+        callback.succeeded();
+      }
+      @Override
+      public void failed(Throwable x) {
+        newResponse.ensureTraced();
+        callback.failed(x);
+      }
+    };
+    return super.handle(newRequest, newResponse, wrappedCallback);
   }
 
 }

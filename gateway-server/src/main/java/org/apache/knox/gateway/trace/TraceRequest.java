@@ -31,26 +31,27 @@ import java.util.Locale;
 class TraceRequest extends Request.Wrapper {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_REQUEST_LOGGER );
   private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_REQUEST_HEADER_LOGGER );
+  private static final Logger bodyLog = LogManager.getLogger( TraceHandler.HTTP_REQUEST_BODY_LOGGER );
 
-  private TraceInput delegate;
+  private final boolean tracing;
+  private final boolean tracingHeaders;
+  private final boolean tracingBody;
+  private final TraceInput delegate = new TraceInput();
 
   TraceRequest(Request request) {
     super(request);
-    if (log.isTraceEnabled()) {
-      delegate = new TraceInput();
+    this.tracing = log.isTraceEnabled();
+    this.tracingHeaders = headLog.isTraceEnabled();
+    this.tracingBody = bodyLog.isTraceEnabled();
+    if (tracing) {
       traceRequestDetails();
     }
   }
 
   @Override
-  public void demand(Runnable demandCallback) {
-    super.demand(demandCallback);
-  }
-
-  @Override
   public Content.Chunk read() {
     Content.Chunk chunk = super.read();
-    if (chunk != null && log.isTraceEnabled()) {
+    if (chunk != null && tracingBody) {
       if (Content.Chunk.isFailure(chunk)) {
         return chunk;
       }
@@ -77,7 +78,7 @@ class TraceRequest extends Request.Wrapper {
   }
 
   private void appendHeaders(StringBuilder sb) {
-    if (headLog.isTraceEnabled()) {
+    if (tracingHeaders) {
       HttpFields requestHeaders = getHeaders();
       if (requestHeaders != null) {
         for (HttpField header: requestHeaders) {

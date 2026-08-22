@@ -32,28 +32,41 @@ import java.util.Set;
 class TraceResponse extends Response.Wrapper {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
   private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
+  private static final Logger bodyLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
 
+  private final boolean tracing;
+  private final boolean tracingHeaders;
+  private final boolean tracingBody;
   private final TraceOutput output;
   private final Set<Integer> filter;
+  private boolean traced;
 
   TraceResponse(Request request, Response wrapped, Set<Integer> filter ) {
     super(request, wrapped);
+    this.tracing = log.isTraceEnabled();
+    this.tracingHeaders = headLog.isTraceEnabled();
+    this.tracingBody = bodyLog.isTraceEnabled();
     this.filter = filter;
     this.output = new TraceOutput();
-    if (log.isTraceEnabled()) {
-      traceResponseDetails();
-    }
   }
 
   @Override
   public void write(boolean last, ByteBuffer content, Callback callback) {
-    if( log.isTraceEnabled() ) {
-      if (filter == null || filter.isEmpty() || filter.contains(getStatus())) {
-        ByteBuffer view = (content != null) ? content.slice() : null;
-        output.extractContent(view, last);
-      }
+    if (tracing) {
+      ensureTraced();
+    }
+    if (tracingBody && (filter == null || filter.isEmpty() || filter.contains(getStatus()))) {
+      ByteBuffer view = (content != null) ? content.slice() : null;
+      output.extractContent(view, last);
     }
     super.write(last, content, callback);
+  }
+
+  void ensureTraced() {
+    if (tracing && !traced) {
+      traced = true;
+      traceResponseDetails();
+    }
   }
 
   private void traceResponseDetails() {
@@ -66,7 +79,7 @@ class TraceResponse extends Response.Wrapper {
   }
 
   private void appendHeaders( StringBuilder sb ) {
-    if( headLog.isTraceEnabled() ) {
+    if (tracingHeaders) {
       HttpFields responseHeaders = getHeaders();
       if (responseHeaders != null) {
         for (HttpField header: responseHeaders) {

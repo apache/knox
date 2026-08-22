@@ -26,17 +26,18 @@ import java.util.Locale;
 
 class TraceOutput {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
-  private static final Logger bodyLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
 
   private static final int BUFFER_LIMIT = 1024;
   private final StringBuilder buffer = new StringBuilder( BUFFER_LIMIT );
 
   public synchronized void extractContent(ByteBuffer view, boolean last) {
-    if (view != null && view.hasRemaining()) {
-      while (view.hasRemaining() && buffer.length() < BUFFER_LIMIT) {
-        String s = StandardCharsets.UTF_8.decode(view).toString();
-        buffer.append(s);
+    if (view != null && view.hasRemaining() && buffer.length() < BUFFER_LIMIT) {
+      int cap = BUFFER_LIMIT - buffer.length();
+      ByteBuffer limited = view.duplicate();
+      if (limited.remaining() > cap) {
+        limited.limit(limited.position() + cap);
       }
+      buffer.append(StandardCharsets.UTF_8.decode(limited));
     }
     if (buffer.length() >= BUFFER_LIMIT || last) {
       traceBody();
@@ -50,9 +51,7 @@ class TraceOutput {
       StringBuilder sb = new StringBuilder();
       TraceUtil.appendCorrelationContext(sb);
       sb.append(String.format(Locale.ROOT, "|ResponseBody[%d]%n\t%s", body.length(), body));
-      if( bodyLog.isTraceEnabled() ) {
-        log.trace(sb.toString());
-      }
+      log.trace(sb.toString());
     }
   }
 

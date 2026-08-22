@@ -34,8 +34,20 @@ public class KnoxErrorHandler extends ErrorHandler {
 
   @Override
   public boolean handle(Request request, Response response, Callback callback) throws Exception {
-    Response newResponse = new TraceResponse(request, response, bodyFilter);
-    return super.handle(request, newResponse, callback);
+    TraceResponse newResponse = new TraceResponse(request, response, bodyFilter);
+    Callback wrappedCallback = new Callback() {
+      @Override
+      public void succeeded() {
+        newResponse.ensureTraced();
+        callback.succeeded();
+      }
+      @Override
+      public void failed(Throwable x) {
+        newResponse.ensureTraced();
+        callback.failed(x);
+      }
+    };
+    return super.handle(request, newResponse, wrappedCallback);
   }
 
 }
