@@ -29,5 +29,8 @@
         <Logger name="audit" level="info">
             <AppenderRef ref="collectappender" />
         </Logger>
+        <Logger name="org.apache.knox.gateway.http" level="off" additivity="false">
+            <AppenderRef ref="collectappender" />
+        </Logger>
     </Loggers>
 </Configuration>
