@@ -63,9 +63,6 @@ import org.eclipse.jetty.websocket.api.StatusCode;
 public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemanding {
   protected static final WebsocketLogMessages LOG = MessagesFactory.get(WebsocketLogMessages.class);
 
-  private static final String TRUSTSTORE_USER_PROPERTY =
-  "org.apache.knox.gateway.websockets.truststore";
-
   /** URI for the backend */
   private final URI backend;
 
@@ -188,14 +185,14 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
     final Map<String, Object> userProperties = clientConfig.getUserProperties();
 
     sslContextFactory.setTrustStore(
-        (KeyStore) userProperties.get(GatewayWebsocketHandler.TRUSTSTORE_USER_PROPERTY));
+        (KeyStore) userProperties.get(KnoxWebSocketCreator.TRUSTSTORE_USER_PROPERTY));
 
     final KeyStore identityKeystore =
-        (KeyStore) userProperties.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY);
+        (KeyStore) userProperties.get(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY);
     if (identityKeystore != null) {
       sslContextFactory.setKeyStore(identityKeystore);
       final char[] passphrase =
-          (char[]) userProperties.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY);
+          (char[]) userProperties.get(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY);
       if (passphrase != null) {
         sslContextFactory.setKeyManagerPassword(new String(passphrase));
       }

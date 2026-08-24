@@ -26,6 +26,8 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.registry.ServiceDefEntry;
 import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
 import org.apache.knox.gateway.services.registry.ServiceRegistry;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
@@ -64,6 +66,12 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
     static final String REGEX_SPLIT_CONTEXT = "^((?:[^/]*/){2}[^/]*)";
 
     static final String REGEX_SPLIT_SERVICE_PATH = "^((?:[^/]*/){3}[^/]*)";
+
+    static final String TRUSTSTORE_USER_PROPERTY = "org.apache.knox.gateway.websockets.truststore";
+
+    static final String KEYSTORE_USER_PROPERTY = "org.apache.knox.gateway.websockets.keystore";
+
+    static final String KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY = "org.apache.knox.gateway.websockets.keystore.key.passphrase";
 
     static final String REGEX_WEBSHELL_REQUEST_PATH =
     "^(" + SECURE_WEBSOCKET_PROTOCOL_STRING+"|"+WEBSOCKET_PROTOCOL_STRING + ")[^/]+/[^/]+/webshell$";
@@ -111,8 +119,8 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
             LOG.debugLog("Generated backend URL for websocket connection: " + backendURL);
 
             final ClientEndpointConfig clientConfig = getClientEndpointConfig(req, backendURL);
-            clientConfig.getUserProperties().put("org.apache.knox.gateway.websockets.truststore", getTruststore());
-
+            clientConfig.getUserProperties().put(TRUSTSTORE_USER_PROPERTY, getTruststore());
+            configureClientIdentity(clientConfig.getUserProperties());
             return new ProxyWebSocketAdapter(URI.create(backendURL), pool, clientConfig, config);
 
         } catch (final Exception e) {
@@ -148,6 +156,39 @@ public class KnoxWebSocketCreator implements WebSocketCreator {
             trustKeystore = ks.getKeystoreForGateway();
         }
         return trustKeystore;
+    }
+
+    /**
+     * Mirrors DefaultHttpClientFactory#createSSLContext: when two-way SSL is
+     * enabled, select the client identity keystore (single-EKU aware) and add it,
+     * with its key passphrase, to the WebSocket client's user properties so the
+     * outbound TLS handshake can present a client certificate.
+     */
+    void configureClientIdentity(final Map<String, Object> userProperties)
+    throws KeystoreServiceException, AliasServiceException {
+        if (!config.isHttpClientTwoWaySslEnabled()) {
+            return;
+        }
+
+        final KeystoreService ks = this.services.getService(ServiceType.KEYSTORE_SERVICE);
+        final AliasService as = this.services.getService(ServiceType.ALIAS_SERVICE);
+
+        final KeyStore identityKeystore;
+        final char[] identityKeyPassphrase;
+        if (config.isSingleEkuEnabled()) {
+            identityKeystore = ks.getKeystoreForHttpClient();
+            identityKeyPassphrase = as.getHttpClientKeyPassphrase();
+        } else {
+            identityKeystore = ks.getKeystoreForGateway();
+            identityKeyPassphrase = as.getGatewayIdentityPassphrase();
+        }
+
+        if (identityKeystore != null) {
+            userProperties.put(KEYSTORE_USER_PROPERTY, identityKeystore);
+            userProperties.put(KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY, identityKeyPassphrase);
+        } else {
+            LOG.noClientIdentityForTwoWaySsl();
+        }
     }
 
     /**

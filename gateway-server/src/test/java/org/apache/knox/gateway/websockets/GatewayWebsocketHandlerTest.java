@@ -18,7 +18,6 @@
 
 package org.apache.knox.gateway.websockets;
 
-import static org.easymock.EasyMock.isA;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -51,13 +50,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URI;
 import java.security.KeyStore;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*", "org.w3c.*"})
@@ -206,12 +204,12 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
         EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertSame(identity, props.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertSame(passphrase, props.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertSame(identity, props.get(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertSame(passphrase, props.get(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     @Test
@@ -234,12 +232,12 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
         EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertSame(clientIdentity, props.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertSame(passphrase, props.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertSame(clientIdentity, props.get(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertSame(passphrase, props.get(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     @Test
@@ -249,12 +247,12 @@ public class GatewayWebsocketHandlerTest {
         GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
         EasyMock.replay(gatewayConfig, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     @Test
@@ -272,19 +270,14 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
         EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
-    private ServletUpgradeRequest createServletUpgradeRequest(String url) throws Exception {
-        HttpServletRequest mockRequest = new org.apache.knox.test.mock.MockHttpServletRequest() {
-            @Override
-            public StringBuffer getRequestURL() {
-                return new StringBuffer(url);
     private ServerUpgradeRequest createServerUpgradeRequest(String url) throws Exception {
         ServerUpgradeRequest mockRequest = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         URI httpUri = WSURI.toHttp(new URI(url));

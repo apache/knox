@@ -21,7 +21,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.websocket.ClientEndpointConfig;
+import jakarta.websocket.ClientEndpointConfig;
 import java.security.KeyStore;
 
 public class ProxyWebSocketAdapterTest {
@@ -37,11 +37,11 @@ public class ProxyWebSocketAdapterTest {
     KeyStore identity = emptyKeyStore();
     KeyStore truststore = emptyKeyStore();
     ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
-    clientConfig.getUserProperties().put(GatewayWebsocketHandler.TRUSTSTORE_USER_PROPERTY, truststore);
-    clientConfig.getUserProperties().put(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY, identity);
-    clientConfig.getUserProperties().put(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY, "secret".toCharArray());
+    clientConfig.getUserProperties().put(KnoxWebSocketCreator.TRUSTSTORE_USER_PROPERTY, truststore);
+    clientConfig.getUserProperties().put(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY, identity);
+    clientConfig.getUserProperties().put(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY, "secret".toCharArray());
 
-    SslContextFactory sslContextFactory = new SslContextFactory.Client();
+    SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
     ProxyWebSocketAdapter.configureSsl(sslContextFactory, clientConfig);
 
     Assert.assertSame(identity, sslContextFactory.getKeyStore());
@@ -52,9 +52,9 @@ public class ProxyWebSocketAdapterTest {
   public void testConfigureSslNoKeystoreWhenAbsent() throws Exception {
     KeyStore truststore = emptyKeyStore();
     ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
-    clientConfig.getUserProperties().put(GatewayWebsocketHandler.TRUSTSTORE_USER_PROPERTY, truststore);
+    clientConfig.getUserProperties().put(KnoxWebSocketCreator.TRUSTSTORE_USER_PROPERTY, truststore);
 
-    SslContextFactory sslContextFactory = new SslContextFactory.Client();
+    SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
     ProxyWebSocketAdapter.configureSsl(sslContextFactory, clientConfig);
 
     Assert.assertNull(sslContextFactory.getKeyStore());
@@ -66,10 +66,10 @@ public class ProxyWebSocketAdapterTest {
     KeyStore identity = emptyKeyStore();
     KeyStore truststore = emptyKeyStore();
     ClientEndpointConfig clientConfig = ClientEndpointConfig.Builder.create().build();
-    clientConfig.getUserProperties().put(GatewayWebsocketHandler.TRUSTSTORE_USER_PROPERTY, truststore);
-    clientConfig.getUserProperties().put(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY, identity);
+    clientConfig.getUserProperties().put(KnoxWebSocketCreator.TRUSTSTORE_USER_PROPERTY, truststore);
+    clientConfig.getUserProperties().put(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY, identity);
 
-    SslContextFactory sslContextFactory = new SslContextFactory.Client();
+    SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
     ProxyWebSocketAdapter.configureSsl(sslContextFactory, clientConfig);
 
     Assert.assertSame(identity, sslContextFactory.getKeyStore());

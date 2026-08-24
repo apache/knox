@@ -451,9 +451,9 @@ public class WebSSOResource {
      * In order to account for google chrome changing default value
      * of SameSite from None to Lax we need to craft Set-Cookie
      * header to prevent issues with hadoop-jwt cookie.
-     * NOTE: this would have been easier if javax.servlet.http.Cookie supported
+     * NOTE: this would have been easier if jakarta.servlet.http.Cookie supported
      * SameSite param. Change this back to Cookie impl. after
-     * SameSite header is supported by javax.servlet.http.Cookie.
+     * SameSite header is supported by jakarta.servlet.http.Cookie.
      */
     try {
       SetCookieHeader setCookieHeader = new SetCookieHeader(cookieName, token.toString());

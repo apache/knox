@@ -17,20 +17,8 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
-import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.registry.ServiceDefEntry;
-import org.apache.knox.gateway.services.registry.ServiceDefinitionRegistry;
-import org.apache.knox.gateway.services.registry.ServiceRegistry;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.KeystoreService;
-import org.apache.knox.gateway.services.security.KeystoreServiceException;
-import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
-
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
