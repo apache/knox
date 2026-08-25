@@ -1954,4 +1954,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public int getKnoxIDFFederatedOpReadTimeoutMs() {
     return getInt(KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS, KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT);
   }
+
+  @Override
+  public int getDelegationServiceTokenTtlSec() {
+    return getInt(DELEGATION_SERVICE_TOKEN_TTL_SEC, DELEGATION_SERVICE_TOKEN_TTL_SEC_DEFAULT);
+  }
 }

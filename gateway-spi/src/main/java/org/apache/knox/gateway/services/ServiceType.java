@@ -42,7 +42,8 @@ public enum ServiceType {
   LDAP_SERVICE("LDAPService"),
   LDAP_ROLES_LOOKUP_SERVICE("LDAPRoleLookupService"),
   KNOXIDF_FEDERATED_IDENTITY_SERVICE("KnoxIDFFederatedIdentityService"),
-  TRUSTED_OIDC_ISSUER_SERVICE("TrustedOidcIssuerService");
+  TRUSTED_OIDC_ISSUER_SERVICE("TrustedOidcIssuerService"),
+  DELEGATION_POLICY_SERVICE("DelegationPolicyService");
 
   private final String serviceTypeName;
   private final String shortName;
