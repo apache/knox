@@ -133,6 +133,7 @@ public class TokenServiceResourceTest {
 
   private ServletContext context;
   private HttpServletRequest request;
+  private String[] audienceParamValues;
   private JWTokenAuthority authority;
   private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
@@ -198,6 +199,11 @@ public class TokenServiceResourceTest {
       EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
     }
     EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
+    final Map<String, String[]> parameterMap = new HashMap<>();
+    if (audienceParamValues != null) {
+      parameterMap.put(TokenResource.AUDIENCE_QUERY_PARAM, audienceParamValues);
+    }
+    EasyMock.expect(request.getParameterMap()).andReturn(parameterMap).anyTimes();
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
@@ -428,6 +434,103 @@ public class TokenServiceResourceTest {
     assertEquals(2, audiences.size());
     assertTrue(audiences.contains("recipient1"));
     assertTrue(audiences.contains("recipient2"));
+  }
+
+  @Test
+  public void testDynamicAudienceNoParamUsesConfigured() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(2, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertTrue(audiences.contains("recipient2"));
+  }
+
+  @Test
+  public void testDynamicAudienceRejectedWhenNoWhitelistConfigured() throws Exception {
+    audienceParamValues = new String[] { "recipient1" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(400, retResponse.getStatus());
+  }
+
+  @Test
+  public void testDynamicAudienceAllowedWhenWhitelisted() throws Exception {
+    audienceParamValues = new String[] { "recipient1" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(1, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertFalse(audiences.contains("recipient2"));
+  }
+
+  @Test
+  public void testDynamicAudienceRejectedWhenNotWhitelisted() throws Exception {
+    audienceParamValues = new String[] { "recipient1", "intruder" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(400, retResponse.getStatus());
+  }
+
+  @Test
+  public void testDynamicAudienceMultipleValuesAndCommaSeparated() throws Exception {
+    audienceParamValues = new String[] { "recipient1", " recipient2 , recipient3" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2,recipient3");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(3, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertTrue(audiences.contains("recipient2"));
+    assertTrue(audiences.contains("recipient3"));
   }
 
   @Test

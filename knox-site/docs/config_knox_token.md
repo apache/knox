@@ -47,7 +47,7 @@ The Knox Token Service configuration can be configured in any descriptor/topolog
 Parameter                        | Description | Default    |
 -------------------------------- |------------ |----------- |
 knox.token.ttl                | This indicates the lifespan (milliseconds) of the token. Once it expires a new token must be acquired from KnoxToken service. The 36000000 in the topology above gives you 10 hrs. | 30000 (30 seconds) |
-knox.token.audiences          | This is a comma-separated list of audiences to add to the JWT token. This is used to ensure that a token received by a participating application knows that the token was intended for use with that application. It is optional. In the event that an endpoint has expected audiences and they are not present the token must be rejected. In the event where the token has audiences and the endpoint has none expected then the token is accepted.| empty |
+knox.token.audiences          | This is a comma-separated list of audiences to add to the JWT token. This is used to ensure that a token received by a participating application knows that the token was intended for use with that application. It is optional. In the event that an endpoint has expected audiences and they are not present the token must be rejected. In the event where the token has audiences and the endpoint has none expected then the token is accepted. This list additionally acts as the whitelist of audiences a caller is permitted to request per request via the `audience` query parameter (see below).| empty |
 knox.token.target.url         | This is an optional configuration parameter to indicate the intended endpoint for which the token may be used. The KnoxShell token credential collector can pull this URL from a knoxtokencache file to be used in scripts. This eliminates the need to prompt for or hardcode endpoints in your scripts. | n/a |
 knox.token.exp.server-managed | This is an optional configuration parameter to enable/disable server-managed token state, to support the associated token renewal and revocation APIs. | false |
 knox.token.renewer.whitelist  | This is an optional configuration parameter to authorize the comma-separated list of users to invoke the associated token renewal and revocation APIs. |  |
@@ -98,6 +98,21 @@ This feature is enabled by default. If you want to disable it, add the following
             <name>knox.token.include.groups.allowed</name> <!-- default = true -->
             <value>false</value>
         </param>
+
+#### Requesting a token audience dynamically
+
+By default the `aud` claim of an issued token is fixed to the value(s) configured in `knox.token.audiences`. A caller may instead request the audience(s) per request using the `audience` query parameter. Multiple audiences may be supplied either comma-separated in a single parameter or as repeated parameters; surrounding whitespace is trimmed.
+
+    curl -u admin:admin-password -k "https://localhost:8443/gateway/homepage/knoxtoken/api/v1/token?audience=service-a"
+
+To prevent audience (token) spoofing, requested audiences are validated against `knox.token.audiences`, which acts as a whitelist. The behavior is:
+
+*   the request does not contain an `audience` parameter -> the statically configured `knox.token.audiences` are used, exactly as before (unchanged default behavior)
+*   the request contains an `audience` parameter but `knox.token.audiences` is not configured -> the request is rejected with `400 Bad Request` (secure by default: there is no whitelist to validate against)
+*   the request contains an `audience` parameter and every requested audience is present in `knox.token.audiences` -> only the requested audience(s) are placed in the token's `aud` claim
+*   the request contains an `audience` parameter and any requested audience is not present in `knox.token.audiences` -> the request is rejected with `400 Bad Request`
+
+Only exact matches against the whitelist are honored.
 
 #### KnoxToken Renewal, Revocation and Enable/Disable actions
 
