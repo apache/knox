@@ -1,4 +1,23 @@
 ------------------------------------------------------------------------------
+Release Notes - Apache Knox - Version 2.1.1
+------------------------------------------------------------------------------
+
+** Improvement
+    * [KNOX-3188] - Add group-based configuration parameter for KnoxToken renewer/revoker access control
+
+** Bug
+    * [KNOX-3410] - Improve KnoxToken enable/disable methods
+    * [KNOX-3411] - Improve getUserToken method
+    * [KNOX-3413] - Improve passcode verification
+    * [KNOX-3416] - Improving redirect protections
+    * [KNOX-3417] - KnoxLdapRealm username RFC-4515 escaping
+    * [KNOX-3418] - Improving file access in Admin API
+
+** Task
+    * [KNOX-3258] - Fix OIDC client login
+
+
+------------------------------------------------------------------------------
 Release Notes - Apache Knox - Version 2.1.0
 ------------------------------------------------------------------------------
 
