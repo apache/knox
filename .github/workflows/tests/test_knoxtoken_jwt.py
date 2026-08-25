@@ -52,6 +52,19 @@ class TestKnoxTokenJwt(unittest.TestCase):
 
         self.guest_auth = HTTPBasicAuth("guest", "guest-password")
         self.admin_auth = HTTPBasicAuth("admin", "admin-password")
+        self._minted_tokens = []
+
+    def tearDown(self):
+        for access_token in self._minted_tokens:
+            self._revoke_quietly(access_token)
+
+    def _revoke_quietly(self, access_token):
+        """Revoke a token, ignoring failures (already revoked/expired/etc.)."""
+        knox_delete(
+            self.token_v2_url + "/revoke",
+            data=access_token,
+            auth=self.guest_auth,
+        )
 
     def _issue_token(self, auth):
         """Return the parsed JSON body of a freshly issued Knox token."""
@@ -64,6 +77,7 @@ class TestKnoxTokenJwt(unittest.TestCase):
         payload = response.json()
         self.assertIn("access_token", payload)
         self.assertIn("token_id", payload)
+        self._minted_tokens.append(payload["access_token"])
         return payload
 
     def _federate(self, access_token):
