@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
+import java.util.Set;
+
 /**
  * Immutable input to {@link DelegationPolicyService#evaluate(PolicyCheckRequest)}.
  */
@@ -25,16 +27,16 @@ public class PolicyCheckRequest {
   private final String actorId;
   private final String subjectName;
   private final String requestedResource;
-  private final String requestedScope;
+  private final Set<String> requestedScopes;
   private final boolean headlessExchange;
 
   public PolicyCheckRequest(String actorAuthority, String actorId, String subjectName,
-      String requestedResource, String requestedScope, boolean headlessExchange) {
+      String requestedResource, Set<String> requestedScopes, boolean headlessExchange) {
     this.actorAuthority = actorAuthority;
     this.actorId = actorId;
     this.subjectName = subjectName;
     this.requestedResource = requestedResource;
-    this.requestedScope = requestedScope;
+    this.requestedScopes = requestedScopes;
     this.headlessExchange = headlessExchange;
   }
 
@@ -54,8 +56,8 @@ public class PolicyCheckRequest {
     return requestedResource;
   }
 
-  public String getRequestedScope() {
-    return requestedScope;
+  public Set<String> getRequestedScopes() {
+    return requestedScopes;
   }
 
   public boolean isHeadlessExchange() {

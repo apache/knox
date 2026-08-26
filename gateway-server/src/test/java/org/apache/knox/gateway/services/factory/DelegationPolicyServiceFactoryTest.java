@@ -177,7 +177,7 @@ public class DelegationPolicyServiceFactoryTest {
 
     final DelegationPolicyService svc = (DelegationPolicyService) createdService;
     final PolicyDecision decision = svc.evaluate(
-        new PolicyCheckRequest("oidc", "actor@example.com", "alice", "/api", "read", false));
+        new PolicyCheckRequest("oidc", "actor@example.com", "alice", "/api", Collections.singleton("read"), false));
     assertEquals("service_not_configured", decision.getDenyReason());
   }
 

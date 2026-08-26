@@ -174,9 +174,10 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
       return deny("resource_not_allowed");
     }
 
-    // Step 5: scope check
+    // Step 5: scope check (requested scopes are optional; when non-empty, all must be in the allowed set)
     final Set<String> scopeSet = resourcePolicy.get(request.getRequestedResource());
-    if (!scopeSet.isEmpty() && !scopeSet.contains(request.getRequestedScope())) {
+    if (!request.getRequestedScopes().isEmpty() && !scopeSet.isEmpty()
+        && !scopeSet.containsAll(request.getRequestedScopes())) {
       return deny("scope_not_allowed");
     }
 
