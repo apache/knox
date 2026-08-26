@@ -50,35 +50,35 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   static final String CORE_TABLE = "DELEGATION_POLICIES";
 
   private static final String INSERT_REGISTRATION_SQL =
-      "INSERT INTO DELEGATION_POLICIES "
-          + "(registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
+      "INSERT INTO " + CORE_TABLE
+          + " (registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange) "
           + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
   private static final String UPDATE_CORE_SQL =
-      "UPDATE DELEGATION_POLICIES SET "
+      "UPDATE " + CORE_TABLE + " SET "
           + "actor_authority = ?, actor_id = ?, name = ?, status = ?, max_token_ttl_sec = ?, "
           + "description = ?, created_by = ?, created_at = ?, updated_at = ?, "
           + "allow_headless_exchange = ? "
           + "WHERE registration_id = ?";
 
   private static final String DELETE_REGISTRATION_SQL =
-      "DELETE FROM DELEGATION_POLICIES WHERE registration_id = ?";
+      "DELETE FROM " + CORE_TABLE + " WHERE registration_id = ?";
 
   private static final String SELECT_BY_ID_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
-          + "FROM DELEGATION_POLICIES WHERE registration_id = ?";
+          + "FROM " + CORE_TABLE + " WHERE registration_id = ?";
 
   private static final String SELECT_BY_ACTOR_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
-          + "FROM DELEGATION_POLICIES WHERE actor_authority = ? AND actor_id = ?";
+          + "FROM " + CORE_TABLE + " WHERE actor_authority = ? AND actor_id = ?";
 
   private static final String SELECT_ALL_BASE_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
-          + "FROM DELEGATION_POLICIES";
+          + "FROM " + CORE_TABLE;
 
   // Built at construction time with limit+1 baked in as an integer literal (Derby does not
   // support ? parameters in FETCH FIRST n ROWS ONLY). Fetching one extra row lets selectAll()
