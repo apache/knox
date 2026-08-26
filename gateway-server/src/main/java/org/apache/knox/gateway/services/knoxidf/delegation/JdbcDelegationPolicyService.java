@@ -164,33 +164,36 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
       return deny("headless_not_allowed");
     }
 
-    // Step 3: subject check
-    if (!policy.getCanActForUsers().contains(request.getSubjectName())) {
-      // Step 4: group check (not yet implemented)
-      if (!policy.getCanActForGroups().isEmpty()) {
-        throw new UnsupportedOperationException("canActFor.groups evaluation not yet implemented");
-      }
-      return deny("subject_not_allowed");
-    }
+    // Step 3: user check (remember result; group check deferred to the end)
+    final boolean userCheckPassed =
+        policy.getCanActForUsers().contains(request.getSubjectName());
 
-    // Step 5: resource check
+    // Step 4: resource check
     final Map<String, Set<String>> resourcePolicy = policy.getResourcePolicy();
     if (!resourcePolicy.containsKey(request.getRequestedResource())) {
       return deny("resource_not_allowed");
     }
 
-    // Step 6: scope check
+    // Step 5: scope check
     final Set<String> scopeSet = resourcePolicy.get(request.getRequestedResource());
     if (!scopeSet.isEmpty() && !scopeSet.contains(request.getRequestedScope())) {
       return deny("scope_not_allowed");
     }
 
-    // Step 7: effective TTL
+    // Step 6: effective TTL
     final int effectiveTtl;
     if (policy.getMaxTokenTtlSec() != null) {
       effectiveTtl = Math.min(policy.getMaxTokenTtlSec(), configuredKnoxTokenTtlSec);
     } else {
       effectiveTtl = configuredKnoxTokenTtlSec;
+    }
+
+    // Step 7: group check (LDAP lookup — slowest, deferred past cheap checks)
+    if (!userCheckPassed) {
+      if (!policy.getCanActForGroups().isEmpty()) {
+        throw new UnsupportedOperationException("canActFor.groups evaluation not yet implemented");
+      }
+      return deny("subject_not_allowed");
     }
 
     // Step 8: authorized
