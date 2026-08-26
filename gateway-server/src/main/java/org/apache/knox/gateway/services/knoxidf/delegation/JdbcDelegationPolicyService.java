@@ -194,10 +194,10 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     }
 
     // Step 8: authorized
-    return new PolicyDecision(true, null, effectiveTtl, request.getRequestedScope(), request.getRequestedResource());
+    return new PolicyDecision(null, effectiveTtl);
   }
 
   private static PolicyDecision deny(String reason) {
-    return new PolicyDecision(false, reason, 0, null, null);
+    return new PolicyDecision(reason, 0);
   }
 }

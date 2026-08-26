@@ -43,7 +43,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -179,7 +178,6 @@ public class DelegationPolicyServiceFactoryTest {
     final DelegationPolicyService svc = (DelegationPolicyService) createdService;
     final PolicyDecision decision = svc.evaluate(
         new PolicyCheckRequest("oidc", "actor@example.com", "alice", "/api", "read", false));
-    assertFalse(decision.isAuthorized());
     assertEquals("service_not_configured", decision.getDenyReason());
   }
 

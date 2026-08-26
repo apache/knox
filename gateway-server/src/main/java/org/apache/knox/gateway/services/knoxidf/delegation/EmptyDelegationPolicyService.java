@@ -77,6 +77,6 @@ public class EmptyDelegationPolicyService implements DelegationPolicyService {
 
   @Override
   public PolicyDecision evaluate(PolicyCheckRequest request) {
-    return new PolicyDecision(false, "service_not_configured", 0, null, null);
+    return new PolicyDecision("service_not_configured", 0);
   }
 }

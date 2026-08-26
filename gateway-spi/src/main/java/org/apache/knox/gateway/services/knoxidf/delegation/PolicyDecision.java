@@ -18,31 +18,19 @@ package org.apache.knox.gateway.services.knoxidf.delegation;
 
 /**
  * Immutable result of {@link DelegationPolicyService#evaluate(PolicyCheckRequest)}.
- * When {@link #isAuthorized()} is false, {@link #getDenyReason()} is non-null and
- * {@link #getEffectiveMaxTtlSec()} is 0.
+ * A null {@link #getDenyReason()} means authorized; non-null means denied.
  */
 public class PolicyDecision {
 
-  private final boolean authorized;
   private final String denyReason;
   private final int effectiveMaxTtlSec;
-  private final String effectiveScope;
-  private final String effectiveResource;
 
-  public PolicyDecision(boolean authorized, String denyReason, int effectiveMaxTtlSec,
-      String effectiveScope, String effectiveResource) {
-    this.authorized = authorized;
+  public PolicyDecision(String denyReason, int effectiveMaxTtlSec) {
     this.denyReason = denyReason;
     this.effectiveMaxTtlSec = effectiveMaxTtlSec;
-    this.effectiveScope = effectiveScope;
-    this.effectiveResource = effectiveResource;
   }
 
-  public boolean isAuthorized() {
-    return authorized;
-  }
-
-  /** Non-null when {@link #isAuthorized()} is false. */
+  /** Null when authorized. Maps to the {@code error_description} of an {@code invalid_grant} response when non-null. */
   public String getDenyReason() {
     return denyReason;
   }
@@ -50,15 +38,5 @@ public class PolicyDecision {
   /** 0 when denied. */
   public int getEffectiveMaxTtlSec() {
     return effectiveMaxTtlSec;
-  }
-
-  /** Null when denied. */
-  public String getEffectiveScope() {
-    return effectiveScope;
-  }
-
-  /** Null when denied. */
-  public String getEffectiveResource() {
-    return effectiveResource;
   }
 }

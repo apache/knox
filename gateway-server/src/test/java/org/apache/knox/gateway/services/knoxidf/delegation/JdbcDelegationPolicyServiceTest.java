@@ -427,10 +427,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "eval@example.com", "alice", "/api/v1", "read", false));
-    assertTrue(decision.isAuthorized());
     assertNull(decision.getDenyReason());
-    assertEquals("/api/v1", decision.getEffectiveResource());
-    assertEquals("read", decision.getEffectiveScope());
   }
 
   @Test
@@ -442,7 +439,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "eval2@example.com", "alice", "/api/v1", "any-scope", false));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
   }
 
   @Test
@@ -455,7 +452,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "eval3@example.com", "alice", "/api/v1", "read", false));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
   }
 
   @Test
@@ -466,7 +463,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "headless@example.com", "alice", "/api", "read", true));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
   }
 
   // ------------------------------------------------------------------
@@ -477,11 +474,8 @@ public class JdbcDelegationPolicyServiceTest {
   public void testEvaluateDenyActorNotRegistered() {
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "nobody@example.com", "alice", "/api", "read", false));
-    assertFalse(decision.isAuthorized());
     assertEquals("actor_not_registered", decision.getDenyReason());
     assertEquals(0, decision.getEffectiveMaxTtlSec());
-    assertNull(decision.getEffectiveResource());
-    assertNull(decision.getEffectiveScope());
   }
 
   @Test
@@ -492,7 +486,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "deny1@example.com", "bob", "/api", "read", false));
-    assertFalse(decision.isAuthorized());
+    assertNotNull(decision.getDenyReason());
     assertEquals("subject_not_allowed", decision.getDenyReason());
   }
 
@@ -504,7 +498,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "deny2@example.com", "alice", "/api", "read", false));
-    assertFalse(decision.isAuthorized());
+    assertNotNull(decision.getDenyReason());
     assertEquals("subject_not_allowed", decision.getDenyReason());
   }
 
@@ -516,7 +510,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "deny3@example.com", "alice", "/api/v2", "read", false));
-    assertFalse(decision.isAuthorized());
+    assertNotNull(decision.getDenyReason());
     assertEquals("resource_not_allowed", decision.getDenyReason());
   }
 
@@ -528,7 +522,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "deny4@example.com", "alice", "/api/v1", "write", false));
-    assertFalse(decision.isAuthorized());
+    assertNotNull(decision.getDenyReason());
     assertEquals("scope_not_allowed", decision.getDenyReason());
   }
 
@@ -544,7 +538,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "scopetest@example.com", "alice", "/api/v1", "read", false));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
   }
 
   @Test
@@ -555,7 +549,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "headless2@example.com", "alice", "/api", "read", true));
-    assertFalse(decision.isAuthorized());
+    assertNotNull(decision.getDenyReason());
     assertEquals("headless_not_allowed", decision.getDenyReason());
   }
 
@@ -582,7 +576,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "ttl1@example.com", "alice", "/api", "read", false));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
     // CONFIGURED_TTL=7200, policy TTL=3600 → min is 3600
     assertEquals(3600, decision.getEffectiveMaxTtlSec());
   }
@@ -595,7 +589,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "ttl2@example.com", "alice", "/api", "read", false));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
     // CONFIGURED_TTL=7200, policy TTL=10000 → min is 7200
     assertEquals(CONFIGURED_TTL, decision.getEffectiveMaxTtlSec());
   }
@@ -608,7 +602,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "ttl3@example.com", "alice", "/api", "read", false));
-    assertTrue(decision.isAuthorized());
+    assertNull(decision.getDenyReason());
     assertEquals(CONFIGURED_TTL, decision.getEffectiveMaxTtlSec());
   }
 
