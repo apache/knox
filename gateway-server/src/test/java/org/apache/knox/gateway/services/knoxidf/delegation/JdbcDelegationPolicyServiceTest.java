@@ -123,7 +123,7 @@ public class JdbcDelegationPolicyServiceTest {
     assertEquals("actor@example.com", fetched.getActorId());
     assertEquals("policy-name", fetched.getName());
     assertEquals("active", fetched.getStatus());
-    assertEquals(Integer.valueOf(3600), fetched.getMaxTokenTtlSec());
+    assertEquals(Integer.valueOf(3600), fetched.getTokenTtlSec());
     assertEquals("desc", fetched.getDescription());
     assertEquals("admin", fetched.getCreatedBy());
     assertEquals(2, fetched.getCanActForUsers().size());
@@ -145,7 +145,7 @@ public class JdbcDelegationPolicyServiceTest {
     final DelegationPolicy fetched = service.get(registered.getRegistrationId()).orElseThrow(AssertionError::new);
 
     assertNull(fetched.getName());
-    assertNull(fetched.getMaxTokenTtlSec());
+    assertNull(fetched.getTokenTtlSec());
     assertNull(fetched.getDescription());
     assertNull(fetched.getCreatedBy());
   }
@@ -179,7 +179,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final DelegationPolicy fetched = service.get(id).orElseThrow(AssertionError::new);
     assertEquals("updated", fetched.getName());
-    assertEquals(Integer.valueOf(3600), fetched.getMaxTokenTtlSec());
+    assertEquals(Integer.valueOf(3600), fetched.getTokenTtlSec());
     assertEquals("new-desc", fetched.getDescription());
     assertEquals(3, fetched.getCanActForUsers().size());
     assertEquals(1, fetched.getCanActForGroups().size());
@@ -475,7 +475,7 @@ public class JdbcDelegationPolicyServiceTest {
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "nobody@example.com", "alice", "/api", Collections.singleton("read"), false));
     assertEquals("actor_not_registered", decision.getDenyReason());
-    assertEquals(0, decision.getEffectiveMaxTtlSec());
+    assertEquals(0, decision.getEffectiveTtlSec());
   }
 
   @Test
@@ -625,8 +625,8 @@ public class JdbcDelegationPolicyServiceTest {
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "ttl1@example.com", "alice", "/api", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
-    // CONFIGURED_TTL=7200, policy TTL=3600 → min is 3600
-    assertEquals(3600, decision.getEffectiveMaxTtlSec());
+    // policy TTL=3600 is set → use policy value directly
+    assertEquals(3600, decision.getEffectiveTtlSec());
   }
 
   @Test
@@ -638,8 +638,8 @@ public class JdbcDelegationPolicyServiceTest {
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "ttl2@example.com", "alice", "/api", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
-    // CONFIGURED_TTL=7200, policy TTL=10000 → min is 7200
-    assertEquals(CONFIGURED_TTL, decision.getEffectiveMaxTtlSec());
+    // policy TTL=10000 is set → use policy value directly; configured default is irrelevant
+    assertEquals(10000, decision.getEffectiveTtlSec());
   }
 
   @Test
@@ -651,7 +651,7 @@ public class JdbcDelegationPolicyServiceTest {
     final PolicyDecision decision = service.evaluate(
         new PolicyCheckRequest("oidc", "ttl3@example.com", "alice", "/api", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
-    assertEquals(CONFIGURED_TTL, decision.getEffectiveMaxTtlSec());
+    assertEquals(CONFIGURED_TTL, decision.getEffectiveTtlSec());
   }
 
   // ------------------------------------------------------------------
@@ -694,10 +694,10 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   private static DelegationPolicy policy(String actorAuthority, String actorId,
-      String name, String status, Integer maxTtl, String description, String createdBy,
+      String name, String status, Integer tokenTtlSec, String description, String createdBy,
       Instant createdAt, Set<String> users, Set<String> groups, Map<String, Set<String>> rp) {
     return new DelegationPolicy(
-        null, actorAuthority, actorId, name, status, maxTtl, description, createdBy,
+        null, actorAuthority, actorId, name, status, tokenTtlSec, description, createdBy,
         createdAt, createdAt, false, users, groups, rp);
   }
 

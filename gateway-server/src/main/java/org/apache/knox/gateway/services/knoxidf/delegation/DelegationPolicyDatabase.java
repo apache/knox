@@ -51,13 +51,13 @@ class DelegationPolicyDatabase extends KnoxDatabase {
 
   private static final String INSERT_REGISTRATION_SQL =
       "INSERT INTO " + CORE_TABLE
-          + " (registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
+          + " (registration_id, actor_authority, actor_id, name, status, token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange) "
           + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
   private static final String UPDATE_CORE_SQL =
       "UPDATE " + CORE_TABLE + " SET "
-          + "actor_authority = ?, actor_id = ?, name = ?, status = ?, max_token_ttl_sec = ?, "
+          + "actor_authority = ?, actor_id = ?, name = ?, status = ?, token_ttl_sec = ?, "
           + "description = ?, created_by = ?, created_at = ?, updated_at = ?, "
           + "allow_headless_exchange = ? "
           + "WHERE registration_id = ?";
@@ -66,17 +66,17 @@ class DelegationPolicyDatabase extends KnoxDatabase {
       "DELETE FROM " + CORE_TABLE + " WHERE registration_id = ?";
 
   private static final String SELECT_BY_ID_SQL =
-      "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
+      "SELECT registration_id, actor_authority, actor_id, name, status, token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
           + "FROM " + CORE_TABLE + " WHERE registration_id = ?";
 
   private static final String SELECT_BY_ACTOR_SQL =
-      "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
+      "SELECT registration_id, actor_authority, actor_id, name, status, token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
           + "FROM " + CORE_TABLE + " WHERE actor_authority = ? AND actor_id = ?";
 
   private static final String SELECT_ALL_BASE_SQL =
-      "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
+      "SELECT registration_id, actor_authority, actor_id, name, status, token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
           + "FROM " + CORE_TABLE;
 
@@ -259,8 +259,8 @@ class DelegationPolicyDatabase extends KnoxDatabase {
       ps.setString(3, policy.getActorId());
       ps.setString(4, policy.getName());
       ps.setString(5, policy.getStatus());
-      if (policy.getMaxTokenTtlSec() != null) {
-        ps.setInt(6, policy.getMaxTokenTtlSec());
+      if (policy.getTokenTtlSec() != null) {
+        ps.setInt(6, policy.getTokenTtlSec());
       } else {
         ps.setNull(6, java.sql.Types.INTEGER);
       }
@@ -324,8 +324,8 @@ class DelegationPolicyDatabase extends KnoxDatabase {
       ps.setString(2, policy.getActorId());
       ps.setString(3, policy.getName());
       ps.setString(4, policy.getStatus());
-      if (policy.getMaxTokenTtlSec() != null) {
-        ps.setInt(5, policy.getMaxTokenTtlSec());
+      if (policy.getTokenTtlSec() != null) {
+        ps.setInt(5, policy.getTokenTtlSec());
       } else {
         ps.setNull(5, java.sql.Types.INTEGER);
       }
@@ -366,8 +366,8 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     final String actorId = rs.getString("actor_id");
     final String name = rs.getString("name");
     final String status = rs.getString("status");
-    final int maxTtl = rs.getInt("max_token_ttl_sec");
-    final Integer maxTokenTtlSec = rs.wasNull() ? null : maxTtl;
+    final int tokenTtlRaw = rs.getInt("token_ttl_sec");
+    final Integer tokenTtlSec = rs.wasNull() ? null : tokenTtlRaw;
     final String description = rs.getString("description");
     final String createdBy = rs.getString("created_by");
     final Timestamp createdAt = rs.getTimestamp("created_at");
@@ -379,7 +379,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     final Map<String, Set<String>> resourcePolicy = selectResourcePolicy(connection, registrationId);
 
     return new DelegationPolicy(
-        registrationId, actorAuthority, actorId, name, status, maxTokenTtlSec,
+        registrationId, actorAuthority, actorId, name, status, tokenTtlSec,
         description, createdBy, createdAt.toInstant(), updatedAt.toInstant(),
         allowHeadlessExchange, users, groups, resourcePolicy);
   }

@@ -33,7 +33,7 @@ public class DelegationPolicy {
   private final String actorId;
   private final String name;
   private final String status;
-  private final Integer maxTokenTtlSec;
+  private final Integer tokenTtlSec;
   private final String description;
   private final String createdBy;
   private final Instant createdAt;
@@ -44,7 +44,7 @@ public class DelegationPolicy {
   private final Map<String, Set<String>> resourcePolicy;
 
   public DelegationPolicy(String registrationId, String actorAuthority, String actorId,
-      String name, String status, Integer maxTokenTtlSec, String description, String createdBy,
+      String name, String status, Integer tokenTtlSec, String description, String createdBy,
       Instant createdAt, Instant updatedAt, boolean allowHeadlessExchange,
       Set<String> canActForUsers, Set<String> canActForGroups,
       Map<String, Set<String>> resourcePolicy) {
@@ -53,7 +53,7 @@ public class DelegationPolicy {
     this.actorId = actorId;
     this.name = name;
     this.status = status;
-    this.maxTokenTtlSec = maxTokenTtlSec;
+    this.tokenTtlSec = tokenTtlSec;
     this.description = description;
     this.createdBy = createdBy;
     this.createdAt = createdAt;
@@ -88,8 +88,8 @@ public class DelegationPolicy {
     return status;
   }
 
-  public Integer getMaxTokenTtlSec() {
-    return maxTokenTtlSec;
+  public Integer getTokenTtlSec() {
+    return tokenTtlSec;
   }
 
   public String getDescription() {

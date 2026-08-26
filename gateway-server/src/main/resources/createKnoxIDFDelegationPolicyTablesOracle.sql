@@ -19,7 +19,7 @@ CREATE TABLE DELEGATION_POLICIES (
     actor_id                VARCHAR2(2048)  NOT NULL,
     name                    VARCHAR2(256),
     status                  VARCHAR2(20)    DEFAULT 'active' NOT NULL,
-    max_token_ttl_sec       INTEGER,
+    token_ttl_sec           INTEGER,
     description             VARCHAR2(1024),
     created_by              VARCHAR2(2048),
     created_at              TIMESTAMP(6)    NOT NULL,

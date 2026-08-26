@@ -23,11 +23,11 @@ package org.apache.knox.gateway.services.knoxidf.delegation;
 public class PolicyDecision {
 
   private final String denyReason;
-  private final int effectiveMaxTtlSec;
+  private final int effectiveTtlSec;
 
-  public PolicyDecision(String denyReason, int effectiveMaxTtlSec) {
+  public PolicyDecision(String denyReason, int effectiveTtlSec) {
     this.denyReason = denyReason;
-    this.effectiveMaxTtlSec = effectiveMaxTtlSec;
+    this.effectiveTtlSec = effectiveTtlSec;
   }
 
   /** Null when authorized. Maps to the {@code error_description} of an {@code invalid_grant} response when non-null. */
@@ -35,8 +35,8 @@ public class PolicyDecision {
     return denyReason;
   }
 
-  /** 0 when denied. */
-  public int getEffectiveMaxTtlSec() {
-    return effectiveMaxTtlSec;
+  /** TTL in seconds for the minted token after exchange. 0 when denied. */
+  public int getEffectiveTtlSec() {
+    return effectiveTtlSec;
   }
 }

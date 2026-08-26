@@ -122,12 +122,12 @@ public class DelegationPolicySchemaTest {
           + "(registration_id, actor_authority, actor_id, created_at, updated_at) "
           + "VALUES ('" + id + "', 'oidc', 'actor@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
       try (ResultSet rs = stmt.executeQuery(
-          "SELECT status, allow_headless_exchange, max_token_ttl_sec FROM DELEGATION_POLICIES WHERE registration_id = '" + id + "'")) {
+          "SELECT status, allow_headless_exchange, token_ttl_sec FROM DELEGATION_POLICIES WHERE registration_id = '" + id + "'")) {
         assertTrue(rs.next());
         assertEquals("active", rs.getString("status"));
         assertEquals(false, rs.getBoolean("allow_headless_exchange"));
-        rs.getInt("max_token_ttl_sec");
-        assertTrue("max_token_ttl_sec must default to null", rs.wasNull());
+        rs.getInt("token_ttl_sec");
+        assertTrue("token_ttl_sec must default to null", rs.wasNull());
       }
     }
   }

@@ -116,14 +116,14 @@ public class DelegationPolicyTest {
         "reg-id", "oidc", "actor@example.com",
         null,   // name
         "active",
-        null,   // maxTokenTtlSec
+        null,   // tokenTtlSec
         null,   // description
         null,   // createdBy
         Instant.now(), Instant.now(), false,
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 
     assertNull(policy.getName());
-    assertNull(policy.getMaxTokenTtlSec());
+    assertNull(policy.getTokenTtlSec());
     assertNull(policy.getDescription());
     assertNull(policy.getCreatedBy());
   }

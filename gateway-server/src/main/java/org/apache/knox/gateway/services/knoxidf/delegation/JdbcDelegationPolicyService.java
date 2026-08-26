@@ -181,13 +181,10 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
       return deny("scope_not_allowed");
     }
 
-    // Step 6: effective TTL
-    final int effectiveTtl;
-    if (policy.getMaxTokenTtlSec() != null) {
-      effectiveTtl = Math.min(policy.getMaxTokenTtlSec(), configuredKnoxTokenTtlSec);
-    } else {
-      effectiveTtl = configuredKnoxTokenTtlSec;
-    }
+    // Step 6: effective TTL — use the policy value if set, otherwise fall back to the configured default
+    final int effectiveTtlSec = policy.getTokenTtlSec() != null
+        ? policy.getTokenTtlSec()
+        : configuredKnoxTokenTtlSec;
 
     // Step 7: group check (LDAP lookup — slowest, deferred past cheap checks)
     if (!userCheckPassed) {
@@ -198,7 +195,7 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     }
 
     // Step 8: authorized
-    return new PolicyDecision(null, effectiveTtl);
+    return new PolicyDecision(null, effectiveTtlSec);
   }
 
   private static PolicyDecision deny(String reason) {
