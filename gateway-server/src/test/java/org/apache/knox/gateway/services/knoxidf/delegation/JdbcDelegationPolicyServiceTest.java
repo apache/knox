@@ -156,7 +156,7 @@ public class JdbcDelegationPolicyServiceTest {
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
     service.register(first);
-    assertThrows(ServiceLifecycleException.class, () -> service.register(first));
+    assertThrows(RuntimeException.class, () -> service.register(first));
   }
 
   @Test

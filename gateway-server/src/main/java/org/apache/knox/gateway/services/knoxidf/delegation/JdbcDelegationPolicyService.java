@@ -22,8 +22,6 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -33,8 +31,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * JDBC-backed implementation of {@link DelegationPolicyService}.
- * All mutating operations use explicit transactions: {@code setAutoCommit(false)} with
- * commit/rollback so child-table writes and core-row writes are atomic.
+ * Transaction management is handled by {@link DelegationPolicyDatabase}; this class
+ * is responsible for service lifecycle, exception translation, and evaluate() logic.
  */
 public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
@@ -90,73 +88,42 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
-  public DelegationPolicy register(DelegationPolicy policy) throws ServiceLifecycleException {
-    try (Connection connection = database.getConnection()) {
-      connection.setAutoCommit(false);
-      try {
-        final String id = database.insertRegistration(connection, policy);
-        database.insertChildRows(connection, id, policy);
-        connection.commit();
-        connection.setAutoCommit(true);
-        return database.selectById(connection, id).orElseThrow(
-            () -> new ServiceLifecycleException("Failed to read back registered policy " + id));
-      } catch (SQLException e) {
-        rollbackQuietly(connection);
-        LOG.errorRegisteringPolicy(policy.getActorAuthority(), policy.getActorId(), e.getMessage(), e);
-        throw new ServiceLifecycleException(
-            "Error registering delegation policy for actor (" + policy.getActorAuthority() + ", " + policy.getActorId() + "): " + e, e);
-      }
-    } catch (ServiceLifecycleException e) {
-      throw e;
+  public DelegationPolicy register(DelegationPolicy policy) {
+    try {
+      final String id = database.insertPolicy(policy);
+      return database.selectById(id).orElseThrow(
+          () -> new RuntimeException("Failed to read back registered policy " + id));
     } catch (Exception e) {
-      throw new ServiceLifecycleException("Error registering delegation policy: " + e, e);
+      LOG.errorRegisteringPolicy(policy.getActorAuthority(), policy.getActorId(), e.getMessage(), e);
+      throw new RuntimeException(
+          "Error registering delegation policy for actor (" + policy.getActorAuthority() + ", " + policy.getActorId() + "): " + e, e);
     }
   }
 
   @Override
-  public void update(String registrationId, DelegationPolicy policy) throws ServiceLifecycleException {
-    try (Connection connection = database.getConnection()) {
-      connection.setAutoCommit(false);
-      try {
-        database.updateCoreRow(connection, registrationId, policy);
-        database.replaceChildRows(connection, registrationId, policy);
-        connection.commit();
-      } catch (SQLException e) {
-        rollbackQuietly(connection);
-        LOG.errorUpdatingPolicy(registrationId, e.getMessage(), e);
-        throw new ServiceLifecycleException("Error updating delegation policy " + registrationId + ": " + e, e);
-      }
-    } catch (ServiceLifecycleException e) {
-      throw e;
+  public void update(String registrationId, DelegationPolicy policy) {
+    try {
+      database.updatePolicy(registrationId, policy);
     } catch (Exception e) {
-      throw new ServiceLifecycleException("Error updating delegation policy " + registrationId + ": " + e, e);
+      LOG.errorUpdatingPolicy(registrationId, e.getMessage(), e);
+      throw new RuntimeException("Error updating delegation policy " + registrationId + ": " + e, e);
     }
   }
 
   @Override
   public void delete(String registrationId) {
-    try (Connection connection = database.getConnection()) {
-      connection.setAutoCommit(false);
-      try {
-        database.deleteChildRows(connection, registrationId);
-        database.deleteRegistration(connection, registrationId);
-        connection.commit();
-      } catch (SQLException e) {
-        rollbackQuietly(connection);
-        LOG.errorDeletingPolicy(registrationId, e.getMessage(), e);
-        throw new RuntimeException("Error deleting delegation policy " + registrationId + ": " + e, e);
-      }
-    } catch (RuntimeException e) {
-      throw e;
+    try {
+      database.deletePolicy(registrationId);
     } catch (Exception e) {
+      LOG.errorDeletingPolicy(registrationId, e.getMessage(), e);
       throw new RuntimeException("Error deleting delegation policy " + registrationId + ": " + e, e);
     }
   }
 
   @Override
   public Optional<DelegationPolicy> get(String registrationId) {
-    try (Connection connection = database.getConnection()) {
-      return database.selectById(connection, registrationId);
+    try {
+      return database.selectById(registrationId);
     } catch (Exception e) {
       LOG.errorReadingPolicy(registrationId, e.getMessage(), e);
       throw new RuntimeException("Error reading delegation policy " + registrationId + ": " + e, e);
@@ -165,8 +132,8 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
   @Override
   public Optional<DelegationPolicy> findByActor(String actorAuthority, String actorId) {
-    try (Connection connection = database.getConnection()) {
-      return database.selectByActor(connection, actorAuthority, actorId);
+    try {
+      return database.selectByActor(actorAuthority, actorId);
     } catch (Exception e) {
       LOG.errorListingPolicies(e.getMessage(), e);
       throw new RuntimeException("Error looking up delegation policy for actor (" + actorAuthority + ", " + actorId + "): " + e, e);
@@ -175,8 +142,8 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
   @Override
   public DelegationPolicyList list(String actorAuthorityFilter) {
-    try (Connection connection = database.getConnection()) {
-      return database.selectAll(connection, actorAuthorityFilter);
+    try {
+      return database.selectAll(actorAuthorityFilter);
     } catch (Exception e) {
       LOG.errorListingPolicies(e.getMessage(), e);
       throw new RuntimeException("Error listing delegation policies: " + e, e);
@@ -232,12 +199,5 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
   private static PolicyDecision deny(String reason) {
     return new PolicyDecision(false, reason, 0, null, null);
-  }
-
-  private static void rollbackQuietly(Connection connection) {
-    try {
-      connection.rollback();
-    } catch (SQLException ignored) {
-    }
   }
 }

@@ -30,19 +30,19 @@ CREATE TABLE DELEGATION_POLICIES (
 );
 
 CREATE TABLE DELEGATION_POLICY_USERS (
-    registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id),
+    registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id) ON DELETE CASCADE,
     username        VARCHAR2(1023) NOT NULL,
     PRIMARY KEY (registration_id, username)
 );
 
 CREATE TABLE DELEGATION_POLICY_GROUPS (
-    registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id),
+    registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id) ON DELETE CASCADE,
     group_name      VARCHAR2(1023) NOT NULL,
     PRIMARY KEY (registration_id, group_name)
 );
 
 CREATE TABLE DELEGATION_POLICY_RESOURCES (
-    registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id),
+    registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id) ON DELETE CASCADE,
     resource_uri    VARCHAR2(1023) NOT NULL,
     PRIMARY KEY (registration_id, resource_uri)
 );
@@ -53,5 +53,5 @@ CREATE TABLE DELEGATION_POLICY_RESOURCE_SCOPES (
     scope           VARCHAR2(255)  NOT NULL,
     PRIMARY KEY (registration_id, resource_uri, scope),
     FOREIGN KEY (registration_id, resource_uri)
-        REFERENCES DELEGATION_POLICY_RESOURCES(registration_id, resource_uri)
+        REFERENCES DELEGATION_POLICY_RESOURCES(registration_id, resource_uri) ON DELETE CASCADE
 )

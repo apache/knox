@@ -42,8 +42,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * JDBC helper for the five DELEGATION_POLICIES tables.
  * All SQL uses {@link PreparedStatement} with {@code ?} parameters only.
- * Methods accept explicit {@link Connection} objects so that the service can manage
- * transaction boundaries (setAutoCommit / commit / rollback) across multiple calls.
+ * Each public method manages its own {@link Connection} and, for multi-table writes,
+ * its own transaction boundaries (setAutoCommit / commit / rollback).
  */
 class DelegationPolicyDatabase extends KnoxDatabase {
 
@@ -121,9 +121,6 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   private static final String DELETE_RESOURCES_SQL =
       "DELETE FROM DELEGATION_POLICY_RESOURCES WHERE registration_id = ?";
 
-  private static final String DELETE_SCOPES_SQL =
-      "DELETE FROM DELEGATION_POLICY_RESOURCE_SCOPES WHERE registration_id = ?";
-
   DelegationPolicyDatabase(DataSource dataSource, String dbType, int listMaxTotal, int listMaxPerAuthority) throws Exception {
     super(dataSource);
     this.listMaxTotal = listMaxTotal;
@@ -132,10 +129,6 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     this.selectAllFilteredSql = SELECT_ALL_BASE_SQL + " WHERE actor_authority = ? FETCH FIRST " + (listMaxPerAuthority + 1) + " ROWS ONLY";
     final DatabaseType databaseType = DatabaseType.fromString(dbType);
     createDelegationTablesIfNotExists(databaseType.delegationPolicyTablesSql());
-  }
-
-  Connection getConnection() throws SQLException {
-    return dataSource.getConnection();
   }
 
   /**
@@ -168,7 +161,97 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     }
   }
 
-  String insertRegistration(Connection connection, DelegationPolicy policy) throws SQLException {
+  String insertPolicy(DelegationPolicy policy) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      final boolean prevAutoCommit = connection.getAutoCommit();
+      connection.setAutoCommit(false);
+      try {
+        final String id = insertRegistrationRow(connection, policy);
+        insertChildRows(connection, id, policy);
+        connection.commit();
+        return id;
+      } catch (SQLException e) {
+        connection.rollback();
+        throw e;
+      } finally {
+        connection.setAutoCommit(prevAutoCommit);
+      }
+    }
+  }
+
+  Optional<DelegationPolicy> selectById(String registrationId) throws SQLException {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement ps = connection.prepareStatement(SELECT_BY_ID_SQL)) {
+      ps.setString(1, registrationId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return Optional.of(assemblePolicyFromRow(connection, rs));
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  Optional<DelegationPolicy> selectByActor(String actorAuthority, String actorId) throws SQLException {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement ps = connection.prepareStatement(SELECT_BY_ACTOR_SQL)) {
+      ps.setString(1, actorAuthority);
+      ps.setString(2, actorId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return Optional.of(assemblePolicyFromRow(connection, rs));
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  DelegationPolicyList selectAll(String actorAuthorityFilter) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      final int limit = (actorAuthorityFilter != null) ? listMaxPerAuthority : listMaxTotal;
+      final List<DelegationPolicy> rows = new ArrayList<>();
+      final String sql = (actorAuthorityFilter != null) ? selectAllFilteredSql : selectAllSql;
+      try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        if (actorAuthorityFilter != null) {
+          ps.setString(1, actorAuthorityFilter);
+        }
+        try (ResultSet rs = ps.executeQuery()) {
+          while (rs.next()) {
+            rows.add(assemblePolicyFromRow(connection, rs));
+          }
+        }
+      }
+      final boolean hasMore = rows.size() > limit;
+      return new DelegationPolicyList(hasMore ? rows.subList(0, limit) : rows, hasMore);
+    }
+  }
+
+  void updatePolicy(String registrationId, DelegationPolicy policy) throws SQLException {
+    try (Connection connection = dataSource.getConnection()) {
+      final boolean prevAutoCommit = connection.getAutoCommit();
+      connection.setAutoCommit(false);
+      try {
+        updateCoreRow(connection, registrationId, policy);
+        replaceChildRows(connection, registrationId, policy);
+        connection.commit();
+      } catch (SQLException e) {
+        connection.rollback();
+        throw e;
+      } finally {
+        connection.setAutoCommit(prevAutoCommit);
+      }
+    }
+  }
+
+  void deletePolicy(String registrationId) throws SQLException {
+    try (Connection connection = dataSource.getConnection();
+         PreparedStatement ps = connection.prepareStatement(DELETE_REGISTRATION_SQL)) {
+      ps.setString(1, registrationId);
+      ps.executeUpdate();
+    }
+  }
+
+  private String insertRegistrationRow(Connection connection, DelegationPolicy policy) throws SQLException {
     final String id = UUID.randomUUID().toString();
     try (PreparedStatement ps = connection.prepareStatement(INSERT_REGISTRATION_SQL)) {
       ps.setString(1, id);
@@ -191,7 +274,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     return id;
   }
 
-  void insertChildRows(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {
+  private void insertChildRows(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {
     try (PreparedStatement ps = connection.prepareStatement(INSERT_USER_SQL)) {
       for (String username : policy.getCanActForUsers()) {
         ps.setString(1, registrationId);
@@ -235,50 +318,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     }
   }
 
-  Optional<DelegationPolicy> selectById(Connection connection, String registrationId) throws SQLException {
-    try (PreparedStatement ps = connection.prepareStatement(SELECT_BY_ID_SQL)) {
-      ps.setString(1, registrationId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return Optional.of(assemblePolicyFromRow(connection, rs));
-        }
-      }
-    }
-    return Optional.empty();
-  }
-
-  Optional<DelegationPolicy> selectByActor(Connection connection, String actorAuthority, String actorId) throws SQLException {
-    try (PreparedStatement ps = connection.prepareStatement(SELECT_BY_ACTOR_SQL)) {
-      ps.setString(1, actorAuthority);
-      ps.setString(2, actorId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return Optional.of(assemblePolicyFromRow(connection, rs));
-        }
-      }
-    }
-    return Optional.empty();
-  }
-
-  DelegationPolicyList selectAll(Connection connection, String actorAuthorityFilter) throws SQLException {
-    final int limit = (actorAuthorityFilter != null) ? listMaxPerAuthority : listMaxTotal;
-    final List<DelegationPolicy> rows = new ArrayList<>();
-    final String sql = (actorAuthorityFilter != null) ? selectAllFilteredSql : selectAllSql;
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-      if (actorAuthorityFilter != null) {
-        ps.setString(1, actorAuthorityFilter);
-      }
-      try (ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) {
-          rows.add(assemblePolicyFromRow(connection, rs));
-        }
-      }
-    }
-    final boolean hasMore = rows.size() > limit;
-    return new DelegationPolicyList(hasMore ? rows.subList(0, limit) : rows, hasMore);
-  }
-
-  void updateCoreRow(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {
+  private void updateCoreRow(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {
     try (PreparedStatement ps = connection.prepareStatement(UPDATE_CORE_SQL)) {
       ps.setString(1, policy.getActorAuthority());
       ps.setString(2, policy.getActorId());
@@ -299,8 +339,8 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     }
   }
 
-  void deleteChildRows(Connection connection, String registrationId) throws SQLException {
-    for (String sql : new String[]{DELETE_SCOPES_SQL, DELETE_RESOURCES_SQL, DELETE_GROUPS_SQL, DELETE_USERS_SQL}) {
+  private void deleteChildRows(Connection connection, String registrationId) throws SQLException {
+    for (String sql : new String[]{DELETE_RESOURCES_SQL, DELETE_GROUPS_SQL, DELETE_USERS_SQL}) {
       try (PreparedStatement ps = connection.prepareStatement(sql)) {
         ps.setString(1, registrationId);
         ps.executeUpdate();
@@ -308,12 +348,12 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     }
   }
 
-  void replaceChildRows(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {
+  private void replaceChildRows(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {
     deleteChildRows(connection, registrationId);
     insertChildRows(connection, registrationId, policy);
   }
 
-  void deleteRegistration(Connection connection, String registrationId) throws SQLException {
+  private void deleteRegistrationRow(Connection connection, String registrationId) throws SQLException {
     try (PreparedStatement ps = connection.prepareStatement(DELETE_REGISTRATION_SQL)) {
       ps.setString(1, registrationId);
       ps.executeUpdate();
