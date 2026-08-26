@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
+import org.apache.directory.api.ldap.model.message.BindRequest;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -50,6 +51,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,6 +73,7 @@ public class LdapProxyBackendTest {
     private static LdapServer ldapServer;
     private static SchemaManager schemaManager;
     private static CapturingSearchRequestHandler capturingSearchRequestHandler;
+    private static CapturingBindRequestHandler capturingBindRequestHandler;
 
     private LdapProxyBackend ldapProxyBackend;
 
@@ -131,6 +134,11 @@ public class LdapProxyBackendTest {
                 ldapServer.getSearchResultReferenceHandler(),
                 ldapServer.getSearchResultDoneHandler());
 
+        capturingBindRequestHandler = new CapturingBindRequestHandler(ldapServer.getBindRequestHandler());
+        ldapServer.setBindHandlers(
+                capturingBindRequestHandler,
+                ldapServer.getBindResponseHandler());
+
         // Setup common backend config values for tests
         ldapBackendConfig = Map.of(
                 "baseDn", "dc=hadoop,dc=apache,dc=org",
@@ -161,6 +169,7 @@ public class LdapProxyBackendTest {
     @After
     public void tearDown() throws Exception {
         capturingSearchRequestHandler.reset();
+        capturingBindRequestHandler.reset();
         if (ldapProxyBackend != null) {
             ldapProxyBackend.close();
         }
@@ -738,6 +747,10 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         Dn dn = new Dn("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org");
         assertTrue(ldapProxyBackend.authenticate(dn, "guest-password"));
+        assertEquals(1, capturingBindRequestHandler.getRequests().size());
+        BindRequest bindRequest = capturingBindRequestHandler.getRequests().get(0);
+        assertEquals("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org", bindRequest.getDn().getName());
+        assertEquals("guest-password", new String(bindRequest.getCredentials(), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -745,13 +758,33 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         Dn dn = new Dn("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org");
         assertFalse(ldapProxyBackend.authenticate(dn, "bad-password"));
+        assertEquals(1, capturingBindRequestHandler.getRequests().size());
+    }
+
+    @Test
+    public void testAuthenticateNoPassword() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        Dn dn = new Dn("uid=guest,ou=people,dc=hadoop,dc=apache,dc=org");
+        assertFalse(ldapProxyBackend.authenticate(dn, ""));
+        // No bind request should be sent to server if no password is provided
+        assertEquals(0, capturingBindRequestHandler.getRequests().size());
+    }
+
+    @Test
+    public void testAuthenticateBadUser() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        Dn dn = new Dn("uid=nobody,ou=people,dc=hadoop,dc=apache,dc=org");
+        assertFalse(ldapProxyBackend.authenticate(dn, "guest-password"));
+        assertEquals(1, capturingBindRequestHandler.getRequests().size());
     }
 
     @Test
     public void testAuthenticateNoUser() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
-        Dn dn = new Dn("uid=nobody,ou=people,dc=hadoop,dc=apache,dc=org");
+        Dn dn = new Dn("");
         assertFalse(ldapProxyBackend.authenticate(dn, "guest-password"));
+        // No bind request should be sent to server if no user is provided
+        assertEquals(0, capturingBindRequestHandler.getRequests().size());
     }
 
     @Test
@@ -939,6 +972,29 @@ public class LdapProxyBackendTest {
 
         @Override
         public void handle(LdapSession session, SearchRequest message) throws Exception {
+            requests.add(message);
+            delegate.handle(session, message);
+        }
+    }
+
+    private static class CapturingBindRequestHandler extends LdapRequestHandler<BindRequest> {
+        private final LdapRequestHandler<BindRequest> delegate;
+        private final List<BindRequest> requests = Collections.synchronizedList(new ArrayList<>());
+
+        CapturingBindRequestHandler(LdapRequestHandler<BindRequest> delegate) {
+            this.delegate = delegate;
+        }
+
+        public void reset() {
+            requests.clear();
+        }
+
+        public List<BindRequest> getRequests() {
+            return List.copyOf(requests);
+        }
+
+        @Override
+        public void handle(LdapSession session, BindRequest message) throws Exception {
             requests.add(message);
             delegate.handle(session, message);
         }
