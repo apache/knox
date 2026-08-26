@@ -38,12 +38,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Validates that the DELEGATION_REGISTRY DDL scripts parse and execute correctly
+ * Validates that the DELEGATION_POLICIES DDL scripts parse and execute correctly
  * against in-memory databases, and that schema constraints are enforced.
  */
 public class DelegationPolicySchemaTest {
 
-  private static final String DERBY_DB = "delegationregistry";
+  private static final String DERBY_DB = "delegationpolicies";
   private static final String DERBY_URL = "jdbc:derby:memory:" + DERBY_DB + ";create=true";
   private static final String DERBY_SHUTDOWN_URL = "jdbc:derby:memory:" + DERBY_DB + ";shutdown=true";
   private static final String HSQL_URL = "jdbc:hsqldb:mem:delegationschema;ifexists=false";
@@ -59,9 +59,9 @@ public class DelegationPolicySchemaTest {
     derbyConn = DriverManager.getConnection(DERBY_URL);
     hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
     // Run Derby DDL once — no IF NOT EXISTS, so run once at class level
-    runScript(derbyConn, loadSql(AbstractDataSourceFactory.DERBY_KNOXIDF_DELEGATION_REGISTRY_TABLES_SQL));
+    runScript(derbyConn, loadSql(AbstractDataSourceFactory.DERBY_KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
     // Run standard DDL on HSQLDB
-    runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_REGISTRY_TABLES_SQL));
+    runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
   }
 
   @AfterClass
@@ -85,8 +85,8 @@ public class DelegationPolicySchemaTest {
   @Test
   public void testDerbyAllFiveTablesQueryable() throws Exception {
     for (String table : new String[]{
-        "DELEGATION_REGISTRY", "DELEGATION_REGISTRY_USERS", "DELEGATION_REGISTRY_GROUPS",
-        "DELEGATION_REGISTRY_RESOURCES", "DELEGATION_REGISTRY_RESOURCE_SCOPES"}) {
+        "DELEGATION_POLICIES", "DELEGATION_POLICY_USERS", "DELEGATION_POLICY_GROUPS",
+        "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES"}) {
       try (Statement stmt = derbyConn.createStatement();
            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + table)) {
         assertTrue("Table must be queryable: " + table, rs.next());
@@ -98,8 +98,8 @@ public class DelegationPolicySchemaTest {
   @Test
   public void testHsqlAllFiveTablesQueryable() throws Exception {
     for (String table : new String[]{
-        "DELEGATION_REGISTRY", "DELEGATION_REGISTRY_USERS", "DELEGATION_REGISTRY_GROUPS",
-        "DELEGATION_REGISTRY_RESOURCES", "DELEGATION_REGISTRY_RESOURCE_SCOPES"}) {
+        "DELEGATION_POLICIES", "DELEGATION_POLICY_USERS", "DELEGATION_POLICY_GROUPS",
+        "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES"}) {
       try (Statement stmt = hsqlConn.createStatement();
            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + table)) {
         assertTrue("Table must be queryable: " + table, rs.next());
@@ -111,18 +111,18 @@ public class DelegationPolicySchemaTest {
   @Test
   public void testHsqlStandardSqlIdempotent() throws Exception {
     // Running the script twice must not throw due to IF NOT EXISTS
-    runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_REGISTRY_TABLES_SQL));
+    runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
   }
 
   @Test
   public void testDefaultValues() throws Exception {
     final String id = UUID.randomUUID().toString();
     try (Statement stmt = hsqlConn.createStatement()) {
-      stmt.execute("INSERT INTO DELEGATION_REGISTRY "
+      stmt.execute("INSERT INTO DELEGATION_POLICIES "
           + "(registration_id, actor_authority, actor_id, created_at, updated_at) "
           + "VALUES ('" + id + "', 'oidc', 'actor@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
       try (ResultSet rs = stmt.executeQuery(
-          "SELECT status, allow_headless_exchange, max_token_ttl_sec FROM DELEGATION_REGISTRY WHERE registration_id = '" + id + "'")) {
+          "SELECT status, allow_headless_exchange, max_token_ttl_sec FROM DELEGATION_POLICIES WHERE registration_id = '" + id + "'")) {
         assertTrue(rs.next());
         assertEquals("active", rs.getString("status"));
         assertEquals(false, rs.getBoolean("allow_headless_exchange"));
@@ -135,21 +135,21 @@ public class DelegationPolicySchemaTest {
   @Test
   public void testNotNullViolationActorAuthority() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY (registration_id, actor_authority, actor_id, created_at, updated_at) "
+        "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
             + "VALUES ('" + UUID.randomUUID() + "', NULL, 'actor@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
   }
 
   @Test
   public void testNotNullViolationActorId() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY (registration_id, actor_authority, actor_id, created_at, updated_at) "
+        "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
             + "VALUES ('" + UUID.randomUUID() + "', 'oidc', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
   }
 
   @Test
   public void testNotNullViolationCreatedAt() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY (registration_id, actor_authority, actor_id, created_at, updated_at) "
+        "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
             + "VALUES ('" + UUID.randomUUID() + "', 'oidc', 'actor@example.com', NULL, CURRENT_TIMESTAMP)");
   }
 
@@ -158,10 +158,10 @@ public class DelegationPolicySchemaTest {
     final String id1 = UUID.randomUUID().toString();
     final String id2 = UUID.randomUUID().toString();
     try (Statement stmt = hsqlConn.createStatement()) {
-      stmt.execute("INSERT INTO DELEGATION_REGISTRY (registration_id, actor_authority, actor_id, created_at, updated_at) "
+      stmt.execute("INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
           + "VALUES ('" + id1 + "', 'oidc', 'duplicateactor', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
       expectConstraintViolation(hsqlConn,
-          "INSERT INTO DELEGATION_REGISTRY (registration_id, actor_authority, actor_id, created_at, updated_at) "
+          "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
               + "VALUES ('" + id2 + "', 'oidc', 'duplicateactor', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
     }
   }
@@ -169,25 +169,25 @@ public class DelegationPolicySchemaTest {
   @Test
   public void testFkViolationUsers() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY_USERS (registration_id, username) VALUES ('" + UUID.randomUUID() + "', 'alice')");
+        "INSERT INTO DELEGATION_POLICY_USERS (registration_id, username) VALUES ('" + UUID.randomUUID() + "', 'alice')");
   }
 
   @Test
   public void testFkViolationGroups() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY_GROUPS (registration_id, group_name) VALUES ('" + UUID.randomUUID() + "', 'admins')");
+        "INSERT INTO DELEGATION_POLICY_GROUPS (registration_id, group_name) VALUES ('" + UUID.randomUUID() + "', 'admins')");
   }
 
   @Test
   public void testFkViolationResources() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY_RESOURCES (registration_id, resource_uri) VALUES ('" + UUID.randomUUID() + "', '/api/v1')");
+        "INSERT INTO DELEGATION_POLICY_RESOURCES (registration_id, resource_uri) VALUES ('" + UUID.randomUUID() + "', '/api/v1')");
   }
 
   @Test
   public void testFkViolationResourceScopes() throws Exception {
     expectConstraintViolation(hsqlConn,
-        "INSERT INTO DELEGATION_REGISTRY_RESOURCE_SCOPES (registration_id, resource_uri, scope) "
+        "INSERT INTO DELEGATION_POLICY_RESOURCE_SCOPES (registration_id, resource_uri, scope) "
             + "VALUES ('" + UUID.randomUUID() + "', '/api/v1', 'read')");
   }
 

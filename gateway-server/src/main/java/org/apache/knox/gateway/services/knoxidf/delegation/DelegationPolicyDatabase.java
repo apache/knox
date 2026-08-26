@@ -40,45 +40,45 @@ import java.util.UUID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * JDBC helper for the five DELEGATION_REGISTRY tables.
+ * JDBC helper for the five DELEGATION_POLICIES tables.
  * All SQL uses {@link PreparedStatement} with {@code ?} parameters only.
  * Methods accept explicit {@link Connection} objects so that the service can manage
  * transaction boundaries (setAutoCommit / commit / rollback) across multiple calls.
  */
 class DelegationPolicyDatabase extends KnoxDatabase {
 
-  static final String CORE_TABLE = "DELEGATION_REGISTRY";
+  static final String CORE_TABLE = "DELEGATION_POLICIES";
 
   private static final String INSERT_REGISTRATION_SQL =
-      "INSERT INTO DELEGATION_REGISTRY "
+      "INSERT INTO DELEGATION_POLICIES "
           + "(registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange) "
           + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
   private static final String UPDATE_CORE_SQL =
-      "UPDATE DELEGATION_REGISTRY SET "
+      "UPDATE DELEGATION_POLICIES SET "
           + "actor_authority = ?, actor_id = ?, name = ?, status = ?, max_token_ttl_sec = ?, "
           + "description = ?, created_by = ?, created_at = ?, updated_at = ?, "
           + "allow_headless_exchange = ? "
           + "WHERE registration_id = ?";
 
   private static final String DELETE_REGISTRATION_SQL =
-      "DELETE FROM DELEGATION_REGISTRY WHERE registration_id = ?";
+      "DELETE FROM DELEGATION_POLICIES WHERE registration_id = ?";
 
   private static final String SELECT_BY_ID_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
-          + "FROM DELEGATION_REGISTRY WHERE registration_id = ?";
+          + "FROM DELEGATION_POLICIES WHERE registration_id = ?";
 
   private static final String SELECT_BY_ACTOR_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
-          + "FROM DELEGATION_REGISTRY WHERE actor_authority = ? AND actor_id = ?";
+          + "FROM DELEGATION_POLICIES WHERE actor_authority = ? AND actor_id = ?";
 
   private static final String SELECT_ALL_BASE_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
-          + "FROM DELEGATION_REGISTRY";
+          + "FROM DELEGATION_POLICIES";
 
   // Built at construction time with limit+1 baked in as an integer literal (Derby does not
   // support ? parameters in FETCH FIRST n ROWS ONLY). Fetching one extra row lets selectAll()
@@ -89,40 +89,40 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   private final String selectAllFilteredSql;
 
   private static final String INSERT_USER_SQL =
-      "INSERT INTO DELEGATION_REGISTRY_USERS (registration_id, username) VALUES (?, ?)";
+      "INSERT INTO DELEGATION_POLICY_USERS (registration_id, username) VALUES (?, ?)";
 
   private static final String INSERT_GROUP_SQL =
-      "INSERT INTO DELEGATION_REGISTRY_GROUPS (registration_id, group_name) VALUES (?, ?)";
+      "INSERT INTO DELEGATION_POLICY_GROUPS (registration_id, group_name) VALUES (?, ?)";
 
   private static final String INSERT_RESOURCE_SQL =
-      "INSERT INTO DELEGATION_REGISTRY_RESOURCES (registration_id, resource_uri) VALUES (?, ?)";
+      "INSERT INTO DELEGATION_POLICY_RESOURCES (registration_id, resource_uri) VALUES (?, ?)";
 
   private static final String INSERT_SCOPE_SQL =
-      "INSERT INTO DELEGATION_REGISTRY_RESOURCE_SCOPES (registration_id, resource_uri, scope) VALUES (?, ?, ?)";
+      "INSERT INTO DELEGATION_POLICY_RESOURCE_SCOPES (registration_id, resource_uri, scope) VALUES (?, ?, ?)";
 
   private static final String SELECT_USERS_SQL =
-      "SELECT username FROM DELEGATION_REGISTRY_USERS WHERE registration_id = ?";
+      "SELECT username FROM DELEGATION_POLICY_USERS WHERE registration_id = ?";
 
   private static final String SELECT_GROUPS_SQL =
-      "SELECT group_name FROM DELEGATION_REGISTRY_GROUPS WHERE registration_id = ?";
+      "SELECT group_name FROM DELEGATION_POLICY_GROUPS WHERE registration_id = ?";
 
   private static final String SELECT_RESOURCES_SQL =
-      "SELECT resource_uri FROM DELEGATION_REGISTRY_RESOURCES WHERE registration_id = ?";
+      "SELECT resource_uri FROM DELEGATION_POLICY_RESOURCES WHERE registration_id = ?";
 
   private static final String SELECT_SCOPES_SQL =
-      "SELECT scope FROM DELEGATION_REGISTRY_RESOURCE_SCOPES WHERE registration_id = ? AND resource_uri = ?";
+      "SELECT scope FROM DELEGATION_POLICY_RESOURCE_SCOPES WHERE registration_id = ? AND resource_uri = ?";
 
   private static final String DELETE_USERS_SQL =
-      "DELETE FROM DELEGATION_REGISTRY_USERS WHERE registration_id = ?";
+      "DELETE FROM DELEGATION_POLICY_USERS WHERE registration_id = ?";
 
   private static final String DELETE_GROUPS_SQL =
-      "DELETE FROM DELEGATION_REGISTRY_GROUPS WHERE registration_id = ?";
+      "DELETE FROM DELEGATION_POLICY_GROUPS WHERE registration_id = ?";
 
   private static final String DELETE_RESOURCES_SQL =
-      "DELETE FROM DELEGATION_REGISTRY_RESOURCES WHERE registration_id = ?";
+      "DELETE FROM DELEGATION_POLICY_RESOURCES WHERE registration_id = ?";
 
   private static final String DELETE_SCOPES_SQL =
-      "DELETE FROM DELEGATION_REGISTRY_RESOURCE_SCOPES WHERE registration_id = ?";
+      "DELETE FROM DELEGATION_POLICY_RESOURCE_SCOPES WHERE registration_id = ?";
 
   DelegationPolicyDatabase(DataSource dataSource, String dbType, int listMaxTotal, int listMaxPerAuthority) throws Exception {
     super(dataSource);
@@ -131,7 +131,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     this.selectAllSql = SELECT_ALL_BASE_SQL + " FETCH FIRST " + (listMaxTotal + 1) + " ROWS ONLY";
     this.selectAllFilteredSql = SELECT_ALL_BASE_SQL + " WHERE actor_authority = ? FETCH FIRST " + (listMaxPerAuthority + 1) + " ROWS ONLY";
     final DatabaseType databaseType = DatabaseType.fromString(dbType);
-    createDelegationTablesIfNotExists(databaseType.delegationRegistryTablesSql());
+    createDelegationTablesIfNotExists(databaseType.delegationPolicyTablesSql());
   }
 
   Connection getConnection() throws SQLException {
@@ -139,7 +139,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   }
 
   /**
-   * Multi-statement DDL runner: checks if DELEGATION_REGISTRY exists, then strips SQL line
+   * Multi-statement DDL runner: checks if DELEGATION_POLICIES exists, then strips SQL line
    * comments, splits on {@code ;}, and executes each non-empty statement individually.
    * {@link JDBCUtils#createTableFromSQL} handles only single statements; delegation needs five.
    * Comment stripping must happen before the split because the ASF license header contains a

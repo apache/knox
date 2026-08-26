@@ -224,7 +224,7 @@ public class JdbcDelegationPolicyServiceTest {
     // Verify child rows are gone too
     try (Connection conn = DriverManager.getConnection(DERBY_URL);
          PreparedStatement ps = conn.prepareStatement(
-             "SELECT COUNT(*) FROM DELEGATION_REGISTRY_USERS WHERE registration_id = ?")) {
+             "SELECT COUNT(*) FROM DELEGATION_POLICY_USERS WHERE registration_id = ?")) {
       ps.setString(1, registered.getRegistrationId());
       try (java.sql.ResultSet rs = ps.executeQuery()) {
         rs.next();
@@ -668,8 +668,8 @@ public class JdbcDelegationPolicyServiceTest {
   private static void clearTables() {
     try (Connection conn = DriverManager.getConnection(DERBY_URL)) {
       for (String table : new String[]{
-          "DELEGATION_REGISTRY_RESOURCE_SCOPES", "DELEGATION_REGISTRY_RESOURCES",
-          "DELEGATION_REGISTRY_GROUPS", "DELEGATION_REGISTRY_USERS", "DELEGATION_REGISTRY"}) {
+          "DELEGATION_POLICY_RESOURCE_SCOPES", "DELEGATION_POLICY_RESOURCES",
+          "DELEGATION_POLICY_GROUPS", "DELEGATION_POLICY_USERS", "DELEGATION_POLICIES"}) {
         try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + table)) {
           ps.executeUpdate();
         } catch (SQLException e) {
