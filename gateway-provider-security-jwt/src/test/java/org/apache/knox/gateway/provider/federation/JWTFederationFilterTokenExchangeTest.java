@@ -246,7 +246,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertFalse(chain.doFilterCalled);
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
-    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
     EasyMock.verify(mockAuth, issuerSvc);
   }
 
@@ -292,7 +292,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
       Assert.assertEquals(EXTERNAL_ISSUER, capturedJwt.getValue().getIssuer());
     }
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
-    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
     Assert.assertTrue(response.body(), response.body().contains("Token has expired"));
     EasyMock.verify(mockAuth, issuerSvc);
   }
@@ -422,7 +422,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertFalse(chain.doFilterCalled);
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
-    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
     EasyMock.verify(issuerSvc);
   }
 
@@ -451,7 +451,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertFalse(chain.doFilterCalled);
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
-    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
   }
 
   /**
@@ -563,7 +563,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertFalse("Insecure (non-HTTPS) dynamic JWKS URI must be rejected OOTB", chain.doFilterCalled);
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
-    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_grant\""));
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
     EasyMock.verify(mockAuth, issuerSvc);
   }
 

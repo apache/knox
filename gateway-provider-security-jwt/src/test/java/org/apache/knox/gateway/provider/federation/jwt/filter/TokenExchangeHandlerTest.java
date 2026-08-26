@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -108,7 +109,7 @@ public class TokenExchangeHandlerTest {
   public void testUnsupportedSubjectTokenType() throws Exception {
     handler.handle(request("subtok", SAML2_TYPE, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertEquals("unsupported_token_type", filter.error);
+    assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("subject_token_type"));
     assertFalse(filter.continued);
   }
@@ -118,7 +119,7 @@ public class TokenExchangeHandlerTest {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     handler.handle(request("subtok", JWT_TYPE, "acttok", SAML2_TYPE), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
-    assertEquals("unsupported_token_type", filter.error);
+    assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("actor_token_type"));
     assertFalse(filter.continued);
   }
@@ -192,6 +193,16 @@ public class TokenExchangeHandlerTest {
     assertFalse(filter.continued);
   }
 
+  @Test
+  public void testUnparseableSubjectTokenReturnsInvalidRequest() throws Exception {
+    filter.throwOnParse.add("subtok");
+    handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
+    assertEquals(HttpServletResponse.SC_UNAUTHORIZED, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("Failed to parse token in token exchange"));
+    assertFalse(filter.continued);
+  }
+
   private static String primaryName(Subject subject) {
     return subject.getPrincipals(PrimaryPrincipal.class).iterator().next().getName();
   }
@@ -233,6 +244,7 @@ public class TokenExchangeHandlerTest {
    */
   private static final class RecordingFilter extends JWTFederationFilter {
     private final Map<String, JWT> valid = new HashMap<>();
+    private final Set<String> throwOnParse = new HashSet<>();
     private int errorStatus = -1;
     private String error;
     private String errorDescription;
@@ -243,6 +255,9 @@ public class TokenExchangeHandlerTest {
     JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
                             FilterChain chain, String tokenValue)
         throws ParseException, IOException, ServletException {
+      if (throwOnParse.contains(tokenValue)) {
+        throw new ParseException("cannot parse " + tokenValue, 0);
+      }
       return valid.get(tokenValue);
     }
 

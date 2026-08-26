@@ -115,12 +115,12 @@ class TokenExchangeHandler {
     // Only JWT-family token types are supported.
     if (isNotSupportedTokenType(subjectTokenType)) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "unsupported_token_type", "unsupported subject_token_type " + subjectTokenType);
+          "invalid_request", "unsupported subject_token_type " + subjectTokenType);
       return;
     }
     if (hasActorToken && isNotSupportedTokenType(actorTokenType)) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "unsupported_token_type", "unsupported actor_token_type " + actorTokenType);
+          "invalid_request", "unsupported actor_token_type " + actorTokenType);
       return;
     }
 
@@ -148,7 +148,7 @@ class TokenExchangeHandler {
       filter.continueWithEstablishedSecurityContext(subject, request, response, chain);
     } catch (ParseException | UnknownTokenException e) {
       filter.handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
-          "invalid_grant", "Failed to parse token in token exchange: " + e.getMessage());
+          "invalid_request", "Failed to parse token in token exchange: " + e.getMessage());
     }
   }
 
