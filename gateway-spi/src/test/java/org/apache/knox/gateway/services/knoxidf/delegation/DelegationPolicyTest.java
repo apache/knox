@@ -28,6 +28,7 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -96,17 +97,8 @@ public class DelegationPolicyTest {
         new HashSet<>(Collections.singleton("admins")),
         Collections.emptyMap());
 
-    try {
-      policy.getCanActForUsers().add("eve");
-      assertFalse("getCanActForUsers() should return an unmodifiable set", true);
-    } catch (UnsupportedOperationException expected) {
-    }
-
-    try {
-      policy.getCanActForGroups().add("ops");
-      assertFalse("getCanActForGroups() should return an unmodifiable set", true);
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> policy.getCanActForUsers().add("eve"));
+    assertThrows(UnsupportedOperationException.class, () -> policy.getCanActForGroups().add("ops"));
   }
 
   @Test
@@ -115,11 +107,7 @@ public class DelegationPolicyTest {
         Collections.emptySet(), Collections.emptySet(),
         new HashMap<>(Collections.singletonMap("/api", new HashSet<>())));
 
-    try {
-      policy.getResourcePolicy().put("/other", new HashSet<>());
-      assertFalse("getResourcePolicy() should return an unmodifiable map", true);
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> policy.getResourcePolicy().put("/other", new HashSet<>()));
   }
 
   @Test

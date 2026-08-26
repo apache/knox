@@ -20,7 +20,6 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -72,8 +71,8 @@ public class EmptyDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
-  public List<DelegationPolicy> list(String actorAuthorityFilter) {
-    return Collections.emptyList();
+  public DelegationPolicyList list(String actorAuthorityFilter) {
+    return new DelegationPolicyList(Collections.emptyList(), false);
   }
 
   @Override

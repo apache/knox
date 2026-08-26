@@ -75,12 +75,18 @@ class DelegationPolicyDatabase extends KnoxDatabase {
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
           + "FROM DELEGATION_REGISTRY WHERE actor_authority = ? AND actor_id = ?";
 
-  private static final String SELECT_ALL_SQL =
+  private static final String SELECT_ALL_BASE_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, max_token_ttl_sec, "
           + "description, created_by, created_at, updated_at, allow_headless_exchange "
           + "FROM DELEGATION_REGISTRY";
 
-  private static final String SELECT_ALL_FILTERED_SQL = SELECT_ALL_SQL + " WHERE actor_authority = ?";
+  // Built at construction time with limit+1 baked in as an integer literal (Derby does not
+  // support ? parameters in FETCH FIRST n ROWS ONLY). Fetching one extra row lets selectAll()
+  // detect truncation without a second COUNT query.
+  private final int listMaxTotal;
+  private final int listMaxPerAuthority;
+  private final String selectAllSql;
+  private final String selectAllFilteredSql;
 
   private static final String INSERT_USER_SQL =
       "INSERT INTO DELEGATION_REGISTRY_USERS (registration_id, username) VALUES (?, ?)";
@@ -118,8 +124,12 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   private static final String DELETE_SCOPES_SQL =
       "DELETE FROM DELEGATION_REGISTRY_RESOURCE_SCOPES WHERE registration_id = ?";
 
-  DelegationPolicyDatabase(DataSource dataSource, String dbType) throws Exception {
+  DelegationPolicyDatabase(DataSource dataSource, String dbType, int listMaxTotal, int listMaxPerAuthority) throws Exception {
     super(dataSource);
+    this.listMaxTotal = listMaxTotal;
+    this.listMaxPerAuthority = listMaxPerAuthority;
+    this.selectAllSql = SELECT_ALL_BASE_SQL + " FETCH FIRST " + (listMaxTotal + 1) + " ROWS ONLY";
+    this.selectAllFilteredSql = SELECT_ALL_BASE_SQL + " WHERE actor_authority = ? FETCH FIRST " + (listMaxPerAuthority + 1) + " ROWS ONLY";
     final DatabaseType databaseType = DatabaseType.fromString(dbType);
     createDelegationTablesIfNotExists(databaseType.delegationRegistryTablesSql());
   }
@@ -250,20 +260,22 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     return Optional.empty();
   }
 
-  List<DelegationPolicy> selectAll(Connection connection, String actorAuthorityFilter) throws SQLException {
-    final List<DelegationPolicy> result = new ArrayList<>();
-    final String sql = (actorAuthorityFilter != null) ? SELECT_ALL_FILTERED_SQL : SELECT_ALL_SQL;
+  DelegationPolicyList selectAll(Connection connection, String actorAuthorityFilter) throws SQLException {
+    final int limit = (actorAuthorityFilter != null) ? listMaxPerAuthority : listMaxTotal;
+    final List<DelegationPolicy> rows = new ArrayList<>();
+    final String sql = (actorAuthorityFilter != null) ? selectAllFilteredSql : selectAllSql;
     try (PreparedStatement ps = connection.prepareStatement(sql)) {
       if (actorAuthorityFilter != null) {
         ps.setString(1, actorAuthorityFilter);
       }
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
-          result.add(assemblePolicyFromRow(connection, rs));
+          rows.add(assemblePolicyFromRow(connection, rs));
         }
       }
     }
-    return result;
+    final boolean hasMore = rows.size() > limit;
+    return new DelegationPolicyList(hasMore ? rows.subList(0, limit) : rows, hasMore);
   }
 
   void updateCoreRow(Connection connection, String registrationId, DelegationPolicy policy) throws SQLException {

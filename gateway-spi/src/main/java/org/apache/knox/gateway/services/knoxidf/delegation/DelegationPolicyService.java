@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.knoxidf.delegation;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -51,7 +50,7 @@ public interface DelegationPolicyService extends Service {
   Optional<DelegationPolicy> findByActor(String actorAuthority, String actorId);
 
   /** @param actorAuthorityFilter null returns all policies */
-  List<DelegationPolicy> list(String actorAuthorityFilter);
+  DelegationPolicyList list(String actorAuthorityFilter);
 
   PolicyDecision evaluate(PolicyCheckRequest request);
 }

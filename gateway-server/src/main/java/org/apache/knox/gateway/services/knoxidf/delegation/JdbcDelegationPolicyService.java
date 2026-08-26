@@ -24,7 +24,6 @@ import org.apache.knox.gateway.services.security.AliasService;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -61,7 +60,10 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
           try {
             this.configuredKnoxTokenTtlSec = config.getDelegationServiceTokenTtlSec();
             this.database = new DelegationPolicyDatabase(
-                DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
+                DataSourceProvider.getDataSource(config, aliasService),
+                config.getDatabaseType(),
+                config.getDelegationServiceListMaxTotal(),
+                config.getDelegationServiceListMaxPerAuthority());
             initialized.set(true);
           } catch (ServiceLifecycleException e) {
             throw e;
@@ -172,7 +174,7 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
-  public List<DelegationPolicy> list(String actorAuthorityFilter) {
+  public DelegationPolicyList list(String actorAuthorityFilter) {
     try (Connection connection = database.getConnection()) {
       return database.selectAll(connection, actorAuthorityFilter);
     } catch (Exception e) {

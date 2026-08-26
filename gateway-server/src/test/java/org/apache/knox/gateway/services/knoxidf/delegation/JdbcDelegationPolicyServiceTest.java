@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,6 +84,10 @@ public class JdbcDelegationPolicyServiceTest {
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
     EasyMock.expect(gatewayConfig.getDelegationServiceTokenTtlSec()).andReturn(CONFIGURED_TTL).anyTimes();
+    EasyMock.expect(gatewayConfig.getDelegationServiceListMaxTotal())
+        .andReturn(GatewayConfig.DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT).anyTimes();
+    EasyMock.expect(gatewayConfig.getDelegationServiceListMaxPerAuthority())
+        .andReturn(GatewayConfig.DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT).anyTimes();
     EasyMock.replay(gatewayConfig);
 
     aliasService = EasyMock.createNiceMock(AliasService.class);
@@ -247,8 +250,9 @@ public class JdbcDelegationPolicyServiceTest {
     service.register(policy("saml", "a2@example.com", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
-    final List<DelegationPolicy> all = service.list(null);
-    assertEquals(2, all.size());
+    final DelegationPolicyList all = service.list(null);
+    assertEquals(2, all.getPolicies().size());
+    assertFalse(all.hasMore());
   }
 
   @Test
@@ -258,9 +262,90 @@ public class JdbcDelegationPolicyServiceTest {
     service.register(policy("saml", "a4@example.com", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
-    final List<DelegationPolicy> oidcOnly = service.list("oidc");
-    assertEquals(1, oidcOnly.size());
-    assertEquals("oidc", oidcOnly.get(0).getActorAuthority());
+    final DelegationPolicyList oidcOnly = service.list("oidc");
+    assertEquals(1, oidcOnly.getPolicies().size());
+    assertFalse(oidcOnly.hasMore());
+    assertEquals("oidc", oidcOnly.getPolicies().get(0).getActorAuthority());
+  }
+
+  @Test
+  public void testListTotalLimitEnforced() throws Exception {
+    for (int i = 0; i < 3; i++) {
+      service.register(policy("k8s_sa", "svc-lim" + i + "@cluster", null, "active", null, null, null, Instant.now(),
+          Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    }
+    service.register(policy("oidc", "extra1@issuer", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    service.register(policy("oidc", "extra2@issuer", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+
+    final JdbcDelegationPolicyService limitedService = createServiceWithLimits(3, 10_000);
+    final DelegationPolicyList result = limitedService.list(null);
+    assertEquals("Total limit of 3 must be respected even though 5 rows exist", 3, result.getPolicies().size());
+    assertTrue("hasMore must be true when results are truncated", result.hasMore());
+  }
+
+  @Test
+  public void testListPerAuthorityLimitEnforced() throws Exception {
+    for (int i = 0; i < 4; i++) {
+      service.register(policy("k8s_sa", "svc-pa" + i + "@cluster", null, "active", null, null, null, Instant.now(),
+          Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    }
+    service.register(policy("oidc", "pa1@issuer", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    service.register(policy("oidc", "pa2@issuer", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+
+    final JdbcDelegationPolicyService limitedService = createServiceWithLimits(10_000, 2);
+
+    final DelegationPolicyList k8sResult = limitedService.list("k8s_sa");
+    assertEquals("Per-authority limit of 2 must crop 4 k8s_sa rows to 2", 2, k8sResult.getPolicies().size());
+    assertTrue("hasMore must be true when results are truncated", k8sResult.hasMore());
+
+    final DelegationPolicyList oidcResult = limitedService.list("oidc");
+    assertEquals("Per-authority limit of 2 does not crop oidc (only 2 registered)", 2, oidcResult.getPolicies().size());
+    assertFalse("hasMore must be false when results fit within limit", oidcResult.hasMore());
+  }
+
+  @Test
+  public void testListHasMoreFalseWhenExactlyAtLimit() throws Exception {
+    for (int i = 0; i < 3; i++) {
+      service.register(policy("oidc", "exact" + i + "@example.com", null, "active", null, null, null, Instant.now(),
+          Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    }
+
+    final JdbcDelegationPolicyService limitedService = createServiceWithLimits(3, 10_000);
+    final DelegationPolicyList result = limitedService.list(null);
+    assertEquals(3, result.getPolicies().size());
+    assertFalse("hasMore must be false when result count equals the limit exactly", result.hasMore());
+  }
+
+  @Test
+  public void testListDefaultLimitsDoNotCropSmallResultSet() throws Exception {
+    // Default limits (DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT = 10_000) must not crop small datasets.
+    // This also verifies that the service initialized with default config values functions correctly.
+    service.register(policy("oidc", "dflt1@example.com", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    service.register(policy("k8s_sa", "dflt2@cluster", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    service.register(policy("saml", "dflt3@idp", null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+
+    final DelegationPolicyList all = service.list(null);
+    assertEquals(3, all.getPolicies().size());
+    assertFalse(all.hasMore());
+
+    final DelegationPolicyList oidcList = service.list("oidc");
+    assertEquals(1, oidcList.getPolicies().size());
+    assertFalse(oidcList.hasMore());
+
+    final DelegationPolicyList k8sList = service.list("k8s_sa");
+    assertEquals(1, k8sList.getPolicies().size());
+    assertFalse(k8sList.hasMore());
+
+    final DelegationPolicyList samlList = service.list("saml");
+    assertEquals(1, samlList.getPolicies().size());
+    assertFalse(samlList.hasMore());
   }
 
   // ------------------------------------------------------------------
@@ -530,6 +615,21 @@ public class JdbcDelegationPolicyServiceTest {
   // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
+
+  private JdbcDelegationPolicyService createServiceWithLimits(int maxTotal, int maxPerAuthority)
+      throws ServiceLifecycleException {
+    final GatewayConfig cfg = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(cfg.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+    EasyMock.expect(cfg.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(cfg.getDelegationServiceTokenTtlSec()).andReturn(CONFIGURED_TTL).anyTimes();
+    EasyMock.expect(cfg.getDelegationServiceListMaxTotal()).andReturn(maxTotal).anyTimes();
+    EasyMock.expect(cfg.getDelegationServiceListMaxPerAuthority()).andReturn(maxPerAuthority).anyTimes();
+    EasyMock.replay(cfg);
+    final JdbcDelegationPolicyService svc = new JdbcDelegationPolicyService();
+    svc.setAliasService(aliasService);
+    svc.init(cfg, null);
+    return svc;
+  }
 
   private void registerPolicy(String actorId, String authority, String actorSubject,
       Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy) throws Exception {
