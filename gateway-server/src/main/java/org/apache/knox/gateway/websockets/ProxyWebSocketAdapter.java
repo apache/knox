@@ -166,7 +166,12 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
    */
   private WebSocketContainer buildBackendContainer() {
     SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
-    configureSsl(sslContextFactory, clientConfig);
+    // Only configure SSL from the client endpoint config when one was supplied.
+    // The non-SSL path uses the 3-arg constructor which leaves clientConfig null;
+    // guarding here avoids an NPE on connection open (see configureSsl).
+    if (clientConfig != null) {
+      configureSsl(sslContextFactory, clientConfig);
+    }
     HttpClient httpClient = new HttpClient();
     httpClient.setSslContextFactory(sslContextFactory);
     LOG.logMessage("Truststore for websocket setup");

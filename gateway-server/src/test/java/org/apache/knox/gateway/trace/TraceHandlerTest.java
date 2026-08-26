@@ -229,6 +229,7 @@ public class TraceHandlerTest {
     server.start();
 
     // enable request/response line loggers but leave body loggers OFF
+    setTraceLoggersLevel(Level.TRACE);
     LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
     Configuration config = ctx.getConfiguration();
     config.getLoggerConfig(TraceHandler.HTTP_REQUEST_BODY_LOGGER).setLevel(Level.OFF);
