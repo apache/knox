@@ -244,10 +244,8 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   }
 
   void deletePolicy(String registrationId) throws SQLException {
-    try (Connection connection = dataSource.getConnection();
-         PreparedStatement ps = connection.prepareStatement(DELETE_REGISTRATION_SQL)) {
-      ps.setString(1, registrationId);
-      ps.executeUpdate();
+    try (Connection connection = dataSource.getConnection()) {
+      deleteRegistrationRow(connection, registrationId);
     }
   }
 
