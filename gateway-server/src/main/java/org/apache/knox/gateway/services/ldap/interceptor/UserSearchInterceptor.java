@@ -112,12 +112,12 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     @Override
     public void bind(BindOperationContext ctx) throws LdapException {
-        LOG.ldapBind(ctx.getDn() != null ? ctx.getDn().toString() : "anonymous");
+        LOG.ldapBind(ctx.getDn() != null && !ctx.getDn().isEmpty() ? ctx.getDn().toString() : "anonymous");
 
         // Try backend first for non-system users
-        if (ctx.getDn() != null && !ctx.getDn().toString().endsWith("ou=system")) {
+        if (ctx.getDn() != null && !ctx.getDn().isEmpty() && !ctx.getDn().toString().endsWith("ou=system")) {
             byte[] credentials = ctx.getCredentials();
-            if (credentials != null) {
+            if (credentials != null && credentials.length > 0) {
                 String password = new String(credentials, java.nio.charset.StandardCharsets.UTF_8);
                 if (backend.authenticate(ctx.getDn(), password)) {
                     // Create session for the authenticated user and set it in context
@@ -130,11 +130,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
             }
         }
 
-        try {
-            next(ctx);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        next(ctx);
     }
 }
 

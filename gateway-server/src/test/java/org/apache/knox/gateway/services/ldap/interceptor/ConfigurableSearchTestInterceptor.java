@@ -31,11 +31,11 @@ import java.util.List;
  * Interceptor for testing. This interceptor will return a Cursor of a List
  * of configured Entries.
  */
-public class ConfigurableEntriesTestInterceptor extends BaseInterceptor {
+public class ConfigurableSearchTestInterceptor extends BaseInterceptor {
     private List<Entry> entries;
     private EntryFilteringCursor cursor;
 
-    ConfigurableEntriesTestInterceptor(String name) {
+    ConfigurableSearchTestInterceptor(String name) {
         super(name);
     }
 
