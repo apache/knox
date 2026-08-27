@@ -420,7 +420,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateAuthorizedSubjectInUsersResourceAndScopeMatch() throws Exception {
-    registerPolicy("eval-auth1", "oidc", "eval@example.com",
+    registerPolicy("oidc", "eval@example.com",
         Collections.singleton("alice"),
         Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
@@ -434,7 +434,7 @@ public class JdbcDelegationPolicyServiceTest {
   public void testEvaluateAuthorizedAllScopesWhenScopeSetEmpty() throws Exception {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", Collections.emptySet());
-    registerPolicy("eval-auth2", "oidc", "eval2@example.com",
+    registerPolicy("oidc", "eval2@example.com",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
@@ -447,7 +447,7 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
     rp.put("/api/v2", new HashSet<>(Arrays.asList("write")));
-    registerPolicy("eval-auth3", "oidc", "eval3@example.com",
+    registerPolicy("oidc", "eval3@example.com",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
@@ -457,7 +457,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateAuthorizedHeadlessExchangeAllowed() throws Exception {
-    registerPolicy("eval-headless", "oidc", "headless@example.com",
+    registerPolicy("oidc", "headless@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), true);
 
@@ -480,7 +480,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateDenySubjectNotInUsersAndNoGroups() throws Exception {
-    registerPolicy("eval-deny-subj", "oidc", "deny1@example.com",
+    registerPolicy("oidc", "deny1@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"));
 
@@ -492,7 +492,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateDenyEmptyUsersAndEmptyGroups() throws Exception {
-    registerPolicy("eval-deny-empty", "oidc", "deny2@example.com",
+    registerPolicy("oidc", "deny2@example.com",
         Collections.emptySet(), Collections.emptySet(),
         singleResourcePolicy("/api", "read"));
 
@@ -504,7 +504,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateDenyResourceNotInPolicy() throws Exception {
-    registerPolicy("eval-deny-res", "oidc", "deny3@example.com",
+    registerPolicy("oidc", "deny3@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
@@ -516,7 +516,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateDenyScopeNotInSet() throws Exception {
-    registerPolicy("eval-deny-scope", "oidc", "deny4@example.com",
+    registerPolicy("oidc", "deny4@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
@@ -528,7 +528,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateAuthorizedEmptyRequestedScopes() throws Exception {
-    registerPolicy("eval-no-scope", "oidc", "noscope@example.com",
+    registerPolicy("oidc", "noscope@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
@@ -539,7 +539,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateAuthorizedMultipleRequestedScopesAllInSet() throws Exception {
-    registerPolicy("eval-multi-scope", "oidc", "multiscope@example.com",
+    registerPolicy("oidc", "multiscope@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read", "write"));
 
@@ -551,7 +551,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateDenyMultipleRequestedScopesPartialMatch() throws Exception {
-    registerPolicy("eval-partial-scope", "oidc", "partial@example.com",
+    registerPolicy("oidc", "partial@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
@@ -565,7 +565,7 @@ public class JdbcDelegationPolicyServiceTest {
   public void testEvaluateAuthorizedMultipleRequestedScopesEmptyPolicySet() throws Exception {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", Collections.emptySet());
-    registerPolicy("eval-multi-any", "oidc", "multiany@example.com",
+    registerPolicy("oidc", "multiany@example.com",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
@@ -581,7 +581,7 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
     rp.put("/api/v2", new HashSet<>(Arrays.asList("write")));
-    registerPolicy("eval-scope-per-res", "oidc", "scopetest@example.com",
+    registerPolicy("oidc", "scopetest@example.com",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
@@ -591,7 +591,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateDenyHeadlessNotAllowed() throws Exception {
-    registerPolicy("eval-headless-deny", "oidc", "headless2@example.com",
+    registerPolicy("oidc", "headless2@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false);
 
@@ -603,7 +603,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateGroupsNotEmptyThrowsServerError() throws Exception {
-    registerPolicy("eval-group-err", "oidc", "groups@example.com",
+    registerPolicy("oidc", "groups@example.com",
         Collections.emptySet(),
         new HashSet<>(Collections.singleton("admins")),
         singleResourcePolicy("/api", "read"));
@@ -618,7 +618,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateTtlPolicyLowerThanConfigured() throws Exception {
-    registerPolicy("eval-ttl1", "oidc", "ttl1@example.com",
+    registerPolicy("oidc", "ttl1@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false, 3600);
 
@@ -631,7 +631,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateTtlConfiguredLowerThanPolicy() throws Exception {
-    registerPolicy("eval-ttl2", "oidc", "ttl2@example.com",
+    registerPolicy("oidc", "ttl2@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false, 10000);
 
@@ -644,7 +644,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEvaluateTtlNullPolicyUsesConfigured() throws Exception {
-    registerPolicy("eval-ttl3", "oidc", "ttl3@example.com",
+    registerPolicy("oidc", "ttl3@example.com",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false, null);
 
@@ -673,23 +673,23 @@ public class JdbcDelegationPolicyServiceTest {
     return svc;
   }
 
-  private void registerPolicy(String actorId, String authority, String actorSubject,
+  private void registerPolicy(String authority, String actorId,
       Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy) throws Exception {
-    service.register(policy(authority, actorSubject, null, "active", null, null, null,
+    service.register(policy(authority, actorId, null, "active", null, null, null,
         Instant.now(), users, groups, resourcePolicy));
   }
 
-  private void registerPolicy(String actorId, String authority, String actorSubject,
+  private void registerPolicy(String authority, String actorId,
       Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy,
       boolean allowHeadless) throws Exception {
-    service.register(new DelegationPolicy(null, authority, actorSubject, null, "active", null, null, null,
+    service.register(new DelegationPolicy(null, authority, actorId, null, "active", null, null, null,
         Instant.now(), Instant.now(), allowHeadless, users, groups, resourcePolicy));
   }
 
-  private void registerPolicy(String actorId, String authority, String actorSubject,
+  private void registerPolicy(String authority, String actorId,
       Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy,
       boolean allowHeadless, Integer policyTtl) throws Exception {
-    service.register(new DelegationPolicy(null, authority, actorSubject, null, "active", policyTtl, null, null,
+    service.register(new DelegationPolicy(null, authority, actorId, null, "active", policyTtl, null, null,
         Instant.now(), Instant.now(), allowHeadless, users, groups, resourcePolicy));
   }
 
