@@ -17,60 +17,60 @@
  */
 package org.apache.knox.gateway.trace;
 
-import org.apache.knox.gateway.servlet.SynchronousServletOutputStreamAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.servlet.ServletOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-class TraceOutput extends SynchronousServletOutputStreamAdapter {
+/**
+ * Response-side counterpart of {@link TraceInput}: accumulates and logs a
+ * bounded prefix of the response body for tracing.
+ * Jetty 12 the body is written through the {@code Response.write(...)} sink,
+ * so {@link TraceResponse} slices each written
+ * buffer and feeds it here via {@link #extractContent}; this is now a plain
+ * helper rather than a stream subclass. Only the logger name and label
+ * ({@code |ResponseBody[len]}) differ from {@link TraceInput}.
+ */
+class TraceOutput {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
-  private static final Logger bodyLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
-
-  private ServletOutputStream delegate;
 
   private static final int BUFFER_LIMIT = 1024;
-  private StringBuilder buffer = new StringBuilder( BUFFER_LIMIT );
+  private final StringBuilder buffer = new StringBuilder( BUFFER_LIMIT );
 
-  TraceOutput( ServletOutputStream delegate ) {
-    this.delegate = delegate;
-  }
-
-  @Override
-  public synchronized void write( int b ) throws IOException {
-    if( b >= 0 ) {
-      buffer.append( (char)b );
-      if( buffer.length() == BUFFER_LIMIT ) {
-        traceBody();
+  /**
+   * Appends up to the remaining {@value #BUFFER_LIMIT}-byte budget from this
+   * buffer view, then flushes when the budget is exhausted or this is the last
+   * write. {@code synchronized} because writes may originate from different
+   * threads over the life of a response.
+   *
+   * @param view a slice of the written bytes (safe to reposition here), or null
+   * @param last whether this is the final write of the response body
+   */
+  public synchronized void extractContent(ByteBuffer view, boolean last) {
+    if (view != null && view.hasRemaining() && buffer.length() < BUFFER_LIMIT) {
+      // Never decode more than what is left of the capture budget.
+      int cap = BUFFER_LIMIT - buffer.length();
+      ByteBuffer limited = view.duplicate();
+      if (limited.remaining() > cap) {
+        limited.limit(limited.position() + cap);
       }
+      buffer.append(StandardCharsets.UTF_8.decode(limited));
     }
-    delegate.write( b );
+    if (buffer.length() >= BUFFER_LIMIT || last) {
+      traceBody();
+    }
   }
 
-  @Override
-  public void flush() throws IOException {
-    traceBody();
-    delegate.flush();
-  }
-
-  @Override
-  public void close() throws IOException {
-    traceBody();
-    delegate.close();
-  }
-
-  private synchronized void traceBody() {
-    if( buffer.length() > 0 ) {
+  private void traceBody() {
+    if (!buffer.isEmpty()) {
       String body = buffer.toString();
-      buffer.setLength( 0 );
+      buffer.setLength(0);
       StringBuilder sb = new StringBuilder();
-      TraceUtil.appendCorrelationContext( sb );
-      sb.append( String.format(Locale.ROOT, "|ResponseBody[%d]%n\t%s", body.length(), body ) );
-      if( bodyLog.isTraceEnabled() ) {
-        log.trace( sb.toString() );
-      }
+      TraceUtil.appendCorrelationContext(sb);
+      sb.append(String.format(Locale.ROOT, "|ResponseBody[%d]%n\t%s", body.length(), body));
+      log.trace(sb.toString());
     }
   }
 

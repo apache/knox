@@ -18,7 +18,6 @@
 
 package org.apache.knox.gateway.websockets;
 
-import static org.easymock.EasyMock.isA;
 import org.apache.knox.gateway.audit.api.AuditService;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
@@ -32,10 +31,12 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.webshell.WebshellWebSocketAdapter;
 import org.easymock.EasyMock;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.websocket.api.util.WSURI;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
+import org.eclipse.jetty.websocket.server.ServerUpgradeResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -47,14 +48,14 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.net.URI;
 import java.security.KeyStore;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.easymock.EasyMock.isA;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*", "org.w3c.*"})
@@ -85,12 +86,15 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(true).anyTimes();
         EasyMock.expect(gatewayConfig.getMaximumConcurrentWebshells()).andReturn(3).anyTimes();
         GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-        // mock ServletUpgradeRequest and ServletUpgradeResponse
-        ServletUpgradeRequest req = createServletUpgradeRequest("wss://localhost:8443/gateway/webshell");
-        ServletUpgradeResponse resp = createServletUpgradeResponse();
+        // mock ServerUpgradeRequest and ServerUpgradeResponse
+        ServerUpgradeRequest req = createServerUpgradeRequest("wss://localhost:8443/gateway/webshell");
+        ServerUpgradeResponse resp = createServerUpgradeResponse();
+        Callback callback = EasyMock.createNiceMock(Callback.class);
+        EasyMock.replay(callback);
 
         JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
         EasyMock.expect(jwtValidator.validate()).andReturn(true).anyTimes();
+        EasyMock.expect(jwtValidator.getUsername()).andReturn("testUser").anyTimes();
         PowerMock.mockStatic(JWTValidatorFactory.class);
         EasyMock.expect(JWTValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
 
@@ -99,8 +103,9 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.replay(gatewayServices,gatewayConfig,jwtValidator);
         PowerMock.replayAll();
 
-        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
-        Assert.assertTrue(gatewayWebsocketHandler.createWebSocket(req,resp) instanceof WebshellWebSocketAdapter);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig,gatewayServices);
+
+        Assert.assertTrue(knoxWebSocketCreator.createWebSocket(req,resp,callback) instanceof WebshellWebSocketAdapter);
     }
 
     @Test
@@ -110,12 +115,14 @@ public class GatewayWebsocketHandlerTest {
       EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(true).anyTimes();
       EasyMock.expect(gatewayConfig.getMaximumConcurrentWebshells()).andReturn(3).anyTimes();
       GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-      // mock ServletUpgradeRequest and ServletUpgradeResponse
-      ServletUpgradeRequest req = createServletUpgradeRequest("wss://www.local.com/gateway/webshell");
-      ServletUpgradeResponse resp = createServletUpgradeResponse();
-
+      // mock ServerUpgradeRequest and ServerUpgradeResponse
+      ServerUpgradeRequest req = createServerUpgradeRequest("wss://www.local.com/gateway/webshell");
+      ServerUpgradeResponse resp = createServerUpgradeResponse();
+      Callback callback = EasyMock.createNiceMock(Callback.class);
+      EasyMock.replay(callback);
       JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
       EasyMock.expect(jwtValidator.validate()).andReturn(true).anyTimes();
+      EasyMock.expect(jwtValidator.getUsername()).andReturn("testUser").anyTimes();
       PowerMock.mockStatic(JWTValidatorFactory.class);
       EasyMock.expect(JWTValidatorFactory.create(req, gatewayServices, gatewayConfig)).andReturn(jwtValidator).anyTimes();
 
@@ -124,8 +131,8 @@ public class GatewayWebsocketHandlerTest {
       EasyMock.replay(gatewayServices,gatewayConfig,jwtValidator);
       PowerMock.replayAll();
 
-      GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
-      Assert.assertTrue(gatewayWebsocketHandler.createWebSocket(req,resp) instanceof WebshellWebSocketAdapter);
+      KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig,gatewayServices);
+      Assert.assertTrue(knoxWebSocketCreator.createWebSocket(req,resp, callback) instanceof WebshellWebSocketAdapter);
     }
 
     @Rule
@@ -140,9 +147,11 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(true).anyTimes();
         EasyMock.expect(gatewayConfig.getMaximumConcurrentWebshells()).andReturn(3).anyTimes();
         GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-        // mock ServletUpgradeRequest and ServletUpgradeResponse
-        ServletUpgradeRequest req = createServletUpgradeRequest("wss://localhost:8443/gateway/webshell");
-        ServletUpgradeResponse resp = createServletUpgradeResponse();
+        // mock ServerUpgradeRequest and ServerUpgradeResponse
+        ServerUpgradeRequest req = createServerUpgradeRequest("wss://localhost:8443/gateway/webshell");
+        ServerUpgradeResponse resp = createServerUpgradeResponse();
+        Callback callback = EasyMock.createNiceMock(Callback.class);
+        EasyMock.replay(callback);
 
         JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
         EasyMock.expect(jwtValidator.validate()).andReturn(false).anyTimes();
@@ -152,8 +161,8 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.replay(gatewayServices,gatewayConfig,jwtValidator);
         PowerMock.replayAll();
 
-        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
-        gatewayWebsocketHandler.createWebSocket(req,resp);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig,gatewayServices);
+        knoxWebSocketCreator.createWebSocket(req,resp,callback);
     }
 
 
@@ -165,12 +174,14 @@ public class GatewayWebsocketHandlerTest {
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.expect(gatewayConfig.isWebShellEnabled()).andReturn(false).anyTimes();
         GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-        // mock ServletUpgradeRequest and ServletUpgradeResponse
-        ServletUpgradeRequest req = createServletUpgradeRequest("wss://localhost:8443/gateway/webshell");
-        ServletUpgradeResponse resp = createServletUpgradeResponse();
+        // mock ServerUpgradeRequest and ServerUpgradeResponse
+        ServerUpgradeRequest req = createServerUpgradeRequest("wss://localhost:8443/gateway/webshell");
+        ServerUpgradeResponse resp = createServerUpgradeResponse();
+        Callback callback = EasyMock.createNiceMock(Callback.class);
+        EasyMock.replay(callback);
         EasyMock.replay(gatewayServices,gatewayConfig);
-        GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(gatewayConfig,gatewayServices);
-        gatewayWebsocketHandler.createWebSocket(req,resp);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig,gatewayServices);
+        knoxWebSocketCreator.createWebSocket(req,resp,callback);
     }
 
     @Test
@@ -193,12 +204,12 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
         EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertSame(identity, props.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertSame(passphrase, props.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertSame(identity, props.get(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertSame(passphrase, props.get(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     @Test
@@ -221,12 +232,12 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
         EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertSame(clientIdentity, props.get(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertSame(passphrase, props.get(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertSame(clientIdentity, props.get(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertSame(passphrase, props.get(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     @Test
@@ -236,12 +247,12 @@ public class GatewayWebsocketHandlerTest {
         GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
         EasyMock.replay(gatewayConfig, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
     @Test
@@ -259,79 +270,32 @@ public class GatewayWebsocketHandlerTest {
         EasyMock.expect(services.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
         EasyMock.replay(gatewayConfig, keystoreService, aliasService, services);
 
-        GatewayWebsocketHandler handler = new GatewayWebsocketHandler(gatewayConfig, services);
+        KnoxWebSocketCreator knoxWebSocketCreator = new KnoxWebSocketCreator(gatewayConfig, services);
         Map<String, Object> props = new HashMap<>();
-        handler.configureClientIdentity(props);
+        knoxWebSocketCreator.configureClientIdentity(props);
 
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_USER_PROPERTY));
-        Assert.assertFalse(props.containsKey(GatewayWebsocketHandler.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_USER_PROPERTY));
+        Assert.assertFalse(props.containsKey(KnoxWebSocketCreator.KEYSTORE_KEY_PASSPHRASE_USER_PROPERTY));
     }
 
-    private ServletUpgradeRequest createServletUpgradeRequest(String url) throws Exception {
-        HttpServletRequest mockRequest = new org.apache.knox.test.mock.MockHttpServletRequest() {
-            @Override
-            public StringBuffer getRequestURL() {
-                return new StringBuffer(url);
-            }
-            @Override
-            public Enumeration<String> getHeaderNames() {
-                return Collections.emptyEnumeration();
-            }
-            @Override
-            public Map<String, String[]> getParameterMap() {
-                return Collections.emptyMap();
-            }
-            @Override
-            public Enumeration<String> getAttributeNames() {
-                return Collections.emptyEnumeration();
-            }
-            @Override
-            public Enumeration<Locale> getLocales() {
-                return Collections.emptyEnumeration();
-            }
-            @Override
-            public String getRemoteAddr() {
-                return "127.0.0.1";
-            }
-            @Override
-            public String getRemoteHost() {
-                return "localhost";
-            }
-            @Override
-            public int getRemotePort() {
-                return 1234;
-            }
-            @Override
-            public String getLocalAddr() {
-                return "127.0.0.1";
-            }
-            @Override
-            public String getLocalName() {
-                return "localhost";
-            }
-            @Override
-            public int getLocalPort() {
-                return 8443;
-            }
-            @Override
-            public String getServerName() {
-                return "localhost";
-            }
-            @Override
-            public int getServerPort() {
-                return 8443;
-            }
-            @Override
-            public String getScheme() {
-                return "wss";
-            }
-        };
-        return new ServletUpgradeRequest(mockRequest);
+    private ServerUpgradeRequest createServerUpgradeRequest(String url) throws Exception {
+        ServerUpgradeRequest mockRequest = EasyMock.createNiceMock(ServerUpgradeRequest.class);
+        URI httpUri = WSURI.toHttp(new URI(url));
+
+        HttpURI httpURI = HttpURI.build(httpUri);
+
+        // Set the expectations needed by KnoxWebSocketCreator and JWTValidator
+        EasyMock.expect(mockRequest.getHttpURI()).andReturn(httpURI).anyTimes();
+        EasyMock.expect(mockRequest.getHeaders()).andReturn(HttpFields.EMPTY).anyTimes();
+
+        EasyMock.replay(mockRequest);
+        return mockRequest;
     }
 
-    private ServletUpgradeResponse createServletUpgradeResponse() {
-        HttpServletResponse mockResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    private ServerUpgradeResponse createServerUpgradeResponse() {
+        ServerUpgradeResponse mockResponse = EasyMock.createNiceMock(ServerUpgradeResponse.class);
+
         EasyMock.replay(mockResponse);
-        return new ServletUpgradeResponse(mockResponse);
+        return mockResponse;
     }
 }

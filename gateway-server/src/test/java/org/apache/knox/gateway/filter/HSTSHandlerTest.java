@@ -16,26 +16,27 @@
  */
 package org.apache.knox.gateway.filter;
 
-import junit.framework.TestCase;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.server.Response;
 import org.junit.Test;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-public class HSTSHandlerTest extends TestCase {
+public class HSTSHandlerTest {
 
     @Test
-    public void testHandle() throws ServletException, IOException {
-        HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
-        response.setHeader("Strict-Transport-Security", "max-age=1000");
-        EasyMock.expectLastCall().once();
+    public void testHandle() throws Exception {
+        Response response = EasyMock.createNiceMock(Response.class);
+        HttpFields.Mutable headers = HttpFields.build();
+        EasyMock.expect(response.getHeaders()).andReturn(headers).anyTimes();
+
         EasyMock.replay(response);
 
         HSTSHandler hstsHandler = new HSTSHandler("max-age=1000");
-        hstsHandler.handle("", null, null, response);
+        hstsHandler.handle(null, response, null);
 
         EasyMock.verify(response);
+        assertEquals("max-age=1000", headers.get("Strict-Transport-Security"));
     }
 }

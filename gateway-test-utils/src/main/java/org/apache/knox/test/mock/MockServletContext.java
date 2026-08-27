@@ -285,4 +285,36 @@ public class MockServletContext implements ServletContext {
   public String getVirtualServerName() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public int getSessionTimeout() {
+    return 0;
+  }
+
+  @Override
+  public void setSessionTimeout( int sessionTimeout ) {
+  }
+
+  @Override
+  public String getRequestCharacterEncoding() {
+    return null;
+  }
+
+  @Override
+  public void setRequestCharacterEncoding( String encoding ) {
+  }
+
+  @Override
+  public String getResponseCharacterEncoding() {
+    return null;
+  }
+
+  @Override
+  public void setResponseCharacterEncoding( String encoding ) {
+  }
+
+  @Override
+  public ServletRegistration.Dynamic addJspFile( String servletName, String jspFile ) {
+    return null;
+  }
 }
