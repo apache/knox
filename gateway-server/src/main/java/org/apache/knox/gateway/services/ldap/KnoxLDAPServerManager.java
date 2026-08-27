@@ -159,7 +159,7 @@ public class KnoxLDAPServerManager {
         if (!StringUtils.isBlank(bindUser)) {
             Dn bindUserDn = new Dn(bindUser);
             if (!(bindUserDn.isDescendantOf("ou=system") || bindUserDn.isDescendantOf("ou=people," + this.baseDn))) {
-                throw new IllegalArgumentException("Bind user must be a descendant of ou=system or ou=people" + this.baseDn);
+                throw new IllegalArgumentException("Bind user must be a descendant of ou=system or ou=people," + this.baseDn);
             }
         }
     }
@@ -456,7 +456,6 @@ public class KnoxLDAPServerManager {
      * Configure the Authenticator used by external clients to bind against the embedded LDAP server.
      */
     private void configureInMemoryBindUser(String bindPassword) throws Exception {
-        String id = "inmemoryuser";
         Dn bindDn = new Dn(directoryService.getSchemaManager(), bindUser);
 
         Interceptor interceptor = directoryService.getInterceptor(InterceptorEnum.AUTHENTICATION_INTERCEPTOR.getName());

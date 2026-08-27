@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.authn;
 
+import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.DefaultDirectoryService;
@@ -79,14 +80,13 @@ public class InMemoryBindAuthenticatorTest {
         assertNull(principal);
     }
 
-    @Test
+    @Test(expected = LdapAuthenticationException.class)
     public void testAuthenticateBadPassword() throws Exception {
         BindOperationContext context = mock(BindOperationContext.class);
         expect(context.getDn()).andReturn(bindDn).once();
         expect(context.getCredentials()).andReturn("bad-password".getBytes(StandardCharsets.UTF_8)).once();
         replay(context);
 
-        LdapPrincipal principal = authenticator.authenticate(context);
-        assertNull(principal);
+        authenticator.authenticate(context);
     }
 }

@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.authn;
 
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
+import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.server.core.api.LdapPrincipal;
@@ -51,6 +52,8 @@ public class InMemoryBindAuthenticator extends AbstractAuthenticator {
             String password = new String(passwordBytes, StandardCharsets.UTF_8);
             if (bindPassword.equals(password)) {
                 return new LdapPrincipal(getDirectoryService().getSchemaManager(), dn, AuthenticationLevel.SIMPLE);
+            } else {
+                throw new LdapAuthenticationException("Failed to authenticate: " + dn.getName());
             }
         }
 
