@@ -899,16 +899,20 @@ public class LdapProxyBackend implements LdapBackend {
                 if (cursor.isDone()) {
                     SearchResultDone done = cursor.getSearchResultDone();
 
-                    LdapResult ldapResult = done.getLdapResult();
-                    if (ldapResult.getResultCode() != ResultCodeEnum.SUCCESS) {
-                        throw new LdapOperationException(ldapResult.getResultCode(), ldapResult.getDiagnosticMessage());
-                    }
-                    PagedResults responseControl = (PagedResults) done.getControl(PagedResults.OID);
+                    if (done != null) {
+                        LdapResult ldapResult = done.getLdapResult();
+                        if (ldapResult.getResultCode() != ResultCodeEnum.SUCCESS) {
+                            throw new LdapOperationException(ldapResult.getResultCode(), ldapResult.getDiagnosticMessage());
+                        }
+                        PagedResults responseControl = (PagedResults) done.getControl(PagedResults.OID);
 
-                    if (responseControl != null) {
-                        cookie = responseControl.getCookie();
+                        if (responseControl != null) {
+                            cookie = responseControl.getCookie();
+                        } else {
+                            cookie = null;
+                        }
                     } else {
-                        cookie = null;
+                        throw new LdapException("The LDAP search operation failed to complete fully.");
                     }
                 }
                 pageNumber++;
