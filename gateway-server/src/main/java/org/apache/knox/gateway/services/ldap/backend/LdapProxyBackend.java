@@ -19,6 +19,7 @@ package org.apache.knox.gateway.services.ldap.backend;
 
 import static java.util.Locale.ROOT;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.cursor.SearchCursor;
@@ -454,6 +455,11 @@ public class LdapProxyBackend implements LdapBackend {
     @Override
     public boolean authenticate(Dn userDn, String password) {
         final String userDnText = userDn.toString(); //at this point we are sure it's not NULL
+
+        // Don't allow anonymous or unauthenticated bind
+        if (StringUtils.isBlank(userDnText) || StringUtils.isBlank(password)) {
+            return false;
+        }
 
         // if userDN is using proxy base DN then convert to remote base dn
         final String remoteUserDnText = remoteSchemaConverter.convertProxyDnToRemoteDn(userDnText);
