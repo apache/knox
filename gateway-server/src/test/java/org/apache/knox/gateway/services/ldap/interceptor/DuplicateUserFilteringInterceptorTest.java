@@ -47,7 +47,7 @@ public class DuplicateUserFilteringInterceptorTest {
 
     private DirectoryService directoryService;
     private SchemaManager schemaManager;
-    private ConfigurableEntriesTestInterceptor nextInterceptor;
+    private ConfigurableSearchTestInterceptor nextInterceptor;
     private SearchOperationContext ctx;
 
     @Before
@@ -61,12 +61,12 @@ public class DuplicateUserFilteringInterceptorTest {
         interceptor.init(directoryService);
         directoryService.addLast(interceptor);
 
-        nextInterceptor = new ConfigurableEntriesTestInterceptor(NEXT_INTERCEPTOR);
+        nextInterceptor = new ConfigurableSearchTestInterceptor(NEXT_INTERCEPTOR);
         nextInterceptor.init(directoryService);
         directoryService.addLast(nextInterceptor);
 
         ctx = new SearchOperationContext(directoryService.getSession());
-        ctx.setInterceptors(List.of(TEST_INTERCEPTOR, NEXT_INTERCEPTOR));
+        ctx.setInterceptors(List.of(NEXT_INTERCEPTOR));
 
     }
 

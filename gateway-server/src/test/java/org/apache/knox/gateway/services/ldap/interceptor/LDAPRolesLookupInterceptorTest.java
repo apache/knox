@@ -142,14 +142,14 @@ public class LDAPRolesLookupInterceptorTest {
         interceptor.init(directoryService);
         directoryService.addLast(interceptor);
 
-        ConfigurableEntriesTestInterceptor nextInterceptor =
-                new ConfigurableEntriesTestInterceptor("NEXT");
+        ConfigurableSearchTestInterceptor nextInterceptor =
+                new ConfigurableSearchTestInterceptor("NEXT");
         nextInterceptor.init(directoryService);
         directoryService.addLast(nextInterceptor);
 
         SearchOperationContext ctx =
                 new SearchOperationContext(directoryService.getSession());
-        ctx.setInterceptors(List.of(interceptor.getName(), "NEXT"));
+        ctx.setInterceptors(List.of("NEXT"));
 
         RolesLookupBypassControl control =
                 new RolesLookupBypassControlImpl();
@@ -188,7 +188,7 @@ public class LDAPRolesLookupInterceptorTest {
 
     private record TestContext(
             LDAPRolesLookupInterceptor interceptor,
-            ConfigurableEntriesTestInterceptor nextInterceptor,
+            ConfigurableSearchTestInterceptor nextInterceptor,
             SearchOperationContext ctx) {
     }
 }
