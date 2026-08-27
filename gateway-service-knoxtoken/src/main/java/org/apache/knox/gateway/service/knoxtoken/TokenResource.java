@@ -907,7 +907,7 @@ public class TokenResource {
     final List<String> audiences;
     try {
       audiences = resolveAudiences();
-    } catch (AudienceValidationException e) {
+    } catch (RequestedAudienceValidationException e) {
       log.rejectedAudienceRequest(e.getMessage());
       return new TokenResponseContext(null,
           "{\n  \"error\": \"" + e.getMessage() + "\",\n  \"code\": " + e.getErrorCode().toInt() + "\n}\n",
@@ -1149,7 +1149,7 @@ public class TokenResource {
     }
   }
 
-  private List<String> resolveAudiences() throws AudienceValidationException {
+  private List<String> resolveAudiences() throws RequestedAudienceValidationException {
     final Map<String, String[]> parameterMap = request.getParameterMap();
     final String[] rawValues = parameterMap == null ? null : parameterMap.get(AUDIENCE_QUERY_PARAM);
     final List<String> requested = new ArrayList<>();
@@ -1174,13 +1174,13 @@ public class TokenResource {
 
     // Secure by default: with no configured whitelist there is nothing to validate against, so refuse.
     if (targetAudiences.isEmpty()) {
-      throw new AudienceValidationException("No audiences are configured; cannot honor a requested audience.",
+      throw new RequestedAudienceValidationException("No allowed audiences are configured in 'knox.token.audiences'; cannot honor a requested audience.",
           ErrorCode.INVALID_AUDIENCE);
     }
 
     for (String audience : requested) {
       if (!targetAudiences.contains(audience)) {
-        throw new AudienceValidationException("The requested audience '" + audience + "' is not allowed.",
+        throw new RequestedAudienceValidationException("The requested audience '" + audience + "' is not allowed.",
             ErrorCode.INVALID_AUDIENCE);
       }
     }

@@ -19,14 +19,10 @@ package org.apache.knox.gateway.service.knoxtoken;
 
 import org.apache.knox.gateway.service.knoxtoken.TokenResource.ErrorCode;
 
-/**
- * Thrown when an {@code audience} requested on a token request cannot be honored, e.g. because no
- * whitelist is configured or a requested value is not part of the configured {@code knox.token.audiences}.
- */
-class AudienceValidationException extends Exception {
+class RequestedAudienceValidationException extends Exception {
   private final ErrorCode errorCode;
 
-  AudienceValidationException(String message, ErrorCode errorCode) {
+  RequestedAudienceValidationException(String message, ErrorCode errorCode) {
     super(message);
     this.errorCode = errorCode;
   }
