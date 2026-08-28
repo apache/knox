@@ -109,6 +109,7 @@ Which requested audiences are allowed is decided by a pluggable *audience valida
 
 *   `static` (the default) preserves the historical behavior: the `audience` query parameter is ignored and the statically configured `knox.token.audiences` are always used. No configuration beyond `knox.token.audiences` is needed and nothing new is exposed to callers.
 *   `whitelist` validates requested audiences against `knox.token.audiences`, treating it as a whitelist.
+*   `passthrough` accepts whatever audience(s) the caller requests without any local whitelist. It requires no configured `knox.token.audiences`; when the request contains no `audience` parameter the token is issued with no `aud` claim (it does not fall back to `knox.token.audiences`).
 
 Selecting the `whitelist` validator enables per-request audiences:
 
@@ -125,15 +126,17 @@ With the `whitelist` validator its behavior is:
 
 Only exact matches against the whitelist are honored.
 
-To avoid deploying a topology that cannot authorize any request, the deployment fails at startup when the `whitelist` validator is selected but no `knox.token.audiences` are configured. This guard is specific to validators that require a configured audience list (the `whitelist` validator cannot authorize anything without one); it is expressed through the validator's own `requiresConfiguredAudiences()` contract rather than by inspecting the topology. The default `static` validator has no such requirement.
+The `passthrough` validator instead stamps the requested audience(s) into the token's `aud` claim verbatim, without any whitelist check, and rejects nothing. If the request contains no `audience` parameter the token is issued with no `aud` claim. Because it performs no local authorization, `passthrough` relies on a downstream JWTProvider to reject tokens whose `aud` does not match the consumer topology's expected audiences, deferring enforcement to the point of consumption. Use it only when such consumption-time validation is in place.
 
-Additional validators can be added and selected through `knox.token.audience.validator` without changing the `static` or `whitelist` behavior described above. Because a validator runs when the token is *issued*, it decides only which `aud` value(s) may be stamped into the new token; it does not and cannot consult the JWTProvider filter, which validates an already-issued token at *consumption* time on the topology fronting the target service. A conceivable future validator could, for example, honor requested audiences without a local whitelist and rely on a downstream JWTProvider to reject tokens whose `aud` does not match that consumer topology's expected audiences (deferring enforcement to the point of consumption), or delegate the decision to an external policy service. Neither is implemented today.
+To avoid deploying a topology that cannot authorize any request, the deployment fails at startup when the `whitelist` validator is selected but no `knox.token.audiences` are configured. This guard is specific to validators that require a configured audience list (the `whitelist` validator cannot authorize anything without one); it is expressed through the validator's own `requiresConfiguredAudiences()` contract rather than by inspecting the topology. The `static` and `passthrough` validators have no such requirement.
+
+Additional validators can be added and selected through `knox.token.audience.validator` without changing the behavior described above. Because a validator runs when the token is *issued*, it decides only which `aud` value(s) may be stamped into the new token; it does not and cannot consult the JWTProvider filter, which validates an already-issued token at *consumption* time on the topology fronting the target service. A conceivable future validator could, for example, delegate the decision to an external policy service. That is not implemented today.
 
 Audience validator configuration parameters:
 
 Parameter                        | Description | Default    |
 -------------------------------- |------------ |----------- |
-knox.token.audience.validator | Selects the audience validator strategy. `static` ignores the per-request `audience` parameter and uses `knox.token.audiences`; `whitelist` honors requested audiences that appear in `knox.token.audiences`. | static |
+knox.token.audience.validator | Selects the audience validator strategy. `static` ignores the per-request `audience` parameter and uses `knox.token.audiences`; `whitelist` honors requested audiences that appear in `knox.token.audiences`; `passthrough` accepts any requested audience without a whitelist (no `aud` when the parameter is absent). | static |
 
 #### KnoxToken Renewal, Revocation and Enable/Disable actions
 

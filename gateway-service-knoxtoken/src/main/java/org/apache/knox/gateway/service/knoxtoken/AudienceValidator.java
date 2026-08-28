@@ -38,7 +38,11 @@ interface AudienceValidator {
         if (WhitelistAudienceValidator.NAME.equalsIgnoreCase(selected)) {
             return new WhitelistAudienceValidator();
         }
+        if (PassthroughAudienceValidator.NAME.equalsIgnoreCase(selected)) {
+            return new PassthroughAudienceValidator();
+        }
         throw new IllegalArgumentException("Unknown audience validator '" + selected + "'. Supported validators: "
-                + StaticAudienceValidator.NAME + ", " + WhitelistAudienceValidator.NAME + '.');
+                + StaticAudienceValidator.NAME + ", " + WhitelistAudienceValidator.NAME + ", "
+                + PassthroughAudienceValidator.NAME + '.');
     }
 }

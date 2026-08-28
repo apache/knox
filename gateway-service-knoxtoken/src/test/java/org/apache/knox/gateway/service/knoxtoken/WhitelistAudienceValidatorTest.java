@@ -77,6 +77,7 @@ public class WhitelistAudienceValidatorTest {
     assertTrue(AudienceValidator.forName("  ") instanceof StaticAudienceValidator);
     assertTrue(AudienceValidator.forName("static") instanceof StaticAudienceValidator);
     assertTrue(AudienceValidator.forName("whitelist") instanceof WhitelistAudienceValidator);
+    assertTrue(AudienceValidator.forName("passthrough") instanceof PassthroughAudienceValidator);
   }
 
   @Test(expected = IllegalArgumentException.class)
