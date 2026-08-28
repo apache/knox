@@ -19,37 +19,83 @@ package org.apache.knox.gateway.trace;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import java.io.IOException;
-import java.util.Collection;
+import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.Set;
 
-class TraceResponse extends HttpServletResponseWrapper {
+/**
+ * Traces the outbound side of an exchange, the status line + response headers
+ * once, and (optionally, filtered by status code) the response body as it is
+ * written.
+ *
+ * This previously (Jetty 9) extended
+ * {@code HttpServletResponseWrapper} and traced the body through a
+ * {@code ServletOutputStream}/{@code PrintWriter} decorator. Jetty 12 writes
+ * responses through the core sink {@link Response#write(boolean, ByteBuffer,
+ * Callback)} instead of servlet streams, so:
+ * <ul>
+ *   <li>the class now extends {@link Response.Wrapper} and overrides
+ *       {@code write(...)} to observe each buffer being flushed;</li>
+ *   <li>status/headers come from {@link #getStatus()} and {@link HttpFields}
+ *       ({@link #getHeaders()}).</li>
+ * </ul>
+ */
+class TraceResponse extends Response.Wrapper {
   private static final Logger log = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_LOGGER );
   private static final Logger headLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_HEADER_LOGGER );
+  private static final Logger bodyLog = LogManager.getLogger( TraceHandler.HTTP_RESPONSE_BODY_LOGGER );
 
-  private ServletOutputStream output;
-  private Set<Integer> filter;
+  private final boolean tracing;
+  private final boolean tracingHeaders;
+  private final boolean tracingBody;
+  private final TraceOutput output;
+  private final Set<Integer> filter;
+  private boolean traced;
 
-  TraceResponse( HttpServletResponse response, Set<Integer> filter ) {
-    super( response );
+  TraceResponse(Request request, Response wrapped, Set<Integer> filter ) {
+    super(request, wrapped);
+    this.tracing = log.isTraceEnabled();
+    this.tracingHeaders = headLog.isTraceEnabled();
+    this.tracingBody = bodyLog.isTraceEnabled();
     this.filter = filter;
+    this.output = new TraceOutput();
   }
 
   @Override
-  public synchronized ServletOutputStream getOutputStream() throws IOException {
-    if( log.isTraceEnabled() ) {
+  public void write(boolean last, ByteBuffer content, Callback callback) {
+    // First write commits the response, so this is where status/headers are
+    // logged for the common (body-bearing) case; ensureTraced() dedupes against
+    // the callback-driven path used by body-less responses.
+    if (tracing) {
+      ensureTraced();
+    }
+    // Body tracing is optionally restricted to a set of status codes (e.g. only
+    // log error-response bodies). An empty/null filter means "all statuses".
+    if (tracingBody && (filter == null || filter.isEmpty() || filter.contains(getStatus()))) {
+      // slice() so decoding for the log leaves the caller's buffer position
+      // untouched for the real write below.
+      ByteBuffer view = (content != null) ? content.slice() : null;
+      output.extractContent(view, last);
+    }
+    super.write(last, content, callback);
+  }
+
+  /**
+   * Logs the status line + headers exactly once. Invoked either from the first
+   * {@link #write} or from {@code TraceHandler}'s wrapped callback (for
+   * responses that never call {@code write}). The {@code traced} guard ensures
+   * whichever fires second does nothing.
+   */
+  void ensureTraced() {
+    if (tracing && !traced) {
+      traced = true;
       traceResponseDetails();
-      if( output == null && ( filter == null || filter.isEmpty() || filter.contains( getStatus() ) ) ) {
-        output = new TraceOutput( super.getOutputStream() );
-      }
-      return output;
-    } else {
-      return super.getOutputStream();
     }
   }
 
@@ -57,21 +103,22 @@ class TraceResponse extends HttpServletResponseWrapper {
     StringBuilder sb = new StringBuilder();
     TraceUtil.appendCorrelationContext( sb );
     sb.append( "|Response=" )
-        .append( getStatus() );
+    .append( getStatus() );
     appendHeaders( sb );
     log.trace( sb.toString() );
   }
 
   private void appendHeaders( StringBuilder sb ) {
-    if( headLog.isTraceEnabled() ) {
-      Collection<String> names = getHeaderNames();
-      for( String name : names ) {
-        for( String value : getHeaders( name ) ) {
-          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", name, value ) );
+    if (tracingHeaders) {
+      HttpFields responseHeaders = getHeaders();
+      if (responseHeaders != null) {
+        for (HttpField header: responseHeaders) {
+          sb.append( String.format(Locale.ROOT, "%n\tHeader[%s]=%s", header.getName(), header.getValue()));
         }
       }
     }
   }
+
 }
 
 

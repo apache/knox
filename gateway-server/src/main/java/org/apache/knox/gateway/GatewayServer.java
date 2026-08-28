@@ -58,6 +58,7 @@ import org.apache.knox.gateway.trace.TraceHandler;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.apache.knox.gateway.websockets.GatewayWebsocketHandler;
+import org.eclipse.jetty.http.UriCompliance;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -65,18 +66,17 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.webapp.Configuration;
-import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.ee8.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
@@ -87,8 +87,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.servlet.SessionCookieConfig;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -492,15 +490,44 @@ public class GatewayServer {
       httpConfig.setResponseHeaderSize( config.getHttpServerResponseHeaderBuffer() );
       httpConfig.setOutputBufferSize( config.getHttpServerResponseBuffer() );
 
+      /*
+       Jetty 12's default UriCompliance (RFC3986) rejects URIs
+       containing encoded path separators (%2F) e.g. /gateway/cluster/hbase/table/%2F%2Ftestrow
+       and the empty segments they
+       produce as "ambiguous", throwing 400 before the request reaches
+       routing. Knox should be able to pass such paths through
+       to backends keeping the behavior for Jetty 9.4. LEGACY restores that
+       Jetty 9.4 URI handling so those requests are proxied rather than rejected.
+       */
+      httpConfig.setUriCompliance( UriCompliance.LEGACY );
+
       if (config.isSSLEnabled()) {
         HttpConfiguration httpsConfig = new HttpConfiguration( httpConfig );
         httpsConfig.setSecureScheme( "https" );
         httpsConfig.setSecurePort( connectorPort );
-        httpsConfig.addCustomizer( new SecureRequestCustomizer() );
+        // Jetty's SecureRequestCustomizer enforces SNI host checking by default (it
+        // rejects with HTTP 400 any HTTPS request whose TLS SNI does not match a name
+        // in the presented server certificate). Knox terminates TLS as a reverse proxy
+        // and is frequently deployed with a single gateway certificate (in dev, a
+        // self-signed localhost certificate) that does not enumerate every hostname a
+        // client might use, so leaving the check enabled would reject otherwise-legitimate
+        // requests. Disable it so the gateway stays reachable under those deployments.
+        // NOTE: this relaxes the default; enable it where the gateway certificate covers
+        // all client-facing hostnames and strict SNI matching is desired.
+        SecureRequestCustomizer secureRequestCustomizer = new SecureRequestCustomizer();
+        secureRequestCustomizer.setSniHostCheck( false );
+        httpsConfig.addCustomizer( secureRequestCustomizer );
         SSLService ssl = services.getService(ServiceType.SSL_SERVICE);
-        SslContextFactory sslContextFactory = (SslContextFactory)ssl.buildSslContextFactory( config );
+        // In Jetty 12 the ServerConnector(Server, SslContextFactory, ConnectionFactory)
+        // convenience constructor was removed. Build an SslConnectionFactory explicitly
+        // and prepend it to the HttpConnectionFactory so that the SSL layer wraps HTTP/1.1.
+        SslContextFactory.Server sslContextFactory =
+            (SslContextFactory.Server) ssl.buildSslContextFactory( config );
         ssl.excludeTopologyFromClientAuth(sslContextFactory, config, topologyName);
-        connector = new ServerConnector( server, sslContextFactory, new HttpConnectionFactory( httpsConfig ) );
+        HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );
+        SslConnectionFactory sslConnectionFactory =
+            new SslConnectionFactory( sslContextFactory, httpConnectionFactory.getProtocol() );
+        connector = new ServerConnector( server, sslConnectionFactory, httpConnectionFactory );
       } else {
         connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
       }
@@ -520,24 +547,12 @@ public class GatewayServer {
     return connectors;
   }
 
-  private static HandlerCollection createHandlers(
+  private static Handler createHandlers(
       final GatewayConfig config,
       final GatewayServices services,
       final ContextHandlerCollection contexts,
+      final Map<String, WebAppContext> deployments,
       final Map<String, Integer> topologyPortMap) {
-
-    final Map<String, Handler> contextToHandlerMap = new HashMap<>();
-    if(contexts.getHandlers() != null) {
-      Arrays.asList(contexts.getHandlers()).stream()
-          .filter(h -> h instanceof WebAppContext)
-          .forEach(h -> contextToHandlerMap
-              .put(((WebAppContext) h).getContextPath(), h));
-    }
-
-    HandlerCollection handlers = new HandlerCollection();
-    RequestLogHandler logHandler = new RequestLogHandler();
-
-    logHandler.setRequestLog( new AccessHandler() );
 
     TraceHandler traceHandler = new TraceHandler();
     traceHandler.setHandler( contexts );
@@ -569,12 +584,18 @@ public class GatewayServer {
           .filter(e -> !e.getValue().equals(config.getGatewayPort()))
           .forEach( entry ->  {
             log.createJettyHandler(entry.getKey());
-            final Handler context = contextToHandlerMap
+            // Deployed topologies register their ee8 WebAppContext in the
+            // deployments map keyed by context path. (The ContextHandlerCollection
+            // holds the *core* ContextHandlers returned by getCoreContextHandler(),
+            // which are not ee8 WebAppContext instances, so it cannot be filtered
+            // by type to recover them.) Binding the virtual host on the ee8
+            // WebAppContext propagates to its core context handler.
+            final WebAppContext context = deployments
                 .get("/" + config.getGatewayPath() + "/" + entry.getKey());
 
             if(context !=  null) {
-              ((WebAppContext) context).setVirtualHosts(
-                  new String[] { "@" + entry.getKey().toLowerCase(Locale.ROOT) });
+              context.setVirtualHosts(
+                  new String[]{"@" + entry.getKey().toLowerCase(Locale.ROOT)});
             } else {
               // no topology found for mapping entry.getKey()
               log.noMappedTopologyFound(entry.getKey());
@@ -582,26 +603,24 @@ public class GatewayServer {
           });
     }
 
-    handlers.addHandler(logHandler);
-
-    if(config.isStrictTransportEnabled()) {
-      final String strictTransportOption = config.getStrictTransportOption();
-      handlers.addHandler(new HSTSHandler(strictTransportOption));
-      log.strictTransportHeaderEnabled(strictTransportOption);
-    }
-
+    Handler rootHandler = portMappingHandler;
     if (config.isWebsocketEnabled()) {
       final GatewayWebsocketHandler websocketHandler = new GatewayWebsocketHandler(
           config, services);
       websocketHandler.setHandler(portMappingHandler);
-
-      handlers.addHandler(websocketHandler);
-
-    } else {
-      handlers.addHandler(portMappingHandler);
+      rootHandler = websocketHandler;
     }
 
-    return handlers;
+    if(config.isStrictTransportEnabled()) {
+      final String strictTransportOption = config.getStrictTransportOption();
+      HSTSHandler hstsHandler = new HSTSHandler(strictTransportOption);
+      hstsHandler.setHandler(rootHandler);
+      rootHandler = hstsHandler;
+      log.strictTransportHeaderEnabled(strictTransportOption);
+    }
+
+
+    return rootHandler;
   }
 
   /**
@@ -680,12 +699,6 @@ public class GatewayServer {
     // Create Jetty.
     createJetty();
 
-    // Add Annotations processing into the Jetty server to support JSPs
-    Configuration.ClassList classlist = Configuration.ClassList.setServerDefault( jetty );
-    classlist.addBefore(
-        "org.eclipse.jetty.webapp.JettyWebXmlConfiguration",
-        "org.eclipse.jetty.annotations.AnnotationConfiguration" );
-
     // Load the current topologies.
     // Redeploy autodeploy topologies.
     File topologiesDir = calculateAbsoluteTopologiesDir();
@@ -722,7 +735,7 @@ public class GatewayServer {
     // log WARN message and continue
     checkMappedTopologiesExist(topologyPortMap, deployedTopologyList);
 
-    final HandlerCollection handlers = createHandlers( config, services, contexts, topologyPortMap);
+    final Handler handlers = createHandlers( config, services, contexts, deployments, topologyPortMap);
 
      // Check whether a topology wants dedicated port,
      // if yes then we create a connector that listens on the provided port.
@@ -752,7 +765,8 @@ public class GatewayServer {
     }
 
     jetty.setHandler(handlers);
-    jetty.addLifeCycleListener(new GatewayServerLifecycleListener(config));
+    jetty.setRequestLog(new AccessHandler());
+    jetty.addEventListener(new GatewayServerLifecycleListener(config));
 
     // Start Jetty.
     try {
@@ -783,11 +797,6 @@ public class GatewayServer {
 
   void createJetty() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, AliasServiceException {
     jetty = new Server( new QueuedThreadPool( config.getThreadPoolMax() ) );
-
-    jetty.setAttribute(ContextHandler.MAX_FORM_CONTENT_SIZE_KEY, config.getJettyMaxFormContentSize());
-    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
-    jetty.setAttribute(ContextHandler.MAX_FORM_KEYS_KEY, config.getJettyMaxFormKeys());
-    log.setMaxFormKeys(config.getJettyMaxFormKeys());
 
     // Add a handler for the 404 responses when a topology is being redeployed (i.e., is inactive)
     jetty.setErrorHandler(new Http404ErrorHandler(this, config.getGatewayPath()));
@@ -881,7 +890,12 @@ public class GatewayServer {
   private KnoxErrorHandler createErrorHandler() {
     KnoxErrorHandler errorHandler = new KnoxErrorHandler();
     errorHandler.setShowStacks( false );
-    errorHandler.setTracedBodyFilter( System.getProperty( "org.apache.knox.gateway.trace.body.status.filter" ) );
+    // Note: prior to the Jetty 12 migration this also called
+    // errorHandler.setTracedBodyFilter(...) so the (servlet-layer) error handler
+    // could trace error-page bodies. That is intentionally omitted now — response
+    // bodies (including error-page bodies) are traced uniformly at the core layer
+    // by TraceHandler, which wraps the ContextHandlerCollection with the same
+    // body-status filter (see createHandlers). See KnoxErrorHandler for details.
     return errorHandler;
   }
 
@@ -891,8 +905,10 @@ public class GatewayServer {
     String contextPath;
     contextPath = "/" + Urls.trimLeadingAndTrailingSlashJoin( config.getGatewayPath(), topoName, warPath );
     context.setContextPath( contextPath );
-    SessionCookieConfig sessionCookieConfig = context.getServletContext().getSessionCookieConfig();
-    sessionCookieConfig.setName(KNOXSESSIONCOOKIENAME);
+    // In Jetty 12 the servlet ServletContext.getSessionCookieConfig() is not
+    // reachable until the context is started. The session cookie name is
+    // configured on the SessionHandler directly.
+    context.getSessionHandler().setSessionCookie(KNOXSESSIONCOOKIENAME);
     context.setWar( warFile.getAbsolutePath() );
     context.setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, topoName );
     context.setAttribute( "org.apache.knox.gateway.frontend.uri", getFrontendUri( context, config ) );
@@ -900,16 +916,20 @@ public class GatewayServer {
     context.setAttribute( GatewayServices.GATEWAY_NAME, config.getGatewayPath());
     // Add support for JSPs.
     context.setAttribute(
-        "org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
+        "org.eclipse.jetty.ee8.webapp.ContainerIncludeJarPattern",
         ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$" );
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
-    context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
+    context.setInitParameter("org.eclipse.jetty.ee8.servlet.Default.dirAllowed", "false");
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
+    // Jetty 12's ee8 form parser reads the max form content size and max form keys
+    // from the context (ContextHandler.getMaxFormContentSize()/getMaxFormKeys() and
+    // the core Context attribute) — never from Server-level attributes — so the
+    // gateway-configured limits must be applied per WebApp context here.
     context.setMaxFormContentSize(config.getJettyMaxFormContentSize());
-    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
     context.setMaxFormKeys(config.getJettyMaxFormKeys());
+    log.setMaxFormContentSize(config.getJettyMaxFormContentSize());
     log.setMaxFormKeys(config.getJettyMaxFormKeys());
     return context;
   }
@@ -1014,9 +1034,9 @@ public class GatewayServer {
       WebAppContext oldContext = deployments.get( newContext.getContextPath() );
       deployments.put( newContext.getContextPath(), newContext );
       if( oldContext != null ) {
-        contexts.removeHandler( oldContext );
+        contexts.removeHandler( oldContext.getCoreContextHandler() );
       }
-      contexts.addHandler( newContext );
+      contexts.addHandler( newContext.getCoreContextHandler() );
 
       processApplicationPathAliases(warDir, topology);
 
@@ -1039,7 +1059,7 @@ public class GatewayServer {
       if (warDir.getName().contains(appName) && !aliases.isEmpty()) {
         aliases.forEach(alias -> {
           WebAppContext aliasContext = createWebAppContext(topology, warDir, alias);
-          contexts.addHandler(aliasContext);
+          contexts.addHandler(aliasContext.getCoreContextHandler());
         });
       }
     });
@@ -1094,7 +1114,7 @@ public class GatewayServer {
       for( WebAppContext context : deactivate ) {
         String contextPath = context.getContextPath();
         deployments.remove( contextPath );
-        contexts.removeHandler( context );
+        contexts.removeHandler( context.getCoreContextHandler() );
         try {
           context.stop();
         } catch( Exception e ) {
@@ -1287,15 +1307,15 @@ public class GatewayServer {
     }
 
     @Override
-    public void doError(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public boolean handle(Request request, Response response, Callback callback) throws Exception {
       final int gatewayPrefixLength = ("/" + gatewayPath + "/").length();
-      String pathInfo = baseRequest.getPathInfo();
+      String pathInfo = Request.getPathInContext(request);
       String topologyName = pathInfo.substring(gatewayPrefixLength, pathInfo.indexOf('/', gatewayPrefixLength));
       if (gs.isInactiveTopology(topologyName) && (response.getStatus() == HttpServletResponse.SC_NOT_FOUND)) {
-        request.setAttribute("javax.servlet.error.message", "Service Unavailable"); // The default ErrorHandler references this attribute
+        request.setAttribute(ErrorHandler.ERROR_MESSAGE, "Service Unavailable"); // The default ErrorHandler references this attribute
         response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
       }
-      super.doError(target, baseRequest, request, response);
+      return super.handle(request, response, callback);
     }
   }
 

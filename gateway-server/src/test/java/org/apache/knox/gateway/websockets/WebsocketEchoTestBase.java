@@ -33,11 +33,11 @@ import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.websocket.server.WebSocketHandler;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +94,7 @@ public class WebsocketEchoTestBase {
    */
   public static URI serverUri;
 
-  public static WebSocketHandler handler;
+  public static Handler.Wrapper handler;
 
   private static File topoDir;
   private static Path dataDir;
@@ -157,8 +157,8 @@ public class WebsocketEchoTestBase {
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
-    context.setHandler(handler);
-    backendServer.setHandler(context);
+    handler.setHandler(context);
+    backendServer.setHandler(handler);
 
     // Start Server
     backendServer.start();
@@ -184,15 +184,22 @@ public class WebsocketEchoTestBase {
     final ServerConnector connector = new ServerConnector(gatewayServer);
     gatewayServer.addConnector(connector);
 
+    setupGatewayConfig(backendServerUri.toString());
+
     /* workaround so we can add our handler later at runtime */
-    HandlerCollection handlers = new HandlerCollection(true);
+    ContextHandlerCollection handlers = new ContextHandlerCollection(true);
 
     /* add some initial handlers */
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
     handlers.addHandler(context);
 
-    gatewayServer.setHandler(handlers);
+    /* Setup websocket handler */
+    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
+    gatewayConfig, services);
+    gatewayWebsocketHandler.setHandler(handlers);
+
+    gatewayServer.setHandler(gatewayWebsocketHandler);
 
     // Start Server
     gatewayServer.start();
@@ -203,14 +210,6 @@ public class WebsocketEchoTestBase {
     }
     int port = connector.getLocalPort();
     serverUri = new URI(String.format(Locale.ROOT, "ws://%s:%d/", host, port));
-
-    /* Setup websocket handler */
-    setupGatewayConfig(backendServerUri.toString());
-
-    final GatewayWebsocketHandler gatewayWebsocketHandler = new GatewayWebsocketHandler(
-        gatewayConfig, services);
-    handlers.addHandler(gatewayWebsocketHandler);
-    gatewayWebsocketHandler.start();
   }
 
   /**

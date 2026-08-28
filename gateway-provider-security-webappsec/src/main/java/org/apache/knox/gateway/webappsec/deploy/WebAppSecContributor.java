@@ -51,7 +51,7 @@ public class WebAppSecContributor extends ProviderDeploymentContributorBase {
   private static final String STRICT_TRANSPORT_SUFFIX = "_STRICTTRANSPORT";
   private static final String STRICT_TRANSPORT_FILTER_CLASSNAME = "org.apache.knox.gateway.webappsec.filter.StrictTransportFilter";
   private static final String STRICT_TRANSPORT_ENABLED = "strict.transport.enabled";
-  private static final String RATE_LIMITING_FILTER_CLASSNAME = "org.eclipse.jetty.servlets.DoSFilter";
+  private static final String RATE_LIMITING_FILTER_CLASSNAME = "org.eclipse.jetty.ee8.servlets.DoSFilter";
   private static final String RATE_LIMITING_PREFIX = "rate.limiting";
   private static final String RATE_LIMITING_SUFFIX = "_RATE.LIMITING";
   private static final String RATE_LIMITING_ENABLED = RATE_LIMITING_PREFIX + ".enabled";

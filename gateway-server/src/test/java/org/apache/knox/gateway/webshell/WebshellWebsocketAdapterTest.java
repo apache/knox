@@ -27,9 +27,10 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.websockets.JWTValidator;
 import org.apache.knox.gateway.websockets.WebsocketLogMessages;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockSupport;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
+import org.eclipse.jetty.websocket.api.Callback;
 import org.eclipse.jetty.websocket.api.Session;
 import org.junit.Rule;
 import org.junit.Test;
@@ -99,14 +100,18 @@ public class WebshellWebsocketAdapterTest extends EasyMockSupport {
         EasyMock.expect(connectionInfo.getInputStream()).andReturn(inputStreamEmpty).times(1);
 
         Session session = EasyMock.createNiceMock(Session.class);
-        RemoteEndpoint remote = EasyMock.createNiceMock(RemoteEndpoint.class);
+        Capture<Callback> callbackCapture = EasyMock.newCapture();
+        session.sendText(EasyMock.eq(bashOuput), EasyMock.capture(callbackCapture));
+        EasyMock.expectLastCall().andAnswer(() -> {
+            callbackCapture.getValue().succeed();
+            return null;
+        }).anyTimes();
         // send to client
-        EasyMock.expect(session.getRemote()).andReturn(remote).anyTimes();
-        remote.sendString(bashOuput);
+
         // clean up
         EasyMock.expect(session.isOpen()).andReturn(true).anyTimes();
         session.close();
-        EasyMock.replay(session, remote);
+        EasyMock.replay(session);
 
         connectionInfo.disconnect();
         PowerMock.replay(connectionInfo, ConnectionInfo.class);
@@ -114,7 +119,7 @@ public class WebshellWebsocketAdapterTest extends EasyMockSupport {
         ExecutorService pool = Executors.newFixedThreadPool(10);
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
-        webshellWebSocketAdapter.onWebSocketConnect(session);
+        webshellWebSocketAdapter.onWebSocketOpen(session);
         verifyAll();
     }
 
@@ -231,6 +236,36 @@ public class WebshellWebsocketAdapterTest extends EasyMockSupport {
         AtomicInteger concurrentWebshells = new AtomicInteger(0);
         WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
         webshellWebSocketAdapter.onWebSocketError(new Throwable());
+        verifyAll();
+    }
+
+    // Regression test for the KNOX-3238 cleanup race: teardown must run exactly
+    // once even when cleanup() is reached from more than one trigger (e.g. an
+    // error callback on a Jetty I/O thread and a close on another thread). The
+    // AtomicBoolean guard makes the second cleanup a no-op; without it,
+    // connectionInfo.disconnect() would be called twice.
+    @Test
+    public void testCleanupIsIdempotent() throws Exception {
+        GatewayConfig gatewayConfig = setupGatewayConfig();
+        setupMessagesFactory();
+        setupAuditor();
+
+        JWTValidator jwtValidator = EasyMock.createNiceMock(JWTValidator.class);
+        EasyMock.expect(jwtValidator.getUsername()).andReturn("Alice").anyTimes();
+        EasyMock.replay(jwtValidator);
+
+        ConnectionInfo connectionInfo = PowerMock.createMock(ConnectionInfo.class);
+        PowerMock.expectNew(ConnectionInfo.class, isA(String.class) , isA(String.class), isA(AtomicInteger.class)).andReturn(connectionInfo);
+        // Must be called exactly once despite two teardown triggers below.
+        connectionInfo.disconnect();
+        EasyMock.expectLastCall().once();
+        PowerMock.replay(connectionInfo, ConnectionInfo.class);
+
+        ExecutorService pool = Executors.newFixedThreadPool(10);
+        AtomicInteger concurrentWebshells = new AtomicInteger(0);
+        WebshellWebSocketAdapter webshellWebSocketAdapter = new WebshellWebSocketAdapter(pool, gatewayConfig, jwtValidator, concurrentWebshells);
+        webshellWebSocketAdapter.onWebSocketError(new Throwable());
+        webshellWebSocketAdapter.onWebSocketClose(0, "reason");
         verifyAll();
     }
 }
