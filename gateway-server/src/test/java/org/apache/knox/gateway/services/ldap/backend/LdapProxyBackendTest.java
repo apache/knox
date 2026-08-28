@@ -17,19 +17,31 @@
  */
 package org.apache.knox.gateway.services.ldap.backend;
 
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
+import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.message.BindRequest;
+import org.apache.directory.api.ldap.model.message.LdapResult;
+import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
+import org.apache.directory.api.ldap.model.message.SearchResultDone;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.InstanceLayout;
@@ -828,6 +840,61 @@ public class LdapProxyBackendTest {
         assertFalse(ldapProxyBackend.isSupportedSearchBase("dc=other,dc=base,dc=org"));
     }
 
+    @Test
+    public void testPerformPagedSearchThrowsOnFailure() throws Exception{
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("pageSize", Integer.toString(PAGE_SIZE));
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // Mock out unsuccessful paging result
+        LdapResult mockResult = createMock(LdapResult.class);
+        expect(mockResult.getResultCode()).andReturn(ResultCodeEnum.UNWILLING_TO_PERFORM).atLeastOnce();
+        expect(mockResult.getDiagnosticMessage()).andReturn("test error message");
+        SearchResultDone mockDone = createMock(SearchResultDone.class);
+        expect(mockDone.getLdapResult()).andReturn(mockResult);
+        SearchCursor mockCursor = createMock(SearchCursor.class);
+        expect(mockCursor.next()).andReturn(false);
+        expect(mockCursor.isDone()).andReturn(true);
+        expect(mockCursor.getSearchResultDone()).andReturn(mockDone);
+        LdapConnection mockConnection = createMock(LdapConnection.class);
+        expect(mockConnection.search(anyObject(SearchRequest.class))).andReturn(mockCursor);
+        replay(mockResult,
+                mockDone,
+                mockCursor,
+                mockConnection);
+
+        LdapOperationException exception = assertThrows(
+                LdapOperationException.class,
+                () -> ldapProxyBackend.performPagedSearch(mockConnection, "ou=people,dc=proxy,dc=org", "(objectclass=inetOrgPerson)", SearchScope.SUBTREE, "*"));
+        assertEquals(ResultCodeEnum.UNWILLING_TO_PERFORM, exception.getResultCode());
+        assertEquals("test error message", exception.getMessage());
+    }
+
+    @Test
+    public void testPerformPagedSearchThrowsOnNullSearchResultDone() throws Exception{
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("pageSize", Integer.toString(PAGE_SIZE));
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // Mock out unsuccessful paging result
+        LdapResult mockResult = createMock(LdapResult.class);
+        expect(mockResult.getResultCode()).andReturn(ResultCodeEnum.UNWILLING_TO_PERFORM).atLeastOnce();
+        expect(mockResult.getDiagnosticMessage()).andReturn("test error message");
+        SearchCursor mockCursor = createMock(SearchCursor.class);
+        expect(mockCursor.next()).andReturn(false);
+        expect(mockCursor.isDone()).andReturn(true);
+        expect(mockCursor.getSearchResultDone()).andReturn(null);
+        LdapConnection mockConnection = createMock(LdapConnection.class);
+        expect(mockConnection.search(anyObject(SearchRequest.class))).andReturn(mockCursor);
+        replay(mockResult,
+                mockCursor,
+                mockConnection);
+
+        LdapException exception = assertThrows(
+                LdapException.class,
+                () -> ldapProxyBackend.performPagedSearch(mockConnection, "ou=people,dc=proxy,dc=org", "(objectclass=inetOrgPerson)", SearchScope.SUBTREE, "*"));
+        assertEquals("The LDAP search operation failed to complete fully.", exception.getMessage());
+    }
     // Helper methods for refactoring
 
     private Map<String, String> createConfigWithUserAttr(String attr) {
