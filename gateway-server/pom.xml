@@ -513,6 +513,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-interceptors-authn</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-jdbm-partition</artifactId>
             <scope>provided</scope>
         </dependency>
