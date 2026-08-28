@@ -39,7 +39,7 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.enabled` | `false` | Enables or disables the embedded LDAP service. |
 | `gateway.ldap.port` | `3890` | The port on which the LDAP server listens. |
 | `gateway.ldap.base.dn` | `dc=proxy,dc=com` | The base DN for the LDAP server. |
-| `gateway.ldap.bind.user` | N/A | Full bind DN (e.g. `uid=knox,ou=system`) that clients must authenticate as. When set together with the `gateway_ldap_bind_password` credential store alias, anonymous access is disabled. The bind DN's parent container must already exist (`ou=system` always exists; `ou=people,{base.dn}` and `ou=groups,{base.dn}` are created automatically). |
+| `gateway.ldap.bind.user` | N/A | Full bind DN (e.g. `uid=knox,dc=proxy,dc=com`) that clients must authenticate as. When set together with the `gateway_ldap_bind_password` credential store alias, anonymous access is disabled. The bind DN's parent container must already exist (`ou=system` always exists; `ou=people,{base.dn}` and `ou=groups,{base.dn}` are created automatically). |
 | `gateway.ldap.interceptor.names` | N/A | A comma separated list of interceptors to use. A separate interceptor configuration block will be used for each name. |
 | `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). |
 | `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint. |
@@ -99,10 +99,18 @@ Clients then bind with the full DN, e.g.:
 ldapsearch -x -H ldap://localhost:3890 -D "uid=knox,ou=people,dc=hadoop,dc=apache,dc=org" -w knoxsecret -b "" "(uid=admin)"
 ```
 
-The bind entry is created as an `inetOrgPerson`, so either a `uid`-based RDN
-(`uid=knox,...`) or a `cn`-based RDN (`cn=bind,...`) is valid. Use a dedicated identity
-(e.g. `uid=knox`) rather than the built-in ApacheDS admin `uid=admin,ou=system`, which
+Either a `uid`-based RDN (`uid=knox,...`) or a `cn`-based RDN (`cn=bind,...`) are accepted as valid Bind DNs.
+Use a dedicated identity (e.g. `uid=knox`) rather than the built-in ApacheDS admin `uid=admin,ou=system`, which
 remains available with its default credentials.
+
+#### Rotating bind credentials
+
+Knox keeps the bind dn and credentials in-memory for authentication. The bind credentials can be rotated by
+changing the `gateway.ldap.bind.user` property in the gateway configuration and aliased password. The bind
+user will be updated when the gateway is reloaded.
+
+NOTE: Knox 3.0.0 created the bind user in the embedded LDAP server. These users need to be manually deleted to disable
+access using the old credentials.
 
 ### Interceptor Types
 

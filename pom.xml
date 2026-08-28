@@ -2290,6 +2290,11 @@
                 <artifactId>apacheds-jdbm-partition</artifactId>
                 <version>${apacheds.directory.server.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-interceptors-authn</artifactId>
+                <version>${apacheds.directory.server.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.directory.api</groupId>

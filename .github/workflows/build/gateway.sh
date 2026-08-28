@@ -43,6 +43,11 @@ keytool -importcert -noprompt -alias knox-ldaps \
   -file /tmp/ldaps-cert.pem
 rm -f /tmp/ldaps-cert.pem
 
+# 4) Store a password for the LDAP Proxy bind user
+LDAP_BIND_PASSWORD=bind-password
+LDAP_BIND_PASSWORD_ALIAS=gateway_ldap_bind_password
+/knox-runtime/bin/knoxcli.sh create-alias "$LDAP_BIND_PASSWORD_ALIAS" --value "$LDAP_BIND_PASSWORD"
+
 # Start Knox. Endpoint (hostname) identification is disabled for the embedded LDAPS
 # connection - the dev cert is self-signed - but trust is still enforced via cacerts.
 java -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true \
