@@ -35,7 +35,10 @@ import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.EasyMock;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -44,7 +47,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Field;
-import java.net.HttpCookie;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -54,8 +56,10 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -112,11 +116,13 @@ public class JWTValidatorTest {
         }
     }
 
-    private void setTokenOnRequest(ServletUpgradeRequest request, SignedJWT jwt){
-        HttpCookie cookie1 = new HttpCookie("hadoop-jwt", "garbage");
-        HttpCookie cookie2 = new HttpCookie("hadoop-jwt", "ljm" + jwt.serialize());// garbled jwt
-        HttpCookie cookie3 = new HttpCookie("hadoop-jwt", jwt.serialize());
-        EasyMock.expect(request.getCookies()).andReturn(Arrays.asList(cookie1, cookie2, cookie3)).anyTimes();
+    private void setTokenOnRequest(ServerUpgradeRequest request, SignedJWT jwt){
+        List<HttpCookie> mockedCookies = Arrays.asList(
+        HttpCookie.from("hadoop-jwt", "garbage"),
+        HttpCookie.from("hadoop-jwt", "ljm" + jwt.serialize()),
+        HttpCookie.from("hadoop-jwt", jwt.serialize())
+        );
+        EasyMock.expect(request.getAttribute(Request.COOKIE_ATTRIBUTE)).andReturn(mockedCookies).anyTimes();
     }
 
     private static SignedJWT getJWT(final String issuer,
@@ -190,7 +196,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, validJWT.getHeader().getAlgorithm().getName());
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, validJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
@@ -211,8 +217,11 @@ public class JWTValidatorTest {
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("No Valid JWT found");
         setUpParams(new HashMap<>());
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
-        EasyMock.expect(request.getCookies()).andReturn(null).anyTimes();
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
+        EasyMock.expect(request.getHeaders()).andReturn(HttpFields.EMPTY).anyTimes();
+        EasyMock.expect(request.getAttribute(Request.COOKIE_ATTRIBUTE))
+        .andReturn(Collections.emptyList())
+        .anyTimes();
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(true).anyTimes();
@@ -233,7 +242,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, unexpectedIssuerJWT.getHeader().getAlgorithm().getName());
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, unexpectedIssuerJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
@@ -255,7 +264,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, expiredJWT.getHeader().getAlgorithm().getName());
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, expiredJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
@@ -277,7 +286,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, expiredJWT.getHeader().getAlgorithm().getName());
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, expiredJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
@@ -299,7 +308,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, JWSAlgorithm.RS512.getName() );
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, unexpectedSigAlgJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
@@ -320,7 +329,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, validJWT.getHeader().getAlgorithm().getName());
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, validJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
@@ -342,7 +351,7 @@ public class JWTValidatorTest {
         params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
         params.put(JWT_EXPECTED_SIGALG, parsableJWT.getHeader().getAlgorithm().getName());
         setUpParams(params);
-        ServletUpgradeRequest request = EasyMock.createNiceMock(ServletUpgradeRequest.class);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
         setTokenOnRequest(request, parsableJWT);
         EasyMock.replay(request);
         JWTValidator jwtValidator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);

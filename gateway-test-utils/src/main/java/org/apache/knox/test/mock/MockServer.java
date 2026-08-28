@@ -19,10 +19,13 @@ package org.apache.knox.test.mock;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.http.UriCompliance;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee8.servlet.ServletHolder;
 
 import javax.servlet.Servlet;
 import java.util.LinkedList;
@@ -67,8 +70,19 @@ public class MockServer {
   }
 
   public void start() throws Exception {
-    Handler context = createHandler();
-    jetty = new Server(0);
+    ServletContextHandler context = createHandler();
+    jetty = new Server();
+    // These mock servers stand in for real backends (e.g. WebHBASE) whose paths
+    // legitimately contain encoded separators (%2F). Jetty 12's default
+    // UriCompliance (RFC3986) answers 400 "Ambiguous URI path separator" for such
+    // requests before the servlet runs. Use LEGACY (Jetty 9.4 behavior) so the mock
+    // accepts the proxied encoded path exactly as the real backend would, matching
+    // the gateway's own connector compliance.
+    HttpConfiguration httpConfig = new HttpConfiguration();
+    httpConfig.setUriCompliance( UriCompliance.LEGACY );
+    ServerConnector connector = new ServerConnector( jetty, new HttpConnectionFactory( httpConfig ) );
+    connector.setPort( 0 );
+    jetty.addConnector( connector );
     jetty.setHandler( context );
     jetty.start();
     log.info( "Mock server started on port " + getPort() );

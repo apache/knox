@@ -17,16 +17,24 @@
  */
 package org.apache.knox.gateway.trace;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Set;
 
-public class TraceHandler extends HandlerWrapper {
+/**
+ * Entry point for HTTP wire-level tracing. Installed in the server handler
+ * chain, wraps each exchange's request and response in {@link TraceRequest}
+ * and {@link TraceResponse} so the request line, status line, headers, and
+ * (optionally) request/response bodies are logged at TRACE under the
+ * {@code org.apache.knox.gateway.http.*} loggers named by the constants below.
+ *
+ * <p>The {@code bodyFilter} (an optional set of status codes) narrows body
+ * tracing to selected responses and is honored by {@link TraceResponse}.
+ */
+public class TraceHandler extends Handler.Wrapper {
 
   static final String HTTP_LOGGER = "org.apache.knox.gateway.http";
   static final String HTTP_REQUEST_LOGGER = HTTP_LOGGER + ".request";
@@ -44,11 +52,24 @@ public class TraceHandler extends HandlerWrapper {
   }
 
   @Override
-  public void handle( String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response )
-      throws IOException, ServletException {
-    HttpServletRequest newRequest = new TraceRequest( request );
-    HttpServletResponse newResponse = new TraceResponse( response, bodyFilter );
-    super.handle( target, baseRequest, newRequest, newResponse );
+  public boolean handle(Request request, Response response, Callback callback) throws Exception {
+    TraceRequest newRequest = new TraceRequest(request);
+    TraceResponse newResponse = new TraceResponse(request, response, bodyFilter);
+    // Wrap the callback so responses that produce no body (204, 3xx redirects) still
+    // get their status/headers logged, write() would never fire in those cases.
+    Callback wrappedCallback = new Callback() {
+      @Override
+      public void succeeded() {
+        newResponse.ensureTraced();
+        callback.succeeded();
+      }
+      @Override
+      public void failed(Throwable x) {
+        newResponse.ensureTraced();
+        callback.failed(x);
+      }
+    };
+    return super.handle(newRequest, newResponse, wrappedCallback);
   }
 
 }

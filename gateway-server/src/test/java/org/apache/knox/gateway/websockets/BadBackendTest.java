@@ -32,6 +32,7 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.WebSocketContainer;
 import java.net.URI;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -76,13 +77,17 @@ public class BadBackendTest {
 
   private static void startProxy() throws Exception {
     GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gatewayConfig);
     proxy = new Server();
     proxyConnector = new ServerConnector(proxy);
     proxy.addConnector(proxyConnector);
 
     /* start Knox with WebsocketAdapter to test */
+    final ExecutorService pool = Executors.newFixedThreadPool(10);
+    final URI backendURI = new URI(BAD_BACKEND);
+
     final BigEchoSocketHandler wsHandler = new BigEchoSocketHandler(
-        new ProxyWebSocketAdapter(new URI(BAD_BACKEND), Executors.newFixedThreadPool(10), gatewayConfig));
+    () -> new ProxyWebSocketAdapter(backendURI, pool, gatewayConfig));
 
     ContextHandler context = new ContextHandler();
     context.setContextPath("/");
