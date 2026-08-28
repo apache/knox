@@ -439,6 +439,7 @@ public class TokenServiceResourceTest {
   @Test
   public void testDynamicAudienceNoParamUsesConfigured() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "whitelist");
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
     configureCommonExpectations(contextExpectations);
 
@@ -458,9 +459,12 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testDynamicAudienceRejectedWhenNoWhitelistConfigured() throws Exception {
+  public void testDynamicAudienceIgnoredWithDefaultStaticValidator() throws Exception {
+    // With no validator configured the default 'static' validator is used: a requested audience must
+    // be ignored and the configured audiences used unchanged (historical behavior).
     audienceParamValues = new String[] { "recipient1" };
     final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
     configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
@@ -469,13 +473,47 @@ public class TokenServiceResourceTest {
     tr.init();
 
     Response retResponse = tr.doGet();
-    assertEquals(400, retResponse.getStatus());
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(2, audiences.size());
+    assertTrue(audiences.contains("recipient1"));
+    assertTrue(audiences.contains("recipient2"));
+  }
+
+  @Test(expected = ServiceLifecycleException.class)
+  public void testDeploymentFailsWhenWhitelistValidatorWithoutWhitelist() throws Exception {
+    // Selecting the whitelist validator with no configured audiences must fail the deployment rather
+    // than start up unable to honor any request.
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "whitelist");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+  }
+
+  @Test(expected = ServiceLifecycleException.class)
+  public void testDeploymentFailsWhenUnknownAudienceValidatorConfigured() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audiences", "recipient1");
+    contextExpectations.put("knox.token.audience.validator", "does-not-exist");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
   }
 
   @Test
   public void testDynamicAudienceAllowedWhenWhitelisted() throws Exception {
     audienceParamValues = new String[] { "recipient1" };
     final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "whitelist");
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
     configureCommonExpectations(contextExpectations);
 
@@ -498,6 +536,7 @@ public class TokenServiceResourceTest {
   public void testDynamicAudienceRejectedWhenNotWhitelisted() throws Exception {
     audienceParamValues = new String[] { "recipient1", "intruder" };
     final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "whitelist");
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
     configureCommonExpectations(contextExpectations);
 
@@ -514,6 +553,7 @@ public class TokenServiceResourceTest {
   public void testDynamicAudienceMultipleValuesAndCommaSeparated() throws Exception {
     audienceParamValues = new String[] { "recipient1", " recipient2 , recipient3" };
     final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "whitelist");
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2,recipient3");
     configureCommonExpectations(contextExpectations);
 

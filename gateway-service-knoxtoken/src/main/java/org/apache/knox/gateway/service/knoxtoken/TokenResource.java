@@ -126,6 +126,7 @@ public class TokenResource {
   public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
   static final String AUDIENCE_QUERY_PARAM = "audience";
+  private static final String TOKEN_AUDIENCE_VALIDATOR_PARAM = TOKEN_PARAM_PREFIX + "audience.validator";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
   static final String TOKEN_CLIENT_DATA = TOKEN_PARAM_PREFIX + "client.data";
@@ -173,6 +174,7 @@ public class TokenResource {
   private String tokenType;
   private String tokenTTLAsText;
   private List<String> targetAudiences = new ArrayList<>();
+  private AudienceValidator audienceValidator;
   private String tokenTargetUrl;
   private Map<String, Object> tokenClientDataMap;
   private List<String> allowedDNs = new ArrayList<>();
@@ -246,6 +248,18 @@ public class TokenResource {
       for (String aud : auds) {
         targetAudiences.add(aud.trim());
       }
+    }
+
+    try {
+      audienceValidator = AudienceValidator.forName(context.getInitParameter(TOKEN_AUDIENCE_VALIDATOR_PARAM));
+    } catch (IllegalArgumentException e) {
+      throw new ServiceLifecycleException(e.getMessage(), e);
+    }
+
+    if (audienceValidator.requiresConfiguredAudiences() && targetAudiences.isEmpty()) {
+      throw new ServiceLifecycleException("The '" + audienceValidator.name()
+          + "' audience validator requires audiences to be configured in '" + TOKEN_AUDIENCES_PARAM
+          + "', but none are set. Configure the allowed audiences or select a different audience validator.");
     }
 
     String clientCert = context.getInitParameter(TOKEN_CLIENT_CERT_REQUIRED);
@@ -906,7 +920,7 @@ public class TokenResource {
 
     final List<String> audiences;
     try {
-      audiences = resolveAudiences();
+      audiences = audienceValidator.validateAndResolve(new AudienceValidationContext(parseRequestedAudiences(), targetAudiences));
     } catch (RequestedAudienceValidationException e) {
       log.rejectedAudienceRequest(e.getMessage());
       return new TokenResponseContext(null,
@@ -1149,7 +1163,7 @@ public class TokenResource {
     }
   }
 
-  private List<String> resolveAudiences() throws RequestedAudienceValidationException {
+  private List<String> parseRequestedAudiences() {
     final Map<String, String[]> parameterMap = request.getParameterMap();
     final String[] rawValues = parameterMap == null ? null : parameterMap.get(AUDIENCE_QUERY_PARAM);
     final List<String> requested = new ArrayList<>();
@@ -1164,24 +1178,6 @@ public class TokenResource {
             requested.add(trimmed);
           }
         }
-      }
-    }
-
-    // No audience requested: keep the historical behavior (use the configured audiences).
-    if (requested.isEmpty()) {
-      return targetAudiences;
-    }
-
-    // Secure by default: with no configured whitelist there is nothing to validate against, so refuse.
-    if (targetAudiences.isEmpty()) {
-      throw new RequestedAudienceValidationException("No allowed audiences are configured in 'knox.token.audiences'; cannot honor a requested audience.",
-          ErrorCode.INVALID_AUDIENCE);
-    }
-
-    for (String audience : requested) {
-      if (!targetAudiences.contains(audience)) {
-        throw new RequestedAudienceValidationException("The requested audience '" + audience + "' is not allowed.",
-            ErrorCode.INVALID_AUDIENCE);
       }
     }
     return requested;
