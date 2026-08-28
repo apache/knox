@@ -70,6 +70,10 @@ public class JdbcDelegationPolicyServiceTest {
     try {
       DriverManager.getConnection(DERBY_SHUTDOWN_URL);
     } catch (SQLException e) {
+      // See https://db.apache.org/derby/docs/10.9/ref/rrefproperextdiagsevlevel.html
+      // to note ErrorCode 45000 means database closed and
+      // https://db.apache.org/derby/docs/10.17/ref/rrefexcept71493.html
+      // to note that SQLState 08006 means shutdown for a single database.
       if (!(e.getErrorCode() == 45000 && "08006".equals(e.getSQLState()))) {
         throw new RuntimeException("Unexpected Derby shutdown error", e);
       }
@@ -109,7 +113,7 @@ public class JdbcDelegationPolicyServiceTest {
   @Test
   public void testRegisterAndGetAllFields() throws Exception {
     final Instant now = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
-    final DelegationPolicy input = policy("oidc", "actor@example.com",
+    final DelegationPolicy input = policy("oidc", "actorId",
         "policy-name", "active", 3600, "desc", "admin", now,
         new HashSet<>(Arrays.asList("alice", "bob")),
         new HashSet<>(Collections.singleton("admins")),
@@ -120,7 +124,7 @@ public class JdbcDelegationPolicyServiceTest {
 
     final DelegationPolicy fetched = service.get(registered.getRegistrationId()).orElseThrow(AssertionError::new);
     assertEquals("oidc", fetched.getActorAuthority());
-    assertEquals("actor@example.com", fetched.getActorId());
+    assertEquals("actorId", fetched.getActorId());
     assertEquals("policy-name", fetched.getName());
     assertEquals("active", fetched.getStatus());
     assertEquals(Integer.valueOf(3600), fetched.getTokenTtlSec());
@@ -137,7 +141,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testRegisterWithNullableFieldsNull() throws Exception {
-    final DelegationPolicy input = policy("oidc", "actor2@example.com",
+    final DelegationPolicy input = policy("oidc", "actorId2",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 
@@ -152,7 +156,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testRegisterDuplicateActorThrows() throws Exception {
-    final DelegationPolicy first = policy("oidc", "dup@example.com",
+    final DelegationPolicy first = policy("oidc", "duplicated",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
     service.register(first);
@@ -161,7 +165,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testUpdateReplacesAllFields() throws Exception {
-    final DelegationPolicy original = policy("oidc", "actor3@example.com",
+    final DelegationPolicy original = policy("oidc", "actorId3",
         "original", "active", 1800, null, null, Instant.now(),
         new HashSet<>(Collections.singleton("alice")),
         Collections.emptySet(), Collections.emptyMap());
@@ -169,7 +173,7 @@ public class JdbcDelegationPolicyServiceTest {
     final DelegationPolicy registered = service.register(original);
     final String id = registered.getRegistrationId();
 
-    final DelegationPolicy updated = policy("oidc", "actor3@example.com",
+    final DelegationPolicy updated = policy("oidc", "actorId3",
         "updated", "active", 3600, "new-desc", "admin2", Instant.now(),
         new HashSet<>(Arrays.asList("alice", "bob", "carol")),
         new HashSet<>(Collections.singleton("ops")),
@@ -188,14 +192,14 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testUpdateReplaceChildRowsCompletely() throws Exception {
-    // Register with 2 users, update with 3 different users — result must be exactly 3
-    final DelegationPolicy original = policy("oidc", "actor4@example.com",
+    // Register with 2 users, update with 3 different users - result must be exactly 3
+    final DelegationPolicy original = policy("oidc", "actorId4",
         null, "active", null, null, null, Instant.now(),
         new HashSet<>(Arrays.asList("alice", "bob")),
         Collections.emptySet(), Collections.emptyMap());
     final DelegationPolicy registered = service.register(original);
 
-    final DelegationPolicy updated = policy("oidc", "actor4@example.com",
+    final DelegationPolicy updated = policy("oidc", "actorId4",
         null, "active", null, null, null, Instant.now(),
         new HashSet<>(Arrays.asList("charlie", "dave", "eve")),
         Collections.emptySet(), Collections.emptyMap());
@@ -211,7 +215,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testDeleteRemovesPolicyAndChildRows() throws Exception {
-    final DelegationPolicy registered = service.register(policy("oidc", "actor5@example.com",
+    final DelegationPolicy registered = service.register(policy("oidc", "actorId5",
         null, "active", null, null, null, Instant.now(),
         new HashSet<>(Collections.singleton("alice")),
         Collections.emptySet(),
@@ -240,14 +244,14 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testFindByActorNonExistentReturnsEmpty() {
-    assertFalse(service.findByActor("oidc", "nobody@example.com").isPresent());
+    assertFalse(service.findByActor("oidc", "nobody").isPresent());
   }
 
   @Test
   public void testListNoFilter() throws Exception {
-    service.register(policy("oidc", "a1@example.com", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "a1", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
-    service.register(policy("saml", "a2@example.com", null, "active", null, null, null, Instant.now(),
+    service.register(policy("saml", "a2", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
     final DelegationPolicyList all = service.list(null);
@@ -257,9 +261,9 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testListFilteredByActorAuthority() throws Exception {
-    service.register(policy("oidc", "a3@example.com", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "a3", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
-    service.register(policy("saml", "a4@example.com", null, "active", null, null, null, Instant.now(),
+    service.register(policy("saml", "a4", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
     final DelegationPolicyList oidcOnly = service.list("oidc");
@@ -271,12 +275,12 @@ public class JdbcDelegationPolicyServiceTest {
   @Test
   public void testListTotalLimitEnforced() throws Exception {
     for (int i = 0; i < 3; i++) {
-      service.register(policy("k8s_sa", "svc-lim" + i + "@cluster", null, "active", null, null, null, Instant.now(),
+      service.register(policy("k8s_sa", "svc-lim" + i, null, "active", null, null, null, Instant.now(),
           Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
     }
-    service.register(policy("oidc", "extra1@issuer", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "extra1", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
-    service.register(policy("oidc", "extra2@issuer", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "extra2", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
     final JdbcDelegationPolicyService limitedService = createServiceWithLimits(3, 10_000);
@@ -288,12 +292,12 @@ public class JdbcDelegationPolicyServiceTest {
   @Test
   public void testListPerAuthorityLimitEnforced() throws Exception {
     for (int i = 0; i < 4; i++) {
-      service.register(policy("k8s_sa", "svc-pa" + i + "@cluster", null, "active", null, null, null, Instant.now(),
+      service.register(policy("k8s_sa", "svc-pa" + i, null, "active", null, null, null, Instant.now(),
           Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
     }
-    service.register(policy("oidc", "pa1@issuer", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "pa1", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
-    service.register(policy("oidc", "pa2@issuer", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "pa2", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
     final JdbcDelegationPolicyService limitedService = createServiceWithLimits(10_000, 2);
@@ -310,7 +314,7 @@ public class JdbcDelegationPolicyServiceTest {
   @Test
   public void testListHasMoreFalseWhenExactlyAtLimit() throws Exception {
     for (int i = 0; i < 3; i++) {
-      service.register(policy("oidc", "exact" + i + "@example.com", null, "active", null, null, null, Instant.now(),
+      service.register(policy("oidc", "exact" + i, null, "active", null, null, null, Instant.now(),
           Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
     }
 
@@ -324,11 +328,11 @@ public class JdbcDelegationPolicyServiceTest {
   public void testListDefaultLimitsDoNotCropSmallResultSet() throws Exception {
     // Default limits (DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT = 10_000) must not crop small datasets.
     // This also verifies that the service initialized with default config values functions correctly.
-    service.register(policy("oidc", "dflt1@example.com", null, "active", null, null, null, Instant.now(),
+    service.register(policy("oidc", "dflt1", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
-    service.register(policy("k8s_sa", "dflt2@cluster", null, "active", null, null, null, Instant.now(),
+    service.register(policy("k8s_sa", "dflt2", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
-    service.register(policy("saml", "dflt3@idp", null, "active", null, null, null, Instant.now(),
+    service.register(policy("saml", "dflt3", null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
     final DelegationPolicyList all = service.list(null);
@@ -354,7 +358,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testResourceWithTwoExplicitScopes() throws Exception {
-    final DelegationPolicy registered = service.register(policy("oidc", "rp1@example.com",
+    final DelegationPolicy registered = service.register(policy("oidc", "rp1",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read", "write")));
@@ -367,7 +371,7 @@ public class JdbcDelegationPolicyServiceTest {
   public void testResourceWithEmptyScopeSet() throws Exception {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", Collections.emptySet());
-    final DelegationPolicy registered = service.register(policy("oidc", "rp2@example.com",
+    final DelegationPolicy registered = service.register(policy("oidc", "rp2",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), rp));
 
@@ -378,7 +382,7 @@ public class JdbcDelegationPolicyServiceTest {
 
   @Test
   public void testEmptyResourcePolicy() throws Exception {
-    final DelegationPolicy registered = service.register(policy("oidc", "rp3@example.com",
+    final DelegationPolicy registered = service.register(policy("oidc", "rp3",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
@@ -391,7 +395,7 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
     rp.put("/api/v2", new HashSet<>(Arrays.asList("read", "write")));
-    final DelegationPolicy registered = service.register(policy("oidc", "rp4@example.com",
+    final DelegationPolicy registered = service.register(policy("oidc", "rp4",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), rp));
 
@@ -405,7 +409,7 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
     rp.put("/api/v2", Collections.emptySet());
-    final DelegationPolicy registered = service.register(policy("oidc", "rp5@example.com",
+    final DelegationPolicy registered = service.register(policy("oidc", "rp5",
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), rp));
 
@@ -415,18 +419,18 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   // ------------------------------------------------------------------
-  // evaluate() — authorized paths
+  // evaluate() - authorized paths
   // ------------------------------------------------------------------
 
   @Test
   public void testEvaluateAuthorizedSubjectInUsersResourceAndScopeMatch() throws Exception {
-    registerPolicy("oidc", "eval@example.com",
+    registerPolicy("oidc", "eval",
         Collections.singleton("alice"),
         Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "eval@example.com", "alice", "/api/v1", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "eval", "alice", "/api/v1", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
   }
 
@@ -434,11 +438,11 @@ public class JdbcDelegationPolicyServiceTest {
   public void testEvaluateAuthorizedAllScopesWhenScopeSetEmpty() throws Exception {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", Collections.emptySet());
-    registerPolicy("oidc", "eval2@example.com",
+    registerPolicy("oidc", "eval2",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "eval2@example.com", "alice", "/api/v1", Collections.singleton("any-scope"), false));
+        new PolicyCheckRequest("oidc", "eval2", "alice", "/api/v1", Collections.singleton("any-scope"), false));
     assertNull(decision.getDenyReason());
   }
 
@@ -447,116 +451,116 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
     rp.put("/api/v2", new HashSet<>(Arrays.asList("write")));
-    registerPolicy("oidc", "eval3@example.com",
+    registerPolicy("oidc", "eval3",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "eval3@example.com", "alice", "/api/v1", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "eval3", "alice", "/api/v1", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateAuthorizedHeadlessExchangeAllowed() throws Exception {
-    registerPolicy("oidc", "headless@example.com",
+    registerPolicy("oidc", "headless",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), true);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "headless@example.com", "alice", "/api", Collections.singleton("read"), true));
+        new PolicyCheckRequest("oidc", "headless", "alice", "/api", Collections.singleton("read"), true));
     assertNull(decision.getDenyReason());
   }
 
   // ------------------------------------------------------------------
-  // evaluate() — denied paths
+  // evaluate() - denied paths
   // ------------------------------------------------------------------
 
   @Test
   public void testEvaluateDenyActorNotRegistered() {
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "nobody@example.com", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "nobody", "alice", "/api", Collections.singleton("read"), false));
     assertEquals("actor_not_registered", decision.getDenyReason());
     assertEquals(0, decision.getEffectiveTtlSec());
   }
 
   @Test
   public void testEvaluateDenySubjectNotInUsersAndNoGroups() throws Exception {
-    registerPolicy("oidc", "deny1@example.com",
+    registerPolicy("oidc", "deny1",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny1@example.com", "bob", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "deny1", "bob", "/api", Collections.singleton("read"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("subject_not_allowed", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateDenyEmptyUsersAndEmptyGroups() throws Exception {
-    registerPolicy("oidc", "deny2@example.com",
+    registerPolicy("oidc", "deny2",
         Collections.emptySet(), Collections.emptySet(),
         singleResourcePolicy("/api", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny2@example.com", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "deny2", "alice", "/api", Collections.singleton("read"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("subject_not_allowed", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateDenyResourceNotInPolicy() throws Exception {
-    registerPolicy("oidc", "deny3@example.com",
+    registerPolicy("oidc", "deny3",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny3@example.com", "alice", "/api/v2", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "deny3", "alice", "/api/v2", Collections.singleton("read"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("resource_not_allowed", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateDenyScopeNotInSet() throws Exception {
-    registerPolicy("oidc", "deny4@example.com",
+    registerPolicy("oidc", "deny4",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny4@example.com", "alice", "/api/v1", Collections.singleton("write"), false));
+        new PolicyCheckRequest("oidc", "deny4", "alice", "/api/v1", Collections.singleton("write"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("scope_not_allowed", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateAuthorizedEmptyRequestedScopes() throws Exception {
-    registerPolicy("oidc", "noscope@example.com",
+    registerPolicy("oidc", "noscope",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "noscope@example.com", "alice", "/api/v1", Collections.emptySet(), false));
+        new PolicyCheckRequest("oidc", "noscope", "alice", "/api/v1", Collections.emptySet(), false));
     assertNull("empty requested scopes must be authorized (scope is optional)", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateAuthorizedMultipleRequestedScopesAllInSet() throws Exception {
-    registerPolicy("oidc", "multiscope@example.com",
+    registerPolicy("oidc", "multiscope",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read", "write"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "multiscope@example.com", "alice", "/api/v1",
+        new PolicyCheckRequest("oidc", "multiscope", "alice", "/api/v1",
             new HashSet<>(Arrays.asList("read", "write")), false));
     assertNull("all requested scopes in allowed set must be authorized", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateDenyMultipleRequestedScopesPartialMatch() throws Exception {
-    registerPolicy("oidc", "partial@example.com",
+    registerPolicy("oidc", "partial",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "partial@example.com", "alice", "/api/v1",
+        new PolicyCheckRequest("oidc", "partial", "alice", "/api/v1",
             new HashSet<>(Arrays.asList("read", "write")), false));
     assertEquals("scope_not_allowed", decision.getDenyReason());
   }
@@ -565,11 +569,11 @@ public class JdbcDelegationPolicyServiceTest {
   public void testEvaluateAuthorizedMultipleRequestedScopesEmptyPolicySet() throws Exception {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", Collections.emptySet());
-    registerPolicy("oidc", "multiany@example.com",
+    registerPolicy("oidc", "multiany",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "multiany@example.com", "alice", "/api/v1",
+        new PolicyCheckRequest("oidc", "multiany", "alice", "/api/v1",
             new HashSet<>(Arrays.asList("read", "write")), false));
     assertNull("empty policy scope set allows any requested scopes", decision.getDenyReason());
   }
@@ -581,75 +585,75 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
     rp.put("/api/v2", new HashSet<>(Arrays.asList("write")));
-    registerPolicy("oidc", "scopetest@example.com",
+    registerPolicy("oidc", "scopetest",
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "scopetest@example.com", "alice", "/api/v1", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "scopetest", "alice", "/api/v1", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateDenyHeadlessNotAllowed() throws Exception {
-    registerPolicy("oidc", "headless2@example.com",
+    registerPolicy("oidc", "headless2",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "headless2@example.com", "alice", "/api", Collections.singleton("read"), true));
+        new PolicyCheckRequest("oidc", "headless2", "alice", "/api", Collections.singleton("read"), true));
     assertNotNull(decision.getDenyReason());
     assertEquals("headless_not_allowed", decision.getDenyReason());
   }
 
   @Test
   public void testEvaluateGroupsNotEmptyThrowsServerError() throws Exception {
-    registerPolicy("oidc", "groups@example.com",
+    registerPolicy("oidc", "groups",
         Collections.emptySet(),
         new HashSet<>(Collections.singleton("admins")),
         singleResourcePolicy("/api", "read"));
 
     assertThrows(UnsupportedOperationException.class, () ->
-        service.evaluate(new PolicyCheckRequest("oidc", "groups@example.com", "alice", "/api", Collections.singleton("read"), false)));
+        service.evaluate(new PolicyCheckRequest("oidc", "groups", "alice", "/api", Collections.singleton("read"), false)));
   }
 
   // ------------------------------------------------------------------
-  // evaluate() — TTL computation
+  // evaluate() - TTL computation
   // ------------------------------------------------------------------
 
   @Test
   public void testEvaluateTtlPolicyLowerThanConfigured() throws Exception {
-    registerPolicy("oidc", "ttl1@example.com",
+    registerPolicy("oidc", "ttl1",
         Collections.singleton("alice"), Collections.emptySet(),
-        singleResourcePolicy("/api", "read"), false, 3600);
+        singleResourcePolicy("/api", "read"), false, 1000);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "ttl1@example.com", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "ttl1", "alice", "/api", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
-    // policy TTL=3600 is set → use policy value directly
-    assertEquals(3600, decision.getEffectiveTtlSec());
+    // policy TTL=1000 is set so use policy value directly
+    assertEquals(1000, decision.getEffectiveTtlSec());
   }
 
   @Test
   public void testEvaluateTtlConfiguredLowerThanPolicy() throws Exception {
-    registerPolicy("oidc", "ttl2@example.com",
+    registerPolicy("oidc", "ttl2",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false, 10000);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "ttl2@example.com", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "ttl2", "alice", "/api", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
-    // policy TTL=10000 is set → use policy value directly; configured default is irrelevant
+    // policy TTL=10000 is set so use policy value directly; configured default is irrelevant
     assertEquals(10000, decision.getEffectiveTtlSec());
   }
 
   @Test
   public void testEvaluateTtlNullPolicyUsesConfigured() throws Exception {
-    registerPolicy("oidc", "ttl3@example.com",
+    registerPolicy("oidc", "ttl3",
         Collections.singleton("alice"), Collections.emptySet(),
         singleResourcePolicy("/api", "read"), false, null);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "ttl3@example.com", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "ttl3", "alice", "/api", Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
     assertEquals(CONFIGURED_TTL, decision.getEffectiveTtlSec());
   }

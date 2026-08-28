@@ -58,7 +58,7 @@ public class DelegationPolicySchemaTest {
     java.util.Locale.setDefault(java.util.Locale.US);
     derbyConn = DriverManager.getConnection(DERBY_URL);
     hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
-    // Run Derby DDL once — no IF NOT EXISTS, so run once at class level
+    // Run Derby DDL once - no IF NOT EXISTS, so run once at class level
     runScript(derbyConn, loadSql(AbstractDataSourceFactory.DERBY_KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
     // Run standard DDL on HSQLDB
     runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
@@ -76,6 +76,10 @@ public class DelegationPolicySchemaTest {
     try {
       DriverManager.getConnection(DERBY_SHUTDOWN_URL);
     } catch (SQLException e) {
+      // See https://db.apache.org/derby/docs/10.9/ref/rrefproperextdiagsevlevel.html
+      // to note ErrorCode 45000 means database closed and
+      // https://db.apache.org/derby/docs/10.17/ref/rrefexcept71493.html
+      // to note that SQLState 08006 means shutdown for a single database.
       if (!(e.getErrorCode() == 45000 && "08006".equals(e.getSQLState()))) {
         throw e;
       }
@@ -120,7 +124,7 @@ public class DelegationPolicySchemaTest {
     try (Statement stmt = hsqlConn.createStatement()) {
       stmt.execute("INSERT INTO DELEGATION_POLICIES "
           + "(registration_id, actor_authority, actor_id, created_at, updated_at) "
-          + "VALUES ('" + id + "', 'oidc', 'actor@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+          + "VALUES ('" + id + "', 'oidc', 'actor-id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
       try (ResultSet rs = stmt.executeQuery(
           "SELECT status, allow_headless_exchange, token_ttl_sec FROM DELEGATION_POLICIES WHERE registration_id = '" + id + "'")) {
         assertTrue(rs.next());
@@ -136,7 +140,7 @@ public class DelegationPolicySchemaTest {
   public void testNotNullViolationActorAuthority() throws Exception {
     expectConstraintViolation(hsqlConn,
         "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
-            + "VALUES ('" + UUID.randomUUID() + "', NULL, 'actor@example.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+            + "VALUES ('" + UUID.randomUUID() + "', NULL, 'actor-id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
   }
 
   @Test
@@ -150,7 +154,7 @@ public class DelegationPolicySchemaTest {
   public void testNotNullViolationCreatedAt() throws Exception {
     expectConstraintViolation(hsqlConn,
         "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
-            + "VALUES ('" + UUID.randomUUID() + "', 'oidc', 'actor@example.com', NULL, CURRENT_TIMESTAMP)");
+            + "VALUES ('" + UUID.randomUUID() + "', 'oidc', 'actor-id', NULL, CURRENT_TIMESTAMP)");
   }
 
   @Test

@@ -113,7 +113,7 @@ public class DelegationPolicyTest {
   @Test
   public void nullableFieldsArePreservedAsNull() {
     final DelegationPolicy policy = new DelegationPolicy(
-        "reg-id", "oidc", "actor@example.com",
+        "reg-id", "oidc", "actorId",
         null,   // name
         "active",
         null,   // tokenTtlSec
@@ -130,7 +130,7 @@ public class DelegationPolicyTest {
 
   private static DelegationPolicy policy(Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy) {
     return new DelegationPolicy(
-        "reg-id", "oidc", "actor@example.com",
+        "reg-id", "oidc", "actorId",
         "test-policy", "active", 3600, "desc", "admin",
         Instant.now(), Instant.now(), false,
         users, groups, resourcePolicy);
