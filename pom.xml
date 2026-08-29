@@ -256,6 +256,7 @@
         <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
         <metrics.version>4.2.38</metrics.version>
         <mina.version>2.2.8</mina.version>
+        <nashorn.version>15.4</nashorn.version>
         <netty.version>4.1.137.Final</netty.version>
         <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
         <nodejs.version>v22.20.0</nodejs.version>
@@ -2594,6 +2595,21 @@
                 <artifactId>asm-commons</artifactId>
                 <version>${asm.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-analysis</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-tree</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-util</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.taglibs</groupId>
@@ -3085,6 +3101,13 @@
                         <artifactId>objenesis</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openjdk.nashorn</groupId>
+                <artifactId>nashorn-core</artifactId>
+                <version>${nashorn.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
