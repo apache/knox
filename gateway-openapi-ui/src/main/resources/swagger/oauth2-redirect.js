@@ -14,4 +14,95 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";function run(){var e,r,t,a=window.opener.swaggerUIRedirectOauth2,o=a.state,n=a.redirectUrl;if((t=(r=/code|token|error/.test(window.location.hash)?window.location.hash.substring(1).replace("?","&"):location.search.substring(1)).split("&")).forEach((function(e,r,t){t[r]='"'+e.replace("=",'":"')+'"'})),e=(r=r?JSON.parse("{"+t.join()+"}",(function(e,r){return""===e?r:decodeURIComponent(r)})):{}).state===o,"accessCode"!==a.auth.schema.get("flow")&&"authorizationCode"!==a.auth.schema.get("flow")&&"authorization_code"!==a.auth.schema.get("flow")||a.auth.code)a.callback({auth:a.auth,token:r,isValid:e,redirectUrl:n});else if(e||a.errCb({authId:a.auth.name,source:"auth",level:"warning",message:"Authorization may be unsafe, passed state was changed in server Passed state wasn't returned from auth server"}),r.code)delete a.state,a.auth.code=r.code,a.callback({auth:a.auth,redirectUrl:n});else{let e;r.error&&(e="["+r.error+"]: "+(r.error_description?r.error_description+". ":"no accessCode received from the server. ")+(r.error_uri?"More info: "+r.error_uri:"")),a.errCb({authId:a.auth.name,source:"auth",level:"error",message:e||"[Authorization failed]: no accessCode received from the server"})}window.close()}"loading"!==document.readyState?run():document.addEventListener("DOMContentLoaded",(function(){run()}));
+"use strict";
+
+function getResponseParams() {
+  var queryString;
+
+  if (/code|token|error/.test(window.location.hash)) {
+    queryString = window.location.hash.substring(1).replace("?", "&");
+  } else {
+    queryString = location.search.substring(1);
+  }
+
+  var pairs = queryString.split("&");
+  pairs.forEach(function (value, index, allPairs) {
+    allPairs[index] = '"' + value.replace("=", '":"') + '"';
+  });
+
+  return queryString ? JSON.parse("{" + pairs.join() + "}", function (key, value) {
+    return key === "" ? value : decodeURIComponent(value);
+  }) : {};
+}
+
+function isAuthorizationCodeFlow(oauth2) {
+  var flow = oauth2.auth.schema.get("flow");
+  return flow === "accessCode"
+    || flow === "authorizationCode"
+    || flow === "authorization_code";
+}
+
+function reportAuthorizationCodeError(oauth2, response) {
+  var oauthErrorMsg;
+
+  if (response.error) {
+    oauthErrorMsg = "[" + response.error + "]: "
+      + (response.error_description ? response.error_description + ". " : "no accessCode received from the server. ")
+      + (response.error_uri ? "More info: " + response.error_uri : "");
+  }
+
+  oauth2.errCb({
+    authId: oauth2.auth.name,
+    source: "auth",
+    level: "error",
+    message: oauthErrorMsg || "[Authorization failed]: no accessCode received from the server"
+  });
+}
+
+function run() {
+  var oauth2 = window.opener.swaggerUIRedirectOauth2;
+  var sentState = oauth2.state;
+  var redirectUrl = oauth2.redirectUrl;
+  var response = getResponseParams();
+  var isValid = response.state === sentState;
+
+  if (!isAuthorizationCodeFlow(oauth2) || oauth2.auth.code) {
+    oauth2.callback({
+      auth: oauth2.auth,
+      token: response,
+      isValid: isValid,
+      redirectUrl: redirectUrl
+    });
+    window.close();
+    return;
+  }
+
+  if (!isValid) {
+    oauth2.errCb({
+      authId: oauth2.auth.name,
+      source: "auth",
+      level: "warning",
+      message: "Authorization may be unsafe, passed state was changed in server Passed state wasn't returned from auth server"
+    });
+  }
+
+  if (response.code) {
+    if (isValid) {
+      delete oauth2.state;
+      oauth2.auth.code = response.code;
+      oauth2.callback({auth: oauth2.auth, redirectUrl: redirectUrl});
+    }
+  } else {
+    reportAuthorizationCodeError(oauth2, response);
+  }
+
+  window.close();
+}
+
+if (document.readyState !== "loading") {
+  run();
+} else {
+  document.addEventListener("DOMContentLoaded", function () {
+    run();
+  });
+}
