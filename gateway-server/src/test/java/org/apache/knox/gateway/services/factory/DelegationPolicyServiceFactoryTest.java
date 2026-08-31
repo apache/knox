@@ -127,6 +127,10 @@ public class DelegationPolicyServiceFactoryTest {
     EasyMock.expect(config.getDatabaseName())
         .andReturn("memory:" + getClass().getSimpleName() + "_knoxidf").anyTimes();
     EasyMock.expect(config.getDelegationServiceTokenTtlSec()).andReturn(3600).anyTimes();
+    EasyMock.expect(config.getDelegationServiceListMaxTotal()).andReturn(
+         org.apache.knox.gateway.config.GatewayConfig.DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT).anyTimes();
+    EasyMock.expect(config.getDelegationServiceListMaxPerAuthority()).andReturn(
+         org.apache.knox.gateway.config.GatewayConfig.DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT).anyTimes();
     EasyMock.replay(config);
 
     createdService = factory.create(gws, ServiceType.DELEGATION_POLICY_SERVICE, config, options, "");
