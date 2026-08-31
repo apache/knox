@@ -36,7 +36,8 @@ public class PolicyCheckRequest {
     this.actorId = actorId;
     this.subjectName = subjectName;
     this.requestedResource = requestedResource;
-    this.requestedScopes = requestedScopes;
+    this.requestedScopes = Set.copyOf(requestedScopes != null ?
+            requestedScopes : java.util.Collections.emptySet());
     this.headlessExchange = headlessExchange;
   }
 
