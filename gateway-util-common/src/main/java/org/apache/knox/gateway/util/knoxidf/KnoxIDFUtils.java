@@ -22,13 +22,16 @@ import org.apache.knox.gateway.util.JsonUtils;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,6 +54,28 @@ public class KnoxIDFUtils {
         errorMap.put("error", error);
         errorMap.put("error_description", description);
         return Response.status(status).entity(JsonUtils.renderAsJsonString(errorMap)).build();
+    }
+
+    /**
+     * Writes an OAuth 2.0 error response (RFC 6749 §5.2 / RFC 8693 §2.2.2) directly to a servlet
+     * response as {@code {"error": ..., "error_description": ...}} with a JSON content type. Used by
+     * the filter layer, which works with {@link HttpServletResponse} rather than a JAX-RS
+     * {@link Response}. Uses {@link HttpServletResponse#setStatus(int)} (not {@code sendError}) so the
+     * JSON body is returned verbatim rather than replaced by the servlet container's HTML error page.
+     * The caller supplies the HTTP status; the {@code error_description} is omitted when {@code null}.
+     */
+    public static void writeErrorResponse(HttpServletResponse response, int status,
+                                          String error, String description) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json; charset=UTF-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Pragma", "no-cache");
+        final Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", error);
+        if (description != null) {
+            body.put("error_description", description);
+        }
+        response.getWriter().write(JsonUtils.renderAsJsonString(body));
     }
 
     private static Response.Status statusForError(String error) {

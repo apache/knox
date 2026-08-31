@@ -34,6 +34,7 @@ import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.ServletRequestUtils;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
@@ -553,12 +554,27 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   @Override
   protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
                                        String error) throws IOException {
+    if (Boolean.TRUE.equals(request.getAttribute(TOKEN_EXCHANGE_REQUEST_ATTR))) {
+      handleValidationError(request, response, status, "invalid_request", error);
+      return;
+    }
     if (error != null) {
       response.sendError(status, error);
     }
     else {
       response.sendError(status);
     }
+  }
+
+  /**
+   * Emit an RFC 8693 / RFC 6749 §5.2 JSON error response ({@code {"error": ..., "error_description":
+   * ...}}) for a token-exchange request. Called directly by {@link TokenExchangeHandler} when it has
+   * an explicit OAuth error code (e.g. {@code invalid_request}), and indirectly by the four-argument
+   * {@link #handleValidationError} for shared-path errors.
+   */
+  void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status,
+                             String error, String description) throws IOException {
+    KnoxIDFUtils.writeErrorResponse(response, status, error, description);
   }
 
   /**
