@@ -256,7 +256,7 @@
         <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
         <metrics.version>4.2.38</metrics.version>
         <mina.version>2.2.8</mina.version>
-        <netty.version>4.1.135.Final</netty.version>
+        <netty.version>4.1.137.Final</netty.version>
         <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
         <nodejs.version>v22.20.0</nodejs.version>
         <oauth2-oidc-sdk.version>11.37.2</oauth2-oidc-sdk.version>
