@@ -83,6 +83,7 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3388] - Single-EKU test gateway startup is slow/flaky: batch credential-store alias creation
     * [KNOX-3398] - Iceberg REST catalog CM service discovery should consider ENCRYPT_ALL_PORTS ENV variable when setting up scheme
     * [KNOX-3409] - Validate knoxauth theme name to Harden the Branding Support
+    * [KNOX-3422] - LDAP Proxy shouldn't create user from gateway.ldap.bind.user config
 
 ** Bug
     * [KNOX-2957] - Upgrade Groovy version >= 3.0.8 to support knoxshell on JDK17 cluster
@@ -129,13 +130,17 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3397] - Remove index suffix from actor groups header explicitly in AbstractAuthResource
     * [KNOX-3399] - RFC 8693 token exchange (handleTokenExchange) unreachable for x-www-form-urlencoded POSTs
     * [KNOX-3403] - RFC 8693 token exchange: issued token 'sub' is the actor instead of the subject on non-server-managed topologies
+    * [KNOX-3406] - Fix intermittent LDAP proxy search truncation
     * [KNOX-3407] - mTLS Support for Websockets
-    * [KNOX-3410] - KnoxToken enable/disable endpoints perform no caller authorization
-    * [KNOX-3411] - KnoxToken getUserTokens returns every user's token metadata without a caller authorization check
-    * [KNOX-3413] - KnoxToken passcode verification accepts a valid passcode for a different token
-    * [KNOX-3416] - KnoxSSO redirects to untrusted site
-    * [KNOX-3417] - KnoxLdapRealm builds the LDAP search filter from the client username without RFC-4515 escaping
-    * [KNOX-3418] - Path traversal → arbitrary file write/overwrite in the Apache Knox Admin API
+    * [KNOX-3410] - Improve KnoxToken enable/disable methods
+    * [KNOX-3411] - Improve getUserToken method
+    * [KNOX-3413] - Improve passcode verification
+    * [KNOX-3416] - Improving redirect protections
+    * [KNOX-3417] - KnoxLdapRealm username RFC-4515 escaping
+    * [KNOX-3418] - Improving file access in Admin API
+    * [KNOX-3420] - Upgrade Jetty to 12.x
+    * [KNOX-3421] - Upgrade Shiro to 2.2.1
+    * [KNOX-3425] - Ldap Proxy may allow anonymous bind
 
 ** Test
     * [KNOX-3225] - New integration test for global HSTS headers
@@ -187,6 +192,7 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3377] - Support secure LDAP (LDAPS) for the Knox embedded LDAP service
     * [KNOX-3382] - Bump netty to 4.1.135.Final due to CVEs
     * [KNOX-3383] - Bump jackson to 2.18.9 due to CVEs
+    * [KNOX-3278] - Update jline to 3.30.6
 
 ** Sub-task
     * [KNOX-3378] - Expose a secure (LDAPS) transport on the embedded Knox LDAP server
