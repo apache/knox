@@ -62,6 +62,8 @@ public class DelegationPolicySchemaTest {
     runScript(derbyConn, loadSql(AbstractDataSourceFactory.DERBY_KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
     // Run standard DDL on HSQLDB
     runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
+    // Verify Oracle DDL script is present on the classpath (execution requires an Oracle-backed test)
+    loadSql(AbstractDataSourceFactory.ORACLE_KNOXIDF_DELEGATION_POLICY_TABLES_SQL);
   }
 
   @AfterClass
