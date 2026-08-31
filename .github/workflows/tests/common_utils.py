@@ -61,6 +61,20 @@ def knox_post(url: str, **kwargs: Any) -> requests.Response:
     return requests.post(url, **opts)
 
 
+def knox_put(url: str, **kwargs: Any) -> requests.Response:
+    """PUT against Knox with verify=False and default timeout unless overridden."""
+    opts: dict[str, Any] = {"verify": False, "timeout": KNOX_REQUEST_TIMEOUT}
+    opts.update(kwargs)
+    return requests.put(url, **opts)
+
+
+def knox_delete(url: str, **kwargs: Any) -> requests.Response:
+    """DELETE against Knox with verify=False and default timeout unless overridden."""
+    opts: dict[str, Any] = {"verify": False, "timeout": KNOX_REQUEST_TIMEOUT}
+    opts.update(kwargs)
+    return requests.delete(url, **opts)
+
+
 def collect_actor_group_values(
     response: requests.Response, prefix: str = "x-knox-actor-groups"
 ) -> list[str]:

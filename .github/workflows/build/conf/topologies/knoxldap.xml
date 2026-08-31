@@ -63,8 +63,18 @@ limitations under the License.
 	<service>
 		<role>KNOXTOKEN</role>
 		<param>
-			<name>knoxsso.token.ttl</name>
+			<name>knox.token.ttl</name>
 			<value>86400000</value>
+		</param>
+		<!-- Server-managed state is required for renew / revoke / enable / disable. -->
+		<param>
+			<name>knox.token.exp.server-managed</name>
+			<value>true</value>
+		</param>
+		<!-- guest may renew/revoke others' tokens; own-token revoke is always allowed. -->
+		<param>
+			<name>knox.token.renewer.whitelist</name>
+			<value>guest</value>
 		</param>
 	</service>
 	<service>

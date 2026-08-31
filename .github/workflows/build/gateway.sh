@@ -34,8 +34,11 @@ keytool -genkeypair -alias ldaps -keyalg RSA -keysize 2048 \
 # 2) Store the keystore password under the alias the LDAP SSL config resolves.
 /knox-runtime/bin/knoxcli.sh create-alias "$KEYSTORE_PASSWORD_ALIAS" --value "$KEYSTORE_PASSWORD"
 
-# 3) Trust that certificate in the JVM default truststore (cacerts) so the JNDI-based
-#    Shiro LDAP realm accepts it. This is additive - it does not remove the default CAs.
+# 3) Provision the gateway-level JWK required for server-managed Knox token state (renew / revoke / enable / disable and JWTProvider enforcement).
+/knox-runtime/bin/knoxcli.sh generate-jwk --jwkAlg HS256 --saveAlias knox.token.hash.key
+
+# 4) Trust that certificate in the JVM default truststore (cacerts) so the JNDI-based
+# Shiro LDAP realm accepts it. This is additive - it does not remove the default CAs.
 keytool -exportcert -alias ldaps -rfc \
   -keystore "$KEYSTORE" -storepass "$KEYSTORE_PASSWORD" -file /tmp/ldaps-cert.pem
 keytool -importcert -noprompt -alias knox-ldaps \

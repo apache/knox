@@ -92,7 +92,8 @@ services:
       # Point the fabric8 client used by the k8s ServiceAccountValidator at k3s.
       - KUBECONFIG=/k3s/knox-kubeconfig.yaml
     volumes:
-#      - ./topologies:/knox-runtime/conf/topologies
+      # Mount topologies from the workspace so config changes apply on restart
+      - ../build/conf/topologies:/knox-runtime/conf/topologies
       - ./logs:/knox-runtime/logs
 #      - ./knoxshell:/knoxshell
       - k3s-output:/k3s:ro
