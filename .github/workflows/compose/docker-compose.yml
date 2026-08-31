@@ -115,7 +115,7 @@ services:
       && pylint *.py
       && echo 'Waiting for knox...'
       && sleep 30
-      && pytest --ignore=test_single_eku_mtls.py --ignore=test_single_eku_no_mtls.py --ignore=test_knoxidf_federation.py --junitxml=test-results.xml"
+      && pytest --ignore=test_single_eku_mtls.py --ignore=test_single_eku_no_mtls.py --ignore=test_knoxidf_federation.py --ignore=test_knox_hashicorp_vault_alias.py --junitxml=test-results.xml"
     depends_on:
       - knox
 

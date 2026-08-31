@@ -124,6 +124,59 @@ jobs:
           echo '===== gateway.log ====='
           cat ./.github/workflows/compose/logs/gateway.log || true
 
+      # HashiCorp Vault alias-service E2E. Unlike the Keycloak federation run,
+      # this is NOT label-gated: the Vault dev image is small and boots in
+      # seconds, so it runs on every PR to guard the spring-vault integration
+      # (e.g. after a Spring / Spring Vault bump). It stands up a dev-mode Vault
+      # and recreates 'knox' with the Vault-backed RemoteAliasService, then
+      # round-trips an alias through the admin API and confirms it in Vault. It
+      # runs here, before the single-EKU steps, so 'knox' is still in its base
+      # config when the override recreates it.
+      - name: Start Vault + Knox for HashiCorp Vault alias service
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.hashicorp-vault.yml \
+            up -d knox vault
+
+      - name: Wait for Vault stack to stabilize
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run HashiCorp Vault Alias Tests
+        id: hashicorp_vault_tests
+        run: |
+          # Emit a distinct JUnit file so it reports as its own test suite.
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.hashicorp-vault.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test_knox_hashicorp_vault_alias.py --junitxml=test-results-hashicorp-vault.xml"
+
+      # Evidence gathering: an alias-API failure could be a gateway that never
+      # reached Vault (bad address/token/engine) or a Vault that never came up.
+      # Dump container status plus the knox and vault logs so the two can be told
+      # apart.
+      - name: Dump HashiCorp Vault diagnostics on failure
+        if: failure() && steps.hashicorp_vault_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.hashicorp-vault.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.hashicorp-vault.yml \
+            logs --no-color knox || true
+          echo '===== vault container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.hashicorp-vault.yml \
+            logs --no-color vault || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+
       # Single-EKU mTLS runs as its own pass. Its override turns on
       # gateway.client.auth.needed=true, which would break the default
       # (no-client-cert) tests above, so the gateway is recreated with the
@@ -226,6 +279,7 @@ jobs:
             .github/workflows/tests/test-results-single-eku.xml
             .github/workflows/tests/test-results-single-eku-no-mtls.xml
             .github/workflows/tests/test-results-federation.xml
+            .github/workflows/tests/test-results-hashicorp-vault.xml
 
       - name: Archive Knox Logs
         if: always()

@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<configuration>
+
+    <!--
+      HashiCorp Vault remote alias service (added on top of the baked
+      .github/workflows/build/gateway-site.xml). This file is mounted over the
+      baked one by docker-compose.hashicorp-vault.yml.
+
+      The alias service implementation is switched to RemoteAliasService, the
+      wrapper that layers a remote backend (here: HashiCorp Vault) on top of the
+      local keystore. On write it stores into BOTH the local keystore and Vault;
+      on read it prefers the remote backend and falls back to local. That
+      fallback is what lets the gateway keep resolving its keystore/identity
+      passwords (which are NOT in Vault) from the local master secret while the
+      admin alias API round-trips real aliases through Vault.
+
+      Vault is reachable at http://vault:8200 (the dev-mode container defined in
+      the compose override). Dev mode mounts a KV v2 secrets engine at "secret"
+      and accepts the root token "myroot"; both are dev-only fixtures, not
+      secrets. Aliases land under secret/data/knox/<cluster>/<alias>.
+    -->
+    <property>
+        <name>gateway.service.alias.impl</name>
+        <value>org.apache.knox.gateway.services.security.impl.RemoteAliasService</value>
+    </property>
+    <property>
+        <name>gateway.remote.alias.service.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.remote.alias.service.config.type</name>
+        <value>hashicorp.vault</value>
+    </property>
+    <property>
+        <name>gateway.remote.alias.service.config.hashicorp.vault.address</name>
+        <value>http://vault:8200</value>
+    </property>
+    <property>
+        <name>gateway.remote.alias.service.config.hashicorp.vault.secrets.engine</name>
+        <value>secret</value>
+    </property>
+    <property>
+        <name>gateway.remote.alias.service.config.hashicorp.vault.path.prefix</name>
+        <value>knox</value>
+    </property>
+    <property>
+        <name>gateway.remote.alias.service.config.hashicorp.vault.authentication.type</name>
+        <value>token</value>
+    </property>
+    <!-- Dev-only root token; matches VAULT_DEV_ROOT_TOKEN_ID in the compose override. -->
+    <property>
+        <name>gateway.remote.alias.service.config.hashicorp.vault.authentication.token</name>
+        <value>myroot</value>
+    </property>
+
+    <!--
+      Use the in-memory DefaultTokenStateService instead of the baked default
+      (DerbyDBTokenStateService). The Derby service reads its DB-credential alias
+      (gateway_database_user) from the alias service at init; with the alias
+      service pointed at Vault, that becomes a hard, fatal dependency on Vault
+      being reachable during gateway startup. DefaultTokenStateService reads no
+      aliases at init, so the gateway boots independently of Vault and this suite
+      stays focused on the alias round-trip (token state is not under test here).
+    -->
+    <property>
+        <name>gateway.service.tokenstate.impl</name>
+        <value>org.apache.knox.gateway.services.token.impl.DefaultTokenStateService</value>
+    </property>
+
+    <property>
+        <name>gateway.port</name>
+        <value>8443</value>
+        <description>The HTTP port for the Gateway.</description>
+    </property>
+
+    <property>
+        <name>gateway.path</name>
+        <value>gateway</value>
+        <description>The default context path for the gateway.</description>
+    </property>
+
+    <property>
+        <name>gateway.gateway.conf.dir</name>
+        <value>deployments</value>
+        <description>The directory within GATEWAY_HOME that contains gateway topology files and deployments.</description>
+    </property>
+
+    <!-- @since 0.10 Websocket configs -->
+    <property>
+        <name>gateway.websocket.feature.enabled</name>
+        <value>true</value>
+        <description>Enable/Disable websocket feature.</description>
+    </property>
+
+    <property>
+        <name>gateway.scope.cookies.feature.enabled</name>
+        <value>false</value>
+        <description>Enable/Disable cookie scoping feature.</description>
+    </property>
+
+    <!-- @since 2.0.0 WebShell configs -->
+    <!-- must have websocket enabled to use webshell -->
+    <property>
+        <name>gateway.webshell.feature.enabled</name>
+        <value>true</value>
+        <description>Enable/Disable webshell feature.</description>
+    </property>
+    <property>
+        <name>gateway.webshell.max.concurrent.sessions</name>
+        <value>20</value>
+        <description>Maximum number of total concurrent webshell sessions</description>
+    </property>
+    <property>
+        <name>gateway.webshell.read.buffer.size</name>
+        <value>1024</value>
+        <description>Web Shell buffer size for reading</description>
+    </property>
+
+    <!-- @since 2.0.0 websocket JWT validation configs -->
+    <property>
+        <name>gateway.websocket.JWT.validation.feature.enabled</name>
+        <value>true</value>
+        <description>Enable/Disable websocket JWT validation at websocket layer.</description>
+    </property>
+
+    <!-- @since 1.5.0 homepage logout -->
+    <property>
+        <name>knox.homepage.logout.enabled</name>
+        <value>true</value>
+        <description>Enable/disable logout from the Knox Homepage.</description>
+    </property>
+
+    <!-- @since 1.6.0 token management related properties -->
+    <property>
+        <name>gateway.knox.token.eviction.grace.period</name>
+        <value>0</value>
+        <description>A duration (in seconds) beyond a token’s expiration to wait before evicting its state. This configuration only applies when server-managed token state is enabled either in gateway-site or at the topology level.</description>
+    </property>
+
+    <!-- Knox Admin related config -->
+    <property>
+        <name>gateway.knox.admin.groups</name>
+        <value>admin</value>
+    </property>
+
+    <!-- DEMO LDAP config for Hadoop Group Provider -->
+    <property>
+        <name>gateway.group.config.hadoop.security.group.mapping</name>
+        <value>org.apache.hadoop.security.LdapGroupsMapping</value>
+    </property>
+    <property>
+        <name>gateway.group.config.use.ldap.service</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.dispatch.whitelist.services</name>
+        <value>DATANODE,HBASEUI,HDFSUI,JOBHISTORYUI,NODEUI,YARNUI,knoxauth</value>
+        <description>The comma-delimited list of service roles for which the gateway.dispatch.whitelist should be applied.</description>
+    </property>
+    <property>
+        <name>gateway.dispatch.whitelist</name>
+        <value>^https?:\/\/(www\.local\.com|localhost|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
+        <description>The whitelist to be applied for dispatches associated with the service roles specified by gateway.dispatch.whitelist.services.
+        If the value is DEFAULT, a domain-based whitelist will be derived from the Knox host.</description>
+    </property>
+    <property>
+        <name>gateway.xforwarded.header.context.append.servicename</name>
+        <value>LIVYSERVER</value>
+        <description>Add service name to x-forward-context header for the list of services defined above.</description>
+    </property>
+    <property>
+        <name>gateway.strict.transport.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.strict.transport.option</name>
+        <value>max-age=300; includeSubDomains</value>
+    </property>
+
+    <!-- KnoxLDAP Service Configuration -->
+    <property>
+        <name>gateway.ldap.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.port</name>
+        <value>33390</value>
+    </property>
+    <property>
+        <name>gateway.ldap.base.dn</name>
+        <value>dc=proxy,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.bind.user</name>
+        <value>uid=bind,ou=people,dc=proxy,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.max.size.limit</name>
+        <value>1000</value>
+    </property>
+    <property>
+        <name>gateway.ldap.max.time.limit</name>
+        <value>60000</value>
+    </property>
+    <property>
+        <name>gateway.ldap.recursive.group.resolution</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.names</name>
+        <value>demoldap</value>
+    </property>
+    <!-- Expose the embedded Knox LDAP service over LDAPS using the dev keystore that
+         gateway.sh provisions; its password is resolved from the credential store. -->
+    <property>
+        <name>gateway.ldap.ssl.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.ssl.keystore.path</name>
+        <value>/knox-runtime/conf/ldaps-keystore.p12</value>
+    </property>
+    <property>
+        <name>gateway.ldap.ssl.keystore.password.alias</name>
+        <value>gateway_ldap_ssl_keystore_password</value>
+    </property>
+
+    <!-- LDAP Backend specific configuration (proxying to demo ldap) -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.interceptorType</name>
+        <value>backend</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.backendType</name>
+        <value>ldap</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.url</name>
+        <value>ldaps://ldap:33389</value>
+    </property>
+    <!-- The demo LDAP presents a self-signed dev certificate; trust it rather than
+         wiring a truststore for this dev/CI fixture. -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.trustAllCertificates</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.remoteBaseDn</name>
+        <value>dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.systemUsername</name>
+        <value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.systemPassword</name>
+        <value>guest-password</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.userSearchBase</name>
+        <value>ou=people,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.groupSearchBase</name>
+        <value>ou=groups,dc=hadoop,dc=apache,dc=org</value>
+    </property>
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.groupMemberAttribute</name>
+        <value>member</value>
+    </property>
+    <!-- Set an unnaturally low page size to ensure that paging is used in tests -->
+    <property>
+        <name>gateway.ldap.interceptor.demoldap.pageSize</name>
+        <value>3</value>
+    </property>
+
+</configuration>
