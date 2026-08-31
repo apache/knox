@@ -142,6 +142,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     if (!JDBCUtils.tableExists(CORE_TABLE, dataSource)) {
       try (InputStream is = getClass().getClassLoader().getResourceAsStream(sqlFileName);
            Connection connection = dataSource.getConnection()) {
+        if (is == null) {
+          throw new IllegalStateException("DDL script not found on classpath: " + sqlFileName);
+        }
         final String script = IOUtils.toString(is, UTF_8);
         final StringBuilder stripped = new StringBuilder();
         for (String line : script.split("\n")) {
