@@ -19,7 +19,6 @@ package org.apache.knox.gateway.services.knoxidf.delegation;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,11 +58,13 @@ public class DelegationPolicy {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.allowHeadlessExchange = allowHeadlessExchange;
-    this.canActForUsers = Collections.unmodifiableSet(new HashSet<>(canActForUsers));
-    this.canActForGroups = Collections.unmodifiableSet(new HashSet<>(canActForGroups));
+    this.canActForUsers = Set.copyOf(canActForUsers != null ? canActForUsers : Collections.emptySet());
+    this.canActForGroups = Set.copyOf(canActForGroups != null ? canActForGroups : Collections.emptySet());
+    final Map<String, Set<String>> rp = (resourcePolicy != null) ? resourcePolicy : Collections.emptyMap();
     Map<String, Set<String>> copy = new HashMap<>();
-    for (Map.Entry<String, Set<String>> entry : resourcePolicy.entrySet()) {
-      copy.put(entry.getKey(), Collections.unmodifiableSet(new HashSet<>(entry.getValue())));
+    for (Map.Entry<String, Set<String>> entry : rp.entrySet()) {
+      final Set<String> scopes = (entry.getValue() != null) ? entry.getValue() : Collections.emptySet();
+      copy.put(entry.getKey(), Set.copyOf(scopes));
     }
     this.resourcePolicy = Collections.unmodifiableMap(copy);
   }

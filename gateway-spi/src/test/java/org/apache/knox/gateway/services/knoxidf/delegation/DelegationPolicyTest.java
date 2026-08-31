@@ -128,6 +128,41 @@ public class DelegationPolicyTest {
     assertNull(policy.getCreatedBy());
   }
 
+  @Test
+  public void nullCanActForUsersBecomesEmptySet() {
+    final DelegationPolicy policy = policy(null, Collections.emptySet(), Collections.emptyMap());
+
+    assertTrue("Null canActForUsers should become empty set", policy.getCanActForUsers().isEmpty());
+  }
+
+  @Test
+  public void nullCanActForGroupsBecomesEmptySet() {
+    final DelegationPolicy policy = policy(Collections.emptySet(), null, Collections.emptyMap());
+
+    assertTrue("Null canActForGroups should become empty set", policy.getCanActForGroups().isEmpty());
+  }
+
+  @Test
+  public void nullResourcePolicyBecomesEmptyMap() {
+    final DelegationPolicy policy = new DelegationPolicy(
+        "reg-id", "oidc", "actorId",
+        "test-policy", "active", 3600, "desc", "admin",
+        Instant.now(), Instant.now(), false,
+        Collections.emptySet(), Collections.emptySet(), null);
+
+    assertTrue("Null resourcePolicy should become empty map", policy.getResourcePolicy().isEmpty());
+  }
+
+  @Test
+  public void nullValueSetInResourcePolicyBecomesEmptySet() {
+    final Map<String, Set<String>> resourcePolicy = new HashMap<>();
+    resourcePolicy.put("/api/v1", null);
+    final DelegationPolicy policy = policy(Collections.emptySet(), Collections.emptySet(), resourcePolicy);
+
+    final Set<String> scopes = policy.getResourcePolicy().get("/api/v1");
+    assertTrue("Null value set in resourcePolicy should become empty set", scopes.isEmpty());
+  }
+
   private static DelegationPolicy policy(Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy) {
     return new DelegationPolicy(
         "reg-id", "oidc", "actorId",
