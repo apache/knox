@@ -26,11 +26,15 @@ with the KNOXTOKEN service exposed by the ``knoxldap`` topology:
    ``knox.token.exp.server-managed=true`` on both the issuing service and
    the JWTProvider so that revocation and disablement are enforced at
    federation time — not just acknowledged by the management API.
+4. Passcode tokens (a second credential minted alongside the JWT) authenticate
+   the same JWTProvider topology and must stay bound to their own token id
+   — a verified passcode may not be replayed against another token.
 
 No other suite issues Knox tokens or authenticates via JWTProvider, so this
 file does not overlap with the Basic-auth / preauth coverage elsewhere.
 """
 
+import base64
 import unittest
 
 from requests.auth import HTTPBasicAuth
@@ -38,6 +42,7 @@ from requests.auth import HTTPBasicAuth
 from common_utils import gateway_base_url, knox_delete, knox_get, knox_put
 
 
+# pylint: disable=too-many-public-methods
 class TestKnoxTokenJwt(unittest.TestCase):
     """Mint a Knox JWT and use it against a JWTProvider-federated topology."""
 
@@ -231,6 +236,64 @@ class TestKnoxTokenJwt(unittest.TestCase):
         self.assertEqual(body.get("revoked"), "false")
         self.assertIn("not authorized", body.get("error", "").lower())
 
+    def test_disable_forbidden_for_non_owner_non_whitelisted_user(self):
+        """admin may not disable guest's token without being on the renewer whitelist."""
+        token_id = self._issue_token(self.guest_auth)["token_id"]
+
+        disable = knox_put(
+            self.token_url + "/disable",
+            data=token_id,
+            auth=self.admin_auth,
+        )
+        self.assertEqual(disable.status_code, 403)
+        body = disable.json()
+        self.assertEqual(body.get("setEnabledFlag"), "false")
+        self.assertIn("not authorized", body.get("error", "").lower())
+
+    GET_USER_TOKENS_FORBIDDEN_ERROR = (
+        "Caller (guest) is not authorized to see other users' tokens."
+    )
+
+    def _assert_get_user_tokens_forbidden(self, params):
+        """guest must be denied (403) any getUserTokens query it is not scoped to.
+
+        Only users in knox's "can see all tokens" allowlist may list tokens they
+        do not own; being on the renewer whitelist does not grant it.
+        """
+        self._issue_token(self.admin_auth)
+
+        response = knox_get(
+            self.token_url + "/getUserTokens",
+            params=params,
+            auth=self.guest_auth,
+        )
+        self.assertEqual(
+            response.status_code,
+            403,
+            msg=f"Expected 403 for getUserTokens {params}, got "
+            f"{response.status_code}: {response.text}",
+        )
+        self.assertEqual(
+            response.json().get("error"),
+            self.GET_USER_TOKENS_FORBIDDEN_ERROR,
+        )
+
+    def test_get_user_tokens_forbidden_all_tokens(self):
+        """guest may not enumerate every token via allTokens=true."""
+        self._assert_get_user_tokens_forbidden({"allTokens": "true"})
+
+    def test_get_user_tokens_forbidden_by_username(self):
+        """guest may not list another user's tokens by userName."""
+        self._assert_get_user_tokens_forbidden({"userName": "admin"})
+
+    def test_get_user_tokens_forbidden_by_created_by(self):
+        """guest may not list another user's tokens by createdBy."""
+        self._assert_get_user_tokens_forbidden({"createdBy": "admin"})
+
+    def test_get_user_tokens_forbidden_by_username_or_created_by(self):
+        """guest may not list another user's tokens by userNameOrCreatedBy."""
+        self._assert_get_user_tokens_forbidden({"userNameOrCreatedBy": "admin"})
+
     def test_disable_is_enforced_at_federation(self):
         """Disabling a token must stop federation; re-enabling restores it."""
         payload = self._issue_token(self.guest_auth)
@@ -300,6 +363,78 @@ class TestKnoxTokenJwt(unittest.TestCase):
         body = second.json()
         self.assertEqual(body.get("setEnabledFlag"), "false")
         self.assertIn("already disabled", body.get("error", "").lower())
+
+    def _present_passcode(self, passcode_field):
+        """Present a passcode token value to the JWTProvider topology as Basic auth."""
+        basic = base64.b64encode(
+            ("Passcode:" + passcode_field).encode("utf-8")
+        ).decode("ascii")
+        return knox_get(
+            self.federated_pre_url,
+            headers={"Authorization": "Basic " + basic},
+        )
+
+    @staticmethod
+    def _craft_cross_token_passcode(target_token_id, victim_passcode_field):
+        """Pair target_token_id with the victim's raw passcode, re-encoded as a value.
+
+        Decodes ``Base64( Base64(victimId) + "::" + Base64(rawPasscode) )``,
+        swaps in the target token id, and re-encodes — the payload an attacker
+        who holds one valid passcode would forge for another token id.
+        """
+        inner = base64.b64decode(victim_passcode_field).decode("utf-8")
+        _victim_id_b64, raw_passcode_b64 = inner.split("::")
+        target_id_b64 = base64.b64encode(
+            target_token_id.encode("utf-8")
+        ).decode("ascii")
+        crafted_inner = target_id_b64 + "::" + raw_passcode_b64
+        return base64.b64encode(crafted_inner.encode("utf-8")).decode("ascii")
+
+    def test_valid_passcode_authenticates(self):
+        """Positive control: a token's own passcode authenticates as its owner (200)."""
+        payload = self._issue_token(self.guest_auth)
+        self.assertIn(
+            "passcode",
+            payload,
+            msg="no passcode field; token state service must be persistent/server-managed",
+        )
+        response = self._present_passcode(payload["passcode"])
+        self.assertEqual(
+            response.status_code,
+            200,
+            msg=f"valid passcode was not accepted: {response.status_code} {response.text}",
+        )
+        self.assertEqual(response.headers.get("x-knox-actor-username"), "guest")
+
+    def test_passcode_is_bound_to_its_own_token(self):
+        """A guest passcode replayed against an admin token id must be rejected (401).
+
+        Warm the verification cache with guest's real passcode (accepted, 200),
+        then present that same raw passcode paired with admin's token id. Before
+        the fix the cache hit on the passcode alone authenticated the caller as
+        admin; the fix keys the cache by token id + passcode, so the forged pair
+        falls through to a MAC check against admin's token and fails.
+        """
+        admin_token_id = self._issue_token(self.admin_auth)["token_id"]
+        guest_passcode = self._issue_token(self.guest_auth)["passcode"]
+
+        warm = self._present_passcode(guest_passcode)
+        self.assertEqual(
+            warm.status_code,
+            200,
+            msg=f"warm-up passcode was not accepted: {warm.status_code} {warm.text}",
+        )
+        self.assertEqual(warm.headers.get("x-knox-actor-username"), "guest")
+
+        forged = self._craft_cross_token_passcode(admin_token_id, guest_passcode)
+        response = self._present_passcode(forged)
+        self.assertEqual(
+            response.status_code,
+            401,
+            msg=f"cross-token passcode must be rejected; got "
+            f"{response.status_code}: {response.text}",
+        )
+        self.assertNotEqual(response.headers.get("x-knox-actor-username"), "admin")
 
 
 if __name__ == "__main__":

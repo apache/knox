@@ -15,6 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+<!--
+  Search-then-bind LDAP topology that exercises the operator-authored
+  userSearchFilter sink in KnoxLdapRealm (KNOX-3417). Unlike the userDnTemplate
+  topologies (knoxldap/knoxsso), this one binds as a system account, runs a
+  filter search for the client-supplied username, and only then binds as the
+  matched user. The client-supplied {0} is interpolated into the LDAP search
+  filter, so its RFC-4515 metacharacters must be escaped or the filter can be
+  rewritten by the caller (LDAP filter injection).
+
+  Backed by the same embedded Knox LDAP (LDAPS on localhost:33390, proxying to
+  the demo LDAP) used by the other CI topologies.
+-->
 <topology>
 	<gateway>
 		<provider>
@@ -30,16 +42,36 @@ limitations under the License.
 				<value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>
 			</param>
 			<param>
-				<name>main.ldapRealm.userDnTemplate</name>
-				<value>uid={0},ou=people,dc=proxy,dc=org</value>
+				<name>main.ldapContextFactory</name>
+				<value>org.apache.knox.gateway.shirorealm.KnoxLdapContextFactory</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory</name>
+				<value>$ldapContextFactory</value>
 			</param>
 			<param>
 				<name>main.ldapRealm.contextFactory.url</name>
-				<value>ldaps://localhost:33390</value>  <!-- Local Knox LDAP service (LDAPS); configured to proxy to the demo LDAP as a backend -->
+				<value>ldaps://localhost:33390</value>
 			</param>
 			<param>
 				<name>main.ldapRealm.contextFactory.authenticationMechanism</name>
 				<value>simple</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory.systemUsername</name>
+				<value>uid=guest,ou=people,dc=hadoop,dc=apache,dc=org</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory.systemPassword</name>
+				<value>guest-password</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.userSearchBase</name>
+				<value>ou=people,dc=hadoop,dc=apache,dc=org</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.userSearchFilter</name>
+				<value>(&amp;(objectclass=person)(uid={0}))</value>
 			</param>
 			<param>
 				<name>urls./**</name>
@@ -48,52 +80,11 @@ limitations under the License.
 		</provider>
 		<provider>
 			<role>identity-assertion</role>
-			<name>HadoopGroupProvider</name>
+			<name>Default</name>
 			<enabled>true</enabled>
-			<param>
-				<name>group.principal.mapping</name>
-				<value>admin=longGroupName1,longGroupName2,longGroupName3,longGroupName4</value>
-			</param>
-			<param>
-				<name>CENTRAL_GROUP_CONFIG_PREFIX</name>
-				<value>gateway.group.config.</value>
-			</param>
 		</provider>
 	</gateway>
 	<service>
-		<role>KNOXTOKEN</role>
-		<param>
-			<name>knox.token.ttl</name>
-			<value>86400000</value>
-		</param>
-		<!-- Server-managed state is required for renew / revoke / enable / disable. -->
-		<param>
-			<name>knox.token.exp.server-managed</name>
-			<value>true</value>
-		</param>
-		<!-- guest may renew/revoke others' tokens; own-token revoke is always allowed. -->
-		<param>
-			<name>knox.token.renewer.whitelist</name>
-			<value>guest</value>
-		</param>
-	</service>
-	<service>
-		<role>KNOX-AUTH-SERVICE</role>
-		<param>
-			<name>preauth.auth.header.actor.id.name</name>
-			<value>x-knox-actor-username</value>
-		</param>
-		<param>
-			<name>preauth.auth.header.actor.groups.prefix</name>
-			<value>x-knox-actor-groups</value>
-		</param>
-		<param>
-			<name>preauth.group.filter.pattern</name>
-			<value>[^\s]+</value>
-		</param>
-	</service>
-	<service>
-		<role>KNOX</role>
+		<role>HEALTH</role>
 	</service>
 </topology>
-
