@@ -26,9 +26,10 @@ import org.apache.knox.gateway.topology.Service;
 
 import java.util.List;
 
+@Deprecated
 public class AccessTokenFederationContributor extends ProviderDeploymentContributorBase {
 
-  private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.AccessTokenFederationFilter";
+  //private static final String FILTER_CLASSNAME = "org.apache.knox.gateway.provider.federation.jwt.filter.AccessTokenFederationFilter";
 
   @Override
   public String getRole() {
@@ -46,6 +47,6 @@ public class AccessTokenFederationContributor extends ProviderDeploymentContribu
 
   @Override
   public void contributeFilter( DeploymentContext context, Provider provider, Service service, ResourceDescriptor resource, List<FilterParamDescriptor> params ) {
-    resource.addFilter().name( getName() ).role( getRole() ).impl( FILTER_CLASSNAME ).params( params );
+    throw new UnsupportedOperationException("AccessTokenFederationFilter is deprecated use JWTFederationFilter instead");
   }
 }
