@@ -47,7 +47,7 @@ The Knox Token Service configuration can be configured in any descriptor/topolog
 Parameter                        | Description | Default    |
 -------------------------------- |------------ |----------- |
 knox.token.ttl                | This indicates the lifespan (milliseconds) of the token. Once it expires a new token must be acquired from KnoxToken service. The 36000000 in the topology above gives you 10 hrs. | 30000 (30 seconds) |
-knox.token.audiences          | This is a comma-separated list of audiences to add to the JWT token. This is used to ensure that a token received by a participating application knows that the token was intended for use with that application. It is optional. In the event that an endpoint has expected audiences and they are not present the token must be rejected. In the event where the token has audiences and the endpoint has none expected then the token is accepted. This list additionally acts as the whitelist of audiences a caller is permitted to request per request via the `audience` query parameter (see below).| empty |
+knox.token.audiences          | This is a comma-separated list of audiences to add to the JWT token. This is used to ensure that a token received by a participating application knows that the token was intended for use with that application. It is optional. In the event that an endpoint has expected audiences and they are not present the token must be rejected. In the event where the token has audiences and the endpoint has none expected then the token is accepted. This list additionally acts as the whitelist of audiences a caller is permitted to request per request via the `resource` query parameter (see below).| empty |
 knox.token.target.url         | This is an optional configuration parameter to indicate the intended endpoint for which the token may be used. The KnoxShell token credential collector can pull this URL from a knoxtokencache file to be used in scripts. This eliminates the need to prompt for or hardcode endpoints in your scripts. | n/a |
 knox.token.exp.server-managed | This is an optional configuration parameter to enable/disable server-managed token state, to support the associated token renewal and revocation APIs. | false |
 knox.token.renewer.whitelist  | This is an optional configuration parameter to authorize the comma-separated list of users to invoke the associated token renewal and revocation APIs. |  |
@@ -101,17 +101,19 @@ This feature is enabled by default. If you want to disable it, add the following
 
 #### Requesting a token audience dynamically
 
-By default the `aud` claim of an issued token is fixed to the value(s) configured in `knox.token.audiences`, and the per-request `audience` query parameter is ignored. To let a caller request the audience(s) per request instead, select an *audience validator* that honors the parameter. Multiple audiences may be supplied either comma-separated in a single parameter or as repeated parameters; surrounding whitespace is trimmed.
+By default the `aud` claim of an issued token is fixed to the value(s) configured in `knox.token.audiences`, and the per-request `resource` query parameter is ignored. To let a caller request the audience(s) per request instead, select an *audience validator* that honors the parameter. This follows [RFC 8707 (Resource Indicators for OAuth 2.0)](https://www.rfc-editor.org/rfc/rfc8707): the caller names the target service via the `resource` parameter and the gateway maps it into the token's `aud` claim.
 
-    curl -u admin:admin-password -k "https://localhost:8443/gateway/homepage/knoxtoken/api/v1/token?audience=service-a"
+Per RFC 8707 section 2, each `resource` value MUST be an absolute URI (RFC 3986 section 4.3) and MUST NOT include a fragment component; a query component is permitted. A `resource` value that is not a valid absolute URI, or that includes a fragment, is rejected with `400 Bad Request`. Multiple resources may be supplied either comma-separated in a single parameter or as repeated parameters; surrounding whitespace is trimmed.
 
-Which requested audiences are allowed is decided by a pluggable *audience validator*, selected with `knox.token.audience.validator`:
+    curl -u admin:admin-password -k "https://localhost:8443/gateway/homepage/knoxtoken/api/v1/token?resource=https://service-a"
 
-*   `static` (the default) preserves the historical behavior: the `audience` query parameter is ignored and the statically configured `knox.token.audiences` are always used. No configuration beyond `knox.token.audiences` is needed and nothing new is exposed to callers.
-*   `whitelist` validates requested audiences against `knox.token.audiences`, treating it as a whitelist.
-*   `passthrough` accepts whatever audience(s) the caller requests without any local whitelist. It requires no configured `knox.token.audiences`; when the request contains no `audience` parameter the token is issued with no `aud` claim (it does not fall back to `knox.token.audiences`).
+Which requested resources are allowed is decided by a pluggable *audience validator*, selected with `knox.token.audience.validator`:
 
-Selecting the `whitelist` validator enables per-request audiences:
+*   `static` (the default) preserves the historical behavior: the `resource` query parameter is ignored and the statically configured `knox.token.audiences` are always used. No configuration beyond `knox.token.audiences` is needed and nothing new is exposed to callers.
+*   `whitelist` validates requested resources against `knox.token.audiences`, treating it as a whitelist.
+*   `passthrough` accepts whatever resource(s) the caller requests without any local whitelist. It requires no configured `knox.token.audiences`; when the request contains no `resource` parameter the token is issued with no `aud` claim (it does not fall back to `knox.token.audiences`).
+
+Selecting the `whitelist` validator enables per-request resources:
 
         <param>
             <name>knox.token.audience.validator</name>
@@ -120,13 +122,13 @@ Selecting the `whitelist` validator enables per-request audiences:
 
 With the `whitelist` validator its behavior is:
 
-*   the request does not contain an `audience` parameter -> the statically configured `knox.token.audiences` are used, exactly as before (unchanged default behavior)
-*   the request contains an `audience` parameter and every requested audience is present in `knox.token.audiences` -> only the requested audience(s) are placed in the token's `aud` claim
-*   the request contains an `audience` parameter and any requested audience is not present in `knox.token.audiences` -> the request is rejected with `400 Bad Request`
+*   the request does not contain a `resource` parameter -> the statically configured `knox.token.audiences` are used, exactly as before (unchanged default behavior)
+*   the request contains a `resource` parameter and every requested resource is present in `knox.token.audiences` -> only the requested resource(s) are placed in the token's `aud` claim
+*   the request contains a `resource` parameter and any requested resource is not present in `knox.token.audiences` -> the request is rejected with `400 Bad Request`
 
-Only exact matches against the whitelist are honored.
+Only exact matches against the whitelist are honored, so the values configured in `knox.token.audiences` must be the same absolute URIs the callers request.
 
-The `passthrough` validator instead stamps the requested audience(s) into the token's `aud` claim verbatim, without any whitelist check, and rejects nothing. If the request contains no `audience` parameter the token is issued with no `aud` claim. Because it performs no local authorization, `passthrough` relies on a downstream JWTProvider to reject tokens whose `aud` does not match the consumer topology's expected audiences, deferring enforcement to the point of consumption. Use it only when such consumption-time validation is in place.
+The `passthrough` validator instead stamps the requested resource(s) into the token's `aud` claim verbatim, without any whitelist check, and rejects nothing (beyond the URI validation above). If the request contains no `resource` parameter the token is issued with no `aud` claim. Because it performs no local authorization, `passthrough` relies on a downstream JWTProvider to reject tokens whose `aud` does not match the consumer topology's expected audiences, deferring enforcement to the point of consumption. Use it only when such consumption-time validation is in place.
 
 To avoid deploying a topology that cannot authorize any request, the deployment fails at startup when the `whitelist` validator is selected but no `knox.token.audiences` are configured. This guard is specific to validators that require a configured audience list (the `whitelist` validator cannot authorize anything without one); it is expressed through the validator's own `requiresConfiguredAudiences()` contract rather than by inspecting the topology. The `static` and `passthrough` validators have no such requirement.
 
@@ -136,7 +138,7 @@ Audience validator configuration parameters:
 
 Parameter                        | Description | Default    |
 -------------------------------- |------------ |----------- |
-knox.token.audience.validator | Selects the audience validator strategy. `static` ignores the per-request `audience` parameter and uses `knox.token.audiences`; `whitelist` honors requested audiences that appear in `knox.token.audiences`; `passthrough` accepts any requested audience without a whitelist (no `aud` when the parameter is absent). | static |
+knox.token.audience.validator | Selects the audience validator strategy. `static` ignores the per-request `resource` parameter and uses `knox.token.audiences`; `whitelist` honors requested resources that appear in `knox.token.audiences`; `passthrough` accepts any requested resource without a whitelist (no `aud` when the parameter is absent). | static |
 
 #### KnoxToken Renewal, Revocation and Enable/Disable actions
 

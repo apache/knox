@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
@@ -125,7 +127,7 @@ public class TokenResource {
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
-  static final String AUDIENCE_QUERY_PARAM = "audience";
+  static final String RESOURCE_QUERY_PARAM = "resource";
   private static final String TOKEN_AUDIENCE_VALIDATOR_PARAM = TOKEN_PARAM_PREFIX + "audience.validator";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
@@ -221,7 +223,8 @@ public class TokenResource {
     ALREADY_ENABLED(70),
     DISABLED_KNOXSSO_COOKIE(80),
     TOKEN_EXPIRED(90),
-    INVALID_AUDIENCE(100);
+    INVALID_AUDIENCE(100),
+    INVALID_RESOURCE(110);
 
     private final int code;
 
@@ -920,7 +923,7 @@ public class TokenResource {
 
     final List<String> audiences;
     try {
-      audiences = audienceValidator.validateAndResolve(new AudienceValidationContext(parseRequestedAudiences(), targetAudiences));
+      audiences = audienceValidator.validateAndResolve(new AudienceValidationContext(parseRequestedResources(), targetAudiences));
     } catch (RequestedAudienceValidationException e) {
       log.rejectedAudienceRequest(e.getMessage());
       return new TokenResponseContext(null,
@@ -1163,24 +1166,40 @@ public class TokenResource {
     }
   }
 
-  private List<String> parseRequestedAudiences() {
+  private List<String> parseRequestedResources() throws RequestedAudienceValidationException {
     final Map<String, String[]> parameterMap = request.getParameterMap();
-    final String[] rawValues = parameterMap == null ? null : parameterMap.get(AUDIENCE_QUERY_PARAM);
+    final String[] rawValues = parameterMap == null ? null : parameterMap.get(RESOURCE_QUERY_PARAM);
     final List<String> requested = new ArrayList<>();
     if (rawValues != null) {
       for (String rawValue : rawValues) {
-        if (rawValue == null) {
-          continue;
-        }
         for (String value : rawValue.split(",")) {
-          final String trimmed = value.trim();
-          if (!trimmed.isEmpty()) {
-            requested.add(trimmed);
-          }
+          requested.add(validateResourceUri(value.trim()));
         }
       }
     }
     return requested;
+  }
+
+  /**
+   * Validates that a requested {@code resource} value is an absolute URI without a fragment, as
+   * required by RFC 8707 (Resource Indicators for OAuth 2.0) section 2 and RFC 3986 section 4.3.
+   * A query component is permitted; a fragment component is not. Returns the value unchanged when
+   * it is valid.
+   */
+  private String validateResourceUri(String value) throws RequestedAudienceValidationException {
+    final URI uri;
+    try {
+      uri = new URI(value);
+    } catch (URISyntaxException e) {
+      throw new RequestedAudienceValidationException(
+          "The requested resource '" + value + "' is not a valid URI.", ErrorCode.INVALID_RESOURCE);
+    }
+    if (!uri.isAbsolute() || uri.getFragment() != null) {
+      throw new RequestedAudienceValidationException(
+          "The requested resource '" + value + "' must be an absolute URI without a fragment.",
+          ErrorCode.INVALID_RESOURCE);
+    }
+    return value;
   }
 
   private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences) throws TokenServiceException {

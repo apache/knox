@@ -133,7 +133,7 @@ public class TokenServiceResourceTest {
 
   private ServletContext context;
   private HttpServletRequest request;
-  private String[] audienceParamValues;
+  private String[] resourceParamValues;
   private JWTokenAuthority authority;
   private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
@@ -200,8 +200,8 @@ public class TokenServiceResourceTest {
     }
     EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     final Map<String, String[]> parameterMap = new HashMap<>();
-    if (audienceParamValues != null) {
-      parameterMap.put(TokenResource.AUDIENCE_QUERY_PARAM, audienceParamValues);
+    if (resourceParamValues != null) {
+      parameterMap.put(TokenResource.RESOURCE_QUERY_PARAM, resourceParamValues);
     }
     EasyMock.expect(request.getParameterMap()).andReturn(parameterMap).anyTimes();
 
@@ -437,7 +437,7 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testDynamicAudienceNoParamUsesConfigured() throws Exception {
+  public void testDynamicResourceNoParamUsesConfigured() throws Exception {
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audience.validator", "whitelist");
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
@@ -459,10 +459,10 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testDynamicAudienceIgnoredWithDefaultStaticValidator() throws Exception {
-    // With no validator configured the default 'static' validator is used: a requested audience must
+  public void testDynamicResourceIgnoredWithDefaultStaticValidator() throws Exception {
+    // With no validator configured the default 'static' validator is used: a requested resource must
     // be ignored and the configured audiences used unchanged (historical behavior).
-    audienceParamValues = new String[] { "recipient1" };
+    resourceParamValues = new String[] { "https://recipient1" };
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
     configureCommonExpectations(contextExpectations);
@@ -510,11 +510,11 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testDynamicAudienceAllowedWhenWhitelisted() throws Exception {
-    audienceParamValues = new String[] { "recipient1" };
+  public void testDynamicResourceAllowedWhenWhitelisted() throws Exception {
+    resourceParamValues = new String[] { "https://recipient1" };
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audience.validator", "whitelist");
-    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    contextExpectations.put("knox.token.audiences", "https://recipient1,https://recipient2");
     configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
@@ -528,16 +528,16 @@ public class TokenServiceResourceTest {
     JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
     List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
     assertEquals(1, audiences.size());
-    assertTrue(audiences.contains("recipient1"));
-    assertFalse(audiences.contains("recipient2"));
+    assertTrue(audiences.contains("https://recipient1"));
+    assertFalse(audiences.contains("https://recipient2"));
   }
 
   @Test
-  public void testDynamicAudienceRejectedWhenNotWhitelisted() throws Exception {
-    audienceParamValues = new String[] { "recipient1", "intruder" };
+  public void testDynamicResourceRejectedWhenNotWhitelisted() throws Exception {
+    resourceParamValues = new String[] { "https://recipient1", "https://intruder" };
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audience.validator", "whitelist");
-    contextExpectations.put("knox.token.audiences", "recipient1,recipient2");
+    contextExpectations.put("knox.token.audiences", "https://recipient1,https://recipient2");
     configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
@@ -550,11 +550,48 @@ public class TokenServiceResourceTest {
   }
 
   @Test
-  public void testDynamicAudienceMultipleValuesAndCommaSeparated() throws Exception {
-    audienceParamValues = new String[] { "recipient1", " recipient2 , recipient3" };
+  public void testDynamicResourceRejectedWhenNotAValidUri() throws Exception {
+    // A resource that is present but not an absolute URI (RFC 8707 section 2) must be rejected,
+    // regardless of the selected validator.
+    resourceParamValues = new String[] { "not-a-uri" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "passthrough");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(400, retResponse.getStatus());
+    assertTrue(retResponse.getEntity().toString().contains("\"code\": " + TokenResource.ErrorCode.INVALID_RESOURCE.toInt()));
+  }
+
+  @Test
+  public void testDynamicResourceRejectedWhenUriHasFragment() throws Exception {
+    // RFC 8707 section 2: the resource URI MUST NOT include a fragment component.
+    resourceParamValues = new String[] { "https://recipient1#fragment" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "passthrough");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(400, retResponse.getStatus());
+    assertTrue(retResponse.getEntity().toString().contains("\"code\": " + TokenResource.ErrorCode.INVALID_RESOURCE.toInt()));
+  }
+
+  @Test
+  public void testDynamicResourceMultipleValuesAndCommaSeparated() throws Exception {
+    resourceParamValues = new String[] { "https://recipient1", " https://recipient2 , https://recipient3" };
     final Map<String, String> contextExpectations = new HashMap<>();
     contextExpectations.put("knox.token.audience.validator", "whitelist");
-    contextExpectations.put("knox.token.audiences", "recipient1,recipient2,recipient3");
+    contextExpectations.put("knox.token.audiences", "https://recipient1,https://recipient2,https://recipient3");
     configureCommonExpectations(contextExpectations);
 
     TokenResource tr = new TokenResource();
@@ -568,9 +605,9 @@ public class TokenServiceResourceTest {
     JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
     List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
     assertEquals(3, audiences.size());
-    assertTrue(audiences.contains("recipient1"));
-    assertTrue(audiences.contains("recipient2"));
-    assertTrue(audiences.contains("recipient3"));
+    assertTrue(audiences.contains("https://recipient1"));
+    assertTrue(audiences.contains("https://recipient2"));
+    assertTrue(audiences.contains("https://recipient3"));
   }
 
   @Test

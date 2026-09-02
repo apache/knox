@@ -48,7 +48,7 @@ class WhitelistAudienceValidator implements AudienceValidator {
         for (String audience : requested) {
             if (!configured.contains(audience)) {
                 throw new RequestedAudienceValidationException(
-                        "The requested audience '" + audience + "' is not allowed.", ErrorCode.INVALID_AUDIENCE);
+                        "The requested resource '" + audience + "' is not allowed.", ErrorCode.INVALID_AUDIENCE);
             }
         }
         return requested;
