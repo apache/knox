@@ -96,10 +96,6 @@
             <name>knox.token.exp.server-managed</name>
             <value>false</value>
         </param>
-        <param>
-            <name>knoxsso.redirect.whitelist.regex</name>
-            <value>^https?://knox:[0-9]+/gateway/.*$</value>
-        </param>
     </service>
 
 </topology>
