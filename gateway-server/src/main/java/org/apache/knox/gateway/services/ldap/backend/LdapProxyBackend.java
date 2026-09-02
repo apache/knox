@@ -477,10 +477,10 @@ public class LdapProxyBackend implements LdapBackend {
         authConfig.setCredentials(password);
         try (LdapConnection connection =  new LdapNetworkConnection(authConfig)){
             connection.bind();
-            LOG.ldapAuthSucceeded(userDnText);
+            LOG.ldapAuthSucceeded(getName(), userDnText);
             return true;
         } catch (Exception e) {
-            LOG.ldapAuthFailed(userDnText, e);
+            LOG.ldapAuthFailed(getName(), userDnText, e);
             return false;
         }
     }
