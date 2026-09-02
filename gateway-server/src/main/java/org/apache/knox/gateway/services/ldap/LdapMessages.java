@@ -118,8 +118,8 @@ public interface LdapMessages {
     void ldapPagedSearchCompleted(String baseDn, String filter, int numResults);
 
     @Message(level = MessageLevel.ERROR,
-            text = "LDAP Search failed: {0} | {1}, {2}")
-    void ldapSearchFailed(String baseDn, String filter, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+            text = "LDAP Search to backend {0} failed: {1} | {2}, {3}")
+    void ldapSearchFailed(String name, String baseDn, String filter, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.DEBUG,
             text = "LDAP Bind: {0}")
@@ -153,11 +153,11 @@ public interface LdapMessages {
             text = "Failed to copy attribute: {0}")
     void ldapAttributeCopyError(@StackTrace(level = MessageLevel.TRACE) Exception e);
 
-    @Message(level = MessageLevel.DEBUG, text = "LDAP authentication succeeded for user: {0}")
-    void ldapAuthSucceeded(String user);
+    @Message(level = MessageLevel.DEBUG, text = "LDAP authentication to backend {0} succeeded for user: {1}")
+    void ldapAuthSucceeded(String name, String user);
 
-    @Message(level = MessageLevel.WARN, text = "LDAP authentication failed for user: {0}")
-    void ldapAuthFailed(String user, @StackTrace(level = MessageLevel.INFO) Throwable cause);
+    @Message(level = MessageLevel.WARN, text = "LDAP authentication to backend {0} failed for user: {1}, {2}")
+    void ldapAuthFailed(String name, String user, @StackTrace(level = MessageLevel.DEBUG) Throwable cause);
 
     @Message(level = MessageLevel.INFO,
             text = "Reloading LDAP configuration")

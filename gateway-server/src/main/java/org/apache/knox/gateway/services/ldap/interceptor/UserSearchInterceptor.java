@@ -18,9 +18,12 @@
 package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
+import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapOperationException;
+import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
@@ -35,6 +38,7 @@ import org.apache.knox.gateway.services.ldap.LdapUtils;
 import org.apache.knox.gateway.services.ldap.backend.BackendFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +75,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
                     entry = backend.getUser(username, schemaManager);
                 } catch (Exception e) {
                     LOG.ldapLookupFailed(ctx.getDn().toString(),e);
+                    throw new LdapOperationException(ResultCodeEnum.OTHER, "Lookup request to backend " + getName() + " failed.", e);
                 }
             }
         }
@@ -92,8 +97,10 @@ public class UserSearchInterceptor extends BaseInterceptor {
             while (originalResults.next()) {
                 entries.add(originalResults.get());
             }
-        } catch (Exception e) {
-            // If we get an error or no results, try the backends
+        }  catch (CursorException e ) {
+            throw new LdapException(e.getMessage(), e);
+        } catch (IOException e) {
+            // swallow error closing cursor
         }
 
         // Only forward to the backend when the search base is under the backend's namespace.
@@ -102,7 +109,8 @@ public class UserSearchInterceptor extends BaseInterceptor {
             try {
                 entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
             } catch (Exception e) {
-                LOG.ldapSearchFailed(baseDn, filter, e);
+                LOG.ldapSearchFailed(getName(), baseDn, filter, e);
+                throw new LdapOperationException(ResultCodeEnum.OTHER, "Search request to backend " + getName() + " failed.", e);
             }
         }
 

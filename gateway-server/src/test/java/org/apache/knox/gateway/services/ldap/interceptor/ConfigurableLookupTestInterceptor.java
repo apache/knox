@@ -17,47 +17,36 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
-import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
-import org.apache.directory.server.core.api.filtering.EntryFilteringCursorImpl;
 import org.apache.directory.server.core.api.interceptor.BaseInterceptor;
-import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
-
-import java.util.List;
+import org.apache.directory.server.core.api.interceptor.context.LookupOperationContext;
 
 /**
  * Interceptor for testing. This interceptor will return a Cursor of a List
  * of configured Entries.
  */
-public class ConfigurableSearchTestInterceptor extends BaseInterceptor {
-    private List<Entry> entries;
+public class ConfigurableLookupTestInterceptor extends BaseInterceptor {
+    private Entry entry;
     private LdapException ldapException;
-    private EntryFilteringCursor cursor;
 
-    ConfigurableSearchTestInterceptor(String name) {
+    ConfigurableLookupTestInterceptor(String name) {
         super(name);
     }
 
-    public void setEntries(List<Entry> entries) {
-        this.entries = entries;
+    public void setEntry(Entry entry) {
+        this.entry = entry;
     }
 
     public void setLdapException(LdapException ldapException) {
         this.ldapException = ldapException;
     }
 
-    public EntryFilteringCursor getCursor() {
-        return cursor;
-    }
-
     @Override
-    public EntryFilteringCursor search(SearchOperationContext searchContext) throws LdapException {
+    public Entry lookup(LookupOperationContext lookupOperationContext) throws LdapException {
         if (ldapException != null) {
             throw ldapException;
         }
-        cursor = new EntryFilteringCursorImpl(new ListCursor<>(entries), searchContext, schemaManager);
-        return cursor;
+        return entry;
     }
 }
