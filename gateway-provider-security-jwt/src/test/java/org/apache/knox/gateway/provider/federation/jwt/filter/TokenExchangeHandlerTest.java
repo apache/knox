@@ -22,10 +22,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.knox.gateway.security.ActorChainPrincipal;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -58,6 +61,7 @@ public class TokenExchangeHandlerTest {
   private TokenExchangeHandler handler;
   private HttpServletResponse response;
   private FilterChain chain;
+  private Capture<Object> requestedAudiencesAttr;
 
   @Before
   public void setUp() {
@@ -203,6 +207,86 @@ public class TokenExchangeHandlerTest {
     assertFalse(filter.continued);
   }
 
+  @Test
+  public void testResourceBodyParamConveyedAsRequestedAudiences() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok",
+        new String[] {"https://recipient1", "https://recipient2"}, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertTrue(requestedAudiencesAttr.hasCaptured());
+    assertEquals(Arrays.asList("https://recipient1", "https://recipient2"), requestedAudiencesAttr.getValue());
+  }
+
+  @Test
+  public void testAudienceBodyParamConveyedAsRequestedAudiences() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // RFC 8693 audience is a logical service name and is not URI-constrained
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
+
+    assertTrue(filter.continued);
+    assertEquals(Arrays.asList("service-a"), requestedAudiencesAttr.getValue());
+  }
+
+  @Test
+  public void testResourceAndAudienceCombinedResourceFirst() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok",
+        new String[] {"https://recipient1"}, new String[] {"service-a"}), response, chain);
+
+    assertEquals(Arrays.asList("https://recipient1", "service-a"), requestedAudiencesAttr.getValue());
+  }
+
+  @Test
+  public void testCommaSeparatedResourceValuesAreSplit() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok",
+        new String[] {"https://recipient1, https://recipient2"}, null), response, chain);
+
+    assertEquals(Arrays.asList("https://recipient1", "https://recipient2"), requestedAudiencesAttr.getValue());
+  }
+
+  @Test
+  public void testInvalidResourceUriRejectedAsInvalidTarget() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", new String[] {"not-a-uri"}, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testResourceUriWithFragmentRejectedAsInvalidTarget() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", new String[] {"https://recipient1#fragment"}, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testEmptyResourceValueRejectedAsInvalidTarget() throws Exception {
+    // An empty resource value (e.g. "resource=") is not an absolute URI and is surfaced as an error
+    // rather than silently dropped.
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", new String[] {""}, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testNoResourceOrAudienceLeavesRequestAttributeUnset() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", null, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertFalse(requestedAudiencesAttr.hasCaptured());
+  }
+
   private static String primaryName(Subject subject) {
     return subject.getPrincipals(PrimaryPrincipal.class).iterator().next().getName();
   }
@@ -214,6 +298,27 @@ public class TokenExchangeHandlerTest {
     EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
+    EasyMock.replay(request);
+    return request;
+  }
+
+  /**
+   * Build a subject-only token-exchange request carrying the given {@code resource}/{@code audience}
+   * body parameters, capturing the requested-audiences request attribute the handler stashes for the
+   * downstream KNOXTOKEN service.
+   */
+  private HttpServletRequest exchangeRequest(String subjectToken, String[] resources, String[] audiences) {
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(JWT_TYPE).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(null).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(null).anyTimes();
+    EasyMock.expect(request.getParameterValues(CommonTokenConstants.RESOURCE)).andReturn(resources).anyTimes();
+    EasyMock.expect(request.getParameterValues(CommonTokenConstants.AUDIENCE)).andReturn(audiences).anyTimes();
+    requestedAudiencesAttr = EasyMock.newCapture();
+    request.setAttribute(EasyMock.eq(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR),
+        EasyMock.capture(requestedAudiencesAttr));
+    EasyMock.expectLastCall().anyTimes();
     EasyMock.replay(request);
     return request;
   }

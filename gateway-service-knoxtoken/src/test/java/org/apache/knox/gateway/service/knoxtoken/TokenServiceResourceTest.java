@@ -89,6 +89,7 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -134,6 +135,7 @@ public class TokenServiceResourceTest {
   private ServletContext context;
   private HttpServletRequest request;
   private String[] resourceParamValues;
+  private List<String> exchangeRequestedAudiences;
   private JWTokenAuthority authority;
   private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
@@ -204,6 +206,10 @@ public class TokenServiceResourceTest {
       parameterMap.put(TokenResource.RESOURCE_QUERY_PARAM, resourceParamValues);
     }
     EasyMock.expect(request.getParameterMap()).andReturn(parameterMap).anyTimes();
+    if (exchangeRequestedAudiences != null) {
+      EasyMock.expect(request.getAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR))
+          .andReturn(exchangeRequestedAudiences).anyTimes();
+    }
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
@@ -530,6 +536,56 @@ public class TokenServiceResourceTest {
     assertEquals(1, audiences.size());
     assertTrue(audiences.contains("https://recipient1"));
     assertFalse(audiences.contains("https://recipient2"));
+  }
+
+  @Test
+  public void testExchangeRequestedAudiencesFromRequestAttributeAreHonored() throws Exception {
+    // An RFC 8693 token-exchange request conveys its already-validated resource/audience via a
+    // request attribute (set by the JWTProvider's TokenExchangeHandler). The audience value is a
+    // logical name and reaches the aud claim through the passthrough validator.
+    exchangeRequestedAudiences = Arrays.asList("https://recipient1", "service-a");
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "passthrough");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(2, audiences.size());
+    assertTrue(audiences.contains("https://recipient1"));
+    assertTrue(audiences.contains("service-a"));
+  }
+
+  @Test
+  public void testExchangeRequestedAudiencesTakePrecedenceOverQueryParam() throws Exception {
+    // When the token-exchange body value is present it takes precedence over the resource query
+    // parameter, which must be ignored entirely.
+    exchangeRequestedAudiences = Arrays.asList("https://from-body");
+    resourceParamValues = new String[] { "https://from-query" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "passthrough");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    List<String> audiences = Arrays.asList(parsedToken.getAudienceClaims());
+    assertEquals(1, audiences.size());
+    assertTrue(audiences.contains("https://from-body"));
+    assertFalse(audiences.contains("https://from-query"));
   }
 
   @Test

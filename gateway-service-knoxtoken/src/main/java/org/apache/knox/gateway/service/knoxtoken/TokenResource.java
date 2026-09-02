@@ -73,6 +73,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.ActorChainPrincipal;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
@@ -127,7 +128,7 @@ public class TokenResource {
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
-  static final String RESOURCE_QUERY_PARAM = "resource";
+  static final String RESOURCE_QUERY_PARAM = CommonTokenConstants.RESOURCE;
   private static final String TOKEN_AUDIENCE_VALIDATOR_PARAM = TOKEN_PARAM_PREFIX + "audience.validator";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
@@ -1167,6 +1168,16 @@ public class TokenResource {
   }
 
   private List<String> parseRequestedResources() throws RequestedAudienceValidationException {
+    // An RFC 8693 token-exchange request carries the requested resource/audience in the form body,
+    // which the JWTProvider's TokenExchangeHandler has already parsed and validated and stashed as a
+    // request attribute. When present, those body-supplied values take precedence over the resource
+    // query parameter.
+    @SuppressWarnings("unchecked")
+    final List<String> fromExchange =
+        (List<String>) request.getAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR);
+    if (fromExchange != null) {
+      return fromExchange;
+    }
     final Map<String, String[]> parameterMap = request.getParameterMap();
     final String[] rawValues = parameterMap == null ? null : parameterMap.get(RESOURCE_QUERY_PARAM);
     final List<String> requested = new ArrayList<>();

@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
@@ -32,8 +33,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +61,14 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederati
  * {@code actor_token} is present the request is treated as delegation (on-behalf-of): the actor is
  * the authenticated party and the subject is the impersonated party; otherwise the subject_token is
  * simply exchanged for a token representing the subject.</p>
+ *
+ * <p>The optional RFC 8693 section 2.1 {@code resource} and {@code audience} body parameters are
+ * read here (from the same {@code x-www-form-urlencoded} body) and conveyed to the downstream
+ * KNOXTOKEN service via {@link CommonTokenConstants#REQUESTED_AUDIENCES_REQUEST_ATTR} so they land
+ * in the minted token's {@code aud} claim. {@code resource} values must be absolute URIs without a
+ * fragment (RFC 8707 section 2 / RFC 3986 section 4.3); {@code audience} values are logical service
+ * names and are not URI-constrained. When present, these body values take precedence over the
+ * {@code resource} query parameter that KNOXTOKEN would otherwise honor.</p>
  */
 class TokenExchangeHandler {
 
@@ -124,6 +136,19 @@ class TokenExchangeHandler {
       return;
     }
 
+    // RFC 8693 section 2.1: the optional resource/audience parameters identify the target service(s)
+    // the returned token is intended for. They are parsed here and conveyed to the KNOXTOKEN service,
+    // which mints the token and resolves the aud claim through its configured audience validator.
+    final List<String> requestedAudiences;
+    try {
+      requestedAudiences = parseRequestedAudiences(bodyRequest);
+    } catch (InvalidResourceException e) {
+      // RFC 8707 section 2: a malformed resource yields the invalid_target error code.
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_target", e.getMessage());
+      return;
+    }
+
     try {
       final JWT subjectToken = filter.parseAndValidateJWT(request, response, chain, subjectTokenValue);
       if (subjectToken == null) {
@@ -143,6 +168,13 @@ class TokenExchangeHandler {
       } else {
         // No actor_token: exchange the subject_token for a token representing the subject itself
         subject = filter.createSubjectFromToken(subjectToken);
+      }
+
+      // Convey the requested resource/audience to the downstream KNOXTOKEN service. Set only when
+      // present so that KNOXTOKEN falls back to its resource query parameter otherwise; when set,
+      // the body value takes precedence over the query parameter.
+      if (!requestedAudiences.isEmpty()) {
+        request.setAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR, requestedAudiences);
       }
 
       filter.continueWithEstablishedSecurityContext(subject, request, response, chain);
@@ -198,5 +230,61 @@ class TokenExchangeHandler {
     @SuppressWarnings("rawtypes")
     final HashSet emptySet = new HashSet();
     return new Subject(true, principals, emptySet, emptySet);
+  }
+
+  /**
+   * Parse the optional RFC 8693 section 2.1 {@code resource} and {@code audience} body parameters
+   * into the list of requested audiences for the token being minted. Both parameters may be repeated
+   * and may also carry a comma-separated list of values. {@code resource} values are validated as
+   * absolute URIs; {@code audience} values are logical names and are taken verbatim.
+   *
+   * @param bodyRequest the unwrapped request exposing the form body
+   * @return the requested audiences, in the order resource-then-audience; never null
+   * @throws InvalidResourceException if a {@code resource} value is not an absolute URI without a fragment
+   */
+  private List<String> parseRequestedAudiences(HttpServletRequest bodyRequest) throws InvalidResourceException {
+    final List<String> requested = new ArrayList<>();
+    addValues(bodyRequest.getParameterValues(CommonTokenConstants.RESOURCE), requested, true);
+    addValues(bodyRequest.getParameterValues(CommonTokenConstants.AUDIENCE), requested, false);
+    return requested;
+  }
+
+  private void addValues(String[] rawValues, List<String> target, boolean validateAsUri) throws InvalidResourceException {
+    if (rawValues == null) {
+      return;
+    }
+    for (String rawValue : rawValues) {
+      for (String value : rawValue.split(",")) {
+        final String trimmed = value.trim();
+        if (validateAsUri) {
+          validateResourceUri(trimmed);
+        }
+        target.add(trimmed);
+      }
+    }
+  }
+
+  /**
+   * Validate that a {@code resource} value is an absolute URI without a fragment, as required by
+   * RFC 8707 section 2 and RFC 3986 section 4.3. A query component is permitted; a fragment is not.
+   */
+  private void validateResourceUri(String value) throws InvalidResourceException {
+    final URI uri;
+    try {
+      uri = new URI(value);
+    } catch (URISyntaxException e) {
+      throw new InvalidResourceException("the requested resource '" + value + "' is not a valid URI");
+    }
+    if (!uri.isAbsolute() || uri.getFragment() != null) {
+      throw new InvalidResourceException(
+          "the requested resource '" + value + "' must be an absolute URI without a fragment");
+    }
+  }
+
+  /** Signals an RFC 8707 {@code invalid_target}: a malformed {@code resource} indicator. */
+  private static final class InvalidResourceException extends Exception {
+    InvalidResourceException(String message) {
+      super(message);
+    }
   }
 }
