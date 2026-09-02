@@ -109,9 +109,6 @@ Knox keeps the bind dn and credentials in-memory for authentication. The bind cr
 changing the `gateway.ldap.bind.user` property in the gateway configuration and aliased password. The bind
 user will be updated when the gateway is reloaded.
 
-NOTE: Knox 3.0.0 created the bind user in the embedded LDAP server. These users need to be manually deleted to disable
-access using the old credentials.
-
 ### Interceptor Types
 
 #### Common Interceptor Properties
