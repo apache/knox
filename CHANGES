@@ -141,6 +141,7 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3420] - Upgrade Jetty to 12.x
     * [KNOX-3421] - Upgrade Shiro to 2.2.1
     * [KNOX-3425] - Ldap Proxy may allow anonymous bind
+    * [KNOX-3427] - Upgrade Netty to 4.1.137.Final
 
 ** Test
     * [KNOX-3225] - New integration test for global HSTS headers
@@ -193,6 +194,7 @@ Release Notes - Apache Knox - Version 3.0.0
     * [KNOX-3382] - Bump netty to 4.1.135.Final due to CVEs
     * [KNOX-3383] - Bump jackson to 2.18.9 due to CVEs
     * [KNOX-3278] - Update jline to 3.30.6
+    * [KNOX-3430] - Deprecate AccessTokenFederationFilter
 
 ** Sub-task
     * [KNOX-3378] - Expose a secure (LDAPS) transport on the embedded Knox LDAP server
