@@ -122,7 +122,7 @@ Selecting the `whitelist` validator enables per-request resources:
 
 With the `whitelist` validator its behavior is:
 
-*   the request does not contain a `resource` parameter -> the statically configured `knox.token.audiences` are used, exactly as before (unchanged default behavior)
+*   the request does not contain a `resource` parameter -> the statically configured `knox.token.audiences` are used
 *   the request contains a `resource` parameter and every requested resource is present in `knox.token.audiences` -> only the requested resource(s) are placed in the token's `aud` claim
 *   the request contains a `resource` parameter and any requested resource is not present in `knox.token.audiences` -> the request is rejected with `400 Bad Request`
 
