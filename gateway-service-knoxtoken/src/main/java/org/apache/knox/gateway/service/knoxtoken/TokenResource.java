@@ -35,6 +35,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -928,7 +929,7 @@ public class TokenResource {
     } catch (RequestedAudienceValidationException e) {
       log.rejectedAudienceRequest(e.getMessage());
       return new TokenResponseContext(null,
-          "{\n  \"error\": \"" + e.getMessage() + "\",\n  \"code\": " + e.getErrorCode().toInt() + "\n}\n",
+          errorResponseBody(e.getMessage(), e.getErrorCode()),
           Response.status(Response.Status.BAD_REQUEST));
     }
 
@@ -1211,6 +1212,19 @@ public class TokenResource {
           ErrorCode.INVALID_RESOURCE);
     }
     return value;
+  }
+
+  /**
+   * Renders a token-issuance error body as {@code {"error": ..., "code": ...}}. The {@code error}
+   * message may embed a caller-supplied value (e.g. an invalid {@code resource} indicator), so it is
+   * serialized through {@link JsonUtils} to escape it rather than being concatenated verbatim, which
+   * would allow the value to break out of the JSON string.
+   */
+  private static String errorResponseBody(String error, ErrorCode code) {
+    final Map<String, Object> body = new LinkedHashMap<>();
+    body.put("error", error);
+    body.put("code", code.toInt());
+    return JsonUtils.renderAsJsonString(body);
   }
 
   private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences) throws TokenServiceException {

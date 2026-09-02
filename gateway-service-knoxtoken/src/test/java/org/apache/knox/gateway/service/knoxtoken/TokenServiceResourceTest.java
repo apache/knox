@@ -621,7 +621,8 @@ public class TokenServiceResourceTest {
 
     Response retResponse = tr.doGet();
     assertEquals(400, retResponse.getStatus());
-    assertTrue(retResponse.getEntity().toString().contains("\"code\": " + TokenResource.ErrorCode.INVALID_RESOURCE.toInt()));
+    final Map<String, Object> json = parseJSONResponse((String) retResponse.getEntity());
+    assertEquals(TokenResource.ErrorCode.INVALID_RESOURCE.toInt(), json.get("code"));
   }
 
   @Test
@@ -639,7 +640,31 @@ public class TokenServiceResourceTest {
 
     Response retResponse = tr.doGet();
     assertEquals(400, retResponse.getStatus());
-    assertTrue(retResponse.getEntity().toString().contains("\"code\": " + TokenResource.ErrorCode.INVALID_RESOURCE.toInt()));
+    final Map<String, Object> json = parseJSONResponse((String) retResponse.getEntity());
+    assertEquals(TokenResource.ErrorCode.INVALID_RESOURCE.toInt(), json.get("code"));
+  }
+
+  @Test
+  public void testDynamicResourceRejectionEscapesCallerSuppliedValueInErrorBody() throws Exception {
+    // The rejected resource value is echoed back in the error message; a value containing a double
+    // quote must be JSON-escaped so it cannot break out of the error body's JSON string.
+    resourceParamValues = new String[] { "not\"a\"uri" };
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.audience.validator", "passthrough");
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(400, retResponse.getStatus());
+    // The body must still be parseable JSON (i.e. the quotes did not break out of the string) ...
+    final Map<String, Object> json = parseJSONResponse((String) retResponse.getEntity());
+    assertEquals(TokenResource.ErrorCode.INVALID_RESOURCE.toInt(), json.get("code"));
+    // ... and the caller-supplied value must round-trip intact inside the error message.
+    assertTrue(((String) json.get("error")).contains("not\"a\"uri"));
   }
 
   @Test
