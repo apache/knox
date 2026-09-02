@@ -125,6 +125,8 @@ public class TokenResource {
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
+  static final String AUDIENCE_QUERY_PARAM = "audience";
+  private static final String TOKEN_AUDIENCE_VALIDATOR_PARAM = TOKEN_PARAM_PREFIX + "audience.validator";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
   static final String TOKEN_CLIENT_DATA = TOKEN_PARAM_PREFIX + "client.data";
@@ -172,6 +174,7 @@ public class TokenResource {
   private String tokenType;
   private String tokenTTLAsText;
   private List<String> targetAudiences = new ArrayList<>();
+  private AudienceValidator audienceValidator;
   private String tokenTargetUrl;
   private Map<String, Object> tokenClientDataMap;
   private List<String> allowedDNs = new ArrayList<>();
@@ -217,7 +220,8 @@ public class TokenResource {
     ALREADY_DISABLED(60),
     ALREADY_ENABLED(70),
     DISABLED_KNOXSSO_COOKIE(80),
-    TOKEN_EXPIRED(90);
+    TOKEN_EXPIRED(90),
+    INVALID_AUDIENCE(100);
 
     private final int code;
 
@@ -244,6 +248,18 @@ public class TokenResource {
       for (String aud : auds) {
         targetAudiences.add(aud.trim());
       }
+    }
+
+    try {
+      audienceValidator = AudienceValidator.forName(context.getInitParameter(TOKEN_AUDIENCE_VALIDATOR_PARAM));
+    } catch (IllegalArgumentException e) {
+      throw new ServiceLifecycleException(e.getMessage(), e);
+    }
+
+    if (audienceValidator.requiresConfiguredAudiences() && targetAudiences.isEmpty()) {
+      throw new ServiceLifecycleException("The '" + audienceValidator.name()
+          + "' audience validator requires audiences to be configured in '" + TOKEN_AUDIENCES_PARAM
+          + "', but none are set. Configure the allowed audiences or select a different audience validator.");
     }
 
     String clientCert = context.getInitParameter(TOKEN_CLIENT_CERT_REQUIRED);
@@ -901,9 +917,20 @@ public class TokenResource {
     long expires = getExpiry();
     setupPublicCertPEM();
     String jku = getJku();
+
+    final List<String> audiences;
+    try {
+      audiences = audienceValidator.validateAndResolve(new AudienceValidationContext(parseRequestedAudiences(), targetAudiences));
+    } catch (RequestedAudienceValidationException e) {
+      log.rejectedAudienceRequest(e.getMessage());
+      return new TokenResponseContext(null,
+          "{\n  \"error\": \"" + e.getMessage() + "\",\n  \"code\": " + e.getErrorCode().toInt() + "\n}\n",
+          Response.status(Response.Status.BAD_REQUEST));
+    }
+
     try
     {
-      JWT token = getJWT(context, issueTime, expires, jku);
+      JWT token = getJWT(context, issueTime, expires, jku, audiences);
       if (token != null) {
         ResponseMap result = buildResponseMap(token, expires);
         String jsonResponse = JsonUtils.renderAsJsonString(result.map);
@@ -1136,7 +1163,27 @@ public class TokenResource {
     }
   }
 
-  private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku) throws TokenServiceException {
+  private List<String> parseRequestedAudiences() {
+    final Map<String, String[]> parameterMap = request.getParameterMap();
+    final String[] rawValues = parameterMap == null ? null : parameterMap.get(AUDIENCE_QUERY_PARAM);
+    final List<String> requested = new ArrayList<>();
+    if (rawValues != null) {
+      for (String rawValue : rawValues) {
+        if (rawValue == null) {
+          continue;
+        }
+        for (String value : rawValue.split(",")) {
+          final String trimmed = value.trim();
+          if (!trimmed.isEmpty()) {
+            requested.add(trimmed);
+          }
+        }
+      }
+    }
+    return requested;
+  }
+
+  private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences) throws TokenServiceException {
     JWTokenAttributes jwtAttributes;
     JWT token;
     JWTokenAuthority ts = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
@@ -1151,8 +1198,8 @@ public class TokenResource {
         .setManaged(managedToken)
         .setJku(jku)
         .setType(tokenType);
-    if (!targetAudiences.isEmpty()) {
-      jwtAttributesBuilder.setAudiences(targetAudiences);
+    if (audiences != null && !audiences.isEmpty()) {
+      jwtAttributesBuilder.setAudiences(audiences);
     }
     if (shouldIncludeGroups()) {
       jwtAttributesBuilder.setGroups(groups());

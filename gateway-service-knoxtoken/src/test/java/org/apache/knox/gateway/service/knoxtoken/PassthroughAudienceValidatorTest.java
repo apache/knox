@@ -1,0 +1,53 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.knox.gateway.service.knoxtoken;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.Test;
+
+public class PassthroughAudienceValidatorTest {
+
+  private final PassthroughAudienceValidator validator = new PassthroughAudienceValidator();
+
+  @Test
+  public void requestedAudiencesAreReturnedAsIsWithoutWhitelistCheck() throws Exception {
+    final List<String> requested = Arrays.asList("service-a", "not-configured");
+    final List<String> result = validator.validateAndResolve(
+        new AudienceValidationContext(requested, Collections.singletonList("service-b")));
+    assertSame(requested, result);
+  }
+
+  @Test
+  public void noRequestedAudienceReturnsEmptyWithoutFallbackToConfigured() throws Exception {
+    final List<String> result = validator.validateAndResolve(
+        new AudienceValidationContext(Collections.emptyList(), Arrays.asList("a", "b")));
+    assertEquals(Collections.emptyList(), result);
+  }
+
+  @Test
+  public void doesNotRequireConfiguredAudiences() {
+    assertFalse(validator.requiresConfiguredAudiences());
+  }
+}
