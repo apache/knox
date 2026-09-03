@@ -120,8 +120,11 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
   /**
    * Subject token from EXTERNAL_ISSUER (not in static list); no actor token. The authority mock
-   * verifies the dynamic path calls verifyToken with the resolved JWKS URI, configured sig-alg,
-   * and type-verifier.
+   * verifies the dynamic path calls verifyToken with the resolved JWKS URI and configured sig-alg,
+   * and that some {@code JOSEObjectTypeVerifier} (class match only, via {@code isA()} — not which
+   * one, or its allowed-types content) is passed as the 4th argument. See
+   * testRegisteredIssuerPathConstructsPermissiveTypeVerifier for the test that actually asserts
+   * which verifier object is constructed and what it allows.
    */
   @Test
   public void testDynamicIssuerAllowedSubjectExternal() throws Exception {
@@ -163,7 +166,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
    * Actor token from EXTERNAL_ISSUER (dynamic path); subject token from KNOX_ISSUER (static
    * path). This is the primary K8s SA delegation scenario: the acting service carries a
    * projected SA token with a dynamically registered issuer; the subject carries a Knox-issued
-   * token. The authority mock verifies the same argument contract as the previous test.
+   * token. The authority mock verifies the same argument contract as the previous test — including
+   * the same class-match-only, not-which-one caveat on the 4th argument described there.
    */
   @Test
   public void testDynamicIssuerAllowedActorExternal() throws Exception {
@@ -183,7 +187,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedDynamicJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG), // configured sig-alg
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))       // filter-configured type verifier
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))       // class match only; see Javadoc above
         .andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -568,7 +572,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
    * Opt-in bypass: with knox.token.exchange.dynamic.jwks.allow.http=true on the provider, an http
    * JWKS URI resolved via dynamic discovery is accepted and used exclusively for signature
    * verification (e.g. an internal test OP). Mirrors testDynamicIssuerAllowedSubjectExternal but with
-   * the insecure URI and the toggle enabled.
+   * the insecure URI and the toggle enabled — including that test's class-match-only, not-which-one
+   * caveat on the {@code isA(JOSEObjectTypeVerifier.class)} argument below.
    */
   @Test
   public void testInsecureDynamicJwksUriAllowedWhenConfigured() throws Exception {
