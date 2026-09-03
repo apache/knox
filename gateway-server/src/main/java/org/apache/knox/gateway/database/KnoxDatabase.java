@@ -36,9 +36,6 @@ public class KnoxDatabase {
     private static final Pattern CREATE_TABLE_PATTERN =
         Pattern.compile("(?i)^\\s*CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?([\\w.]+)");
 
-    // Locates the first CREATE TABLE anywhere in a script; used to skip the ASF license header.
-    private static final Pattern FIRST_CREATE_TABLE_PATTERN = Pattern.compile("(?i)CREATE\\s+TABLE");
-
     protected final DataSource dataSource;
 
     public KnoxDatabase(DataSource dataSource) {
@@ -69,7 +66,7 @@ public class KnoxDatabase {
                 throw new IllegalStateException("DDL script not found on classpath: " + sqlFileName);
             }
             final String script = IOUtils.toString(is, UTF_8);
-            final String withoutLicenseHeader = removeLicenceHeader(script);
+            final String withoutLicenseHeader = removeLicenseHeader(script);
             final Map<String, String> createSqlByTableName = new LinkedHashMap<>();
             for (String statement : withoutLicenseHeader.split(";")) {
                 final String trimmed = statement.trim();
@@ -81,16 +78,13 @@ public class KnoxDatabase {
         }
     }
 
-    /* The DDL scripts begin with the ASF license as a block of "--" comment lines. Cutting
-    everything before the first CREATE TABLE drops that header so its content (including any
-     ';') can't interfere with the split-on-';' statement parsing in parseCreateTableStatements.
+    /* The DDL scripts begin with the ASF license as a block of "--" comment lines. Stripping only
+    the comment lines (rather than cutting everything before the first CREATE TABLE) removes the
+    header while leaving every SQL statement intact -- notably the PostgreSQL pg_advisory_lock
+    statements that guard concurrent CREATE TABLE IF NOT EXISTS, which the earlier approach cut.
      */
-    private String removeLicenceHeader(String script) {
-        final Matcher matcher = FIRST_CREATE_TABLE_PATTERN.matcher(script);
-        if (!matcher.find()) {
-            throw new IllegalStateException("No CREATE TABLE statement found in DDL script");
-        }
-        return script.substring(matcher.start());
+    private String removeLicenseHeader(String script) {
+        return script.replaceAll("(?m)^\\s*--.*$", "");
     }
 
     private  String extractTableName(String createTableStatement) {
