@@ -99,6 +99,7 @@ class TestKnoxIDF(unittest.TestCase):
         tokens = response.json()
         self.assertIn("access_token", tokens)
         self.assertEqual(tokens["token_type"], "Bearer")
+        self.assertEqual(tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
 
     def test_authorization_code_flow(self):
         """
@@ -136,6 +137,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertIn("access_token", tokens)
         self.assertIn("id_token", tokens)
         self.assertIn("refresh_token", tokens)
+        self.assertEqual(tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
 
         refresh_token = tokens["refresh_token"]
         print(f"Refresh token: {refresh_token}")
@@ -154,6 +156,7 @@ class TestKnoxIDF(unittest.TestCase):
         new_tokens = response.json()
         self.assertIn("access_token", new_tokens)
         self.assertIn("refresh_token", new_tokens)
+        self.assertEqual(new_tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
 
         # Verify rotation: new refresh token should be different
         self.assertNotEqual(refresh_token, new_tokens["refresh_token"])

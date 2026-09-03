@@ -71,6 +71,8 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLEN
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE_METHOD;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_VERIFIER;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.FEDERATED_IDENTITY_ID;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.ISSUED_TOKEN_TYPE;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.ISSUED_TOKEN_TYPE_JWT_VALUE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OFFLINE_ACCESS_SCOPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.PKCE_METHOD_S256;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.REDIRECT_URI;
@@ -210,6 +212,11 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     protected ResponseMap buildResponseMap(JWT token, long expires) throws TokenServiceException {
         final ResponseMap responseMap = super.buildResponseMap(token, expires);
+
+        // RFC 8693 §2.2.1 requires the response to state the type of the issued token. Every KnoxIDF
+        // grant (authorization_code, refresh_token and the client_credentials/other grants routed to
+        // super.doPost()) funnels through here and mints a JWT, so advertise the JWT URN unconditionally.
+        responseMap.map.put(ISSUED_TOKEN_TYPE, ISSUED_TOKEN_TYPE_JWT_VALUE);
 
         // id_token + refresh-token rotation apply to the user-centric grants (authorization_code and
         // refresh_token). client_credentials and other grants routed to super.doPost() must not get an
