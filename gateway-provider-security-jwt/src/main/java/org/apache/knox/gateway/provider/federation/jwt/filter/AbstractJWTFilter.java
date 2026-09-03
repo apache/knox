@@ -584,7 +584,13 @@ public abstract class AbstractJWTFilter implements Filter {
       return true;
     }
     try {
-      final boolean verified = authority.verifyToken(token, jwksUrls, expectedSigAlg, typeVerifier);
+      // Tokens reaching this path have already been established (by the caller) to belong to a
+      // dynamically registered, trusted OIDC issuer during an actual RFC 8693 token-exchange call.
+      // Such issuers (e.g. Kubernetes) may omit the "typ" JOSE header, so a dedicated, permissive
+      // verifier is used here instead of the filter-wide this.typeVerifier field.
+      final JOSEObjectTypeVerifier<SecurityContext> registeredIssuerTypeVerifier =
+              new DefaultJOSEObjectTypeVerifier<>(new HashSet<>(Arrays.asList(JOSEObjectType.JWT, null)));
+      final boolean verified = authority.verifyToken(token, jwksUrls, expectedSigAlg, registeredIssuerTypeVerifier);
       if (verified) {
         recordSignatureVerification(serializedJWT);
       }

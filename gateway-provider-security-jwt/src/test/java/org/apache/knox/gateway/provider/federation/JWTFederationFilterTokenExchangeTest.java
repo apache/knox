@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
@@ -38,8 +40,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -764,6 +768,181 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertTrue(chain.doFilterCalled);
     EasyMock.verify(strictIssuerSvc);
+  }
+
+  // ---------------------------------------------------------------------------
+  // typ-verifier construction/routing
+  //
+  // These tests check which JOSEObjectTypeVerifier object AbstractJWTFilter constructs and
+  // passes to authority.verifyToken(...) on each path. They deliberately do not construct a
+  // JWT with or without a "typ" header, and do not exercise real Nimbus typ enforcement.
+  // The nimbus doc defines the behavior: including a null in the verifier constructor
+  // argument means that a missing or null typ is allowed.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * On the registered-issuer path (token-exchange dispatch, issuer registered as
+   * a trusted dynamic-JWKS TrustedOidcIssuer), the filter must construct and pass a dedicated
+   * permissive verifier accepting {@code typ: JWT} or a missing typ header — not the filter's
+   * shared {@code this.typeVerifier} field.
+   */
+  @Test
+  public void testRegisteredIssuerPathConstructsPermissiveTypeVerifier() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JOSEObjectTypeVerifier> capturedTypeVerifier = EasyMock.newCapture();
+
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.anyObject(JWT.class),
+        EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.capture(capturedTypeVerifier)))
+        .andReturn(true).once();
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
+    EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response, issuerSvc);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
+    Assert.assertTrue("Registered-issuer path must construct a DefaultJOSEObjectTypeVerifier",
+        capturedTypeVerifier.getValue() instanceof DefaultJOSEObjectTypeVerifier);
+    final Set<JOSEObjectType> allowedTypes =
+        ((DefaultJOSEObjectTypeVerifier<?>) capturedTypeVerifier.getValue()).getAllowedTypes();
+    Assert.assertEquals(new HashSet<>(Arrays.asList(JOSEObjectType.JWT, null)), allowedTypes);
+    EasyMock.verify(mockAuth, issuerSvc);
+  }
+
+  /**
+   * On the non-token-exchange, static-issuer path (issuer in {@code jwt.expected.issuer},
+   * {@code registeredIssuerJwks} empty, JWKS branch taken via topology-configured
+   * {@link JWTFederationFilter#JWKS_URL}), the filter must pass its own unchanged
+   * {@code this.typeVerifier} (default: {@code typ: JWT} only, no null) — not the new permissive
+   * verifier.
+   */
+  @Test
+  public void testStaticIssuerPathTypeVerifierUnchanged() throws Exception {
+    final String staticJwksUrl = "https://static.jwks.example.com/jwks";
+    final Properties props = getProperties();
+    props.setProperty(JWTFederationFilter.JWKS_URL, staticJwksUrl);
+    handler.init(new TestFilterConfig(props));
+
+    final SignedJWT jwt = getJWT(KNOX_ISSUER, "some-user",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JOSEObjectTypeVerifier> capturedTypeVerifier = EasyMock.newCapture();
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.anyObject(JWT.class),
+        EasyMock.eq(Set.of(new URI(staticJwksUrl))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.capture(capturedTypeVerifier)))
+        .andReturn(true).once();
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    // Strict mock, no expectations: the static-issuer path must never consult the registry.
+    final TrustedOidcIssuerService strictIssuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.replay(strictIssuerSvc);
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getHeader("Authorization"))
+        .andReturn(JWTFederationFilter.BEARER + " " + jwt.serialize()).anyTimes();
+    EasyMock.expect(request.getServletContext())
+        .andReturn(buildContextWithIssuerService(strictIssuerSvc)).anyTimes();
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue(chain.doFilterCalled);
+    Assert.assertTrue("Static-issuer path must pass a DefaultJOSEObjectTypeVerifier",
+        capturedTypeVerifier.getValue() instanceof DefaultJOSEObjectTypeVerifier);
+    final Set<JOSEObjectType> allowedTypes =
+        ((DefaultJOSEObjectTypeVerifier<?>) capturedTypeVerifier.getValue()).getAllowedTypes();
+    Assert.assertFalse("Static-issuer path must not use the permissive (typ-optional) verifier",
+        allowedTypes.contains(null));
+    Assert.assertEquals(Set.of(JOSEObjectType.JWT), allowedTypes);
+    EasyMock.verify(mockAuth, strictIssuerSvc);
+  }
+
+  /**
+   * An ordinary bearer-token request (Authorization header; no
+   * subject_token/actor_token; no token-exchange dispatch attribute set) whose issuer IS
+   * registered as a trusted dynamic-JWKS TrustedOidcIssuer must still be routed through
+   * {@code verifyTokenSignature()} using {@code this.typeVerifier} — the new permissive verifier
+   * must never be constructed or passed for this request, and the registry must never be
+   * consulted (proving {@code resolveRegisteredIssuerJwks()}'s exchange-dispatch guard cannot be
+   * bypassed by issuer-URL matching alone).
+   */
+  @Test
+  public void testTrustedIssuerNonExchangeRequestUsesFilterTypeVerifier() throws Exception {
+    final String staticJwksUrl = "https://static.jwks.example.com/jwks";
+    final Properties props = getProperties();
+    props.setProperty(JWTFederationFilter.JWKS_URL, staticJwksUrl);
+    // Registered in the static topology too: a plain Bearer request never sets
+    // TOKEN_EXCHANGE_REQUEST_ATTR, so resolveRegisteredIssuerJwks() always returns Set.of() for it
+    // regardless of the issuer's TrustedOidcIssuerService registration -- the only way this issuer's
+    // token reaches doFullTokenValidation() at all on this path is via the static expectedIssuers
+    // check, which is what actually routes it to verifyTokenSignature().
+    props.setProperty(AbstractJWTFilter.JWT_EXPECTED_ISSUER, EXTERNAL_ISSUER);
+    handler.init(new TestFilterConfig(props));
+
+    final SignedJWT jwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final Capture<JOSEObjectTypeVerifier> capturedTypeVerifier = EasyMock.newCapture();
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.anyObject(JWT.class),
+        EasyMock.eq(Set.of(new URI(staticJwksUrl))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.capture(capturedTypeVerifier)))
+        .andReturn(true).once();
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    // Strict mock, no expectations: proves the registry is never consulted for a non-exchange
+    // request, even though this issuer IS registered as a trusted dynamic-JWKS issuer.
+    final TrustedOidcIssuerService strictIssuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.replay(strictIssuerSvc);
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getHeader("Authorization"))
+        .andReturn(JWTFederationFilter.BEARER + " " + jwt.serialize()).anyTimes();
+    EasyMock.expect(request.getServletContext())
+        .andReturn(buildContextWithIssuerService(strictIssuerSvc)).anyTimes();
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue(chain.doFilterCalled);
+    Assert.assertTrue("Non-exchange path must pass a DefaultJOSEObjectTypeVerifier",
+        capturedTypeVerifier.getValue() instanceof DefaultJOSEObjectTypeVerifier);
+    final Set<JOSEObjectType> allowedTypes =
+        ((DefaultJOSEObjectTypeVerifier<?>) capturedTypeVerifier.getValue()).getAllowedTypes();
+    Assert.assertFalse("The permissive verifier must never leak outside token-exchange dispatch",
+        allowedTypes.contains(null));
+    Assert.assertEquals(Set.of(JOSEObjectType.JWT), allowedTypes);
+    EasyMock.verify(mockAuth, strictIssuerSvc);
   }
 
   // ---------------------------------------------------------------------------
