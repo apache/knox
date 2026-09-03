@@ -87,6 +87,10 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     this.aliasService = aliasService;
   }
 
+  protected AliasService getAliasService() {
+    return aliasService;
+  }
+
   @Override
   public DelegationPolicy register(DelegationPolicy policy) {
     try {
