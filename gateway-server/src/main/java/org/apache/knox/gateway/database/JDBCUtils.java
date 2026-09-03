@@ -63,9 +63,14 @@ public class JDBCUtils {
     }
 
     public static void createTableFromSQL(String createSqlFileName, DataSource dataSource, ClassLoader classLoader) throws Exception {
-        try (InputStream is = classLoader.getResourceAsStream(createSqlFileName);
-             Connection connection = dataSource.getConnection();Statement createTableStatement = connection.createStatement()) {
-            String createTableSql = IOUtils.toString(is, UTF_8);
+        try (InputStream is = classLoader.getResourceAsStream(createSqlFileName)) {
+            createTableFromSQL(IOUtils.toString(is, UTF_8), dataSource);
+        }
+    }
+
+    public static void createTableFromSQL(String createTableSql, DataSource dataSource) throws Exception {
+        try (Connection connection = dataSource.getConnection();
+             Statement createTableStatement = connection.createStatement()) {
             createTableStatement.execute(createTableSql);
         }
     }

@@ -16,13 +16,10 @@
  */
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.database.DatabaseType;
-import org.apache.knox.gateway.database.JDBCUtils;
 import org.apache.knox.gateway.database.KnoxDatabase;
 
 import javax.sql.DataSource;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -36,8 +33,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * JDBC helper for the five DELEGATION_POLICIES tables.
@@ -128,40 +123,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     this.selectAllSql = SELECT_ALL_BASE_SQL + " FETCH FIRST " + (listMaxTotal + 1) + " ROWS ONLY";
     this.selectAllFilteredSql = SELECT_ALL_BASE_SQL + " WHERE actor_authority = ? FETCH FIRST " + (listMaxPerAuthority + 1) + " ROWS ONLY";
     final DatabaseType databaseType = DatabaseType.fromString(dbType);
-    createDelegationTablesIfNotExists(databaseType.delegationPolicyTablesSql());
-  }
-
-  /**
-   * Multi-statement DDL runner: checks if DELEGATION_POLICIES exists, then strips SQL line
-   * comments, splits on {@code ;}, and executes each non-empty statement individually.
-   * {@link JDBCUtils#createTableFromSQL} handles only single statements; delegation needs five.
-   * Comment stripping must happen before the split because the ASF license header contains a
-   * semicolon inside a {@code --} comment line, which would otherwise produce a spurious token.
-   */
-  private void createDelegationTablesIfNotExists(String sqlFileName) throws Exception {
-    if (!JDBCUtils.tableExists(CORE_TABLE, dataSource)) {
-      try (InputStream is = getClass().getClassLoader().getResourceAsStream(sqlFileName);
-           Connection connection = dataSource.getConnection()) {
-        if (is == null) {
-          throw new IllegalStateException("DDL script not found on classpath: " + sqlFileName);
-        }
-        final String script = IOUtils.toString(is, UTF_8);
-        final StringBuilder stripped = new StringBuilder();
-        for (String line : script.split("\n")) {
-          if (!line.trim().startsWith("--")) {
-            stripped.append(line).append('\n');
-          }
-        }
-        for (String statement : stripped.toString().split(";")) {
-          final String trimmed = statement.trim();
-          if (!trimmed.isEmpty()) {
-            try (java.sql.Statement stmt = connection.createStatement()) {
-              stmt.execute(trimmed);
-            }
-          }
-        }
-      }
-    }
+    createTablesIfNotExist(databaseType.delegationPolicyTablesSql());
   }
 
   String insertPolicy(DelegationPolicy policy) throws SQLException {
