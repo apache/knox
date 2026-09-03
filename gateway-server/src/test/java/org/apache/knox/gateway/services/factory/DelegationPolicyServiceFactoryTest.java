@@ -22,21 +22,23 @@ import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.delegation.DerbyDBDelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.EmptyDelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.JdbcDelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.junit.After;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.sql.DriverManager;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,13 +54,6 @@ public class DelegationPolicyServiceFactoryTest {
   private final Map<String, String> options = new HashMap<>();
   private File tempDir;
   private Service createdService;
-
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    java.util.Locale.setDefault(java.util.Locale.US);
-    DriverManager.getConnection("jdbc:derby:memory:DelegationPolicyServiceFactoryTest_knoxidf;create=true").close();
-    DriverManager.getConnection("jdbc:derby:memory:DelegationPolicyServiceFactoryTest_knoxidf_admin;create=true").close();
-  }
 
   @After
   public void tearDown() throws Exception {
@@ -103,69 +98,82 @@ public class DelegationPolicyServiceFactoryTest {
   }
 
   // ------------------------------------------------------------------
-  // JDBC when KNOXIDF deployed
+  // Auto-implementation selection
   // ------------------------------------------------------------------
 
   @Test
-  public void shouldSelectJdbcWhenKnoxIdfDeployed() throws Exception {
-    tempDir = org.apache.knox.test.TestUtils.createTempDir(getClass().getName());
-    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.replay(aliasService);
-
-    final TopologyService topologyService = EasyMock.createNiceMock(TopologyService.class);
-    EasyMock.expect(topologyService.getTopologies()).andReturn(
-        Collections.singletonList(topologyWithRole("KNOXIDF"))).anyTimes();
-    EasyMock.replay(topologyService);
-
-    final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(topologyService).anyTimes();
-    EasyMock.expect(gws.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-    EasyMock.replay(gws);
-
+  public void shouldChooseDerbyWhenNoDatabaseConfigured() {
     final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(config.getDatabaseName())
-        .andReturn("memory:" + getClass().getSimpleName() + "_knoxidf").anyTimes();
-    EasyMock.expect(config.getDelegationServiceTokenTtlSec()).andReturn(3600).anyTimes();
-    EasyMock.expect(config.getDelegationServiceListMaxTotal()).andReturn(
-         org.apache.knox.gateway.config.GatewayConfig.DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT).anyTimes();
-    EasyMock.expect(config.getDelegationServiceListMaxPerAuthority()).andReturn(
-         org.apache.knox.gateway.config.GatewayConfig.DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT).anyTimes();
+    EasyMock.expect(config.getDatabaseType()).andReturn("none").anyTimes();
     EasyMock.replay(config);
-
-    createdService = factory.create(gws, ServiceType.DELEGATION_POLICY_SERVICE, config, options, "");
-    assertNotNull(createdService);
-    assertTrue("Expected JdbcDelegationPolicyService when KNOXIDF is deployed, got "
-        + createdService.getClass().getName(), createdService instanceof JdbcDelegationPolicyService);
+    assertEquals(DerbyDBDelegationPolicyService.class.getName(), factory.chooseAutoImplementation(config));
   }
 
   @Test
-  public void shouldSelectJdbcWhenKnoxIdfAdminDeployed() throws Exception {
-    tempDir = org.apache.knox.test.TestUtils.createTempDir(getClass().getName());
+  public void shouldChooseDerbyWhenDatabaseTypeIsDerby() {
+    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
+    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+    EasyMock.replay(config);
+    assertEquals(DerbyDBDelegationPolicyService.class.getName(), factory.chooseAutoImplementation(config));
+  }
+
+  @Test
+  public void shouldChooseJdbcWhenExternalDatabaseConfigured() {
+    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
+    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.POSTGRESQL.type()).anyTimes();
+    EasyMock.replay(config);
+    assertEquals(JdbcDelegationPolicyService.class.getName(), factory.chooseAutoImplementation(config));
+  }
+
+  // ------------------------------------------------------------------
+  // Derby auto-provisioning
+  // ------------------------------------------------------------------
+
+  @Test
+  public void shouldAutoSelectDerbyServiceWhenKnoxIdfDeployedWithoutExternalDatabase() throws Exception {
+    createdService = createAutoProvisionedDerbyService(topologyWithRole("KNOXIDF"));
+    assertNotNull(createdService);
+    assertTrue("Expected a self-provisioning Derby-backed delegation policy service, got "
+        + createdService.getClass().getName(), createdService instanceof DerbyDBDelegationPolicyService);
+  }
+
+  @Test
+  public void shouldAutoSelectDerbyServiceWhenKnoxIdfAdminDeployedWithoutExternalDatabase() throws Exception {
+    createdService = createAutoProvisionedDerbyService(topologyWithRole("KNOXIDF_ADMIN"));
+    assertNotNull(createdService);
+    assertTrue("Expected a self-provisioning Derby-backed delegation policy service, got "
+        + createdService.getClass().getName(), createdService instanceof DerbyDBDelegationPolicyService);
+  }
+
+  private Service createAutoProvisionedDerbyService(Topology topology) throws Exception {
+    tempDir = TestUtils.createTempDir(this.getClass().getName());
+    final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
+    EasyMock.expect(masterService.getMasterSecret()).andReturn("M4st3RSecret!".toCharArray()).anyTimes();
+    EasyMock.replay(masterService);
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.replay(aliasService);
 
     final TopologyService topologyService = EasyMock.createNiceMock(TopologyService.class);
-    EasyMock.expect(topologyService.getTopologies()).andReturn(
-        Collections.singletonList(topologyWithRole("KNOXIDF_ADMIN"))).anyTimes();
+    EasyMock.expect(topologyService.getTopologies()).andReturn(Collections.singletonList(topology)).anyTimes();
     EasyMock.replay(topologyService);
-
     final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
     EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(topologyService).anyTimes();
     EasyMock.expect(gws.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+    EasyMock.expect(gws.getService(ServiceType.MASTER_SERVICE)).andReturn(masterService).anyTimes();
     EasyMock.replay(gws);
 
     final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
     EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(config.getDatabaseName())
-        .andReturn("memory:" + getClass().getSimpleName() + "_knoxidf_admin").anyTimes();
+    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(tempDir.getAbsolutePath()).anyTimes();
+    EasyMock.expect(config.getDatabaseName()).andReturn(Paths.get(tempDir.getAbsolutePath(), "tokens").toString()).anyTimes();
     EasyMock.expect(config.getDelegationServiceTokenTtlSec()).andReturn(3600).anyTimes();
+    EasyMock.expect(config.getDelegationServiceListMaxTotal()).andReturn(
+        org.apache.knox.gateway.config.GatewayConfig.DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT).anyTimes();
+    EasyMock.expect(config.getDelegationServiceListMaxPerAuthority()).andReturn(
+        org.apache.knox.gateway.config.GatewayConfig.DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT).anyTimes();
     EasyMock.replay(config);
 
-    createdService = factory.create(gws, ServiceType.DELEGATION_POLICY_SERVICE, config, options, "");
-    assertNotNull(createdService);
-    assertTrue("Expected JdbcDelegationPolicyService when KNOXIDF_ADMIN is deployed, got "
-        + createdService.getClass().getName(), createdService instanceof JdbcDelegationPolicyService);
+    return factory.create(gws, ServiceType.DELEGATION_POLICY_SERVICE, config, options, "");
   }
 
   // ------------------------------------------------------------------

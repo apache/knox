@@ -18,11 +18,13 @@ package org.apache.knox.gateway.services.factory;
 
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.delegation.DerbyDBDelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.EmptyDelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.JdbcDelegationPolicyService;
 
@@ -41,14 +43,18 @@ public class DelegationPolicyServiceFactory extends AbstractServiceFactory {
       throws ServiceLifecycleException {
 
     String implementationToUse = implementation;
+    // No explicit impl configured: auto-select a persistence backend when KnoxIDF is deployed.
+    // Otherwise honor the configured impl (very likely a prod JDBC store).
     if (isEmptyDefaultImplementation(implementationToUse) && isKnoxIdfEnabledInAnyTopology(gatewayServices, gatewayConfig)) {
-      implementationToUse = JdbcDelegationPolicyService.class.getName();
+      implementationToUse = chooseAutoImplementation(gatewayConfig);
     }
 
     Service service = null;
     if (shouldCreateService(implementationToUse)) {
       if (matchesImplementation(implementationToUse, EmptyDelegationPolicyService.class, true)) {
         service = new EmptyDelegationPolicyService();
+      } else if (matchesImplementation(implementationToUse, DerbyDBDelegationPolicyService.class)) {
+        service = createDerbyService(gatewayServices, gatewayConfig, options);
       } else if (matchesImplementation(implementationToUse, JdbcDelegationPolicyService.class)) {
         service = createJdbcService(gatewayServices, gatewayConfig, options);
       }
@@ -57,6 +63,42 @@ public class DelegationPolicyServiceFactory extends AbstractServiceFactory {
       }
     }
     return service;
+  }
+
+  /**
+   * Chooses the auto-enabled implementation when KnoxIDF is deployed with no explicit impl: an
+   * operator-configured external database wins (very likely a prod JDBC store), otherwise a
+   * self-provisioning embedded Derby store (the {@code none}/{@code derbydb} default) so the
+   * delegation policy registry works out of the box without any extra infrastructure.
+   */
+  String chooseAutoImplementation(GatewayConfig gatewayConfig) {
+    return isExternalDatabaseConfigured(gatewayConfig)
+        ? JdbcDelegationPolicyService.class.getName()
+        : DerbyDBDelegationPolicyService.class.getName();
+  }
+
+  private boolean isExternalDatabaseConfigured(GatewayConfig gatewayConfig) {
+    final String databaseType = gatewayConfig.getDatabaseType();
+    try {
+      return DatabaseType.fromString(databaseType) != DatabaseType.DERBY;
+    } catch (IllegalArgumentException e) {
+      // "none" (the default) or any unrecognized value: no real external DB -> use Derby.
+      return false;
+    }
+  }
+
+  private Service createDerbyService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options)
+      throws ServiceLifecycleException {
+    try {
+      final DerbyDBDelegationPolicyService derbyService = new DerbyDBDelegationPolicyService();
+      derbyService.setAliasService(getAliasService(gatewayServices));
+      derbyService.setMasterService(getMasterService(gatewayServices));
+      derbyService.init(gatewayConfig, options);
+      return derbyService;
+    } catch (ServiceLifecycleException e) {
+      LOG.errorInitializingService(DerbyDBDelegationPolicyService.class.getName(), e.getMessage(), e);
+      return new EmptyDelegationPolicyService();
+    }
   }
 
   private Service createJdbcService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options)
@@ -79,6 +121,6 @@ public class DelegationPolicyServiceFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return List.of(DEFAULT_IMPLEMENTATION, JdbcDelegationPolicyService.class.getName());
+    return List.of(DEFAULT_IMPLEMENTATION, JdbcDelegationPolicyService.class.getName(), DerbyDBDelegationPolicyService.class.getName());
   }
 }
