@@ -42,11 +42,12 @@ public interface CommonTokenConstants {
     String AUDIENCE = "audience";
 
     /**
-     * Request attribute used to convey the requested audiences parsed from an RFC 8693 token-exchange
-     * body ({@code resource}/{@code audience}) from the JWTProvider's token-exchange handler to the
+     * Request attribute an upstream authentication/federation component may set to convey the
+     * requested audiences it has already resolved and validated for the current request to the
      * downstream KNOXTOKEN service, which mints the token. When present it takes precedence over the
-     * {@code resource} query parameter. The value is a {@code List<String>}.
+     * {@code resource} query parameter the token service would otherwise honor. The value is a
+     * {@code List<String>}.
      */
-    String REQUESTED_AUDIENCES_REQUEST_ATTR = "knox.token.exchange.requested.audiences";
+    String REQUESTED_AUDIENCES_REQUEST_ATTR = "knox.token.requested.audiences";
 
 }

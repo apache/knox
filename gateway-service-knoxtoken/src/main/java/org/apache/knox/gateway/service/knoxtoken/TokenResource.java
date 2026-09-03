@@ -1169,15 +1169,14 @@ public class TokenResource {
   }
 
   private List<String> parseRequestedResources() throws RequestedAudienceValidationException {
-    // An RFC 8693 token-exchange request carries the requested resource/audience in the form body,
-    // which the JWTProvider's TokenExchangeHandler has already parsed and validated and stashed as a
-    // request attribute. When present, those body-supplied values take precedence over the resource
-    // query parameter.
+    // An upstream authentication/federation component may have already resolved and validated the
+    // requested audiences for this request and stashed them as a request attribute. When present,
+    // those pre-resolved values take precedence over the resource query parameter.
     @SuppressWarnings("unchecked")
-    final List<String> fromExchange =
+    final List<String> requestedAudiences =
         (List<String>) request.getAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR);
-    if (fromExchange != null) {
-      return fromExchange;
+    if (requestedAudiences != null) {
+      return requestedAudiences;
     }
     final Map<String, String[]> parameterMap = request.getParameterMap();
     final String[] rawValues = parameterMap == null ? null : parameterMap.get(RESOURCE_QUERY_PARAM);
