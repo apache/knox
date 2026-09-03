@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
+import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -118,7 +119,8 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     filter.init(new TestFilterConfig(props, tss));
 
     final Subject subject = filter.createSubjectFromTokenIdentifier(tokenId);
-    assertEquals(thirdPartyApp ? tokenId : userName, subject.getPrincipals().iterator().next().getName());
+    assertEquals(1, subject.getPrincipals(PrimaryPrincipal.class).size());
+    assertEquals(thirdPartyApp ? tokenId : userName, subject.getPrincipals(PrimaryPrincipal.class).iterator().next().getName());
     if (!thirdPartyApp) {
       assertEquals(1, subject.getPrincipals(TokenIdPrincipal.class).size());
       assertEquals(tokenId, subject.getPrincipals(TokenIdPrincipal.class).iterator().next().getName());

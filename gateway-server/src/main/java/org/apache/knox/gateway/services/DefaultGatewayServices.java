@@ -90,6 +90,8 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     addService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE, gatewayServiceFactory.create(this, ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE, config, options));
 
     addService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, gatewayServiceFactory.create(this, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, config, options));
+
+    addService(ServiceType.DELEGATION_POLICY_SERVICE, gatewayServiceFactory.create(this, ServiceType.DELEGATION_POLICY_SERVICE, config, options));
   }
 
   @Override

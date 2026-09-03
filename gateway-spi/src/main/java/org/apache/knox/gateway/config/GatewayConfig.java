@@ -175,6 +175,15 @@ public interface GatewayConfig {
   String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX+ "read.timeout.ms";
   int TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT = 10000;
 
+  // KnoxIDF delegation policy service configuration.
+  String DELEGATION_SERVICE_PREFIX = "gateway.delegation.service.";
+  String DELEGATION_SERVICE_TOKEN_TTL_SEC = DELEGATION_SERVICE_PREFIX + "token.ttl.sec";
+  int    DELEGATION_SERVICE_TOKEN_TTL_SEC_DEFAULT = 3600;
+  String DELEGATION_SERVICE_LIST_MAX_TOTAL = DELEGATION_SERVICE_PREFIX + "list.max.total";
+  int    DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT = 10_000;
+  String DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY = DELEGATION_SERVICE_PREFIX + "list.max.per.authority";
+  int    DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT = 10_000;
+
   // KnoxIDF federated-OP back-channel (token exchange) HTTP client timeouts. Without these an
   // unresponsive external OP token endpoint pins the calling request thread indefinitely.
   String KNOXIDF_FEDERATED_OP_PREFIX = "gateway.knoxidf.federated.op.";
@@ -1281,5 +1290,11 @@ public interface GatewayConfig {
   int getKnoxIDFFederatedOpConnectTimeoutMs();
 
   int getKnoxIDFFederatedOpReadTimeoutMs();
+
+  int getDelegationServiceTokenTtlSec();
+
+  int getDelegationServiceListMaxTotal();
+
+  int getDelegationServiceListMaxPerAuthority();
 
 }

@@ -69,7 +69,8 @@ public class AbstractGatewayServicesTest {
         ServiceType.LDAP_SERVICE,
         ServiceType.LDAP_ROLES_LOOKUP_SERVICE,
         ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE,
-        ServiceType.TRUSTED_OIDC_ISSUER_SERVICE
+        ServiceType.TRUSTED_OIDC_ISSUER_SERVICE,
+        ServiceType.DELEGATION_POLICY_SERVICE
     };
 
     assertNotEquals(ServiceType.values(), orderedServiceTypes);

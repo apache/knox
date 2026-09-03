@@ -1400,4 +1400,19 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT;
   }
 
+  @Override
+  public int getDelegationServiceTokenTtlSec() {
+    return DELEGATION_SERVICE_TOKEN_TTL_SEC_DEFAULT;
+  }
+
+  @Override
+  public int getDelegationServiceListMaxTotal() {
+    return DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT;
+  }
+
+  @Override
+  public int getDelegationServiceListMaxPerAuthority() {
+    return DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT;
+  }
+
 }
