@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.service.knoxtoken;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
@@ -33,6 +35,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -71,6 +74,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.security.ActorChainPrincipal;
+import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
@@ -125,7 +129,7 @@ public class TokenResource {
   protected static final String TOKEN_TTL_PARAM = TOKEN_PARAM_PREFIX + "ttl";
   public static final String TOKEN_TYPE_PARAM = TOKEN_PARAM_PREFIX + "type";
   private static final String TOKEN_AUDIENCES_PARAM = TOKEN_PARAM_PREFIX + "audiences";
-  static final String AUDIENCE_QUERY_PARAM = "audience";
+  static final String RESOURCE_QUERY_PARAM = CommonTokenConstants.RESOURCE;
   private static final String TOKEN_AUDIENCE_VALIDATOR_PARAM = TOKEN_PARAM_PREFIX + "audience.validator";
   public static final String TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED = TOKEN_PARAM_PREFIX + "include.groups.allowed";
   private static final String TOKEN_TARGET_URL = TOKEN_PARAM_PREFIX + "target.url";
@@ -221,7 +225,8 @@ public class TokenResource {
     ALREADY_ENABLED(70),
     DISABLED_KNOXSSO_COOKIE(80),
     TOKEN_EXPIRED(90),
-    INVALID_AUDIENCE(100);
+    INVALID_AUDIENCE(100),
+    INVALID_RESOURCE(110);
 
     private final int code;
 
@@ -920,11 +925,11 @@ public class TokenResource {
 
     final List<String> audiences;
     try {
-      audiences = audienceValidator.validateAndResolve(new AudienceValidationContext(parseRequestedAudiences(), targetAudiences));
+      audiences = audienceValidator.validateAndResolve(new AudienceValidationContext(parseRequestedResources(), targetAudiences));
     } catch (RequestedAudienceValidationException e) {
       log.rejectedAudienceRequest(e.getMessage());
       return new TokenResponseContext(null,
-          "{\n  \"error\": \"" + e.getMessage() + "\",\n  \"code\": " + e.getErrorCode().toInt() + "\n}\n",
+          errorResponseBody(e.getMessage(), e.getErrorCode()),
           Response.status(Response.Status.BAD_REQUEST));
     }
 
@@ -1163,24 +1168,62 @@ public class TokenResource {
     }
   }
 
-  private List<String> parseRequestedAudiences() {
+  private List<String> parseRequestedResources() throws RequestedAudienceValidationException {
+    // An upstream authentication/federation component may have already resolved and validated the
+    // requested audiences for this request and stashed them as a request attribute. When present,
+    // those pre-resolved values take precedence over the resource query parameter.
+    @SuppressWarnings("unchecked")
+    final List<String> requestedAudiences =
+        (List<String>) request.getAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR);
+    if (requestedAudiences != null) {
+      return requestedAudiences;
+    }
     final Map<String, String[]> parameterMap = request.getParameterMap();
-    final String[] rawValues = parameterMap == null ? null : parameterMap.get(AUDIENCE_QUERY_PARAM);
+    final String[] rawValues = parameterMap == null ? null : parameterMap.get(RESOURCE_QUERY_PARAM);
     final List<String> requested = new ArrayList<>();
     if (rawValues != null) {
       for (String rawValue : rawValues) {
-        if (rawValue == null) {
-          continue;
-        }
         for (String value : rawValue.split(",")) {
-          final String trimmed = value.trim();
-          if (!trimmed.isEmpty()) {
-            requested.add(trimmed);
-          }
+          requested.add(validateResourceUri(value.trim()));
         }
       }
     }
     return requested;
+  }
+
+  /**
+   * Validates that a requested {@code resource} value is an absolute URI without a fragment, as
+   * required by RFC 8707 (Resource Indicators for OAuth 2.0) section 2 and RFC 3986 section 4.3.
+   * A query component is permitted; a fragment component is not. Returns the value unchanged when
+   * it is valid.
+   */
+  private String validateResourceUri(String value) throws RequestedAudienceValidationException {
+    final URI uri;
+    try {
+      uri = new URI(value);
+    } catch (URISyntaxException e) {
+      throw new RequestedAudienceValidationException(
+          "The requested resource '" + value + "' is not a valid URI.", ErrorCode.INVALID_RESOURCE);
+    }
+    if (!uri.isAbsolute() || uri.getFragment() != null) {
+      throw new RequestedAudienceValidationException(
+          "The requested resource '" + value + "' must be an absolute URI without a fragment.",
+          ErrorCode.INVALID_RESOURCE);
+    }
+    return value;
+  }
+
+  /**
+   * Renders a token-issuance error body as {@code {"error": ..., "code": ...}}. The {@code error}
+   * message may embed a caller-supplied value (e.g. an invalid {@code resource} indicator), so it is
+   * serialized through {@link JsonUtils} to escape it rather than being concatenated verbatim, which
+   * would allow the value to break out of the JSON string.
+   */
+  private static String errorResponseBody(String error, ErrorCode code) {
+    final Map<String, Object> body = new LinkedHashMap<>();
+    body.put("error", error);
+    body.put("code", code.toInt());
+    return JsonUtils.renderAsJsonString(body);
   }
 
   private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences) throws TokenServiceException {

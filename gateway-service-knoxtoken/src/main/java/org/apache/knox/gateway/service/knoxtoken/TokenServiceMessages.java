@@ -105,7 +105,7 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.DEBUG, text = "Adding RFC 8693 'act' claim to token: actor={0}, subject={1}" )
   void addingActorClaimToToken(String actor, String subject);
 
-  @Message( level = MessageLevel.WARN, text = "Rejected token request due to invalid audience: {0}" )
+  @Message( level = MessageLevel.WARN, text = "Rejected token request due to invalid requested resource: {0}" )
   void rejectedAudienceRequest(String reason);
 
 }

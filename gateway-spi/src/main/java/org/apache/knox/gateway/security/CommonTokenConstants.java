@@ -29,4 +29,25 @@ public interface CommonTokenConstants {
 
     String AUTH_CODE = "authorization_code";
 
+    /**
+     * RFC 8707 (Resource Indicators) / RFC 8693 (Token Exchange) {@code resource} request parameter:
+     * the target service for which the token is requested, expressed as an absolute URI.
+     */
+    String RESOURCE = "resource";
+
+    /**
+     * RFC 8693 (Token Exchange) {@code audience} request parameter: the logical name of the target
+     * service for which the token is requested.
+     */
+    String AUDIENCE = "audience";
+
+    /**
+     * Request attribute an upstream authentication/federation component may set to convey the
+     * requested audiences it has already resolved and validated for the current request to the
+     * downstream KNOXTOKEN service, which mints the token. When present it takes precedence over the
+     * {@code resource} query parameter the token service would otherwise honor. The value is a
+     * {@code List<String>}.
+     */
+    String REQUESTED_AUDIENCES_REQUEST_ATTR = "knox.token.requested.audiences";
+
 }
