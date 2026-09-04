@@ -66,7 +66,12 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertEqual(config.get("response_types_supported"), ["code"])
         self.assertEqual(
             config.get("grant_types_supported"),
-            ["authorization_code", "refresh_token"],
+            [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials",
+                "urn:ietf:params:oauth:grant-type:token-exchange",
+            ],
         )
         self.assertEqual(config.get("id_token_signing_alg_values_supported"), ["RS256"])
         # DEFAULT_SCOPES is an ImmutableSet, so discovery emits it in insertion order.

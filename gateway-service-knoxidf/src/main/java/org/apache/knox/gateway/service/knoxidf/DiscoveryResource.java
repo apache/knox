@@ -85,7 +85,7 @@ public class DiscoveryResource {
         // field is absent, but stating it tells MCP clients to use dynamic client registration
         // (registration_endpoint) rather than a URL client_id. Flip to true only if CIMD is implemented.
         config.put("client_id_metadata_document_supported", Boolean.FALSE);
-        config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE, KnoxIDFConstants.REFRESH_TOKEN});
+        config.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE, KnoxIDFConstants.REFRESH_TOKEN, KnoxIDFConstants.CLIENT_CREDENTIALS, KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE});
         config.put("scopes_supported", KnoxIDFConstants.DEFAULT_SCOPES);
         config.put("id_token_signing_alg_values_supported", new String[]{"RS256"});
         // Advertise only S256: AuthorizeResource rejects any other code_challenge_method (including

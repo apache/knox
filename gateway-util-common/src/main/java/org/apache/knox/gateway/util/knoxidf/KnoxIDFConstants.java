@@ -44,10 +44,15 @@ public interface KnoxIDFConstants {
     String STATE = "state";
     String CODE = "code";
     String REFRESH_TOKEN = "refresh_token";
+    String CLIENT_CREDENTIALS = "client_credentials";
     // RFC 8693 §2.2.1: the token endpoint response must advertise the type of the issued token.
     String ISSUED_TOKEN_TYPE = "issued_token_type";
     //KnoxIDF always mints a JWT so issued_token_type is the JWT URN rather than the generic access_token URN.
     String ISSUED_TOKEN_TYPE_JWT_VALUE = "urn:ietf:params:oauth:token-type:jwt";
+    // This is intentionally duplicated from JWTFederationFilter.TOKEN_EXCHANGE rather than shared:
+    // it is a fixed standard identifier that will not change, and duplicating it avoids a module
+    // dependency on the JWT federation provider.
+    String TOKEN_EXCHANGE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange";
     String REFRESH_TOKEN_TTL= "refresh.token.ttl";
     long REFRESH_TOKEN_TTL_DEFAULT = 86400000L; // 1 day
     String CODE_RESPONSE_TYPE = RESPONSE_TYPE + "=" + CODE;
