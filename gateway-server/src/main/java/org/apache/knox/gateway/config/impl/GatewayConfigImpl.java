@@ -1969,4 +1969,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public int getDelegationServiceListMaxPerAuthority() {
     return getInt(DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY, DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT);
   }
+
+  @Override
+  public int getDelegationServiceMinTokenTtlSec() {
+    return getInt(DELEGATION_SERVICE_MIN_TOKEN_TTL_SEC, DELEGATION_SERVICE_MIN_TOKEN_TTL_SEC_DEFAULT);
+  }
+
+  @Override
+  public int getDelegationServiceMaxTokenTtlSec() {
+    return getInt(DELEGATION_SERVICE_MAX_TOKEN_TTL_SEC, DELEGATION_SERVICE_MAX_TOKEN_TTL_SEC_DEFAULT);
+  }
 }

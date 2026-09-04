@@ -1415,4 +1415,14 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
     return DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT;
   }
 
+  @Override
+  public int getDelegationServiceMinTokenTtlSec() {
+    return DELEGATION_SERVICE_MIN_TOKEN_TTL_SEC_DEFAULT;
+  }
+
+  @Override
+  public int getDelegationServiceMaxTokenTtlSec() {
+    return DELEGATION_SERVICE_MAX_TOKEN_TTL_SEC_DEFAULT;
+  }
+
 }

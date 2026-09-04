@@ -1,0 +1,158 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with this
+ * work for additional information regarding copyright ownership. The ASF
+ * licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package org.apache.knox.gateway.service.knoxidf;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Response body returned by POST/PUT/GET(one) on {@link DelegationPolicyResource}.
+ * Every {@link DelegationPolicyRequest} field plus the server-managed fields.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DelegationPolicyResponse {
+
+  private String registrationId;
+  private String actorAuthority;
+  private String actorId;
+  private String name;
+  private String status;
+  private Integer tokenTtlSec;
+  private String description;
+  private boolean allowHeadlessExchange;
+  private Set<String> canActForUsers;
+  private Set<String> canActForGroups;
+  private Map<String, Set<String>> resourcePolicy;
+  private String createdBy;
+  private Instant createdAt;
+  private Instant updatedAt;
+
+  public String getRegistrationId() {
+    return registrationId;
+  }
+
+  public void setRegistrationId(String registrationId) {
+    this.registrationId = registrationId;
+  }
+
+  public String getActorAuthority() {
+    return actorAuthority;
+  }
+
+  public void setActorAuthority(String actorAuthority) {
+    this.actorAuthority = actorAuthority;
+  }
+
+  public String getActorId() {
+    return actorId;
+  }
+
+  public void setActorId(String actorId) {
+    this.actorId = actorId;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public Integer getTokenTtlSec() {
+    return tokenTtlSec;
+  }
+
+  public void setTokenTtlSec(Integer tokenTtlSec) {
+    this.tokenTtlSec = tokenTtlSec;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public boolean isAllowHeadlessExchange() {
+    return allowHeadlessExchange;
+  }
+
+  public void setAllowHeadlessExchange(boolean allowHeadlessExchange) {
+    this.allowHeadlessExchange = allowHeadlessExchange;
+  }
+
+  public Set<String> getCanActForUsers() {
+    return canActForUsers;
+  }
+
+  public void setCanActForUsers(Set<String> canActForUsers) {
+    this.canActForUsers = canActForUsers;
+  }
+
+  public Set<String> getCanActForGroups() {
+    return canActForGroups;
+  }
+
+  public void setCanActForGroups(Set<String> canActForGroups) {
+    this.canActForGroups = canActForGroups;
+  }
+
+  public Map<String, Set<String>> getResourcePolicy() {
+    return resourcePolicy;
+  }
+
+  public void setResourcePolicy(Map<String, Set<String>> resourcePolicy) {
+    this.resourcePolicy = resourcePolicy;
+  }
+
+  public String getCreatedBy() {
+    return createdBy;
+  }
+
+  public void setCreatedBy(String createdBy) {
+    this.createdBy = createdBy;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public Instant getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Instant updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+}

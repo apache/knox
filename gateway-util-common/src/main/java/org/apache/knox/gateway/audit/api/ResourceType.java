@@ -26,5 +26,6 @@ public abstract class ResourceType {
   public static final String PRINCIPAL = "principal";
   public static final String PROCESS = "process";
   public static final String TRUSTED_ISSUER = "trusted-issuer";
+  public static final String DELEGATION_POLICY = "delegation-policy";
 
 }

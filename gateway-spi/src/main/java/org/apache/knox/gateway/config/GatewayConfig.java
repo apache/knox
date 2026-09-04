@@ -183,6 +183,10 @@ public interface GatewayConfig {
   int    DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT = 10_000;
   String DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY = DELEGATION_SERVICE_PREFIX + "list.max.per.authority";
   int    DELEGATION_SERVICE_LIST_MAX_PER_AUTHORITY_DEFAULT = 10_000;
+  String DELEGATION_SERVICE_MIN_TOKEN_TTL_SEC = DELEGATION_SERVICE_PREFIX + "min.token.ttl.sec";
+  int    DELEGATION_SERVICE_MIN_TOKEN_TTL_SEC_DEFAULT = 60;       // 1 minute
+  String DELEGATION_SERVICE_MAX_TOKEN_TTL_SEC = DELEGATION_SERVICE_PREFIX + "max.token.ttl.sec";
+  int    DELEGATION_SERVICE_MAX_TOKEN_TTL_SEC_DEFAULT = 86400;    // 24 hours
 
   // KnoxIDF federated-OP back-channel (token exchange) HTTP client timeouts. Without these an
   // unresponsive external OP token endpoint pins the calling request thread indefinitely.
@@ -1296,5 +1300,9 @@ public interface GatewayConfig {
   int getDelegationServiceListMaxTotal();
 
   int getDelegationServiceListMaxPerAuthority();
+
+  int getDelegationServiceMinTokenTtlSec();
+
+  int getDelegationServiceMaxTokenTtlSec();
 
 }
