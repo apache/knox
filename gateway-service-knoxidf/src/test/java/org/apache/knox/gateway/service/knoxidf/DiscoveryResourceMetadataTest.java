@@ -71,6 +71,8 @@ public class DiscoveryResourceMetadataTest {
         body.contains("grant_types_supported") && body.contains("\"" + KnoxIDFConstants.AUTH_CODE + "\""));
     assertTrue("grant_types_supported must advertise refresh_token.",
         body.contains("\"" + KnoxIDFConstants.REFRESH_TOKEN + "\""));
+    assertTrue("grant_types_supported must advertise client_credentials.",
+        body.contains("\"" + KnoxIDFConstants.CLIENT_CREDENTIALS + "\""));
     assertTrue("grant_types_supported must advertise the RFC 8693 token-exchange grant type.",
         body.contains("\"" + KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE + "\""));
   }

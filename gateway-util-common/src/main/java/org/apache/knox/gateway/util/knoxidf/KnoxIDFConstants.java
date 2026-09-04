@@ -44,6 +44,7 @@ public interface KnoxIDFConstants {
     String STATE = "state";
     String CODE = "code";
     String REFRESH_TOKEN = "refresh_token";
+    String CLIENT_CREDENTIALS = "client_credentials";
     // RFC 8693 §2.2.1: the token endpoint response must advertise the type of the issued token.
     String ISSUED_TOKEN_TYPE = "issued_token_type";
     //KnoxIDF always mints a JWT so issued_token_type is the JWT URN rather than the generic access_token URN.
