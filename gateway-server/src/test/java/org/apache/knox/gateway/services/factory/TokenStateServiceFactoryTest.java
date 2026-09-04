@@ -19,10 +19,11 @@ package org.apache.knox.gateway.services.factory;
 
 import static org.junit.Assert.assertTrue;
 
+import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
-import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
+import org.apache.knox.gateway.services.token.impl.H2DBTokenStateService;
 import org.junit.Test;
 
 public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
@@ -44,34 +45,17 @@ public class TokenStateServiceFactoryTest extends ServiceFactoryTest {
   }
 
   @Test
-  public void shouldReturnDerbyDBTokenStateServiceByDefault() throws Exception {
+  public void shouldReturnH2DBTokenStateServiceByDefault() throws Exception {
+    // Embedded H2 is the zero-config OOTB default that replaced the retired Derby backend (KNOX-3401).
     TokenStateService tokenStateService = null;
     try {
-      initConfig(true);
+      initConfig(true, DatabaseType.H2);
       tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options, "");
-      assertTrue(tokenStateService instanceof DerbyDBTokenStateService);
+      assertTrue(tokenStateService instanceof H2DBTokenStateService);
     } finally {
       if (tokenStateService != null) {
         tokenStateService.stop();
       }
     }
-  }
-
-  @Test
-  public void shouldReturnDerbyDatabaseTokenStateService() throws Exception {
-    TokenStateService tokenStateService = null;
-    try {
-      initConfig(true);
-      tokenStateService = (TokenStateService) serviceFactory.create(gatewayServices, ServiceType.TOKEN_STATE_SERVICE, gatewayConfig, options,
-          DerbyDBTokenStateService.class.getName());
-      assertTrue(tokenStateService instanceof DerbyDBTokenStateService);
-      assertTrue(isAliasServiceSetOnParent(tokenStateService));
-      assertTrue(isMasterServiceSet(tokenStateService));
-    } finally {
-      if (tokenStateService != null) {
-        tokenStateService.stop();
-      }
-    }
-
   }
 }

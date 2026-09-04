@@ -41,21 +41,19 @@ import static org.junit.Assert.assertTrue;
  */
 public class TrustedOidcIssuersSchemaTest {
 
-  private static final String DERBY_DB = "trustedissuers";
-  private static final String DERBY_URL = "jdbc:derby:memory:" + DERBY_DB + ";create=true";
-  private static final String DERBY_SHUTDOWN_URL = "jdbc:derby:memory:" + DERBY_DB + ";shutdown=true";
+  private static final String H2_DB = "trustedissuers";
+  // H2 is the OOTB embedded backend; DB_CLOSE_DELAY=-1 keeps the in-memory database alive for the class.
+  private static final String H2_URL = "jdbc:h2:mem:" + H2_DB + ";DB_CLOSE_DELAY=-1";
   private static final String HSQL_URL = "jdbc:hsqldb:mem:trustedissuersschema;ifexists=false";
   private static final String HSQL_USER = "SA";
   private static final String HSQL_PASSWORD = "";
 
-  private static Connection derbyConn;
+  private static Connection h2Conn;
   private static Connection hsqlConn;
 
   @BeforeClass
   public static void setUp() throws SQLException {
-    // Derby 10.14 does not recognize locales like en_001; force a standard locale.
-    java.util.Locale.setDefault(java.util.Locale.US);
-    derbyConn = DriverManager.getConnection(DERBY_URL);
+    h2Conn = DriverManager.getConnection(H2_URL);
     hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
   }
 
@@ -67,28 +65,23 @@ public class TrustedOidcIssuersSchemaTest {
       stmt.execute("SHUTDOWN");
     }
 
-    // Derby: close the shared connection before issuing shutdown
-    if (derbyConn != null && !derbyConn.isClosed()) {
-      derbyConn.close();
-    }
-    try {
-      DriverManager.getConnection(DERBY_SHUTDOWN_URL);
-    } catch (SQLException e) {
-      // Derby signals a successful single-DB shutdown as error code 45000, state "08006"
-      if (!(e.getErrorCode() == 45000 && "08006".equals(e.getSQLState()))) {
-        throw e;
+    // H2: drop all objects to release the in-memory database, then close the shared connection.
+    if (h2Conn != null && !h2Conn.isClosed()) {
+      try (Statement stmt = h2Conn.createStatement()) {
+        stmt.execute("DROP ALL OBJECTS");
       }
+      h2Conn.close();
     }
   }
 
   /**
-   * The Derby-dialect DDL must execute without error in a Derby in-memory
-   * database and leave the table queryable.
+   * The standard-dialect DDL must execute without error in an H2 in-memory
+   * database (the OOTB embedded backend) and leave the table queryable.
    */
   @Test
-  public void testDerbyDdlCreatesTable() throws Exception {
-    try (Statement stmt = derbyConn.createStatement()) {
-      stmt.execute(loadSql(AbstractDataSourceFactory.DERBY_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL));
+  public void testH2DdlCreatesTable() throws Exception {
+    try (Statement stmt = h2Conn.createStatement()) {
+      stmt.execute(loadSql(AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL));
       try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM TRUSTED_OIDC_ISSUERS")) {
         assertTrue(rs.next());
         assertEquals(0, rs.getInt(1));

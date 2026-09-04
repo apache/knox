@@ -19,27 +19,27 @@ package org.apache.knox.gateway.services.knoxidf.trustedoidcissuer;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.database.EmbeddedDerbyDatabase;
+import org.apache.knox.gateway.database.EmbeddedH2Database;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.MasterService;
-import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
+import org.apache.knox.gateway.services.token.impl.H2DBTokenStateService;
 
 /**
- * A self-provisioning, embedded-Derby backed {@link TrustedOidcIssuerService}. This is the
+ * A self-provisioning, embedded-H2 backed {@link TrustedOidcIssuerService}. This is the
  * auto-enabled default when KnoxIDF is deployed without an operator-configured external database,
- * mirroring how {@link DerbyDBTokenStateService} is the default token-state service and
- * {@code DerbyDBFederatedIdentityService} is the default federated-identity service.
+ * mirroring how {@link H2DBTokenStateService} is the default token-state service and
+ * {@code H2DBFederatedIdentityService} is the default federated-identity service. It replaces the
+ * retired embedded-Derby backend (KNOX-3401).
  * <p>
- * It reuses the single embedded Derby database that the token-state service already provisions
- * under {@code ${securityDir}/tokens} (the {@code ;create=true} JDBC URL is idempotent, so
- * connecting to an already-booted database simply connects), sets the shared {@link GatewayConfig}
- * to point at it, ensures the connection user/password aliases exist, and then delegates all
- * persistence to {@link JdbcTrustedOidcIssuerService} (which builds the
- * {@link TrustedOidcIssuerDatabase} and self-creates its table).
+ * It reuses the single embedded H2 database that the token-state service already provisions under
+ * {@code ${securityDir}/h2db} (connecting to an already-open embedded database simply attaches to
+ * it), sets the shared {@link GatewayConfig} to point at it, ensures the connection user/password
+ * aliases exist, and then delegates all persistence to {@link JdbcTrustedOidcIssuerService} (which
+ * builds the {@link TrustedOidcIssuerDatabase} and self-creates its table).
  */
-public class DerbyDBTrustedOidcIssuerService extends JdbcTrustedOidcIssuerService {
+public class H2DBTrustedOidcIssuerService extends JdbcTrustedOidcIssuerService {
 
-  private EmbeddedDerbyDatabase embeddedDerbyDatabase;
+  private EmbeddedH2Database embeddedH2Database;
   private MasterService masterService;
 
   public void setMasterService(MasterService masterService) {
@@ -49,18 +49,18 @@ public class DerbyDBTrustedOidcIssuerService extends JdbcTrustedOidcIssuerServic
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     try {
-      embeddedDerbyDatabase = new EmbeddedDerbyDatabase(config);
-      embeddedDerbyDatabase.start(config, getAliasService(), masterService);
+      embeddedH2Database = new EmbeddedH2Database(config);
+      embeddedH2Database.start(config, getAliasService(), masterService);
       super.init(config, options);
     } catch (Exception e) {
-      throw new ServiceLifecycleException("Error while initiating DerbyDBTrustedOidcIssuerService: " + e, e);
+      throw new ServiceLifecycleException("Error while initiating H2DBTrustedOidcIssuerService: " + e, e);
     }
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    if (embeddedDerbyDatabase != null) {
-      embeddedDerbyDatabase.stop();
+    if (embeddedH2Database != null) {
+      embeddedH2Database.stop();
     }
   }
 }

@@ -19,13 +19,19 @@ package org.apache.knox.gateway.services.token.impl;
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.database.EmbeddedDerbyDatabase;
+import org.apache.knox.gateway.database.EmbeddedH2Database;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.MasterService;
 
-public class DerbyDBTokenStateService extends JDBCTokenStateService {
+/**
+ * A self-provisioning, embedded-H2 backed token-state service. This is the zero-config OOTB default
+ * that replaces the retired {@code DerbyDBTokenStateService} (KNOX-3401): it boots the shared
+ * embedded H2 database under {@code ${securityDir}/h2db} and then delegates all persistence to
+ * {@link JDBCTokenStateService}.
+ */
+public class H2DBTokenStateService extends JDBCTokenStateService {
 
-  private EmbeddedDerbyDatabase embeddedDerbyDatabase;
+  private EmbeddedH2Database embeddedH2Database;
   private MasterService masterService;
 
   public void setMasterService(MasterService masterService) {
@@ -35,18 +41,18 @@ public class DerbyDBTokenStateService extends JDBCTokenStateService {
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     try {
-      embeddedDerbyDatabase = new EmbeddedDerbyDatabase(config);
-      embeddedDerbyDatabase.start(config, getAliasService(), masterService);
+      embeddedH2Database = new EmbeddedH2Database(config);
+      embeddedH2Database.start(config, getAliasService(), masterService);
       super.init(config, options);
     } catch (Exception e) {
-      throw new ServiceLifecycleException("Error while initiating DerbyDBTokenStateService: " + e, e);
+      throw new ServiceLifecycleException("Error while initiating H2DBTokenStateService: " + e, e);
     }
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    if (embeddedDerbyDatabase != null) {
-      embeddedDerbyDatabase.stop();
+    if (embeddedH2Database != null) {
+      embeddedH2Database.stop();
     }
   }
 

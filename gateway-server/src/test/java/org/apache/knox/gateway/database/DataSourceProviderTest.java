@@ -19,19 +19,22 @@ package org.apache.knox.gateway.database;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 import oracle.jdbc.pool.OracleDataSource;
-import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.easymock.EasyMock;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Test;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.ssl.NonValidatingFactory;
 
+import java.sql.SQLException;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class DataSourceProviderTest {
@@ -129,28 +132,61 @@ public class DataSourceProviderTest {
   }
 
   @Test
-  public void shouldReturnDerbyDataSource() throws Exception {
+  public void shouldReturnH2DataSource() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, aliasService) instanceof EmbeddedDataSource);
+    assertTrue(DataSourceProvider.getDataSource(gatewayConfig, aliasService) instanceof JdbcDataSource);
   }
 
   @Test
-  public void derbyDataSourceShouldHaveProperConnectionProperties() throws Exception {
+  public void h2DataSourceShouldHaveProperConnectionProperties() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase");
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase").anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseH2EncryptionEnabled()).andReturn(false).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
     EasyMock.replay(gatewayConfig, aliasService);
-    final EmbeddedDataSource dataSource = (EmbeddedDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
-    assertEquals("sampleDatabase", dataSource.getDatabaseName());
+    final JdbcDataSource dataSource = (JdbcDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertEquals("jdbc:h2:sampleDatabase", dataSource.getUrl());
     assertEquals("user", dataSource.getUser());
     assertEquals("password", dataSource.getPassword());
+  }
+
+  @Test
+  public void h2EncryptionEnabledAppendsCipherAndFilePassword() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase").anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseH2EncryptionEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseH2EncryptionPassphraseAlias()).andReturn(AbstractDataSourceFactory.H2_ENCRYPTION_PASSPHRASE_ALIAS_NAME).anyTimes();
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.H2_ENCRYPTION_PASSPHRASE_ALIAS_NAME)).andReturn("filePass".toCharArray()).anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    final JdbcDataSource dataSource = (JdbcDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertEquals("jdbc:h2:sampleDatabase;CIPHER=AES", dataSource.getUrl());
+    assertEquals("user", dataSource.getUser());
+    // H2 splits the connection password on the first space: <filePassword> <userPassword>.
+    assertEquals("filePass password", dataSource.getPassword());
+  }
+
+  @Test
+  public void h2EncryptionEnabledWithoutPassphraseFailsFast() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("sampleDatabase").anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseH2EncryptionEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseH2EncryptionPassphraseAlias()).andReturn(AbstractDataSourceFactory.H2_ENCRYPTION_PASSPHRASE_ALIAS_NAME).anyTimes();
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    assertThrows(SQLException.class, () -> DataSourceProvider.getDataSource(gatewayConfig, aliasService));
   }
 
   @Test

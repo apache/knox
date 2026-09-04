@@ -30,8 +30,6 @@ public abstract class AbstractDataSourceFactory {
     public static final String TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTable.sql";
     public static final String ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTableOracle.sql";
     public static final String ORACLE_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTableOracle.sql";
-    public static final String DERBY_TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTableDerby.sql";
-    public static final String DERBY_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTableDerby.sql";
     public static final String POSTGRES_TOKENS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenDatabaseTablePostgres.sql";
     public static final String POSTGRES_TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME = "createKnoxTokenMetadataDatabaseTablePostgres.sql";
 
@@ -39,28 +37,24 @@ public abstract class AbstractDataSourceFactory {
     public static final String KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTable.sql";
     public static final String ORACLE_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTableOracle.sql";
     public static final String ORACLE_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTableOracle.sql";
-    public static final String DERBY_KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxProvidersTableDerby.sql";
-    public static final String DERBY_KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME = "createKnoxDescriptorsTableDerby.sql";
 
     //KNOXIDF
     public static final String KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME = "createKnoxIDFFederatedIdentityTable.sql";
     public static final String KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME = "createKnoxIDFFederatedIdentityAttributesTable.sql";
     public static final String ORACLE_KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME = "createKnoxIDFFederatedIdentityTableOracle.sql";
     public static final String ORACLE_KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME = "createKnoxIDFFederatedIdentityAttributesTableOracle.sql";
-    public static final String DERBY_KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME = "createKnoxIDFFederatedIdentityTableDerby.sql";
-    public static final String DERBY_KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME = "createKnoxIDFFederatedIdentityAttributesTableDerby.sql";
 
     public static final String KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL = "createKnoxIDFTrustedOidcIssuersTable.sql";
-    public static final String DERBY_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL = "createKnoxIDFTrustedOidcIssuersTableDerby.sql";
     public static final String ORACLE_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL = "createKnoxIDFTrustedOidcIssuersTableOracle.sql";
 
     public static final String KNOXIDF_DELEGATION_POLICY_TABLES_SQL = "createKnoxIDFDelegationPolicyTables.sql";
-    public static final String DERBY_KNOXIDF_DELEGATION_POLICY_TABLES_SQL = "createKnoxIDFDelegationPolicyTablesDerby.sql";
     public static final String ORACLE_KNOXIDF_DELEGATION_POLICY_TABLES_SQL = "createKnoxIDFDelegationPolicyTablesOracle.sql";
 
     public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
     public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
     public static final String DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME = "gateway_database_ssl_truststore_password";
+    /** Alias whose stored value is the passphrase for at-rest encryption of the embedded H2 database. */
+    public static final String H2_ENCRYPTION_PASSPHRASE_ALIAS_NAME = "h2_encryption_passphrase";
 
     public abstract DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException;
 

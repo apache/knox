@@ -32,6 +32,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,9 +48,13 @@ import static org.junit.Assert.assertTrue;
 public class JdbcTrustedOidcIssuerServiceTest {
 
   private static final String DB_NAME = "trustedissuers_svc_test";
-  private static final String DERBY_CREATE_URL = "jdbc:derby:memory:" + DB_NAME + ";create=true";
-  private static final String DERBY_URL = "jdbc:derby:memory:" + DB_NAME;
-  private static final String DERBY_SHUTDOWN_URL = "jdbc:derby:memory:" + DB_NAME + ";shutdown=true";
+  // In-memory H2; DB_CLOSE_DELAY=-1 keeps the database alive across connection open/close for the
+  // whole test class (the service and the direct JDBC cleanup below each open their own connections).
+  private static final String H2_URL = "jdbc:h2:mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1";
+
+  // A held-open connection guarantees the in-memory database survives even when every other
+  // connection is briefly closed between tests.
+  private static Connection keepAlive;
 
   private GatewayConfig gatewayConfig;
   private AliasService aliasService;
@@ -57,28 +62,25 @@ public class JdbcTrustedOidcIssuerServiceTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    // Derby 10.14 does not recognize locales like en_001; force a standard locale.
-    java.util.Locale.setDefault(java.util.Locale.US);
-    // Create the Derby in-memory DB so DerbyDataSourceFactory can connect to it
-    DriverManager.getConnection(DERBY_CREATE_URL).close();
+    // Create and pin the in-memory H2 database for the lifetime of the test class.
+    keepAlive = DriverManager.getConnection(H2_URL);
   }
 
   @AfterClass
-  public static void tearDownClass() {
-    try {
-      DriverManager.getConnection(DERBY_SHUTDOWN_URL);
-    } catch (SQLException e) {
-      // Derby signals a successful in-memory shutdown as SQLState 08006 / error 45000
-      if (!(e.getErrorCode() == 45000 && "08006".equals(e.getSQLState()))) {
-        throw new RuntimeException("Unexpected Derby shutdown error", e);
+  public static void tearDownClass() throws SQLException {
+    // Dropping all objects releases the in-memory database once the class finishes.
+    if (keepAlive != null) {
+      try (Statement stmt = keepAlive.createStatement()) {
+        stmt.execute("DROP ALL OBJECTS");
       }
+      keepAlive.close();
     }
   }
 
   @Before
   public void setUp() throws Exception {
     // Clear table between tests
-    try (Connection conn = DriverManager.getConnection(DERBY_URL);
+    try (Connection conn = DriverManager.getConnection(H2_URL);
          PreparedStatement ps = conn.prepareStatement("DELETE FROM TRUSTED_OIDC_ISSUERS")) {
       ps.executeUpdate();
     } catch (SQLException e) {
@@ -86,8 +88,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
     }
 
     gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1").anyTimes();
     EasyMock.expect(gatewayConfig.getTrustedOidcIssuerMaxTrustedIssuers() ).andReturn(10).anyTimes();
     EasyMock.replay(gatewayConfig);
 
@@ -182,7 +184,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
   public void testRegistrySnapshotWarmOnInit() throws Exception {
     // Pre-populate the TRUSTED_OIDC_ISSUERS table before initializing a new service
     final String preloadedUrl = "https://preloaded.example.com";
-    try (Connection conn = DriverManager.getConnection(DERBY_URL);
+    try (Connection conn = DriverManager.getConnection(H2_URL);
          PreparedStatement ps = conn.prepareStatement(
              "INSERT INTO TRUSTED_OIDC_ISSUERS (issuer_url, dynamic_jwks, registered_at) "
                  + "VALUES (?, ?, ?)")) {
@@ -223,8 +225,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
   @Test
   public void testMaxTrustedIssuers() throws ServiceLifecycleException {
     final GatewayConfig limitedConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(limitedConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(limitedConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(limitedConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(limitedConfig.getDatabaseName()).andReturn("mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1").anyTimes();
     EasyMock.expect(limitedConfig.getTrustedOidcIssuerMaxTrustedIssuers() ).andReturn(2).anyTimes();
     EasyMock.replay(limitedConfig);
 

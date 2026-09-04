@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,11 +36,9 @@ import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.knoxidf.federation.DerbyDBFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentityService;
+import org.apache.knox.gateway.services.knoxidf.federation.H2DBFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.JdbcFederatedIdentityService;
-import org.apache.knox.gateway.services.security.AliasService;
-import org.apache.knox.gateway.services.security.MasterService;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.test.TestUtils;
@@ -67,19 +64,11 @@ public class FederatedIdentityServiceFactoryTest {
   }
 
   @Test
-  public void shouldChooseDerbyWhenNoDatabaseConfigured() {
+  public void shouldChooseH2WhenNoDatabaseConfigured() {
     final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
     EasyMock.expect(config.getDatabaseType()).andReturn("none").anyTimes();
     EasyMock.replay(config);
-    assertEquals(DerbyDBFederatedIdentityService.class.getName(), serviceFactory.chooseAutoImplementation(config));
-  }
-
-  @Test
-  public void shouldChooseDerbyWhenDatabaseTypeIsDerby() {
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.replay(config);
-    assertEquals(DerbyDBFederatedIdentityService.class.getName(), serviceFactory.chooseAutoImplementation(config));
+    assertEquals(H2DBFederatedIdentityService.class.getName(), serviceFactory.chooseAutoImplementation(config));
   }
 
   @Test
@@ -154,36 +143,6 @@ public class FederatedIdentityServiceFactoryTest {
 
     createdService = serviceFactory.create(gatewayServices, ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE, config, options, "");
     assertTrue(createdService instanceof EmptyFederatedIdentityService);
-  }
-
-  @Test
-  public void shouldAutoSelectDerbyServiceWhenKnoxIdfDeployedWithoutExternalDatabase() throws Exception {
-    tempDir = TestUtils.createTempDir(this.getClass().getName());
-    final String masterSecret = "M4st3RSecret!";
-    final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
-    EasyMock.expect(masterService.getMasterSecret()).andReturn(masterSecret.toCharArray()).anyTimes();
-    EasyMock.replay(masterService);
-    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
-    EasyMock.replay(aliasService);
-
-    final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-    final TopologyService topologyService = EasyMock.createNiceMock(TopologyService.class);
-    EasyMock.expect(topologyService.getTopologies()).andReturn(Collections.singletonList(topologyWithRole("KNOXIDF"))).anyTimes();
-    EasyMock.replay(topologyService);
-    EasyMock.expect(gatewayServices.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(topologyService).anyTimes();
-    EasyMock.expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-    EasyMock.expect(gatewayServices.getService(ServiceType.MASTER_SERVICE)).andReturn(masterService).anyTimes();
-    EasyMock.replay(gatewayServices);
-
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(config.getGatewaySecurityDir()).andReturn(tempDir.getAbsolutePath()).anyTimes();
-    EasyMock.expect(config.getDatabaseName()).andReturn(Paths.get(tempDir.getAbsolutePath(), "tokens").toString()).anyTimes();
-    EasyMock.replay(config);
-
-    createdService = serviceFactory.create(gatewayServices, ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE, config, options, "");
-    assertTrue("Expected a self-provisioning Derby-backed federated identity service, got "
-        + createdService.getClass().getName(), createdService instanceof DerbyDBFederatedIdentityService);
   }
 
   private Topology topologyWithRole(String role) {

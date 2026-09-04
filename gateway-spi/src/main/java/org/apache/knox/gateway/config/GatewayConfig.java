@@ -1036,6 +1036,20 @@ public interface GatewayConfig {
 
   String getDatabaseSslTruststoreFileName();
 
+  /**
+   * Whether at-rest encryption is enabled for the embedded H2 database. Opt-in; defaults to
+   * {@code false}. When {@code true}, the encryption passphrase is resolved from the credential
+   * store alias named by {@link #getDatabaseH2EncryptionPassphraseAlias()} (never the master secret).
+   */
+  boolean isDatabaseH2EncryptionEnabled();
+
+  /**
+   * Name of the credential-store alias whose stored value is the passphrase used for at-rest
+   * encryption of the embedded H2 database. Consulted only when {@link #isDatabaseH2EncryptionEnabled()}
+   * is {@code true}. The operator provisions this alias; Knox never auto-generates it.
+   */
+  String getDatabaseH2EncryptionPassphraseAlias();
+
   int getJettyMaxFormContentSize();
 
   int getJettyMaxFormKeys();

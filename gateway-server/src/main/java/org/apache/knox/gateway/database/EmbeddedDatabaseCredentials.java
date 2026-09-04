@@ -23,18 +23,18 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.MasterService;
 
 /**
- * Shared resolution of the embedded-Derby connection credentials used by the self-provisioning
- * {@code DerbyDB*} services (token state, federated identity, trusted OIDC issuer, delegation
- * policy). All of these back onto the single embedded Derby database and therefore resolve the
- * same connection user and password: read from the gateway alias store when present, otherwise
- * falling back to a well-known default user and the master secret.
+ * Shared resolution of the embedded-database connection credentials used by the self-provisioning
+ * {@code H2DB*} services (token state, federated identity, trusted OIDC issuer, delegation policy).
+ * All of these back onto the single embedded H2 database and therefore resolve the same connection
+ * user and password: read from the gateway alias store when present, otherwise falling back to a
+ * well-known default user and the master secret.
  */
-public final class DerbyDatabaseCredentials {
+public final class EmbeddedDatabaseCredentials {
 
-  /** Default connection user for the embedded Derby database when no alias is configured. */
+  /** Default connection user for the embedded database when no alias is configured. */
   public static final String DEFAULT_DB_USER_NAME = "knox";
 
-  private DerbyDatabaseCredentials() {
+  private EmbeddedDatabaseCredentials() {
   }
 
   public static String getDatabaseUserName(AliasService aliasService) throws Exception {

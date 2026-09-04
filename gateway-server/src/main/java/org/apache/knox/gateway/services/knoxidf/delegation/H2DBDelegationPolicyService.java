@@ -14,31 +14,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.services.knoxidf.federation;
+package org.apache.knox.gateway.services.knoxidf.delegation;
 
 import java.util.Map;
 
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.database.EmbeddedDerbyDatabase;
+import org.apache.knox.gateway.database.EmbeddedH2Database;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.MasterService;
-import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
+import org.apache.knox.gateway.services.token.impl.H2DBTokenStateService;
 
 /**
- * A self-provisioning, embedded-Derby backed {@link FederatedIdentityService}. This is the
+ * A self-provisioning, embedded-H2 backed {@link DelegationPolicyService}. This is the
  * auto-enabled default when KnoxIDF is deployed without an operator-configured external database,
- * mirroring how {@link DerbyDBTokenStateService} is the default token-state service.
+ * mirroring how {@link H2DBTokenStateService} is the default token-state service and
+ * {@code H2DBFederatedIdentityService}/{@code H2DBTrustedOidcIssuerService} are the default
+ * federated-identity and trusted-OIDC-issuer services. It replaces the retired embedded-Derby
+ * backend (KNOX-3401).
  * <p>
- * It reuses the single embedded Derby database that the token-state service already provisions
- * under {@code ${securityDir}/tokens} (the {@code ;create=true} JDBC URL is idempotent, so
- * connecting to an already-booted database simply connects), sets the shared {@link GatewayConfig}
- * to point at it, ensures the connection user/password aliases exist, and then delegates all
- * persistence to {@link JdbcFederatedIdentityService} (which builds the
- * {@link FederatedIdentityDatabase} and self-creates its tables).
+ * It reuses the single embedded H2 database that the token-state service already provisions under
+ * {@code ${securityDir}/h2db} (connecting to an already-open embedded database simply attaches to
+ * it), sets the shared {@link GatewayConfig} to point at it, ensures the connection user/password
+ * aliases exist, and then delegates all persistence to {@link JdbcDelegationPolicyService} (which
+ * builds the {@link DelegationPolicyDatabase} and self-creates its tables).
  */
-public class DerbyDBFederatedIdentityService extends JdbcFederatedIdentityService {
+public class H2DBDelegationPolicyService extends JdbcDelegationPolicyService {
 
-  private EmbeddedDerbyDatabase embeddedDerbyDatabase;
+  private EmbeddedH2Database embeddedH2Database;
   private MasterService masterService;
 
   public void setMasterService(MasterService masterService) {
@@ -48,18 +50,18 @@ public class DerbyDBFederatedIdentityService extends JdbcFederatedIdentityServic
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
     try {
-      embeddedDerbyDatabase = new EmbeddedDerbyDatabase(config);
-      embeddedDerbyDatabase.start(config, getAliasService(), masterService);
+      embeddedH2Database = new EmbeddedH2Database(config);
+      embeddedH2Database.start(config, getAliasService(), masterService);
       super.init(config, options);
     } catch (Exception e) {
-      throw new ServiceLifecycleException("Error while initiating DerbyDBFederatedIdentityService: " + e, e);
+      throw new ServiceLifecycleException("Error while initiating H2DBDelegationPolicyService: " + e, e);
     }
   }
 
   @Override
   public void stop() throws ServiceLifecycleException {
-    if (embeddedDerbyDatabase != null) {
-      embeddedDerbyDatabase.stop();
+    if (embeddedH2Database != null) {
+      embeddedH2Database.stop();
     }
   }
 }

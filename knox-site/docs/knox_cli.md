@@ -302,4 +302,20 @@ Argument | Description
 \-\-discovery\-pwd\-alias | Optional; Password alias for service discovery user, required for service discovery.
 \-\-discovery\-type | Optional; Service discovery type, required for service discovery.
 
+#### Migrate tokens from a legacy embedded Derby database ####
+##### `bin/knoxcli.sh migrate-derby-tokens [--derbyDatabase path] [--verbose true|false]` #####
+
+Migrates Knox Tokens from a legacy embedded Apache Derby database into the currently configured JDBC token backend (the embedded H2 database by default). Only tokens are migrated (the `KNOX_TOKENS` and `KNOX_TOKEN_METADATA` tables). Token rows are copied verbatim and the command is safe to re-run: tokens already present in the destination are skipped.
+
+The gateway must be stopped before running this command. Because Knox no longer ships the Apache Derby driver, a Derby JDBC driver jar (e.g. `derby-10.14.2.0.jar`, the last version Knox shipped) must be copied into the `$KNOX_GATEWAY_HOME/ext` directory beforehand.
+
+Argument | Description
+---------|-----------
+\-\-derbyDatabase | Optional; File system path of the legacy Derby database. Defaults to the `tokens` folder under the gateway security directory.
+\-\-verbose | Optional; Boolean flag enabling more verbose per-token output. Defaults to `false`.
+
+    bin/knoxcli.sh migrate-derby-tokens --verbose true
+
+See [Migrating tokens from a legacy embedded Derby database](config_knox_token.html#Migrating+tokens+from+a+legacy+embedded+Derby+database) in the Token configuration guide for the full procedure.
+
 

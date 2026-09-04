@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,11 +51,15 @@ import static org.junit.Assert.assertTrue;
 public class JdbcDelegationPolicyServiceTest {
 
   private static final String DB_NAME = "delegation_svc_test";
-  private static final String DERBY_CREATE_URL = "jdbc:derby:memory:" + DB_NAME + ";create=true";
-  private static final String DERBY_URL = "jdbc:derby:memory:" + DB_NAME;
-  private static final String DERBY_SHUTDOWN_URL = "jdbc:derby:memory:" + DB_NAME + ";shutdown=true";
+  // In-memory H2; DB_CLOSE_DELAY=-1 keeps the database alive across connection open/close for the
+  // whole test class (the service and the direct JDBC cleanup below each open their own connections).
+  private static final String H2_URL = "jdbc:h2:mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1";
 
   private static final int CONFIGURED_TTL = 7200;
+
+  // A held-open connection guarantees the in-memory database survives even when every other
+  // connection is briefly closed between tests.
+  private static Connection keepAlive;
 
   private GatewayConfig gatewayConfig;
   private AliasService aliasService;
@@ -62,22 +67,18 @@ public class JdbcDelegationPolicyServiceTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    java.util.Locale.setDefault(java.util.Locale.US);
-    DriverManager.getConnection(DERBY_CREATE_URL).close();
+    // Create and pin the in-memory H2 database for the lifetime of the test class.
+    keepAlive = DriverManager.getConnection(H2_URL);
   }
 
   @AfterClass
-  public static void tearDownClass() {
-    try {
-      DriverManager.getConnection(DERBY_SHUTDOWN_URL);
-    } catch (SQLException e) {
-      // See https://db.apache.org/derby/docs/10.9/ref/rrefproperextdiagsevlevel.html
-      // to note ErrorCode 45000 means database closed and
-      // https://db.apache.org/derby/docs/10.17/ref/rrefexcept71493.html
-      // to note that SQLState 08006 means shutdown for a single database.
-      if (!(e.getErrorCode() == 45000 && "08006".equals(e.getSQLState()))) {
-        throw new RuntimeException("Unexpected Derby shutdown error", e);
+  public static void tearDownClass() throws SQLException {
+    // Dropping all objects releases the in-memory database once the class finishes.
+    if (keepAlive != null) {
+      try (Statement stmt = keepAlive.createStatement()) {
+        stmt.execute("DROP ALL OBJECTS");
       }
+      keepAlive.close();
     }
   }
 
@@ -86,8 +87,8 @@ public class JdbcDelegationPolicyServiceTest {
     clearTables();
 
     gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1").anyTimes();
     EasyMock.expect(gatewayConfig.getDelegationServiceTokenTtlSec()).andReturn(CONFIGURED_TTL).anyTimes();
     EasyMock.expect(gatewayConfig.getDelegationServiceListMaxTotal())
         .andReturn(GatewayConfig.DELEGATION_SERVICE_LIST_MAX_TOTAL_DEFAULT).anyTimes();
@@ -379,7 +380,7 @@ public class JdbcDelegationPolicyServiceTest {
     assertFalse(service.get(registered.getRegistrationId()).isPresent());
 
     // Verify child rows are gone too
-    try (Connection conn = DriverManager.getConnection(DERBY_URL);
+    try (Connection conn = DriverManager.getConnection(H2_URL);
          PreparedStatement ps = conn.prepareStatement(
              "SELECT COUNT(*) FROM DELEGATION_POLICY_USERS WHERE registration_id = ?")) {
       ps.setString(1, registered.getRegistrationId());
@@ -824,8 +825,8 @@ public class JdbcDelegationPolicyServiceTest {
   private JdbcDelegationPolicyService createServiceWithLimits(int maxTotal, int maxPerAuthority)
       throws ServiceLifecycleException {
     final GatewayConfig cfg = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(cfg.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
-    EasyMock.expect(cfg.getDatabaseName()).andReturn("memory:" + DB_NAME).anyTimes();
+    EasyMock.expect(cfg.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(cfg.getDatabaseName()).andReturn("mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1").anyTimes();
     EasyMock.expect(cfg.getDelegationServiceTokenTtlSec()).andReturn(CONFIGURED_TTL).anyTimes();
     EasyMock.expect(cfg.getDelegationServiceListMaxTotal()).andReturn(maxTotal).anyTimes();
     EasyMock.expect(cfg.getDelegationServiceListMaxPerAuthority()).andReturn(maxPerAuthority).anyTimes();
@@ -871,7 +872,7 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   private static void clearTables() {
-    try (Connection conn = DriverManager.getConnection(DERBY_URL)) {
+    try (Connection conn = DriverManager.getConnection(H2_URL)) {
       for (String table : new String[]{
           "DELEGATION_POLICY_RESOURCE_SCOPES", "DELEGATION_POLICY_RESOURCES",
           "DELEGATION_POLICY_GROUPS", "DELEGATION_POLICY_USERS", "DELEGATION_POLICIES"}) {

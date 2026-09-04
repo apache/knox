@@ -36,16 +36,21 @@ configuration:
 
 | `gateway.database.type` | Backend | Notes |
 |-------------------------|---------|-------|
-| `none` (default) or `derbydb` | Self-provisioning **embedded Derby** | Uses the same physical embedded database as token state (under the gateway security directory). Zero setup. |
+| `none` (default) | Self-provisioning **embedded H2** | Uses the same physical embedded database as token state (under the gateway security directory). Zero setup. Optional at-rest encryption — see [Configuration → Embedded database encryption](configuration.md#embedded-database-encryption). |
 | A real external type (`postgresql`, `mysql`, `oracle`, …) | **JDBC-backed** store | Uses the operator-configured external database. Recommended for HA. |
 
 You can also pin the implementation explicitly with the service property
-`gateway.service.KnoxIDFFederatedIdentityService.impl` (Empty / Derby / JDBC); an explicit value
+`gateway.service.KnoxIDFFederatedIdentityService.impl` (Empty / H2 / JDBC); an explicit value
 always wins over auto-selection. Setting it to the empty (no-op) implementation disables
 persistence.
 
+!!! note "`derbydb` is no longer supported"
+    The embedded backend is now **H2 only**; the Apache Derby driver has been removed from the Knox
+    distribution. If you have existing embedded-Derby data, migrate it offline before upgrading —
+    see [Configuration → Migrating from Derby to H2](configuration.md#migrating-from-derby-to-h2).
+
 !!! note "Use an external database for multi-instance deployments"
-    The embedded Derby store is local to a single gateway process. For a clustered / HA
+    The embedded H2 store is local to a single gateway process. For a clustered / HA
     deployment where more than one Knox instance must share federated-identity state, configure an
     external database (see [Configuration → Persistence](configuration.md#persistence-and-database)).
 
@@ -114,7 +119,7 @@ KnoxIDF-specific requirements:
 
 - **Shared persistence.** All instances must point at the **same external database**
   (`gateway.database.*`) so a federated identity created on one instance is visible on the others.
-  The embedded Derby default is per-process and is not suitable for multi-instance HA.
+  The embedded H2 default is per-process and is not suitable for multi-instance HA.
 - **Consistent signing keys.** All instances must share the same signing keystore and the same
   `gateway.signing.key.alias` / `gateway.signing.key.aliases.additional` configuration, so a token
   issued by one instance verifies against the JWKS served by any instance.

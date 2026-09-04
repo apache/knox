@@ -24,9 +24,9 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.knoxidf.federation.DerbyDBFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
+import org.apache.knox.gateway.services.knoxidf.federation.H2DBFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.JdbcFederatedIdentityService;
 
 import java.util.Collection;
@@ -53,8 +53,8 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
         if (shouldCreateService(implementationToUse)) {
             if (matchesImplementation(implementationToUse, EmptyFederatedIdentityService.class, true)) {
                 service = new EmptyFederatedIdentityService();
-            } else if (matchesImplementation(implementationToUse, DerbyDBFederatedIdentityService.class)) {
-                service = createDerbyService(gatewayServices, gatewayConfig, options);
+            } else if (matchesImplementation(implementationToUse, H2DBFederatedIdentityService.class)) {
+                service = createH2Service(gatewayServices, gatewayConfig, options);
             } else if (matchesImplementation(implementationToUse, JdbcFederatedIdentityService.class)) {
                 service = createJdbcService(gatewayServices, gatewayConfig, options);
             }
@@ -65,35 +65,36 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
     /**
      * Chooses the auto-enabled implementation when KnoxIDF is deployed with no explicit impl: an
-     * operator-configured external database wins (very likely a prod JDBC store), otherwise a
-     * self-provisioning embedded Derby store (the {@code none}/{@code derbydb} default) so
+     * operator-configured external database wins (very likely a prod JDBC store); everything else
+     * (the {@code none} default, or an explicit {@code h2}) selects the self-provisioning embedded H2
+     * store that replaced the retired Derby backend as the zero-config default (KNOX-3401) so
      * federation works out of the box without any extra infrastructure.
      */
     String chooseAutoImplementation(GatewayConfig gatewayConfig) {
         return isExternalDatabaseConfigured(gatewayConfig)
                 ? JdbcFederatedIdentityService.class.getName()
-                : DerbyDBFederatedIdentityService.class.getName();
+                : H2DBFederatedIdentityService.class.getName();
     }
 
     private boolean isExternalDatabaseConfigured(GatewayConfig gatewayConfig) {
-        final String databaseType = gatewayConfig.getDatabaseType();
         try {
-            return DatabaseType.fromString(databaseType) != DatabaseType.DERBY;
+            // The embedded self-provisioning engine (H2) is not an external store.
+            return DatabaseType.fromString(gatewayConfig.getDatabaseType()) != DatabaseType.H2;
         } catch (IllegalArgumentException e) {
-            // "none" (the default) or any unrecognized value: no real external DB -> use Derby.
+            // "none" (the default) or any unrecognized value: no real external DB -> use embedded.
             return false;
         }
     }
 
-    private FederatedIdentityService createDerbyService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
+    private FederatedIdentityService createH2Service(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
         try {
-            final DerbyDBFederatedIdentityService derbyService = new DerbyDBFederatedIdentityService();
-            derbyService.setAliasService(getAliasService(gatewayServices));
-            derbyService.setMasterService(getMasterService(gatewayServices));
-            derbyService.init(gatewayConfig, options);
-            return derbyService;
+            final H2DBFederatedIdentityService h2Service = new H2DBFederatedIdentityService();
+            h2Service.setAliasService(getAliasService(gatewayServices));
+            h2Service.setMasterService(getMasterService(gatewayServices));
+            h2Service.init(gatewayConfig, options);
+            return h2Service;
         } catch (ServiceLifecycleException e) {
-            LOG.errorInitializingService(DerbyDBFederatedIdentityService.class.getName(), e.getMessage(), e);
+            LOG.errorInitializingService(H2DBFederatedIdentityService.class.getName(), e.getMessage(), e);
             return new EmptyFederatedIdentityService();
         }
     }
@@ -117,6 +118,6 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
     @Override
     protected Collection<String> getKnownImplementations() {
-        return List.of(DEFAULT_IMPLEMENTATION, JdbcFederatedIdentityService.class.getName(), DerbyDBFederatedIdentityService.class.getName());
+        return List.of(DEFAULT_IMPLEMENTATION, JdbcFederatedIdentityService.class.getName(), H2DBFederatedIdentityService.class.getName());
     }
 }

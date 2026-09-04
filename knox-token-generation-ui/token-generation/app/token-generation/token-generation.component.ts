@@ -206,8 +206,9 @@ export class TokenGenerationComponent implements OnInit {
   private decideTssMessage() {
     if (this.tssStatus.tokenManagementEnabled) {
       if (this.tssStatus.allowedTssForTokengen) {
-        if (this.tssStatus.actualTssBackend === 'DerbyDBTokenStateService') {
-          this.setTssMessage('warning', `Token management backend is configured to store tokens in a Derby DB on local file system.
+        if (this.tssStatus.actualTssBackend === 'H2DBTokenStateService') {
+          this.setTssMessage('warning', `Token management backend is configured to store tokens in 
+            an embedded H2 database on the local file system.
             This is only valid in non-HA environments!`);
         } else {
           this.setTssMessage('info', 'Token management backend is properly configured for HA and production deployments.');

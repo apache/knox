@@ -22,8 +22,8 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
 import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.apache.knox.gateway.database.DatabaseType;
-import org.apache.knox.gateway.database.DerbyDatabaseCredentials;
-import org.apache.knox.gateway.database.EmbeddedDerbyDatabase;
+import org.apache.knox.gateway.database.EmbeddedDatabaseCredentials;
+import org.apache.knox.gateway.database.EmbeddedH2Database;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
@@ -73,6 +73,10 @@ class ServiceFactoryTest {
   }
 
   protected void initConfig(boolean expectDbCredentialLookup) {
+    initConfig(expectDbCredentialLookup, DatabaseType.H2);
+  }
+
+  protected void initConfig(boolean expectDbCredentialLookup, DatabaseType databaseType) {
     final String masterSecret = "M4st3RSecret!";
     final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
     expect(masterService.getMasterSecret()).andReturn(masterSecret.toCharArray()).anyTimes();
@@ -83,18 +87,21 @@ class ServiceFactoryTest {
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
     if (expectDbCredentialLookup) {
       try {
-        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME, DerbyDatabaseCredentials.DEFAULT_DB_USER_NAME);
+        aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME, EmbeddedDatabaseCredentials.DEFAULT_DB_USER_NAME);
         EasyMock.expectLastCall().anyTimes();
         aliasService.addAliasForCluster(NO_CLUSTER_NAME, AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME, masterSecret);
         EasyMock.expectLastCall().anyTimes();
-        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(DerbyDatabaseCredentials.DEFAULT_DB_USER_NAME.toCharArray()).anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(EmbeddedDatabaseCredentials.DEFAULT_DB_USER_NAME.toCharArray()).anyTimes();
         expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(masterSecret.toCharArray()).anyTimes();
 
-        // prepare GatewayConfig
-        expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.DERBY.type()).anyTimes();
+        // prepare GatewayConfig. In production the embedded engine repoints the shared GatewayConfig
+        // at its own file via GatewayConfig.set(...); a nice mock cannot mutate, so we present the
+        // already-embedded view here (H2 lives at ${securityDir}/h2db/knoxdb).
+        expect(gatewayConfig.getDatabaseType()).andReturn(databaseType.type()).anyTimes();
         tempDbFolder = TestUtils.createTempDir(this.getClass().getName());
         expect(gatewayConfig.getGatewaySecurityDir()).andReturn(tempDbFolder.getAbsolutePath()).anyTimes();
-        expect(gatewayConfig.getDatabaseName()).andReturn(Paths.get(tempDbFolder.getAbsolutePath(), EmbeddedDerbyDatabase.DB_NAME).toString()).anyTimes();
+        final String databaseName = Paths.get(tempDbFolder.getAbsolutePath(), EmbeddedH2Database.DB_FOLDER, EmbeddedH2Database.DB_FILE_BASE).toString();
+        expect(gatewayConfig.getDatabaseName()).andReturn(databaseName).anyTimes();
       } catch (AliasServiceException | IOException e) {
         // NOP
       }

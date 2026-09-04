@@ -143,7 +143,7 @@ public class SelectCommand extends AbstractSQLCommandSupport implements KeyListe
       }
 
 
-      //KnoxShellTable.builder().jdbc().connect("jdbc:derby:codejava/webdb1").driver("org.apache.derby.jdbc.EmbeddedDriver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
+      //KnoxShellTable.builder().jdbc().connectTo("jdbc:postgresql://dbhost:5432/webdb").driver("org.postgresql.Driver").username("lmccay").pwd("xxxx").sql("SELECT * FROM book");
       try {
         if (ok) {
           System.out.println(sql);

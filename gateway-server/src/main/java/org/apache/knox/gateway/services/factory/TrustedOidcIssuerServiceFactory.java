@@ -24,8 +24,8 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.DerbyDBTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.EmptyTrustedOidcIssuerService;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.H2DBTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.JdbcTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 
@@ -54,8 +54,8 @@ public class TrustedOidcIssuerServiceFactory extends AbstractServiceFactory {
     if (shouldCreateService(implementationToUse)) {
       if (matchesImplementation(implementationToUse, EmptyTrustedOidcIssuerService.class, true)) {
         service = new EmptyTrustedOidcIssuerService();
-      } else if (matchesImplementation(implementationToUse, DerbyDBTrustedOidcIssuerService.class)) {
-        service = createDerbyService(gatewayServices, gatewayConfig, options);
+      } else if (matchesImplementation(implementationToUse, H2DBTrustedOidcIssuerService.class)) {
+        service = createH2Service(gatewayServices, gatewayConfig, options);
       } else if (matchesImplementation(implementationToUse, JdbcTrustedOidcIssuerService.class)) {
         service = createJdbcService(gatewayServices, gatewayConfig, options);
       }
@@ -68,36 +68,37 @@ public class TrustedOidcIssuerServiceFactory extends AbstractServiceFactory {
 
   /**
    * Chooses the auto-enabled implementation when KnoxIDF is deployed with no explicit impl: an
-   * operator-configured external database wins (very likely a prod JDBC store), otherwise a
-   * self-provisioning embedded Derby store (the {@code none}/{@code derbydb} default) so the
+   * operator-configured external database wins (very likely a prod JDBC store); everything else
+   * (the {@code none} default, or an explicit {@code h2}) selects the self-provisioning embedded H2
+   * store that replaced the retired Derby backend as the zero-config default (KNOX-3401) so the
    * trusted OIDC issuer registry works out of the box without any extra infrastructure.
    */
   String chooseAutoImplementation(GatewayConfig gatewayConfig) {
     return isExternalDatabaseConfigured(gatewayConfig)
         ? JdbcTrustedOidcIssuerService.class.getName()
-        : DerbyDBTrustedOidcIssuerService.class.getName();
+        : H2DBTrustedOidcIssuerService.class.getName();
   }
 
   private boolean isExternalDatabaseConfigured(GatewayConfig gatewayConfig) {
-    final String databaseType = gatewayConfig.getDatabaseType();
     try {
-      return DatabaseType.fromString(databaseType) != DatabaseType.DERBY;
+      // The embedded self-provisioning engine (H2) is not an external store.
+      return DatabaseType.fromString(gatewayConfig.getDatabaseType()) != DatabaseType.H2;
     } catch (IllegalArgumentException e) {
-      // "none" (the default) or any unrecognized value: no real external DB -> use Derby.
+      // "none" (the default) or any unrecognized value: no real external DB -> use embedded.
       return false;
     }
   }
 
-  private TrustedOidcIssuerService createDerbyService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options)
+  private TrustedOidcIssuerService createH2Service(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options)
       throws ServiceLifecycleException {
     try {
-      final DerbyDBTrustedOidcIssuerService derbyService = new DerbyDBTrustedOidcIssuerService();
-      derbyService.setAliasService(getAliasService(gatewayServices));
-      derbyService.setMasterService(getMasterService(gatewayServices));
-      derbyService.init(gatewayConfig, options);
-      return derbyService;
+      final H2DBTrustedOidcIssuerService h2Service = new H2DBTrustedOidcIssuerService();
+      h2Service.setAliasService(getAliasService(gatewayServices));
+      h2Service.setMasterService(getMasterService(gatewayServices));
+      h2Service.init(gatewayConfig, options);
+      return h2Service;
     } catch (ServiceLifecycleException e) {
-      LOG.errorInitializingService(DerbyDBTrustedOidcIssuerService.class.getName(), e.getMessage(), e);
+      LOG.errorInitializingService(H2DBTrustedOidcIssuerService.class.getName(), e.getMessage(), e);
       return new EmptyTrustedOidcIssuerService();
     }
   }
@@ -122,6 +123,6 @@ public class TrustedOidcIssuerServiceFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return List.of(DEFAULT_IMPLEMENTATION, JdbcTrustedOidcIssuerService.class.getName(), DerbyDBTrustedOidcIssuerService.class.getName());
+    return List.of(DEFAULT_IMPLEMENTATION, JdbcTrustedOidcIssuerService.class.getName(), H2DBTrustedOidcIssuerService.class.getName());
   }
 }

@@ -1058,7 +1058,7 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
 
   @Override
   public String getDatabaseType() {
-    return "derbydb";
+    return "h2";
   }
 
   @Override
@@ -1096,6 +1096,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public String getDatabaseSslTruststoreFileName() {
     return null;
+  }
+
+  @Override
+  public boolean isDatabaseH2EncryptionEnabled() {
+    return false;
+  }
+
+  @Override
+  public String getDatabaseH2EncryptionPassphraseAlias() {
+    return "h2_encryption_passphrase";
   }
 
   @Override

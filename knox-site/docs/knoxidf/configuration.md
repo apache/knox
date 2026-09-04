@@ -133,21 +133,79 @@ These are set in `$KNOX_HOME/conf/gateway-site.xml` and shared with the rest of 
 
 KnoxIDF's [federated-identity store](operations.md#federated-identity-persistence) and the trusted-issuer
 registry share Knox's database configuration. With no external database configured, KnoxIDF
-self-provisions an **embedded Derby** database (the same physical store used by token state), so no
-setup is required to get started.
+self-provisions an **embedded H2** database (the same physical store used by token state), so no
+setup is required to get started. H2 lives in its own folder under the gateway security directory
+(`h2db/`), separate from the legacy Derby folder.
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `gateway.database.type` | `none` | Database backend: `none` / `derbydb` select the embedded self-provisioning Derby store; a real external type (`postgresql`, `mysql`, `oracle`, …) selects the JDBC-backed store. |
+| `gateway.database.type` | `none` | Database backend: `none` selects the embedded self-provisioning **H2** store; a real external type (`postgresql`, `mysql`, `oracle`, …) selects the JDBC-backed store. |
 | `gateway.database.connection.url` | (none) | Full JDBC URL (overrides host/port/name if set). |
 | `gateway.database.host` | (none) | Database host (when not using a full connection URL). |
 | `gateway.database.port` | (none) | Database port. |
 | `gateway.database.name` | `GATEWAY_DATABASE` | Database/schema name. |
 | `gateway.database.ssl.enabled` | `false` | Enable TLS to the database. |
 | `gateway.database.ssl.truststore.path` / `.alias` | (none) | Truststore path / password alias for the database TLS connection. |
+| `gateway.database.h2.encryption.enabled` | `false` | Enable H2 at-rest encryption (`AES` cipher) for the embedded database. When `true`, the encryption passphrase is read from the credential-store alias named below. Has no effect on external database types. |
+| `gateway.database.h2.encryption.passphrase.alias` | `h2_encryption_passphrase` | Name of the credential-store alias holding the H2 file-encryption passphrase. Provision it before enabling encryption; startup fails fast if enabled and the alias is missing. |
 
 Database credentials are supplied as aliases (`gateway_database_user`,
 `gateway_database_password`) — see [Getting Started](getting_started.md#2-install-and-start-knox).
+
+> **`derbydb` is no longer supported.** The embedded backend is now H2 only; the Apache Derby driver
+> has been removed from the Knox distribution. A `gateway.database.type=derbydb` value is no longer a
+> valid external type. See [Embedded database encryption](#embedded-database-encryption) and
+> [Migrating from Derby to H2](#migrating-from-derby-to-h2) below.
+
+#### Embedded database encryption
+
+At-rest encryption for the embedded H2 database is opt-in. To enable it:
+
+1. Create a credential-store alias holding the passphrase (the operator chooses the value; Knox does
+   not auto-generate it). Using the default alias name:
+
+   ```bash
+   bin/knoxcli.sh create-alias h2_encryption_passphrase --value '<strong-passphrase>'
+   ```
+
+2. Set `gateway.database.h2.encryption.enabled=true` in `gateway-site.xml`. To use a different alias
+   name, also set `gateway.database.h2.encryption.passphrase.alias`.
+
+When enabled, Knox appends `;CIPHER=AES` to the embedded H2 JDBC URL and unlocks the database file
+with the aliased passphrase. If encryption is enabled but the alias resolves to nothing, startup
+fails fast rather than silently falling back to an unencrypted store. The master secret is not used
+as the encryption key.
+
+Encryption is applied when the database file is first created. To encrypt an existing (previously
+unencrypted) H2 database — or to change the passphrase — use H2's own tooling (e.g. the
+`org.h2.tools.ChangeFileEncryption` utility) offline while the gateway is stopped.
+
+#### Migrating from Derby to H2
+
+A **fresh install needs nothing** — H2 is provisioned automatically on first start. The only data
+ever persisted by a Derby-shipping Knox release was tokens, so migration scope is tokens only.
+
+An operator with existing embedded-Derby token data who wants to preserve it uses the
+`knoxcli.sh migrate-derby-tokens` command, which copies the `KNOX_TOKENS` and `KNOX_TOKEN_METADATA`
+rows from the legacy Derby database into the configured H2 store. Because the Derby driver is no
+longer shipped with Knox, the operator supplies one at runtime:
+
+1. Stop the gateway (the embedded databases use an exclusive file lock).
+2. Copy a Derby JDBC driver jar — e.g. `derby-10.14.2.0.jar`, the last version Knox shipped — into
+   `$KNOX_GATEWAY_HOME/ext/`.
+3. Run the migration:
+
+   ```bash
+   bin/knoxcli.sh migrate-derby-tokens
+   ```
+
+The command copies rows verbatim (preserving absolute expiration/lifetime timestamps and passcodes)
+and is safe to re-run — tokens already present in the destination are skipped. The legacy Derby
+folder (`tokens/`) is left untouched; it is simply no longer read. Afterwards, remove the Derby jar
+from `ext/` and optionally delete the stale `tokens/` folder.
+
+> See [Migrating tokens from a legacy embedded Derby database](../config_knox_token.html#Migrating+tokens+from+a+legacy+embedded+Derby+database)
+> in the Token configuration guide for the full procedure and command arguments.
 
 ### Trusted OIDC issuer registry
 

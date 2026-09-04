@@ -33,8 +33,8 @@ public class DataSourceProvider {
             case POSTGRESQL -> new PostgresDataSourceFactory();
             case MYSQL -> new MysqlDataSourceFactory();
             case MARIADB -> new MariaDBDataSourceFactory();
-            case DERBY -> new DerbyDataSourceFactory();
             case HSQL -> new HsqlDataSourceFactory();
+            case H2 -> new H2DataSourceFactory();
             case ORACLE -> new OracleDataSourceFactory();
         };
 

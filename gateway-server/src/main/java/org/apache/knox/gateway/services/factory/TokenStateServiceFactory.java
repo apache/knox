@@ -25,7 +25,7 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.token.impl.DefaultTokenStateService;
-import org.apache.knox.gateway.services.token.impl.DerbyDBTokenStateService;
+import org.apache.knox.gateway.services.token.impl.H2DBTokenStateService;
 import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
 
 import java.util.Collection;
@@ -43,8 +43,9 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
       throws ServiceLifecycleException {
     Service service = null;
     if (shouldCreateService(implementation)) {
-      if (matchesImplementation(implementation, DerbyDBTokenStateService.class, true)) {
-        service = useDerbyDatabaseTokenStateService(gatewayServices, gatewayConfig, options);
+      // Embedded H2 is the zero-config OOTB default that replaces the retired Derby backend (KNOX-3401).
+      if (matchesImplementation(implementation, H2DBTokenStateService.class, true)) {
+        service = useH2DatabaseTokenStateService(gatewayServices, gatewayConfig, options);
       } else if (matchesImplementation(implementation, DefaultTokenStateService.class)) {
         service = new DefaultTokenStateService();
       } else if (matchesImplementation(implementation, JDBCTokenStateService.class)) {
@@ -54,7 +55,7 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
           service.init(gatewayConfig, options);
         } catch (ServiceLifecycleException e) {
           LOG.errorInitializingService(implementation, e.getMessage(), e);
-          service = useDerbyDatabaseTokenStateService(gatewayServices, gatewayConfig, options);
+          service = useH2DatabaseTokenStateService(gatewayServices, gatewayConfig, options);
         }
       }
 
@@ -64,15 +65,15 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
     return service;
   }
 
-  private Service useDerbyDatabaseTokenStateService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
+  private Service useH2DatabaseTokenStateService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
     Service service;
     try {
-      service = new DerbyDBTokenStateService();
-      ((DerbyDBTokenStateService) service).setAliasService(getAliasService(gatewayServices));
-      ((DerbyDBTokenStateService) service).setMasterService(getMasterService(gatewayServices));
+      service = new H2DBTokenStateService();
+      ((H2DBTokenStateService) service).setAliasService(getAliasService(gatewayServices));
+      ((H2DBTokenStateService) service).setMasterService(getMasterService(gatewayServices));
       service.init(gatewayConfig, options);
     } catch (ServiceLifecycleException e) {
-      LOG.errorInitializingService(DerbyDBTokenStateService.class.getName(), e.getMessage(), e);
+      LOG.errorInitializingService(H2DBTokenStateService.class.getName(), e.getMessage(), e);
       service = new DefaultTokenStateService();
     }
     return service;
@@ -85,6 +86,6 @@ public class TokenStateServiceFactory extends AbstractServiceFactory {
 
   @Override
   protected Collection<String> getKnownImplementations() {
-    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), JDBCTokenStateService.class.getName(), DerbyDBTokenStateService.class.getName()));
+    return unmodifiableList(asList(DefaultTokenStateService.class.getName(), JDBCTokenStateService.class.getName(), H2DBTokenStateService.class.getName()));
   }
 }

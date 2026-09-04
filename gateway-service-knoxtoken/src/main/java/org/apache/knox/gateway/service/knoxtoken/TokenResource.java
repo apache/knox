@@ -481,8 +481,8 @@ public class TokenResource {
         }
       }
     } else {
-      //if there is no custom configuration in the topology, then we allow DerbyDB and custom DB back-ends for the tokengen application
-      if ("DerbyDBTokenStateService".equals(actualTokenServiceName) || "JDBCTokenStateService".equals(actualTokenServiceName)) {
+      //if there is no custom configuration in the topology, then we allow the embedded H2 and custom DB back-ends for the tokengen application
+      if ("H2DBTokenStateService".equals(actualTokenServiceName) || "JDBCTokenStateService".equals(actualTokenServiceName)) {
         tokenStateServiceStatusMap.put(TSS_ALLOWED_BACKEND_FOR_TOKENGEN, "true");
       }
     }

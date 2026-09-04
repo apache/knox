@@ -55,7 +55,7 @@ $KNOX_HOME/bin/knoxcli.sh create-master --master gateway
 # Signing / passcode HMAC key
 $KNOX_HOME/bin/knoxcli.sh create-alias knox.token.hash.key --value <a-strong-random-secret>
 
-# Database credential aliases (used by the embedded Derby store and any external DB)
+# Database credential aliases (used by the embedded H2 store and any external DB)
 $KNOX_HOME/bin/knoxcli.sh create-alias gateway_database_user --value knox
 $KNOX_HOME/bin/knoxcli.sh create-alias gateway_database_password --value knox
 
@@ -67,7 +67,7 @@ $KNOX_HOME/bin/gateway.sh start
     `$KNOX_HOME/conf/gateway-site.xml`. **Do not do this in production** — OAuth 2.0 / OIDC
     requires TLS for all token-bearing traffic.
 
-By default, KnoxIDF's federated-identity persistence uses an **embedded Derby** database that
+By default, KnoxIDF's federated-identity persistence uses an **embedded H2** database that
 Knox provisions automatically (the same physical DB used by token state). No external database
 is required to get started. To point KnoxIDF at an external database (PostgreSQL, etc.), see
 the [Configuration Reference](configuration.md) and [Operations](operations.md) chapters.

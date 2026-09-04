@@ -43,23 +43,22 @@ import static org.junit.Assert.fail;
  */
 public class DelegationPolicySchemaTest {
 
-  private static final String DERBY_DB = "delegationpolicies";
-  private static final String DERBY_URL = "jdbc:derby:memory:" + DERBY_DB + ";create=true";
-  private static final String DERBY_SHUTDOWN_URL = "jdbc:derby:memory:" + DERBY_DB + ";shutdown=true";
+  private static final String H2_DB = "delegationpolicies";
+  // H2 is the OOTB embedded backend; DB_CLOSE_DELAY=-1 keeps the in-memory database alive for the class.
+  private static final String H2_URL = "jdbc:h2:mem:" + H2_DB + ";DB_CLOSE_DELAY=-1";
   private static final String HSQL_URL = "jdbc:hsqldb:mem:delegationschema;ifexists=false";
   private static final String HSQL_USER = "SA";
   private static final String HSQL_PASSWORD = "";
 
-  private static Connection derbyConn;
+  private static Connection h2Conn;
   private static Connection hsqlConn;
 
   @BeforeClass
   public static void setUp() throws Exception {
-    java.util.Locale.setDefault(java.util.Locale.US);
-    derbyConn = DriverManager.getConnection(DERBY_URL);
+    h2Conn = DriverManager.getConnection(H2_URL);
     hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
-    // Run Derby DDL once - no IF NOT EXISTS, so run once at class level
-    runScript(derbyConn, loadSql(AbstractDataSourceFactory.DERBY_KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
+    // H2 (the OOTB embedded backend) uses the standard DDL script; IF NOT EXISTS makes it idempotent.
+    runScript(h2Conn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
     // Run standard DDL on HSQLDB
     runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
     // Verify Oracle DDL script is present on the classpath (execution requires an Oracle-backed test)
@@ -72,28 +71,20 @@ public class DelegationPolicySchemaTest {
          Statement stmt = conn.createStatement()) {
       stmt.execute("SHUTDOWN");
     }
-    if (derbyConn != null && !derbyConn.isClosed()) {
-      derbyConn.close();
-    }
-    try {
-      DriverManager.getConnection(DERBY_SHUTDOWN_URL);
-    } catch (SQLException e) {
-      // See https://db.apache.org/derby/docs/10.9/ref/rrefproperextdiagsevlevel.html
-      // to note ErrorCode 45000 means database closed and
-      // https://db.apache.org/derby/docs/10.17/ref/rrefexcept71493.html
-      // to note that SQLState 08006 means shutdown for a single database.
-      if (!(e.getErrorCode() == 45000 && "08006".equals(e.getSQLState()))) {
-        throw e;
+    if (h2Conn != null && !h2Conn.isClosed()) {
+      try (Statement stmt = h2Conn.createStatement()) {
+        stmt.execute("DROP ALL OBJECTS");
       }
+      h2Conn.close();
     }
   }
 
   @Test
-  public void testDerbyAllFiveTablesQueryable() throws Exception {
+  public void testH2AllFiveTablesQueryable() throws Exception {
     for (String table : new String[]{
         "DELEGATION_POLICIES", "DELEGATION_POLICY_USERS", "DELEGATION_POLICY_GROUPS",
         "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES"}) {
-      try (Statement stmt = derbyConn.createStatement();
+      try (Statement stmt = h2Conn.createStatement();
            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + table)) {
         assertTrue("Table must be queryable: " + table, rs.next());
         assertEquals("Table must be empty after DDL: " + table, 0, rs.getInt(1));

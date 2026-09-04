@@ -354,6 +354,9 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_VERIFY_SERVER_CERT =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.verify.server.cert";
   private static final String GATEWAY_DATABASE_TRUSTSTORE_FILE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.file";
   private static final String GATEWAY_DATABASE_SSL_TRUSTSTORE_TYPE =  GATEWAY_CONFIG_FILE_PREFIX + ".database.ssl.truststore.type";
+  private static final String GATEWAY_DATABASE_H2_ENCRYPTION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".database.h2.encryption.enabled";
+  private static final String GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS = GATEWAY_CONFIG_FILE_PREFIX + ".database.h2.encryption.passphrase.alias";
+  private static final String DEFAULT_GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS = "h2_encryption_passphrase";
 
   // Concurrent session properties
   private static final String GATEWAY_SESSION_VERIFICATION_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification";
@@ -1606,6 +1609,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDatabaseSslTruststoreType() {
     return get(GATEWAY_DATABASE_SSL_TRUSTSTORE_TYPE, "JKS");
+  }
+
+  @Override
+  public boolean isDatabaseH2EncryptionEnabled() {
+    return getBoolean(GATEWAY_DATABASE_H2_ENCRYPTION_ENABLED, false);
+  }
+
+  @Override
+  public String getDatabaseH2EncryptionPassphraseAlias() {
+    return get(GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS, DEFAULT_GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS);
   }
 
   @Override
