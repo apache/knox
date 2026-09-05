@@ -25,6 +25,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.Locale;
 
@@ -73,5 +74,25 @@ public class JDBCUtils {
              Statement createTableStatement = connection.createStatement()) {
             createTableStatement.execute(createTableSql);
         }
+    }
+
+    /**
+     * Recognises a unique/primary-key constraint violation across dialects: either a
+     * {@link SQLIntegrityConstraintViolationException} or any {@link SQLException} in the cause
+     * chain whose SQLState is in the {@code 23} (integrity constraint violation) class.
+     */
+    public static boolean isUniqueConstraintViolation(SQLException e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof SQLIntegrityConstraintViolationException) {
+                return true;
+            }
+            if (t instanceof SQLException) {
+                final String sqlState = ((SQLException) t).getSQLState();
+                if (sqlState != null && sqlState.startsWith("23")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

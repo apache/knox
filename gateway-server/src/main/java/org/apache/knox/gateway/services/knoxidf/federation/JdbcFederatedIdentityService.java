@@ -18,12 +18,12 @@ package org.apache.knox.gateway.services.knoxidf.federation;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.DataSourceProvider;
+import org.apache.knox.gateway.database.JDBCUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -89,7 +89,7 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
             federatedIdentityDatabase.addFederatedIdentity(identity);
             return identity;
         } catch (SQLException e) {
-            if (isUniqueConstraintViolation(e)) {
+            if (JDBCUtils.isUniqueConstraintViolation(e)) {
                 LOG.federatedIdentityAlreadyExists(identity.getProvider(), identity.getExternalIssuer(), identity.getExternalSubject());
                 // The concurrent winner owns the canonical primary key; our in-memory identity carries a
                 // different random id (UUID.randomUUID) that was never persisted. Return the stored row so
@@ -101,26 +101,6 @@ public class JdbcFederatedIdentityService implements FederatedIdentityService {
             LOG.errorSavingFederatedIdentityInDatabase(identity.getId(), e.getMessage(), e);
             throw new FederatedIdentityServiceException("An error occurred while saving Federated Identity " + identity.getId() + " in the database", e);
         }
-    }
-
-    /**
-     * Recognises a unique/primary-key constraint violation across dialects: either a
-     * {@link SQLIntegrityConstraintViolationException} or any {@link SQLException} in the cause
-     * chain whose SQLState is in the {@code 23} (integrity constraint violation) class.
-     */
-    private static boolean isUniqueConstraintViolation(SQLException e) {
-        for (Throwable t = e; t != null; t = t.getCause()) {
-            if (t instanceof SQLIntegrityConstraintViolationException) {
-                return true;
-            }
-            if (t instanceof SQLException) {
-                final String sqlState = ((SQLException) t).getSQLState();
-                if (sqlState != null && sqlState.startsWith("23")) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     @Override

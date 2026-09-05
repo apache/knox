@@ -161,7 +161,30 @@ public class JdbcDelegationPolicyServiceTest {
         null, "active", null, null, null, Instant.now(),
         Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
     service.register(first);
-    assertThrows(RuntimeException.class, () -> service.register(first));
+    final DelegationPolicyAlreadyExistsException e =
+        assertThrows(DelegationPolicyAlreadyExistsException.class, () -> service.register(first));
+    assertNotNull("cause chain must retain the original SQLException", findSQLException(e));
+  }
+
+  @Test
+  public void testRegisterUnrelatedStorageFailureThrowsPlainRuntimeException() throws Exception {
+    // A VARCHAR(20) column overflow triggers Derby's data-exception SQLState 22001, which is not
+    // an integrity-constraint violation -- confirms isUniqueConstraintViolation doesn't over-match.
+    final DelegationPolicy tooLongAuthority = policy(
+        "this-authority-is-far-too-long-for-the-column", "actorIdForOverflow",
+        null, "active", null, null, null, Instant.now(),
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+    final RuntimeException e = assertThrows(RuntimeException.class, () -> service.register(tooLongAuthority));
+    assertFalse(e instanceof DelegationPolicyAlreadyExistsException);
+  }
+
+  private static SQLException findSQLException(Throwable t) {
+    for (; t != null; t = t.getCause()) {
+      if (t instanceof SQLException) {
+        return (SQLException) t;
+      }
+    }
+    return null;
   }
 
   @Test

@@ -18,10 +18,12 @@ package org.apache.knox.gateway.services.knoxidf.delegation;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.DataSourceProvider;
+import org.apache.knox.gateway.database.JDBCUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -93,8 +95,22 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
   @Override
   public DelegationPolicy register(DelegationPolicy policy) {
+    final String id;
     try {
-      final String id = database.insertPolicy(policy);
+      id = database.insertPolicy(policy);
+    } catch (SQLException e) {
+      if (JDBCUtils.isUniqueConstraintViolation(e)) {
+        throw new DelegationPolicyAlreadyExistsException(policy.getActorAuthority(), policy.getActorId(), e);
+      }
+      LOG.errorRegisteringPolicy(policy.getActorAuthority(), policy.getActorId(), e.getMessage(), e);
+      throw new RuntimeException(
+          "Error registering delegation policy for actor (" + policy.getActorAuthority() + ", " + policy.getActorId() + "): " + e, e);
+    } catch (Exception e) {
+      LOG.errorRegisteringPolicy(policy.getActorAuthority(), policy.getActorId(), e.getMessage(), e);
+      throw new RuntimeException(
+          "Error registering delegation policy for actor (" + policy.getActorAuthority() + ", " + policy.getActorId() + "): " + e, e);
+    }
+    try {
       return database.selectById(id).orElseThrow(
           () -> new RuntimeException("Failed to read back registered policy " + id));
     } catch (Exception e) {
