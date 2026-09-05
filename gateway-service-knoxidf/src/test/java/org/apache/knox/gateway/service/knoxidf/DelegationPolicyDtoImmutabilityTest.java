@@ -19,6 +19,7 @@ package org.apache.knox.gateway.service.knoxidf;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -28,6 +29,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Verifies that {@link DelegationPolicyRequest}, {@link DelegationPolicyResponse} and
@@ -43,6 +45,37 @@ public class DelegationPolicyDtoImmutabilityTest {
   private static final String SCOPE = "read";
 
   // ---- DelegationPolicyRequest ----
+
+  @Test
+  public void requestCopyOfFiltersNullElements() {
+    // JSON null elements (from arrays like ["alice", null]) must be silently filtered rather
+    // than letting Set.copyOf throw NullPointerException and surface as a 500.
+    final Set<String> withNull = new LinkedHashSet<>(Arrays.asList(USER, null));
+    final DelegationPolicyRequest request = new DelegationPolicyRequest();
+    request.setCanActForUsers(withNull);
+    assertEquals(Collections.singleton(USER), request.getCanActForUsers());
+  }
+
+  @Test
+  public void requestCopyOfFiltersNullElementsInResourcePolicyScopes() {
+    final Set<String> scopesWithNull = new LinkedHashSet<>(Arrays.asList(SCOPE, null));
+    final Map<String, Set<String>> source = new LinkedHashMap<>();
+    source.put(RESOURCE, scopesWithNull);
+    final DelegationPolicyRequest request = new DelegationPolicyRequest();
+    request.setResourcePolicy(source);
+    assertEquals(Collections.singleton(SCOPE), request.getResourcePolicy().get(RESOURCE));
+  }
+
+  @Test
+  public void requestCopyOfFiltersNullKeysInResourcePolicy() {
+    final Map<String, Set<String>> source = new LinkedHashMap<>();
+    source.put(null, Collections.singleton(SCOPE));
+    source.put(RESOURCE, Collections.singleton(SCOPE));
+    final DelegationPolicyRequest request = new DelegationPolicyRequest();
+    request.setResourcePolicy(source);
+    assertEquals(1, request.getResourcePolicy().size());
+    assertTrue(request.getResourcePolicy().containsKey(RESOURCE));
+  }
 
   @Test
   public void requestCanActForUsersNotAffectedByMutatingSourceAfterSet() {

@@ -193,6 +193,24 @@ public class DelegationPolicyResourceTest {
     EasyMock.verify(mockService, mockAuditor);
   }
 
+  @Test
+  public void testRegisterNullElementInCanActForUsersFiltered() throws Exception {
+    // JSON null elements in arrays are filtered out rather than causing a 500 storage_error.
+    final Map<String, Object> fields = minimalFields();
+    fields.put("canActForUsers", java.util.Arrays.asList("alice", null));
+    final Capture<DelegationPolicy> captured = EasyMock.newCapture();
+    EasyMock.expect(mockService.register(EasyMock.capture(captured)))
+        .andAnswer(() -> withRegistrationId(captured.getValue(), REGISTRATION_ID));
+    expectAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.register(toJson(fields));
+
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    assertEquals(Collections.singleton("alice"), captured.getValue().getCanActForUsers());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
   // ---------------------------------------------------------------------------
   // POST — boundary values: actorAuthority / actorId
   // ---------------------------------------------------------------------------
@@ -677,6 +695,78 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
+  // PUT (registerOrUpdate) — actor field variants (mirror POST coverage)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testRegisterOrUpdateNullActorAuthorityRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("actorAuthority", null));
+  }
+
+  @Test
+  public void testRegisterOrUpdateEmptyActorAuthorityRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("actorAuthority", ""));
+  }
+
+  @Test
+  public void testRegisterOrUpdateWhitespaceActorAuthorityRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("actorAuthority", "   "));
+  }
+
+  @Test
+  public void testRegisterOrUpdateMissingActorIdRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWithout("actorId"));
+  }
+
+  @Test
+  public void testRegisterOrUpdateNullActorIdRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("actorId", null));
+  }
+
+  @Test
+  public void testRegisterOrUpdateEmptyActorIdRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("actorId", ""));
+  }
+
+  @Test
+  public void testRegisterOrUpdateWhitespaceActorIdRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("actorId", "   "));
+  }
+
+  // ---------------------------------------------------------------------------
+  // PUT (registerOrUpdate) — status / tokenTtlSec boundary values
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testRegisterOrUpdateWrongCaseStatusRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("status", "Active"));
+  }
+
+  @Test
+  public void testRegisterOrUpdateTokenTtlNegativeRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("tokenTtlSec", -1));
+  }
+
+  @Test
+  public void testRegisterOrUpdateTokenTtlZeroRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("tokenTtlSec", 0));
+  }
+
+  @Test
+  public void testRegisterOrUpdateTokenTtlWrongTypeReturnsBadRequest() {
+    expectAuditAnyId(ActionOutcome.FAILURE, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(
+        "{\"actorAuthority\":\"" + ACTOR_AUTHORITY + "\",\"actorId\":\"" + ACTOR_ID
+            + "\",\"canActForUsers\":[\"alice\"],\"tokenTtlSec\":\"not-a-number\"}");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  // ---------------------------------------------------------------------------
   // GET (list)
   // ---------------------------------------------------------------------------
 
@@ -922,6 +1012,85 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
+  // PUT (update) — actor field variants (mirror POST coverage per spec)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testUpdateNullActorAuthorityRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("actorAuthority", null));
+  }
+
+  @Test
+  public void testUpdateEmptyActorAuthorityRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("actorAuthority", ""));
+  }
+
+  @Test
+  public void testUpdateWhitespaceActorAuthorityRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("actorAuthority", "   "));
+  }
+
+  @Test
+  public void testUpdateMissingActorIdRejected() throws Exception {
+    assertUpdateRejected(fieldsWithout("actorId"));
+  }
+
+  @Test
+  public void testUpdateNullActorIdRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("actorId", null));
+  }
+
+  @Test
+  public void testUpdateEmptyActorIdRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("actorId", ""));
+  }
+
+  // ---------------------------------------------------------------------------
+  // PUT (update) — status / tokenTtlSec boundary values (mirror POST coverage)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testUpdateWrongCaseStatusRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("status", "Active"));
+  }
+
+  @Test
+  public void testUpdateTokenTtlAtMinAccepted() throws Exception {
+    assertEquals(Integer.valueOf(MIN_TTL),
+        updateAndGetField(fieldsWith("tokenTtlSec", MIN_TTL), DelegationPolicyResponse::getTokenTtlSec));
+  }
+
+  @Test
+  public void testUpdateTokenTtlAtMaxAccepted() throws Exception {
+    assertEquals(Integer.valueOf(MAX_TTL),
+        updateAndGetField(fieldsWith("tokenTtlSec", MAX_TTL), DelegationPolicyResponse::getTokenTtlSec));
+  }
+
+  @Test
+  public void testUpdateTokenTtlNegativeRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("tokenTtlSec", -1));
+  }
+
+  @Test
+  public void testUpdateTokenTtlZeroRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("tokenTtlSec", 0));
+  }
+
+  @Test
+  public void testUpdateTokenTtlWrongTypeReturnsBadRequest() {
+    expectAudit(REGISTRATION_ID, ActionOutcome.FAILURE, "policy_updated");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.update(REGISTRATION_ID,
+        "{\"actorAuthority\":\"" + ACTOR_AUTHORITY + "\",\"actorId\":\"" + ACTOR_ID
+            + "\",\"canActForUsers\":[\"alice\"],\"tokenTtlSec\":\"not-a-number\"}");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  // ---------------------------------------------------------------------------
   // DELETE
   // ---------------------------------------------------------------------------
 
@@ -1149,6 +1318,20 @@ public class DelegationPolicyResourceTest {
 
     final Response response = resource.register(toJson(fields));
     assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    final T result = extractor.apply(parseResponse(response));
+    EasyMock.verify(mockService, mockAuditor);
+    return result;
+  }
+
+  private <T> T updateAndGetField(Map<String, Object> fields, java.util.function.Function<DelegationPolicyResponse, T> extractor) throws Exception {
+    final Capture<DelegationPolicy> captured = EasyMock.newCapture();
+    EasyMock.expect(mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.capture(captured)))
+        .andAnswer(() -> withRegistrationId(captured.getValue(), REGISTRATION_ID));
+    expectAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_updated");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.update(REGISTRATION_ID, toJson(fields));
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
     final T result = extractor.apply(parseResponse(response));
     EasyMock.verify(mockService, mockAuditor);
     return result;
