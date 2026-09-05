@@ -195,7 +195,12 @@ public class DelegationPolicyResource {
       outcome = ActionOutcome.SUCCESS;
       return Response.ok(writeJson(toResponse(stored))).build();
     } catch (DelegationPolicyNotFoundException e) {
-      return errorResponse(Response.Status.NOT_FOUND, "policy_not_found", e.getMessage());
+      // registrationId may not exist at all, or it may exist with a different
+      // actorAuthority/actorId -- identity is immutable, so a mismatch is rejected the same way as
+      // not-found (see DelegationPolicyService.update() javadoc). The two causes are deliberately
+      // not distinguished here; GET the registrationId separately to tell them apart.
+      return errorResponse(Response.Status.NOT_FOUND, "policy_not_found",
+          "Delegation policy not found, or actorAuthority/actorId does not match the existing record: " + registrationId);
     } catch (RuntimeException e) {
       return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error", "Failed to update delegation policy");
     } finally {
@@ -236,7 +241,7 @@ public class DelegationPolicyResource {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
           "tokenTtlSec must be between " + minTokenTtlSec + " and " + maxTokenTtlSec + " seconds (inclusive)");
     }
-    final String status = req.getStatus();
+    final String status = effectiveStatus(req.getStatus());
     if (!DelegationPolicyRequest.STATUS_ACTIVE.equals(status) && !DelegationPolicyRequest.STATUS_REVOKED.equals(status)) {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
           "status must be \"" + DelegationPolicyRequest.STATUS_ACTIVE + "\" or \"" + DelegationPolicyRequest.STATUS_REVOKED + "\"");
@@ -251,10 +256,15 @@ public class DelegationPolicyResource {
   private static DelegationPolicy toDomain(String registrationId, DelegationPolicyRequest req,
       String createdBy, Instant createdAt, Instant updatedAt) {
     return new DelegationPolicy(registrationId, req.getActorAuthority(), req.getActorId(),
-        normalize(req.getName()), req.getStatus(), req.getTokenTtlSec(),
+        normalize(req.getName()), effectiveStatus(req.getStatus()), req.getTokenTtlSec(),
         normalize(req.getDescription()), createdBy, createdAt, updatedAt,
         req.isAllowHeadlessExchange(), req.getCanActForUsers(), req.getCanActForGroups(),
         req.getResourcePolicy());
+  }
+
+  /** Null/empty status is accepted and defaults to {@link DelegationPolicyRequest#STATUS_ACTIVE}. */
+  private static String effectiveStatus(String status) {
+    return StringUtils.isBlank(status) ? DelegationPolicyRequest.STATUS_ACTIVE : status;
   }
 
   private static DelegationPolicyResponse toResponse(DelegationPolicy policy) {

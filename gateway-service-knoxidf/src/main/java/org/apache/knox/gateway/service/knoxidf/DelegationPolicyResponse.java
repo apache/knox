@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.Instant;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -115,7 +114,7 @@ public class DelegationPolicyResponse {
   }
 
   public void setCanActForUsers(Set<String> canActForUsers) {
-    this.canActForUsers = Set.copyOf(canActForUsers != null ? canActForUsers : Collections.emptySet());
+    this.canActForUsers = DelegationPolicyDtoImmutabilityHelper.copyOf(canActForUsers);
   }
 
   public Set<String> getCanActForGroups() {
@@ -123,7 +122,7 @@ public class DelegationPolicyResponse {
   }
 
   public void setCanActForGroups(Set<String> canActForGroups) {
-    this.canActForGroups = Set.copyOf(canActForGroups != null ? canActForGroups : Collections.emptySet());
+    this.canActForGroups = DelegationPolicyDtoImmutabilityHelper.copyOf(canActForGroups);
   }
 
   public Map<String, Set<String>> getResourcePolicy() {
@@ -131,13 +130,7 @@ public class DelegationPolicyResponse {
   }
 
   public void setResourcePolicy(Map<String, Set<String>> resourcePolicy) {
-    final Map<String, Set<String>> source = (resourcePolicy != null) ? resourcePolicy : Collections.emptyMap();
-    final Map<String, Set<String>> copy = new HashMap<>();
-    for (Map.Entry<String, Set<String>> entry : source.entrySet()) {
-      final Set<String> scopes = (entry.getValue() != null) ? entry.getValue() : Collections.emptySet();
-      copy.put(entry.getKey(), Set.copyOf(scopes));
-    }
-    this.resourcePolicy = Collections.unmodifiableMap(copy);
+    this.resourcePolicy = DelegationPolicyDtoImmutabilityHelper.copyResourcePolicy(resourcePolicy);
   }
 
   public String getCreatedBy() {

@@ -309,6 +309,12 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   @Test
+  public void testDeleteNonExistentRegistrationIdThrowsNotFound() {
+    assertThrows(DelegationPolicyNotFoundException.class,
+        () -> service.delete("nonexistent-registration-id"));
+  }
+
+  @Test
   public void testGetNonExistentReturnsEmpty() {
     assertFalse(service.get(java.util.UUID.randomUUID().toString()).isPresent());
   }

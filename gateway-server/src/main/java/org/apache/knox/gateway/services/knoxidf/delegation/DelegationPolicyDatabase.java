@@ -196,8 +196,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   }
 
   /**
-   * @return true if a core row matched registrationId (with actorAuthority/actorId unchanged)
-   *     and was updated; false if no such row exists, in which case nothing was written.
+   * @return true if a core row matched registrationId and was updated; false if no row matches --
+   *     either because registrationId does not exist at all, or because it exists but with a
+   *     different actorAuthority/actorId (identity mismatch). Either way, nothing is written.
    */
   boolean updatePolicy(String registrationId, DelegationPolicy policy) throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
@@ -220,9 +221,14 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     }
   }
 
-  void deletePolicy(String registrationId) throws SQLException {
+  /**
+   * @return true if a core row matched registrationId and was deleted (child rows are removed by
+   *     the database via ON DELETE CASCADE); false if registrationId does not exist, in which case
+   *     nothing was deleted.
+   */
+  boolean deletePolicy(String registrationId) throws SQLException {
     try (Connection connection = dataSource.getConnection()) {
-      deleteRegistrationRow(connection, registrationId);
+      return deleteRegistrationRow(connection, registrationId) > 0;
     }
   }
 
@@ -325,10 +331,10 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     insertChildRows(connection, registrationId, policy);
   }
 
-  private void deleteRegistrationRow(Connection connection, String registrationId) throws SQLException {
+  private int deleteRegistrationRow(Connection connection, String registrationId) throws SQLException {
     try (PreparedStatement ps = connection.prepareStatement(DELETE_REGISTRATION_SQL)) {
       ps.setString(1, registrationId);
-      ps.executeUpdate();
+      return ps.executeUpdate();
     }
   }
 

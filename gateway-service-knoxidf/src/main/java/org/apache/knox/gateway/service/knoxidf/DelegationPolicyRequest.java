@@ -19,7 +19,6 @@ package org.apache.knox.gateway.service.knoxidf;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +36,7 @@ public class DelegationPolicyRequest {
   private String actorAuthority;
   private String actorId;
   private String name;
-  private String status = STATUS_ACTIVE;
+  private String status;
   private Integer tokenTtlSec;
   private String description;
   private boolean allowHeadlessExchange;
@@ -73,9 +72,9 @@ public class DelegationPolicyRequest {
     return status;
   }
 
-  /** Null/empty collapses directly to the default {@link #STATUS_ACTIVE} -- never stored as null. */
+  /** Mirrors the request body verbatim, including null/empty; defaulting is done by DelegationPolicyResource. */
   public void setStatus(String status) {
-    this.status = (status == null || status.isEmpty()) ? STATUS_ACTIVE : status;
+    this.status = status;
   }
 
   public Integer getTokenTtlSec() {
@@ -107,7 +106,7 @@ public class DelegationPolicyRequest {
   }
 
   public void setCanActForUsers(Set<String> canActForUsers) {
-    this.canActForUsers = Set.copyOf(canActForUsers != null ? canActForUsers : Collections.emptySet());
+    this.canActForUsers = DelegationPolicyDtoImmutabilityHelper.copyOf(canActForUsers);
   }
 
   public Set<String> getCanActForGroups() {
@@ -115,7 +114,7 @@ public class DelegationPolicyRequest {
   }
 
   public void setCanActForGroups(Set<String> canActForGroups) {
-    this.canActForGroups = Set.copyOf(canActForGroups != null ? canActForGroups : Collections.emptySet());
+    this.canActForGroups = DelegationPolicyDtoImmutabilityHelper.copyOf(canActForGroups);
   }
 
   public Map<String, Set<String>> getResourcePolicy() {
@@ -123,12 +122,6 @@ public class DelegationPolicyRequest {
   }
 
   public void setResourcePolicy(Map<String, Set<String>> resourcePolicy) {
-    final Map<String, Set<String>> source = (resourcePolicy != null) ? resourcePolicy : Collections.emptyMap();
-    final Map<String, Set<String>> copy = new HashMap<>();
-    for (Map.Entry<String, Set<String>> entry : source.entrySet()) {
-      final Set<String> scopes = (entry.getValue() != null) ? entry.getValue() : Collections.emptySet();
-      copy.put(entry.getKey(), Set.copyOf(scopes));
-    }
-    this.resourcePolicy = Collections.unmodifiableMap(copy);
+    this.resourcePolicy = DelegationPolicyDtoImmutabilityHelper.copyResourcePolicy(resourcePolicy);
   }
 }

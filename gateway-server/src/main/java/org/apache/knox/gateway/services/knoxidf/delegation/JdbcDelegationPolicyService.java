@@ -123,7 +123,11 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   @Override
   public void delete(String registrationId) {
     try {
-      database.deletePolicy(registrationId);
+      if (!database.deletePolicy(registrationId)) {
+        throw new DelegationPolicyNotFoundException(registrationId);
+      }
+    } catch (DelegationPolicyNotFoundException e) {
+      throw e;
     } catch (Exception e) {
       LOG.errorDeletingPolicy(registrationId, e.getMessage(), e);
       throw new RuntimeException("Error deleting delegation policy " + registrationId + ": " + e, e);
