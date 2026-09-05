@@ -137,6 +137,30 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
+  public RegisterOrUpdateResult registerOrUpdate(DelegationPolicy policy) {
+    final Optional<DelegationPolicy> existing = findByActor(policy.getActorAuthority(), policy.getActorId());
+    if (existing.isPresent()) {
+      try {
+        return new RegisterOrUpdateResult(update(existing.get().getRegistrationId(), policy), false);
+      } catch (DelegationPolicyNotFoundException e) {
+        // Deleted concurrently between our findByActor() and update() -- fall through to create.
+      }
+      return new RegisterOrUpdateResult(register(policy), true); // a second race propagates as-is
+    } else {
+      try {
+        return new RegisterOrUpdateResult(register(policy), true);
+      } catch (DelegationPolicyAlreadyExistsException e) {
+        // Created concurrently between our findByActor() and register() -- fall through to update.
+      }
+      final DelegationPolicy winner = findByActor(policy.getActorAuthority(), policy.getActorId())
+          .orElseThrow(() -> new IllegalStateException(
+              "Actor (" + policy.getActorAuthority() + ", " + policy.getActorId()
+                  + ") reported as already existing but not found on re-lookup"));
+      return new RegisterOrUpdateResult(update(winner.getRegistrationId(), policy), false);
+    }
+  }
+
+  @Override
   public void delete(String registrationId) {
     try {
       if (!database.deletePolicy(registrationId)) {

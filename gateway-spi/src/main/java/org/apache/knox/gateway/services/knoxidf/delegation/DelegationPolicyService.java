@@ -49,6 +49,23 @@ public interface DelegationPolicyService extends Service {
   DelegationPolicy update(String registrationId, DelegationPolicy policy);
 
   /**
+   * Creates a new delegation policy for (policy.actorAuthority, policy.actorId) if none exists
+   * yet, or fully replaces the existing one for that actor if one does (same full-replace
+   * semantics as {@link #update(String, DelegationPolicy)} -- see its javadoc). This is the only
+   * entry point that does not require the caller to already know registrationId; it exists for
+   * callers (e.g. a Kubernetes operator reconciling a CRD) that know only the actor identity and
+   * cannot distinguish "first reconcile" from "re-reconcile" without it.
+   * @return the persisted policy plus whether this call created it (true) or replaced an
+   *     existing one (false).
+   * @throws DelegationPolicyAlreadyExistsException if a concurrent register() for the same actor
+   *     is lost after this method's own single internal retry.
+   * @throws DelegationPolicyNotFoundException if a concurrent delete() for the same actor is lost
+   *     after this method's own single internal retry.
+   * @throws RuntimeException on any other storage error.
+   */
+  RegisterOrUpdateResult registerOrUpdate(DelegationPolicy policy);
+
+  /**
    * @throws DelegationPolicyNotFoundException if registrationId does not exist.
    * @throws RuntimeException on any other storage error.
    */

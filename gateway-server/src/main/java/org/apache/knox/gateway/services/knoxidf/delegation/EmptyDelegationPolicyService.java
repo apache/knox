@@ -55,6 +55,12 @@ public class EmptyDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
+  public RegisterOrUpdateResult registerOrUpdate(DelegationPolicy policy) {
+    throw new UnsupportedOperationException("DelegationPolicyService is not enabled; "
+        + "deploy the KNOXIDF or KNOXIDF_ADMIN service role to activate it.");
+  }
+
+  @Override
   public void delete(String registrationId) {
     throw new UnsupportedOperationException("DelegationPolicyService is not enabled; "
         + "deploy the KNOXIDF or KNOXIDF_ADMIN service role to activate it.");

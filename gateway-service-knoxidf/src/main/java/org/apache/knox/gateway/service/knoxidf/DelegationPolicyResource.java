@@ -35,6 +35,7 @@ import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyAlrea
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyList;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyNotFoundException;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
+import org.apache.knox.gateway.services.knoxidf.delegation.RegisterOrUpdateResult;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import javax.annotation.PostConstruct;
@@ -133,6 +134,48 @@ public class DelegationPolicyResource {
     } finally {
       auditor.audit(Action.DELEGATION_LIFECYCLE, auditId, ResourceType.DELEGATION_POLICY,
           outcome, "event_type=policy_registered performed_by=" + auditLabel(operatorId));
+    }
+  }
+
+  @PUT
+  @Consumes(MediaType.APPLICATION_JSON)
+  public Response registerOrUpdate(String body) {
+    final String operatorId = getOperatorId();
+    String auditId = "INVALID_REQUEST";
+    String outcome = ActionOutcome.FAILURE;
+    String eventType = "policy_registered";
+
+    try {
+      final DelegationPolicyRequest parsed;
+      try {
+        parsed = MAPPER.readValue(body, DelegationPolicyRequest.class);
+      } catch (IOException e) {
+        return errorResponse(Response.Status.BAD_REQUEST, "invalid_request", "Malformed or invalid JSON body");
+      }
+      auditId = bestEffortActorIdForAudit(parsed);
+
+      final Response validationError = validateRequest(parsed);
+      if (validationError != null) {
+        return validationError;
+      }
+
+      final Instant now = Instant.now();
+      final DelegationPolicy toStore = toDomain(null, parsed, operatorId, now, now);
+      final RegisterOrUpdateResult result = policyService.registerOrUpdate(toStore);
+      auditId = result.getPolicy().getRegistrationId();
+      eventType = result.isCreated() ? "policy_registered" : "policy_updated";
+      outcome = ActionOutcome.SUCCESS;
+      final Response.Status status = result.isCreated() ? Response.Status.CREATED : Response.Status.OK;
+      return Response.status(status).entity(writeJson(toResponse(result.getPolicy()))).build();
+    } catch (DelegationPolicyAlreadyExistsException e) {
+      return errorResponse(Response.Status.CONFLICT, "actor_exists", e.getMessage());
+    } catch (DelegationPolicyNotFoundException e) {
+      return errorResponse(Response.Status.NOT_FOUND, "policy_not_found", e.getMessage());
+    } catch (RuntimeException e) {
+      return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error", "Failed to register or update delegation policy");
+    } finally {
+      auditor.audit(Action.DELEGATION_LIFECYCLE, auditId, ResourceType.DELEGATION_POLICY,
+          outcome, "event_type=" + eventType + " performed_by=" + auditLabel(operatorId));
     }
   }
 

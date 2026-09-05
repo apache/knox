@@ -30,6 +30,7 @@ import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyAlrea
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyList;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyNotFoundException;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
+import org.apache.knox.gateway.services.knoxidf.delegation.RegisterOrUpdateResult;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -530,6 +531,152 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
+  // PUT (registerOrUpdate)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testRegisterOrUpdateCreatesNewActor() throws Exception {
+    final Capture<DelegationPolicy> captured = EasyMock.newCapture();
+    EasyMock.expect(mockService.registerOrUpdate(EasyMock.capture(captured)))
+        .andAnswer(() -> new RegisterOrUpdateResult(withRegistrationId(captured.getValue(), REGISTRATION_ID), true));
+    expectAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(toJson(minimalFields()));
+
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    final DelegationPolicyResponse body = parseResponse(response);
+    assertEquals(REGISTRATION_ID, body.getRegistrationId());
+    assertEquals(ACTOR_AUTHORITY, body.getActorAuthority());
+    assertEquals(ACTOR_ID, body.getActorId());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterOrUpdateReplacesExistingActor() throws Exception {
+    final Instant originalCreatedAt = Instant.now().minusSeconds(3600);
+    final Capture<DelegationPolicy> captured = EasyMock.newCapture();
+    EasyMock.expect(mockService.registerOrUpdate(EasyMock.capture(captured)))
+        .andAnswer(() -> new RegisterOrUpdateResult(
+            withCreationMetadata(withRegistrationId(captured.getValue(), REGISTRATION_ID),
+                "original-operator", originalCreatedAt, Instant.now()),
+            false));
+    expectAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_updated");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(toJson(minimalFields()));
+
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+    final DelegationPolicyResponse body = parseResponse(response);
+    assertEquals(REGISTRATION_ID, body.getRegistrationId());
+    // createdBy/createdAt come back from the persisted row, not from the request.
+    assertEquals("original-operator", body.getCreatedBy());
+    assertEquals(originalCreatedAt, body.getCreatedAt());
+    assertNotEquals(originalCreatedAt, body.getUpdatedAt());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterOrUpdateMissingActorAuthorityRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWithout("actorAuthority"));
+  }
+
+  @Test
+  public void testRegisterOrUpdateBothCanActForEmptyRejected() throws Exception {
+    final Map<String, Object> fields = new LinkedHashMap<>();
+    fields.put("actorAuthority", ACTOR_AUTHORITY);
+    fields.put("actorId", ACTOR_ID);
+    assertRegisterOrUpdateRejected(fields);
+  }
+
+  @Test
+  public void testRegisterOrUpdateTokenTtlOutOfBoundsRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("tokenTtlSec", MAX_TTL + 1));
+  }
+
+  @Test
+  public void testRegisterOrUpdateInvalidStatusRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("status", "bogus"));
+  }
+
+  @Test
+  public void testRegisterOrUpdateMalformedJson() {
+    expectAudit("INVALID_REQUEST", ActionOutcome.FAILURE, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate("{ not valid json }");
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterOrUpdateActorExistsConflict() throws Exception {
+    EasyMock.expect(mockService.registerOrUpdate(EasyMock.anyObject(DelegationPolicy.class)))
+        .andThrow(new DelegationPolicyAlreadyExistsException(ACTOR_AUTHORITY, ACTOR_ID, new RuntimeException("dup")))
+        .once();
+    expectAudit(ACTOR_AUTHORITY + "/" + ACTOR_ID, ActionOutcome.FAILURE, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(toJson(minimalFields()));
+
+    assertEquals(Response.Status.CONFLICT.getStatusCode(), response.getStatus());
+    assertErrorField(response, "actor_exists");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterOrUpdatePolicyNotFound() throws Exception {
+    EasyMock.expect(mockService.registerOrUpdate(EasyMock.anyObject(DelegationPolicy.class)))
+        .andThrow(new DelegationPolicyNotFoundException(REGISTRATION_ID))
+        .once();
+    expectAudit(ACTOR_AUTHORITY + "/" + ACTOR_ID, ActionOutcome.FAILURE, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(toJson(minimalFields()));
+
+    assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    assertErrorField(response, "policy_not_found");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterOrUpdateStorageFailure() throws Exception {
+    EasyMock.expect(mockService.registerOrUpdate(EasyMock.anyObject(DelegationPolicy.class)))
+        .andThrow(new RuntimeException("DB error"))
+        .once();
+    expectAudit(ACTOR_AUTHORITY + "/" + ACTOR_ID, ActionOutcome.FAILURE, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(toJson(minimalFields()));
+
+    assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+    assertErrorField(response, "storage_error");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterOrUpdateNullPrincipalAuditsAnonymous() throws Exception {
+    final DelegationPolicyResource res = buildResource(null);
+    final Capture<DelegationPolicy> captured = EasyMock.newCapture();
+    EasyMock.expect(mockService.registerOrUpdate(EasyMock.capture(captured)))
+        .andAnswer(() -> new RegisterOrUpdateResult(withRegistrationId(captured.getValue(), REGISTRATION_ID), true));
+    mockAuditor.audit(
+        EasyMock.eq(Action.DELEGATION_LIFECYCLE), EasyMock.eq(REGISTRATION_ID),
+        EasyMock.eq(ResourceType.DELEGATION_POLICY), EasyMock.eq(ActionOutcome.SUCCESS),
+        EasyMock.contains("performed_by=ANONYMOUS"));
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = res.registerOrUpdate(toJson(minimalFields()));
+
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    assertNull(captured.getValue().getCreatedBy());
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  // ---------------------------------------------------------------------------
   // GET (list)
   // ---------------------------------------------------------------------------
 
@@ -976,6 +1123,17 @@ public class DelegationPolicyResourceTest {
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.update(REGISTRATION_ID, toJson(fields));
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  private void assertRegisterOrUpdateRejected(Map<String, Object> fields) throws Exception {
+    expectAuditAnyId(ActionOutcome.FAILURE, "policy_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerOrUpdate(toJson(fields));
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     assertErrorField(response, "invalid_request");
