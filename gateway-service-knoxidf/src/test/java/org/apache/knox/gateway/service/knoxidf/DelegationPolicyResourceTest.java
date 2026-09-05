@@ -662,11 +662,9 @@ public class DelegationPolicyResourceTest {
   @Test
   public void testUpdateFullReplaceResetsOmittedFields() throws Exception {
     final Instant originalCreatedAt = Instant.now().minusSeconds(3600);
-    final DelegationPolicy existing = existingPolicy(REGISTRATION_ID, originalCreatedAt);
-    EasyMock.expect(mockService.get(REGISTRATION_ID)).andReturn(Optional.of(existing)).once();
     final Capture<DelegationPolicy> captured = EasyMock.newCapture();
-    mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.capture(captured));
-    EasyMock.expectLastCall().once();
+    EasyMock.expect(mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.capture(captured)))
+        .andAnswer(() -> withCreationMetadata(captured.getValue(), "original-operator", originalCreatedAt, Instant.now()));
     expectAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_updated");
     EasyMock.replay(mockService, mockAuditor);
 
@@ -677,20 +675,20 @@ public class DelegationPolicyResourceTest {
     assertFalse(body.isAllowHeadlessExchange());
     assertEquals("active", body.getStatus());
     assertTrue(body.getCanActForGroups().isEmpty());
-    assertEquals(originalCreatedAt, captured.getValue().getCreatedAt());
-    assertEquals("original-operator", captured.getValue().getCreatedBy());
-    assertNotEquals(originalCreatedAt, captured.getValue().getUpdatedAt());
+    // createdBy/createdAt come back from the persisted row, not from the request --
+    // the resource never controls these on update.
+    assertEquals(originalCreatedAt, body.getCreatedAt());
+    assertEquals("original-operator", body.getCreatedBy());
+    assertNotEquals(originalCreatedAt, body.getUpdatedAt());
     EasyMock.verify(mockService, mockAuditor);
   }
 
   @Test
   public void testUpdateIgnoresClientSuppliedServerManagedFields() throws Exception {
     final Instant originalCreatedAt = Instant.now().minusSeconds(3600);
-    final DelegationPolicy existing = existingPolicy(REGISTRATION_ID, originalCreatedAt);
-    EasyMock.expect(mockService.get(REGISTRATION_ID)).andReturn(Optional.of(existing)).once();
     final Capture<DelegationPolicy> captured = EasyMock.newCapture();
-    mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.capture(captured));
-    EasyMock.expectLastCall().once();
+    EasyMock.expect(mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.capture(captured)))
+        .andAnswer(() -> withCreationMetadata(captured.getValue(), "original-operator", originalCreatedAt, Instant.now()));
     expectAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_updated");
     EasyMock.replay(mockService, mockAuditor);
 
@@ -699,11 +697,12 @@ public class DelegationPolicyResourceTest {
     fields.put("createdBy", "client-by");
     fields.put("createdAt", "2000-01-01T00:00:00Z");
 
-    resource.update(REGISTRATION_ID, toJson(fields));
+    final Response response = resource.update(REGISTRATION_ID, toJson(fields));
 
     assertEquals(REGISTRATION_ID, captured.getValue().getRegistrationId());
-    assertEquals("original-operator", captured.getValue().getCreatedBy());
-    assertEquals(originalCreatedAt, captured.getValue().getCreatedAt());
+    final DelegationPolicyResponse body = parseResponse(response);
+    assertEquals("original-operator", body.getCreatedBy());
+    assertEquals(originalCreatedAt, body.getCreatedAt());
     EasyMock.verify(mockService, mockAuditor);
   }
 
@@ -749,9 +748,8 @@ public class DelegationPolicyResourceTest {
 
   @Test
   public void testUpdateNotFound() throws Exception {
-    EasyMock.expect(mockService.get(REGISTRATION_ID)).andReturn(Optional.empty()).once();
-    mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.anyObject(DelegationPolicy.class));
-    EasyMock.expectLastCall().andThrow(new DelegationPolicyNotFoundException(REGISTRATION_ID)).once();
+    EasyMock.expect(mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.anyObject(DelegationPolicy.class)))
+        .andThrow(new DelegationPolicyNotFoundException(REGISTRATION_ID)).once();
     expectAudit(REGISTRATION_ID, ActionOutcome.FAILURE, "policy_updated");
     EasyMock.replay(mockService, mockAuditor);
 
@@ -764,9 +762,8 @@ public class DelegationPolicyResourceTest {
 
   @Test
   public void testUpdateStorageFailure() throws Exception {
-    EasyMock.expect(mockService.get(REGISTRATION_ID)).andReturn(Optional.empty()).once();
-    mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.anyObject(DelegationPolicy.class));
-    EasyMock.expectLastCall().andThrow(new RuntimeException("DB error")).once();
+    EasyMock.expect(mockService.update(EasyMock.eq(REGISTRATION_ID), EasyMock.anyObject(DelegationPolicy.class)))
+        .andThrow(new RuntimeException("DB error")).once();
     expectAudit(REGISTRATION_ID, ActionOutcome.FAILURE, "policy_updated");
     EasyMock.replay(mockService, mockAuditor);
 
@@ -1047,6 +1044,16 @@ public class DelegationPolicyResourceTest {
     return new DelegationPolicy(registrationId, p.getActorAuthority(), p.getActorId(), p.getName(),
         p.getStatus(), p.getTokenTtlSec(), p.getDescription(), p.getCreatedBy(), p.getCreatedAt(),
         p.getUpdatedAt(), p.isAllowHeadlessExchange(), p.getCanActForUsers(), p.getCanActForGroups(),
+        p.getResourcePolicy());
+  }
+
+  // Simulates what update() returns: the persisted row, with identity/creation fields as the
+  // storage layer actually preserved them rather than whatever the request happened to carry.
+  private static DelegationPolicy withCreationMetadata(
+      DelegationPolicy p, String createdBy, Instant createdAt, Instant updatedAt) {
+    return new DelegationPolicy(p.getRegistrationId(), p.getActorAuthority(), p.getActorId(), p.getName(),
+        p.getStatus(), p.getTokenTtlSec(), p.getDescription(), createdBy, createdAt,
+        updatedAt, p.isAllowHeadlessExchange(), p.getCanActForUsers(), p.getCanActForGroups(),
         p.getResourcePolicy());
   }
 

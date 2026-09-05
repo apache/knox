@@ -49,7 +49,7 @@ public class EmptyDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
-  public void update(String registrationId, DelegationPolicy policy) {
+  public DelegationPolicy update(String registrationId, DelegationPolicy policy) {
     throw new UnsupportedOperationException("DelegationPolicyService is not enabled; "
         + "deploy the KNOXIDF or KNOXIDF_ADMIN service role to activate it.");
   }

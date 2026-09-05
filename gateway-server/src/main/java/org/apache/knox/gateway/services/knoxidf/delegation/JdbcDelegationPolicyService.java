@@ -105,9 +105,15 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
-  public void update(String registrationId, DelegationPolicy policy) {
+  public DelegationPolicy update(String registrationId, DelegationPolicy policy) {
     try {
-      database.updatePolicy(registrationId, policy);
+      if (!database.updatePolicy(registrationId, policy)) {
+        throw new DelegationPolicyNotFoundException(registrationId);
+      }
+      return database.selectById(registrationId).orElseThrow(
+          () -> new RuntimeException("Failed to read back updated policy " + registrationId));
+    } catch (DelegationPolicyNotFoundException e) {
+      throw e;
     } catch (Exception e) {
       LOG.errorUpdatingPolicy(registrationId, e.getMessage(), e);
       throw new RuntimeException("Error updating delegation policy " + registrationId + ": " + e, e);

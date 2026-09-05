@@ -18,6 +18,7 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,7 +31,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DelegationPolicyListResponse {
 
-  private List<DelegationPolicyResponse> policies;
+  private List<DelegationPolicyResponse> policies = Collections.emptyList();
   private boolean hasMore;
 
   public List<DelegationPolicyResponse> getPolicies() {
@@ -38,7 +39,7 @@ public class DelegationPolicyListResponse {
   }
 
   public void setPolicies(List<DelegationPolicyResponse> policies) {
-    this.policies = policies;
+    this.policies = List.copyOf(policies != null ? policies : Collections.emptyList());
   }
 
   public boolean isHasMore() {

@@ -41,6 +41,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -211,6 +212,76 @@ public class JdbcDelegationPolicyServiceTest {
     assertTrue(fetched.getCanActForUsers().contains("dave"));
     assertTrue(fetched.getCanActForUsers().contains("eve"));
     assertFalse(fetched.getCanActForUsers().contains("alice"));
+  }
+
+  @Test
+  public void testUpdateNonExistentRegistrationIdThrowsNotFound() throws Exception {
+    final DelegationPolicy update = policy("oidc", "actorId-missing",
+        "name", "active", null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+    assertThrows(DelegationPolicyNotFoundException.class,
+        () -> service.update("nonexistent-registration-id", update));
+  }
+
+  @Test
+  public void testUpdateRejectsActorAuthorityChange() throws Exception {
+    final DelegationPolicy original = policy("oidc", "actorId6",
+        "original", "active", null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+    final String id = service.register(original).getRegistrationId();
+
+    final DelegationPolicy attempt = policy("different-authority", "actorId6",
+        "updated", "active", null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+
+    assertThrows(DelegationPolicyNotFoundException.class, () -> service.update(id, attempt));
+
+    // Identity is immutable, so a rejected update must leave the stored row untouched.
+    final DelegationPolicy fetched = service.get(id).orElseThrow(AssertionError::new);
+    assertEquals("original", fetched.getName());
+    assertEquals("oidc", fetched.getActorAuthority());
+  }
+
+  @Test
+  public void testUpdateRejectsActorIdChange() throws Exception {
+    final DelegationPolicy original = policy("oidc", "actorId7",
+        "original", "active", null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+    final String id = service.register(original).getRegistrationId();
+
+    final DelegationPolicy attempt = policy("oidc", "different-actor-id",
+        "updated", "active", null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+
+    assertThrows(DelegationPolicyNotFoundException.class, () -> service.update(id, attempt));
+
+    final DelegationPolicy fetched = service.get(id).orElseThrow(AssertionError::new);
+    assertEquals("original", fetched.getName());
+    assertEquals("actorId7", fetched.getActorId());
+  }
+
+  @Test
+  public void testUpdatePreservesCreatedByAndCreatedAtAndReturnsPersistedRow() throws Exception {
+    final Instant originalCreatedAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS).minusSeconds(3600);
+    final DelegationPolicy original = policy("oidc", "actorId8",
+        "original", "active", null, null, "original-admin", originalCreatedAt,
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+    final String id = service.register(original).getRegistrationId();
+
+    // Client-supplied createdBy/createdAt on the update payload must be ignored entirely.
+    final DelegationPolicy attempt = policy("oidc", "actorId8",
+        "updated", "active", null, null, "spoofed-admin", Instant.now().minusSeconds(9999),
+        Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap());
+
+    final DelegationPolicy result = service.update(id, attempt);
+
+    assertEquals("original-admin", result.getCreatedBy());
+    assertEquals(originalCreatedAt, result.getCreatedAt());
+    assertNotEquals(originalCreatedAt, result.getUpdatedAt());
+
+    final DelegationPolicy fetched = service.get(id).orElseThrow(AssertionError::new);
+    assertEquals("original-admin", fetched.getCreatedBy());
+    assertEquals(originalCreatedAt, fetched.getCreatedAt());
   }
 
   @Test

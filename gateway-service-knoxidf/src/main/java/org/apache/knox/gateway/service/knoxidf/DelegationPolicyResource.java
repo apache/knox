@@ -55,11 +55,9 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path(DelegationPolicyResource.RESOURCE_PATH)
@@ -67,9 +65,6 @@ import java.util.stream.Collectors;
 public class DelegationPolicyResource {
 
   static final String RESOURCE_PATH = "knoxidf/admin/v1/delegation-policies";
-
-  private static final String STATUS_ACTIVE = "active";
-  private static final String STATUS_REVOKED = "revoked";
 
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .registerModule(new JavaTimeModule())
@@ -118,7 +113,7 @@ public class DelegationPolicyResource {
       } catch (IOException e) {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request", "Malformed or invalid JSON body");
       }
-      auditId = bestEffortActorId(parsed);
+      auditId = bestEffortActorIdForAudit(parsed);
 
       final Response validationError = validateRequest(parsed);
       if (validationError != null) {
@@ -189,21 +184,16 @@ public class DelegationPolicyResource {
         return validationError;
       }
 
-      // PUT is full-replace, but createdBy/createdAt are server-managed and must survive it.
-      // The storage layer's UPDATE writes every column it is given, so the only way to keep the
-      // original createdBy/createdAt is to read them back and carry them forward here. This is
-      // not an existence pre-check: if the record is gone, update() below still throws
-      // DelegationPolicyNotFoundException and that -- not this lookup -- decides the 404, so no
-      // TOCTOU is introduced.
+      // PUT is full-replace, but actorAuthority/actorId/createdBy/createdAt are immutable after
+      // registration and are never written by update() regardless of what toStore carries for
+      // them; updatedAt is computed by the storage layer, not the caller. The values passed here
+      // are inert placeholders -- the response is built from the policy update() actually
+      // persisted and returned, not from toStore.
       final Instant now = Instant.now();
-      final Optional<DelegationPolicy> existing = policyService.get(registrationId);
-      final String createdBy = existing.map(DelegationPolicy::getCreatedBy).orElse(operatorId);
-      final Instant createdAt = existing.map(DelegationPolicy::getCreatedAt).orElse(now);
-
-      final DelegationPolicy toStore = toDomain(registrationId, parsed, createdBy, createdAt, now);
-      policyService.update(registrationId, toStore);
+      final DelegationPolicy toStore = toDomain(registrationId, parsed, operatorId, now, now);
+      final DelegationPolicy stored = policyService.update(registrationId, toStore);
       outcome = ActionOutcome.SUCCESS;
-      return Response.ok(writeJson(toResponse(toStore))).build();
+      return Response.ok(writeJson(toResponse(stored))).build();
     } catch (DelegationPolicyNotFoundException e) {
       return errorResponse(Response.Status.NOT_FOUND, "policy_not_found", e.getMessage());
     } catch (RuntimeException e) {
@@ -246,12 +236,12 @@ public class DelegationPolicyResource {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
           "tokenTtlSec must be between " + minTokenTtlSec + " and " + maxTokenTtlSec + " seconds (inclusive)");
     }
-    final String status = normalize(req.getStatus());
-    if (status != null && !STATUS_ACTIVE.equals(status) && !STATUS_REVOKED.equals(status)) {
+    final String status = req.getStatus();
+    if (!DelegationPolicyRequest.STATUS_ACTIVE.equals(status) && !DelegationPolicyRequest.STATUS_REVOKED.equals(status)) {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
-          "status must be \"" + STATUS_ACTIVE + "\" or \"" + STATUS_REVOKED + "\"");
+          "status must be \"" + DelegationPolicyRequest.STATUS_ACTIVE + "\" or \"" + DelegationPolicyRequest.STATUS_REVOKED + "\"");
     }
-    if (emptyIfNull(req.getCanActForUsers()).isEmpty() && emptyIfNull(req.getCanActForGroups()).isEmpty()) {
+    if (req.getCanActForUsers().isEmpty() && req.getCanActForGroups().isEmpty()) {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
           "At least one of canActForUsers or canActForGroups must be non-empty");
     }
@@ -261,7 +251,7 @@ public class DelegationPolicyResource {
   private static DelegationPolicy toDomain(String registrationId, DelegationPolicyRequest req,
       String createdBy, Instant createdAt, Instant updatedAt) {
     return new DelegationPolicy(registrationId, req.getActorAuthority(), req.getActorId(),
-        normalize(req.getName()), resolveStatus(req.getStatus()), req.getTokenTtlSec(),
+        normalize(req.getName()), req.getStatus(), req.getTokenTtlSec(),
         normalize(req.getDescription()), createdBy, createdAt, updatedAt,
         req.isAllowHeadlessExchange(), req.getCanActForUsers(), req.getCanActForGroups(),
         req.getResourcePolicy());
@@ -290,16 +280,7 @@ public class DelegationPolicyResource {
     return (value != null && value.isEmpty()) ? null : value;
   }
 
-  private static String resolveStatus(String status) {
-    final String normalized = normalize(status);
-    return normalized != null ? normalized : STATUS_ACTIVE;
-  }
-
-  private static Set<String> emptyIfNull(Set<String> set) {
-    return set != null ? set : Collections.emptySet();
-  }
-
-  private static String bestEffortActorId(DelegationPolicyRequest req) {
+  private static String bestEffortActorIdForAudit(DelegationPolicyRequest req) {
     final String authority = StringUtils.isBlank(req.getActorAuthority()) ? null : req.getActorAuthority();
     final String actorId = StringUtils.isBlank(req.getActorId()) ? null : req.getActorId();
     if (authority == null && actorId == null) {

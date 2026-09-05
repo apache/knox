@@ -34,12 +34,19 @@ public interface DelegationPolicyService extends Service {
   DelegationPolicy register(DelegationPolicy policy);
 
   /**
-   * Fully replaces all fields including child rows (users, groups, resource policy).
-   * Child rows are deleted and re-inserted transactionally.
-   * @throws DelegationPolicyNotFoundException if registrationId does not exist.
+   * Fully replaces all mutable fields (name, status, tokenTtlSec, description,
+   * allowHeadlessExchange, canActForUsers, canActForGroups, resourcePolicy) including child rows,
+   * which are deleted and re-inserted transactionally. actorAuthority, actorId, createdBy, and
+   * createdAt are immutable after registration: they are never written by this call regardless of
+   * what {@code policy} carries for them, and updatedAt is computed by the storage layer, not the
+   * caller. Returns the persisted policy, reflecting the true (unchanged) identity/creation fields.
+   * @throws DelegationPolicyNotFoundException if registrationId does not exist, or if policy's
+   *     actorAuthority/actorId do not match the existing record's -- identity cannot be changed
+   *     via update; delete and re-register instead. The two causes are deliberately not
+   *     distinguished; callers can GET the registrationId separately to tell them apart.
    * @throws RuntimeException on any other storage error.
    */
-  void update(String registrationId, DelegationPolicy policy);
+  DelegationPolicy update(String registrationId, DelegationPolicy policy);
 
   /**
    * @throws DelegationPolicyNotFoundException if registrationId does not exist.
