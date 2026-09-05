@@ -179,7 +179,8 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   private static SQLException findSQLException(Throwable t) {
-    for (; t != null; t = t.getCause()) {
+    final int maxDepth = 1000;
+    for (int depth = 0; t != null && depth < maxDepth; t = t.getCause(), depth++) {
       if (t instanceof SQLException) {
         return (SQLException) t;
       }
