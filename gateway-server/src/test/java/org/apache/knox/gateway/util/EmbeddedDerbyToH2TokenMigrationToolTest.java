@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -59,7 +60,7 @@ public class EmbeddedDerbyToH2TokenMigrationToolTest {
     destination = DriverManager.getConnection("jdbc:h2:mem:migration-dest;DB_CLOSE_DELAY=-1");
     createSchema(source);
     createSchema(destination);
-    tool = new EmbeddedDerbyToH2TokenMigrationTool(null, null, new PrintStream(new ByteArrayOutputStream()));
+    tool = new EmbeddedDerbyToH2TokenMigrationTool(null, null, new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8.name()));
   }
 
   @After
