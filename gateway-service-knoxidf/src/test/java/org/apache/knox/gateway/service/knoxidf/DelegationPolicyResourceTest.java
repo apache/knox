@@ -91,7 +91,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — success paths
+  // POST - success paths
   // ---------------------------------------------------------------------------
 
   @Test
@@ -212,7 +212,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: actorAuthority / actorId
+  // POST - boundary values: actorAuthority / actorId
   // ---------------------------------------------------------------------------
 
   @Test
@@ -256,7 +256,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: name / description
+  // POST - boundary values: name / description
   // ---------------------------------------------------------------------------
 
   @Test
@@ -290,7 +290,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: status
+  // POST - boundary values: status
   // ---------------------------------------------------------------------------
 
   @Test
@@ -324,7 +324,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: tokenTtlSec
+  // POST - boundary values: tokenTtlSec
   // ---------------------------------------------------------------------------
 
   @Test
@@ -379,7 +379,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: allowHeadlessExchange
+  // POST - boundary values: allowHeadlessExchange
   // ---------------------------------------------------------------------------
 
   @Test
@@ -393,7 +393,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: canActForUsers / canActForGroups non-empty rule
+  // POST - boundary values: canActForUsers / canActForGroups non-empty rule
   // ---------------------------------------------------------------------------
 
   @Test
@@ -443,7 +443,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — boundary values: resourcePolicy
+  // POST - boundary values: resourcePolicy
   // ---------------------------------------------------------------------------
 
   @Test
@@ -485,7 +485,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // POST — malformed body / negative / error paths
+  // POST - malformed body / negative / error paths
   // ---------------------------------------------------------------------------
 
   @Test
@@ -695,7 +695,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // PUT (registerOrUpdate) — actor field variants (mirror POST coverage)
+  // PUT (registerOrUpdate) - actor field variants (mirror POST coverage)
   // ---------------------------------------------------------------------------
 
   @Test
@@ -734,7 +734,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // PUT (registerOrUpdate) — status / tokenTtlSec boundary values
+  // PUT (registerOrUpdate) - status / tokenTtlSec boundary values
   // ---------------------------------------------------------------------------
 
   @Test
@@ -1012,7 +1012,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // PUT (update) — actor field variants (mirror POST coverage per spec)
+  // PUT (update) - actor field variants (mirror POST coverage per spec)
   // ---------------------------------------------------------------------------
 
   @Test
@@ -1046,7 +1046,7 @@ public class DelegationPolicyResourceTest {
   }
 
   // ---------------------------------------------------------------------------
-  // PUT (update) — status / tokenTtlSec boundary values (mirror POST coverage)
+  // PUT (update) - status / tokenTtlSec boundary values (mirror POST coverage)
   // ---------------------------------------------------------------------------
 
   @Test
