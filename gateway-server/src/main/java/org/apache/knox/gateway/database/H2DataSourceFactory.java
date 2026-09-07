@@ -41,12 +41,15 @@ import java.sql.SQLException;
  */
 public class H2DataSourceFactory extends AbstractDataSourceFactory {
 
+    private static final String ENCRYPTED_URL_POSTFIX = ";CIPHER=AES";
+
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
         final JdbcDataSource dataSource = new JdbcDataSource();
         String url = "jdbc:h2:" + gatewayConfig.getDatabaseName();
         final String userPassword = getDatabasePassword(aliasService);
 
+        dataSource.setUser(getDatabaseUser(aliasService));
         if (gatewayConfig.isDatabaseH2EncryptionEnabled()) {
             final String aliasName = gatewayConfig.getDatabaseH2EncryptionPassphraseAlias();
             final String filePassword = getDatabaseAlias(aliasService, aliasName);
@@ -54,12 +57,10 @@ public class H2DataSourceFactory extends AbstractDataSourceFactory {
                 throw new SQLException("H2 at-rest encryption is enabled (" + aliasName + ") but no passphrase is stored under credential-store alias '"
                         + aliasName + "'. Provision the alias or disable gateway.database.h2.encryption.enabled.");
             }
-            url += ";CIPHER=AES";
-            dataSource.setUser(getDatabaseUser(aliasService));
+            url += ENCRYPTED_URL_POSTFIX;
             // H2 splits the password on the first space: <filePassword> <userPassword>.
             dataSource.setPassword(filePassword + " " + (userPassword == null ? "" : userPassword));
         } else {
-            dataSource.setUser(getDatabaseUser(aliasService));
             dataSource.setPassword(userPassword);
         }
 
