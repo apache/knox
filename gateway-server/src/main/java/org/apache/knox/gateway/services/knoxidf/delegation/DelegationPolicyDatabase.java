@@ -25,6 +25,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,14 +52,16 @@ class DelegationPolicyDatabase extends KnoxDatabase {
           + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
   // actor_authority/actor_id/created_by/created_at are deliberately absent from SET: identity and
-  // creation metadata are immutable after registration. updated_at is computed by the database,
-  // not supplied by the caller. The WHERE clause requires the identity fields to still match, so
-  // an update attempting to change them affects 0 rows -- indistinguishable from (and reported the
-  // same as) registrationId not existing at all.
+  // creation metadata are immutable after registration. updated_at is computed by the storage layer
+  // and bound below (param 6) from the app clock -- the same source INSERT uses for created_at, so
+  // both columns share one clock/zone and stay comparable (a DB-side CURRENT_TIMESTAMP could read
+  // earlier than the JVM-written created_at). The WHERE clause requires the identity fields to still
+  // match, so an update attempting to change them affects 0 rows -- indistinguishable from (and
+  // reported the same as) registrationId not existing at all.
   private static final String UPDATE_CORE_SQL =
       "UPDATE " + CORE_TABLE + " SET "
           + "name = ?, status = ?, token_ttl_sec = ?, description = ?, allow_headless_exchange = ?, "
-          + "updated_at = CURRENT_TIMESTAMP "
+          + "updated_at = ? "
           + "WHERE registration_id = ? AND actor_authority = ? AND actor_id = ?";
 
   private static final String DELETE_REGISTRATION_SQL =
@@ -310,9 +313,10 @@ class DelegationPolicyDatabase extends KnoxDatabase {
       }
       ps.setString(4, policy.getDescription());
       ps.setBoolean(5, policy.isAllowHeadlessExchange());
-      ps.setString(6, registrationId);
-      ps.setString(7, policy.getActorAuthority());
-      ps.setString(8, policy.getActorId());
+      ps.setTimestamp(6, Timestamp.from(Instant.now()));
+      ps.setString(7, registrationId);
+      ps.setString(8, policy.getActorAuthority());
+      ps.setString(9, policy.getActorId());
       return ps.executeUpdate();
     }
   }
