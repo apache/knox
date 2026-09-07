@@ -206,29 +206,41 @@ public class DelegationPolicyResource {
 
   @GET
   public Response list(@QueryParam("actorAuthority") String actorAuthority) {
+    final String filter = StringUtils.isBlank(actorAuthority) ? null : actorAuthority;
+    String outcome = ActionOutcome.FAILURE;
     try {
-      final String filter = StringUtils.isBlank(actorAuthority) ? null : actorAuthority;
       final DelegationPolicyList result = policyService.list(filter);
       final DelegationPolicyListResponse body = new DelegationPolicyListResponse();
       body.setPolicies(result.getPolicies().stream().map(DelegationPolicyResource::toResponse).collect(Collectors.toList()));
       body.setHasMore(result.hasMore());
+      outcome = ActionOutcome.SUCCESS;
       return Response.ok(writeJson(body)).build();
     } catch (RuntimeException e) {
       return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error", "Failed to list delegation policies");
+    } finally {
+      final String operatorId = getOperatorId();
+      auditor.audit(Action.ACCESS, filter != null ? filter : "ALL", ResourceType.DELEGATION_POLICY,
+          outcome, "event_type=policy_listed performed_by=" + auditLabel(operatorId));
     }
   }
 
   @GET
   @Path("/{registrationId}")
   public Response getOne(@PathParam("registrationId") String registrationId) {
+    String outcome = ActionOutcome.FAILURE;
     try {
       final Optional<DelegationPolicy> found = policyService.get(registrationId);
       if (!found.isPresent()) {
         return errorResponse(Response.Status.NOT_FOUND, "policy_not_found", "Delegation policy not found: " + registrationId);
       }
+      outcome = ActionOutcome.SUCCESS;
       return Response.ok(writeJson(toResponse(found.get()))).build();
     } catch (RuntimeException e) {
       return errorResponse(Response.Status.INTERNAL_SERVER_ERROR, "storage_error", "Failed to read delegation policy");
+    } finally {
+      final String operatorId = getOperatorId();
+      auditor.audit(Action.ACCESS, registrationId, ResourceType.DELEGATION_POLICY,
+          outcome, "event_type=policy_read performed_by=" + auditLabel(operatorId));
     }
   }
 

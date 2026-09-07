@@ -55,7 +55,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class DelegationPolicyResourceTest {
 
@@ -775,6 +774,7 @@ public class DelegationPolicyResourceTest {
     EasyMock.expect(mockService.list(null))
         .andReturn(new DelegationPolicyList(Collections.singletonList(existingPolicy(REGISTRATION_ID, Instant.now())), false))
         .once();
+    expectReadAudit("ALL", ActionOutcome.SUCCESS, "policy_listed");
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.list(null);
@@ -791,6 +791,7 @@ public class DelegationPolicyResourceTest {
     EasyMock.expect(mockService.list(ACTOR_AUTHORITY))
         .andReturn(new DelegationPolicyList(Collections.emptyList(), false))
         .once();
+    expectReadAudit(ACTOR_AUTHORITY, ActionOutcome.SUCCESS, "policy_listed");
     EasyMock.replay(mockService, mockAuditor);
 
     resource.list(ACTOR_AUTHORITY);
@@ -803,6 +804,7 @@ public class DelegationPolicyResourceTest {
     EasyMock.expect(mockService.list(null))
         .andReturn(new DelegationPolicyList(Collections.emptyList(), false))
         .once();
+    expectReadAudit("ALL", ActionOutcome.SUCCESS, "policy_listed");
     EasyMock.replay(mockService, mockAuditor);
 
     resource.list("");
@@ -815,6 +817,7 @@ public class DelegationPolicyResourceTest {
     EasyMock.expect(mockService.list(null))
         .andReturn(new DelegationPolicyList(Collections.emptyList(), false))
         .once();
+    expectReadAudit("ALL", ActionOutcome.SUCCESS, "policy_listed");
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.list(null);
@@ -831,6 +834,7 @@ public class DelegationPolicyResourceTest {
     EasyMock.expect(mockService.list(null))
         .andReturn(new DelegationPolicyList(Collections.emptyList(), true))
         .once();
+    expectReadAudit("ALL", ActionOutcome.SUCCESS, "policy_listed");
     EasyMock.replay(mockService, mockAuditor);
 
     final DelegationPolicyListResponse body = parseListResponse(resource.list(null));
@@ -842,6 +846,7 @@ public class DelegationPolicyResourceTest {
   @Test
   public void testListStorageFailure() {
     EasyMock.expect(mockService.list(null)).andThrow(new RuntimeException("DB error")).once();
+    expectReadAudit("ALL", ActionOutcome.FAILURE, "policy_listed");
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.list(null);
@@ -859,6 +864,7 @@ public class DelegationPolicyResourceTest {
   public void testGetOneFound() throws Exception {
     final DelegationPolicy stored = existingPolicy(REGISTRATION_ID, Instant.now());
     EasyMock.expect(mockService.get(REGISTRATION_ID)).andReturn(Optional.of(stored)).once();
+    expectReadAudit(REGISTRATION_ID, ActionOutcome.SUCCESS, "policy_read");
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.getOne(REGISTRATION_ID);
@@ -871,6 +877,7 @@ public class DelegationPolicyResourceTest {
   @Test
   public void testGetOneNotFound() {
     EasyMock.expect(mockService.get(REGISTRATION_ID)).andReturn(Optional.empty()).once();
+    expectReadAudit(REGISTRATION_ID, ActionOutcome.FAILURE, "policy_read");
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.getOne(REGISTRATION_ID);
@@ -883,6 +890,7 @@ public class DelegationPolicyResourceTest {
   @Test
   public void testGetOneStorageFailure() {
     EasyMock.expect(mockService.get(REGISTRATION_ID)).andThrow(new RuntimeException("DB error")).once();
+    expectReadAudit(REGISTRATION_ID, ActionOutcome.FAILURE, "policy_read");
     EasyMock.replay(mockService, mockAuditor);
 
     final Response response = resource.getOne(REGISTRATION_ID);
@@ -1271,12 +1279,20 @@ public class DelegationPolicyResourceTest {
   }
 
   private void expectAudit(String registrationId, String outcome, String eventType) {
+    expectAudit(Action.DELEGATION_LIFECYCLE, registrationId, outcome, eventType);
+  }
+
+  private void expectReadAudit(String id, String outcome, String eventType) {
+    expectAudit(Action.ACCESS, id, outcome, eventType);
+  }
+
+  private void expectAudit(String action, String registrationId, String outcome, String eventType) {
     mockAuditor.audit(
-        EasyMock.eq(Action.DELEGATION_LIFECYCLE),
-        EasyMock.eq(registrationId),
-        EasyMock.eq(ResourceType.DELEGATION_POLICY),
-        EasyMock.eq(outcome),
-        EasyMock.contains(eventType));
+            EasyMock.eq(action),
+            EasyMock.eq(registrationId),
+            EasyMock.eq(ResourceType.DELEGATION_POLICY),
+            EasyMock.eq(outcome),
+            EasyMock.contains(eventType));
     EasyMock.expectLastCall().once();
   }
 
