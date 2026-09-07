@@ -45,6 +45,7 @@ import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -149,6 +150,32 @@ public class PollingConfigurationAnalyzerTest {
     ChangeListener listener =
             doTestEvent(startEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
     assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * Test that a start event for a service type excluded from discovery via
+   * gateway.cloudera.manager.service.discovery.excluded.service.types is not treated as relevant, so it does not
+   * trigger an unnecessary re-discovery. This is the same scenario as {@link #testNewServiceStartEvent()} (absent
+   * baseline, which would otherwise be read as a "new service"), but with the service type excluded.
+   */
+  @Test
+  public void testExcludedServiceTypeStartEventIsNotRelevant() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster X";
+
+    // Simulate a service Start event for a service type that is excluded from discovery
+    ApiEvent startEvent = createApiEvent(clusterName,
+                                         NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                         NameNodeServiceModelGenerator.SERVICE,
+                                         PollingConfigurationAnalyzer.START_COMMAND,
+                                         PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    final ChangeListener listener = new ChangeListener();
+    final TestablePollingConfigAnalyzer pca = buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(),
+            listener, true, Collections.singleton(NameNodeServiceModelGenerator.SERVICE_TYPE));
+
+    doTestEvent(startEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
+    assertFalse("Excluded service type must not trigger a change notification", listener.wasNotified(address, clusterName));
   }
 
   /**
@@ -432,6 +459,49 @@ public class PollingConfigurationAnalyzerTest {
     doTestEventWithConfigChange(revisionEvent, clusterName);
   }
 
+  /**
+   * A down-scale (role deleted) event for a service type excluded from discovery via
+   * gateway.cloudera.manager.service.discovery.excluded.service.types must not be treated as relevant, so it does not
+   * trigger an unnecessary re-discovery. Counterpart of {@link #testNotificationSentAfterDownScaleEvent()} with the
+   * service type excluded.
+   */
+  @Test
+  public void testExcludedServiceTypeDownScaleEventIsNotRelevant() throws AliasServiceException {
+    doTestExcludedServiceTypeScaleEventIsNotRelevant(PollingConfigurationAnalyzer.EVENT_CODE_ROLE_DELETED);
+  }
+
+  /**
+   * An up-scale (role created) event for a service type excluded from discovery via
+   * gateway.cloudera.manager.service.discovery.excluded.service.types must not be treated as relevant, so it does not
+   * trigger an unnecessary re-discovery. Counterpart of {@link #testNotificationSentAfterUpScaleEvent()} with the
+   * service type excluded.
+   */
+  @Test
+  public void testExcludedServiceTypeUpScaleEventIsNotRelevant() throws AliasServiceException {
+    doTestExcludedServiceTypeScaleEventIsNotRelevant(PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED);
+  }
+
+  private void doTestExcludedServiceTypeScaleEventIsNotRelevant(final String eventCode) throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster T";
+
+    final List<ApiEventAttribute> revisionEventAttrs = new ArrayList<>();
+    revisionEventAttrs.add(createEventAttribute("CLUSTER", clusterName));
+    revisionEventAttrs.add(createEventAttribute("SERVICE_TYPE", HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("SERVICE", HiveOnTezServiceModelGenerator.SERVICE));
+    revisionEventAttrs.add(createEventAttribute("ROLE_TYPE", HiveOnTezServiceModelGenerator.ROLE_TYPE));
+    revisionEventAttrs.add(createEventAttribute("REVISION", "215"));
+    revisionEventAttrs.add(createEventAttribute("EVENTCODE", eventCode));
+    final ApiEvent revisionEvent = createApiEvent(ApiEventCategory.AUDIT_EVENT, revisionEventAttrs, null);
+
+    final ChangeListener listener = new ChangeListener();
+    final TestablePollingConfigAnalyzer pca = buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(),
+            listener, true, Collections.singleton(HiveOnTezServiceModelGenerator.SERVICE_TYPE));
+
+    doTestEvent(revisionEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
+    assertFalse("Excluded service type must not trigger a scale-event notification", listener.wasNotified(address, clusterName));
+  }
+
   @Test
   public void shouldNotPerformClusterConfigurationChangeMonitoringIfKnoxGatewayIsNotYetReady() throws AliasServiceException {
     final String address = "http://host1:1234";
@@ -516,9 +586,16 @@ public class PollingConfigurationAnalyzerTest {
 
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
       final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady) throws AliasServiceException {
+    return buildPollingConfigAnalyzer(address, clusterName, serviceConfigurationModels, listener, isKnoxGatewayReady, Collections.emptySet());
+  }
+
+  private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady,
+      Collection<String> excludedServiceTypes) throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(excludedServiceTypes).anyTimes();
     EasyMock.replay(gatewayConfig);
 
     // Mock the service discovery details

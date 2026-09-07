@@ -532,7 +532,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final boolean clusterRollingOrStalenessRestart = CM_SERVICE.equals(service) && CM_SERVICE_TYPE.equals(serviceType)
             && (ROLLING_RESTART_COMMAND.equals(command) || RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND.equals(command));
     final boolean relevant = (clusterRollingOrStalenessRestart && SUCCEEDED_STATUS.equals(status))
-            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists);
+            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists && !isExcludedServiceType(serviceType));
     log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists, clusterRollingOrStalenessRestart);
     return relevant;
   }
@@ -542,10 +542,31 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
     final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
-    final boolean relevant = serviceModelGeneratorExists &&
+    final boolean relevant = serviceModelGeneratorExists && !isExcludedServiceType(serviceType) &&
             (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
     log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, relevant);
     return relevant;
+  }
+
+  /**
+   * Determine whether the given CM service type is configured to be excluded from CM service discovery via
+   * {@code gateway.cloudera.manager.service.discovery.excluded.service.types}. Excluded service types are never
+   * discovered (see ClouderaManagerServiceDiscovery#getClusterServices), so their configuration is never present in
+   * the monitored baseline. Treating their start/scale events as relevant would otherwise cause the analyzer to see a
+   * missing baseline and trigger an unnecessary re-discovery on every restart of such a service.
+   *
+   * @param serviceType the CM service type from an audit event
+   * @return true if the service type is excluded from discovery; false otherwise
+   */
+  private boolean isExcludedServiceType(final String serviceType) {
+    if (serviceType == null) {
+      return false;
+    }
+    final Collection<String> excludedServiceTypes = gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes();
+    if (excludedServiceTypes == null || excludedServiceTypes.isEmpty()) {
+      return false;
+    }
+    return excludedServiceTypes.stream().anyMatch(serviceType::equalsIgnoreCase);
   }
 
   @SuppressWarnings("unchecked")
