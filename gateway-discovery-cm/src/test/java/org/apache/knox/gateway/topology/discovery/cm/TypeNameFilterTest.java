@@ -69,4 +69,41 @@ public class TypeNameFilterTest {
         assertThat("Should exclude exact match", filter.isExcluded("HIVESERVER2"), is(true));
     }
 
+    @Test
+    public void testRequiredTypeIsNotExcluded() {
+        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), Collections.singleton("HIVESERVER2"));
+        assertThat("Required type should not be excluded", filter.isExcluded("HIVESERVER2"), is(false));
+    }
+
+    @Test
+    public void testNonRequiredTypeIsExcludedWhenAllowListNonEmpty() {
+        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), Collections.singleton("HIVESERVER2"));
+        assertThat("Type absent from a non-empty allow-list should be excluded", filter.isExcluded("DATANODE"), is(true));
+    }
+
+    @Test
+    public void testEmptyRequiredTypesAppliesNoAllowListRestriction() {
+        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), Collections.emptySet());
+        assertThat("Empty allow-list should not exclude anything", filter.isExcluded("DATANODE"), is(false));
+    }
+
+    @Test
+    public void testNullRequiredTypesAppliesNoAllowListRestriction() {
+        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), null);
+        assertThat("Null allow-list should not exclude anything", filter.isExcluded("DATANODE"), is(false));
+    }
+
+    @Test
+    public void testRequiredTypeMatchIsCaseInsensitive() {
+        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), Collections.singleton("HiveServer2"));
+        assertThat("Required type match should be case-insensitive", filter.isExcluded("HIVESERVER2"), is(false));
+    }
+
+    @Test
+    public void testExcludedTypeWinsOverAllowList() {
+        TypeNameFilter filter =
+                new TypeNameFilter(Collections.singleton("HIVESERVER2"), Collections.singleton("HIVESERVER2"));
+        assertThat("Deny-list should take precedence over allow-list", filter.isExcluded("HIVESERVER2"), is(true));
+    }
+
 }

@@ -22,6 +22,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.util.Collection;
+import java.util.Set;
 
 import static org.apache.knox.gateway.config.GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE;
 import static org.apache.knox.gateway.config.GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_SERVICE;
@@ -78,7 +79,8 @@ public class ServiceRoleCollectorBuilder {
             String fetchStrategy = gatewayConfig.getClouderaManagerServiceDiscoveryRoleFetchStrategy();
             long pageSize = gatewayConfig.getClouderaManagerServiceDiscoveryRoleConfigPageSize();
             Collection<String> excludedRoleTypes = gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes();
-            TypeNameFilter roleTypeNameFilter = new TypeNameFilter(excludedRoleTypes);
+            Set<String> requiredRoleTypes = ServiceModelGeneratorsHolder.getInstance().getAllRoleTypes();
+            TypeNameFilter roleTypeNameFilter = new TypeNameFilter(excludedRoleTypes, requiredRoleTypes);
             String clientBasePath = rolesResourceApi.getApiClient().getBasePath();
 
             if (CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE.equals(fetchStrategy)) {
