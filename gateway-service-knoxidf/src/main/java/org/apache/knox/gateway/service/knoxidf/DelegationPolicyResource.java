@@ -27,7 +27,6 @@ import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
-import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicy;
@@ -67,6 +66,11 @@ public class DelegationPolicyResource {
 
   static final String RESOURCE_PATH = "knoxidf/admin/v1/delegation-policies";
 
+  static final String MIN_TOKEN_TTL_SEC_PARAM = "knox.delegation.min.token.ttl.sec";
+  static final String MAX_TOKEN_TTL_SEC_PARAM = "knox.delegation.max.token.ttl.sec";
+  static final int DEFAULT_MIN_TOKEN_TTL_SEC = 60;      // 1 minute
+  static final int DEFAULT_MAX_TOKEN_TTL_SEC = 86400;   // 24 hours
+
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .registerModule(new JavaTimeModule())
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -84,8 +88,8 @@ public class DelegationPolicyResource {
 
   private DelegationPolicyService policyService;
 
-  private int minTokenTtlSec = GatewayConfig.DELEGATION_SERVICE_MIN_TOKEN_TTL_SEC_DEFAULT;
-  private int maxTokenTtlSec = GatewayConfig.DELEGATION_SERVICE_MAX_TOKEN_TTL_SEC_DEFAULT;
+  private int minTokenTtlSec =  DEFAULT_MIN_TOKEN_TTL_SEC;
+  private int maxTokenTtlSec =   DEFAULT_MAX_TOKEN_TTL_SEC;
 
   @PostConstruct
   public void init() {
@@ -93,11 +97,32 @@ public class DelegationPolicyResource {
         servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     policyService = services.getService(ServiceType.DELEGATION_POLICY_SERVICE);
 
-    final GatewayConfig config = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-    if (config != null) {
-      minTokenTtlSec = config.getDelegationServiceMinTokenTtlSec();
-      maxTokenTtlSec = config.getDelegationServiceMaxTokenTtlSec();
+    minTokenTtlSec = readPositiveIntParam(MIN_TOKEN_TTL_SEC_PARAM, DEFAULT_MIN_TOKEN_TTL_SEC);
+    maxTokenTtlSec = readPositiveIntParam(MAX_TOKEN_TTL_SEC_PARAM, DEFAULT_MAX_TOKEN_TTL_SEC);
+    if (minTokenTtlSec > maxTokenTtlSec) {
+      throw new IllegalStateException("Invalid delegation policy TTL bounds: "
+          + MIN_TOKEN_TTL_SEC_PARAM + " (" + minTokenTtlSec + ") must not exceed "
+          + MAX_TOKEN_TTL_SEC_PARAM + " (" + maxTokenTtlSec + ")");
     }
+  }
+
+  private int readPositiveIntParam(String paramName, int defaultValue) {
+    final String raw = servletContext.getInitParameter(paramName);
+    if (StringUtils.isBlank(raw)) {
+      return defaultValue;
+    }
+    final int value;
+    try {
+      value = Integer.parseInt(raw.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalStateException("Invalid value for " + paramName + ": \"" + raw
+          + "\" is not an integer");
+    }
+    if (value <= 0) {
+      throw new IllegalStateException("Invalid value for " + paramName + ": " + value
+          + " must be a positive number of seconds");
+    }
+    return value;
   }
 
   @POST
