@@ -85,4 +85,12 @@ public class EmptyDelegationPolicyService implements DelegationPolicyService {
   public PolicyDecision evaluate(PolicyCheckRequest request) {
     return new PolicyDecision("service_not_configured", 0);
   }
+
+  @Override
+  public int getConfiguredTokenTtlSec() {
+    // This stub is only in play when the service role is not deployed (so the admin API is not
+    // deployed either). Return the gateway-config default so any bounds check still sees an
+    // in-range value rather than 0.
+    return GatewayConfig.DELEGATION_SERVICE_TOKEN_TTL_SEC_DEFAULT;
+  }
 }

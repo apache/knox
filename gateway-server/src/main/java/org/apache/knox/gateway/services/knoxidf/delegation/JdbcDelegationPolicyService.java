@@ -205,6 +205,11 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   }
 
   @Override
+  public int getConfiguredTokenTtlSec() {
+    return configuredKnoxTokenTtlSec;
+  }
+
+  @Override
   public PolicyDecision evaluate(PolicyCheckRequest request) {
     // Step 1: look up registration
     final Optional<DelegationPolicy> policyOpt = findByActor(request.getActorAuthority(), request.getActorId());

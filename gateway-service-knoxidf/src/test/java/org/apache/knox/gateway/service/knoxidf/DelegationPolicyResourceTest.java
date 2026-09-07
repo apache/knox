@@ -1186,6 +1186,7 @@ public class DelegationPolicyResourceTest {
   @Test
   public void testInitWiresServiceFromGatewayServices() throws Exception {
     final DelegationPolicyService svc = EasyMock.createNiceMock(DelegationPolicyService.class);
+    EasyMock.expect(svc.getConfiguredTokenTtlSec()).andReturn(3600).anyTimes();
     EasyMock.replay(svc);
 
     final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
@@ -1229,8 +1230,20 @@ public class DelegationPolicyResourceTest {
       initResourceWithBounds("7200", "120");
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void testInitRejectsConfiguredDefaultOutsideBounds() throws Exception {
+    // Default bounds are [60, 86400]; a gateway-wide default above max would let policies without
+    // an explicit tokenTtlSec yield an out-of-range effective TTL, so init() must fail fast.
+    initResource(null, null, 100000);
+  }
+
   private DelegationPolicyResource initResourceWithBounds(String min, String max) throws Exception {
+    return initResource(min, max, 3600);
+  }
+
+  private DelegationPolicyResource initResource(String min, String max, int configuredDefault) throws Exception {
     final DelegationPolicyService svc = EasyMock.createNiceMock(DelegationPolicyService.class);
+    EasyMock.expect(svc.getConfiguredTokenTtlSec()).andReturn(configuredDefault).anyTimes();
     EasyMock.replay(svc);
 
     final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);

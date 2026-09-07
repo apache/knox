@@ -80,4 +80,13 @@ public interface DelegationPolicyService extends Service {
   DelegationPolicyList list(String actorAuthorityFilter);
 
   PolicyDecision evaluate(PolicyCheckRequest request);
+
+  /**
+   * @return the gateway-wide default token TTL (seconds) that {@link #evaluate} applies when a
+   *     policy does not pin its own tokenTtlSec. Exposed so the admin API can validate this
+   *     fallback against its configured [min, max] bounds at startup and fail fast on an
+   *     out-of-range value -- otherwise policies stored without an explicit tokenTtlSec would
+   *     yield an effective TTL outside the range the API enforces for explicit values.
+   */
+  int getConfiguredTokenTtlSec();
 }

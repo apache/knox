@@ -96,13 +96,24 @@ public class DelegationPolicyResource {
     final GatewayServices services = (GatewayServices)
         servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     policyService = services.getService(ServiceType.DELEGATION_POLICY_SERVICE);
+    configureTtlBounds();
+  }
 
+  private void configureTtlBounds() {
     minTokenTtlSec = readPositiveIntParam(MIN_TOKEN_TTL_SEC_PARAM, DEFAULT_MIN_TOKEN_TTL_SEC);
     maxTokenTtlSec = readPositiveIntParam(MAX_TOKEN_TTL_SEC_PARAM, DEFAULT_MAX_TOKEN_TTL_SEC);
     if (minTokenTtlSec > maxTokenTtlSec) {
       throw new IllegalStateException("Invalid delegation policy TTL bounds: "
-          + MIN_TOKEN_TTL_SEC_PARAM + " (" + minTokenTtlSec + ") must not exceed "
-          + MAX_TOKEN_TTL_SEC_PARAM + " (" + maxTokenTtlSec + ")");
+              + MIN_TOKEN_TTL_SEC_PARAM + " (" + minTokenTtlSec + ") must not exceed "
+              + MAX_TOKEN_TTL_SEC_PARAM + " (" + maxTokenTtlSec + ")");
+    }
+
+    final int configuredDefaultTtlSec = policyService.getConfiguredTokenTtlSec();
+    if (configuredDefaultTtlSec < minTokenTtlSec || configuredDefaultTtlSec > maxTokenTtlSec) {
+      throw new IllegalStateException("Configured default delegation token TTL ("
+              + configuredDefaultTtlSec + "s) is outside the enforced bounds [" + minTokenTtlSec + ", "
+              + maxTokenTtlSec + "]; policies without an explicit tokenTtlSec would receive an "
+              + "out-of-range effective TTL");
     }
   }
 
