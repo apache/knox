@@ -34,6 +34,7 @@ import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator;
 import org.apache.knox.gateway.util.TruststorePasswordSetter;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -177,6 +178,32 @@ public class PollingConfigurationAnalyzerTest {
     ChangeListener listener =
             doTestEvent(startEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
     assertFalse("Invalid-and-still-invalid service must not trigger discovery", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * A service that had a valid baseline but now produces no model (e.g. HiveServer2 transport mode changed to binary)
+   * must trigger re-discovery so it is dropped from the affected topologies.
+   */
+  @Test
+  public void testValidServiceBecameInvalidTriggers() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster BI";
+
+    ApiEvent startEvent = createApiEvent(clusterName,
+                                         NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                         NameNodeServiceModelGenerator.SERVICE,
+                                         PollingConfigurationAnalyzer.START_COMMAND,
+                                         PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    // Baseline has a valid service; no current model is stubbed -> current is null (became invalid).
+    final Map<String, ServiceConfigurationModel> baseline = new HashMap<>();
+    final ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+    baseline.put(NameNodeServiceModelGenerator.SERVICE_TYPE, nnModel);
+
+    ChangeListener listener =
+            doTestEvent(startEvent, address, clusterName, baseline, Collections.emptyMap());
+    assertTrue("A service that became invalid must trigger re-discovery", listener.wasNotified(address, clusterName));
   }
 
   /**
@@ -547,6 +574,131 @@ public class PollingConfigurationAnalyzerTest {
     listener.clearNotification();
     doTestEvent(rollingRestartEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
     assertFalse("Unexpected change notification", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * A start event for a service type that no deployed descriptor references must not be relevant, even though a
+   * generator exists and a (valid) current model would otherwise be discovered.
+   */
+  @Test
+  public void testUnreferencedServiceStartEventIsNotRelevant() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster REF1";
+
+    ApiEvent solrStart = createApiEvent(clusterName, SolrServiceModelGenerator.SERVICE_TYPE,
+        SolrServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+    ServiceConfigurationModel solrModel = new ServiceConfigurationModel();
+    solrModel.addRoleProperty(SolrServiceModelGenerator.ROLE_TYPE, "solr_http_port", "8983");
+
+    // Descriptor references NAMENODE only -> a SOLR event is not relevant.
+    boolean notified = runReferenceAwareScenario(address, clusterName, NameNodeServiceModelGenerator.SERVICE,
+        solrStart, SolrServiceModelGenerator.SERVICE, solrModel);
+    assertFalse("An event for a service no descriptor references must not trigger discovery", notified);
+  }
+
+  /**
+   * A start event for a service type a deployed descriptor references is relevant and (as a new/now-valid service)
+   * triggers re-discovery.
+   */
+  @Test
+  public void testReferencedServiceStartEventIsRelevant() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster REF2";
+
+    ApiEvent nnStart = createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+    ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+
+    boolean notified = runReferenceAwareScenario(address, clusterName, NameNodeServiceModelGenerator.SERVICE,
+        nnStart, NameNodeServiceModelGenerator.SERVICE, nnModel);
+    assertTrue("An event for a referenced service must trigger discovery", notified);
+  }
+
+  private boolean runReferenceAwareScenario(final String address, final String clusterName,
+      final String descriptorServiceName, final ApiEvent event, final String currentServiceName,
+      final ServiceConfigurationModel currentModel) throws AliasServiceException {
+    final String descContent =
+        "{\n" +
+        "  \"discovery-type\": \"ClouderaManager\",\n" +
+        "  \"discovery-address\": \"" + address + "\",\n" +
+        "  \"cluster\": \"" + clusterName + "\",\n" +
+        "  \"provider-config-ref\": \"ldap\",\n" +
+        "  \"services\": [\n" +
+        "    {\n" +
+        "      \"name\": \"" + descriptorServiceName + "\"\n" +
+        "    }\n" +
+        "  ]\n" +
+        "}";
+
+    File descriptor = null;
+    try {
+      descriptor = File.createTempFile("test", ".json");
+      FileUtils.writeStringToFile(descriptor, descContent, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
+    ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
+    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
+    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
+    EasyMock.expect(sdc.getPasswordAlias()).andReturn("a").anyTimes();
+    EasyMock.replay(sdc);
+
+    final ClusterConfigurationCache configCache = new ClusterConfigurationCache();
+    configCache.addDiscoveryConfig(sdc);
+    // Register the cluster with an empty baseline so the monitor iterates it (getClusterNames is driven by the
+    // service-configuration cache); the event's service type is intentionally absent from the baseline.
+    configCache.addServiceConfiguration(address, clusterName, new HashMap<>());
+
+    TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
+    EasyMock.expect(ts.getDescriptors()).andReturn(Collections.singletonList(descriptor)).anyTimes();
+
+    final GatewayStatusService gatewayStatusService = EasyMock.createNiceMock(GatewayStatusService.class);
+    EasyMock.expect(gatewayStatusService.status()).andReturn(Boolean.TRUE).anyTimes();
+
+    GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+    EasyMock.expect(gws.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(gatewayStatusService).anyTimes();
+    EasyMock.replay(ts, gatewayStatusService, gws);
+
+    AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(TruststorePasswordSetter.TRUSTSTORE_PASSWORD_ALIAS)).andReturn(null).anyTimes();
+    EasyMock.replay(aliasService);
+
+    final ChangeListener listener = new ChangeListener();
+    try {
+      setGatewayServices(gws);
+
+      TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache, aliasService, listener);
+      pca.setInterval(5);
+      if (currentServiceName != null) {
+        pca.addCurrentServiceConfigModel(address, clusterName, currentServiceName, currentModel);
+      }
+      pca.addRestartEvent(clusterName, event);
+
+      ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
+      pollingThreadExecutor.execute(pca);
+      pollingThreadExecutor.shutdown();
+      try {
+        pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        //
+      }
+      pca.stop();
+    } finally {
+      setGatewayServices(null);
+      if (descriptor != null && descriptor.exists()) {
+        descriptor.deleteOnExit();
+      }
+    }
+    return listener.wasNotified(address, clusterName);
   }
 
   private void doTestStartEvent(final ApiEventCategory category) {

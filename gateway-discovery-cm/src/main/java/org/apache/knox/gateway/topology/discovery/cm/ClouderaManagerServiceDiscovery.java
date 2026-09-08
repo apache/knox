@@ -279,19 +279,25 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     ClouderaManagerCluster cluster = new ClouderaManagerCluster(clusterName);
     cluster.addServiceModels(serviceModels);
+    // Record the CM service types this discovery was responsible for, so the configuration monitor can scope-replace
+    // the persisted baseline instead of overwriting it. An empty includedServices means "discover everything", which
+    // maps to a null scope (full replace).
+    cluster.setInScopeServiceTypes(
+        (includedServices == null || includedServices.isEmpty())
+            ? null
+            : ServiceModelGeneratorsHolder.getInstance().getServiceTypesForServices(includedServices));
     log.discoveredCluster(clusterName);
     return cluster;
   }
 
-  @SuppressWarnings("PMD.UnusedFormalParameter")
   private Set<ServiceModel> discoverService(DiscoveryApiClient client, String clusterName, Collection<String> includedServices,
                                             ApiService service, ServicesResourceApi servicesResourceApi,
                                             ServiceRoleCollector roleCollector, ApiServiceConfig coreSettingsConfig) throws ApiException {
-    //final List<ServiceModelGenerator> modelGenerators = ServiceModelGeneratorsHolder.getInstance().getServiceModelGenerators(service.getType());
-    //if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
-      //log.skipServiceDiscovery(service.getName(), service.getType());
-      //continue;
-    //}
+    final List<ServiceModelGenerator> modelGenerators = ServiceModelGeneratorsHolder.getInstance().getServiceModelGenerators(service.getType());
+    if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
+      log.skipServiceDiscovery(service.getName(), service.getType());
+      return Collections.emptySet();
+    }
     log.discoveringService(service.getName(), service.getType());
     ApiServiceConfig serviceConfig = null;
     /* no reason to check service config for CM or CORE_SETTINGS services */
@@ -319,7 +325,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return null;
   }
 
-  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private boolean shouldSkipServiceDiscovery(List<ServiceModelGenerator> modelGenerators, Collection<String> includedServices) {
     if (includedServices == null || includedServices.isEmpty()) {
       // per the contract of org.apache.knox.gateway.topology.discovery.ServiceDiscovery.discover(GatewayConfig, ServiceDiscoveryConfig, String, Collection<String>):

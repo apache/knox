@@ -18,12 +18,15 @@ package org.apache.knox.gateway.topology.discovery.cm;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertTrue;
 
 public class ServiceModelGeneratorsHolderTest {
 
@@ -45,6 +48,20 @@ public class ServiceModelGeneratorsHolderTest {
     @Test(expected = UnsupportedOperationException.class)
     public void testGetAllRoleTypesIsUnmodifiable() {
         ServiceModelGeneratorsHolder.getInstance().getAllRoleTypes().add("SOME_ROLE_TYPE");
+    }
+
+    @Test
+    public void testGetServiceTypesForServicesMapsKnoxNamesToCmTypes() {
+        Set<String> serviceTypes =
+                ServiceModelGeneratorsHolder.getInstance().getServiceTypesForServices(Arrays.asList("SOLR", "NAMENODE"));
+        assertThat("Knox service names should map to their CM service types",
+                serviceTypes, hasItems("SOLR", "HDFS"));
+    }
+
+    @Test
+    public void testGetServiceTypesForUnknownServiceIsEmpty() {
+        assertTrue("An unknown Knox service maps to no CM service type",
+                ServiceModelGeneratorsHolder.getInstance().getServiceTypesForServices(Collections.singletonList("NO_SUCH_SERVICE")).isEmpty());
     }
 
 }
