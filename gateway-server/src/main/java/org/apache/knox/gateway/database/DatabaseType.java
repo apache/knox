@@ -48,16 +48,6 @@ public enum DatabaseType {
             AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
             AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL
     ),
-    HSQL("hsql",
-            AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOX_PROVIDERS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOX_DESCRIPTORS_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
-            AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
-            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL
-    ),
     H2("h2",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.TOKEN_METADATA_TABLE_CREATE_SQL_FILE_NAME,

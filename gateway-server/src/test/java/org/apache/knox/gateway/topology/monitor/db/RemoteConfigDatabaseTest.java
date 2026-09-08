@@ -27,7 +27,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-import org.hsqldb.jdbc.JDBCDataSource;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -35,24 +35,23 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RemoteConfigDatabaseTest {
-  public static final String DB_NAME = "remote_config_test";
   public static final String USER = "sa";
   public static final String PASSWORD = "";
-  private static JDBCDataSource dataSource;
+  private static JdbcDataSource dataSource;
   private RemoteConfigDatabase db;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    dataSource = new JDBCDataSource();
-    dataSource.setDatabaseName(DB_NAME);
+    dataSource = new JdbcDataSource();
     dataSource.setUser(USER);
     dataSource.setPassword(PASSWORD);
-    dataSource.setUrl("jdbc:hsqldb:mem:knox;sql.syntax_pgs=true"); // sql.syntax_pgs => use postgres syntax
+    // In-memory H2; DB_CLOSE_DELAY=-1 keeps the database alive across connection open/close for the class.
+    dataSource.setUrl("jdbc:h2:mem:knox;DB_CLOSE_DELAY=-1");
   }
 
   @Before
   public void setUp() throws Exception {
-    db = new RemoteConfigDatabase(dataSource, "hsql");
+    db = new RemoteConfigDatabase(dataSource, "h2");
   }
 
   @After

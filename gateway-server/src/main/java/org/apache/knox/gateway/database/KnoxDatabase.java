@@ -32,7 +32,7 @@ public class KnoxDatabase {
 
     // Matches the leading "CREATE TABLE [IF NOT EXISTS] <name>" of a DDL statement so the table name
     // can be handed to the existence check. Case-insensitive; tolerates the IF NOT EXISTS that the
-    // standard (PostgreSQL/MySQL/HSQL) scripts use but Derby and Oracle omit.
+    // standard (PostgreSQL/MySQL/H2) scripts use but Oracle omit.
     private static final Pattern CREATE_TABLE_PATTERN =
         Pattern.compile("(?i)^\\s*CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?([\\w.]+)");
 

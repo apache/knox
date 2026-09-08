@@ -65,8 +65,10 @@ public class JDBCTokenStateServiceTest {
 
   @ClassRule
   public static final TemporaryFolder testFolder = new TemporaryFolder();
-  public static final String CONNECTION_URL = "jdbc:hsqldb:mem:knox;ifexists=false";
-  public static final String DB_NAME = "knox";
+  public static final String CONNECTION_URL = "jdbc:h2:mem:knox;DB_CLOSE_DELAY=-1";
+  // H2DataSourceFactory builds the URL as "jdbc:h2:" + getDatabaseName(), so the database name
+  // carries the in-memory location and flags to produce the same URL the test opens directly above.
+  public static final String DB_NAME = "mem:knox;DB_CLOSE_DELAY=-1";
   private static JDBCTokenStateService jdbcTokenStateService;
   private static TokenMAC tokenMAC;
 
@@ -74,7 +76,7 @@ public class JDBCTokenStateServiceTest {
   @BeforeClass
   public static void setUp() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.HSQL.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn(CONNECTION_URL).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(DB_NAME).anyTimes();
     final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);

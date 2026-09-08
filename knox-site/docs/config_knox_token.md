@@ -408,7 +408,7 @@ The second option involves a newly created Knox CLI command called `generate-jwk
 There was an important step the Knox team made to provide more flexibility for our end-users: there are some internal service implementations in Knox that were hard-coded in the Java source code. One of those services is the `Token State` service implementation which you can change in gateway-site.xml going forward by setting the `gateway.service.tokenstate.impl` property to any of:
 
 1.  `org.apache.knox.gateway.services.token.impl.DefaultTokenStateService` - keeps all token information in memory, therefore all of this information is lost when Knox is shut down
-2.  `org.apache.knox.gateway.services.token.impl.JDBCTokenStateService` - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. The following database types are supported: PostgreSQL, MySQL, MariaDB, Oracle, H2 and HSQL.
+2.  `org.apache.knox.gateway.services.token.impl.JDBCTokenStateService` - stores token information in relational databases. It's not only durable, but it's perfectly fine with HA deployments. The following database types are supported: PostgreSQL, MySQL, MariaDB, Oracle and H2.
 3.  `org.apache.knox.gateway.services.token.impl.H2DBTokenStateService` - a specialization of `JDBCTokenStateService` backed by an embedded H2 database that Knox provisions and manages automatically under the gateway security directory (`$KNOX_DATA_DIR/security`). It provides durable token storage without any external database setup and is the __default__ implementation when `gateway.service.tokenstate.impl` is not set. If the embedded H2 database cannot be initialized Knox falls back to `DefaultTokenStateService`. Optional at-rest encryption is available via the `gateway.database.h2.encryption.*` properties (see the KnoxIDF [Embedded database encryption](knoxidf/configuration.md#embedded-database-encryption) section). The previously-shipped embedded Apache Derby backend (`DerbyDBTokenStateService`, `gateway.database.type=derbydb`) has been removed — the Derby driver is no longer bundled with Knox; see [Migrating from Derby to H2](knoxidf/configuration.md#migrating-from-derby-to-h2).
 
 ##### Configuring the JDBC token state service
@@ -418,7 +418,7 @@ If you want to use the newly implemented database token management, you’ve to 
 Now, that you have configured your token state backend, you need to configure a valid database in _gateway-site.xml_. There are two ways to do that:
 
 1.  You either declare database connection properties one-by-one:  
-    `gateway.database.type` - should be set to `postgresql`, `mysql`, `mariadb`, `oracle`, `h2` or `hsql`  
+    `gateway.database.type` - should be set to `postgresql`, `mysql`, `mariadb`, `oracle` or `h2`  
     `gateway.database.host` - the host where your DB server is running  
     `gateway.database.port` - the port that your DB server is listening on  
     `gateway.database.name` - the name of the database you are connecting to (for Oracle, this is the service name)
@@ -432,7 +432,7 @@ If your database requires user/password authentication, the following aliases mu
 
 ###### Database SSL
 
-SSL connections to the database are supported for PostgreSQL, MySQL and Oracle. MariaDB, H2 and HSQL do not honor the `gateway.database.ssl.*` properties. SSL is enabled per gateway by setting:
+SSL connections to the database are supported for PostgreSQL, MySQL and Oracle. MariaDB and H2 do not honor the `gateway.database.ssl.*` properties. SSL is enabled per gateway by setting:
 
 *   `gateway.database.ssl.enabled` - set to `true` to enable SSL
 *   `gateway.database.ssl.verify.server.cert` - set to `true` to verify the server certificate against a local truststore
@@ -443,7 +443,7 @@ If the truststore is password-protected, store the password in the Knox Gateway'
 
 ###### Provided JDBC drivers
 
-The MySQL and Oracle JDBC drivers are declared as __provided__ Maven dependencies and are __not__ shipped with the Knox distribution (due to licensing). To enable MySQL or Oracle support, download the matching driver jar (`mysql-connector-java*.jar` or `ojdbc11.jar`) and drop it into the `$KNOX_HOME/ext` directory before starting the gateway. PostgreSQL, MariaDB, H2 and HSQL drivers are bundled with Knox and require no extra steps.
+The MySQL and Oracle JDBC drivers are declared as __provided__ Maven dependencies and are __not__ shipped with the Knox distribution (due to licensing). To enable MySQL or Oracle support, download the matching driver jar (`mysql-connector-java*.jar` or `ojdbc11.jar`) and drop it into the `$KNOX_HOME/ext` directory before starting the gateway. PostgreSQL, MariaDB and H2 drivers are bundled with Knox and require no extra steps.
 
 ###### Migrating tokens from a legacy embedded Derby database
 

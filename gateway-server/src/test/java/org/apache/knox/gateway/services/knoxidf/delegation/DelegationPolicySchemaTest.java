@@ -18,6 +18,7 @@ package org.apache.knox.gateway.services.knoxidf.delegation;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.knox.gateway.database.AbstractDataSourceFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,31 +47,36 @@ public class DelegationPolicySchemaTest {
   private static final String H2_DB = "delegationpolicies";
   // H2 is the OOTB embedded backend; DB_CLOSE_DELAY=-1 keeps the in-memory database alive for the class.
   private static final String H2_URL = "jdbc:h2:mem:" + H2_DB + ";DB_CLOSE_DELAY=-1";
-  private static final String HSQL_URL = "jdbc:hsqldb:mem:delegationschema;ifexists=false";
-  private static final String HSQL_USER = "SA";
-  private static final String HSQL_PASSWORD = "";
+
+  // Child-first so the foreign keys don't block the truncation between tests.
+  private static final String[] TABLES_CHILD_FIRST = {
+      "DELEGATION_POLICY_RESOURCE_SCOPES", "DELEGATION_POLICY_RESOURCES",
+      "DELEGATION_POLICY_GROUPS", "DELEGATION_POLICY_USERS", "DELEGATION_POLICIES"};
 
   private static Connection h2Conn;
-  private static Connection hsqlConn;
 
   @BeforeClass
   public static void setUp() throws Exception {
     h2Conn = DriverManager.getConnection(H2_URL);
-    hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
     // H2 (the OOTB embedded backend) uses the standard DDL script; IF NOT EXISTS makes it idempotent.
     runScript(h2Conn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
-    // Run standard DDL on HSQLDB
-    runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
     // Verify Oracle DDL script is present on the classpath (execution requires an Oracle-backed test)
     loadSql(AbstractDataSourceFactory.ORACLE_KNOXIDF_DELEGATION_POLICY_TABLES_SQL);
   }
 
+  @After
+  public void clearTables() throws Exception {
+    // Reset mutable state so each test starts clean regardless of JUnit method order (notably the
+    // "empty after DDL" assertion in testAllFiveTablesQueryable).
+    try (Statement stmt = h2Conn.createStatement()) {
+      for (String table : TABLES_CHILD_FIRST) {
+        stmt.execute("DELETE FROM " + table);
+      }
+    }
+  }
+
   @AfterClass
   public static void tearDown() throws Exception {
-    try (Connection conn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
-         Statement stmt = conn.createStatement()) {
-      stmt.execute("SHUTDOWN");
-    }
     if (h2Conn != null && !h2Conn.isClosed()) {
       try (Statement stmt = h2Conn.createStatement()) {
         stmt.execute("DROP ALL OBJECTS");
@@ -80,7 +86,7 @@ public class DelegationPolicySchemaTest {
   }
 
   @Test
-  public void testH2AllFiveTablesQueryable() throws Exception {
+  public void testAllFiveTablesQueryable() throws Exception {
     for (String table : new String[]{
         "DELEGATION_POLICIES", "DELEGATION_POLICY_USERS", "DELEGATION_POLICY_GROUPS",
         "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES"}) {
@@ -93,28 +99,15 @@ public class DelegationPolicySchemaTest {
   }
 
   @Test
-  public void testHsqlAllFiveTablesQueryable() throws Exception {
-    for (String table : new String[]{
-        "DELEGATION_POLICIES", "DELEGATION_POLICY_USERS", "DELEGATION_POLICY_GROUPS",
-        "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES"}) {
-      try (Statement stmt = hsqlConn.createStatement();
-           ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + table)) {
-        assertTrue("Table must be queryable: " + table, rs.next());
-        assertEquals("Table must be empty after DDL: " + table, 0, rs.getInt(1));
-      }
-    }
-  }
-
-  @Test
-  public void testHsqlStandardSqlIdempotent() throws Exception {
+  public void testStandardSqlIdempotent() throws Exception {
     // Running the script twice must not throw due to IF NOT EXISTS
-    runScript(hsqlConn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
+    runScript(h2Conn, loadSql(AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL));
   }
 
   @Test
   public void testDefaultValues() throws Exception {
     final String id = UUID.randomUUID().toString();
-    try (Statement stmt = hsqlConn.createStatement()) {
+    try (Statement stmt = h2Conn.createStatement()) {
       stmt.execute("INSERT INTO DELEGATION_POLICIES "
           + "(registration_id, actor_authority, actor_id, created_at, updated_at) "
           + "VALUES ('" + id + "', 'oidc', 'actor-id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
@@ -131,21 +124,21 @@ public class DelegationPolicySchemaTest {
 
   @Test
   public void testNotNullViolationActorAuthority() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
             + "VALUES ('" + UUID.randomUUID() + "', NULL, 'actor-id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
   }
 
   @Test
   public void testNotNullViolationActorId() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
             + "VALUES ('" + UUID.randomUUID() + "', 'oidc', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
   }
 
   @Test
   public void testNotNullViolationCreatedAt() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
             + "VALUES ('" + UUID.randomUUID() + "', 'oidc', 'actor-id', NULL, CURRENT_TIMESTAMP)");
   }
@@ -154,10 +147,10 @@ public class DelegationPolicySchemaTest {
   public void testUniqueConstraintOnActorAuthorityAndId() throws Exception {
     final String id1 = UUID.randomUUID().toString();
     final String id2 = UUID.randomUUID().toString();
-    try (Statement stmt = hsqlConn.createStatement()) {
+    try (Statement stmt = h2Conn.createStatement()) {
       stmt.execute("INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
           + "VALUES ('" + id1 + "', 'oidc', 'duplicateactor', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-      expectConstraintViolation(hsqlConn,
+      expectConstraintViolation(h2Conn,
           "INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
               + "VALUES ('" + id2 + "', 'oidc', 'duplicateactor', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
     }
@@ -165,25 +158,25 @@ public class DelegationPolicySchemaTest {
 
   @Test
   public void testFkViolationUsers() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICY_USERS (registration_id, username) VALUES ('" + UUID.randomUUID() + "', 'alice')");
   }
 
   @Test
   public void testFkViolationGroups() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICY_GROUPS (registration_id, group_name) VALUES ('" + UUID.randomUUID() + "', 'admins')");
   }
 
   @Test
   public void testFkViolationResources() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICY_RESOURCES (registration_id, resource_uri) VALUES ('" + UUID.randomUUID() + "', '/api/v1')");
   }
 
   @Test
   public void testFkViolationResourceScopes() throws Exception {
-    expectConstraintViolation(hsqlConn,
+    expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICY_RESOURCE_SCOPES (registration_id, resource_uri, scope) "
             + "VALUES ('" + UUID.randomUUID() + "', '/api/v1', 'read')");
   }

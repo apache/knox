@@ -39,8 +39,8 @@ import org.junit.Test;
 
 /**
  * Exercises the DB-agnostic {@code copyTokens} logic using two in-memory H2 databases standing in
- * for the legacy Derby source and the H2 destination. This deliberately avoids any Derby (or
- * HSQLDB) test dependency: the token schema is identical across databases, so two H2 instances
+ * for the legacy Derby source and the H2 destination. This deliberately avoids any Derby test
+ * dependency: the token schema is identical across databases, so two H2 instances
  * fully cover the copy behaviour.
  */
 public class EmbeddedDerbyToH2TokenMigrationToolTest {

@@ -44,27 +44,16 @@ public class TrustedOidcIssuersSchemaTest {
   private static final String H2_DB = "trustedissuers";
   // H2 is the OOTB embedded backend; DB_CLOSE_DELAY=-1 keeps the in-memory database alive for the class.
   private static final String H2_URL = "jdbc:h2:mem:" + H2_DB + ";DB_CLOSE_DELAY=-1";
-  private static final String HSQL_URL = "jdbc:hsqldb:mem:trustedissuersschema;ifexists=false";
-  private static final String HSQL_USER = "SA";
-  private static final String HSQL_PASSWORD = "";
 
   private static Connection h2Conn;
-  private static Connection hsqlConn;
 
   @BeforeClass
   public static void setUp() throws SQLException {
     h2Conn = DriverManager.getConnection(H2_URL);
-    hsqlConn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    // HSQLDB: follow JDBCTokenStateServiceTest pattern — new connection for SHUTDOWN
-    try (Connection conn = DriverManager.getConnection(HSQL_URL, HSQL_USER, HSQL_PASSWORD);
-         Statement stmt = conn.createStatement()) {
-      stmt.execute("SHUTDOWN");
-    }
-
     // H2: drop all objects to release the in-memory database, then close the shared connection.
     if (h2Conn != null && !h2Conn.isClosed()) {
       try (Statement stmt = h2Conn.createStatement()) {
@@ -96,7 +85,7 @@ public class TrustedOidcIssuersSchemaTest {
   @Test
   public void testStandardSqlIdempotent() throws Exception {
     String sql = loadSql(AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL);
-    try (Statement stmt = hsqlConn.createStatement()) {
+    try (Statement stmt = h2Conn.createStatement()) {
       stmt.execute(sql);
       // Second execution must succeed due to IF NOT EXISTS
       stmt.execute(sql);

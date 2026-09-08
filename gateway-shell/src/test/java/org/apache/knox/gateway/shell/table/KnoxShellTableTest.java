@@ -65,7 +65,7 @@ public class KnoxShellTableTest {
   @Rule
   public final TemporaryFolder testFolder = new TemporaryFolder();
 
-  private static final String HSQLDB_DRIVER = "org.hsqldb.jdbc.JDBCDriver";
+  private static final String H2_DRIVER = "org.h2.Driver";
   private static final String SAMPLE_JDBC_DATABASE_NAME = "sampleBooksDatabase";
 
   @Before
@@ -499,12 +499,12 @@ public class KnoxShellTableTest {
 
   @Test
   public void testJDBCBuilderUsingConnectionString() throws Exception {
-    final String jdbcUrl = "jdbc:hsqldb:mem:" + SAMPLE_JDBC_DATABASE_NAME;
-    // Keep a connection open for the duration of the test so the in-memory HSQLDB (which is
+    final String jdbcUrl = "jdbc:h2:mem:" + SAMPLE_JDBC_DATABASE_NAME;
+    // Keep a connection open for the duration of the test so the in-memory H2 database (which is
     // discarded when its last connection closes) survives until the builder opens its own.
     try (Connection setupConnection = DriverManager.getConnection(jdbcUrl)) {
       prepareBooksTable(setupConnection);
-      final KnoxShellTable table = KnoxShellTable.builder().jdbc().driver(HSQLDB_DRIVER).connectTo(jdbcUrl)
+      final KnoxShellTable table = KnoxShellTable.builder().jdbc().driver(H2_DRIVER).connectTo(jdbcUrl)
           .sql("select * from books");
       assertEquals(2, table.getRows().size());
       assertTrue(table.values("TITLE").containsAll(Arrays.asList("Apache Knox: The Definitive Guide", "Apache Knox: The Definitive Guide 2nd Edition")));
@@ -533,7 +533,7 @@ public class KnoxShellTableTest {
     // it's quite hard to integrate AspectJ weaving together with JUnit so we
     // manually build up the history
     saveCall(table.id, "org.apache.knox.gateway.shell.table.KnoxShellTableBuilder", "jdbc", false, Collections.emptyMap());
-    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "driver", false, singletonMap(HSQLDB_DRIVER, String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "driver", false, singletonMap(H2_DRIVER, String.class));
     saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "username", false, singletonMap("myUserName", String.class));
     saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "pwd", false, singletonMap("myP4ssW0rd", String.class));
     saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "connectTo", false, singletonMap("myDBConnectionUrl", String.class));

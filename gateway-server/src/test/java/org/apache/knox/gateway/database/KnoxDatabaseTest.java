@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.hsqldb.jdbc.JDBCDataSource;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -37,8 +37,8 @@ import org.junit.Test;
 
 /**
  * Exercises {@link KnoxDatabase#createTablesIfNotExist(String)} and its
- * {@link KnoxDatabase#parseCreateTableStatements(String)} helper directly against an in-memory HSQL
- * database, using the standard (PostgreSQL/HSQL) KnoxIDF delegation-policy DDL as a representative
+ * {@link KnoxDatabase#parseCreateTableStatements(String)} helper directly against an in-memory H2
+ * database, using the standard KnoxIDF delegation-policy DDL as a representative
  * multi-statement, foreign-key-ordered script.
  */
 public class KnoxDatabaseTest {
@@ -57,16 +57,16 @@ public class KnoxDatabaseTest {
       "DELEGATION_POLICY_RESOURCES",
       "DELEGATION_POLICY_RESOURCE_SCOPES");
 
-  private static JDBCDataSource dataSource;
+  private static JdbcDataSource dataSource;
   private KnoxDatabase db;
 
   @BeforeClass
   public static void setUpClass() {
-    dataSource = new JDBCDataSource();
-    dataSource.setDatabaseName("knox_database_test");
+    dataSource = new JdbcDataSource();
     dataSource.setUser(USER);
     dataSource.setPassword(PASSWORD);
-    dataSource.setUrl("jdbc:hsqldb:mem:knoxdatabasetest;sql.syntax_pgs=true"); // sql.syntax_pgs => use postgres syntax
+    // In-memory H2; DB_CLOSE_DELAY=-1 keeps the database alive across connection open/close for the class.
+    dataSource.setUrl("jdbc:h2:mem:knoxdatabasetest;DB_CLOSE_DELAY=-1");
   }
 
   @Before
