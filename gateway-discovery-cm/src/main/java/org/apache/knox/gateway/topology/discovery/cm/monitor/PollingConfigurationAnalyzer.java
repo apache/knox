@@ -21,16 +21,14 @@ import com.cloudera.api.swagger.RolesResourceApi;
 import com.cloudera.api.swagger.ServicesResourceApi;
 import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
 import com.cloudera.api.swagger.model.ApiEventQueryResult;
-import com.cloudera.api.swagger.model.ApiHostRef;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleConfig;
 import com.cloudera.api.swagger.model.ApiRoleConfigList;
+import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import com.cloudera.api.swagger.model.ApiServiceList;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -48,8 +46,11 @@ import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ApiClientFactory;
+import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelFactory;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollector;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollectorBuilder;
@@ -66,7 +67,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -340,11 +340,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
         // Get the previously-recorded configuration
         ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
 
-        if (serviceConfig != null) {
-          // Get the current config for the started service, and compare with the previously-recorded config
-          ServiceConfigurationModel currentConfig =
-                          getCurrentServiceConfiguration(address, clusterName, re.getService());
+        // Get the current (model-derived) config for the started service. This is null when the service produces no
+        // model (e.g. invalid configuration), just as such a service is absent from the recorded baseline.
+        ServiceConfigurationModel currentConfig =
+                        getCurrentServiceConfiguration(address, clusterName, re.getService(), re.getServiceType());
 
+        if (serviceConfig != null) {
+          // The service had a prior (valid) config. Compare with the current config to detect changes.
           if (currentConfig != null) {
             log.analyzingCurrentServiceConfiguration(re.getService());
             try {
@@ -353,12 +355,16 @@ public class PollingConfigurationAnalyzer implements Runnable {
               log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
             }
           }
-        } else {
-          // A new service (no prior config) represent a config change, since a descriptor may have referenced
-          // the "new" service, but discovery had previously not succeeded because the service had not been
-          // configured (appropriately) at that time.
+        } else if (currentConfig != null) {
+          // No prior config, but the service now produces a model: it is a new/now-valid service. A descriptor may
+          // have referenced it while discovery previously did not succeed because it had not been configured
+          // (appropriately) at that time, so re-discover.
           log.serviceEnabled(re.getService());
           configHasChanged = true;
+        } else {
+          // No prior config and still no model: the service was and remains in an invalid configuration state.
+          // Re-discovery would again produce no model, so do not trigger it.
+          log.skippingConfigChangeForInvalidService(re.getService(), re.getServiceType());
         }
 
         handledServiceTypes.add(serviceType);
@@ -609,28 +615,34 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   /**
-   * Get the current configuration for the specified service.
+   * Get the current configuration for the specified service, built by running the service model generators exactly
+   * as cluster discovery does and transforming the resulting models the same way the persisted baseline is built.
+   * <p>
+   * Because the baseline is model-derived, computing the current snapshot the same way keeps the two comparable, and
+   * a service whose configuration is invalid (no generator produces a model) yields {@code null} here - mirroring its
+   * absence from the baseline, so a service that was and remains invalid is not misread as a change.
    *
    * @param address     The address of the ClouderaManager instance.
    * @param clusterName The name of the cluster.
    * @param service     The name of the service.
+   * @param serviceType The type of the service.
    *
-   * @return A ServiceConfigurationModel object with the configuration properties associated with the specified
-   * service.
+   * @return A ServiceConfigurationModel with the model-derived configuration of the service, or {@code null} if the
+   * service produces no model (e.g. invalid configuration).
    */
   protected ServiceConfigurationModel getCurrentServiceConfiguration(final String address,
                                                                      final String clusterName,
-                                                                     final String service) {
+                                                                     final String service,
+                                                                     final String serviceType) {
     ServiceConfigurationModel currentConfig = null;
 
     log.gettingCurrentClusterConfiguration(service, clusterName, address);
 
-    ApiClient apiClient = getApiClient(configCache.getDiscoveryConfig(address, clusterName));
+    DiscoveryApiClient apiClient = getApiClient(configCache.getDiscoveryConfig(address, clusterName));
     ServicesResourceApi api = new ServicesResourceApi(apiClient);
     try {
       ApiServiceConfig svcConfig = api.readServiceConfig(clusterName, service, "full");
 
-      Map<ApiRole, ApiConfigList> roleConfigs = new HashMap<>();
       RolesResourceApi rolesResourceApi = new RolesResourceApi(apiClient);
       ServiceRoleCollector roleCollector = ServiceRoleCollectorBuilder.newBuilder()
               .gatewayConfig(gatewayConfig)
@@ -639,20 +651,31 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
 
-      for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
-        ApiConfigList configList = roleConfig.getConfig();
-
-        String roleName = roleConfig.getName();
-        String roleType = roleConfig.getRoleType();
-        ApiHostRef hostRef = roleConfig.getHostRef();
-        ApiRole role = new ApiRole().name(roleName).type(roleType).hostRef(hostRef);
-        roleConfigs.put(role, configList);
-      }
-      currentConfig = new ServiceConfigurationModel(svcConfig, roleConfigs);
+      final ApiService apiService = new ApiService().name(service).type(serviceType);
+      final ApiServiceConfig coreSettingsConfig = getCoreSettingsConfig(api, clusterName);
+      final Set<ServiceModel> serviceModels =
+              ServiceModelFactory.generateServiceModels(apiClient, apiService, svcConfig, roleConfigList, coreSettingsConfig);
+      currentConfig = ServiceConfigurationModel.fromServiceModels(serviceModels).get(serviceType);
     } catch (ApiException e) {
       log.clouderaManagerConfigurationAPIError(e);
     }
     return currentConfig;
+  }
+
+  /**
+   * Look up the CORE_SETTINGS service configuration for the cluster, needed to run generators faithfully (some HDFS
+   * models read settings from CORE_SETTINGS). Returns {@code null} if the cluster has no CORE_SETTINGS service.
+   */
+  private ApiServiceConfig getCoreSettingsConfig(final ServicesResourceApi api, final String clusterName) throws ApiException {
+    final ApiServiceList serviceList = api.readServices(clusterName, "summary");
+    if (serviceList != null && serviceList.getItems() != null) {
+      for (ApiService service : serviceList.getItems()) {
+        if (ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE.equals(service.getType())) {
+          return api.readServiceConfig(clusterName, service.getName(), "full");
+        }
+      }
+    }
+    return null;
   }
 
   /**
