@@ -1547,6 +1547,72 @@ public class ClouderaManagerServiceDiscoveryTest {
     return cluster;
   }
 
+  @Test
+  public void testServiceDiscoveryFiltersServicesNotReferencedByDescriptor() {
+    final Map<String, String> serviceProps = Collections.singletonMap("solr_use_ssl", "false");
+    final Map<String, String> roleProps = new HashMap<>();
+    roleProps.put("solr_http_port", "8983");
+    roleProps.put("solr_https_port", "8985");
+
+    // Included services do NOT reference SOLR -> the SOLR service is skipped (no models discovered).
+    ClouderaManagerCluster skipped = discoverSolr(serviceProps, roleProps, Collections.singleton("RANGER"));
+    assertTrue("A service not referenced by the descriptor must be skipped", skipped.getServiceModels().isEmpty());
+    assertEquals("Discovery scope should reflect the descriptor's referenced service types",
+        ServiceModelGeneratorsHolder.getInstance().getServiceTypesForServices(Collections.singleton("RANGER")),
+        skipped.getInScopeServiceTypes());
+
+    // Included services reference SOLR -> the SOLR service is discovered.
+    ClouderaManagerCluster included = discoverSolr(serviceProps, roleProps, Collections.singleton(SolrServiceModelGenerator.SERVICE));
+    assertFalse("A referenced service must be discovered", included.getServiceModels().isEmpty());
+  }
+
+  private ClouderaManagerCluster discoverSolr(Map<String, String> serviceProps, Map<String, String> roleProps, Set<String> includedServices) {
+    final String clusterName = "cluster-1";
+    final String hostName = "solr-host";
+    final String serviceName = "SOLR-1";
+    final String roleName = "SOLR-SERVER-1";
+
+    GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gwConf.getClouderaManagerClientSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerClientSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryApiVersion()).andReturn(null).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryRoleFetchStrategy())
+        .andReturn(GatewayConfig.CLOUDERA_MANAGER_SERVICE_DISCOVERY_ROLE_FETCH_STRATEGY_BY_ROLE).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gwConf.getClouderaManagerServiceDiscoveryExcludedRoleTypes()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gwConf);
+
+    ServiceDiscoveryConfig sdConfig = createMockDiscoveryConfig(clusterName);
+    TestDiscoveryApiClient mockClient = new TestDiscoveryApiClient(gwConf, sdConfig, null);
+
+    ApiServiceList serviceList = EasyMock.createNiceMock(ApiServiceList.class);
+    EasyMock.expect(serviceList.getItems())
+        .andReturn(Collections.singletonList(createMockApiService(serviceName, SolrServiceModelGenerator.SERVICE_TYPE, clusterName))).anyTimes();
+    EasyMock.replay(serviceList);
+    mockClient.addResponse(ApiServiceList.class, new TestApiServiceListResponse(serviceList));
+
+    ApiServiceConfig serviceConfig = createMockApiServiceConfig(serviceProps);
+    mockClient.addResponse(ApiServiceConfig.class, new TestApiServiceConfigResponse(serviceConfig));
+
+    ApiConfigList apiConfigList = createMockApiConfigList(roleProps);
+    mockClient.addResponse(ApiConfigList.class, new TestApiConfigListResponse(apiConfigList));
+
+    ApiRole role = createMockApiRole(roleName, SolrServiceModelGenerator.ROLE_TYPE, hostName);
+    ApiRoleList roleList = EasyMock.createNiceMock(ApiRoleList.class);
+    EasyMock.expect(roleList.getItems()).andReturn(Collections.singletonList(role)).anyTimes();
+    EasyMock.replay(roleList);
+    ApiRoleConfig roleConfig = createMockApiRoleConfig(roleName, SolrServiceModelGenerator.ROLE_TYPE, hostName, apiConfigList);
+    ApiRoleConfigList roleConfigList = EasyMock.createNiceMock(ApiRoleConfigList.class);
+    EasyMock.expect(roleConfigList.getItems()).andReturn(Collections.singletonList(roleConfig)).anyTimes();
+    EasyMock.replay(roleConfigList);
+    mockClient.addResponse(ApiRoleList.class, new TestApiRoleListResponse(roleList));
+    mockClient.addResponse(ApiRoleConfigList.class, new TestApiRoleConfigListResponse(roleConfigList));
+
+    ClouderaManagerServiceDiscovery cmsd = new ClouderaManagerServiceDiscovery(true, gwConf);
+    cmsd.onConfigurationChange(null, null); // clear the repository
+    return (ClouderaManagerCluster) cmsd.discover(gwConf, sdConfig, clusterName, includedServices, mockClient);
+  }
+
   private int getExpectedExecuteCount(String roleFetchStrategy, boolean testRetry) {
     // With testRetry, retryAttempts is configured to be 1,
     // the first call for readServices() fails in TestFaultyDiscoveryApiClient

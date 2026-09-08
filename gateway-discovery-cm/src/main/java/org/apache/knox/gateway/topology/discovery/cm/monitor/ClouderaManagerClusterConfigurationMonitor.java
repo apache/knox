@@ -153,11 +153,11 @@ public class ClouderaManagerClusterConfigurationMonitor implements ClusterConfig
     serviceModels.values().forEach(allModels::addAll);
     Map<String, ServiceConfigurationModel> scpMap = ServiceConfigurationModel.fromServiceModels(allModels);
 
-    // Persist the service configurations
-    serviceConfigStore.store(address, clusterName, scpMap);
-
-    // Add the service configurations to the cache
-    configCache.addServiceConfiguration(address, clusterName, scpMap);
+    // Scope-replace the freshly discovered services into the cluster baseline (preserving services discovered for
+    // other descriptors of the same cluster), then persist the merged result so the cache and the .ver stay in sync.
+    Map<String, ServiceConfigurationModel> merged =
+        configCache.mergeServiceConfiguration(address, clusterName, scpMap, cluster.getInScopeServiceTypes());
+    serviceConfigStore.store(address, clusterName, merged);
   }
 
   /**

@@ -345,26 +345,26 @@ public class PollingConfigurationAnalyzer implements Runnable {
         ServiceConfigurationModel currentConfig =
                         getCurrentServiceConfiguration(address, clusterName, re.getService(), re.getServiceType());
 
-        if (serviceConfig != null) {
-          // The service had a prior (valid) config. Compare with the current config to detect changes.
-          if (currentConfig != null) {
-            log.analyzingCurrentServiceConfiguration(re.getService());
-            try {
-              configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
-            } catch (Exception e) {
-              log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
-            }
+        if (serviceConfig == null && currentConfig == null) {
+          // Was and remains in an invalid configuration state (no model either time): nothing to proxy, no change.
+          log.skippingConfigChangeForInvalidService(re.getService(), re.getServiceType());
+        } else if (serviceConfig != null && currentConfig != null) {
+          // Valid before and now: compare the recorded and current configs to detect a change.
+          log.analyzingCurrentServiceConfiguration(re.getService());
+          try {
+            configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
+          } catch (Exception e) {
+            log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
           }
         } else if (currentConfig != null) {
-          // No prior config, but the service now produces a model: it is a new/now-valid service. A descriptor may
-          // have referenced it while discovery previously did not succeed because it had not been configured
-          // (appropriately) at that time, so re-discover.
+          // No prior config, but the service now produces a model: new / became valid -> re-discover.
           log.serviceEnabled(re.getService());
           configHasChanged = true;
         } else {
-          // No prior config and still no model: the service was and remains in an invalid configuration state.
-          // Re-discovery would again produce no model, so do not trigger it.
-          log.skippingConfigChangeForInvalidService(re.getService(), re.getServiceType());
+          // Had a prior config but produces no model now: became invalid / was removed -> re-discover so the
+          // service is dropped from the affected topologies (and the scoped-replace merge clears its baseline).
+          log.serviceDisabled(re.getService());
+          configHasChanged = true;
         }
 
         handledServiceTypes.add(serviceType);
@@ -518,8 +518,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (events.isEmpty()) {
       log.noActivationEventFound();
     } else {
+      // The CM service types referenced by the deployed descriptors for this cluster. Events for services no
+      // descriptor references are irrelevant: with per-descriptor discovery filtering they are never discovered, so
+      // they must not be treated as "new services" and trigger churn. A null value means references cannot be
+      // determined (no TopologyService), in which case no reference filtering is applied.
+      final Set<String> referencedServiceTypes = getReferencedServiceTypes(address, clusterName);
       for (ApiEvent event : events) {
-        if (isStartEvent(event) || isScaleEvent(event)) {
+        if (isStartEvent(event, referencedServiceTypes) || isScaleEvent(event, referencedServiceTypes)) {
           relevantEvents.add(new RelevantEvent(event));
         }
       }
@@ -528,7 +533,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     return relevantEvents;
   }
 
-  private boolean isStartEvent(ApiEvent event) {
+  private boolean isStartEvent(ApiEvent event, Set<String> referencedServiceTypes) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String command = getAttribute(attributeMap, COMMAND);
     final String status = getAttribute(attributeMap, COMMAND_STATUS);
@@ -538,20 +543,59 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final boolean clusterRollingOrStalenessRestart = CM_SERVICE.equals(service) && CM_SERVICE_TYPE.equals(serviceType)
             && (ROLLING_RESTART_COMMAND.equals(command) || RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND.equals(command));
     final boolean relevant = (clusterRollingOrStalenessRestart && SUCCEEDED_STATUS.equals(status))
-            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists && !isExcludedServiceType(serviceType));
+            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists
+                && !isExcludedServiceType(serviceType) && isReferencedServiceType(serviceType, referencedServiceTypes));
     log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists, clusterRollingOrStalenessRestart);
     return relevant;
   }
 
-  private boolean isScaleEvent(ApiEvent event) {
+  private boolean isScaleEvent(ApiEvent event, Set<String> referencedServiceTypes) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
     final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
-    final boolean relevant = serviceModelGeneratorExists && !isExcludedServiceType(serviceType) &&
-            (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
+    final boolean relevant = serviceModelGeneratorExists && !isExcludedServiceType(serviceType)
+            && isReferencedServiceType(serviceType, referencedServiceTypes)
+            && (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
     log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, relevant);
     return relevant;
+  }
+
+  /**
+   * @return true if the given CM service type is referenced by a deployed descriptor for the cluster, or if
+   * references could not be determined ({@code referencedServiceTypes} is null, so no filtering is applied).
+   */
+  private boolean isReferencedServiceType(final String serviceType, final Set<String> referencedServiceTypes) {
+    return referencedServiceTypes == null || referencedServiceTypes.contains(serviceType);
+  }
+
+  /**
+   * Determine the CM service types referenced by the deployed descriptors targeting the given discovery source and
+   * cluster, by mapping each descriptor's declared Knox service names to CM service types via the registered service
+   * model generators.
+   *
+   * @return the referenced CM service types, or null if the TopologyService is unavailable (references undeterminable)
+   */
+  private Set<String> getReferencedServiceTypes(final String source, final String clusterName) {
+    final TopologyService ts = getTopologyService();
+    if (ts == null) {
+      return null;
+    }
+
+    final Set<String> referencedServices = new HashSet<>();
+    for (File f : ts.getDescriptors()) {
+      try {
+        SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
+        if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
+          for (SimpleDescriptor.Service service : sd.getServices()) {
+            referencedServices.add(service.getName());
+          }
+        }
+      } catch (IOException e) {
+        // Ignore these errors
+      }
+    }
+    return serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices);
   }
 
   /**
