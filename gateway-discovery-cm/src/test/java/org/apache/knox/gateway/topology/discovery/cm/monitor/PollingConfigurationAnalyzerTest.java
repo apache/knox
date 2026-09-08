@@ -147,9 +147,36 @@ public class PollingConfigurationAnalyzerTest {
                                          PollingConfigurationAnalyzer.START_COMMAND,
                                          PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
 
+    // No prior baseline, but the new service now produces a (valid) model -> discovery should be triggered.
+    final Map<String, ServiceConfigurationModel> currentModels = new HashMap<>();
+    final ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+    currentModels.put(NameNodeServiceModelGenerator.SERVICE, nnModel);
+
+    ChangeListener listener =
+            doTestEvent(startEvent, address, clusterName, Collections.emptyMap(), currentModels);
+    assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * A service that had no prior (valid) baseline and still produces no model (e.g. an invalid configuration such as
+   * Hive with binary transport mode) must not trigger discovery: it was invalid and remains invalid.
+   */
+  @Test
+  public void testInvalidServiceRemainsInvalidDoesNotNotify() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster I";
+
+    ApiEvent startEvent = createApiEvent(clusterName,
+                                         NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                         NameNodeServiceModelGenerator.SERVICE,
+                                         PollingConfigurationAnalyzer.START_COMMAND,
+                                         PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    // Empty baseline and no current model stubbed -> getCurrentServiceConfiguration returns null (still invalid).
     ChangeListener listener =
             doTestEvent(startEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
-    assertTrue("Expected a change notification", listener.wasNotified(address, clusterName));
+    assertFalse("Invalid-and-still-invalid service must not trigger discovery", listener.wasNotified(address, clusterName));
   }
 
   /**
@@ -823,7 +850,8 @@ public class PollingConfigurationAnalyzerTest {
     @Override
     protected ServiceConfigurationModel getCurrentServiceConfiguration(String address,
                                                                        String clusterName,
-                                                                       String service) {
+                                                                       String service,
+                                                                       String serviceType) {
       return serviceConfigModels.get(getServiceConfigModelKey(address, clusterName, service));
     }
 

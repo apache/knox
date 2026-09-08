@@ -19,8 +19,10 @@ package org.apache.knox.gateway.topology.discovery.cm.monitor;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
 import org.apache.knox.gateway.topology.discovery.cm.AbstractCMDiscoveryTest;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ServiceConfigurationModelTest extends AbstractCMDiscoveryTest {
 
@@ -112,6 +115,44 @@ public class ServiceConfigurationModelTest extends AbstractCMDiscoveryTest {
     validateServiceConfigurationModel(model, serviceConfig, roleConfig);
   }
 
+
+  @Test
+  public void testFromServiceModelsEmpty() {
+    assertTrue("No models should yield an empty map",
+        ServiceConfigurationModel.fromServiceModels(Collections.emptyList()).isEmpty());
+    assertTrue("Null models should yield an empty map",
+        ServiceConfigurationModel.fromServiceModels(null).isEmpty());
+  }
+
+  @Test
+  public void testFromServiceModelsGroupsByServiceTypeAndCopiesProps() {
+    // Two models of the same service type (e.g. an API and a UI model) should merge into a single entry.
+    ServiceModel apiModel = new ServiceModel(ServiceModel.Type.API, "SOLR", "SOLR", "SOLR_SERVER", "https://host:8985");
+    apiModel.addServiceProperty("solr_use_ssl", "true");
+    apiModel.addRoleProperty("SOLR_SERVER", "solr_https_port", "8985");
+
+    ServiceModel uiModel = new ServiceModel(ServiceModel.Type.UI, "SOLRUI", "SOLR", "SOLR_SERVER", "https://host:8985");
+    uiModel.addRoleProperty("SOLR_SERVER", "solr_http_port", "8983");
+
+    // A model of a different service type should produce a separate entry.
+    ServiceModel nnModel = new ServiceModel(ServiceModel.Type.API, "NAMENODE", "HDFS", "NAMENODE", "hdfs://host:8020");
+    nnModel.addRoleProperty("NAMENODE", "namenode_port", "8020");
+
+    Map<String, ServiceConfigurationModel> result =
+        ServiceConfigurationModel.fromServiceModels(Arrays.asList(apiModel, uiModel, nnModel));
+
+    assertEquals("Should be grouped into two service types", 2, result.size());
+
+    ServiceConfigurationModel solr = result.get("SOLR");
+    assertNotNull(solr);
+    assertEquals("true", solr.getServiceProps().get("solr_use_ssl"));
+    assertEquals("8985", solr.getRoleProps("SOLR_SERVER").get("solr_https_port"));
+    assertEquals("8983", solr.getRoleProps("SOLR_SERVER").get("solr_http_port"));
+
+    ServiceConfigurationModel hdfs = result.get("HDFS");
+    assertNotNull(hdfs);
+    assertEquals("8020", hdfs.getRoleProps("NAMENODE").get("namenode_port"));
+  }
 
   private void validateServiceConfigurationModel(final ServiceConfigurationModel        model,
                                                  final Map<String, String>              expectedServiceConfig,

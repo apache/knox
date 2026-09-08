@@ -265,6 +265,10 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "The {0} service configuration has changed, such that it has been enabled for proxying.")
   void serviceEnabled(String serviceName);
 
+  @Message(level = MessageLevel.DEBUG,
+           text = "The {0} ({1}) service was and remains in an invalid configuration state; skipping discovery.")
+  void skippingConfigChangeForInvalidService(String serviceName, String serviceType);
+
   @Message(level = MessageLevel.INFO, text = "Role type {0} has been removed.")
   void roleTypeRemoved(String roleType);
 
