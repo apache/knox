@@ -36,8 +36,8 @@ import org.apache.knox.gateway.plang.Parser;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class VirtualGroupMapperTest {
     private Parser parser = new Parser();

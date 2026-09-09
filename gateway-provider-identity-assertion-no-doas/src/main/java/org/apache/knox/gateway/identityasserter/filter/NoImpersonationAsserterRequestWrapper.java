@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.identityasserter.filter;
 
 import org.apache.knox.gateway.identityasserter.common.filter.IdentityAsserterHttpServletRequestWrapper;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Collections;

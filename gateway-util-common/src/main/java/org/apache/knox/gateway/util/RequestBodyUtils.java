@@ -24,7 +24,7 @@ import java.io.Reader;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-import javax.servlet.ServletRequest;
+import jakarta.servlet.ServletRequest;
 
 public class RequestBodyUtils {
 

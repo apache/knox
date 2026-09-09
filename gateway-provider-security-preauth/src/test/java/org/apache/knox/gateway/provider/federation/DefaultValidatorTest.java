@@ -21,8 +21,8 @@ import org.apache.knox.gateway.preauth.filter.DefaultValidator;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

@@ -30,7 +30,7 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.util.CertificateUtils;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;

@@ -27,7 +27,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
 
-import javax.servlet.Servlet;
+import jakarta.servlet.Servlet;
 import java.util.LinkedList;
 import java.util.Queue;
 

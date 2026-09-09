@@ -21,9 +21,9 @@ import java.util.Enumeration;
 import java.util.List;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.LdapGroupsMapping;

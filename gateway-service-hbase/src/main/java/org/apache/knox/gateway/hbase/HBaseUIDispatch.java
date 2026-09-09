@@ -20,8 +20,8 @@ package org.apache.knox.gateway.hbase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class HBaseUIDispatch extends ConfigurableDispatch {
