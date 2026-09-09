@@ -556,6 +556,67 @@ public class PollingConfigurationAnalyzerTest {
     assertFalse("Excluded service type must not trigger a scale-event notification", listener.wasNotified(address, clusterName));
   }
 
+  /**
+   * A scale (role added/removed) event whose role type is explicitly excluded from discovery via
+   * gateway.cloudera.manager.service.discovery.excluded.role.types must not be treated as relevant, so it does not
+   * trigger an unnecessary re-discovery - even though the service type has a generator, is not excluded and is
+   * referenced. Mirrors how discovery itself skips such role types (see ServiceRoleCollectorBuilder / TypeNameFilter).
+   */
+  @Test
+  public void testExcludedRoleTypeScaleEventIsNotRelevant() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster RX";
+
+    final ApiEvent scaleEvent = createScaleApiEvent(clusterName, HiveOnTezServiceModelGenerator.SERVICE_TYPE,
+        HiveOnTezServiceModelGenerator.SERVICE, HiveOnTezServiceModelGenerator.ROLE_TYPE,
+        PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED);
+
+    final ChangeListener listener = new ChangeListener();
+    final TestablePollingConfigAnalyzer pca = buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(),
+        listener, true, Collections.emptySet(), Collections.singleton(HiveOnTezServiceModelGenerator.ROLE_TYPE));
+
+    doTestEvent(scaleEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
+    assertFalse("Excluded role type must not trigger a change notification", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * A scale event for a role type that no ServiceModelGenerator uses (absent from
+   * ServiceModelGeneratorsHolder.getAllRoleTypes()) must not be treated as relevant, even with an empty
+   * excluded-role-types config: discovery never collects such a role type's config, so a change to it cannot alter
+   * any service model. This is the "match discovery" allow-list behavior.
+   */
+  @Test
+  public void testNonRequiredRoleTypeScaleEventIsNotRelevant() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster RN";
+
+    // DATANODE belongs to HDFS (a generator-backed, non-excluded service) but no generator declares it as its role type.
+    final ApiEvent scaleEvent = createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, "DATANODE", PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED);
+
+    final ChangeListener listener =
+        doTestEvent(scaleEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
+    assertFalse("A role type no generator uses must not trigger discovery", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * A scale event for a generator-backed role type (present in getAllRoleTypes()) that is not excluded remains
+   * relevant and triggers re-discovery - guarding against the role filter over-suppressing.
+   */
+  @Test
+  public void testRequiredRoleTypeScaleEventIsRelevant() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster RR";
+
+    final ApiEvent scaleEvent = createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
+        PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED);
+
+    final ChangeListener listener =
+        doTestEvent(scaleEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap());
+    assertTrue("A generator-backed role type must trigger discovery", listener.wasNotified(address, clusterName));
+  }
+
   @Test
   public void shouldNotPerformClusterConfigurationChangeMonitoringIfKnoxGatewayIsNotYetReady() throws AliasServiceException {
     final String address = "http://host1:1234";
@@ -771,10 +832,18 @@ public class PollingConfigurationAnalyzerTest {
   private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
       final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady,
       Collection<String> excludedServiceTypes) throws AliasServiceException {
+    return buildPollingConfigAnalyzer(address, clusterName, serviceConfigurationModels, listener, isKnoxGatewayReady,
+            excludedServiceTypes, Collections.emptySet());
+  }
+
+  private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady,
+      Collection<String> excludedServiceTypes, Collection<String> excludedRoleTypes) throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
     EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(excludedServiceTypes).anyTimes();
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes()).andReturn(excludedRoleTypes).anyTimes();
     EasyMock.replay(gatewayConfig);
 
     // Mock the service discovery details
@@ -926,6 +995,17 @@ public class PollingConfigurationAnalyzerTest {
     attrs.add(createEventAttribute("COMMAND_STATUS", commandStatues));
     attrs.add(createEventAttribute("EVENTCODE", eventCode));
     return createApiEvent(ApiEventCategory.AUDIT_EVENT, attrs, id);
+  }
+
+  private ApiEvent createScaleApiEvent(final String clusterName, final String serviceType, final String service,
+                                       final String roleType, final String eventCode) {
+    final List<ApiEventAttribute> attrs = new ArrayList<>();
+    attrs.add(createEventAttribute("CLUSTER", clusterName));
+    attrs.add(createEventAttribute("SERVICE_TYPE", serviceType));
+    attrs.add(createEventAttribute("SERVICE", service));
+    attrs.add(createEventAttribute("ROLE_TYPE", roleType));
+    attrs.add(createEventAttribute("EVENTCODE", eventCode));
+    return createApiEvent(ApiEventCategory.AUDIT_EVENT, attrs, null);
   }
 
   private ApiEvent createApiEvent(final ApiEventCategory category, final List<ApiEventAttribute> attrs, String id) {
