@@ -54,6 +54,7 @@ import org.apache.knox.gateway.topology.discovery.cm.ServiceModelFactory;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollector;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollectorBuilder;
+import org.apache.knox.gateway.topology.discovery.cm.TypeNameFilter;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
@@ -156,6 +157,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
 
   private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
+
+  // Filters CM role types the same way discovery does: the configured excluded-role-types deny-list combined with the
+  // allow-list of role types some ServiceModelGenerator actually uses. Lazily built so it picks up gatewayConfig.
+  private TypeNameFilter roleTypeFilter;
 
   private boolean isActive;
 
@@ -552,12 +557,14 @@ public class PollingConfigurationAnalyzer implements Runnable {
   private boolean isScaleEvent(ApiEvent event, Set<String> referencedServiceTypes) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
+    final String roleType = getAttribute(attributeMap, RelevantEvent.ATTR_ROLE);
     final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
     final boolean relevant = serviceModelGeneratorExists && !isExcludedServiceType(serviceType)
             && isReferencedServiceType(serviceType, referencedServiceTypes)
+            && !isExcludedRoleType(roleType)
             && (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
-    log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, relevant);
+    log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, roleType, serviceModelGeneratorExists);
     return relevant;
   }
 
@@ -617,6 +624,31 @@ public class PollingConfigurationAnalyzer implements Runnable {
       return false;
     }
     return excludedServiceTypes.stream().anyMatch(serviceType::equalsIgnoreCase);
+  }
+
+  /**
+   * Determine whether the given CM role type would be excluded from CM service discovery, using the exact same filter
+   * discovery applies when collecting role configurations (see ServiceRoleCollectorBuilder): the configured
+   * {@code gateway.cloudera.manager.service.discovery.excluded.role.types} deny-list combined with the allow-list of
+   * role types some ServiceModelGenerator actually uses ({@link ServiceModelGeneratorsHolder#getAllRoleTypes()}).
+   * Role types discovery never collects can never produce a service model, so a scale (role added/removed) event for
+   * such a role type must not be treated as relevant - it would otherwise trigger an unnecessary re-discovery that
+   * would recompute an identical model.
+   * <p>
+   * Fails open on a missing/empty role type: the event is kept relevant rather than dropped on missing information.
+   *
+   * @param roleType the CM role type from an audit event
+   * @return true if the role type is excluded from discovery; false otherwise (including when it is null/empty)
+   */
+  private boolean isExcludedRoleType(final String roleType) {
+    if (roleType == null || roleType.isEmpty()) {
+      return false;
+    }
+    if (roleTypeFilter == null) {
+      roleTypeFilter = new TypeNameFilter(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes(),
+              serviceModelGeneratorsHolder.getAllRoleTypes());
+    }
+    return roleTypeFilter.isExcluded(roleType);
   }
 
   @SuppressWarnings("unchecked")
