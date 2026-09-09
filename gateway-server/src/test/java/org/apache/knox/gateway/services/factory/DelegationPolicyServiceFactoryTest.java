@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -125,7 +126,7 @@ public class DelegationPolicyServiceFactoryTest {
 
     final DelegationPolicyService svc = (DelegationPolicyService) createdService;
     final PolicyDecision decision = svc.evaluate(
-        new PolicyCheckRequest("oidc", "actor-id", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "actor-id", "alice", Set.of("/api"), Collections.singleton("read"), false));
     assertEquals("service_not_configured", decision.getDenyReason());
   }
 

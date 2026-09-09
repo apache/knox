@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import java.util.Arrays;
@@ -30,12 +31,29 @@ public class PolicyCheckRequestTest {
     public void testPolicyCheckRequestScopesFieldIsImmutable() {
         final Set<String> mutableScopes = new HashSet<>(Arrays.asList("read", "write"));
         final PolicyCheckRequest request = new PolicyCheckRequest(
-                "oidc", "actor1", "subject1", "/api/v1", mutableScopes, false);
+                "oidc", "actor1", "subject1", Set.of("/api/v1"), mutableScopes, false);
 
         final Set<String> returnedScopes = request.getRequestedScopes();
         assertThrows("requestedScopes must be immutable", UnsupportedOperationException.class,
                 () -> returnedScopes.add("admin"));
         assertThrows("requestedScopes must be immutable", UnsupportedOperationException.class,
                 () -> returnedScopes.remove("read"));
+    }
+
+    @Test
+    public void testPolicyCheckRequestResourcesFieldIsImmutable() {
+        final Set<String> mutableResources = new HashSet<>(Set.of("/api/v1"));
+        final PolicyCheckRequest request = new PolicyCheckRequest(
+                "oidc", "actor1", "subject1", mutableResources, Set.of("read"), false);
+
+        mutableResources.add("/api/v2");
+        assertEquals("requestedResources must be defensively copied, not aliased",
+                Set.of("/api/v1"), request.getRequestedResources());
+
+        final Set<String> returnedResources = request.getRequestedResources();
+        assertThrows("requestedResources must be immutable", UnsupportedOperationException.class,
+                () -> returnedResources.add("/api/v2"));
+        assertThrows("requestedResources must be immutable", UnsupportedOperationException.class,
+                () -> returnedResources.remove("/api/v1"));
     }
 }

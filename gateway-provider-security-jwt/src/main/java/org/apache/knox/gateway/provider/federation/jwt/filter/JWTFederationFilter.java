@@ -96,7 +96,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Topology provider param. OOTB the JWKS URI resolved via dynamic OIDC discovery for a
   // runtime-registered external issuer MUST be HTTPS: fetching a token issuer's signing keys over
   // cleartext would let an on-path attacker substitute their own keys and forge subject tokens.
-  // Set this to "true" on the provider to permit an http:// jwks_uri (e.g. an internal test OP).
+      // Set this to "true" on the provider to permit an http:// jwks_uri (e.g. an internal test OP).
   public static final String TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP = "knox.token.exchange.dynamic.jwks.allow.http";
 
   public enum TokenType {

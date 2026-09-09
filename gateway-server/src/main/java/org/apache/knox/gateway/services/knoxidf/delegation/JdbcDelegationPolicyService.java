@@ -227,25 +227,43 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     final boolean userCheckPassed =
         policy.getCanActForUsers().contains(request.getSubjectName());
 
-    // Step 4: resource check
+    // Step 4/5: per-resource membership and scope check.
+    //
+    // Scopes can only be validated against a specific resource's allowed scope set, so a request
+    // cannot ask for scopes without also requesting at least one resource. When no resources are
+    // requested but at least one scope is requested, deny.
+    //
+    // Each requested resource is checked independently against its own allowed scope set. A
+    // resource whose configured scope set is empty is unrestricted for that resource; requested
+    // scopes must still be allowed by every other requested resource that has a non empty scope
+    // set. Iteration order over requestedResources does not matter: the loop returns on the first
+    // resource that fails either check, so when multiple requested resources would each fail for
+    // a different reason, which reason is returned is unspecified.
+    //
+    // When no resources and no scopes are requested, this check imposes no restriction and
+    // evaluate() proceeds to Step 6.
     final Map<String, Set<String>> resourcePolicy = policy.getResourcePolicy();
-    if (!resourcePolicy.containsKey(request.getRequestedResource())) {
-      return deny("resource_not_allowed");
-    }
-
-    // Step 5: scope check (requested scopes are optional; when non-empty, all must be in the allowed set)
-    final Set<String> scopeSet = resourcePolicy.get(request.getRequestedResource());
-    if (!request.getRequestedScopes().isEmpty() && !scopeSet.isEmpty()
-        && !scopeSet.containsAll(request.getRequestedScopes())) {
+    if (request.getRequestedResources().isEmpty() && !request.getRequestedScopes().isEmpty()) {
       return deny("scope_not_allowed");
     }
+    for (String requestedResource : request.getRequestedResources()) {
+      if (!resourcePolicy.containsKey(requestedResource)) {
+        return deny("resource_not_allowed");
+      }
+      final Set<String> scopeSet = resourcePolicy.get(requestedResource);
+      if (!request.getRequestedScopes().isEmpty() && !scopeSet.isEmpty()
+          && !scopeSet.containsAll(request.getRequestedScopes())) {
+        return deny("scope_not_allowed");
+      }
+    }
 
-    // Step 6: effective TTL — use the policy value if set, otherwise fall back to the configured default
+    // Step 6: effective TTL. Use the policy value if set, otherwise fall back to the
+    // configured default.
     final int effectiveTtlSec = policy.getTokenTtlSec() != null
         ? policy.getTokenTtlSec()
         : configuredKnoxTokenTtlSec;
 
-    // Step 7: group check (LDAP lookup — slowest, deferred past cheap checks)
+    // Step 7: group check (LDAP lookup, slowest, deferred past the cheaper checks).
     if (!userCheckPassed) {
       if (!policy.getCanActForGroups().isEmpty()) {
         throw new UnsupportedOperationException("canActFor.groups evaluation not yet implemented");
