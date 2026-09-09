@@ -20,7 +20,7 @@ import org.apache.knox.test.TestUtils;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.is;

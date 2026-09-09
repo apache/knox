@@ -25,7 +25,7 @@ import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.logging.log4j.LogManager;
 
 import javax.security.auth.Subject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Locale;
 

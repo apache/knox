@@ -21,8 +21,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.knox.test.mock.MockServletInputStream;

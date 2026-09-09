@@ -19,8 +19,8 @@ package org.apache.knox.gateway.hive;
 
 import org.apache.knox.gateway.dispatch.GatewayDispatchFilter;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 
 /**
  * KNOX-526. Need to keep this class around for backward compatibility of deployed

@@ -33,10 +33,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.CloseReason;
-import javax.websocket.DeploymentException;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.WebSocketContainer;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -94,7 +94,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   /** Session between the backend (outbound) and Knox */
-  private javax.websocket.Session backendSession;
+  private jakarta.websocket.Session backendSession;
 
   /** JSR-356 client container used to connect to the backend */
   private WebSocketContainer container;
@@ -358,7 +358,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
       }
 
       @Override
-      public void onMessagePong(javax.websocket.PongMessage message, Object session) {
+      public void onMessagePong(jakarta.websocket.PongMessage message, Object session) {
         LOG.logMessage("[From Backend <---]: PONG");
         remoteLock.lock();
         try {

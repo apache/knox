@@ -29,8 +29,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -88,7 +88,7 @@ public class WebsocketServerInitiatedPingTest extends WebsocketEchoTestBase {
     WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 
     WebsocketClient client = new WebsocketClient();
-    try (javax.websocket.Session session = container.connectToServer(client,
+    try (jakarta.websocket.Session session = container.connectToServer(client,
     new URI(serverUri.toString() + "gateway/websocket/123foo456bar/channels"))) {
       assertThat(session.isOpen(), is(true));
       String pongPayload = pingHandler.socket.pongFuture.get(10000, TimeUnit.MILLISECONDS);

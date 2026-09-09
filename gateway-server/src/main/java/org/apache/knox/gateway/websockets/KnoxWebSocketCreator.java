@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import javax.websocket.ClientEndpointConfig;
+import jakarta.websocket.ClientEndpointConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;

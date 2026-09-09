@@ -19,8 +19,8 @@ package org.apache.knox.gateway.filter;
 
 import static org.junit.Assert.assertEquals;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.EasyMock;

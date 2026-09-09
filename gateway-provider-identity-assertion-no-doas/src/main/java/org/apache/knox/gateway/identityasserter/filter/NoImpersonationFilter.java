@@ -19,11 +19,11 @@ package org.apache.knox.gateway.identityasserter.filter;
 
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 

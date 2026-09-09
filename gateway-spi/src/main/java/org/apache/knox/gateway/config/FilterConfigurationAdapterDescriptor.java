@@ -19,7 +19,7 @@ package org.apache.knox.gateway.config;
 
 import org.apache.knox.gateway.config.spi.AbstractConfigurationAdapterDescriptor;
 
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 
 public class FilterConfigurationAdapterDescriptor extends AbstractConfigurationAdapterDescriptor {
 

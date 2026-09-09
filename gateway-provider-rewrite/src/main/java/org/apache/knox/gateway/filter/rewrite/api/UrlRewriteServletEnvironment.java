@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;

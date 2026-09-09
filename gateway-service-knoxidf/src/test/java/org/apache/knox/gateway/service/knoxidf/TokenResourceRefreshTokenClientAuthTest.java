@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.service.knoxidf.TokenResource.RefreshTokenValidationError;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;

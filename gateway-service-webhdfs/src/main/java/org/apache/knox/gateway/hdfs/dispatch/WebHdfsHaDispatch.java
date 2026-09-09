@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.hdfs.dispatch;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 public class WebHdfsHaDispatch extends AbstractHdfsHaDispatch {
   public static final String RESOURCE_ROLE = "WEBHDFS";
