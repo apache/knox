@@ -61,6 +61,7 @@ import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.PagedResultsControl;
 import javax.naming.ldap.PagedResultsResponseControl;
+import javax.naming.ldap.Rdn;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -150,6 +151,9 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
     private static final String POSIX_GROUP = "posixGroup";
 
     private static final String HASHING_ALGORITHM = "SHA-256";
+
+    /** How a substituted template value must be escaped for its target context. */
+    private enum EscapeMode { NONE, FILTER, DN }
 
     static {
           SUBTREE_SCOPE.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -258,7 +262,7 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       String userDn;
       if (userSearchAttributeName == null || userSearchAttributeName.isEmpty()) {
         // memberAttributeValuePrefix and memberAttributeValueSuffix were computed from memberAttributeValueTemplate
-        userDn = memberAttributeValuePrefix + userName + memberAttributeValueSuffix;
+        userDn = memberAttributeValuePrefix + escapeDnValue(userName) + memberAttributeValueSuffix;
       } else {
         userDn = getUserDn(userName);
       }
@@ -684,13 +688,19 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
           ( userSearchAttributeName == null &&
               userSearchFilter == null &&
               !"object".equalsIgnoreCase( userSearchScope ) ) ) {
-        userDn = expandTemplate( userDnTemplate, matchedPrincipal );
+        // When the template is exactly "{0}" the principal IS the full DN (e.g. a system
+        // bind DN), so DN-escaping it would corrupt the DN and break the bind. Escaping is
+        // only needed when the placeholder is embedded within surrounding DN structure
+        // (e.g. "uid={0},ou=people,..."), where the principal is a single RDN value that
+        // could otherwise inject additional RDNs.
+        final EscapeMode escapeMode = "{0}".equals( userDnTemplate.trim() ) ? EscapeMode.NONE : EscapeMode.DN;
+        userDn = expandTemplate( userDnTemplate, matchedPrincipal, escapeMode );
         LOG.computedUserDn( userDn, principal );
         return userDn;
       }
 
       // Create the searchBase and searchFilter from config.
-      String searchBase = expandTemplate( getUserSearchBase(), matchedPrincipal );
+      String searchBase = expandTemplate( getUserSearchBase(), matchedPrincipal, EscapeMode.DN );
       String searchFilter;
       if ( userSearchFilter == null ) {
         if ( userSearchAttributeName == null ) {
@@ -700,10 +710,10 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
               "(&(objectclass=%1$s)(%2$s=%3$s))",
               getUserObjectClass(),
               userSearchAttributeName,
-              expandTemplate(getUserSearchAttributeTemplate(), matchedPrincipal, true));
+              expandTemplate(getUserSearchAttributeTemplate(), matchedPrincipal, EscapeMode.FILTER));
         }
       } else {
-        searchFilter = expandTemplate(userSearchFilter, matchedPrincipal, true);
+        searchFilter = expandTemplate(userSearchFilter, matchedPrincipal, EscapeMode.FILTER);
       }
       SearchControls searchControls = getUserSearchControls();
 
@@ -749,11 +759,7 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       return new SimpleAuthenticationInfo(token.getPrincipal(), credentialsHash.toHex(), credentialsHash.getSalt(), getName());
     }
 
-  private static String expandTemplate(final String template, final Matcher input) {
-    return expandTemplate(template, input, false);
-  }
-
-  private static String expandTemplate( final String template, final Matcher input, final boolean escapeForLdapFilter ) {
+  private static String expandTemplate( final String template, final Matcher input, final EscapeMode escapeMode ) {
     String output = template;
     Matcher matcher = TEMPLATE_PATTERN.matcher( output );
     while( matcher.find() ) {
@@ -762,8 +768,16 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       String lookupValue = input.group( lookupIndex );
       if (lookupValue == null) {
           lookupValue = "";
-      } else if (escapeForLdapFilter) {
+      } else if (escapeMode == EscapeMode.FILTER) {
           lookupValue = escapeLdapSearchFilterValue(lookupValue);
+      } else if (escapeMode == EscapeMode.DN) {
+          lookupValue = escapeDnValue(lookupValue);
+      }
+      // A substituted value that itself contains a template token (e.g. a username of
+      // "{0}") would be re-matched on the next scan and expand forever. No legitimate
+      // principal contains a "{<digits>}" token, so reject it rather than loop.
+      if (TEMPLATE_PATTERN.matcher(lookupValue).find()) {
+          throw new IllegalArgumentException("Illegal template placeholder in substituted value");
       }
       // quoteReplacement is required: replaceFirst treats '\' and '$' in the replacement specially
       output = matcher.replaceFirst(Matcher.quoteReplacement(lookupValue));
@@ -800,6 +814,15 @@ public class KnoxLdapRealm extends DefaultLdapRealm {
       }
     }
     return sb.toString();
+  }
+
+  // RFC 4514 DN-value escaping (escapes ',', '=', '+', '"', '\\', '<', '>', ';',
+  // leading/trailing space, and a leading '#'), preventing DN injection.
+  static String escapeDnValue(final String value) {
+    if (value == null) {
+      return null;
+    }
+    return Rdn.escapeValue(value);
   }
 
 }
