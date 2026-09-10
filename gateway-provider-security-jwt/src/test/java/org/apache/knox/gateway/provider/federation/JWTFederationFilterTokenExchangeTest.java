@@ -174,7 +174,9 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
    */
   @Test
   public void testDynamicIssuerAllowedActorExternal() throws Exception {
-    handler.init(new TestFilterConfig(getProperties()));
+    final Properties props = getProperties();
+    props.setProperty(JWTFederationFilter.DELEGATION_SERVER_ENABLED, "true");
+    handler.init(new TestFilterConfig(props));
 
     final SignedJWT subjectJwt = getJWT(KNOX_ISSUER, "end-user",
         new Date(System.currentTimeMillis() + 60000));
@@ -682,6 +684,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     final Properties props = getProperties();
     props.setProperty(JWTFederationFilter.JWKS_URL, staticJwksUrl);
+    props.setProperty(JWTFederationFilter.DELEGATION_SERVER_ENABLED, "true");
     handler.init(new TestFilterConfig(props));
 
     final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);

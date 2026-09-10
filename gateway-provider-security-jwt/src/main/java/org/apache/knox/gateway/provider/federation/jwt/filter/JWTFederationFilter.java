@@ -83,6 +83,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange";
   public static final String SUBJECT_TOKEN = "subject_token";
   public static final String ACTOR_TOKEN = "actor_token";
+  public static final String REQUESTED_SUBJECT = "requested_subject";
   public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
   public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
 

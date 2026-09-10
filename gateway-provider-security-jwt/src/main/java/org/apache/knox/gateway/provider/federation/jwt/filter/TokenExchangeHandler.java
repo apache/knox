@@ -156,6 +156,32 @@ class TokenExchangeHandler {
         return;
       }
 
+      final String requestedSubjectValue;
+      if (filter.isDelegationRequestedSubjectEnabled()) {
+        final String rawRequestedSubject = bodyRequest.getParameter(JWTFederationFilter.REQUESTED_SUBJECT);
+        requestedSubjectValue = rawRequestedSubject == null ? null : rawRequestedSubject.trim();
+      } else {
+        requestedSubjectValue = null;
+      }
+      final boolean hasRequestedSubject = requestedSubjectValue != null && !requestedSubjectValue.isEmpty();
+      final boolean requestedSubjectDiffersFromSubject =
+          hasRequestedSubject && !requestedSubjectValue.equals(subjectToken.getSubject());
+      final boolean isSameSubjectExchange = !hasActorToken && !requestedSubjectDiffersFromSubject;
+
+      if (!isSameSubjectExchange) {
+        if (!filter.isDelegationServerEnabled()) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "Delegation is not enabled for this topology");
+          return;
+        }
+        if (hasActorToken && requestedSubjectDiffersFromSubject) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request",
+              "requested_subject must not differ from subject_token's subject when actor_token is present");
+          return;
+        }
+      }
+
       final Subject subject;
       if (hasActorToken) {
         final JWT actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);

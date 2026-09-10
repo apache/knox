@@ -19,6 +19,7 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.knox.gateway.security.ActorChainPrincipal;
@@ -151,6 +152,7 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testDelegationExchangeMakesActorPrimaryWithTokenExchangePrincipal() throws Exception {
+    filter.delegationServerEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
     handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
@@ -168,6 +170,7 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testSubjectTokenWithActClaimCreatesActorChainPrincipal() throws Exception {
+    filter.delegationServerEnabled = true;
     // subject_token already carries a prior delegation chain (an 'act' claim) ...
     filter.valid.put("subtok", jwtWithActClaim("alice", "KNOXSSO", Map.of("sub", "prior-actor")));
     filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
@@ -191,10 +194,22 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testActorValidationFailureDoesNotEstablishContext() throws Exception {
+    filter.delegationServerEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     // "acttok" is not valid
     handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
     assertFalse(filter.continued);
+    // RecordingFilter.parseAndValidateJWT does not call handleValidationError itself when a
+    // token is missing from `valid` -- unlike the real filter, it leaves filter.error/
+    // errorDescription/errorStatus at their defaults for this case, so there is no rejection
+    // message here to assert on the way other tests in this class do. Asserting the defaults
+    // are unchanged still guards against this test passing for the wrong reason: if the gate
+    // check or the actor-token/requested_subject conflict check had rejected the request instead
+    // of actor-token parsing failing, handler.handle() would have called
+    // filter.handleValidationError(...) and these fields would be non-default.
+    assertEquals(-1, filter.errorStatus);
+    assertNull(filter.error);
+    assertNull(filter.errorDescription);
   }
 
   @Test
@@ -287,6 +302,93 @@ public class TokenExchangeHandlerTest {
     assertFalse(requestedAudiencesAttr.hasCaptured());
   }
 
+  @Test
+  public void testGateRejectsActorTokenPresentWhenDelegationServerDisabled() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+  }
+
+  @Test
+  public void testGateRejectsHeadlessCandidateWhenDelegationServerDisabled() throws Exception {
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+  }
+
+  @Test
+  public void testGateRejectsActorTokenPresentRequestedSubjectPresentAndDifferentFromSubject() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE, "bob"), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("requested_subject must not differ from subject_token's subject when actor_token is present",
+        filter.errorDescription);
+  }
+
+  @Test
+  public void testActorTokenPresentWithRequestedSubjectEqualToSubjectIsTreatedAsActorTokenDelegation() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE, "alice"), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+  }
+
+  // TODO: this test asserts that requested_subject differing from the subject_token's subject
+  // has no effect when actor_token is absent. Once headless exchange is implemented, this shape
+  // will be handled as a headless delegation candidate instead, and this test will need to change.
+  @Test
+  public void testHeadlessCandidatePassesThroughUnchangedWhenGateEnabled() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    assertEquals("alice", primaryName(filter.establishedSubject));
+  }
+
+  @Test
+  public void testRequestedSubjectIgnoredWhenFlagDisabledTreatedAsSameSubjectExchange() throws Exception {
+    // delegation.requested.subject.enabled left false (default): requested_subject is not read
+    // at all, so this request is classified as same-subject regardless of delegation.server.enabled.
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    assertEquals("alice", primaryName(filter.establishedSubject));
+  }
+
+  @Test
+  public void testEmptyRequestedSubjectTreatedAsAbsent() throws Exception {
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "   "), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    assertEquals("alice", primaryName(filter.establishedSubject));
+  }
+
   private static String primaryName(Subject subject) {
     return subject.getPrincipals(PrimaryPrincipal.class).iterator().next().getName();
   }
@@ -298,6 +400,19 @@ public class TokenExchangeHandlerTest {
     EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
     EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
+    EasyMock.replay(request);
+    return request;
+  }
+
+  private HttpServletRequest request(String subjectToken, String subjectTokenType,
+                                     String actorToken, String actorTokenType,
+                                     String requestedSubject) {
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(subjectTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.REQUESTED_SUBJECT)).andReturn(requestedSubject).anyTimes();
     EasyMock.replay(request);
     return request;
   }
@@ -355,6 +470,18 @@ public class TokenExchangeHandlerTest {
     private String errorDescription;
     private boolean continued;
     private Subject establishedSubject;
+    private boolean delegationServerEnabled;
+    private boolean delegationRequestedSubjectEnabled;
+
+    @Override
+    boolean isDelegationServerEnabled() {
+      return delegationServerEnabled;
+    }
+
+    @Override
+    boolean isDelegationRequestedSubjectEnabled() {
+      return delegationRequestedSubjectEnabled;
+    }
 
     @Override
     JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
