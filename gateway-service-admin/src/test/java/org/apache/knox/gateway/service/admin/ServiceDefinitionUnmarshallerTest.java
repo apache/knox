@@ -24,8 +24,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import javax.ws.rs.core.MediaType;
-
+import jakarta.ws.rs.core.MediaType;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
 import org.junit.Test;
 

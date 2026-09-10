@@ -16,8 +16,8 @@
  */
 package org.apache.knox.gateway.servlet;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
 
 public abstract class SynchronousServletOutputStreamAdapter extends ServletOutputStream {
 

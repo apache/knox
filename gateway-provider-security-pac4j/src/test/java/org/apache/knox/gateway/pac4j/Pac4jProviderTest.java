@@ -33,10 +33,10 @@ import org.junit.Test;
 import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.http.client.indirect.IndirectBasicAuthClient;
 
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.http.Cookie;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.Cookie;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.Properties;

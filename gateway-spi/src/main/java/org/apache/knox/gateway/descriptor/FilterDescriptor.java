@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.descriptor;
 
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 import java.util.List;
 
 public interface FilterDescriptor {

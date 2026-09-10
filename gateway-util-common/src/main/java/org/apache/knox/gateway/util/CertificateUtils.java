@@ -25,7 +25,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 public class CertificateUtils {
   private static final String PEM_HEADER = "-----BEGIN CERTIFICATE-----\n";

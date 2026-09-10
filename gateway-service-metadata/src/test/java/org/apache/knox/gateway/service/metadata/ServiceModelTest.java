@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.service.definition.Metadata;
 import org.apache.knox.gateway.service.definition.Sample;

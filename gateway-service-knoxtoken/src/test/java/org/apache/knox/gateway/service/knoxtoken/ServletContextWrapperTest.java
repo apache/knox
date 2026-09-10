@@ -21,7 +21,7 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;

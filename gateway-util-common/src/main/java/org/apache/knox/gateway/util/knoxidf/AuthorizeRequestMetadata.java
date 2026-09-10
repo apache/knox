@@ -16,7 +16,7 @@
  */
 package org.apache.knox.gateway.util.knoxidf;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.util.Set;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;

@@ -56,8 +56,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-annotations</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-annotations</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
@@ -68,6 +68,14 @@
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-util</artifactId>
                 </exclusion>
+    <exclusion>
+     <groupId>org.eclipse.jetty.ee9</groupId>
+     <artifactId>jetty-ee9-webapp</artifactId>
+    </exclusion>
+    <exclusion>
+     <groupId>org.eclipse.jetty.ee10</groupId>
+     <artifactId>jetty-ee10-webapp</artifactId>
+    </exclusion>
             </exclusions>
             <scope>test</scope>
         </dependency>
@@ -88,6 +96,10 @@
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-io</artifactId>
                 </exclusion>
+    <exclusion>
+     <groupId>jakarta.servlet</groupId>
+     <artifactId>jakarta.servlet-api</artifactId>
+    </exclusion>
             </exclusions>
             <scope>test</scope>
         </dependency>
@@ -116,9 +128,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-security</artifactId>
-            <version>${jetty.version}</version>
+            <groupId>org.eclipse.jetty.ee9</groupId>
+            <artifactId>jetty-ee9-security</artifactId>
+            <version>12.0.39</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.eclipse.jetty</groupId>
@@ -134,20 +146,28 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-servlet</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-security</artifactId>
                 </exclusion>
+    <exclusion>
+     <groupId>org.eclipse.jetty.ee9</groupId>
+     <artifactId>jetty-ee9-security</artifactId>
+    </exclusion>
+    <exclusion>
+     <groupId>org.eclipse.jetty.ee10</groupId>
+     <artifactId>jetty-ee10-security</artifactId>
+    </exclusion>
             </exclusions>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-webapp</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-webapp</artifactId>
             <version>${jetty.version}</version>
             <exclusions>
                 <exclusion>
@@ -158,6 +178,14 @@
                     <groupId>org.eclipse.jetty</groupId>
                     <artifactId>jetty-servlet</artifactId>
                 </exclusion>
+    <exclusion>
+     <groupId>org.eclipse.jetty.ee9</groupId>
+     <artifactId>jetty-ee9-servlet</artifactId>
+    </exclusion>
+    <exclusion>
+     <groupId>org.eclipse.jetty.ee10</groupId>
+     <artifactId>jetty-ee10-servlet</artifactId>
+    </exclusion>
             </exclusions>
             <scope>test</scope>
         </dependency>

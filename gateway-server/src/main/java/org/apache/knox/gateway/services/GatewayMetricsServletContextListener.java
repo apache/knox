@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.services;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.servlets.MetricsServlet;
+import io.dropwizard.metrics.servlets.MetricsServlet;
 import org.apache.knox.gateway.services.metrics.impl.DefaultMetricsService;
 
 public class GatewayMetricsServletContextListener extends MetricsServlet.ContextListener {

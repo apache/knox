@@ -30,9 +30,9 @@ import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Response;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.ws.rs.core.Response;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.Enumeration;

@@ -43,14 +43,15 @@ import org.apache.knox.gateway.util.AuthorizationException;
 import org.apache.knox.gateway.util.HttpExceptionUtils;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
@@ -85,8 +86,20 @@ import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHEN
  * hadoop.auth.config.kerberos.keytab=/etc/knox/conf/knox.service.keytab (default: null)
  */
 
-public class HadoopAuthFilter extends
-    org.apache.hadoop.security.authentication.server.AuthenticationFilter {
+/**
+ * Knox front-end for Hadoop's {@code AuthenticationFilter}.
+ *
+ * <p>The gateway runs on Jetty EE10 / {@code jakarta.servlet}, but Hadoop's
+ * {@code org.apache.hadoop.security.authentication.server.AuthenticationFilter} is only
+ * published against {@code javax.servlet}. Rather than fork or disable it, this class is a
+ * {@code jakarta.servlet.Filter} that composes a {@link HadoopAuthFilterDelegate} (the javax
+ * subclass of Hadoop's filter) and bridges the two servlet namespaces:
+ * {@code jakarta}&rarr;{@code javax} adapters carry the request/response/config into Hadoop's
+ * authentication, and {@link JavaxToJakartaFilterChain} carries the authenticated identity
+ * back out so the rest of the (jakarta) gateway chain — including doAs impersonation — runs
+ * unchanged.</p>
+ */
+public class HadoopAuthFilter implements Filter {
 
   static final String SUPPORT_JWT = "support.jwt";
 
@@ -104,7 +117,14 @@ public class HadoopAuthFilter extends
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
   private String topologyName;
 
-  @Override
+  /* The javax delegate that performs the actual Hadoop authentication. */
+  private HadoopAuthFilterDelegate delegate;
+
+  /**
+   * Resolves the Hadoop auth configuration, honoring Knox aliases. Kept as an overridable
+   * (non-final) method so unit tests can mock it and so {@link HadoopAuthFilterDelegate} can
+   * route Hadoop's {@code getConfiguration(String, FilterConfig)} call back here.
+   */
   protected Properties getConfiguration(String configPrefix, FilterConfig filterConfig) throws ServletException {
     GatewayServices services = GatewayServer.getGatewayServices();
     AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
@@ -144,7 +164,15 @@ public class HadoopAuthFilter extends
       ignoreDoAs.addAll(ignoredServices);
     }
 
-    super.init(filterConfig);
+    // Initialize the javax delegate that performs the real Hadoop authentication. The jakarta
+    // FilterConfig is adapted to javax; Hadoop's init calls back to getConfiguration(...) above.
+    delegate = new HadoopAuthFilterDelegate(this);
+    try {
+      delegate.init(new JakartaToJavaxFilterConfig(filterConfig));
+    } catch (javax.servlet.ServletException e) {
+      // Translate Hadoop's javax exception to the jakarta type declared by Filter.init.
+      throw new ServletException(e.getMessage(), e.getCause() == null ? e : e.getCause());
+    }
 
     final String supportJwt = filterConfig.getInitParameter(SUPPORT_JWT);
     final boolean jwtSupported = Boolean.parseBoolean(supportJwt == null ? "false" : supportJwt);
@@ -163,7 +191,6 @@ public class HadoopAuthFilter extends
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     /* check for unauthenticated paths to bypass */
-
     if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
       continueWithAnonymousSubject(request, response, filterChain);
       return;
@@ -171,34 +198,53 @@ public class HadoopAuthFilter extends
     if (shouldUseJwtFilter(jwtFilter, (HttpServletRequest) request)) {
       LOG.useJwtFilter();
       jwtFilter.doFilter(request, response, filterChain);
-    } else {
-      super.doFilter(request, response, filterChain);
-    }
-  }
-
-  @Override
-  protected void doFilter(FilterChain filterChain, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-    /* check for unauthenticated paths to bypass */
-    if(AuthFilterUtils.doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
-      continueWithAnonymousSubject(request, response, filterChain);
-      return;
-    }
-    if (shouldUseJwtFilter(jwtFilter, request)) {
-      LOG.useJwtFilter();
-      jwtFilter.doFilter(request, response, filterChain);
       return;
     }
 
     /*
-     * If impersonation is not ignored for the authenticated user, attempt to set a proxied user if
-     * one was specified in the doAs query parameter.  A comma-delimited list of services/users to
-     * be ignored may be set in either the relevant topology file or the Gateway's gateway-site
-     * configuration file using a property named `gateway.proxyuser.services.ignore.doas`
-     *
-     * If setting a proxy user, proper authorization checks are made to ensure the authenticated user
-     * (proxy user) is allowed to set specified proxied user. It is expected that the relevant
-     * topology file has the required hadoop.proxyuser configurations set.
+     * Delegate to Hadoop's AuthenticationFilter through the javax bridge. On successful
+     * authentication Hadoop invokes the JavaxToJakartaFilterChain, which calls back to
+     * continueChainAfterHadoopAuth(...) to apply doAs impersonation and continue the chain.
      */
+    final HttpServletRequest httpRequest = (HttpServletRequest) request;
+    final HttpServletResponse httpResponse = (HttpServletResponse) response;
+    try {
+      delegate.doFilter(
+          new JakartaToJavaxHttpServletRequest(httpRequest),
+          new JakartaToJavaxHttpServletResponse(httpResponse),
+          new JavaxToJakartaFilterChain(filterChain, httpRequest, httpResponse, this));
+    } catch (javax.servlet.ServletException e) {
+      // Translate Hadoop's javax exception back to the jakarta type expected by the chain.
+      throw new ServletException(e.getMessage(), e.getCause() == null ? e : e.getCause());
+    }
+  }
+
+  @Override
+  public void destroy() {
+    if (delegate != null) {
+      delegate.destroy();
+    }
+    if (jwtFilter != null) {
+      jwtFilter.destroy();
+    }
+  }
+
+  /**
+   * Continues the gateway filter chain after Hadoop has authenticated the request. Applies doAs
+   * impersonation when a {@code doAs} query parameter is present and the authenticated user is
+   * authorized to impersonate. Invoked from {@link JavaxToJakartaFilterChain}.
+   *
+   * <p>If impersonation is not ignored for the authenticated user, attempt to set a proxied user
+   * if one was specified in the doAs query parameter.  A comma-delimited list of services/users to
+   * be ignored may be set in either the relevant topology file or the Gateway's gateway-site
+   * configuration file using a property named {@code gateway.proxyuser.services.ignore.doas}.</p>
+   *
+   * <p>If setting a proxy user, proper authorization checks are made to ensure the authenticated
+   * user (proxy user) is allowed to set specified proxied user. It is expected that the relevant
+   * topology file has the required hadoop.proxyuser configurations set.</p>
+   */
+  void continueChainAfterHadoopAuth(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws IOException, ServletException {
     HttpServletRequest proxyRequest = null;
     final String remoteUser = request.getRemoteUser();
     if (!ignoreDoAs(remoteUser)) {
@@ -218,7 +264,7 @@ public class HadoopAuthFilter extends
       }
     }
 
-    super.doFilter(filterChain, proxyRequest == null ? request : proxyRequest, response);
+    filterChain.doFilter(proxyRequest == null ? request : proxyRequest, response);
   }
 
   /**

@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.filter;
 
 import jakarta.activation.MimeType;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface GatewayRequest extends HttpServletRequest {
 

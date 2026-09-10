@@ -35,9 +35,9 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;

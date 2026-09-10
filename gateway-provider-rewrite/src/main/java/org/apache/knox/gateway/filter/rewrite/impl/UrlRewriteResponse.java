@@ -37,10 +37,10 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 import org.apache.commons.io.IOUtils;
 
 import jakarta.activation.MimeType;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -313,22 +313,10 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
     }
   }
 
-  @Override
-  @SuppressWarnings("deprecation")
-  public String encodeUrl( String url ) {
-    return this.encodeURL( url );
-  }
-
   //TODO: Route these through the rewriter.
   @Override
   public String encodeURL(String url ) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public String encodeRedirectUrl( String url ) {
-    return this.encodeRedirectURL( url );
   }
 
   //TODO: Route these through the rewriter.

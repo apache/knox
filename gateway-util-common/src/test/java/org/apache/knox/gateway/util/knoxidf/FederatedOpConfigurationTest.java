@@ -19,7 +19,7 @@ package org.apache.knox.gateway.util.knoxidf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import org.easymock.EasyMock;
 import org.junit.Test;

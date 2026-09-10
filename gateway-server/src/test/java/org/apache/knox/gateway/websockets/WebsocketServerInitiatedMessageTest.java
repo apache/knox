@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.websockets;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.server.ServerUpgradeRequest;

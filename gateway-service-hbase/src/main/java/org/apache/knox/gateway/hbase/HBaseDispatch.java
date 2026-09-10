@@ -18,7 +18,7 @@
 package org.apache.knox.gateway.hbase;
 
 import java.net.URI;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
 

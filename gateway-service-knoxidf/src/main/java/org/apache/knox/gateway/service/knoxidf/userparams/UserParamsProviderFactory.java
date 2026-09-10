@@ -16,7 +16,7 @@
  */
 package org.apache.knox.gateway.service.knoxidf.userparams;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 public class UserParamsProviderFactory {
     public static UserParamsProvider getUserParamsProvider(ServletContext servletContext) {

@@ -63,12 +63,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
+            <artifactId>jakarta.json</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.json</groupId>
@@ -163,25 +159,21 @@
             <artifactId>jetty-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-servlet</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-nested</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-servlet</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-webapp</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-webapp</artifactId>
         </dependency>
         
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
 
         <dependency>
@@ -207,10 +199,12 @@
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-core</artifactId>
+   <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-web</artifactId>
+   <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
@@ -323,7 +317,7 @@
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-servlets</artifactId>
+            <artifactId>metrics-jakarta-servlets</artifactId>
         </dependency>
 
         <!--
@@ -331,16 +325,16 @@
         The need to be late in the classpath for some reason otherwise class loading issues occur.
         -->
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-annotations</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-apache-jsp</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-apache-jsp</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.ee8</groupId>
-            <artifactId>jetty-ee8-glassfish-jstl</artifactId>
+            <groupId>org.eclipse.jetty.ee10</groupId>
+            <artifactId>jetty-ee10-glassfish-jstl</artifactId>
         </dependency>
 
         <dependency>
@@ -363,23 +357,28 @@
         </dependency>
 
         <dependency>
-           <groupId>org.eclipse.jetty.ee8.websocket</groupId>
-           <artifactId>jetty-ee8-websocket-servlet</artifactId>
+           <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+           <artifactId>jetty-ee10-websocket-servlet</artifactId>
         </dependency>
 
         <dependency>
-           <groupId>javax.websocket</groupId>
-           <artifactId>javax.websocket-api</artifactId>
+           <groupId>jakarta.websocket</groupId>
+           <artifactId>jakarta.websocket-api</artifactId>
         </dependency>
 
         <dependency>
-           <groupId>org.eclipse.jetty.ee8.websocket</groupId>
-           <artifactId>jetty-ee8-websocket-javax-server</artifactId>
+           <groupId>jakarta.websocket</groupId>
+           <artifactId>jakarta.websocket-client-api</artifactId>
         </dependency>
 
         <dependency>
-           <groupId>org.eclipse.jetty.ee8.websocket</groupId>
-           <artifactId>jetty-ee8-websocket-javax-client</artifactId>
+           <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+           <artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+           <artifactId>jetty-ee10-websocket-jakarta-client</artifactId>
         </dependency>
 
         <dependency>

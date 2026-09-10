@@ -19,7 +19,7 @@ package org.apache.knox.gateway.dispatch;
 
 import org.apache.http.nio.client.HttpAsyncClient;
 
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 
 public interface HttpAsyncClientFactory extends HttpClientFactory {
     HttpAsyncClient createAsyncHttpClient(FilterConfig filterConfig);
