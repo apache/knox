@@ -12,6 +12,7 @@ Release Notes - Apache Knox - Version 2.1.1
     * [KNOX-3416] - Improving redirect protections
     * [KNOX-3417] - KnoxLdapRealm username RFC-4515 escaping
     * [KNOX-3418] - Improving file access in Admin API
+    * [KNOX-3421] - Escape LDAP DN values in KnoxLdapRealm
 
 ** Task
     * [KNOX-3258] - Fix OIDC client login
