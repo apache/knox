@@ -97,26 +97,7 @@ public class MockServletContext implements ServletContext {
   }
 
   @Override
-  public Servlet getServlet( String s ) throws ServletException {
-    return null;
-  }
-
-  @Override
-  public Enumeration<Servlet> getServlets() {
-    return null;
-  }
-
-  @Override
-  public Enumeration<String> getServletNames() {
-    return null;
-  }
-
-  @Override
   public void log( String s ) {
-  }
-
-  @Override
-  public void log( Exception e, String s ) {
   }
 
   @Override

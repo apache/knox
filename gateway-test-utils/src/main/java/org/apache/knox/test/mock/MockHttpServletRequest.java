@@ -20,6 +20,7 @@ package org.apache.knox.test.mock;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -182,12 +183,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public boolean isRequestedSessionIdFromUrl() {
-    return false;
-  }
-
-  @Override
   public boolean authenticate( HttpServletResponse httpServletResponse ) throws IOException, ServletException {
     return false;
   }
@@ -346,11 +341,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     return null;
   }
 
-  @Override
-  @SuppressWarnings("deprecation")
-  public String getRealPath( String s ) {
-    return null;
-  }
 
   @Override
   public int getRemotePort() {
@@ -404,6 +394,22 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
   @Override
   public DispatcherType getDispatcherType() {
+    return null;
+  }
+
+
+  @Override
+  public String getRequestId() {
+    return "";
+  }
+
+  @Override
+  public String getProtocolRequestId() {
+    return "";
+  }
+
+  @Override
+  public ServletConnection getServletConnection() {
     return null;
   }
 
