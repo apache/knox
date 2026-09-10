@@ -52,17 +52,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public String encodeUrl( String s ) {
-    return null;
-  }
-
-  @Override
-  public String encodeRedirectUrl( String s ) {
-    return null;
-  }
-
-  @Override
   public void sendError( int i, String s ) throws IOException {
   }
 
@@ -102,11 +91,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 
   @Override
   public void setStatus( int i ) {
-  }
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public void setStatus( int i, String s ) {
   }
 
   @Override

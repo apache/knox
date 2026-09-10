@@ -19,7 +19,7 @@ package org.apache.knox.gateway.service.health;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.json.MetricsModule;
-import com.codahale.metrics.servlets.MetricsServlet;
+import io.dropwizard.metrics.servlets.MetricsServlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;

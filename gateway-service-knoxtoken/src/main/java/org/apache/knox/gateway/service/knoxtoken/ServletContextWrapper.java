@@ -110,28 +110,8 @@ class ServletContextWrapper implements ServletContext {
     }
 
     @Override
-    public Servlet getServlet(String name) throws ServletException {
-        return delegate.getServlet(name);
-    }
-
-    @Override
-    public Enumeration<Servlet> getServlets() {
-        return delegate.getServlets();
-    }
-
-    @Override
-    public Enumeration<String> getServletNames() {
-        return delegate.getServletNames();
-    }
-
-    @Override
     public void log(String msg) {
         delegate.log(msg);
-    }
-
-    @Override
-    public void log(Exception exception, String msg) {
-        delegate.log(msg, exception);
     }
 
     @Override
