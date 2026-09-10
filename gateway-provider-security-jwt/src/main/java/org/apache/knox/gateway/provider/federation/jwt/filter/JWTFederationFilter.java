@@ -24,6 +24,9 @@ import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
@@ -39,6 +42,7 @@ import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import javax.security.auth.Subject;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -99,6 +103,43 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Set this to "true" on the provider to permit an http:// jwks_uri (e.g. an internal test OP).
   public static final String TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP = "knox.token.exchange.dynamic.jwks.allow.http";
 
+  // Topology provider param (default false/absent). Master switch for
+  // delegation token-exchange enforcement: while off, every attempted
+  // delegation (any exchange that is not same-subject) is rejected before
+  // DelegationPolicyService.evaluate() is ever called; same-subject
+  // exchanges are never affected by this flag, regardless of its value.
+  // Fail-safe default -- a security control that is off until an operator
+  // explicitly configures a topology to enforce delegation policy.
+  public static final String DELEGATION_SERVER_ENABLED = "delegation.server.enabled";
+
+  // Topology provider param (default false/absent). Gates whether the
+  // requested_subject token-exchange request parameter is read at all.
+  // While off, requested_subject is ignored entirely, exactly as any other
+  // unrecognized parameter.
+  public static final String DELEGATION_REQUESTED_SUBJECT_ENABLED = "delegation.requested.subject.enabled";
+
+  // Topology provider param (default false/absent). Optionally forces that
+  // at least one audience/resource value is present on a delegation
+  // token-exchange request. Has no effect on a same-subject exchange.
+  public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED = "delegation.enforce.requested.audience.required";
+
+  // Topology provider param (default false/absent). Optionally forces that
+  // exactly one combined audience/resource value (not one of each) is
+  // present on a delegation token-exchange request. Has no effect on a
+  // same-subject exchange.
+  public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_EXACTLY_ONE = "delegation.enforce.requested.audience.exactly.one";
+
+  // Topology provider param (default false/absent). Gates whether the RFC
+  // 8693 scope token-exchange request parameter is read at all, for every
+  // exchange (delegation or not) -- unlike audience/resource parsing, which
+  // is unconditional. No minted Knox token has ever carried a scope claim,
+  // so this defaults off even for delegation exchanges. A parsed scope
+  // value only reaches a minted token if knox.token.scope.validator
+  // (KnoxToken's TokenResource, gateway-service-knoxtoken module) is
+  // separately configured to pass requested scopes through -- this flag
+  // alone never causes a scope claim to be minted.
+  public static final String DELEGATION_REQUESTED_SCOPE_ENABLED = "delegation.requested.scope.enabled";
+
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
   }
@@ -127,12 +168,29 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean allowInsecureDynamicJwks;
   private Set<String> unAuthenticatedPaths = new HashSet<>(20);
 
+  private DelegationPolicyService delegationPolicyService;
+
+  private boolean delegationServerEnabled;
+  private boolean delegationRequestedSubjectEnabled;
+  private boolean delegationEnforceRequestedAudienceRequired;
+  private boolean delegationEnforceRequestedAudienceExactlyOne;
+  private boolean delegationRequestedScopeEnabled;
+
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
 
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init(filterConfig);
+
+    // Protect against null ServletContext and GatewayServices on init.
+    final ServletContext context = filterConfig.getServletContext();
+    if (context != null) {
+      final GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
+      if (services != null) {
+        delegationPolicyService = services.getService(ServiceType.DELEGATION_POLICY_SERVICE);
+      }
+    }
 
     // expected audiences or null
     String expectedAudiences = filterConfig.getInitParameter(KNOX_TOKEN_AUDIENCES);
@@ -176,6 +234,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // HTTPS enforcement on -- the fail-safe direction for a security control.
     allowInsecureDynamicJwks = Boolean.parseBoolean(
         filterConfig.getInitParameter(TOKEN_EXCHANGE_DYNAMIC_JWKS_ALLOW_HTTP));
+
+    // Delegation-enforcement topology flags -- see their constant
+    // declarations above for behavior and defaults. Each parsed with
+    // Boolean.parseBoolean so any value other than an explicit "true"
+    // (including absence, or a typo) keeps the flag off -- fail-safe default.
+    delegationServerEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_SERVER_ENABLED));
+    delegationRequestedSubjectEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SUBJECT_ENABLED));
+    delegationEnforceRequestedAudienceRequired = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED));
+    delegationEnforceRequestedAudienceExactlyOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_EXACTLY_ONE));
+    delegationRequestedScopeEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SCOPE_ENABLED));
 
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
@@ -634,5 +702,29 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Test seam: allows a mock/recording handler to be injected.
   void setTokenExchangeHandler(TokenExchangeHandler tokenExchangeHandler) {
     this.tokenExchangeHandler = tokenExchangeHandler;
+  }
+
+  boolean isDelegationServerEnabled() {
+    return delegationServerEnabled;
+  }
+
+  boolean isDelegationRequestedSubjectEnabled() {
+    return delegationRequestedSubjectEnabled;
+  }
+
+  boolean isDelegationEnforceRequestedAudienceRequired() {
+    return delegationEnforceRequestedAudienceRequired;
+  }
+
+  boolean isDelegationEnforceRequestedAudienceExactlyOne() {
+    return delegationEnforceRequestedAudienceExactlyOne;
+  }
+
+  boolean isDelegationRequestedScopeEnabled() {
+    return delegationRequestedScopeEnabled;
+  }
+
+  PolicyDecision evaluateDelegationPolicy(PolicyCheckRequest request) {
+    return delegationPolicyService.evaluate(request);
   }
 }

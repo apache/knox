@@ -21,6 +21,7 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -36,6 +37,7 @@ public class TestFilterConfig implements FilterConfig {
 
     private final Properties props;
     private final TokenStateService tokenStateService;
+    private final DelegationPolicyService delegationPolicyService;
 
     public TestFilterConfig() {
       this(new Properties());
@@ -46,8 +48,13 @@ public class TestFilterConfig implements FilterConfig {
     }
 
     public TestFilterConfig(Properties props, TokenStateService tokenStateService) {
+      this(props, tokenStateService, null);
+    }
+
+    public TestFilterConfig(Properties props, TokenStateService tokenStateService, DelegationPolicyService delegationPolicyService) {
       this.props = props;
       this.tokenStateService = tokenStateService;
+      this.delegationPolicyService = delegationPolicyService;
     }
 
     @Override
@@ -63,25 +70,30 @@ public class TestFilterConfig implements FilterConfig {
         }
         ServletContext context = EasyMock.createNiceMock(ServletContext.class);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(topologyName).anyTimes();
-        if (tokenStateService != null) {
+        if (tokenStateService != null || delegationPolicyService != null) {
           final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
-          EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tokenStateService).anyTimes();
+          if (tokenStateService != null) {
+            EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_STATE_SERVICE)).andReturn(tokenStateService).anyTimes();
 
-          // tests with TSS need GatewayConfig and AliasService too for TokenMAC calculation
-          final AliasService aliasService  = EasyMock.createNiceMock(AliasService.class);
-          try {
-            EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn("supersecretpassword".toCharArray()).anyTimes();
-          } catch (AliasServiceException e) {
-            // NOP - if the mock initialization failed there will be errors down the line
+            // tests with TSS need GatewayConfig and AliasService too for TokenMAC calculation
+            final AliasService aliasService  = EasyMock.createNiceMock(AliasService.class);
+            try {
+              EasyMock.expect(aliasService.getPasswordFromAliasForGateway(EasyMock.anyString())).andReturn("supersecretpassword".toCharArray()).anyTimes();
+            } catch (AliasServiceException e) {
+              // NOP - if the mock initialization failed there will be errors down the line
+            }
+            EasyMock.expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+
+            final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+            EasyMock.expect(gatewayConfig.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
+            EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
+            EasyMock.replay(gatewayConfig, aliasService);
           }
-          EasyMock.expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
-
-          final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
-          EasyMock.expect(gatewayConfig.getKnoxTokenHashAlgorithm()).andReturn(HmacAlgorithms.HMAC_SHA_256.getName()).anyTimes();
-          EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig).anyTimes();
-
+          if (delegationPolicyService != null) {
+            EasyMock.expect(gatewayServices.getService(ServiceType.DELEGATION_POLICY_SERVICE)).andReturn(delegationPolicyService).anyTimes();
+          }
           EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices).anyTimes();
-          EasyMock.replay(gatewayConfig, gatewayServices, aliasService);
+          EasyMock.replay(gatewayServices);
         }
         EasyMock.replay(context);
         return context;
