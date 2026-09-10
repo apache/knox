@@ -242,9 +242,10 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     //
     // When no resources and no scopes are requested, this check imposes no restriction and
     // evaluate() proceeds to Step 6.
+    final String scopeNotAllowedReason = "scope_not_allowed";
     final Map<String, Set<String>> resourcePolicy = policy.getResourcePolicy();
     if (request.getRequestedResources().isEmpty() && !request.getRequestedScopes().isEmpty()) {
-      return deny("scope_not_allowed");
+      return deny(scopeNotAllowedReason);
     }
     for (String requestedResource : request.getRequestedResources()) {
       if (!resourcePolicy.containsKey(requestedResource)) {
@@ -253,7 +254,7 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
       final Set<String> scopeSet = resourcePolicy.get(requestedResource);
       if (!request.getRequestedScopes().isEmpty() && !scopeSet.isEmpty()
           && !scopeSet.containsAll(request.getRequestedScopes())) {
-        return deny("scope_not_allowed");
+        return deny(scopeNotAllowedReason);
       }
     }
 
