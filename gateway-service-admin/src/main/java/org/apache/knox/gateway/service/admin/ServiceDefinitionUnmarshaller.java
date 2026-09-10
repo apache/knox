@@ -34,6 +34,11 @@ import jakarta.xml.bind.Unmarshaller;
 
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.stream.StreamSource;
+
 @Provider
 @Consumes({ MediaType.APPLICATION_XML })
 public class ServiceDefinitionUnmarshaller implements MessageBodyReader<ServiceDefinitionPair> {
