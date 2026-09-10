@@ -31,6 +31,10 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
 
@@ -49,8 +53,13 @@ public class ServiceDefinitionUnmarshaller implements MessageBodyReader<ServiceD
   public ServiceDefinitionPair readFrom(Class<ServiceDefinitionPair> instance, Type genericType, Annotation[] annotations, MediaType mediaType,
       MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
     try {
-      return (ServiceDefinitionPair) getUnmarshaller().unmarshal(entityStream);
-    } catch (JAXBException e) {
+      XMLInputFactory xif = XMLInputFactory.newFactory();
+      xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+      xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+      xif.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false);
+      XMLStreamReader xsr = xif.createXMLStreamReader(new StreamSource(entityStream));
+      return (ServiceDefinitionPair) getUnmarshaller().unmarshal(xsr);
+    } catch (XMLStreamException | JAXBException e) {
       throw new IOException(e);
     }
   }
