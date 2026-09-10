@@ -296,7 +296,12 @@
         <woodstox-core.version>6.4.0</woodstox-core.version>
         <xmlsec.version>4.0.4</xmlsec.version>
         <xmltool.version>3.3</xmltool.version>
-        <xml-jaxb.version>4.0.5</xml-jaxb.version>
+        <!-- Pinned to 3.0.2 (not 4.0.x): jakarta.xml.bind-api 4.0.x removed jaxb.properties
+             support from ContextFinder, so JAXBContext.newInstance(contextPath,...) picks the
+             glassfish RI via ServiceLoader instead of MOXy and rejects MOXy-only properties
+             (eclipselink.oxm.metadata-source, MEDIA_TYPE). 3.0.2 still honors the per-package
+             jaxb.properties selector, letting MOXy win. MOXy 4.0.9 runs fine against this API. -->
+        <xml-jaxb.version>3.0.2</xml-jaxb.version>
         <xml-matchers.version>0.10</xml-matchers.version>
         <zookeeper.version>3.8.6</zookeeper.version>
         <docker-maven-plugin.version>0.45.0</docker-maven-plugin.version>
@@ -1625,7 +1630,8 @@
                 <artifactId>jaxb-runtime</artifactId>
                 <version>${xml-jaxb.version}</version>
             </dependency>
-            <!-- Converge angus-activation: MOXy 4.0.9 pulls 2.0.3, jaxb-runtime 4.0.5 pulls 2.0.2. -->
+            <!-- Pin angus-activation to the version MOXy 4.0.9 expects (2.0.3) so it converges
+                 against the activation impl pulled elsewhere in the reactor. -->
             <dependency>
                 <groupId>org.eclipse.angus</groupId>
                 <artifactId>angus-activation</artifactId>
