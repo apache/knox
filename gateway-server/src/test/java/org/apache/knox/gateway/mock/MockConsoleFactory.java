@@ -19,8 +19,8 @@ package org.apache.knox.gateway.mock;
 
 import org.apache.knox.test.mock.MockServlet;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee8.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
 
 public class MockConsoleFactory {
 
@@ -34,7 +34,7 @@ public class MockConsoleFactory {
     consoleContext.setBaseResourceAsString( "target/classes" );
     consoleContext.addServlet( consoleHolder, "/*" );
 
-    return consoleContext.getCoreContextHandler();
+    return consoleContext;
   }
 
 }

@@ -34,9 +34,9 @@ import org.apache.knox.test.mock.MockServlet;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.http.HttpTester;
-import org.eclipse.jetty.ee8.servlet.FilterHolder;
-import org.eclipse.jetty.ee8.servlet.ServletHolder;
-import org.eclipse.jetty.ee8.servlet.ServletTester;
+import org.eclipse.jetty.ee10.servlet.FilterHolder;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.servlet.ServletTester;
 import org.eclipse.jetty.util.Attributes;
 import org.eclipse.jetty.util.AttributesMap;
 import org.hamcrest.core.Is;
@@ -141,7 +141,7 @@ public class FrontendFunctionProcessorTest {
         UrlRewriteServletContextListener.DESCRIPTOR_LOCATION_INIT_PARAM_NAME, descriptorUrl );
 
     if( attributes != null ) {
-      server.getContext().setAttributes( attributes );
+      attributes.asAttributeMap().forEach((key, value) -> server.getContext().setAttribute(key, value));
     }
     server.getContext().setAttribute( GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE, "test-cluster" );
     server.getContext().setAttribute( GatewayServices.GATEWAY_SERVICES_ATTRIBUTE, mockGatewayServices );
