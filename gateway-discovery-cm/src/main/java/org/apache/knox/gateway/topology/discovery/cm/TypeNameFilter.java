@@ -27,15 +27,10 @@ public class TypeNameFilter {
     private final Set<String> excludedTypeNames;
     private final Set<String> requiredTypeNames;
 
-    public TypeNameFilter(Collection<String> excludedTypeNames) {
-        this(excludedTypeNames, Collections.emptySet());
-    }
-
     /**
      * @param excludedTypeNames a deny-list of type names that are always excluded
-     * @param requiredTypeNames an allow-list of type names; when non-empty, any type
-     *                          not contained in it is excluded. An empty allow-list
-     *                          means no allow-list restriction is applied.
+     * @param requiredTypeNames an allow-list of type names; any type not contained in it
+     *                          is excluded. An empty (or null) allow-list excludes every type.
      */
     public TypeNameFilter(Collection<String> excludedTypeNames, Collection<String> requiredTypeNames) {
         this.excludedTypeNames = mapToLowerCase(excludedTypeNames);
@@ -47,7 +42,7 @@ public class TypeNameFilter {
         if (excludedTypeNames.contains(lower)) {
             return true;
         }
-        return !requiredTypeNames.isEmpty() && !requiredTypeNames.contains(lower);
+        return !requiredTypeNames.contains(lower);
     }
 
     private Set<String> mapToLowerCase(Collection<String> items) {

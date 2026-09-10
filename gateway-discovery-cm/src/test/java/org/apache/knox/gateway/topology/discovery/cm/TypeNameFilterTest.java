@@ -29,27 +29,27 @@ import static org.hamcrest.core.Is.is;
 public class TypeNameFilterTest {
 
     @Test
-    public void testExcludedNamesIsNull() {
-        TypeNameFilter filter = new TypeNameFilter(null);
-        assertThat("Should exclude nothing", filter.isExcluded("HIVESERVER2"), is(false));
+    public void testNullExcludeListDoesNotExcludeAllowedType() {
+        TypeNameFilter filter = new TypeNameFilter(null, Collections.singleton("HIVESERVER2"));
+        assertThat("Null exclude list should not exclude an allowed type", filter.isExcluded("HIVESERVER2"), is(false));
     }
 
     @Test
-    public void testExcludedNamesIsEmpty() {
-        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet());
-        assertThat("Should exclude nothing", filter.isExcluded("HIVESERVER2"), is(false));
+    public void testEmptyExcludeListDoesNotExcludeAllowedType() {
+        TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), Collections.singleton("HIVESERVER2"));
+        assertThat("Empty exclude list should not exclude an allowed type", filter.isExcluded("HIVESERVER2"), is(false));
     }
 
     @Test
     public void testExcludeWhenExactMatch() {
-        TypeNameFilter filter = new TypeNameFilter(Collections.singleton("HIVESERVER2"));
+        TypeNameFilter filter = new TypeNameFilter(Collections.singleton("HIVESERVER2"), Collections.singleton("HIVESERVER2"));
         assertThat("Should exclude exact match", filter.isExcluded("HIVESERVER2"), is(true));
     }
 
     @Test
     public void testExcludeWhenIgnoreCaseMatch() {
-        TypeNameFilter filter = new TypeNameFilter(Collections.singleton("hiveServer2"));
-        assertThat("Should exclude exact match", filter.isExcluded("HIVESERVER2"), is(true));
+        TypeNameFilter filter = new TypeNameFilter(Collections.singleton("hiveServer2"), Collections.singleton("HIVESERVER2"));
+        assertThat("Should exclude case-insensitive match", filter.isExcluded("HIVESERVER2"), is(true));
     }
 
 
@@ -57,7 +57,7 @@ public class TypeNameFilterTest {
     public void testExcludeMultipleTypesWithExactMatch() {
         Set<String> excludedTypeNames =
                 new HashSet<>(Arrays.asList("GATEWAY", "HIVESERVER2"));
-        TypeNameFilter filter = new TypeNameFilter(excludedTypeNames);
+        TypeNameFilter filter = new TypeNameFilter(excludedTypeNames, Collections.singleton("HIVESERVER2"));
         assertThat("Should exclude exact match", filter.isExcluded("HIVESERVER2"), is(true));
     }
 
@@ -65,8 +65,8 @@ public class TypeNameFilterTest {
     public void testExcludeMultipleTypesWithIgnoreCaseMatch() {
         Set<String> excludedTypeNames =
                 new HashSet<>(Arrays.asList("Gateway", "HiveserVER2"));
-        TypeNameFilter filter = new TypeNameFilter(excludedTypeNames);
-        assertThat("Should exclude exact match", filter.isExcluded("HIVESERVER2"), is(true));
+        TypeNameFilter filter = new TypeNameFilter(excludedTypeNames, Collections.singleton("HIVESERVER2"));
+        assertThat("Should exclude case-insensitive match", filter.isExcluded("HIVESERVER2"), is(true));
     }
 
     @Test
@@ -82,15 +82,15 @@ public class TypeNameFilterTest {
     }
 
     @Test
-    public void testEmptyRequiredTypesAppliesNoAllowListRestriction() {
+    public void testEmptyAllowListExcludesEverything() {
         TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), Collections.emptySet());
-        assertThat("Empty allow-list should not exclude anything", filter.isExcluded("DATANODE"), is(false));
+        assertThat("Empty allow-list should exclude every type", filter.isExcluded("DATANODE"), is(true));
     }
 
     @Test
-    public void testNullRequiredTypesAppliesNoAllowListRestriction() {
+    public void testNullAllowListExcludesEverything() {
         TypeNameFilter filter = new TypeNameFilter(Collections.emptySet(), null);
-        assertThat("Null allow-list should not exclude anything", filter.isExcluded("DATANODE"), is(false));
+        assertThat("Null allow-list should exclude every type", filter.isExcluded("DATANODE"), is(true));
     }
 
     @Test

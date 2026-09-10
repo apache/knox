@@ -192,7 +192,8 @@ public class ServiceRoleCollectorByRoleTest {
         EasyMock.expect(api.readRoleConfig(eq(clusterName), eq(hiveServer2Role().getName()), eq(serviceName), eq(DATA_VIEW_FULL))).andReturn(hiveServer2ConfigList);
         EasyMock.replay(api);
         Set<String> excludedRoleTypes = Collections.singleton("GATEWAY");
-        TypeNameFilter roleTypeFilter = new TypeNameFilter(excludedRoleTypes);
+        Set<String> requiredRoleTypes = Collections.singleton("HIVESERVER2");
+        TypeNameFilter roleTypeFilter = new TypeNameFilter(excludedRoleTypes, requiredRoleTypes);
         ServiceRoleCollector collector = createRoleCollectorWithFilter(api, roleTypeFilter);
 
         ApiRoleConfigList roleConfigList = collector.getAllServiceRoleConfigurations(clusterName, serviceName);
