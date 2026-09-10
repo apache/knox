@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import org.apache.commons.lang3.StringUtils;
+
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -69,6 +71,19 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederati
  * fragment (RFC 8707 section 2 / RFC 3986 section 4.3); {@code audience} values are logical service
  * names and are not URI-constrained. When present, these body values take precedence over the
  * {@code resource} query parameter that KNOXTOKEN would otherwise honor.</p>
+ *
+ * <p>The optional requested_subject parameter is read as body parameter if the
+ * {@link JWTFederationFilter#DELEGATION_REQUESTED_SUBJECT_ENABLED} provider parameter is
+ * true. This is used to allow a delegation token exchange using only the subject token
+ * as actor when no separate actor_token is defined.</p>
+ *
+ * <p>A distinction is made between same-subject and delegation exchanges. A delegation exchange
+ * is when there is an actor_token defined or requested_subject is defined and has a different
+ * value from the sub claim in the subject_token. The latter is called a 'headless' exchange,
+ * expected for batch or non-interactive jobs when an agent or service runs for a user.
+ * Delegation is disabled unless the {@link JWTFederationFilter#DELEGATION_SERVER_ENABLED}
+ * provider parameter is true. A request with both an actor_token and a requested_subject
+ * value that does not equal the sub claim in the subject_token is invalid.</p>
  */
 class TokenExchangeHandler {
 
@@ -156,24 +171,27 @@ class TokenExchangeHandler {
         return;
       }
 
-      final String requestedSubjectValue;
-      if (filter.isDelegationRequestedSubjectEnabled()) {
-        final String rawRequestedSubject = bodyRequest.getParameter(JWTFederationFilter.REQUESTED_SUBJECT);
-        requestedSubjectValue = rawRequestedSubject == null ? null : rawRequestedSubject.trim();
-      } else {
-        requestedSubjectValue = null;
-      }
-      final boolean hasRequestedSubject = requestedSubjectValue != null && !requestedSubjectValue.isEmpty();
+      // Parse the optional requested_subject parameter if DELEGATION_REQUESTED_SUBJECT_ENABLED
+      // is true.
+      final String requestedSubjectValue = parseRequestedSubject(bodyRequest);
       final boolean requestedSubjectDiffersFromSubject =
-          hasRequestedSubject && !requestedSubjectValue.equals(subjectToken.getSubject());
-      final boolean isSameSubjectExchange = !hasActorToken && !requestedSubjectDiffersFromSubject;
+          requestedSubjectValue != null && !requestedSubjectValue.equals(subjectToken.getSubject());
 
-      if (!isSameSubjectExchange) {
+      // The request is a delegation token exchange if either an actor_token is present or
+      // a requested_subject that differs from the subject_token sub claim is present. The
+      // latter is 'headless' delegation exchange for which the subject_token is the actor.
+      if (hasActorToken || requestedSubjectDiffersFromSubject) {
+        // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is
+        // set to true. When true, only authorized token exchanges will be permitted.
+        // Otherwise, any actor could impersonate any subject without authorization.
         if (!filter.isDelegationServerEnabled()) {
           filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "Delegation is not enabled for this topology");
           return;
         }
+        // A delegation exchange request can use actor_token or requested_subject for headless
+        // exchanges, but not both. Allow a requested_subject to be defined when an actor_token
+        // is present only if the value matches the subject_token sub claim.
         if (hasActorToken && requestedSubjectDiffersFromSubject) {
           filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request",
@@ -273,6 +291,26 @@ class TokenExchangeHandler {
     addValues(bodyRequest.getParameterValues(CommonTokenConstants.RESOURCE), requested, true);
     addValues(bodyRequest.getParameterValues(CommonTokenConstants.AUDIENCE), requested, false);
     return requested;
+  }
+
+  /**
+   * Parse the optional requested_subject parameter if
+   * {@link JWTFederationFilter#DELEGATION_REQUESTED_SUBJECT_ENABLED}
+   * is true.
+   * @param bodyRequest the unwrapped request exposing the form body
+   * @return the value of the requested_subject parameter. null if either
+   *         DELEGATION_REQUESTED_SUBJECT_ENABLED is false or the parameter
+   *         is undefined or the value is empty or purely whitespace.
+   */
+  private String parseRequestedSubject(HttpServletRequest bodyRequest) {
+    final String requestedSubjectValue;
+    if (filter.isDelegationRequestedSubjectEnabled()) {
+        final String rawRequestedSubject = bodyRequest.getParameter(JWTFederationFilter.REQUESTED_SUBJECT);
+        requestedSubjectValue = StringUtils.isBlank(rawRequestedSubject) ? null : rawRequestedSubject.trim();
+    } else {
+        requestedSubjectValue = null;
+    }
+    return requestedSubjectValue;
   }
 
   private void addValues(String[] rawValues, List<String> target, boolean validateAsUri) throws InvalidResourceException {

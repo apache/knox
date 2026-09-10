@@ -311,6 +311,7 @@ public class TokenExchangeHandlerTest {
     assertFalse(filter.continued);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("Delegation is not enabled for this topology"));
   }
 
   @Test
@@ -322,6 +323,20 @@ public class TokenExchangeHandlerTest {
     assertFalse(filter.continued);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("Delegation is not enabled for this topology"));
+  }
+
+  @Test
+  public void testGateRejectsActorTokenWithHeadlessCandidateWhenDelegationServerDisabled() throws Exception {
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE,"acttok", JWT_TYPE, "bob"), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("Delegation is not enabled for this topology"));
   }
 
   @Test
@@ -349,11 +364,14 @@ public class TokenExchangeHandlerTest {
 
     assertTrue(filter.continued);
     assertNotNull(filter.establishedSubject);
+    assertEquals("svc-dataservice", primaryName(filter.establishedSubject));
   }
 
   // TODO: this test asserts that requested_subject differing from the subject_token's subject
   // has no effect when actor_token is absent. Once headless exchange is implemented, this shape
   // will be handled as a headless delegation candidate instead, and this test will need to change.
+  // Once the requested_subject is honored, there will be more cases like the value is trimmed and
+  // it is case-sensitive.
   @Test
   public void testHeadlessCandidatePassesThroughUnchangedWhenGateEnabled() throws Exception {
     filter.delegationServerEnabled = true;
@@ -383,6 +401,31 @@ public class TokenExchangeHandlerTest {
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     handler.handle(request("subtok", JWT_TYPE, null, null, "   "), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    assertEquals("alice", primaryName(filter.establishedSubject));
+  }
+
+  @Test
+  public void testWhitespaceRequestedSubjectTreatedAsAbsent() throws Exception {
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "   "), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    assertEquals("alice", primaryName(filter.establishedSubject));
+  }
+
+  @Test
+  public void testRequestedSubjectEqualToSubjectTreatedAsSameSubjectExchange() throws Exception {
+    // Delegation is not enabled, so a delegation exchange would be denied, but a
+    // requested_subject that matches the subject_token sub claim is treated as a same-
+    // subject exchange.
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "alice"), response, chain);
 
     assertTrue(filter.continued);
     assertNotNull(filter.establishedSubject);
