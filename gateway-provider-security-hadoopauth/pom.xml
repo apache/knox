@@ -66,6 +66,17 @@
             <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
 
+        <!--
+          Hadoop's AuthenticationFilter is compiled against javax.servlet (no jakarta release),
+          so the javax half of the bridge (HadoopAuthFilterDelegate + adapters) needs the
+          javax.servlet API at compile time. hadoop-auth only brings it in as 'provided'.
+        -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+        </dependency>
+
 
 
         <dependency>
