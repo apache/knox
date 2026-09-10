@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -36,9 +37,9 @@ public class PolicyCheckRequest {
     this.actorId = actorId;
     this.subjectName = subjectName;
     this.requestedResources = Set.copyOf(requestedResources != null ?
-            requestedResources : java.util.Collections.emptySet());
+            requestedResources : Collections.emptySet());
     this.requestedScopes = Set.copyOf(requestedScopes != null ?
-            requestedScopes : java.util.Collections.emptySet());
+            requestedScopes : Collections.emptySet());
     this.headlessExchange = headlessExchange;
   }
 
@@ -54,10 +55,6 @@ public class PolicyCheckRequest {
     return subjectName;
   }
 
-  /**
-   * The full set of requested audience/resource values for this exchange. Resource and audience
-   * values are matched as verbatim synonyms.
-   */
   public Set<String> getRequestedResources() {
     return requestedResources;
   }
