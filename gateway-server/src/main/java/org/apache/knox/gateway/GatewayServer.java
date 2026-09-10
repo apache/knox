@@ -920,6 +920,13 @@ public class GatewayServer {
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
     context.setInitParameter("org.eclipse.jetty.ee10.servlet.Default.dirAllowed", "false");
+    // Jetty 12 / Servlet 6 (EE10) rejects ambiguous URIs (e.g. encoded path
+    // separators %2F) with 400 at the servlet layer unless the ServletHandler is
+    // told to decode them. Knox proxies backends (WebHDFS/WEBHBASE row keys, etc.)
+    // whose paths legitimately carry encoded slashes, so decode them here — this,
+    // together with UriCompliance.LEGACY on the connector, restores the Jetty 9.4
+    // pass-through behavior.
+    context.getServletHandler().setDecodeAmbiguousURIs(true);
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
     // Jetty 12's ee10 form parser reads the max form content size and max form keys
