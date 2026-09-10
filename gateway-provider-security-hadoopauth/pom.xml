@@ -74,7 +74,9 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
+            <!-- Match the version Hadoop (hadoop-common/hadoop-hdfs) pulls transitively so the
+                 javax.servlet-api version converges across the reactor. -->
+            <version>3.1.0</version>
         </dependency>
 
 

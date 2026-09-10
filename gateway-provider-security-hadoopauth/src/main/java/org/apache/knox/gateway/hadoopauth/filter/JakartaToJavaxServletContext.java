@@ -161,36 +161,6 @@ class JakartaToJavaxServletContext implements ServletContext {
   }
 
   @Override
-  public int getSessionTimeout() {
-    return delegate.getSessionTimeout();
-  }
-
-  @Override
-  public void setSessionTimeout(int sessionTimeout) {
-    delegate.setSessionTimeout(sessionTimeout);
-  }
-
-  @Override
-  public String getRequestCharacterEncoding() {
-    return delegate.getRequestCharacterEncoding();
-  }
-
-  @Override
-  public void setRequestCharacterEncoding(String encoding) {
-    delegate.setRequestCharacterEncoding(encoding);
-  }
-
-  @Override
-  public String getResponseCharacterEncoding() {
-    return delegate.getResponseCharacterEncoding();
-  }
-
-  @Override
-  public void setResponseCharacterEncoding(String encoding) {
-    delegate.setResponseCharacterEncoding(encoding);
-  }
-
-  @Override
   public void log(String msg) {
     delegate.log(msg);
   }
@@ -254,11 +224,6 @@ class JakartaToJavaxServletContext implements ServletContext {
   @Override
   public ServletRegistration.Dynamic addServlet(String servletName, Class<? extends Servlet> servletClass) {
     throw unsupported("addServlet");
-  }
-
-  @Override
-  public ServletRegistration.Dynamic addJspFile(String servletName, String jspFile) {
-    throw unsupported("addJspFile");
   }
 
   @Override
