@@ -367,13 +367,8 @@ public class TokenExchangeHandlerTest {
     assertEquals("svc-dataservice", primaryName(filter.establishedSubject));
   }
 
-  // TODO: this test asserts that requested_subject differing from the subject_token's subject
-  // has no effect when actor_token is absent. Once headless exchange is implemented, this shape
-  // will be handled as a headless delegation candidate instead, and this test will need to change.
-  // Once the requested_subject is honored, there will be more cases like the value is trimmed and
-  // it is case-sensitive.
   @Test
-  public void testHeadlessCandidatePassesThroughUnchangedWhenGateEnabled() throws Exception {
+  public void testHeadlessDelegationCreatesTokenExchangePrincipalWhenGateEnabled() throws Exception {
     filter.delegationServerEnabled = true;
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
@@ -381,7 +376,101 @@ public class TokenExchangeHandlerTest {
 
     assertTrue(filter.continued);
     assertNotNull(filter.establishedSubject);
+    // Headless delegation: subject_token's own identity (alice) is the actor ...
     assertEquals("alice", primaryName(filter.establishedSubject));
+    // ... and requested_subject (bob) is carried as the impersonated party via
+    // TokenExchangePrincipal, with a null subjectIssuer since it is a bare,
+    // policy-asserted parameter, not token-backed.
+    final TokenExchangePrincipal tep =
+        filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
+    assertEquals("bob", tep.getSubjectPrincipalName());
+    assertNull(tep.getSubjectIssuer());
+    assertEquals("alice", tep.getActorPrincipalName());
+    assertEquals("KNOXSSO", tep.getActorIssuer());
+  }
+
+  @Test
+  public void testHeadlessDelegationIgnoresSubjectTokenActClaim() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    // subject_token carries an 'act' claim of its own (e.g. it was itself issued via some
+    // earlier, unrelated delegation) -- this describes the actor's own history, not bob's.
+    filter.valid.put("subtok", jwtWithActClaim("alice", "KNOXSSO", Map.of("sub", "prior-actor")));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    // ... and must NOT be attributed to requested_subject (bob): no ActorChainPrincipal is
+    // added at all, regardless of what subject_token's own act claim contains.
+    final Set<ActorChainPrincipal> actorChainPrincipals =
+        filter.establishedSubject.getPrincipals(ActorChainPrincipal.class);
+    assertTrue("no ActorChainPrincipal should be present", actorChainPrincipals.isEmpty());
+  }
+
+  @Test
+  public void testHeadlessDelegationTrimsRequestedSubjectEndToEnd() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // parseRequestedSubject() trims upstream; assert the principal actually built carries
+    // the trimmed value, not the raw padded one.
+    handler.handle(request("subtok", JWT_TYPE, null, null, "  bob  "), response, chain);
+
+    assertTrue(filter.continued);
+    final TokenExchangePrincipal tep =
+        filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
+    assertEquals("bob", tep.getSubjectPrincipalName());
+  }
+
+  @Test
+  public void testHeadlessDelegationPreservesRequestedSubjectCase() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "Bob"), response, chain);
+
+    assertTrue(filter.continued);
+    final TokenExchangePrincipal tep =
+        filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
+    // No case-folding: "Bob" must not become "bob" or vice versa.
+    assertEquals("Bob", tep.getSubjectPrincipalName());
+  }
+
+  @Test
+  public void testHeadlessDelegationWithLongRequestedSubjectValue() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // No length bound exists at this layer yet (that is R15/E-4's job, not built). Confirm
+    // this method does not itself truncate or fail on a long value.
+    final StringBuilder sb = new StringBuilder("bob-");
+    // TODO: replace with max length constant when defined
+    for (int i = 0; i < 4096 - "bob-".length(); i++) {
+      sb.append('x');
+    }
+    final String longSubject = sb.toString();
+    handler.handle(request("subtok", JWT_TYPE, null, null, longSubject), response, chain);
+
+    assertTrue(filter.continued);
+    final TokenExchangePrincipal tep =
+        filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
+    assertEquals(longSubject, tep.getSubjectPrincipalName());
+  }
+
+  @Test
+  public void testHeadlessDelegationWithSubjectTokenMissingIssuer() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    // subject_token with no issuer claim: null issuer is valid in TokenExchangePrincipalImpl
+    filter.valid.put("subtok", jwt("alice", null));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.establishedSubject);
+    assertEquals("alice", primaryName(filter.establishedSubject));
+    final TokenExchangePrincipal tep =
+        filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
+    assertNull(tep.getActorIssuer());
   }
 
   @Test

@@ -61,8 +61,10 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederati
  * {@code actor_token} is optional, and {@code actor_token_type} is required when {@code actor_token}
  * is present and must not be present otherwise. Only JWT-family token types are supported. When an
  * {@code actor_token} is present the request is treated as delegation (on-behalf-of): the actor is
- * the authenticated party and the subject is the impersonated party; otherwise the subject_token is
- * simply exchanged for a token representing the subject.</p>
+ * the authenticated party and the subject is the impersonated party. When requested_subject is
+ * present and differs from the subject_token's own subject (headless delegation, see below), the
+ * subject_token's own identity is likewise the actor and requested_subject is the impersonated
+ * party. Otherwise the subject_token is simply exchanged for a token representing the subject.</p>
  *
  * <p>The optional RFC 8693 section 2.1 {@code resource} and {@code audience} body parameters are
  * read here (from the same {@code x-www-form-urlencoded} body) and conveyed to the downstream
@@ -209,8 +211,13 @@ class TokenExchangeHandler {
         }
         // Delegation (OBO): actor as PrimaryPrincipal, subject as the impersonated party
         subject = createSubjectForTokenExchange(subjectToken, actorToken);
+      } else if (requestedSubjectDiffersFromSubject) {
+        // Headless delegation: subject_token's own identity is the actor, requested_subject is
+        // the impersonated party
+        subject = createSubjectForHeadlessDelegation(subjectToken, requestedSubjectValue);
       } else {
-        // No actor_token: exchange the subject_token for a token representing the subject itself
+        // No actor_token, no headless delegation: exchange the subject_token for a token
+        // representing the subject itself
         subject = filter.createSubjectFromToken(subjectToken);
       }
 
@@ -270,6 +277,47 @@ class TokenExchangeHandler {
     if (!actorChain.isEmpty()) {
       principals.add(new ActorChainPrincipalImpl(actorChain));
     }
+
+    @SuppressWarnings("rawtypes")
+    final HashSet emptySet = new HashSet();
+    return new Subject(true, principals, emptySet, emptySet);
+  }
+
+  /**
+   * Create a Subject for a headless delegation token exchange: the subject_token's own
+   * identity is the actor (the authenticated party), and requested_subject is carried as
+   * the impersonated party for the identity assertion layer. Unlike an interactive
+   * (actor_token) exchange, the impersonated identity here is a bare, policy-asserted
+   * request parameter with no corroborating validated token, so its issuer is recorded as
+   * null. No ActorChainPrincipal is added here: subject_token is the actor's own token in
+   * this case, not a user token, so any pre-existing act claim it happens to carry
+   * describes a delegation history for a different subject and must not be attributed to
+   * requested_subject.
+   *
+   * @param subjectToken     the validated subject token, whose own identity is the actor
+   * @param requestedSubject the requested_subject value, the identity to be impersonated
+   * @return a Subject configured for headless delegation
+   */
+  private Subject createSubjectForHeadlessDelegation(JWT subjectToken, String requestedSubject) {
+    final String actorPrincipalName = subjectToken.getSubject();
+    final String actorIssuer = subjectToken.getIssuer();
+
+    // PrimaryPrincipal is the ACTOR (subject_token's own identity)
+    final PrimaryPrincipal primaryPrincipal = new PrimaryPrincipal(actorPrincipalName);
+
+    // TokenExchangePrincipal carries metadata for the identity assertion layer. requested_subject
+    // is a bare, unauthenticated parameter with no corroborating token, so subjectIssuer is null.
+    final TokenExchangePrincipal tokenExchangePrincipal =
+        new TokenExchangePrincipalImpl(requestedSubject, null, actorPrincipalName, actorIssuer);
+
+    // Deliberately no actor-chain extraction here (unlike createSubjectForTokenExchange()):
+    // subject_token is the actor's own token in the headless case, not a user token, so any
+    // pre-existing act claim on it belongs to a different subject's delegation history and
+    // must not be carried into this Subject.
+
+    final Set<Principal> principals = new HashSet<>();
+    principals.add(primaryPrincipal);
+    principals.add(tokenExchangePrincipal);
 
     @SuppressWarnings("rawtypes")
     final HashSet emptySet = new HashSet();
