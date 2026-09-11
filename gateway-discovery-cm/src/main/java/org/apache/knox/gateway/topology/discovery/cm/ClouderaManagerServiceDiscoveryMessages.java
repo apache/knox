@@ -238,8 +238,8 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void activationEventRelevance(String eventId, boolean relevance, String command, String status, String serviceType, boolean serviceModelGeneratorExists,
                                 boolean rollingOrStalenessRestart);
 
-  @Message(level = MessageLevel.DEBUG, text = "Scale event relevance: {0} = {1} ({2} / {3} / {4})")
-  void scaleEventRelevance(String eventId, String relevance, String eventCode, String serviceType, boolean serviceModelGeneratorExists);
+  @Message(level = MessageLevel.DEBUG, text = "Scale event relevance: {0} = {1} ({2} / {3} / {4} / {5})")
+  void scaleEventRelevance(String eventId, String relevance, String eventCode, String serviceType, String roleType, boolean serviceModelGeneratorExists);
 
   @Message(level = MessageLevel.DEBUG, text = "Activation event - {0} - has already been processed, skipping ...")
   void activationEventAlreadyProcessed(String eventId);
@@ -265,8 +265,26 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "The {0} service configuration has changed, such that it has been enabled for proxying.")
   void serviceEnabled(String serviceName);
 
+  @Message(level = MessageLevel.INFO,
+           text = "The {0} service configuration has changed, such that it can no longer be proxied.")
+  void serviceDisabled(String serviceName);
+
+  @Message(level = MessageLevel.DEBUG,
+           text = "The {0} ({1}) service was and remains in an invalid configuration state; skipping discovery.")
+  void skippingConfigChangeForInvalidService(String serviceName, String serviceType);
+
   @Message(level = MessageLevel.INFO, text = "Role type {0} has been removed.")
   void roleTypeRemoved(String roleType);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Could not read descriptor {0}; skipping it when determining referenced services for {1}/{2}: {3}")
+  void errorDeterminingReferencedServiceTypes(String descriptor, String source, String clusterName,
+                                              @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Could not read descriptor {0}; keeping cluster {1}/{2} monitored this cycle: {3}")
+  void errorCheckingClusterReferences(String descriptor, String source, String clusterName,
+                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.WARN, text = "Failed to create persistence directory {0}")
   void failedToCreatePersistenceDirectory(String path);

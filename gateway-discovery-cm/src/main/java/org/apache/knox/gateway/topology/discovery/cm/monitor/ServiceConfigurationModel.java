@@ -20,7 +20,10 @@ import com.cloudera.api.swagger.model.ApiConfig;
 import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +39,38 @@ final class ServiceConfigurationModel {
   private Map<String, Map<String, String>> roleProps = new ConcurrentHashMap<>();
 
   ServiceConfigurationModel() {
+  }
+
+  /**
+   * Transform the given discovered {@link ServiceModel}s into a map of service type to its
+   * {@link ServiceConfigurationModel}, preserving exactly the service and role properties that the model generators
+   * extracted. This is the representation the configuration monitor compares against, so building both the persisted
+   * baseline and the current snapshot through this method keeps them comparable.
+   *
+   * @param models the service models produced by the model generators
+   * @return a map keyed by service type; empty if there are no models
+   */
+  static Map<String, ServiceConfigurationModel> fromServiceModels(final Collection<ServiceModel> models) {
+    final Map<String, ServiceConfigurationModel> result = new HashMap<>();
+    if (models != null) {
+      for (ServiceModel model : models) {
+        final ServiceConfigurationModel scp =
+            result.computeIfAbsent(model.getServiceType(), p -> new ServiceConfigurationModel());
+
+        for (Map.Entry<String, String> entry : model.getServiceProperties().entrySet()) {
+          scp.addServiceProperty(entry.getKey(), entry.getValue());
+        }
+
+        final Map<String, Map<String, String>> roleProperties = model.getRoleProperties();
+        for (String roleName : roleProperties.keySet()) {
+          final Map<String, String> rp = roleProperties.get(roleName);
+          for (Map.Entry<String, String> entry : rp.entrySet()) {
+            scp.addRoleProperty(roleName, entry.getKey(), entry.getValue());
+          }
+        }
+      }
+    }
+    return result;
   }
 
   ServiceConfigurationModel(final ApiServiceConfig            serviceConfig,
