@@ -24,14 +24,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TypeNameFilter {
-    private final Collection<String> excludedTypeNames;
+    private final Set<String> excludedTypeNames;
+    private final Set<String> requiredTypeNames;
 
-    public TypeNameFilter(Collection<String> excludedTypeNames) {
+    /**
+     * @param excludedTypeNames a deny-list of type names that are always excluded
+     * @param requiredTypeNames an allow-list of type names; any type not contained in it
+     *                          is excluded. An empty (or null) allow-list excludes every type.
+     */
+    public TypeNameFilter(Collection<String> excludedTypeNames, Collection<String> requiredTypeNames) {
         this.excludedTypeNames = mapToLowerCase(excludedTypeNames);
+        this.requiredTypeNames = mapToLowerCase(requiredTypeNames);
     }
 
     public boolean isExcluded(String roleType) {
-        return excludedTypeNames.contains(roleType.toLowerCase(Locale.ROOT));
+        final String lower = roleType.toLowerCase(Locale.ROOT);
+        if (excludedTypeNames.contains(lower)) {
+            return true;
+        }
+        return !requiredTypeNames.contains(lower);
     }
 
     private Set<String> mapToLowerCase(Collection<String> items) {

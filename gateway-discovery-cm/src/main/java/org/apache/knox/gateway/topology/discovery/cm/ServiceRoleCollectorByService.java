@@ -25,8 +25,6 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ServiceRoleCollectorByService implements ServiceRoleCollector {
 
@@ -55,19 +53,16 @@ public class ServiceRoleCollectorByService implements ServiceRoleCollector {
             roleConfigList = rolesResourceApi.readRolesConfig(clusterName, serviceName,
                     BigDecimal.valueOf(limit), BigDecimal.valueOf(offset), VIEW_FULL);
             if (roleConfigList != null && roleConfigList.getItems() != null) {
-                allServiceRoleConfigs.getItems().addAll(roleConfigList.getItems());
+                // filter each page as it arrives so unneeded role configs never accumulate
+                roleConfigList.getItems().stream()
+                        .filter(this::isIncluded)
+                        .forEach(allServiceRoleConfigs.getItems()::add);
             } else {
                 log.receivedNullServiceRoleConfigs(serviceName, clusterName);
             }
             offset += limit;
         } while (configItemSizeMatchesLimit(roleConfigList, limit));
-        return filterIncluded(allServiceRoleConfigs);
-    }
-
-    private ApiRoleConfigList filterIncluded(ApiRoleConfigList roleConfigs) {
-        List<ApiRoleConfig> filteredItems = roleConfigs.getItems().stream()
-                .filter(this::isIncluded).collect(Collectors.toList());
-        return new ApiRoleConfigList().items(filteredItems);
+        return allServiceRoleConfigs;
     }
 
     private boolean configItemSizeMatchesLimit(ApiRoleConfigList roleConfigList, long limit) {
