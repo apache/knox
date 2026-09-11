@@ -30,19 +30,36 @@ stores **only ID-token–derived data** — no access tokens, refresh tokens, or
 
 ### Backend selection
 
-The persistence backend activates automatically whenever a topology with the `KNOXIDF` or
-`KNOXIDF_ADMIN` role is deployed. Which backend is used follows the gateway's database
-configuration:
+The persistence backend is always active — it does **not** depend on a `KNOXIDF` /
+`KNOXIDF_ADMIN` topology being deployed, and it is chosen the same way as
+[token state](../config_knox_token.md): a self-provisioning **embedded H2** database by default,
+switching to a **JDBC-backed** external store only when you explicitly configure it. This mirrors
+`TokenStateService` and applies to all three KnoxIDF stores (federated identity, the trusted-issuer
+registry, and delegation policies).
 
-| `gateway.database.type` | Backend | Notes |
-|-------------------------|---------|-------|
-| `none` (default) | Self-provisioning **embedded H2** | Uses the same physical embedded database as token state (under the gateway security directory). Zero setup. Optional at-rest encryption — see [Configuration → Embedded database encryption](configuration.md#embedded-database-encryption). |
-| A real external type (`postgresql`, `mysql`, `oracle`, …) | **JDBC-backed** store | Uses the operator-configured external database. Recommended for HA. |
+| Backend | How it is selected | Notes |
+|---------|--------------------|-------|
+| Self-provisioning **embedded H2** (default) | Used when the service `impl` is left unset. | Uses the same physical embedded database as token state (under the gateway security directory). Zero setup. Optional at-rest encryption — see [Configuration → Embedded database encryption](configuration.md#embedded-database-encryption). |
+| **JDBC-backed** store | Selected explicitly by setting the service `impl` to the JDBC implementation (below). `gateway.database.type` then names the external database (`postgresql`, `mysql`, `oracle`, …) and supplies the connection details. | Uses the operator-configured external database. Recommended for HA. |
 
-You can also pin the implementation explicitly with the service property
-`gateway.service.KnoxIDFFederatedIdentityService.impl` (Empty / H2 / JDBC); an explicit value
-always wins over auto-selection. Setting it to the empty (no-op) implementation disables
-persistence.
+Pin the implementation explicitly with the per-service `impl` property:
+
+| Service | `impl` property | Default (H2) implementation | JDBC implementation |
+|---------|-----------------|-----------------------------|---------------------|
+| Federated identity | `gateway.service.KnoxIDFFederatedIdentityService.impl` | `H2DBFederatedIdentityService` | `JdbcFederatedIdentityService` |
+| Trusted OIDC issuers | `gateway.service.TrustedOidcIssuerService.impl` | `H2DBTrustedOidcIssuerService` | `JdbcTrustedOidcIssuerService` |
+| Delegation policy | `gateway.service.DelegationPolicyService.impl` | `H2DBDelegationPolicyService` | `JdbcDelegationPolicyService` |
+
+Leaving a property unset selects the embedded H2 implementation. There is no longer a no-op
+implementation that disables persistence; if the selected backend cannot be initialized, gateway
+startup **fails** rather than silently serving an empty store.
+
+!!! note "Configure all three consistently"
+    These properties are read per service, so it is technically possible to point some at JDBC and
+    leave others on H2. Don't — the embedded-H2 backend rewrites the shared `gateway.database.*`
+    configuration as it starts, so a mixed setup can pull the JDBC-configured services onto H2 (or
+    conflict) depending on startup order. Treat the backend as a gateway-wide choice: configure all
+    three KnoxIDF services (and token state) the same way.
 
 !!! note "`derbydb` is no longer supported"
     The embedded backend is now **H2 only**; the Apache Derby driver has been removed from the Knox

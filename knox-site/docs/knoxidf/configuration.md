@@ -139,7 +139,7 @@ setup is required to get started. H2 lives in its own folder under the gateway s
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `gateway.database.type` | `none` | Database backend: `none` selects the embedded self-provisioning **H2** store; a real external type (`postgresql`, `mysql`, `oracle`, …) selects the JDBC-backed store. |
+| `gateway.database.type` | `none` | External database backend used **when a KnoxIDF store is explicitly set to its JDBC implementation** (see [Operations → Backend selection](operations.md#backend-selection)): `postgresql`, `mysql`, `oracle`, …. With the default embedded-H2 backend this is managed automatically and need not be set. |
 | `gateway.database.connection.url` | (none) | Full JDBC URL (overrides host/port/name if set). |
 | `gateway.database.host` | (none) | Database host (when not using a full connection URL). |
 | `gateway.database.port` | (none) | Database port. |
