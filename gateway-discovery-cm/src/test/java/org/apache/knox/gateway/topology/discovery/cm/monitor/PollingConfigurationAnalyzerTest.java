@@ -46,6 +46,7 @@ import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -381,14 +382,29 @@ public class PollingConfigurationAnalyzerTest {
         "  ]\n" +
         "}";
 
-    File descriptor = null;
-    try {
-      descriptor = File.createTempFile("test", ".json");
-      FileUtils.writeStringToFile(descriptor, descContent, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    // The descriptor references a different discovery-address, so this cluster is no longer referenced and the
+    // cache entry must be torn down.
+    final File descriptor = createTempDescriptor("test", ".json", descContent);
+    assertEquals("Expected the config cache entry for " + clusterName + " to have been removed.",
+                 0, runClusterReferenceTerminationScenario(descriptor, address, clusterName));
+  }
 
+  /**
+   * A descriptor that cannot be read/parsed must not be interpreted as "no references"; clusterReferencesExist must
+   * fail open (assume references remain) so a transient read/parse problem does not tear down a live cluster's cache.
+   */
+  @Test
+  public void testUnparseableDescriptorDoesNotTearDownCache() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster 7B";
+
+    final File descriptor = createTempDescriptor("broken", ".json", "{ this is not valid descriptor json ");
+    assertEquals("An unparseable descriptor must fail open (assume references remain) and not tear down the cache.",
+                 1, runClusterReferenceTerminationScenario(descriptor, address, clusterName));
+  }
+
+  private int runClusterReferenceTerminationScenario(final File descriptor, final String address,
+      final String clusterName) throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
@@ -472,9 +488,7 @@ public class PollingConfigurationAnalyzerTest {
         descriptor.deleteOnExit();
       }
 
-      assertEquals("Expected the config cache entry for " + clusterName + " to have been removed.",
-                   0,
-                   configCache.getClusterNames().get(address).size());
+      return configCache.getClusterNames().get(address).size();
     } finally {
       // Reset the GatewayServices field of GatewayServer
       setGatewayServices(null);
@@ -676,6 +690,58 @@ public class PollingConfigurationAnalyzerTest {
     assertTrue("An event for a referenced service must trigger discovery", notified);
   }
 
+  /**
+   * A descriptor that cannot be parsed (malformed content, {@link IOException} from Jackson) contributes no referenced
+   * services: it cannot be re-generated until fixed, so a re-discovery now could not act on it. getReferencedServiceTypes
+   * skips it (logged), so an event for a service only such a descriptor would reference is not treated as relevant.
+   */
+  @Test
+  public void testUnparseableDescriptorIsSkippedForReferenceFiltering() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster REF3";
+
+    ApiEvent nnStart = createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+    ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+
+    final File descriptor = createTempDescriptor("broken", ".json", "{ this is not valid descriptor json ");
+    boolean notified = runReferenceAwareScenario(descriptor, address, clusterName, nnStart,
+        NameNodeServiceModelGenerator.SERVICE, nnModel);
+    assertFalse("An unparseable descriptor contributes no referenced services, so the event must not be relevant", notified);
+  }
+
+  /**
+   * With one unparseable descriptor (unsupported extension -> unchecked IllegalArgumentException from
+   * SimpleDescriptorFactory.parse) alongside a valid one, the broken descriptor must be caught and skipped without
+   * aborting the monitoring cycle, and an event for a service referenced by the valid descriptor must still trigger
+   * re-discovery.
+   */
+  @Test
+  public void testValidDescriptorStillTriggersWhenAnotherDescriptorIsUnparseable() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster REF4";
+
+    ApiEvent nnStart = createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+    ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+
+    final File validDescriptor = createTempDescriptor("valid", ".json",
+        "{\n" +
+        "  \"discovery-type\": \"ClouderaManager\",\n" +
+        "  \"discovery-address\": \"" + address + "\",\n" +
+        "  \"cluster\": \"" + clusterName + "\",\n" +
+        "  \"provider-config-ref\": \"ldap\",\n" +
+        "  \"services\": [ { \"name\": \"" + NameNodeServiceModelGenerator.SERVICE + "\" } ]\n" +
+        "}");
+    final File brokenDescriptor = createTempDescriptor("broken", ".txt", "not a descriptor");
+
+    boolean notified = runReferenceAwareScenario(Arrays.asList(validDescriptor, brokenDescriptor), address, clusterName,
+        nnStart, NameNodeServiceModelGenerator.SERVICE, nnModel);
+    assertTrue("A valid descriptor's referenced-service event must still trigger discovery despite a broken descriptor", notified);
+  }
+
   private boolean runReferenceAwareScenario(final String address, final String clusterName,
       final String descriptorServiceName, final ApiEvent event, final String currentServiceName,
       final ServiceConfigurationModel currentModel) throws AliasServiceException {
@@ -692,14 +758,20 @@ public class PollingConfigurationAnalyzerTest {
         "  ]\n" +
         "}";
 
-    File descriptor = null;
-    try {
-      descriptor = File.createTempFile("test", ".json");
-      FileUtils.writeStringToFile(descriptor, descContent, StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    final File descriptor = createTempDescriptor("test", ".json", descContent);
+    return runReferenceAwareScenario(descriptor, address, clusterName, event, currentServiceName, currentModel);
+  }
 
+  private boolean runReferenceAwareScenario(final File descriptor, final String address, final String clusterName,
+      final ApiEvent event, final String currentServiceName,
+      final ServiceConfigurationModel currentModel) throws AliasServiceException {
+    return runReferenceAwareScenario(Collections.singletonList(descriptor), address, clusterName, event,
+        currentServiceName, currentModel);
+  }
+
+  private boolean runReferenceAwareScenario(final List<File> descriptors, final String address, final String clusterName,
+      final ApiEvent event, final String currentServiceName,
+      final ServiceConfigurationModel currentModel) throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
@@ -719,7 +791,7 @@ public class PollingConfigurationAnalyzerTest {
     configCache.addServiceConfiguration(address, clusterName, new HashMap<>());
 
     TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
-    EasyMock.expect(ts.getDescriptors()).andReturn(Collections.singletonList(descriptor)).anyTimes();
+    EasyMock.expect(ts.getDescriptors()).andReturn(descriptors).anyTimes();
 
     final GatewayStatusService gatewayStatusService = EasyMock.createNiceMock(GatewayStatusService.class);
     EasyMock.expect(gatewayStatusService.status()).andReturn(Boolean.TRUE).anyTimes();
@@ -755,8 +827,10 @@ public class PollingConfigurationAnalyzerTest {
       pca.stop();
     } finally {
       setGatewayServices(null);
-      if (descriptor != null && descriptor.exists()) {
-        descriptor.deleteOnExit();
+      for (File descriptor : descriptors) {
+        if (descriptor != null && descriptor.exists()) {
+          descriptor.deleteOnExit();
+        }
       }
     }
     return listener.wasNotified(address, clusterName);
@@ -962,6 +1036,17 @@ public class PollingConfigurationAnalyzerTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  private File createTempDescriptor(final String prefix, final String suffix, final String content) {
+    File descriptor = null;
+    try {
+      descriptor = File.createTempFile(prefix, suffix);
+      FileUtils.writeStringToFile(descriptor, content, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return descriptor;
   }
 
   private ApiEvent createApiEvent(final String clusterName,
