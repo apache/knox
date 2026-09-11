@@ -59,7 +59,6 @@ import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.KeyStore;
 import java.time.Instant;
@@ -427,6 +426,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (source != null && clusterName != null) {
       TopologyService ts = getTopologyService();
       if (ts != null) {
+        boolean referencesIncomplete = false;
         for (File f : ts.getDescriptors()) {
           try {
             SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
@@ -434,9 +434,18 @@ public class PollingConfigurationAnalyzer implements Runnable {
               remainingClusterRefs = true;
               break;
             }
-          } catch (IOException e) {
-            // Ignore these errors
+          } catch (Exception e) {
+            // A descriptor we cannot read/parse might reference this cluster. Concluding "no references" on
+            // incomplete information would tear down a still-referenced cluster's cache, so remember the gap and
+            // assume a reference remains below.
+            log.errorCheckingClusterReferences(f.getName(), source, clusterName, e);
+            referencesIncomplete = true;
           }
+        }
+        if (!remainingClusterRefs && referencesIncomplete) {
+          // Could not rule out a reference from an unreadable/unparseable descriptor; assume a reference remains and
+          // keep monitoring rather than evict the cache (mirroring the unavailable-TopologyService case below).
+          remainingClusterRefs = true;
         }
       } else {
         remainingClusterRefs = true; // If the TopologyService is unavailable, assume references remain
@@ -580,8 +589,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
    * Determine the CM service types referenced by the deployed descriptors targeting the given discovery source and
    * cluster, by mapping each descriptor's declared Knox service names to CM service types via the registered service
    * model generators.
+   * <p>
+   * The set is built only from descriptors that could be read and parsed. An unreadable/unparseable descriptor is
+   * logged and skipped: a re-discovery can only ever refresh a descriptor that is parseable (an unparseable one cannot
+   * be regenerated until it is fixed, which itself triggers a fresh discovery), so filtering relevance on the services
+   * of the parseable descriptors never drops an actionable re-discovery. This intentionally differs from
+   * {@link #clusterReferencesExist(String, String)}, which must instead assume references remain so an unreadable
+   * descriptor never causes the monitored baseline to be discarded.
    *
-   * @return the referenced CM service types, or null if the TopologyService is unavailable (references undeterminable)
+   * @return the referenced CM service types (possibly empty), or null if the TopologyService is unavailable
    */
   private Set<String> getReferencedServiceTypes(final String source, final String clusterName) {
     final TopologyService ts = getTopologyService();
@@ -598,8 +614,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
             referencedServices.add(service.getName());
           }
         }
-      } catch (IOException e) {
-        // Ignore these errors
+      } catch (Exception e) {
+        // A descriptor we cannot read/parse is skipped: it cannot be re-generated until it is fixed, so it cannot be
+        // the target of a useful re-discovery now. Log the offending file and keep filtering on the descriptors we
+        // could read.
+        log.errorDeterminingReferencedServiceTypes(f.getName(), source, clusterName, e);
       }
     }
     return serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices);
