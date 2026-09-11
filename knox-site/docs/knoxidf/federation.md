@@ -215,7 +215,8 @@ The external issuers whose tokens Knox will accept are administered through the
 ## Persistence
 
 Federated identities are persisted so the same upstream user maps to a stable Knox subject and
-so their attributes can be reused. This store activates automatically when a `KNOXIDF` (or
-`KNOXIDF_ADMIN`) topology is present — no explicit configuration is required. See
+so their attributes can be reused. This store is always active and requires no explicit
+configuration — it defaults to a self-provisioning embedded H2 database, independent of whether a
+`KNOXIDF` (or `KNOXIDF_ADMIN`) topology is deployed. See
 [Operations → Federated identity persistence](operations.md#federated-identity-persistence) for
 the backend-selection rules and how to point KnoxIDF at an external database.
