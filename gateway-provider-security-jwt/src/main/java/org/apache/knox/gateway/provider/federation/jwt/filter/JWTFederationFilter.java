@@ -125,10 +125,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED = "delegation.enforce.requested.audience.required";
 
   // Topology provider param (default false/absent). Optionally forces that
-  // exactly one combined audience/resource value (not one of each) is
-  // present on a delegation token-exchange request. Has no effect on a
-  // same-subject exchange.
-  public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_EXACTLY_ONE = "delegation.enforce.requested.audience.exactly.one";
+  // at most one distinct combined audience/resource value is present on a
+  // delegation token-exchange request; combine with
+  // DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED to require exactly one.
+  // Has no effect on a same-subject exchange.
+  public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE = "delegation.enforce.requested.audience.max.one";
 
   // Topology provider param (default false/absent). Gates whether the RFC
   // 8693 scope token-exchange request parameter is read at all, for every
@@ -174,7 +175,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean delegationServerEnabled;
   private boolean delegationRequestedSubjectEnabled;
   private boolean delegationEnforceRequestedAudienceRequired;
-  private boolean delegationEnforceRequestedAudienceExactlyOne;
+  private boolean delegationEnforceRequestedAudienceMaxOne;
   private boolean delegationRequestedScopeEnabled;
 
   // Handles RFC 8693 token exchange requests (see doFilter).
@@ -243,7 +244,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationServerEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_SERVER_ENABLED));
     delegationRequestedSubjectEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SUBJECT_ENABLED));
     delegationEnforceRequestedAudienceRequired = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED));
-    delegationEnforceRequestedAudienceExactlyOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_EXACTLY_ONE));
+    delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
     delegationRequestedScopeEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SCOPE_ENABLED));
 
     final String unAuthPathString = filterConfig
@@ -717,8 +718,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     return delegationEnforceRequestedAudienceRequired;
   }
 
-  boolean isDelegationEnforceRequestedAudienceExactlyOne() {
-    return delegationEnforceRequestedAudienceExactlyOne;
+  boolean isDelegationEnforceRequestedAudienceMaxOne() {
+    return delegationEnforceRequestedAudienceMaxOne;
   }
 
   boolean isDelegationRequestedScopeEnabled() {
