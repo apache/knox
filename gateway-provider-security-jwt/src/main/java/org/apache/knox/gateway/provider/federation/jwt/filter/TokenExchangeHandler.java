@@ -212,7 +212,7 @@ class TokenExchangeHandler {
         // Delegation (OBO): actor as PrimaryPrincipal, subject as the impersonated party
         subject = createSubjectForTokenExchange(subjectToken, actorToken);
       } else if (requestedSubjectDiffersFromSubject) {
-        // Headless delegation: subject_token's own identity is the actor, requested_subject is
+        // Headless delegation: subject_token's identity is the actor, requested_subject is
         // the impersonated party
         subject = createSubjectForHeadlessDelegation(subjectToken, requestedSubjectValue);
       } else {
@@ -284,15 +284,14 @@ class TokenExchangeHandler {
   }
 
   /**
-   * Create a Subject for a headless delegation token exchange: the subject_token's own
-   * identity is the actor (the authenticated party), and requested_subject is carried as
+   * Create a Subject for a headless delegation token exchange: the subject_token's
+   * identity is the actor (the authenticated party), and requested_subject is
    * the impersonated party for the identity assertion layer. Unlike an interactive
-   * (actor_token) exchange, the impersonated identity here is a bare, policy-asserted
-   * request parameter with no corroborating validated token, so its issuer is recorded as
-   * null. No ActorChainPrincipal is added here: subject_token is the actor's own token in
-   * this case, not a user token, so any pre-existing act claim it happens to carry
-   * describes a delegation history for a different subject and must not be attributed to
-   * requested_subject.
+   * (actor_token) exchange, the impersonated identity here is a request parameter not a
+   * token, so its issuer is recorded as null. No ActorChainPrincipal is added here:
+   * subject_token is the actor's token in this case, not a token for the impersonated
+   * identity, so any pre-existing act claim it happens to carry describes a delegation
+   * history for a different subject.
    *
    * @param subjectToken     the validated subject token, whose own identity is the actor
    * @param requestedSubject the requested_subject value, the identity to be impersonated
@@ -306,14 +305,9 @@ class TokenExchangeHandler {
     final PrimaryPrincipal primaryPrincipal = new PrimaryPrincipal(actorPrincipalName);
 
     // TokenExchangePrincipal carries metadata for the identity assertion layer. requested_subject
-    // is a bare, unauthenticated parameter with no corroborating token, so subjectIssuer is null.
+    // is a simple name, so subjectIssuer is null.
     final TokenExchangePrincipal tokenExchangePrincipal =
         new TokenExchangePrincipalImpl(requestedSubject, null, actorPrincipalName, actorIssuer);
-
-    // Deliberately no actor-chain extraction here (unlike createSubjectForTokenExchange()):
-    // subject_token is the actor's own token in the headless case, not a user token, so any
-    // pre-existing act claim on it belongs to a different subject's delegation history and
-    // must not be carried into this Subject.
 
     final Set<Principal> principals = new HashSet<>();
     principals.add(primaryPrincipal);
