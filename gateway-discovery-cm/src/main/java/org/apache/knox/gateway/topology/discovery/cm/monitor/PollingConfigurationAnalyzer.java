@@ -590,12 +590,12 @@ public class PollingConfigurationAnalyzer implements Runnable {
    * cluster, by mapping each descriptor's declared Knox service names to CM service types via the registered service
    * model generators.
    * <p>
-   * The set is built only from descriptors that could be read and parsed. An unreadable/unparseable descriptor is
-   * logged and skipped: a re-discovery can only ever refresh a descriptor that is parseable (an unparseable one cannot
-   * be regenerated until it is fixed, which itself triggers a fresh discovery), so filtering relevance on the services
-   * of the parseable descriptors never drops an actionable re-discovery. This intentionally differs from
-   * {@link #clusterReferencesExist(String, String)}, which must instead assume references remain so an unreadable
-   * descriptor never causes the monitored baseline to be discarded.
+   * The set is built only from descriptors a re-discovery could actually act on. A descriptor is skipped when it
+   * cannot be read/parsed (logged; it cannot be regenerated until it is fixed, which itself triggers a fresh
+   * discovery) or when its topology is a read-only override (SimpleDescriptorHandler never regenerates it). Filtering
+   * relevance on the remaining descriptors therefore never drops an actionable re-discovery. This intentionally
+   * differs from {@link #clusterReferencesExist(String, String)}, which must instead assume references remain so an
+   * unreadable descriptor never causes the monitored baseline to be discarded.
    *
    * @return the referenced CM service types (possibly empty), or null if the TopologyService is unavailable
    */
@@ -609,7 +609,12 @@ public class PollingConfigurationAnalyzer implements Runnable {
     for (File f : ts.getDescriptors()) {
       try {
         SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
-        if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
+        // Skip descriptors whose topology is listed in gateway.read.only.override.topologies: SimpleDescriptorHandler
+        // never regenerates them (skipReadOnlyDescriptor), so a re-discovery could not act on them - just as it cannot
+        // act on an unparseable one. This is the gateway-site override list, NOT the descriptor's own "read-only"
+        // field (which only controls Admin UI editability and does not affect discovery).
+        if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())
+            && !gatewayConfig.getReadOnlyOverrideTopologyNames().contains(sd.getName())) {
           for (SimpleDescriptor.Service service : sd.getServices()) {
             referencedServices.add(service.getName());
           }

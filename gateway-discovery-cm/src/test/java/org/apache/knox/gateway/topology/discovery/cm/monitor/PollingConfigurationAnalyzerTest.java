@@ -742,6 +742,37 @@ public class PollingConfigurationAnalyzerTest {
     assertTrue("A valid descriptor's referenced-service event must still trigger discovery despite a broken descriptor", notified);
   }
 
+  /**
+   * A descriptor whose topology is a read-only override (gateway.read.only.override.topologies) contributes no
+   * referenced services: SimpleDescriptorHandler never regenerates it (skipReadOnlyDescriptor), so a re-discovery
+   * could not act on it. An event for a service only such a descriptor references must not be treated as relevant.
+   */
+  @Test
+  public void testReadOnlyOverrideDescriptorIsSkippedForReferenceFiltering() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster REF5";
+
+    ApiEvent nnStart = createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+    ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+
+    final File descriptor = createTempDescriptor("readonly", ".json",
+        "{\n" +
+        "  \"discovery-type\": \"ClouderaManager\",\n" +
+        "  \"discovery-address\": \"" + address + "\",\n" +
+        "  \"cluster\": \"" + clusterName + "\",\n" +
+        "  \"provider-config-ref\": \"ldap\",\n" +
+        "  \"services\": [ { \"name\": \"" + NameNodeServiceModelGenerator.SERVICE + "\" } ]\n" +
+        "}");
+    // The descriptor's topology name is its file base name; mark that name read-only.
+    final String topologyName = descriptor.getName().substring(0, descriptor.getName().lastIndexOf('.'));
+
+    boolean notified = runReferenceAwareScenario(Collections.singletonList(descriptor), address, clusterName, nnStart,
+        NameNodeServiceModelGenerator.SERVICE, nnModel, Collections.singletonList(topologyName));
+    assertFalse("A read-only-override topology's descriptor must be skipped, so its service event is not relevant", notified);
+  }
+
   private boolean runReferenceAwareScenario(final String address, final String clusterName,
       final String descriptorServiceName, final ApiEvent event, final String currentServiceName,
       final ServiceConfigurationModel currentModel) throws AliasServiceException {
@@ -772,9 +803,17 @@ public class PollingConfigurationAnalyzerTest {
   private boolean runReferenceAwareScenario(final List<File> descriptors, final String address, final String clusterName,
       final ApiEvent event, final String currentServiceName,
       final ServiceConfigurationModel currentModel) throws AliasServiceException {
+    return runReferenceAwareScenario(descriptors, address, clusterName, event, currentServiceName, currentModel,
+        Collections.emptyList());
+  }
+
+  private boolean runReferenceAwareScenario(final List<File> descriptors, final String address, final String clusterName,
+      final ApiEvent event, final String currentServiceName, final ServiceConfigurationModel currentModel,
+      final Collection<String> readOnlyTopologyNames) throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gatewayConfig.getReadOnlyOverrideTopologyNames()).andReturn(new ArrayList<>(readOnlyTopologyNames)).anyTimes();
     EasyMock.replay(gatewayConfig);
 
     ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
