@@ -18,13 +18,11 @@ package org.apache.knox.gateway.services.factory;
 
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
-import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.knoxidf.federation.EmptyFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.H2DBFederatedIdentityService;
 import org.apache.knox.gateway.services.knoxidf.federation.JdbcFederatedIdentityService;
@@ -36,57 +34,28 @@ import java.util.Map;
 public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
     private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
-    private static final String DEFAULT_IMPLEMENTATION = EmptyFederatedIdentityService.class.getName();
 
     @Override
     protected Service createService(GatewayServices gatewayServices, ServiceType serviceType, GatewayConfig gatewayConfig, Map<String, String> options, String implementation)
             throws ServiceLifecycleException {
 
-        String implementationToUse = implementation;
-        // No explicit impl configured: auto-select a persistence backend when KnoxIDF is deployed.
-        // Otherwise honor the configured impl (very likely a prod JDBC store).
-        if (isEmptyDefaultImplementation(implementationToUse) && isKnoxIdfEnabledInAnyTopology(gatewayServices, gatewayConfig)) {
-            implementationToUse = chooseAutoImplementation(gatewayConfig);
-        }
-
         FederatedIdentityService service = null;
-        if (shouldCreateService(implementationToUse)) {
-            if (matchesImplementation(implementationToUse, EmptyFederatedIdentityService.class, true)) {
-                service = new EmptyFederatedIdentityService();
-            } else if (matchesImplementation(implementationToUse, H2DBFederatedIdentityService.class)) {
+        if (shouldCreateService(implementation)) {
+            // Embedded H2 is the zero-config OOTB default that replaced the retired Derby backend (KNOX-3401).
+            if (matchesImplementation(implementation, H2DBFederatedIdentityService.class, true)) {
                 service = createH2Service(gatewayServices, gatewayConfig, options);
-            } else if (matchesImplementation(implementationToUse, JdbcFederatedIdentityService.class)) {
+            } else if (matchesImplementation(implementation, JdbcFederatedIdentityService.class)) {
                 service = createJdbcService(gatewayServices, gatewayConfig, options);
             }
-            logServiceUsage(service.getClass().getName(), serviceType);
+            if (service != null) {
+                logServiceUsage(service.getClass().getName(), serviceType);
+            }
         }
         return service;
     }
 
-    /**
-     * Chooses the auto-enabled implementation when KnoxIDF is deployed with no explicit impl: an
-     * operator-configured external database wins (very likely a prod JDBC store); everything else
-     * (the {@code none} default, or an explicit {@code h2}) selects the self-provisioning embedded H2
-     * store that replaced the retired Derby backend as the zero-config default (KNOX-3401) so
-     * federation works out of the box without any extra infrastructure.
-     */
-    String chooseAutoImplementation(GatewayConfig gatewayConfig) {
-        return isExternalDatabaseConfigured(gatewayConfig)
-                ? JdbcFederatedIdentityService.class.getName()
-                : H2DBFederatedIdentityService.class.getName();
-    }
-
-    private boolean isExternalDatabaseConfigured(GatewayConfig gatewayConfig) {
-        try {
-            // The embedded self-provisioning engine (H2) is not an external store.
-            return DatabaseType.fromString(gatewayConfig.getDatabaseType()) != DatabaseType.H2;
-        } catch (IllegalArgumentException e) {
-            // "none" (the default) or any unrecognized value: no real external DB -> use embedded.
-            return false;
-        }
-    }
-
-    private FederatedIdentityService createH2Service(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
+    private FederatedIdentityService createH2Service(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options)
+            throws ServiceLifecycleException {
         try {
             final H2DBFederatedIdentityService h2Service = new H2DBFederatedIdentityService();
             h2Service.setAliasService(getAliasService(gatewayServices));
@@ -95,11 +64,12 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
             return h2Service;
         } catch (ServiceLifecycleException e) {
             LOG.errorInitializingService(H2DBFederatedIdentityService.class.getName(), e.getMessage(), e);
-            return new EmptyFederatedIdentityService();
+            throw e;
         }
     }
 
-    private FederatedIdentityService createJdbcService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options) {
+    private FederatedIdentityService createJdbcService(GatewayServices gatewayServices, GatewayConfig gatewayConfig, Map<String, String> options)
+            throws ServiceLifecycleException {
         try {
             final JdbcFederatedIdentityService jdbcService = new JdbcFederatedIdentityService();
             jdbcService.setAliasService(getAliasService(gatewayServices));
@@ -107,7 +77,7 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
             return jdbcService;
         } catch (ServiceLifecycleException e) {
             LOG.errorInitializingService(JdbcFederatedIdentityService.class.getName(), e.getMessage(), e);
-            return new EmptyFederatedIdentityService();
+            throw e;
         }
     }
 
@@ -118,6 +88,6 @@ public class FederatedIdentityServiceFactory extends AbstractServiceFactory {
 
     @Override
     protected Collection<String> getKnownImplementations() {
-        return List.of(DEFAULT_IMPLEMENTATION, JdbcFederatedIdentityService.class.getName(), H2DBFederatedIdentityService.class.getName());
+        return List.of(H2DBFederatedIdentityService.class.getName(), JdbcFederatedIdentityService.class.getName());
     }
 }

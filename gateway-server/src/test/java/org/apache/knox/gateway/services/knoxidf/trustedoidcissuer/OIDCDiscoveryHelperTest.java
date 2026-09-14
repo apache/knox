@@ -21,11 +21,15 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -76,9 +80,17 @@ public class OIDCDiscoveryHelperTest {
   }
 
   private static TrustedOidcIssuerService stubService(boolean trusted, boolean dynamicJwks) {
-    return new EmptyTrustedOidcIssuerService() {
+    return new TrustedOidcIssuerService() {
       @Override public boolean isTrusted(String url) { return trusted; }
       @Override public boolean isDynamicJwks(String url) { return dynamicJwks; }
+      @Override public Optional<String> resolveJwksUri(String url) { return Optional.empty(); }
+      @Override public void refreshJwksUri(String url) { }
+      @Override public void register(TrustedOidcIssuer issuer) { }
+      @Override public void deregister(String url) { }
+      @Override public List<TrustedOidcIssuer> list() { return Collections.emptyList(); }
+      @Override public void init(GatewayConfig config, Map<String, String> opts) { }
+      @Override public void start() { }
+      @Override public void stop() { }
     };
   }
 
