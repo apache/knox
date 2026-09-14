@@ -200,6 +200,27 @@ class TokenExchangeHandler {
               "requested_subject must not differ from subject_token's subject when actor_token is present");
           return;
         }
+        // For headless delegation the requested_subject value must be well-formed.
+        if (!hasActorToken && isRequestedSubjectMalformed(requestedSubjectValue)) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "The requested_subject value is malformed");
+          return;
+        }
+        final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
+        // When configured, at least one audience/resource value is required.
+        if (filter.isDelegationEnforceRequestedAudienceRequired() && uniqueRequestedAudiences.isEmpty()) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request",
+              "At least one audience or resource value is required for a delegation exchange");
+          return;
+        }
+        // When configured, at most one distinct combined audience/resource value is allowed.
+        if (filter.isDelegationEnforceRequestedAudienceMaxOne() && uniqueRequestedAudiences.size() > 1) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request",
+              "Exactly one combined audience or resource value is allowed for a delegation exchange");
+          return;
+        }
       }
 
       final Subject subject;
@@ -353,6 +374,37 @@ class TokenExchangeHandler {
         requestedSubjectValue = null;
     }
     return requestedSubjectValue;
+  }
+
+  /** Larger than an allowed SPIFFE ID. Not configurable. */
+  private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
+
+  /**
+   * A requested_subject value is malformed if it exceeds a hardcoded length bound or contains
+   * any control character. Assumes a non-null, already-trimmed, non-blank value, matching
+   * parseRequestedSubject's contract; only called when requestedSubjectValue is known non-null.
+   */
+  private boolean isRequestedSubjectMalformed(String value) {
+    if (value.length() > MAX_REQUESTED_SUBJECT_LENGTH) {
+      return true;
+    }
+    for (int i = 0; i < value.length(); i++) {
+      if (Character.isISOControl(value.charAt(i))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** The distinct, trimmed, non-blank values in the given list, as a new Set. */
+  private static Set<String> distinctNonBlankValues(List<String> values) {
+    final Set<String> distinct = new HashSet<>();
+    for (String value : values) {
+      if (!value.isEmpty()) {
+        distinct.add(value);
+      }
+    }
+    return distinct;
   }
 
   private void addValues(String[] rawValues, List<String> target, boolean validateAsUri) throws InvalidResourceException {

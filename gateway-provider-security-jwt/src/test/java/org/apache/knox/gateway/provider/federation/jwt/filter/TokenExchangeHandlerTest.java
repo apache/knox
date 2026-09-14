@@ -379,8 +379,7 @@ public class TokenExchangeHandlerTest {
     // Headless delegation: subject_token's own identity (alice) is the actor ...
     assertEquals("alice", primaryName(filter.establishedSubject));
     // ... and requested_subject (bob) is carried as the impersonated party via
-    // TokenExchangePrincipal, with a null subjectIssuer since it is a bare,
-    // policy-asserted parameter, not token-backed.
+    // TokenExchangePrincipal, with a null subjectIssuer.
     final TokenExchangePrincipal tep =
         filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
     assertEquals("bob", tep.getSubjectPrincipalName());
@@ -412,8 +411,7 @@ public class TokenExchangeHandlerTest {
     filter.delegationServerEnabled = true;
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
-    // parseRequestedSubject() trims upstream; assert the principal actually built carries
-    // the trimmed value, not the raw padded one.
+    // Assert the principal actually built carries the trimmed value, not the raw padded one.
     handler.handle(request("subtok", JWT_TYPE, null, null, "  bob  "), response, chain);
 
     assertTrue(filter.continued);
@@ -441,10 +439,8 @@ public class TokenExchangeHandlerTest {
     filter.delegationServerEnabled = true;
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
-    // No length bound exists at this layer yet (that is R15/E-4's job, not built). Confirm
-    // this method does not itself truncate or fail on a long value.
     final StringBuilder sb = new StringBuilder("bob-");
-    // TODO: replace with max length constant when defined
+    // Max length matches TokenExchangeHandler private constant MAX_REQUESTED_SUBJECT_LENGTH
     for (int i = 0; i < 4096 - "bob-".length(); i++) {
       sb.append('x');
     }
@@ -521,6 +517,188 @@ public class TokenExchangeHandlerTest {
     assertEquals("alice", primaryName(filter.establishedSubject));
   }
 
+  @Test
+  public void testControlCharacterInRequestedSubjectRejectedAsInvalidRequest() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("The requested_subject value is malformed", filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testOverlongRequestedSubjectRejectedAsInvalidRequest() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final StringBuilder sb = new StringBuilder();
+    // Length just larger than TokenExchangeHandler private constant MAX_REQUESTED_SUBJECT_LENGTH
+    for (int i = 0; i < 4097; i++) {
+      sb.append('x');
+    }
+    handler.handle(delegationRequest("subtok", null, null, sb.toString(), null, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("The requested_subject value is malformed", filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testRequestedSubjectAtMaxLengthIsNotRejectedForLengthAlone() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final StringBuilder sb = new StringBuilder();
+    // Max length matches TokenExchangeHandler private constant MAX_REQUESTED_SUBJECT_LENGTH
+    for (int i = 0; i < 4096; i++) {
+      sb.append('x');
+    }
+    handler.handle(delegationRequest("subtok", null, null, sb.toString(), null, null), response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testMissingAudienceRejectedWhenRequiredDelegationWithActorToken() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("At least one audience or resource value is required for a delegation exchange",
+        filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testMissingAudienceRejectedWhenRequiredHeadlessDelegation() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("At least one audience or resource value is required for a delegation exchange",
+        filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testBlankAudienceValueDoesNotCountAsPresentWhenRequired() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, new String[] {""}), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("At least one audience or resource value is required for a delegation exchange",
+        filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testAudiencePresentSatisfiesRequiredCheck() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, new String[] {"aud1"}),
+        response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testMoreThanOneDistinctAudienceRejectedWhenMaxOne() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null,
+        new String[] {"aud1", "aud2"}), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
+        filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testDuplicateValueAcrossResourceAndAudienceNotRejectedWhenMaxOne() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null,
+        new String[] {"https://svc"}, new String[] {"https://svc"}), response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testZeroAudienceAllowedWhenMaxOneAloneEnabled() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, null), response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testExactlyOneAudienceRequiredWhenBothFlagsOnAndSatisfied() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, new String[] {"aud1"}),
+        response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testExactlyOneAudienceRequiredZeroValuesRejectedWithRequiredMessage() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, null), response, chain);
+
+    assertEquals("At least one audience or resource value is required for a delegation exchange",
+        filter.errorDescription);
+  }
+
+  @Test
+  public void testExactlyOneAudienceRequiredTwoValuesRejectedWithMaxOneMessage() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null,
+        new String[] {"aud1", "aud2"}), response, chain);
+
+    assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
+        filter.errorDescription);
+  }
+
   private static String primaryName(Subject subject) {
     return subject.getPrincipals(PrimaryPrincipal.class).iterator().next().getName();
   }
@@ -570,6 +748,31 @@ public class TokenExchangeHandlerTest {
     return request;
   }
 
+  /**
+   * Build a full delegation-candidate token-exchange request: subject_token plus every
+   * optional parameter this task's checks read (actor_token/actor_token_type,
+   * requested_subject, resource/audience), capturing the requested-audiences request
+   * attribute the handler may stash for the downstream KNOXTOKEN service. Pass null for any
+   * parameter not relevant to a given test.
+   */
+  private HttpServletRequest delegationRequest(String subjectToken, String actorToken, String actorTokenType,
+                                               String requestedSubject, String[] resources, String[] audiences) {
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN)).andReturn(subjectToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.SUBJECT_TOKEN_TYPE)).andReturn(JWT_TYPE).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN)).andReturn(actorToken).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.ACTOR_TOKEN_TYPE)).andReturn(actorTokenType).anyTimes();
+    EasyMock.expect(request.getParameter(JWTFederationFilter.REQUESTED_SUBJECT)).andReturn(requestedSubject).anyTimes();
+    EasyMock.expect(request.getParameterValues(CommonTokenConstants.RESOURCE)).andReturn(resources).anyTimes();
+    EasyMock.expect(request.getParameterValues(CommonTokenConstants.AUDIENCE)).andReturn(audiences).anyTimes();
+    requestedAudiencesAttr = EasyMock.newCapture();
+    request.setAttribute(EasyMock.eq(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR),
+        EasyMock.capture(requestedAudiencesAttr));
+    EasyMock.expectLastCall().anyTimes();
+    EasyMock.replay(request);
+    return request;
+  }
+
   private static JWT jwt(String subject, String issuer) {
     final JWT jwt = EasyMock.createNiceMock(JWT.class);
     EasyMock.expect(jwt.getSubject()).andReturn(subject).anyTimes();
@@ -604,6 +807,8 @@ public class TokenExchangeHandlerTest {
     private Subject establishedSubject;
     private boolean delegationServerEnabled;
     private boolean delegationRequestedSubjectEnabled;
+    private boolean delegationEnforceRequestedAudienceRequired;
+    private boolean delegationEnforceRequestedAudienceMaxOne;
 
     @Override
     boolean isDelegationServerEnabled() {
@@ -613,6 +818,16 @@ public class TokenExchangeHandlerTest {
     @Override
     boolean isDelegationRequestedSubjectEnabled() {
       return delegationRequestedSubjectEnabled;
+    }
+
+    @Override
+    boolean isDelegationEnforceRequestedAudienceRequired() {
+      return delegationEnforceRequestedAudienceRequired;
+    }
+
+    @Override
+    boolean isDelegationEnforceRequestedAudienceMaxOne() {
+      return delegationEnforceRequestedAudienceMaxOne;
     }
 
     @Override
