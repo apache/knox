@@ -30,6 +30,11 @@ services:
   # ServiceAccountValidator. It exposes a real API server that the fabric8
   # client inside Knox talks to. --tls-san=k3s makes the API server cert valid
   # for the "k3s" compose hostname so the rewritten kubeconfig can target it.
+  #
+  # The service-account-issuer/jwks-uri args make k3s a real OIDC issuer at
+  # https://k3s:6443 whose discovery + JWKS endpoints Knox can fetch. This lets
+  # the RFC 8693 token-exchange path (test_k8s_delegation.py) verify real
+  # ServiceAccount projected tokens, whose 'iss' then resolves to https://k3s:6443.
   k3s:
     image: rancher/k3s:v1.31.5-k3s1
     command:
@@ -40,6 +45,14 @@ services:
       - --disable=local-storage
       - --tls-san=k3s
       - --write-kubeconfig-mode=666
+      - --kube-apiserver-arg=service-account-issuer=https://k3s:6443
+      - --kube-apiserver-arg=service-account-jwks-uri=https://k3s:6443/openid/v1/jwks
+      # k3s defaults the apiserver to --anonymous-auth=false, which rejects Knox's
+      # unauthenticated OIDC discovery/JWKS fetch at the authentication layer (401),
+      # before RBAC. Re-enable it so the knox-sa-issuer-discovery ClusterRoleBinding
+      # (system:service-account-issuer-discovery -> system:unauthenticated, created by
+      # k8s-bootstrap) can grant anonymous access to exactly those two endpoints.
+      - --kube-apiserver-arg=anonymous-auth=true
     privileged: true
     environment:
       - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
@@ -78,6 +91,28 @@ services:
         echo 'Applying test fixtures...'
         kubectl apply -f /manifests/
         kubectl get serviceaccount test-sa -n test
+
+        echo 'Opening anonymous access to the OIDC discovery + JWKS endpoints...'
+        # Knox fetches /.well-known/openid-configuration and /openid/v1/jwks
+        # unauthenticated on the token-exchange path; k8s gates these behind the
+        # service-account-issuer-discovery ClusterRole, so bind it to
+        # system:unauthenticated for the throwaway CI cluster.
+        kubectl create clusterrolebinding knox-sa-issuer-discovery \
+          --clusterrole=system:service-account-issuer-discovery \
+          --group=system:unauthenticated \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+        echo 'Exporting k3s CA cert, issuer URL and a projected SA token...'
+        # The kubeconfig CA is the API server's serving CA -- exactly what the JVM
+        # needs to trust the HTTPS discovery/JWKS endpoints. knox imports it into
+        # cacerts on startup (see gateway-k8s-delegation.sh).
+        kubectl config view --raw \
+          -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' \
+          | base64 -d > /output/k3s-ca.crt
+        printf 'https://k3s:6443' > /output/issuer-url
+        # Projected SA token for namespace test / serviceaccount test-sa. Its 'iss'
+        # is https://k3s:6443 (the configured service-account-issuer).
+        kubectl create token test-sa -n test --duration=3600s > /output/sa-token
         echo 'k8s bootstrap complete'
     volumes:
       - k3s-output:/output
@@ -87,7 +122,10 @@ services:
 
   knox:
     image: apache/knox-dev:${IMAGE_TAG:-master}
-    command: /gateway.sh
+    # Custom entrypoint: import the k3s serving CA into the JVM cacerts (so the
+    # token-exchange path can fetch the k3s OIDC discovery/JWKS over HTTPS), then
+    # hand off to the standard /gateway.sh.
+    command: /gateway-k8s-delegation.sh
     environment:
       # Point the fabric8 client used by the k8s ServiceAccountValidator at k3s.
       - KUBECONFIG=/k3s/knox-kubeconfig.yaml
@@ -97,6 +135,7 @@ services:
       - ./logs:/knox-runtime/logs
 #      - ./knoxshell:/knoxshell
       - k3s-output:/k3s:ro
+      - ./k8s-delegation/gateway-k8s-delegation.sh:/gateway-k8s-delegation.sh:ro
     depends_on:
       ldap:
         condition: service_started
@@ -108,6 +147,8 @@ services:
     working_dir: /tests
     volumes:
       - ../tests:/tests
+      # Exposes the exported SA token + issuer URL to test_k8s_delegation.py.
+      - k3s-output:/k3s:ro
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/
     command: >
