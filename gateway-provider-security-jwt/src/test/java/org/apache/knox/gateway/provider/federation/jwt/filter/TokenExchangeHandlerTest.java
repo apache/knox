@@ -522,7 +522,7 @@ public class TokenExchangeHandlerTest {
     filter.delegationServerEnabled = true;
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
-    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+    handler.handle(delegationRequest("subtok", null, null, "b\u0007ob", null, null), response, chain);
 
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
@@ -697,6 +697,41 @@ public class TokenExchangeHandlerTest {
 
     assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
         filter.errorDescription);
+  }
+
+  @Test
+  public void testMoreThanOneDistinctAudienceRejectedWhenMaxOneHeadlessDelegation() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null,
+        new String[] {"aud1", "aud2"}), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
+        filter.errorDescription);
+    assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testAudienceRequiredFlagDoesNotApplyToNonDelegationExchange() throws Exception {
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", null, null), response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testAudienceMaxOneFlagDoesNotApplyToNonDelegationExchange() throws Exception {
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", null, new String[] {"aud1", "aud2"}), response, chain);
+
+    assertTrue(filter.continued);
+    assertEquals(Arrays.asList("aud1", "aud2"), requestedAudiencesAttr.getValue());
   }
 
   private static String primaryName(Subject subject) {
