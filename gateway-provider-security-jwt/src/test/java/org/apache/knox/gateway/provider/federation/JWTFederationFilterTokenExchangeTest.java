@@ -27,6 +27,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.Capture;
@@ -211,6 +212,68 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     Assert.assertEquals(EXTERNAL_ISSUER, capturedDynamicJwt.getValue().getIssuer());
     Assert.assertEquals(KNOX_ISSUER, capturedStaticJwt.getValue().getIssuer());
     EasyMock.verify(mockAuth, issuerSvc);
+  }
+
+  /**
+   * Regression test for the token-exchange failure on real Kubernetes ServiceAccount tokens.
+   *
+   * <p>When server-managed token state is enabled on the token topology (knoxidf-token.xml sets
+   * {@code knox.token.exp.server-managed=true}), the filter holds a non-null
+   * {@code TokenStateService}. An externally-issued subject token from a registered dynamic-JWKS
+   * issuer (a projected SA token) carries no {@code knox.id} claim, so {@code TokenUtils.getTokenId}
+   * returns {@code null}. Server-managed state is keyed by that id, so the filter must not consult
+   * the state service for such a token — neither for the expiration nor the metadata lookup.
+   * Previously it did: {@code getTokenExpiration(null)} raised {@code IllegalArgumentException}
+   * (surfacing as HTTP 500) and, once that was guarded, {@code getTokenMetadata(null)} raised
+   * {@code UnknownTokenException} (a spurious HTTP 401). The token must instead validate on its own
+   * claims and the chain must proceed.
+   *
+   * <p>The strict {@code TokenStateService} mock has no expectations, so any lookup with the null id
+   * is an unexpected invocation and fails the test. This is the coverage the class Javadoc notes was
+   * previously missing ("without TSS they return true trivially"): earlier tests never injected a
+   * {@code TokenStateService}, leaving this path unguarded.
+   */
+  @Test
+  public void testExternalSubjectTokenWithServerManagedStateSkipsStateLookup() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    // knoxId=null -> no knox.id claim, exactly like a real k8s SA projected token, so
+    // TokenUtils.getTokenId(token) returns null.
+    final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa", "bar",
+        new Date(System.currentTimeMillis() + 60000), new Date(), privateKey,
+        AbstractJWTFilter.JWT_DEFAULT_SIGALG, null);
+
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.anyObject(JWT.class),
+        EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        .andReturn(true).once();
+    EasyMock.replay(mockAuth);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    // Simulate server-managed token state being enabled (as on knoxidf-token). Strict mock, no
+    // expectations: a lookup with the external token's null id would be an unexpected call.
+    final TokenStateService strictTss = EasyMock.createMock(TokenStateService.class);
+    EasyMock.replay(strictTss);
+    ((TestJWTFederationFilter) handler).setTokenStateService(strictTss);
+
+    final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
+    EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response, issuerSvc);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Filter chain must proceed for an external subject token even with "
+        + "server-managed token state enabled", chain.doFilterCalled);
+    EasyMock.verify(mockAuth, issuerSvc, strictTss);
   }
 
   // ---------------------------------------------------------------------------

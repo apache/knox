@@ -24,6 +24,7 @@ import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -205,6 +206,7 @@ public class CommonJWTFilterTest {
     EasyMock.replay(sc);
 
     JWT jwt = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwt.getClaim(JWTToken.KNOX_ID_CLAIM)).andReturn(UUID.randomUUID().toString()).anyTimes();
     EasyMock.replay(jwt);
 
     Field tokenStateServiceField = AbstractJWTFilter.class.getDeclaredField("tokenStateService");
