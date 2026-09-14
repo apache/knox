@@ -267,13 +267,35 @@ public abstract class AbstractJWTFilter implements Filter {
 
   private Date getServerManagedStateExpiration(final String tokenId) throws UnknownTokenException {
     Date expires = null;
-    if (tokenStateService != null) {
+    // Server-managed token state is keyed by the Knox token id (the knox.id claim). An
+    // externally-issued token accepted on the token-exchange path (e.g. a Kubernetes
+    // ServiceAccount projected token from a registered OIDC issuer) has no knox.id, so
+    // TokenUtils.getTokenId returns null. Such a token can never have Knox-managed state:
+    // skip the lookup and let the caller fall back to the token's own exp claim. Passing a
+    // null/empty id to the state service would raise IllegalArgumentException (surfacing as a
+    // 500), rather than the UnknownTokenException the caller handles gracefully.
+    if (tokenStateService != null && tokenId != null && !tokenId.isEmpty()) {
       long value = tokenStateService.getTokenExpiration(tokenId);
       if (value > 0) {
         expires = new Date(value);
       }
     }
     return expires;
+  }
+
+  /**
+   * Look up server-managed metadata for a token, tolerating the absence of token state.
+   *
+   * <p>Returns {@code null} when there is no token state service, or when {@code tokenId} is
+   * null/empty. Server-managed metadata is keyed by the Knox token id (the {@code knox.id}
+   * claim); an externally-issued token accepted on the token-exchange path (e.g. a Kubernetes
+   * ServiceAccount projected token from a registered OIDC issuer) has none. Passing its null id
+   * to the state service would raise {@link IllegalArgumentException} (surfacing as a 500) or
+   * {@link UnknownTokenException} (a spurious 401), rather than simply resolving to no metadata.
+   */
+  private TokenMetadata getTokenMetadata(final String tokenId) throws UnknownTokenException {
+    return (tokenStateService == null || tokenId == null || tokenId.isEmpty())
+        ? null : tokenStateService.getTokenMetadata(tokenId);
   }
 
   /**
@@ -401,7 +423,7 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   public Subject createSubjectFromTokenIdentifier(final String tokenId) throws UnknownTokenException {
-    TokenMetadata metadata = tokenStateService.getTokenMetadata(tokenId);
+    TokenMetadata metadata = getTokenMetadata(tokenId);
     if (metadata != null) {
       // using tokenID and passcode as CLIENT_ID and CLIENT_SECRET will
       // result in a metadata item called "type". If the value is set
@@ -526,7 +548,7 @@ public abstract class AbstractJWTFilter implements Filter {
         if (validateAudiences(token)) {
           Date nbf = token.getNotBeforeDate();
           if (nbf == null || new Date().after(nbf)) {
-            final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+            final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
             if (isTokenEnabled(tokenMetadata)) {
               if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
                 final boolean sigOk = registeredIssuerJwks.isEmpty()
@@ -636,7 +658,7 @@ public abstract class AbstractJWTFilter implements Filter {
       try {
         if (tokenId != null) {
           if (tokenIsStillValid(tokenId)) {
-            final TokenMetadata tokenMetadata = tokenStateService == null ? null : tokenStateService.getTokenMetadata(tokenId);
+            final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
             if (isTokenEnabled(tokenMetadata)) {
               if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
                 if (hasSignatureBeenVerified(passcodeVerificationCacheKey(tokenId, passcode)) || validatePasscode(tokenId, passcode)) {
@@ -681,7 +703,7 @@ public abstract class AbstractJWTFilter implements Filter {
 
   private boolean validatePasscode(String tokenId, String passcode) throws UnknownTokenException {
     final long issueTime = tokenStateService.getTokenIssueTime(tokenId);
-    final TokenMetadata tokenMetadata = tokenStateService.getTokenMetadata(tokenId);
+    final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
     final String userName = tokenMetadata == null ? "" : tokenMetadata.getUserName();
     final byte[] storedPasscode = tokenMetadata == null ? null : tokenMetadata.getPasscode().getBytes(UTF_8);
     final boolean validPasscode = Arrays.equals(tokenMAC.hash(tokenId, issueTime, userName, passcode).getBytes(UTF_8), storedPasscode);
