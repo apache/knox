@@ -1346,6 +1346,16 @@ public class TokenResource {
   }
 
   protected long getExpiry() {
+    // An upstream component (the RFC 8693 token-exchange path) may have resolved an authoritative TTL
+    // from trusted, operator-configured delegation policy. When present it is the expiry basis
+    // directly: it deliberately bypasses the topology knox.token.ttl upper bound and the client-supplied
+    // lifespan clamp below, since the policy value is server-side state (a peer of the topology config),
+    // not untrusted client input, and its purpose is longer-lived tokens for headless/batch delegations.
+    final Object requestedTtlSec = request.getAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR);
+    if (requestedTtlSec instanceof Integer && (Integer) requestedTtlSec > 0) {
+      return System.currentTimeMillis() + ((Integer) requestedTtlSec) * 1000L;
+    }
+
     long expiry = 0L;
     long millis = tokenTTL;
 

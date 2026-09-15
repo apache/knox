@@ -50,4 +50,15 @@ public interface CommonTokenConstants {
      */
     String REQUESTED_AUDIENCES_REQUEST_ATTR = "knox.token.requested.audiences";
 
+    /**
+     * Request attribute an upstream authentication/federation component may set to convey an
+     * authoritative token time-to-live, in seconds, it has already resolved for the current request to
+     * the downstream KNOXTOKEN service, which mints the token. Used by the RFC 8693 token-exchange path
+     * to carry the delegation policy's effective TTL. When present it becomes the minted token's expiry
+     * basis directly, bypassing the topology {@code knox.token.ttl} upper bound and the {@code lifespan}
+     * clamp the token service would otherwise apply: the value is trusted, operator-configured
+     * server-side state, not untrusted client input. The value is an {@code Integer} number of seconds.
+     */
+    String REQUESTED_TTL_REQUEST_ATTR = "knox.token.requested.ttl";
+
 }

@@ -70,6 +70,7 @@ public class TokenExchangeHandlerTest {
   private HttpServletResponse response;
   private FilterChain chain;
   private Capture<Object> requestedAudiencesAttr;
+  private Capture<Object> requestedTtlAttr;
   private static final Auditor ORIGINAL_AUDITOR = TokenExchangeHandler.auditor;
   private Auditor auditor;
 
@@ -276,6 +277,45 @@ public class TokenExchangeHandlerTest {
 
     assertTrue(filter.continued);
     assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testAuthorizedOboDelegationConveysPolicyTtlToTokenService() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.policyDecision = new PolicyDecision(null, 3600);
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(delegationRequest("subtok", "acttok", JWT_TYPE, null, null, null), response, chain);
+
+    assertTrue(filter.continued);
+    // KNOX-3459: the policy's effective TTL is conveyed to the downstream KNOXTOKEN service so it
+    // becomes the minted token's authoritative expiry basis.
+    assertTrue(requestedTtlAttr.hasCaptured());
+    assertEquals(Integer.valueOf(3600), requestedTtlAttr.getValue());
+  }
+
+  @Test
+  public void testAuthorizedHeadlessDelegationConveysPolicyTtlToTokenService() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.policyDecision = new PolicyDecision(null, 1800);
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertTrue(requestedTtlAttr.hasCaptured());
+    assertEquals(Integer.valueOf(1800), requestedTtlAttr.getValue());
+  }
+
+  @Test
+  public void testSameSubjectExchangeDoesNotConveyPolicyTtl() throws Exception {
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // A plain (non-delegation) exchange is not policy-governed, so no authoritative TTL is conveyed
+    // and KNOXTOKEN falls back to its topology knox.token.ttl.
+    handler.handle(delegationRequest("subtok", null, null, null, null, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertFalse(requestedTtlAttr.hasCaptured());
   }
 
   @Test
@@ -1067,6 +1107,10 @@ public class TokenExchangeHandlerTest {
     requestedAudiencesAttr = EasyMock.newCapture();
     request.setAttribute(EasyMock.eq(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR),
         EasyMock.capture(requestedAudiencesAttr));
+    EasyMock.expectLastCall().anyTimes();
+    requestedTtlAttr = EasyMock.newCapture();
+    request.setAttribute(EasyMock.eq(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR),
+        EasyMock.capture(requestedTtlAttr));
     EasyMock.expectLastCall().anyTimes();
     EasyMock.replay(request);
     return request;
