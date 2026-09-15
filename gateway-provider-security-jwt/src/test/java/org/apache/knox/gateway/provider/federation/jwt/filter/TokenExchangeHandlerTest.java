@@ -368,6 +368,19 @@ public class TokenExchangeHandlerTest {
   }
 
   @Test
+  public void testActorTokenPresentWithRequestedSubjectEqualToSubjectIsTreatedAsActorTokenDelegationIgnoresMalformedRequestedSubject() throws Exception {
+      filter.delegationServerEnabled = true;
+      filter.delegationRequestedSubjectEnabled = true;
+      filter.valid.put("subtok", jwt("a\u0007lice", "KNOXSSO"));
+      filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+      handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE, "a\u0007lice"), response, chain);
+
+      assertTrue(filter.continued);
+      assertNotNull(filter.establishedSubject);
+      assertEquals("svc-dataservice", primaryName(filter.establishedSubject));
+  }
+
+  @Test
   public void testHeadlessDelegationCreatesTokenExchangePrincipalWhenGateEnabled() throws Exception {
     filter.delegationServerEnabled = true;
     filter.delegationRequestedSubjectEnabled = true;
@@ -594,7 +607,7 @@ public class TokenExchangeHandlerTest {
   }
 
   @Test
-  public void testBlankAudienceValueDoesNotCountAsPresentWhenRequired() throws Exception {
+  public void testBlankAudienceValueDoesNotCountAsPresentWhenRequiredActorTokenDelegation() throws Exception {
     filter.delegationServerEnabled = true;
     filter.delegationEnforceRequestedAudienceRequired = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
@@ -607,6 +620,21 @@ public class TokenExchangeHandlerTest {
         filter.errorDescription);
     assertFalse(filter.continued);
   }
+
+  @Test
+  public void testBlankAudienceValueDoesNotCountAsPresentWhenRequiredHeadlessDelegation() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, new String[] {""}), response, chain);
+
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertEquals("At least one audience or resource value is required for a delegation exchange",
+        filter.errorDescription);
+    assertFalse(filter.continued);
+    }
 
   @Test
   public void testAudiencePresentSatisfiesRequiredCheck() throws Exception {
@@ -713,6 +741,48 @@ public class TokenExchangeHandlerTest {
     assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
         filter.errorDescription);
     assertFalse(filter.continued);
+  }
+
+  @Test
+  public void testExactlyOneAudienceRequiredWhenBothFlagsOnAndSatisfiedHeadlessDelegation() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, new String[] {"aud1"}),
+        response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testExactlyOneAudienceRequiredZeroValuesRejectedWithRequiredMessageHeadlessDelegation()
+      throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertEquals("At least one audience or resource value is required for a delegation exchange",
+        filter.errorDescription);
+  }
+
+  @Test
+  public void testExactlyOneAudienceRequiredTwoValuesRejectedWithMaxOneMessageHeadlessDelegation()
+      throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationEnforceRequestedAudienceRequired = true;
+    filter.delegationEnforceRequestedAudienceMaxOne = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null,
+        new String[] {"aud1", "aud2"}), response, chain);
+
+    assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
+        filter.errorDescription);
   }
 
   @Test

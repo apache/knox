@@ -40,10 +40,12 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.ACTOR_TOKEN_TYPE;
 import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.SUBJECT_TOKEN_TYPE;
@@ -89,6 +91,8 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederati
  */
 class TokenExchangeHandler {
 
+  // Larger than an allowed SPIFFE ID
+  private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
   private final JWTFederationFilter filter;
 
   TokenExchangeHandler(JWTFederationFilter filter) {
@@ -376,34 +380,34 @@ class TokenExchangeHandler {
     return requestedSubjectValue;
   }
 
-  /** Larger than an allowed SPIFFE ID. Not configurable. */
-  private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
-
   /**
    * A requested_subject value is malformed if it exceeds a hardcoded length bound or contains
    * any control character. Assumes a non-null, already-trimmed, non-blank value, matching
    * parseRequestedSubject's contract; only called when requestedSubjectValue is known non-null.
+   * @param value The requested subject to validate.
+   * @return true if the value is invalid, false otherwise.
    */
-  private boolean isRequestedSubjectMalformed(String value) {
+  private static boolean isRequestedSubjectMalformed(String value) {
     if (value.length() > MAX_REQUESTED_SUBJECT_LENGTH) {
       return true;
     }
-    for (int i = 0; i < value.length(); i++) {
-      if (Character.isISOControl(value.charAt(i))) {
-        return true;
-      }
+    if (value.chars().anyMatch(Character::isISOControl)) {
+      return true;
     }
     return false;
   }
 
-  /** The distinct, trimmed, non-blank values in the given list, as a new Set. */
+  /** The distinct, non-null, non-empty values as a new unmodifiable Set.
+   * @param values The list of String values to convert
+   * @return An unmodifiable Set of the non-null and non-empty values
+   */
   private static Set<String> distinctNonBlankValues(List<String> values) {
-    final Set<String> distinct = new HashSet<>();
-    for (String value : values) {
-      if (!value.isEmpty()) {
-        distinct.add(value);
-      }
-    }
+    Set<String> distinct = values.stream()
+        .filter(s -> s != null && !s.isEmpty())
+        .collect(Collectors.collectingAndThen(
+                Collectors.toSet(),
+                Collections::unmodifiableSet
+        ));
     return distinct;
   }
 
