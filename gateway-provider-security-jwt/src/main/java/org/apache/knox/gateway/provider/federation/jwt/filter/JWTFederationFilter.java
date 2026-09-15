@@ -131,17 +131,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Has no effect on a same-subject exchange.
   public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE = "delegation.enforce.requested.audience.max.one";
 
-  // Topology provider param (default false/absent). Gates whether the RFC
-  // 8693 scope token-exchange request parameter is read at all, for every
-  // exchange (delegation or not) -- unlike audience/resource parsing, which
-  // is unconditional. No minted Knox token has ever carried a scope claim,
-  // so this defaults off even for delegation exchanges. A parsed scope
-  // value only reaches a minted token if knox.token.scope.validator
-  // (KnoxToken's TokenResource, gateway-service-knoxtoken module) is
-  // separately configured to pass requested scopes through -- this flag
-  // alone never causes a scope claim to be minted.
-  public static final String DELEGATION_REQUESTED_SCOPE_ENABLED = "delegation.requested.scope.enabled";
-
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
   }
@@ -176,7 +165,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean delegationRequestedSubjectEnabled;
   private boolean delegationEnforceRequestedAudienceRequired;
   private boolean delegationEnforceRequestedAudienceMaxOne;
-  private boolean delegationRequestedScopeEnabled;
 
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
@@ -245,7 +233,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationRequestedSubjectEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SUBJECT_ENABLED));
     delegationEnforceRequestedAudienceRequired = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED));
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
-    delegationRequestedScopeEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SCOPE_ENABLED));
 
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
@@ -720,10 +707,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   boolean isDelegationEnforceRequestedAudienceMaxOne() {
     return delegationEnforceRequestedAudienceMaxOne;
-  }
-
-  boolean isDelegationRequestedScopeEnabled() {
-    return delegationRequestedScopeEnabled;
   }
 
   PolicyDecision evaluateDelegationPolicy(PolicyCheckRequest request) {
