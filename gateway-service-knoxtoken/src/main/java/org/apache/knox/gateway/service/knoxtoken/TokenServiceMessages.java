@@ -108,4 +108,10 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.WARN, text = "Rejected token request due to invalid requested resource: {0}" )
   void rejectedAudienceRequest(String reason);
 
+  @Message( level = MessageLevel.WARN, text = "Rejected RFC 8693 token exchange: resulting actor chain depth {0} exceeds the configured maximum of {1}" )
+  void actorChainDepthExceeded(int resultingDepth, int maxDepth);
+
+  @Message( level = MessageLevel.WARN, text = "Rejected RFC 8693 token exchange: {0}" )
+  void rejectedTokenExchange(String reason);
+
 }

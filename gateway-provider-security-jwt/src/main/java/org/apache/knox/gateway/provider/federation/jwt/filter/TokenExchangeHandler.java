@@ -281,10 +281,11 @@ class TokenExchangeHandler {
                   + "and reachable to evaluate group-based delegation policies");
           return;
         }
+        final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
         if (policyDecision.getDenyReason() != null) {
           auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
               ActionOutcome.FAILURE, auditMessage(policyDecision, actorIdentity, subjectToken,
-                  requestedSubjectValue, uniqueRequestedAudiences));
+                  requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
           // A single, generic denial that does not identify which requested value failed.
           filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "The token exchange request is rejected by policy");
@@ -292,7 +293,7 @@ class TokenExchangeHandler {
         }
         auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
             ActionOutcome.SUCCESS, auditMessage(policyDecision, actorIdentity, subjectToken,
-                requestedSubjectValue, uniqueRequestedAudiences));
+                requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
 
         request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
       }
@@ -457,14 +458,15 @@ class TokenExchangeHandler {
   }
 
   /**
-   * Builds the audit message for one policy-decision outcome. Deliberately omits every field
-   * this decision point does not have: issued_token_jti, issued_token_expiry, and
-   * issued_subject (only known later, at minting time); scope and act_chain_depth (both out of
-   * scope for this task).
+   * Builds the audit message for one policy-decision outcome. {@code actChainDepth} is the depth of
+   * the delegation history arriving on the subject_token (0 for a headless exchange, whose incoming
+   * chain is not propagated). Deliberately omits every field this decision point does not have:
+   * issued_token_jti, issued_token_expiry, and issued_subject (only known later, at minting time);
+   * scope (out of scope for this task).
    */
   private static String auditMessage(PolicyDecision policyDecision, ActorIdentity actorIdentity,
                                       JWT subjectToken, String requestedSubjectValue,
-                                      Set<String> uniqueRequestedAudiences) {
+                                      Set<String> uniqueRequestedAudiences, int actChainDepth) {
     final StringBuilder message = new StringBuilder();
     final boolean denied = policyDecision.getDenyReason() != null;
     message.append("event_type=").append(denied ? "token_exchange_denied" : "token_exchange_allowed");
@@ -477,6 +479,7 @@ class TokenExchangeHandler {
     message.append(" subject_token_sub=").append(auditLabel(subjectToken.getSubject()));
     message.append(" requested_subject=").append(auditLabel(requestedSubjectValue));
     message.append(" requested_resources=").append(uniqueRequestedAudiences);
+    message.append(" act_chain_depth=").append(actChainDepth);
     return message.toString();
   }
 

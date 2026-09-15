@@ -374,6 +374,23 @@ public class TokenExchangeHandlerTest {
     assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
     assertTrue(auditMessage.getValue().contains("actor_authority=USER"));
     assertTrue(auditMessage.getValue().contains("actor_id=svc-dataservice"));
+    // subject_token carries no prior 'act' chain, so the audited incoming depth is 0
+    assertTrue(auditMessage.getValue().contains("act_chain_depth=0"));
+  }
+
+  @Test
+  public void testAuditRecordsIncomingActorChainDepth() throws Exception {
+    filter.delegationServerEnabled = true;
+    // subject_token carries a two-deep prior delegation chain (act -> act)
+    filter.valid.put("subtok",
+        jwtWithActClaim("alice", "KNOXSSO", Map.of("sub", "actor-1", "act", Map.of("sub", "actor-2"))));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE,
+        "USER/svc-dataservice", ResourceType.PRINCIPAL, ActionOutcome.SUCCESS);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("act_chain_depth=2"));
   }
 
   @Test
