@@ -30,7 +30,7 @@ public class PolicyDecision {
     this.effectiveTtlSec = effectiveTtlSec;
   }
 
-  /** Null when authorized. Maps to the {@code error_description} of an {@code invalid_grant} response when non-null. */
+  /** Null when authorized. Maps to the {@code error_description} of an {@code invalid_request} response when non-null. */
   public String getDenyReason() {
     return denyReason;
   }

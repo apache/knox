@@ -16,11 +16,21 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import org.apache.commons.lang3.StringUtils;
+
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -38,10 +48,12 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.ACTOR_TOKEN_TYPE;
 import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter.SUBJECT_TOKEN_TYPE;
@@ -59,8 +71,10 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederati
  * {@code actor_token} is optional, and {@code actor_token_type} is required when {@code actor_token}
  * is present and must not be present otherwise. Only JWT-family token types are supported. When an
  * {@code actor_token} is present the request is treated as delegation (on-behalf-of): the actor is
- * the authenticated party and the subject is the impersonated party; otherwise the subject_token is
- * simply exchanged for a token representing the subject.</p>
+ * the authenticated party and the subject is the impersonated party. When requested_subject is
+ * present and differs from the subject_token's own subject (headless delegation, see below), the
+ * subject_token's own identity is likewise the actor and requested_subject is the impersonated
+ * party. Otherwise the subject_token is simply exchanged for a token representing the subject.</p>
  *
  * <p>The optional RFC 8693 section 2.1 {@code resource} and {@code audience} body parameters are
  * read here (from the same {@code x-www-form-urlencoded} body) and conveyed to the downstream
@@ -69,9 +83,29 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederati
  * fragment (RFC 8707 section 2 / RFC 3986 section 4.3); {@code audience} values are logical service
  * names and are not URI-constrained. When present, these body values take precedence over the
  * {@code resource} query parameter that KNOXTOKEN would otherwise honor.</p>
+ *
+ * <p>The optional requested_subject parameter is read as body parameter if the
+ * {@link JWTFederationFilter#DELEGATION_REQUESTED_SUBJECT_ENABLED} provider parameter is
+ * true. This is used to allow a delegation token exchange using only the subject token
+ * as actor when no separate actor_token is defined.</p>
+ *
+ * <p>A distinction is made between same-subject and delegation exchanges. A delegation exchange
+ * is when there is an actor_token defined or requested_subject is defined and has a different
+ * value from the sub claim in the subject_token. The latter is called a 'headless' exchange,
+ * expected for batch or non-interactive jobs when an agent or service runs for a user.
+ * Delegation is disabled unless the {@link JWTFederationFilter#DELEGATION_SERVER_ENABLED}
+ * provider parameter is true. A request with both an actor_token and a requested_subject
+ * value that does not equal the sub claim in the subject_token is invalid.</p>
  */
 class TokenExchangeHandler {
 
+  // Larger than an allowed SPIFFE ID
+  private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
+  // Non-final and package-private to allow test injection of a mock Auditor (see
+  // DelegationPolicyResource.auditor for the identical, already-established pattern).
+  static Auditor auditor = AuditServiceFactory.getAuditService()
+      .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   private final JWTFederationFilter filter;
 
   TokenExchangeHandler(JWTFederationFilter filter) {
@@ -156,17 +190,114 @@ class TokenExchangeHandler {
         return;
       }
 
-      final Subject subject;
-      if (hasActorToken) {
-        final JWT actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
-        if (actorToken == null) {
-          // Validation failed, error response already sent
+      // Parse the optional requested_subject parameter if DELEGATION_REQUESTED_SUBJECT_ENABLED
+      // is true.
+      final String requestedSubjectValue = parseRequestedSubject(bodyRequest);
+      final boolean requestedSubjectDiffersFromSubject =
+          requestedSubjectValue != null && !requestedSubjectValue.equals(subjectToken.getSubject());
+
+      // The request is a delegation token exchange if either an actor_token is present or
+      // a requested_subject that differs from the subject_token sub claim is present. The
+      // latter is 'headless' delegation exchange for which the subject_token is the actor.
+      // actorToken is parsed once, below, and reused both for the policy check and for Subject
+      // construction further down; it stays null when hasActorToken is false.
+      JWT actorToken = null;
+      if (hasActorToken || requestedSubjectDiffersFromSubject) {
+        // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is
+        // set to true. When true, only authorized token exchanges will be permitted.
+        // Otherwise, any actor could impersonate any subject without authorization.
+        if (!filter.isDelegationServerEnabled()) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "Delegation is not enabled for this topology");
           return;
         }
+        // A delegation exchange request can use actor_token or requested_subject for headless
+        // exchanges, but not both. Allow a requested_subject to be defined when an actor_token
+        // is present only if the value matches the subject_token sub claim.
+        if (hasActorToken && requestedSubjectDiffersFromSubject) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request",
+              "requested_subject must not differ from subject_token's subject when actor_token is present");
+          return;
+        }
+        // For headless delegation the requested_subject value must be well-formed.
+        if (!hasActorToken && isRequestedSubjectMalformed(requestedSubjectValue)) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "The requested_subject value is malformed");
+          return;
+        }
+        final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
+        // When configured, at least one audience/resource value is required.
+        if (filter.isDelegationEnforceRequestedAudienceRequired() && uniqueRequestedAudiences.isEmpty()) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request",
+              "At least one audience or resource value is required for a delegation exchange");
+          return;
+        }
+        // When configured, at most one distinct combined audience/resource value is allowed.
+        if (filter.isDelegationEnforceRequestedAudienceMaxOne() && uniqueRequestedAudiences.size() > 1) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request",
+              "Exactly one combined audience or resource value is allowed for a delegation exchange");
+          return;
+        }
+
+        // The actor for this exchange is the actor_token's identity when an actor_token is
+        // present, or the subject_token's identity when this is a headless delegation
+        // exchange. Either way it must be parsed/validated before the policy check below; when
+        // an actor_token is present it is reused for Subject construction further down.
+        if (hasActorToken) {
+          actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
+          if (actorToken == null) {
+            // Validation failed, error response already sent
+            return;
+          }
+        }
+        final JWT actorIdentitySource = hasActorToken ? actorToken : subjectToken;
+        final ActorIdentity actorIdentity = deriveActorIdentity(actorIdentitySource);
+
+        // A single policy-evaluation call per exchange, carrying the full validated requested-
+        // resource set and an always-empty requestedScopes set (scope enforcement is deferred).
+        final PolicyCheckRequest policyCheckRequest = new PolicyCheckRequest(
+            actorIdentity.actorAuthority, actorIdentity.actorId,
+            requestedSubjectDiffersFromSubject ? requestedSubjectValue : subjectToken.getSubject(),
+            uniqueRequestedAudiences, Collections.emptySet(), requestedSubjectDiffersFromSubject);
+
+        final PolicyDecision policyDecision;
+        try {
+          policyDecision = filter.evaluateDelegationPolicy(policyCheckRequest);
+        } catch (UnsupportedOperationException e) {
+          // The canActFor.groups group-membership check is intentionally not implemented yet.
+          // Do not suppress or special-case this away; map it to a distinct HTTP status instead.
+          filter.handleValidationError(request, response, HttpServletResponse.SC_NOT_IMPLEMENTED,
+              "server_error", "canActFor.groups evaluation is not yet implemented");
+          return;
+        }
+        if (policyDecision.getDenyReason() != null) {
+          auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
+              ActionOutcome.FAILURE, auditMessage(policyDecision, actorIdentity, subjectToken,
+                  requestedSubjectValue, uniqueRequestedAudiences));
+          // A single, generic denial that does not identify which requested value failed.
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "The token exchange request is rejected by policy");
+          return;
+        }
+        auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
+            ActionOutcome.SUCCESS, auditMessage(policyDecision, actorIdentity, subjectToken,
+                requestedSubjectValue, uniqueRequestedAudiences));
+      }
+
+      final Subject subject;
+      if (hasActorToken) {
         // Delegation (OBO): actor as PrimaryPrincipal, subject as the impersonated party
         subject = createSubjectForTokenExchange(subjectToken, actorToken);
+      } else if (requestedSubjectDiffersFromSubject) {
+        // Headless delegation: subject_token's identity is the actor, requested_subject is
+        // the impersonated party
+        subject = createSubjectForHeadlessDelegation(subjectToken, requestedSubjectValue);
       } else {
-        // No actor_token: exchange the subject_token for a token representing the subject itself
+        // No actor_token, no headless delegation: exchange the subject_token for a token
+        // representing the subject itself
         subject = filter.createSubjectFromToken(subjectToken);
       }
 
@@ -233,6 +364,117 @@ class TokenExchangeHandler {
   }
 
   /**
+   * Create a Subject for a headless delegation token exchange: the subject_token's
+   * identity is the actor (the authenticated party), and requested_subject is
+   * the impersonated party for the identity assertion layer. Unlike an interactive
+   * (actor_token) exchange, the impersonated identity here is a request parameter not a
+   * token, so its issuer is recorded as null. No ActorChainPrincipal is added here:
+   * subject_token is the actor's token in this case, not a token for the impersonated
+   * identity, so any pre-existing act claim it happens to carry describes a delegation
+   * history for a different subject.
+   *
+   * @param subjectToken     the validated subject token, whose own identity is the actor
+   * @param requestedSubject the requested_subject value, the identity to be impersonated
+   * @return a Subject configured for headless delegation
+   */
+  private Subject createSubjectForHeadlessDelegation(JWT subjectToken, String requestedSubject) {
+    final String actorPrincipalName = subjectToken.getSubject();
+    final String actorIssuer = subjectToken.getIssuer();
+
+    // PrimaryPrincipal is the ACTOR (subject_token's own identity)
+    final PrimaryPrincipal primaryPrincipal = new PrimaryPrincipal(actorPrincipalName);
+
+    // TokenExchangePrincipal carries metadata for the identity assertion layer. requested_subject
+    // is a simple name, so subjectIssuer is null.
+    final TokenExchangePrincipal tokenExchangePrincipal =
+        new TokenExchangePrincipalImpl(requestedSubject, null, actorPrincipalName, actorIssuer);
+
+    final Set<Principal> principals = new HashSet<>();
+    principals.add(primaryPrincipal);
+    principals.add(tokenExchangePrincipal);
+
+    @SuppressWarnings("rawtypes")
+    final HashSet emptySet = new HashSet();
+    return new Subject(true, principals, emptySet, emptySet);
+  }
+
+  private static final String K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX = "system:serviceaccount:";
+  private static final String K8S_SA_ACTOR_AUTHORITY = "K8S_SA";
+  private static final String USER_ACTOR_AUTHORITY = "USER";
+
+  /**
+   * Derive the (actorAuthority, actorId) pair identifying the actor for a delegation policy
+   * check, from the actor's validated JWT (the actor_token when one is present, or the
+   * subject_token acting as actor for a headless delegation exchange). actorAuthority is a
+   * fixed type tag identifying what kind of actor this is. Delegation policies are
+   * registered and looked up by the (actorAuthority, actorId) pair. A Kubernetes
+   * service-account subject (sub of the form
+   * "system:serviceaccount:&lt;namespace&gt;:&lt;sa-name&gt;") is tagged K8S_SA, with an
+   * actorId composed of its issuer, namespace, and service-account name, concatenated with
+   * colon separators. Every other subject is tagged USER, with its own subject as actorId
+   * verbatim. Knox managed client policies, tagged with CLIENT_ID, are deferred.
+   *
+   * @param actorJwt the actor's validated JWT
+   * @return the derived actor identity
+   */
+  private static ActorIdentity deriveActorIdentity(JWT actorJwt) {
+    final String subject = actorJwt.getSubject();
+    if (subject != null && subject.startsWith(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX)) {
+      final String namespaceAndName = subject.substring(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX.length());
+      return new ActorIdentity(K8S_SA_ACTOR_AUTHORITY, actorJwt.getIssuer() + ":" + namespaceAndName);
+    }
+    return new ActorIdentity(USER_ACTOR_AUTHORITY, subject);
+  }
+
+  /** The actorAuthority/actorId pair derived by {@link #deriveActorIdentity(JWT)}. */
+  private static final class ActorIdentity {
+    private final String actorAuthority;
+    private final String actorId;
+
+    ActorIdentity(String actorAuthority, String actorId) {
+      this.actorAuthority = actorAuthority;
+      this.actorId = actorId;
+    }
+  }
+
+  /**
+   * The (actorAuthority, actorId) pair is delegation policy's unique lookup key, see
+   * {@link #deriveActorIdentity(JWT)}, and hence can act as the audit record's unique
+   * resourceName.
+   */
+  private static String auditResourceName(ActorIdentity actorIdentity) {
+    return actorIdentity.actorAuthority + "/" + actorIdentity.actorId;
+  }
+
+  /**
+   * Builds the audit message for one policy-decision outcome. Deliberately omits every field
+   * this decision point does not have: issued_token_jti, issued_token_expiry, and
+   * issued_subject (only known later, at minting time); scope and act_chain_depth (both out of
+   * scope for this task).
+   */
+  private static String auditMessage(PolicyDecision policyDecision, ActorIdentity actorIdentity,
+                                      JWT subjectToken, String requestedSubjectValue,
+                                      Set<String> uniqueRequestedAudiences) {
+    final StringBuilder message = new StringBuilder();
+    final boolean denied = policyDecision.getDenyReason() != null;
+    message.append("event_type=").append(denied ? "token_exchange_denied" : "token_exchange_allowed");
+    if (denied) {
+      message.append(" deny_reason=").append(policyDecision.getDenyReason());
+    }
+    message.append(" actor_authority=").append(actorIdentity.actorAuthority);
+    message.append(" actor_id=").append(actorIdentity.actorId);
+    message.append(" subject_token_iss=").append(auditLabel(subjectToken.getIssuer()));
+    message.append(" subject_token_sub=").append(auditLabel(subjectToken.getSubject()));
+    message.append(" requested_subject=").append(auditLabel(requestedSubjectValue));
+    message.append(" requested_resources=").append(uniqueRequestedAudiences);
+    return message.toString();
+  }
+
+  private static String auditLabel(String value) {
+    return value != null ? value : "";
+  }
+
+  /**
    * Parse the optional RFC 8693 section 2.1 {@code resource} and {@code audience} body parameters
    * into the list of requested audiences for the token being minted. Both parameters may be repeated
    * and may also carry a comma-separated list of values. {@code resource} values are validated as
@@ -247,6 +489,57 @@ class TokenExchangeHandler {
     addValues(bodyRequest.getParameterValues(CommonTokenConstants.RESOURCE), requested, true);
     addValues(bodyRequest.getParameterValues(CommonTokenConstants.AUDIENCE), requested, false);
     return requested;
+  }
+
+  /**
+   * Parse the optional requested_subject parameter if
+   * {@link JWTFederationFilter#DELEGATION_REQUESTED_SUBJECT_ENABLED}
+   * is true.
+   * @param bodyRequest the unwrapped request exposing the form body
+   * @return the value of the requested_subject parameter. null if either
+   *         DELEGATION_REQUESTED_SUBJECT_ENABLED is false or the parameter
+   *         is undefined or the value is empty or purely whitespace.
+   */
+  private String parseRequestedSubject(HttpServletRequest bodyRequest) {
+    final String requestedSubjectValue;
+    if (filter.isDelegationRequestedSubjectEnabled()) {
+        final String rawRequestedSubject = bodyRequest.getParameter(JWTFederationFilter.REQUESTED_SUBJECT);
+        requestedSubjectValue = StringUtils.isBlank(rawRequestedSubject) ? null : rawRequestedSubject.trim();
+    } else {
+        requestedSubjectValue = null;
+    }
+    return requestedSubjectValue;
+  }
+
+  /**
+   * A requested_subject value is malformed if it exceeds a hardcoded length bound or contains
+   * any control character. Assumes a non-null, already-trimmed, non-blank value, matching
+   * parseRequestedSubject's contract; only called when requestedSubjectValue is known non-null.
+   * @param value The requested subject to validate.
+   * @return true if the value is invalid, false otherwise.
+   */
+  private static boolean isRequestedSubjectMalformed(String value) {
+    if (value.length() > MAX_REQUESTED_SUBJECT_LENGTH) {
+      return true;
+    }
+    if (value.chars().anyMatch(Character::isISOControl)) {
+      return true;
+    }
+    return false;
+  }
+
+  /** The distinct, non-null, non-empty values as a new unmodifiable Set.
+   * @param values The list of String values to convert
+   * @return An unmodifiable Set of the non-null and non-empty values
+   */
+  private static Set<String> distinctNonBlankValues(List<String> values) {
+    Set<String> distinct = values.stream()
+        .filter(s -> s != null && !s.isEmpty())
+        .collect(Collectors.collectingAndThen(
+                Collectors.toSet(),
+                Collections::unmodifiableSet
+        ));
+    return distinct;
   }
 
   private void addValues(String[] rawValues, List<String> target, boolean validateAsUri) throws InvalidResourceException {

@@ -590,7 +590,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "eval", "alice", "/api/v1", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "eval", "alice", Set.of("/api/v1"), Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
   }
 
@@ -602,7 +602,7 @@ public class JdbcDelegationPolicyServiceTest {
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "eval2", "alice", "/api/v1", Collections.singleton("any-scope"), false));
+        new PolicyCheckRequest("oidc", "eval2", "alice", Set.of("/api/v1"), Collections.singleton("any-scope"), false));
     assertNull(decision.getDenyReason());
   }
 
@@ -615,7 +615,7 @@ public class JdbcDelegationPolicyServiceTest {
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "eval3", "alice", "/api/v1", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "eval3", "alice", Set.of("/api/v1"), Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
   }
 
@@ -626,7 +626,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"), true);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "headless", "alice", "/api", Collections.singleton("read"), true));
+        new PolicyCheckRequest("oidc", "headless", "alice", Set.of("/api"), Collections.singleton("read"), true));
     assertNull(decision.getDenyReason());
   }
 
@@ -637,7 +637,7 @@ public class JdbcDelegationPolicyServiceTest {
   @Test
   public void testEvaluateDenyActorNotRegistered() {
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "nobody", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "nobody", "alice", Set.of("/api"), Collections.singleton("read"), false));
     assertEquals("actor_not_registered", decision.getDenyReason());
     assertEquals(0, decision.getEffectiveTtlSec());
   }
@@ -649,7 +649,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny1", "bob", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "deny1", "bob", Set.of("/api"), Collections.singleton("read"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("subject_not_allowed", decision.getDenyReason());
   }
@@ -661,7 +661,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny2", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "deny2", "alice", Set.of("/api"), Collections.singleton("read"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("subject_not_allowed", decision.getDenyReason());
   }
@@ -673,7 +673,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny3", "alice", "/api/v2", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "deny3", "alice", Set.of("/api/v2"), Collections.singleton("read"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("resource_not_allowed", decision.getDenyReason());
   }
@@ -685,7 +685,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "deny4", "alice", "/api/v1", Collections.singleton("write"), false));
+        new PolicyCheckRequest("oidc", "deny4", "alice", Set.of("/api/v1"), Collections.singleton("write"), false));
     assertNotNull(decision.getDenyReason());
     assertEquals("scope_not_allowed", decision.getDenyReason());
   }
@@ -697,7 +697,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "noscope", "alice", "/api/v1", Collections.emptySet(), false));
+        new PolicyCheckRequest("oidc", "noscope", "alice", Set.of("/api/v1"), Collections.emptySet(), false));
     assertNull("empty requested scopes must be authorized (scope is optional)", decision.getDenyReason());
   }
 
@@ -708,7 +708,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api/v1", "read", "write"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "multiscope", "alice", "/api/v1",
+        new PolicyCheckRequest("oidc", "multiscope", "alice", Set.of("/api/v1"),
             new HashSet<>(Arrays.asList("read", "write")), false));
     assertNull("all requested scopes in allowed set must be authorized", decision.getDenyReason());
   }
@@ -720,7 +720,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api/v1", "read"));
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "partial", "alice", "/api/v1",
+        new PolicyCheckRequest("oidc", "partial", "alice", Set.of("/api/v1"),
             new HashSet<>(Arrays.asList("read", "write")), false));
     assertEquals("scope_not_allowed", decision.getDenyReason());
   }
@@ -733,7 +733,7 @@ public class JdbcDelegationPolicyServiceTest {
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "multiany", "alice", "/api/v1",
+        new PolicyCheckRequest("oidc", "multiany", "alice", Set.of("/api/v1"),
             new HashSet<>(Arrays.asList("read", "write")), false));
     assertNull("empty policy scope set allows any requested scopes", decision.getDenyReason());
   }
@@ -749,8 +749,101 @@ public class JdbcDelegationPolicyServiceTest {
         Collections.singleton("alice"), Collections.emptySet(), rp);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "scopetest", "alice", "/api/v1", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "scopetest", "alice", Set.of("/api/v1"), Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateAuthorizedMultipleRequestedResourcesAllPresentNoScopes() throws Exception {
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/api/v1", Collections.emptySet());
+    rp.put("/api/v2", Collections.emptySet());
+    registerPolicy("oidc", "multires1",
+        Collections.singleton("alice"), Collections.emptySet(), rp);
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "multires1", "alice",
+            new HashSet<>(Arrays.asList("/api/v1", "/api/v2")), Collections.emptySet(), false));
+    assertNull(decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateDenyMultipleRequestedResourcesOneNotInPolicy() throws Exception {
+    registerPolicy("oidc", "multires2",
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api/v1"));
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "multires2", "alice",
+            new HashSet<>(Arrays.asList("/api/v1", "/api/v2")), Collections.emptySet(), false));
+    assertEquals("resource_not_allowed", decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateAuthorizedMultipleRequestedResourcesPerResourceAndSemantics() throws Exception {
+    // Scopes are enforced per resource, so /api/v1's empty scope set makes it unrestricted
+    // regardless of /api/v2's scope set.
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/api/v1", Collections.emptySet());
+    rp.put("/api/v2", new HashSet<>(Arrays.asList("read", "write")));
+    registerPolicy("oidc", "multires3",
+        Collections.singleton("alice"), Collections.emptySet(), rp);
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "multires3", "alice",
+            new HashSet<>(Arrays.asList("/api/v1", "/api/v2")), Collections.singleton("read"), false));
+    assertNull(decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateDenyMultipleRequestedResourcesScopeNotAllowedForOneResource() throws Exception {
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/api/v1", new HashSet<>(Arrays.asList("read")));
+    rp.put("/api/v2", new HashSet<>(Arrays.asList("read", "write")));
+    registerPolicy("oidc", "multires4",
+        Collections.singleton("alice"), Collections.emptySet(), rp);
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "multires4", "alice",
+            new HashSet<>(Arrays.asList("/api/v1", "/api/v2")),
+            new HashSet<>(Arrays.asList("read", "write")), false));
+    assertEquals("scope_not_allowed", decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateAuthorizedEmptyRequestedResources() throws Exception {
+    registerPolicy("oidc", "emptyres1",
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api", "read"));
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "emptyres1", "alice",
+            Collections.emptySet(), Collections.emptySet(), false));
+    assertNull(decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateDenySubjectNotInUsersWithEmptyRequestedResources() throws Exception {
+    registerPolicy("oidc", "emptyres2",
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api", "read"));
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "emptyres2", "bob",
+            Collections.emptySet(), Collections.emptySet(), false));
+    assertEquals("subject_not_allowed", decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateDenyRequestedScopesWithEmptyRequestedResources() throws Exception {
+    registerPolicy("oidc", "emptyres3",
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api", "read"));
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "emptyres3", "alice",
+            Collections.emptySet(), Collections.singleton("read"), false));
+    assertEquals("scope_not_allowed", decision.getDenyReason());
   }
 
   @Test
@@ -760,7 +853,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"), false);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "headless2", "alice", "/api", Collections.singleton("read"), true));
+        new PolicyCheckRequest("oidc", "headless2", "alice", Set.of("/api"), Collections.singleton("read"), true));
     assertNotNull(decision.getDenyReason());
     assertEquals("headless_not_allowed", decision.getDenyReason());
   }
@@ -773,7 +866,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"));
 
     assertThrows(UnsupportedOperationException.class, () ->
-        service.evaluate(new PolicyCheckRequest("oidc", "groups", "alice", "/api", Collections.singleton("read"), false)));
+        service.evaluate(new PolicyCheckRequest("oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false)));
   }
 
   // ------------------------------------------------------------------
@@ -787,7 +880,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"), false, 1000);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "ttl1", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "ttl1", "alice", Set.of("/api"), Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
     // policy TTL=1000 is set so use policy value directly
     assertEquals(1000, decision.getEffectiveTtlSec());
@@ -800,7 +893,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"), false, 10000);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "ttl2", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "ttl2", "alice", Set.of("/api"), Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
     // policy TTL=10000 is set so use policy value directly; configured default is irrelevant
     assertEquals(10000, decision.getEffectiveTtlSec());
@@ -813,7 +906,7 @@ public class JdbcDelegationPolicyServiceTest {
         singleResourcePolicy("/api", "read"), false, null);
 
     final PolicyDecision decision = service.evaluate(
-        new PolicyCheckRequest("oidc", "ttl3", "alice", "/api", Collections.singleton("read"), false));
+        new PolicyCheckRequest("oidc", "ttl3", "alice", Set.of("/api"), Collections.singleton("read"), false));
     assertNull(decision.getDenyReason());
     assertEquals(CONFIGURED_TTL, decision.getEffectiveTtlSec());
   }

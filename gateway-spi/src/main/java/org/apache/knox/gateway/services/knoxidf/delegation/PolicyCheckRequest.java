@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -26,18 +27,19 @@ public class PolicyCheckRequest {
   private final String actorAuthority;
   private final String actorId;
   private final String subjectName;
-  private final String requestedResource;
+  private final Set<String> requestedResources;
   private final Set<String> requestedScopes;
   private final boolean headlessExchange;
 
   public PolicyCheckRequest(String actorAuthority, String actorId, String subjectName,
-      String requestedResource, Set<String> requestedScopes, boolean headlessExchange) {
+      Set<String> requestedResources, Set<String> requestedScopes, boolean headlessExchange) {
     this.actorAuthority = actorAuthority;
     this.actorId = actorId;
     this.subjectName = subjectName;
-    this.requestedResource = requestedResource;
+    this.requestedResources = Set.copyOf(requestedResources != null ?
+            requestedResources : Collections.emptySet());
     this.requestedScopes = Set.copyOf(requestedScopes != null ?
-            requestedScopes : java.util.Collections.emptySet());
+            requestedScopes : Collections.emptySet());
     this.headlessExchange = headlessExchange;
   }
 
@@ -53,8 +55,8 @@ public class PolicyCheckRequest {
     return subjectName;
   }
 
-  public String getRequestedResource() {
-    return requestedResource;
+  public Set<String> getRequestedResources() {
+    return requestedResources;
   }
 
   public Set<String> getRequestedScopes() {
