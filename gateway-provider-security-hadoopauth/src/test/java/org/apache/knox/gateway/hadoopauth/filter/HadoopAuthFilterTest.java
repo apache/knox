@@ -579,6 +579,11 @@ public class HadoopAuthFilterTest {
     expect(filterConfig.getInitParameter("hadoop.auth.unauthenticated.path.list")).andReturn(null).anyTimes();
     expect(filterConfig.getInitParameter("clusterName")).andReturn("topology1").anyTimes();
     expect(filterConfig.getInitParameter(JWT_INSTANCE_KEY_FALLBACK)).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter(JWTFederationFilter.DELEGATION_SERVER_ENABLED)).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter(JWTFederationFilter.DELEGATION_REQUESTED_SUBJECT_ENABLED)).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter(JWTFederationFilter.DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED)).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter(JWTFederationFilter.DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE)).andReturn("false").anyTimes();
+    expect(filterConfig.getInitParameter(JWTFederationFilter.DELEGATION_REQUESTED_SCOPE_ENABLED)).andReturn("false").anyTimes();
     final boolean isJwtSupported = Boolean.parseBoolean(supportJwt);
     if (isJwtSupported) {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_AUDIENCES)).andReturn(null).anyTimes();
