@@ -500,10 +500,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   /**
    * Get a DiscoveryApiClient for the ClouderaManager instance described by the specified discovery configuration.
+   * Package-visible (rather than private) so tests can substitute a client that returns canned responses or fails.
    *
    * @param discoveryConfig The discovery configuration for interacting with a ClouderaManager instance.
    */
-  private DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
+  protected DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
     return clients.computeIfAbsent(discoveryConfig.getAddress(),
                                    c -> ApiClientFactory.getApiClient(gatewayConfig, discoveryConfig, aliasService, truststore));
   }

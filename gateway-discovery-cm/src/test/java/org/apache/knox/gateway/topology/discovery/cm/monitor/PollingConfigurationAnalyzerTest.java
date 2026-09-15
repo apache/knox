@@ -17,9 +17,12 @@
 package org.apache.knox.gateway.topology.discovery.cm.monitor;
 
 import com.cloudera.api.swagger.client.ApiClient;
+import com.cloudera.api.swagger.client.ApiException;
+import com.cloudera.api.swagger.client.ApiResponse;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
+import okhttp3.Call;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.knox.gateway.GatewayServer;
@@ -32,6 +35,7 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator;
@@ -43,6 +47,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -205,6 +210,73 @@ public class PollingConfigurationAnalyzerTest {
     ChangeListener listener =
             doTestEvent(startEvent, address, clusterName, baseline, Collections.emptyMap());
     assertTrue("A service that became invalid must trigger re-discovery", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * Directly exercises the real {@link PollingConfigurationAnalyzer#getCurrentServiceConfiguration} body (not the test
+   * stub) against a Cloudera Manager API client that throws {@link ApiException}. A transient CM error must yield an
+   * {@code error} result - never a with-model or no-model result - so the caller can tell "CM unreachable" apart from
+   * "service produces no model". This is the path the config monitor's own try/catch relies on.
+   */
+  @Test
+  public void testGetCurrentServiceConfigurationReturnsErrorWhenClouderaManagerUnreachable() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster E";
+
+    final ApiClientInjectingPollingConfigAnalyzer pca =
+            buildApiClientInjectingAnalyzer(address, clusterName, Collections.emptyMap(), new ChangeListener(), throwingApiClient(address, clusterName));
+
+    final PollingConfigurationAnalyzer.CurrentServiceConfiguration current =
+            pca.getCurrentServiceConfiguration(address, clusterName, NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.SERVICE_TYPE);
+
+    assertTrue("A CM ApiException must produce an error result", current.isError());
+    assertFalse("An error result must not be mistaken for a produced model", current.hasModel());
+  }
+
+  /**
+   * A transient CM outage while computing a started service's current configuration must be a no-op: even though a
+   * valid prior baseline exists (the shape that would otherwise be read as "became invalid -> re-discover" in
+   * {@link #testValidServiceBecameInvalidTriggers()}), an {@code error} result must NOT trigger re-discovery.
+   * Regression guard for the KNOX-2900 Finding 2 rediscovery storm. Drives the real
+   * {@link PollingConfigurationAnalyzer#getCurrentServiceConfiguration} through the polling loop across multiple
+   * cycles, with the CM API failing every time.
+   */
+  @Test
+  public void testTransientClouderaManagerErrorDoesNotTriggerRediscovery() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster TE";
+
+    // A valid prior baseline for the service - the same precondition under which a genuine no-model result would
+    // (correctly) trigger re-discovery. Here the current-config computation fails with an ApiException instead.
+    final Map<String, ServiceConfigurationModel> baseline = new HashMap<>();
+    final ServiceConfigurationModel nnModel = new ServiceConfigurationModel();
+    nnModel.addRoleProperty(NameNodeServiceModelGenerator.ROLE_TYPE, "namenode_port", "8020");
+    baseline.put(NameNodeServiceModelGenerator.SERVICE_TYPE, nnModel);
+
+    final ApiEvent startEvent = createApiEvent(clusterName,
+                                               NameNodeServiceModelGenerator.SERVICE_TYPE,
+                                               NameNodeServiceModelGenerator.SERVICE,
+                                               PollingConfigurationAnalyzer.RESTART_COMMAND,
+                                               PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+
+    final ChangeListener listener = new ChangeListener();
+    final ApiClientInjectingPollingConfigAnalyzer pca =
+            buildApiClientInjectingAnalyzer(address, clusterName, baseline, listener, throwingApiClient(address, clusterName));
+    pca.setInterval(5);
+    pca.addRestartEvent(clusterName, startEvent);
+
+    final ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
+    pollingThreadExecutor.execute(pca);
+    pollingThreadExecutor.shutdown();
+    try {
+      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    pca.stop();
+
+    assertFalse("A transient CM error must not trigger re-discovery, even with a valid prior baseline",
+            listener.wasNotified(address, clusterName));
   }
 
   /**
@@ -1175,6 +1247,11 @@ public class PollingConfigurationAnalyzerTest {
 
   /**
    * PollingConfigurationAnalyzer extension to override CM API invocations.
+   * <p>
+   * This double stubs the <em>result</em>: it replaces {@link #getCurrentServiceConfiguration} to return a
+   * pre-loaded model, so the real config-computation logic never runs. Contrast with
+   * {@link ApiClientInjectingPollingConfigAnalyzer}, which stubs only the CM <em>client</em> boundary so that real
+   * {@code getCurrentServiceConfiguration} body (including its {@code ApiException} handling) does run.
    */
   private static class TestablePollingConfigAnalyzer extends PollingConfigurationAnalyzer {
 
@@ -1220,6 +1297,113 @@ public class PollingConfigurationAnalyzerTest {
     }
   }
 
+
+  /**
+   * Build an analyzer that runs the REAL {@link PollingConfigurationAnalyzer#getCurrentServiceConfiguration} (it only
+   * overrides {@code queryEvents} and {@code getApiClient}), backed by the supplied Cloudera Manager API client. Used
+   * by the transient-error tests to drive the real config-computation path, including its {@code ApiException} handling.
+   */
+  private ApiClientInjectingPollingConfigAnalyzer buildApiClientInjectingAnalyzer(final String address, final String clusterName,
+      final Map<String, ServiceConfigurationModel> baseline, final ChangeListener listener,
+      final DiscoveryApiClient apiClient) throws AliasServiceException {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
+    final ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
+    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
+    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
+    EasyMock.expect(sdc.getPasswordAlias()).andReturn("a").anyTimes();
+    EasyMock.replay(sdc);
+
+    final Map<String, List<String>> clusterNames = new HashMap<>();
+    clusterNames.put(address, Collections.singletonList(clusterName));
+
+    final ClusterConfigurationCache configCache = EasyMock.createNiceMock(ClusterConfigurationCache.class);
+    EasyMock.expect(configCache.getDiscoveryConfig(address, clusterName)).andReturn(sdc).anyTimes();
+    EasyMock.expect(configCache.getClusterNames()).andReturn(clusterNames).anyTimes();
+    EasyMock.expect(configCache.getClusterServiceConfigurations(address, clusterName)).andReturn(baseline).anyTimes();
+    EasyMock.replay(configCache);
+
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    // Gateway "ready" so the polling loop actually enters monitorClusterConfigurationChanges.
+    final GatewayStatusService gatewayStatusService = EasyMock.createNiceMock(GatewayStatusService.class);
+    EasyMock.expect(gatewayStatusService.status()).andReturn(Boolean.TRUE).anyTimes();
+    final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gws.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(gatewayStatusService).anyTimes();
+    EasyMock.replay(gatewayStatusService, gws);
+    setGatewayServices(gws);
+
+    return new ApiClientInjectingPollingConfigAnalyzer(gatewayConfig, configCache, aliasService, listener, apiClient);
+  }
+
+  /**
+   * A DiscoveryApiClient whose {@code execute} always throws {@link ApiException}, simulating an unreachable Cloudera
+   * Manager. Built with harmless nice-mock configuration so client construction (base path, credentials) succeeds.
+   */
+  private static DiscoveryApiClient throwingApiClient(final String address, final String clusterName) {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gatewayConfig);
+
+    final ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
+    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
+    EasyMock.expect(sdc.getPasswordAlias()).andReturn(null).anyTimes();
+    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
+    EasyMock.replay(sdc);
+
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    return new ThrowingDiscoveryApiClient(gatewayConfig, sdc, aliasService);
+  }
+
+  private static final class ThrowingDiscoveryApiClient extends DiscoveryApiClient {
+    ThrowingDiscoveryApiClient(final GatewayConfig gatewayConfig, final ServiceDiscoveryConfig sdConfig, final AliasService aliasService) {
+      super(gatewayConfig, sdConfig, aliasService, null);
+    }
+
+    @Override
+    public <T> ApiResponse<T> execute(Call call, Type returnType) throws ApiException {
+      throw new ApiException("Cloudera Manager unreachable (simulated)");
+    }
+  }
+
+  /**
+   * PollingConfigurationAnalyzer extension that stubs only the CM <em>client</em> boundary: it overrides
+   * {@code queryEvents} (to feed pre-loaded events) and {@code getApiClient} (to inject a supplied client), but leaves
+   * the real {@link #getCurrentServiceConfiguration} to run against that client - so its {@code ApiException} handling
+   * is exercised. Contrast with {@link TestablePollingConfigAnalyzer}, which stubs the config <em>result</em> instead.
+   */
+  private static final class ApiClientInjectingPollingConfigAnalyzer extends PollingConfigurationAnalyzer {
+    private final Map<String, List<ApiEvent>> restartEvents = new HashMap<>();
+    private final DiscoveryApiClient apiClient;
+
+    ApiClientInjectingPollingConfigAnalyzer(final GatewayConfig gatewayConfig, final ClusterConfigurationCache cache,
+                                    final AliasService aliasService, final ConfigurationChangeListener listener,
+                                    final DiscoveryApiClient apiClient) {
+      super(gatewayConfig, cache, aliasService, null, listener, 20);
+      this.apiClient = apiClient;
+    }
+
+    void addRestartEvent(final String clusterName, final ApiEvent restartEvent) {
+      restartEvents.computeIfAbsent(clusterName, l -> new ArrayList<>()).add(restartEvent);
+    }
+
+    @Override
+    protected List<ApiEvent> queryEvents(ApiClient client, String clusterName, String since) {
+      return restartEvents.computeIfAbsent(clusterName, l -> new ArrayList<>());
+    }
+
+    @Override
+    protected DiscoveryApiClient getApiClient(ServiceDiscoveryConfig discoveryConfig) {
+      return apiClient;
+    }
+  }
 
   private static class ChangeListener implements ConfigurationChangeListener {
     private final Map<String, String> notifications = new HashMap<>();
