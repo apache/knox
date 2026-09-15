@@ -60,6 +60,7 @@ public class DelegationPolicyServiceFactory extends AbstractServiceFactory {
       final H2DBDelegationPolicyService h2Service = new H2DBDelegationPolicyService();
       h2Service.setAliasService(getAliasService(gatewayServices));
       h2Service.setMasterService(getMasterService(gatewayServices));
+      h2Service.setLdapService(gatewayServices.getService(ServiceType.LDAP_SERVICE));
       h2Service.init(gatewayConfig, options);
       return h2Service;
     } catch (ServiceLifecycleException e) {
@@ -73,6 +74,7 @@ public class DelegationPolicyServiceFactory extends AbstractServiceFactory {
     try {
       final JdbcDelegationPolicyService jdbcService = new JdbcDelegationPolicyService();
       jdbcService.setAliasService(getAliasService(gatewayServices));
+      jdbcService.setLdapService(gatewayServices.getService(ServiceType.LDAP_SERVICE));
       jdbcService.init(gatewayConfig, options);
       return jdbcService;
     } catch (ServiceLifecycleException e) {

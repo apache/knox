@@ -48,4 +48,16 @@ interface DelegationPolicyServiceMessages {
       text = "Error listing delegation policies: {0}")
   void errorListingPolicies(String cause,
       @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR,
+      text = "Cannot evaluate canActFor.groups for subject {0}: the LDAP service is disabled or "
+          + "unavailable; failing the exchange with a server error. Enable LDAP on the gateway to "
+          + "evaluate group-based delegation policies")
+  void groupLookupUnavailable(String subjectName);
+
+  @Message(level = MessageLevel.ERROR,
+      text = "Error resolving group membership for subject {0} during delegation policy evaluation: "
+          + "{1}; failing the exchange with a server error")
+  void errorEvaluatingGroupMembership(String subjectName, String cause,
+      @StackTrace(level = MessageLevel.ERROR) Exception e);
 }

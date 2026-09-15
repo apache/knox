@@ -20,6 +20,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.easymock.EasyMock;
 import org.junit.AfterClass;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -859,14 +861,123 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   @Test
-  public void testEvaluateGroupsNotEmptyThrowsServerError() throws Exception {
+  public void testEvaluateAuthorizedViaGroupMembership() throws Exception {
     registerPolicy("oidc", "groups",
         Collections.emptySet(),
         new HashSet<>(Collections.singleton("admins")),
         singleResourcePolicy("/api", "read"));
 
-    assertThrows(UnsupportedOperationException.class, () ->
+    final KnoxLDAPService ldap = EasyMock.createMock(KnoxLDAPService.class);
+    EasyMock.expect(ldap.isEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(ldap.getUserGroups("alice")).andReturn(Arrays.asList("users", "admins")).once();
+    EasyMock.replay(ldap);
+    service.setLdapService(ldap);
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false));
+
+    assertNull("group membership should authorize the exchange", decision.getDenyReason());
+    assertEquals(CONFIGURED_TTL, decision.getEffectiveTtlSec());
+    EasyMock.verify(ldap);
+  }
+
+  @Test
+  public void testEvaluateDenyWhenSubjectInNoAllowedGroup() throws Exception {
+    registerPolicy("oidc", "groups",
+        Collections.emptySet(),
+        new HashSet<>(Collections.singleton("admins")),
+        singleResourcePolicy("/api", "read"));
+
+    final KnoxLDAPService ldap = EasyMock.createMock(KnoxLDAPService.class);
+    EasyMock.expect(ldap.isEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(ldap.getUserGroups("alice")).andReturn(Collections.singletonList("users")).once();
+    EasyMock.replay(ldap);
+    service.setLdapService(ldap);
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false));
+
+    assertEquals("subject_not_allowed", decision.getDenyReason());
+    EasyMock.verify(ldap);
+  }
+
+  @Test
+  public void testEvaluateGroupPolicyThrowsWhenLdapServiceAbsent() throws Exception {
+    // A group-based policy with no LDAP service wired is an operator misconfiguration: evaluate()
+    // must signal it (-> server_error), never silently deny with subject_not_allowed (AC3).
+    registerPolicy("oidc", "groups",
+        Collections.emptySet(),
+        new HashSet<>(Collections.singleton("admins")),
+        singleResourcePolicy("/api", "read"));
+    // Deliberately leave the LDAP service unset.
+
+    assertThrows(DelegationGroupLookupUnavailableException.class, () ->
         service.evaluate(new PolicyCheckRequest("oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false)));
+  }
+
+  @Test
+  public void testEvaluateGroupPolicyThrowsWhenLdapDisabled() throws Exception {
+    // LDAP is wired but disabled: same operator misconfiguration -> server_error, not a deny (AC3).
+    registerPolicy("oidc", "groups",
+        Collections.emptySet(),
+        new HashSet<>(Collections.singleton("admins")),
+        singleResourcePolicy("/api", "read"));
+
+    final KnoxLDAPService ldap = EasyMock.createMock(KnoxLDAPService.class);
+    EasyMock.expect(ldap.isEnabled()).andReturn(false).anyTimes();
+    EasyMock.replay(ldap);
+    service.setLdapService(ldap);
+
+    assertThrows(DelegationGroupLookupUnavailableException.class, () ->
+        service.evaluate(new PolicyCheckRequest("oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false)));
+    EasyMock.verify(ldap);
+  }
+
+  @Test
+  public void testEvaluateGroupLookupExceptionSignalsServerError() throws Exception {
+    // LDAP is enabled but the query itself throws at runtime (directory unreachable): the group rule
+    // could not be evaluated, so this surfaces as a server error (via the exception the handler maps
+    // to server_error), not a silent subject_not_allowed denial.
+    registerPolicy("oidc", "groups",
+        Collections.emptySet(),
+        new HashSet<>(Collections.singleton("admins")),
+        singleResourcePolicy("/api", "read"));
+
+    final KnoxLDAPService ldap = EasyMock.createMock(KnoxLDAPService.class);
+    EasyMock.expect(ldap.isEnabled()).andReturn(true).anyTimes();
+    final RuntimeException lookupFailure = new RuntimeException("directory unreachable");
+    EasyMock.expect(ldap.getUserGroups("alice")).andThrow(lookupFailure).once();
+    EasyMock.replay(ldap);
+    service.setLdapService(ldap);
+
+    final DelegationGroupLookupUnavailableException thrown = assertThrows(
+        DelegationGroupLookupUnavailableException.class,
+        () -> service.evaluate(new PolicyCheckRequest(
+            "oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false)));
+
+    // The originating lookup failure is chained so it can be logged with its stack trace.
+    assertSame(lookupFailure, thrown.getCause());
+    EasyMock.verify(ldap);
+  }
+
+  @Test
+  public void testEvaluateUserCheckShortCircuitsGroupLookup() throws Exception {
+    // The subject is explicitly allowed as a user, so the (slower) LDAP group lookup must be skipped
+    // entirely - including the availability check, so a disabled directory does not spuriously error.
+    registerPolicy("oidc", "groups",
+        Collections.singleton("alice"),
+        new HashSet<>(Collections.singleton("admins")),
+        singleResourcePolicy("/api", "read"));
+
+    final KnoxLDAPService ldap = EasyMock.createMock(KnoxLDAPService.class);
+    EasyMock.replay(ldap); // neither isEnabled() nor getUserGroups() expected
+    service.setLdapService(ldap);
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "groups", "alice", Set.of("/api"), Collections.singleton("read"), false));
+
+    assertNull(decision.getDenyReason());
+    EasyMock.verify(ldap);
   }
 
   // ------------------------------------------------------------------

@@ -21,9 +21,11 @@ import org.apache.knox.gateway.database.DataSourceProvider;
 import org.apache.knox.gateway.database.JDBCUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.services.security.AliasService;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,6 +47,7 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
   private final Lock initLock = new ReentrantLock(true);
 
   private AliasService aliasService;
+  private KnoxLDAPService ldapService;
   private DelegationPolicyDatabase database;
   private int configuredKnoxTokenTtlSec;
 
@@ -91,6 +94,17 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
   protected AliasService getAliasService() {
     return aliasService;
+  }
+
+  /**
+   * The LDAP service used to resolve the impersonated subject's group memberships for the
+   * {@code canActFor.groups} check in {@link #evaluate(PolicyCheckRequest)}. May be left unset when
+   * no LDAP service is available; a policy with a non-empty {@code canActFor.groups} list then cannot
+   * be evaluated and {@link #evaluate(PolicyCheckRequest)} raises
+   * {@link DelegationGroupLookupUnavailableException} (surfaced as a server error) rather than denying.
+   */
+  public void setLdapService(KnoxLDAPService ldapService) {
+    this.ldapService = ldapService;
   }
 
   @Override
@@ -264,16 +278,54 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
         ? policy.getTokenTtlSec()
         : configuredKnoxTokenTtlSec;
 
-    // Step 7: group check (LDAP lookup, slowest, deferred past the cheaper checks).
+    // Step 7: group check (LDAP lookup, slowest, deferred past the cheaper checks). Only reached
+    // when the cheaper explicit-user check did not already authorize the subject. The lookup is on
+    // the impersonated subject, mirroring the Step 3 user check (canActForUsers is matched against
+    // the same subjectName): canActFor.groups means "this actor may act for users in these groups".
     if (!userCheckPassed) {
-      if (!policy.getCanActForGroups().isEmpty()) {
-        throw new UnsupportedOperationException("canActFor.groups evaluation not yet implemented");
+      final Set<String> allowedGroups = policy.getCanActForGroups();
+      if (allowedGroups.isEmpty()) {
+        // No group rule to fall back on: the subject simply is not allowed.
+        return deny("subject_not_allowed");
       }
-      return deny("subject_not_allowed");
+      // A group-based policy requires LDAP to resolve the subject's memberships. If LDAP is absent
+      // or disabled this is an operator misconfiguration (a groups policy with the directory turned
+      // off), not an authorization decision: signal it so the exchange fails with a server_error
+      // directing the operator to enable LDAP, rather than silently denying with subject_not_allowed.
+      if (ldapService == null || !ldapService.isEnabled()) {
+        LOG.groupLookupUnavailable(request.getSubjectName());
+        throw new DelegationGroupLookupUnavailableException(request.getSubjectName());
+      }
+      if (!subjectBelongsToAllowedGroup(request.getSubjectName(), allowedGroups)) {
+        return deny("subject_not_allowed");
+      }
     }
 
     // Step 8: authorized
     return new PolicyDecision(null, effectiveTtlSec);
+  }
+
+  /**
+   * Resolve the subject's group memberships via the (present and enabled) LDAP service and test
+   * them against the policy's allowed groups. Availability is the caller's precondition; this method
+   * concerns itself only with the membership decision. A runtime lookup failure means the group rule
+   * could not be evaluated - it is neither a match nor a non-match - so it is logged (with stack
+   * trace) and re-raised as a {@link DelegationGroupLookupUnavailableException} for the caller to
+   * surface as a server error, rather than being swallowed into a {@code subject_not_allowed} denial.
+   */
+  private boolean subjectBelongsToAllowedGroup(String subjectName, Set<String> allowedGroups) {
+    try {
+      final List<String> subjectGroups = ldapService.getUserGroups(subjectName);
+      for (String group : subjectGroups) {
+        if (allowedGroups.contains(group)) {
+          return true;
+        }
+      }
+      return false;
+    } catch (Exception e) {
+      LOG.errorEvaluatingGroupMembership(subjectName, e.getMessage(), e);
+      throw new DelegationGroupLookupUnavailableException(subjectName, e);
+    }
   }
 
   private static PolicyDecision deny(String reason) {
