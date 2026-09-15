@@ -27,7 +27,7 @@ import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import java.util.Collections;
 import java.util.Properties;

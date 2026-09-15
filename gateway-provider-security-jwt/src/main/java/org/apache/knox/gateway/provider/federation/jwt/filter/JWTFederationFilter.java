@@ -42,6 +42,7 @@ import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import javax.security.auth.Subject;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
