@@ -21,7 +21,7 @@ package org.apache.knox.gateway.filter;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Enumeration;

@@ -104,7 +104,7 @@ public class ClientCertFilter implements Filter {
   }
 
   private X509Certificate extractCertificate(HttpServletRequest req) {
-    X509Certificate[] certs = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
+    X509Certificate[] certs = (X509Certificate[]) req.getAttribute("jakarta.servlet.request.X509Certificate");
     if (null != certs && certs.length > 0) {
       return certs[0];
     }

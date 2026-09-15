@@ -248,11 +248,11 @@ public class TokenServiceResourceTest {
       ArrayList<X509Certificate> certArrayList = new ArrayList<>();
       certArrayList.add(trustedCertMock);
       X509Certificate[] certs = {};
-      EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
+      EasyMock.expect(request.getAttribute("jakarta.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
       EasyMock.replay(trustedCertMock);
     }
     else {
-      EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(null).anyTimes();
+      EasyMock.expect(request.getAttribute("jakarta.servlet.request.X509Certificate")).andReturn(null).anyTimes();
     }
 
     EasyMock.replay(principal, services, context, request, aliasService, config);
