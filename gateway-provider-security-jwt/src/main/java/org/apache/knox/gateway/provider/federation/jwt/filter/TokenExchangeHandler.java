@@ -18,11 +18,19 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import org.apache.commons.lang3.StringUtils;
 
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -93,6 +101,11 @@ class TokenExchangeHandler {
 
   // Larger than an allowed SPIFFE ID
   private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
+  // Non-final and package-private to allow test injection of a mock Auditor (see
+  // DelegationPolicyResource.auditor for the identical, already-established pattern).
+  static Auditor auditor = AuditServiceFactory.getAuditService()
+      .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   private final JWTFederationFilter filter;
 
   TokenExchangeHandler(JWTFederationFilter filter) {
@@ -186,6 +199,9 @@ class TokenExchangeHandler {
       // The request is a delegation token exchange if either an actor_token is present or
       // a requested_subject that differs from the subject_token sub claim is present. The
       // latter is 'headless' delegation exchange for which the subject_token is the actor.
+      // actorToken is parsed once, below, and reused both for the policy check and for Subject
+      // construction further down; it stays null when hasActorToken is false.
+      JWT actorToken = null;
       if (hasActorToken || requestedSubjectDiffersFromSubject) {
         // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is
         // set to true. When true, only authorized token exchanges will be permitted.
@@ -225,15 +241,54 @@ class TokenExchangeHandler {
               "Exactly one combined audience or resource value is allowed for a delegation exchange");
           return;
         }
+
+        // The actor for this exchange is the actor_token's identity when an actor_token is
+        // present, or the subject_token's identity when this is a headless delegation
+        // exchange. Either way it must be parsed/validated before the policy check below; when
+        // an actor_token is present it is reused for Subject construction further down.
+        if (hasActorToken) {
+          actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
+          if (actorToken == null) {
+            // Validation failed, error response already sent
+            return;
+          }
+        }
+        final JWT actorIdentitySource = hasActorToken ? actorToken : subjectToken;
+        final ActorIdentity actorIdentity = deriveActorIdentity(actorIdentitySource);
+
+        // A single policy-evaluation call per exchange, carrying the full validated requested-
+        // resource set and an always-empty requestedScopes set (scope enforcement is deferred).
+        final PolicyCheckRequest policyCheckRequest = new PolicyCheckRequest(
+            actorIdentity.actorAuthority, actorIdentity.actorId,
+            requestedSubjectDiffersFromSubject ? requestedSubjectValue : subjectToken.getSubject(),
+            uniqueRequestedAudiences, Collections.emptySet(), requestedSubjectDiffersFromSubject);
+
+        final PolicyDecision policyDecision;
+        try {
+          policyDecision = filter.evaluateDelegationPolicy(policyCheckRequest);
+        } catch (UnsupportedOperationException e) {
+          // The canActFor.groups group-membership check is intentionally not implemented yet.
+          // Do not suppress or special-case this away; map it to a distinct HTTP status instead.
+          filter.handleValidationError(request, response, HttpServletResponse.SC_NOT_IMPLEMENTED,
+              "server_error", "canActFor.groups evaluation is not yet implemented");
+          return;
+        }
+        if (policyDecision.getDenyReason() != null) {
+          auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
+              ActionOutcome.FAILURE, auditMessage(policyDecision, actorIdentity, subjectToken,
+                  requestedSubjectValue, uniqueRequestedAudiences));
+          // A single, generic denial that does not identify which requested value failed.
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "The token exchange request is rejected by policy");
+          return;
+        }
+        auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
+            ActionOutcome.SUCCESS, auditMessage(policyDecision, actorIdentity, subjectToken,
+                requestedSubjectValue, uniqueRequestedAudiences));
       }
 
       final Subject subject;
       if (hasActorToken) {
-        final JWT actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
-        if (actorToken == null) {
-          // Validation failed, error response already sent
-          return;
-        }
         // Delegation (OBO): actor as PrimaryPrincipal, subject as the impersonated party
         subject = createSubjectForTokenExchange(subjectToken, actorToken);
       } else if (requestedSubjectDiffersFromSubject) {
@@ -341,6 +396,82 @@ class TokenExchangeHandler {
     @SuppressWarnings("rawtypes")
     final HashSet emptySet = new HashSet();
     return new Subject(true, principals, emptySet, emptySet);
+  }
+
+  private static final String K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX = "system:serviceaccount:";
+  private static final String K8S_SA_ACTOR_AUTHORITY = "K8S_SA";
+  private static final String USER_ACTOR_AUTHORITY = "USER";
+
+  /**
+   * Derive the (actorAuthority, actorId) pair identifying the actor for a delegation policy
+   * check, from the actor's validated JWT (the actor_token when one is present, or the
+   * subject_token acting as actor for a headless delegation exchange). actorAuthority is a
+   * fixed type tag identifying what kind of actor this is. Delegation policies are
+   * registered and looked up by the (actorAuthority, actorId) pair. A Kubernetes
+   * service-account subject (sub of the form
+   * "system:serviceaccount:&lt;namespace&gt;:&lt;sa-name&gt;") is tagged K8S_SA, with an
+   * actorId composed of its issuer, namespace, and service-account name, concatenated with
+   * colon separators. Every other subject is tagged USER, with its own subject as actorId
+   * verbatim. Knox managed client policies, tagged with CLIENT_ID, are deferred.
+   *
+   * @param actorJwt the actor's validated JWT
+   * @return the derived actor identity
+   */
+  private static ActorIdentity deriveActorIdentity(JWT actorJwt) {
+    final String subject = actorJwt.getSubject();
+    if (subject != null && subject.startsWith(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX)) {
+      final String namespaceAndName = subject.substring(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX.length());
+      return new ActorIdentity(K8S_SA_ACTOR_AUTHORITY, actorJwt.getIssuer() + ":" + namespaceAndName);
+    }
+    return new ActorIdentity(USER_ACTOR_AUTHORITY, subject);
+  }
+
+  /** The actorAuthority/actorId pair derived by {@link #deriveActorIdentity(JWT)}. */
+  private static final class ActorIdentity {
+    private final String actorAuthority;
+    private final String actorId;
+
+    ActorIdentity(String actorAuthority, String actorId) {
+      this.actorAuthority = actorAuthority;
+      this.actorId = actorId;
+    }
+  }
+
+  /**
+   * The (actorAuthority, actorId) pair is delegation policy's unique lookup key, see
+   * {@link #deriveActorIdentity(JWT)}, and hence can act as the audit record's unique
+   * resourceName.
+   */
+  private static String auditResourceName(ActorIdentity actorIdentity) {
+    return actorIdentity.actorAuthority + "/" + actorIdentity.actorId;
+  }
+
+  /**
+   * Builds the audit message for one policy-decision outcome. Deliberately omits every field
+   * this decision point does not have: issued_token_jti, issued_token_expiry, and
+   * issued_subject (only known later, at minting time); scope and act_chain_depth (both out of
+   * scope for this task).
+   */
+  private static String auditMessage(PolicyDecision policyDecision, ActorIdentity actorIdentity,
+                                      JWT subjectToken, String requestedSubjectValue,
+                                      Set<String> uniqueRequestedAudiences) {
+    final StringBuilder message = new StringBuilder();
+    final boolean denied = policyDecision.getDenyReason() != null;
+    message.append("event_type=").append(denied ? "token_exchange_denied" : "token_exchange_allowed");
+    if (denied) {
+      message.append(" deny_reason=").append(policyDecision.getDenyReason());
+    }
+    message.append(" actor_authority=").append(actorIdentity.actorAuthority);
+    message.append(" actor_id=").append(actorIdentity.actorId);
+    message.append(" subject_token_iss=").append(auditLabel(subjectToken.getIssuer()));
+    message.append(" subject_token_sub=").append(auditLabel(subjectToken.getSubject()));
+    message.append(" requested_subject=").append(auditLabel(requestedSubjectValue));
+    message.append(" requested_resources=").append(uniqueRequestedAudiences);
+    return message.toString();
+  }
+
+  private static String auditLabel(String value) {
+    return value != null ? value : "";
   }
 
   /**

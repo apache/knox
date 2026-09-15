@@ -22,14 +22,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,6 +70,8 @@ public class TokenExchangeHandlerTest {
   private HttpServletResponse response;
   private FilterChain chain;
   private Capture<Object> requestedAudiencesAttr;
+  private static final Auditor ORIGINAL_AUDITOR = TokenExchangeHandler.auditor;
+  private Auditor auditor;
 
   @Before
   public void setUp() {
@@ -71,6 +80,35 @@ public class TokenExchangeHandlerTest {
     response = EasyMock.createNiceMock(HttpServletResponse.class);
     chain = EasyMock.createNiceMock(FilterChain.class);
     EasyMock.replay(response, chain);
+    // Default to a nice, already-replayed Auditor so every test that does not itself care
+    // about auditing (including every pre-existing test in this file) keeps passing
+    // unmodified.
+    auditor = EasyMock.createNiceMock(Auditor.class);
+    EasyMock.replay(auditor);
+    TokenExchangeHandler.auditor = auditor;
+  }
+
+  @After
+  public void tearDown() {
+    TokenExchangeHandler.auditor = ORIGINAL_AUDITOR;
+  }
+
+  /**
+   * Replaces TokenExchangeHandler.auditor with a strict mock expecting exactly one audit()
+   * call matching the given action/resourceName/resourceType/outcome, replays it, and returns
+   * a Capture of the message argument for the caller to assert further content against after
+   * invoking handler.handle(...) and calling EasyMock.verify(auditor).
+   */
+  private Capture<String> expectAudit(String action, String resourceName, String resourceType,
+                                       String outcome) {
+    auditor = EasyMock.createMock(Auditor.class);
+    final Capture<String> message = EasyMock.newCapture();
+    auditor.audit(EasyMock.eq(action), EasyMock.eq(resourceName), EasyMock.eq(resourceType),
+        EasyMock.eq(outcome), EasyMock.capture(message));
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(auditor);
+    TokenExchangeHandler.auditor = auditor;
+    return message;
   }
 
   @Test
@@ -166,6 +204,162 @@ public class TokenExchangeHandlerTest {
         filter.establishedSubject.getPrincipals(TokenExchangePrincipal.class).iterator().next();
     assertEquals("alice", tep.getSubjectPrincipalName());
     assertEquals("svc-dataservice", tep.getActorPrincipalName());
+  }
+
+  @Test
+  public void testActorTokenDelegationPolicyDenialRejectsWithInvalidRequestAndAuditsFailure()
+      throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.policyDecision = new PolicyDecision("resource_not_allowed", 0);
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/svc-dataservice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("rejected by policy"));
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_denied"));
+    assertTrue(auditMessage.getValue().contains("deny_reason=resource_not_allowed"));
+    assertTrue(auditMessage.getValue().contains("actor_authority=USER"));
+    assertTrue(auditMessage.getValue().contains("actor_id=svc-dataservice"));
+    assertTrue(auditMessage.getValue().contains("subject_token_iss=KNOXSSO"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
+  }
+
+  @Test
+  public void testHeadlessDelegationPolicyDenialRejectsWithInvalidRequestAndAuditsFailure()
+      throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.policyDecision = new PolicyDecision("subject_not_allowed", 0);
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("rejected by policy"));
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_denied"));
+    assertTrue(auditMessage.getValue().contains("deny_reason=subject_not_allowed"));
+    assertTrue(auditMessage.getValue().contains("actor_authority=USER"));
+    assertTrue(auditMessage.getValue().contains("actor_id=alice"));
+    assertTrue(auditMessage.getValue().contains("requested_subject=bob"));
+  }
+
+  @Test
+  public void testCanActForGroupsUnsupportedOperationMapsToNotImplemented() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.policyEvaluationException =
+        new UnsupportedOperationException("canActFor.groups evaluation not yet implemented");
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, filter.errorStatus);
+    assertEquals("server_error", filter.error);
+    assertTrue(filter.errorDescription.contains("canActFor.groups"));
+  }
+
+  @Test
+  public void testSameSubjectExchangeNeverCallsPolicyEvaluation() throws Exception {
+    filter.policyEvaluationException = new UnsupportedOperationException("must not be called");
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testActorTokenIdentityDerivedFromK8sServiceAccountSubjectAuditsSuccess()
+      throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("system:serviceaccount:ns1:sa1", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE,
+        "K8S_SA/https://k8s:ns1:sa1", ResourceType.PRINCIPAL, ActionOutcome.SUCCESS);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.capturedPolicyCheckRequest);
+    assertEquals("K8S_SA", filter.capturedPolicyCheckRequest.getActorAuthority());
+    assertEquals("https://k8s:ns1:sa1", filter.capturedPolicyCheckRequest.getActorId());
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
+    assertTrue(auditMessage.getValue().contains("actor_authority=K8S_SA"));
+    assertTrue(auditMessage.getValue().contains("actor_id=https://k8s:ns1:sa1"));
+  }
+
+  @Test
+  public void testActorTokenIdentityFallsBackToUserAuthorityAndSubjectAuditsSuccess()
+      throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE,
+        "USER/svc-dataservice", ResourceType.PRINCIPAL, ActionOutcome.SUCCESS);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.capturedPolicyCheckRequest);
+    assertEquals("USER", filter.capturedPolicyCheckRequest.getActorAuthority());
+    assertEquals("svc-dataservice", filter.capturedPolicyCheckRequest.getActorId());
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
+    assertTrue(auditMessage.getValue().contains("actor_authority=USER"));
+    assertTrue(auditMessage.getValue().contains("actor_id=svc-dataservice"));
+  }
+
+  @Test
+  public void testActorTokenDelegationPolicyCheckRequestSubjectNameAndHeadlessFlag() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.capturedPolicyCheckRequest);
+    assertEquals("alice", filter.capturedPolicyCheckRequest.getSubjectName());
+    assertFalse(filter.capturedPolicyCheckRequest.isHeadlessExchange());
+    assertTrue(filter.capturedPolicyCheckRequest.getRequestedScopes().isEmpty());
+  }
+
+  @Test
+  public void testHeadlessDelegationPolicyCheckRequestUsesSubjectTokenAsActorAndRequestedSubjectAsSubjectName() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(request("subtok", JWT_TYPE, null, null, "bob"), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.capturedPolicyCheckRequest);
+    assertEquals("USER", filter.capturedPolicyCheckRequest.getActorAuthority());
+    assertEquals("alice", filter.capturedPolicyCheckRequest.getActorId());
+    assertEquals("bob", filter.capturedPolicyCheckRequest.getSubjectName());
+    assertTrue(filter.capturedPolicyCheckRequest.isHeadlessExchange());
+    assertTrue(filter.capturedPolicyCheckRequest.getRequestedScopes().isEmpty());
+  }
+
+  @Test
+  public void testActorTokenDelegationPolicyCheckRequestCarriesRequestedResources() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(delegationRequest("subtok", "acttok", JWT_TYPE, null,
+        new String[] {"https://svc.example.com/"}, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertNotNull(filter.capturedPolicyCheckRequest);
+    assertEquals(Set.of("https://svc.example.com/"),
+        filter.capturedPolicyCheckRequest.getRequestedResources());
   }
 
   @Test
@@ -914,6 +1108,11 @@ public class TokenExchangeHandlerTest {
     private boolean delegationRequestedSubjectEnabled;
     private boolean delegationEnforceRequestedAudienceRequired;
     private boolean delegationEnforceRequestedAudienceMaxOne;
+    // Defaults to an "allow" decision so every pre-existing test that never sets this field
+    // keeps passing unmodified.
+    private PolicyDecision policyDecision = new PolicyDecision(null, 0);
+    private RuntimeException policyEvaluationException;
+    private PolicyCheckRequest capturedPolicyCheckRequest;
 
     @Override
     boolean isDelegationServerEnabled() {
@@ -933,6 +1132,15 @@ public class TokenExchangeHandlerTest {
     @Override
     boolean isDelegationEnforceRequestedAudienceMaxOne() {
       return delegationEnforceRequestedAudienceMaxOne;
+    }
+
+    @Override
+    PolicyDecision evaluateDelegationPolicy(PolicyCheckRequest request) {
+      this.capturedPolicyCheckRequest = request;
+      if (policyEvaluationException != null) {
+        throw policyEvaluationException;
+      }
+      return policyDecision;
     }
 
     @Override

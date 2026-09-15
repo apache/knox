@@ -25,6 +25,9 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilte
 
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
+import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -176,7 +179,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   public void testDynamicIssuerAllowedActorExternal() throws Exception {
     final Properties props = getProperties();
     props.setProperty(JWTFederationFilter.DELEGATION_SERVER_ENABLED, "true");
-    handler.init(new TestFilterConfig(props));
+    handler.init(new TestFilterConfig(props, null, allowingDelegationPolicyService()));
 
     final SignedJWT subjectJwt = getJWT(KNOX_ISSUER, "end-user",
         new Date(System.currentTimeMillis() + 60000));
@@ -685,7 +688,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final Properties props = getProperties();
     props.setProperty(JWTFederationFilter.JWKS_URL, staticJwksUrl);
     props.setProperty(JWTFederationFilter.DELEGATION_SERVER_ENABLED, "true");
-    handler.init(new TestFilterConfig(props));
+    handler.init(new TestFilterConfig(props, null, allowingDelegationPolicyService()));
 
     final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
     EasyMock.expect(mockAuth.verifyToken(
@@ -1034,6 +1037,18 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
+
+  // The two actor_token tests in this file (dynamic JWKS resolution for the actor token)
+  // also exercise the delegation policy check that TokenExchangeHandler performs whenever an
+  // actor_token is present; this supplies an always-allow DelegationPolicyService so those tests
+  // keep verifying dynamic JWKS behavior without asserting anything about policy outcomes.
+  private static DelegationPolicyService allowingDelegationPolicyService() {
+    final DelegationPolicyService policyService = EasyMock.createNiceMock(DelegationPolicyService.class);
+    EasyMock.expect(policyService.evaluate(EasyMock.anyObject(PolicyCheckRequest.class)))
+        .andReturn(new PolicyDecision(null, 0)).anyTimes();
+    EasyMock.replay(policyService);
+    return policyService;
+  }
 
   private ServletContext buildContextWithIssuerService(TrustedOidcIssuerService issuerSvc) {
     final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
