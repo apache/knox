@@ -1204,11 +1204,15 @@ public class PollingConfigurationAnalyzerTest {
     }
 
     @Override
-    protected ServiceConfigurationModel getCurrentServiceConfiguration(String address,
-                                                                       String clusterName,
-                                                                       String service,
-                                                                       String serviceType) {
-      return serviceConfigModels.get(getServiceConfigModelKey(address, clusterName, service));
+    protected CurrentServiceConfiguration getCurrentServiceConfiguration(String address,
+                                                                         String clusterName,
+                                                                         String service,
+                                                                         String serviceType) {
+      final ServiceConfigurationModel model = serviceConfigModels.get(getServiceConfigModelKey(address, clusterName, service));
+      // A stubbed model maps to a with-model result; an absent one maps to no-model (a successful CM call that
+      // produced no model), mirroring the invalid-configuration case. Tests needing the CM-unreachable case return
+      // CurrentServiceConfiguration.error() explicitly (see the error-specific test doubles).
+      return model == null ? CurrentServiceConfiguration.noModel() : CurrentServiceConfiguration.withModel(model);
     }
 
     static String getServiceConfigModelKey(final String address, final String clusterName, final String service) {

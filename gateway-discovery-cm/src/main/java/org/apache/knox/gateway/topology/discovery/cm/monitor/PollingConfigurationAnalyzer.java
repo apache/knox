@@ -345,31 +345,39 @@ public class PollingConfigurationAnalyzer implements Runnable {
         // Get the previously-recorded configuration
         ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
 
-        // Get the current (model-derived) config for the started service. This is null when the service produces no
-        // model (e.g. invalid configuration), just as such a service is absent from the recorded baseline.
-        ServiceConfigurationModel currentConfig =
+        // Get the current (model-derived) config for the started service, as a tri-state result so a transient CM
+        // error is never mistaken for a service that produces no model.
+        CurrentServiceConfiguration current =
                         getCurrentServiceConfiguration(address, clusterName, re.getService(), re.getServiceType());
 
-        if (serviceConfig == null && currentConfig == null) {
-          // Was and remains in an invalid configuration state (no model either time): nothing to proxy, no change.
-          log.skippingConfigChangeForInvalidService(re.getService(), re.getServiceType());
-        } else if (serviceConfig != null && currentConfig != null) {
-          // Valid before and now: compare the recorded and current configs to detect a change.
-          log.analyzingCurrentServiceConfiguration(re.getService());
-          try {
-            configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
-          } catch (Exception e) {
-            log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
-          }
-        } else if (currentConfig != null) {
-          // No prior config, but the service now produces a model: new / became valid -> re-discover.
-          log.serviceEnabled(re.getService());
-          configHasChanged = true;
+        if (current.isError()) {
+          // CM was unreachable while computing the current configuration: the current state is unknown, so make no
+          // change decision this cycle. This preserves the pre-KNOX-2900 no-op behavior on API errors and prevents a
+          // transient outage from forcing a full re-discovery every polling cycle until CM recovers.
+          log.skippingConfigChangeForUnreachableService(re.getService(), re.getServiceType());
         } else {
-          // Had a prior config but produces no model now: became invalid / was removed -> re-discover so the
-          // service is dropped from the affected topologies (and the scoped-replace merge clears its baseline).
-          log.serviceDisabled(re.getService());
-          configHasChanged = true;
+          final ServiceConfigurationModel currentConfig = current.getModel(); // non-null only when hasModel()
+          if (serviceConfig == null && !current.hasModel()) {
+            // Was and remains in an invalid configuration state (no model either time): nothing to proxy, no change.
+            log.skippingConfigChangeForInvalidService(re.getService(), re.getServiceType());
+          } else if (serviceConfig != null && current.hasModel()) {
+            // Valid before and now: compare the recorded and current configs to detect a change.
+            log.analyzingCurrentServiceConfiguration(re.getService());
+            try {
+              configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
+            } catch (Exception e) {
+              log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
+            }
+          } else if (current.hasModel()) {
+            // No prior config, but the service now produces a model: new / became valid -> re-discover.
+            log.serviceEnabled(re.getService());
+            configHasChanged = true;
+          } else {
+            // Had a prior config but produces no model now: became invalid / was removed -> re-discover so the
+            // service is dropped from the affected topologies (and the scoped-replace merge clears its baseline).
+            log.serviceDisabled(re.getService());
+            configHasChanged = true;
+          }
         }
 
         handledServiceTypes.add(serviceType);
@@ -719,24 +727,24 @@ public class PollingConfigurationAnalyzer implements Runnable {
    * Get the current configuration for the specified service, built by running the service model generators exactly
    * as cluster discovery does and transforming the resulting models the same way the persisted baseline is built.
    * <p>
-   * Because the baseline is model-derived, computing the current snapshot the same way keeps the two comparable, and
-   * a service whose configuration is invalid (no generator produces a model) yields {@code null} here - mirroring its
-   * absence from the baseline, so a service that was and remains invalid is not misread as a change.
+   * Because the baseline is model-derived, computing the current snapshot the same way keeps the two comparable. The
+   * result distinguishes three outcomes so the caller never conflates "the service is genuinely gone" with "we could
+   * not reach Cloudera Manager": a service whose configuration is invalid (no generator produces a model) yields a
+   * {@link CurrentServiceConfiguration#noModel() no-model} result - mirroring its absence from the baseline - while an
+   * {@link ApiException} (CM unreachable) yields an {@link CurrentServiceConfiguration#error() error} result.
    *
    * @param address     The address of the ClouderaManager instance.
    * @param clusterName The name of the cluster.
    * @param service     The name of the service.
    * @param serviceType The type of the service.
    *
-   * @return A ServiceConfigurationModel with the model-derived configuration of the service, or {@code null} if the
-   * service produces no model (e.g. invalid configuration).
+   * @return a {@link CurrentServiceConfiguration}: with-model when the service produced a model, no-model when the CM
+   * call succeeded but produced no model (invalid configuration), or error when the CM call failed.
    */
-  protected ServiceConfigurationModel getCurrentServiceConfiguration(final String address,
-                                                                     final String clusterName,
-                                                                     final String service,
-                                                                     final String serviceType) {
-    ServiceConfigurationModel currentConfig = null;
-
+  protected CurrentServiceConfiguration getCurrentServiceConfiguration(final String address,
+                                                                       final String clusterName,
+                                                                       final String service,
+                                                                       final String serviceType) {
     log.gettingCurrentClusterConfiguration(service, clusterName, address);
 
     DiscoveryApiClient apiClient = getApiClient(configCache.getDiscoveryConfig(address, clusterName));
@@ -761,11 +769,66 @@ public class PollingConfigurationAnalyzer implements Runnable {
       final ApiServiceConfig coreSettingsConfig = getCoreSettingsConfig(api, clusterName, serviceList);
       final Set<ServiceModel> serviceModels =
               ServiceModelFactory.generateServiceModels(apiClient, apiService, svcConfig, roleConfigList, coreSettingsConfig);
-      currentConfig = ServiceConfigurationModel.fromServiceModels(serviceModels).get(serviceType);
+      final ServiceConfigurationModel currentConfig =
+              ServiceConfigurationModel.fromServiceModels(serviceModels).get(serviceType);
+      // A successful CM call that yields no model means the service is genuinely in an invalid/removed configuration
+      // state - distinct from the error case below, where we simply could not reach CM.
+      return currentConfig == null ? CurrentServiceConfiguration.noModel() : CurrentServiceConfiguration.withModel(currentConfig);
     } catch (ApiException e) {
+      // CM was unreachable (network blip, auth failure, transient 5xx). The current configuration is unknown, so
+      // return an explicit error result: the caller must treat this as "unknown", never as "the service is gone" -
+      // otherwise a transient outage would force a full re-discovery every polling cycle until CM recovers.
       log.clouderaManagerConfigurationAPIError(e);
+      return CurrentServiceConfiguration.error();
     }
-    return currentConfig;
+  }
+
+  /**
+   * The outcome of computing a service's current model-derived configuration. Distinguishes three cases so the
+   * caller never conflates a transient CM error with a service that genuinely produces no model:
+   * <ul>
+   *   <li>{@link #withModel(ServiceConfigurationModel) with-model} - the service produced a model;</li>
+   *   <li>{@link #noModel() no-model} - the CM call succeeded but no generator produced a model (invalid/removed);</li>
+   *   <li>{@link #error() error} - the CM call failed and the current configuration is unknown.</li>
+   * </ul>
+   */
+  protected static final class CurrentServiceConfiguration {
+    private enum Status { WITH_MODEL, NO_MODEL, ERROR }
+
+    private final Status status;
+    private final ServiceConfigurationModel model;
+
+    private CurrentServiceConfiguration(final Status status, final ServiceConfigurationModel model) {
+      this.status = status;
+      this.model = model;
+    }
+
+    static CurrentServiceConfiguration withModel(final ServiceConfigurationModel model) {
+      return new CurrentServiceConfiguration(Status.WITH_MODEL, model);
+    }
+
+    static CurrentServiceConfiguration noModel() {
+      return new CurrentServiceConfiguration(Status.NO_MODEL, null);
+    }
+
+    static CurrentServiceConfiguration error() {
+      return new CurrentServiceConfiguration(Status.ERROR, null);
+    }
+
+    boolean isError() {
+      return status == Status.ERROR;
+    }
+
+    boolean hasModel() {
+      return status == Status.WITH_MODEL;
+    }
+
+    /**
+     * @return the model when {@link #hasModel()} is true; {@code null} for the no-model and error results.
+     */
+    ServiceConfigurationModel getModel() {
+      return model;
+    }
   }
 
   /**

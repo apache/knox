@@ -273,6 +273,11 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "The {0} ({1}) service was and remains in an invalid configuration state; skipping discovery.")
   void skippingConfigChangeForInvalidService(String serviceName, String serviceType);
 
+  @Message(level = MessageLevel.WARN,
+           text = "Could not determine the current configuration of the {0} ({1}) service because ClouderaManager was "
+                  + "unreachable; skipping change detection for this service this cycle.")
+  void skippingConfigChangeForUnreachableService(String serviceName, String serviceType);
+
   @Message(level = MessageLevel.INFO, text = "Role type {0} has been removed.")
   void roleTypeRemoved(String roleType);
 
