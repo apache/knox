@@ -17,18 +17,29 @@
 package org.apache.knox.gateway.topology.discovery.cm;
 
 import com.cloudera.api.swagger.client.ApiException;
+import com.cloudera.api.swagger.client.ApiResponse;
+import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiHostRef;
 import com.cloudera.api.swagger.model.ApiRoleConfig;
 import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import okhttp3.Call;
+import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -105,6 +116,114 @@ public class ServiceModelFactoryTest extends AbstractCMDiscoveryTest {
     Set<ServiceModel> models = ServiceModelFactory.generateServiceModels(null, service, createApiServiceConfigMock(Collections.emptyMap()), roleConfigList, null);
 
     assertTrue("No roles should produce no model", models.isEmpty());
+  }
+
+  @Test
+  public void testAllGeneratorsHandleMonitorReconstructedServiceWithoutNPE() {
+    // Regression guard for PollingConfigurationAnalyzer#getCurrentServiceConfiguration: the monitor derives the
+    // "current" configuration by running the model generators against an ApiService it builds itself (see
+    // PollingConfigurationAnalyzer#findService) rather than a fully-populated discovery object. A generator that
+    // dereferences an ApiService field the monitor leaves unset - e.g. YarnUI/JobHistoryUI read
+    // service.getClusterRef().getClusterName() - would throw an NPE inside generateService() that is not an
+    // ApiException, escaping the analyzer's try/catch and aborting the entire polling cycle for every cluster,
+    // recurring every interval. Run EVERY registered generator against a monitor-shaped ApiService and assert none
+    // throws a NullPointerException.
+
+    // The only nested call any generator makes during generateService() is readServiceConfig (YarnUI/JobHistoryUI,
+    // for the HDFS SSL lookup); hand back an empty ApiServiceConfig so it resolves without contacting CM.
+    final DiscoveryApiClient client = new StubDiscoveryApiClient(createApiServiceConfigMock(Collections.emptyMap()));
+
+    // A non-null hdfs_service gives those generators a real service name for the nested readServiceConfig call.
+    final Map<String, String> serviceProps = new HashMap<>();
+    serviceProps.put("hdfs_service", "hdfs");
+    final ApiServiceConfig serviceConfig = createApiServiceConfigMock(serviceProps);
+
+    final List<String> generatorsThatThrewNPE = new ArrayList<>();
+    for (ServiceModelGenerator generator : ServiceLoader.load(ServiceModelGenerator.class)) {
+      // Shaped exactly as PollingConfigurationAnalyzer#findService's fallback builds it: name + type + a populated
+      // clusterRef, with every other ApiService field (displayName, serviceUrl, ...) left null.
+      final ApiService service = new ApiService()
+          .name(generator.getServiceType() + "-1")
+          .type(generator.getServiceType())
+          .clusterRef(new ApiClusterRef().clusterName("Cluster 1"));
+
+      // A role of the type this generator handles, so its handles() returns true and generateService() is exercised.
+      final ApiRoleConfigList roleConfigList = roleConfigList(generator.getRoleType(), Collections.emptyMap());
+
+      try {
+        ServiceModelFactory.generateServiceModels(client, service, serviceConfig, roleConfigList, null);
+      } catch (NullPointerException npe) {
+        generatorsThatThrewNPE.add(generator.getClass().getSimpleName());
+      } catch (Exception tolerated) {
+        // Config-/API-driven exceptions (an unhandled config shape, the stub's canned response, etc.) are unrelated
+        // to the null-field defect this guard targets; only a NullPointerException is a failure here.
+      }
+    }
+
+    assertTrue("Generators threw NullPointerException on a monitor-reconstructed ApiService (missing clusterRef and "
+        + "other fields discovery would populate): " + generatorsThatThrewNPE, generatorsThatThrewNPE.isEmpty());
+  }
+
+  /**
+   * A {@link DiscoveryApiClient} whose {@link #execute} never touches the network: it returns a canned
+   * ApiServiceConfig for the nested readServiceConfig calls the YarnUI/JobHistoryUI generators make while building
+   * their models. Constructed with harmless nice-mock configuration so the real client setup (base path, etc.)
+   * succeeds without a live Cloudera Manager.
+   */
+  private static final class StubDiscoveryApiClient extends DiscoveryApiClient {
+    private final ApiServiceConfig cannedServiceConfig;
+
+    StubDiscoveryApiClient(final ApiServiceConfig cannedServiceConfig) {
+      super(stubGatewayConfig(), stubDiscoveryConfig(), stubAliasService(), null);
+      this.cannedServiceConfig = cannedServiceConfig;
+    }
+
+    private static GatewayConfig stubGatewayConfig() {
+      final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.replay(gatewayConfig);
+      return gatewayConfig;
+    }
+
+    private static AliasService stubAliasService() {
+      final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+      EasyMock.replay(aliasService);
+      return aliasService;
+    }
+
+    private static ServiceDiscoveryConfig stubDiscoveryConfig() {
+      final ServiceDiscoveryConfig config = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+      EasyMock.expect(config.getAddress()).andReturn("http://localhost:1234").anyTimes();
+      EasyMock.expect(config.getUser()).andReturn("itsme").anyTimes();
+      EasyMock.expect(config.getPasswordAlias()).andReturn(null).anyTimes();
+      EasyMock.expect(config.getCluster()).andReturn("Cluster 1").anyTimes();
+      EasyMock.replay(config);
+      return config;
+    }
+
+    @Override
+    boolean isKerberos() {
+      return false;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> ApiResponse<T> execute(Call call, Type returnType) {
+      return (ApiResponse<T>) new StubApiResponse<>(cannedServiceConfig);
+    }
+  }
+
+  private static final class StubApiResponse<T> extends ApiResponse<T> {
+    private final T data;
+
+    StubApiResponse(final T data) {
+      super(200, Collections.emptyMap());
+      this.data = data;
+    }
+
+    @Override
+    public T getData() {
+      return data;
+    }
   }
 
   private ApiRoleConfigList roleConfigList(final String roleType, final Map<String, String> roleProps) {
