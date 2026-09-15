@@ -16,121 +16,80 @@
  */
 package org.apache.knox.gateway.services.factory;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.apache.knox.gateway.database.DatabaseType;
-import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceType;
-import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.EmptyTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.H2DBTrustedOidcIssuerService;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.JdbcTrustedOidcIssuerService;
-import org.apache.knox.gateway.services.topology.TopologyService;
-import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.services.security.AliasService;
 import org.easymock.EasyMock;
-import org.junit.After;
 import org.junit.Test;
 
-public class TrustedOidcIssuerServiceFactoryTest {
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+
+public class TrustedOidcIssuerServiceFactoryTest extends ServiceFactoryTest {
 
   private final TrustedOidcIssuerServiceFactory serviceFactory = new TrustedOidcIssuerServiceFactory();
-  private final Map<String, String> options = new HashMap<>();
-  private File tempDir;
-  private Service createdService;
 
-  @After
-  public void tearDown() throws Exception {
-    if (createdService != null) {
-      createdService.stop();
+  @Test
+  public void testBasics() throws Exception {
+    initConfig();
+    super.testBasics(serviceFactory, ServiceType.MASTER_SERVICE, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE);
+  }
+
+  @Test
+  public void shouldReturnH2DBServiceByDefault() throws Exception {
+    // Embedded H2 is the zero-config OOTB default that replaced the retired Derby backend (KNOX-3401).
+    Service service = null;
+    try {
+      initConfig(true, DatabaseType.H2);
+      service = serviceFactory.create(gatewayServices, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, gatewayConfig, options, "");
+      assertTrue(service instanceof H2DBTrustedOidcIssuerService);
+    } finally {
+      if (service != null) {
+        service.stop();
+      }
     }
-    if (tempDir != null) {
-      FileUtils.forceDelete(tempDir);
+  }
+
+  @Test
+  public void shouldReturnJdbcServiceWhenExplicitlyConfigured() throws Exception {
+    // When the operator explicitly names the JDBC implementation, the factory must honor it and
+    // return a plain JdbcTrustedOidcIssuerService rather than the embedded-H2 default. The backing
+    // DataSource is an in-memory H2 here purely as test plumbing; selecting the real external
+    // backend (postgresql/mysql/oracle) from gateway.database.type is covered by DataSourceProviderTest.
+    final String memDb = "trustedoidc_factory_jdbc_test";
+    Service service = null;
+    final Connection keepAlive = DriverManager.getConnection("jdbc:h2:mem:" + memDb + ";DB_CLOSE_DELAY=-1");
+    try {
+      final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+      EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(null).anyTimes();
+      EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(null).anyTimes();
+      EasyMock.replay(aliasService);
+      EasyMock.expect(gatewayServices.getService(ServiceType.ALIAS_SERVICE)).andReturn(aliasService).anyTimes();
+      EasyMock.replay(gatewayServices);
+      EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+      EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("mem:" + memDb + ";DB_CLOSE_DELAY=-1").anyTimes();
+      EasyMock.replay(gatewayConfig);
+
+      service = serviceFactory.create(gatewayServices, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, gatewayConfig, options,
+          JdbcTrustedOidcIssuerService.class.getName());
+      assertTrue(service instanceof JdbcTrustedOidcIssuerService);
+      assertFalse("Explicit JDBC impl must not fall back to the embedded-H2 default", service instanceof H2DBTrustedOidcIssuerService);
+    } finally {
+      if (service != null) {
+        service.stop();
+      }
+      try (Statement stmt = keepAlive.createStatement()) {
+        stmt.execute("DROP ALL OBJECTS");
+      }
+      keepAlive.close();
     }
-  }
-
-  // ------------------------------------------------------------------
-  // Auto-implementation selection
-  // ------------------------------------------------------------------
-
-  @Test
-  public void shouldChooseH2WhenNoDatabaseConfigured() {
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.expect(config.getDatabaseType()).andReturn("none").anyTimes();
-    EasyMock.replay(config);
-    assertEquals(H2DBTrustedOidcIssuerService.class.getName(), serviceFactory.chooseAutoImplementation(config));
-  }
-
-  @Test
-  public void shouldChooseJdbcWhenExternalDatabaseConfigured() {
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.expect(config.getDatabaseType()).andReturn(DatabaseType.POSTGRESQL.type()).anyTimes();
-    EasyMock.replay(config);
-    assertEquals(JdbcTrustedOidcIssuerService.class.getName(), serviceFactory.chooseAutoImplementation(config));
-  }
-
-  // ------------------------------------------------------------------
-  // Empty (no KNOXIDF) cases
-  // ------------------------------------------------------------------
-
-  /** Zero topologies → KnoxIDF not deployed → Empty. */
-  @Test
-  public void shouldSelectEmptyWhenNoTopologies() throws Exception {
-    final GatewayServices gws = servicesWithTopology(/* no topologies */);
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.replay(config);
-    createdService = serviceFactory.create(gws, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, config, options, "");
-    assertTrue(createdService instanceof EmptyTrustedOidcIssuerService);
-  }
-
-  /** Topologies exist but none contain KNOXIDF or KNOXIDF_ADMIN → Empty. */
-  @Test
-  public void shouldSelectEmptyWhenNoKnoxIdfRole() throws Exception {
-    final GatewayServices gws = servicesWithTopology(topologyWithRole("KNOXSSO"));
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.replay(config);
-    createdService = serviceFactory.create(gws, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, config, options, "");
-    assertTrue(createdService instanceof EmptyTrustedOidcIssuerService);
-  }
-
-  /** An explicit Empty implementation is honored even when KnoxIDF is deployed. */
-  @Test
-  public void shouldHonorExplicitEmptyImplEvenWhenKnoxIdfIsDeployed() throws Exception {
-    final GatewayServices gws = servicesWithTopology(topologyWithRole("KNOXIDF"));
-    final GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
-    EasyMock.replay(config);
-    createdService = serviceFactory.create(gws, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, config, options,
-        EmptyTrustedOidcIssuerService.class.getName());
-    assertTrue(createdService instanceof EmptyTrustedOidcIssuerService);
-  }
-
-  // ------------------------------------------------------------------
-  // Helpers
-  // ------------------------------------------------------------------
-
-  private Topology topologyWithRole(String role) {
-    final Topology topology = new Topology();
-    topology.setName("topology-" + role);
-    final org.apache.knox.gateway.topology.Service service = new org.apache.knox.gateway.topology.Service();
-    service.setRole(role);
-    topology.addService(service);
-    return topology;
-  }
-
-  private GatewayServices servicesWithTopology(Topology... topologies) {
-    final TopologyService topologyService = EasyMock.createNiceMock(TopologyService.class);
-    EasyMock.expect(topologyService.getTopologies()).andReturn(Arrays.asList(topologies)).anyTimes();
-    EasyMock.replay(topologyService);
-    final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(topologyService).anyTimes();
-    EasyMock.replay(gws);
-    return gws;
   }
 }

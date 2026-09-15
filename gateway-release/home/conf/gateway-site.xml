@@ -203,5 +203,4 @@ limitations under the License.
         <value>LIVYSERVER</value>
         <description>Add service name to x-forward-context header for the list of services defined above.</description>
     </property>
-
 </configuration>

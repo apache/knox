@@ -27,6 +27,7 @@ public class PassAllHeadersDispatch extends ConfigurableDispatch {
 
   static {
       REQUEST_EXCLUDE_HEADERS.add("Content-Length");
+      REQUEST_EXCLUDE_HEADERS.add("Transfer-Encoding");
   }
 
   @Override

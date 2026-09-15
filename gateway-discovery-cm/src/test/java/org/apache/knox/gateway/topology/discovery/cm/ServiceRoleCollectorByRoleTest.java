@@ -192,7 +192,8 @@ public class ServiceRoleCollectorByRoleTest {
         EasyMock.expect(api.readRoleConfig(eq(clusterName), eq(hiveServer2Role().getName()), eq(serviceName), eq(DATA_VIEW_FULL))).andReturn(hiveServer2ConfigList);
         EasyMock.replay(api);
         Set<String> excludedRoleTypes = Collections.singleton("GATEWAY");
-        TypeNameFilter roleTypeFilter = new TypeNameFilter(excludedRoleTypes);
+        Set<String> requiredRoleTypes = Collections.singleton("HIVESERVER2");
+        TypeNameFilter roleTypeFilter = new TypeNameFilter(excludedRoleTypes, requiredRoleTypes);
         ServiceRoleCollector collector = createRoleCollectorWithFilter(api, roleTypeFilter);
 
         ApiRoleConfigList roleConfigList = collector.getAllServiceRoleConfigurations(clusterName, serviceName);
@@ -202,6 +203,30 @@ public class ServiceRoleCollectorByRoleTest {
         expectedItems.add(toApiRoleConfig(hiveServer2Role(), hiveServer2ConfigList()));
         assertEquals("Unexpected role config list size.", expectedItems.size(), items.size());
         assertThat("Config items should match", items, containsInAnyOrder(expectedItems.toArray()));
+        EasyMock.verify(api);
+    }
+
+    @Test
+    public void testRequiredRoleTypeFilterDropsUnneededRoleWithoutReadingItsConfig() throws ApiException {
+        RolesResourceApi api = EasyMock.createNiceMock(RolesResourceApi.class);
+        ApiRoleList serviceRoleList = new ApiRoleList().items(Arrays.asList(hiveServer2Role(), gatewayRole1()));
+        ApiConfigList hiveServer2ConfigList = hiveServer2ConfigList();
+        EasyMock.expect(api.readRoles(eq(clusterName), eq(serviceName), anyString(), eq(DATA_VIEW_FULL))).andReturn(serviceRoleList);
+        // Only the required (HIVESERVER2) role config should be read; GATEWAY must be skipped before readRoleConfig.
+        EasyMock.expect(api.readRoleConfig(eq(clusterName), eq(hiveServer2Role().getName()), eq(serviceName), eq(DATA_VIEW_FULL))).andReturn(hiveServer2ConfigList);
+        EasyMock.replay(api);
+        Set<String> requiredRoleTypes = Collections.singleton("HIVESERVER2");
+        TypeNameFilter roleTypeFilter = new TypeNameFilter(Collections.emptySet(), requiredRoleTypes);
+        ServiceRoleCollector collector = createRoleCollectorWithFilter(api, roleTypeFilter);
+
+        ApiRoleConfigList roleConfigList = collector.getAllServiceRoleConfigurations(clusterName, serviceName);
+
+        List<ApiRoleConfig> items = roleConfigList.getItems();
+        List<ApiRoleConfig> expectedItems = new ArrayList<>();
+        expectedItems.add(toApiRoleConfig(hiveServer2Role(), hiveServer2ConfigList()));
+        assertEquals("Unexpected role config list size.", expectedItems.size(), items.size());
+        assertThat("Config items should match", items, containsInAnyOrder(expectedItems.toArray()));
+        // verify() confirms readRoleConfig was never called for the GATEWAY role.
         EasyMock.verify(api);
     }
 

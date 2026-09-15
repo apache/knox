@@ -17,21 +17,30 @@
 package org.apache.knox.gateway.topology.discovery.cm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 public class ServiceModelGeneratorsHolder {
 
   private static final ServiceModelGeneratorsHolder INSTANCE = new ServiceModelGeneratorsHolder();
   private final Map<String, List<ServiceModelGenerator>> serviceModelGenerators = new HashMap<>();
+  private final Set<String> allRoleTypes = new HashSet<>();
 
   private ServiceModelGeneratorsHolder() {
     final ServiceLoader<ServiceModelGenerator> loader = ServiceLoader.load(ServiceModelGenerator.class);
     for (ServiceModelGenerator serviceModelGenerator : loader) {
       List<ServiceModelGenerator> smgList = serviceModelGenerators.computeIfAbsent(serviceModelGenerator.getServiceType(), k -> new ArrayList<>());
       smgList.add(serviceModelGenerator);
+
+      final String roleType = serviceModelGenerator.getRoleType();
+      if (roleType != null) {
+        allRoleTypes.add(roleType);
+      }
     }
   }
 
@@ -41,6 +50,16 @@ public class ServiceModelGeneratorsHolder {
 
   public List<ServiceModelGenerator> getServiceModelGenerators(String serviceType) {
     return serviceModelGenerators.get(serviceType);
+  }
+
+  /**
+   * @return the union of the CM role types that any registered
+   *         {@link ServiceModelGenerator} operates on. Role types outside of this
+   *         set can never produce a service model and therefore do not need to be
+   *         fetched or cached during CM service discovery.
+   */
+  public Set<String> getAllRoleTypes() {
+    return Collections.unmodifiableSet(allRoleTypes);
   }
 
 }
