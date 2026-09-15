@@ -43,7 +43,6 @@ public class JWTFederationFilterDelegationConfigTest {
     assertFalse(filter.isDelegationRequestedSubjectEnabled());
     assertFalse(filter.isDelegationEnforceRequestedAudienceRequired());
     assertFalse(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertFalse(filter.isDelegationRequestedScopeEnabled());
   }
 
   @Test
@@ -57,7 +56,6 @@ public class JWTFederationFilterDelegationConfigTest {
     assertFalse(filter.isDelegationRequestedSubjectEnabled());
     assertFalse(filter.isDelegationEnforceRequestedAudienceRequired());
     assertFalse(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertFalse(filter.isDelegationRequestedScopeEnabled());
   }
 
   @Test
@@ -71,7 +69,6 @@ public class JWTFederationFilterDelegationConfigTest {
     assertTrue(filter.isDelegationRequestedSubjectEnabled());
     assertFalse(filter.isDelegationEnforceRequestedAudienceRequired());
     assertFalse(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertFalse(filter.isDelegationRequestedScopeEnabled());
   }
 
   @Test
@@ -85,7 +82,6 @@ public class JWTFederationFilterDelegationConfigTest {
     assertFalse(filter.isDelegationRequestedSubjectEnabled());
     assertTrue(filter.isDelegationEnforceRequestedAudienceRequired());
     assertFalse(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertFalse(filter.isDelegationRequestedScopeEnabled());
   }
 
   @Test
@@ -99,21 +95,6 @@ public class JWTFederationFilterDelegationConfigTest {
     assertFalse(filter.isDelegationRequestedSubjectEnabled());
     assertFalse(filter.isDelegationEnforceRequestedAudienceRequired());
     assertTrue(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertFalse(filter.isDelegationRequestedScopeEnabled());
-  }
-
-  @Test
-  public void testDelegationRequestedScopeEnabledIsIndependentlyConfigurable() throws ServletException {
-    final Properties props = new Properties();
-    props.setProperty(JWTFederationFilter.DELEGATION_REQUESTED_SCOPE_ENABLED, "true");
-    final JWTFederationFilter filter = new JWTFederationFilter();
-    filter.init(new TestFilterConfig(props));
-
-    assertFalse(filter.isDelegationServerEnabled());
-    assertFalse(filter.isDelegationRequestedSubjectEnabled());
-    assertFalse(filter.isDelegationEnforceRequestedAudienceRequired());
-    assertFalse(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertTrue(filter.isDelegationRequestedScopeEnabled());
   }
 
   @Test
@@ -123,7 +104,6 @@ public class JWTFederationFilterDelegationConfigTest {
     props.setProperty(JWTFederationFilter.DELEGATION_REQUESTED_SUBJECT_ENABLED, "true");
     props.setProperty(JWTFederationFilter.DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED, "true");
     props.setProperty(JWTFederationFilter.DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE, "true");
-    props.setProperty(JWTFederationFilter.DELEGATION_REQUESTED_SCOPE_ENABLED, "true");
     final JWTFederationFilter filter = new JWTFederationFilter();
     filter.init(new TestFilterConfig(props));
 
@@ -131,7 +111,6 @@ public class JWTFederationFilterDelegationConfigTest {
     assertTrue(filter.isDelegationRequestedSubjectEnabled());
     assertTrue(filter.isDelegationEnforceRequestedAudienceRequired());
     assertTrue(filter.isDelegationEnforceRequestedAudienceMaxOne());
-    assertTrue(filter.isDelegationRequestedScopeEnabled());
   }
 
   @Test
