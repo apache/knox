@@ -21,6 +21,7 @@ import com.cloudera.api.swagger.RolesResourceApi;
 import com.cloudera.api.swagger.ServicesResourceApi;
 import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
+import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
@@ -751,8 +752,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
 
-      final ApiService apiService = new ApiService().name(service).type(serviceType);
-      final ApiServiceConfig coreSettingsConfig = getCoreSettingsConfig(api, clusterName);
+      // Fetch the cluster's service list once (the "summary" view carries clusterRef/displayName), and reuse it both
+      // to obtain the real ApiService for the started service and to locate CORE_SETTINGS. Feeding generators the real
+      // ApiService - rather than a name/type-only stub - keeps the monitor's inputs field-identical to discovery, so
+      // generators that dereference service.getClusterRef().getClusterName() (YarnUI/JobHistoryUI) do not NPE.
+      final ApiServiceList serviceList = api.readServices(clusterName, "summary");
+      final ApiService apiService = findService(serviceList, service, serviceType, clusterName);
+      final ApiServiceConfig coreSettingsConfig = getCoreSettingsConfig(api, clusterName, serviceList);
       final Set<ServiceModel> serviceModels =
               ServiceModelFactory.generateServiceModels(apiClient, apiService, svcConfig, roleConfigList, coreSettingsConfig);
       currentConfig = ServiceConfigurationModel.fromServiceModels(serviceModels).get(serviceType);
@@ -763,11 +769,39 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   /**
+   * Find the real {@link ApiService} for the started service in the cluster's service list, so the model generators
+   * receive the same fully-populated object discovery would hand them (notably {@code clusterRef} and
+   * {@code displayName}, which some generators dereference). Falls back to a minimally-populated service that still
+   * has {@code clusterRef} set, so generators reading {@code service.getClusterRef().getClusterName()} never NPE even
+   * when the service is (unexpectedly) absent from the list.
+   *
+   * @param serviceList the cluster's service list (summary view), possibly null
+   * @param service     the name of the started service
+   * @param serviceType the type of the started service
+   * @param clusterName the name of the cluster
+   * @return the real ApiService if present in the list; otherwise a synthetic ApiService with clusterRef populated
+   */
+  private ApiService findService(final ApiServiceList serviceList, final String service, final String serviceType,
+                                 final String clusterName) {
+    if (serviceList != null && serviceList.getItems() != null) {
+      for (ApiService candidate : serviceList.getItems()) {
+        if (service.equals(candidate.getName())) {
+          return candidate;
+        }
+      }
+    }
+    return new ApiService().name(service).type(serviceType)
+            .clusterRef(new ApiClusterRef().clusterName(clusterName));
+  }
+
+  /**
    * Look up the CORE_SETTINGS service configuration for the cluster, needed to run generators faithfully (some HDFS
    * models read settings from CORE_SETTINGS). Returns {@code null} if the cluster has no CORE_SETTINGS service.
+   *
+   * @param serviceList the cluster's service list (summary view), already fetched by the caller
    */
-  private ApiServiceConfig getCoreSettingsConfig(final ServicesResourceApi api, final String clusterName) throws ApiException {
-    final ApiServiceList serviceList = api.readServices(clusterName, "summary");
+  private ApiServiceConfig getCoreSettingsConfig(final ServicesResourceApi api, final String clusterName,
+                                                 final ApiServiceList serviceList) throws ApiException {
     if (serviceList != null && serviceList.getItems() != null) {
       for (ApiService service : serviceList.getItems()) {
         if (ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE.equals(service.getType())) {
