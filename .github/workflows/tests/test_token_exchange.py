@@ -27,18 +27,32 @@ Because a Knox-issued token verifies against the gateway's own public key, no
 trusted-issuer registration is needed (unlike the external-issuer k8s flow in
 test_k8s_delegation.py).
 
-Two topologies are exercised, both fronting the KNOXIDF token endpoint:
-  - knoxidf-token             -- delegation disabled (the default); used for the
-                                 same-subject happy path and to prove a delegation
-                                 exchange is rejected outright.
-  - knoxidf-token-delegation  -- delegation.server.enabled=true plus both
-                                 requested-audience enforcement flags; used for the
-                                 missing/multiple-audience rejections and to prove a
-                                 same-subject exchange still succeeds there.
+The topologies exercised, all fronting the KNOXIDF token endpoint:
+  - knoxidf-ldap                    -- mint endpoint; issues subject tokens with no
+                                       aud claim (per-user limit -1, uncapped).
+  - knoxidf-ldap-aud                -- mint endpoint that stamps a fixed aud claim
+                                       (https://recipient1, https://recipient2) via
+                                       the default 'static' audience validator.
+  - knoxidf-token                   -- delegation disabled (the default); used for the
+                                       same-subject happy path and to prove a delegation
+                                       exchange is rejected outright.
+  - knoxidf-token-delegation        -- delegation.server.enabled=true plus both
+                                       requested-audience enforcement flags; used for the
+                                       missing/multiple-audience rejections and to prove a
+                                       same-subject exchange still succeeds there.
+  - knoxidf-token-same-subject-aud  -- delegation.same.subject.requested.audience.enabled
+                                       =true with a 'passthrough' audience validator
+                                       (KNOX-3461); authorizes a requested audience on a
+                                       same-subject exchange against the subject token's
+                                       own aud claim.
+  - knoxidf-token-passthrough       -- fail-safe control: same passthrough validator but
+                                       the flag left off (default), so a requested audience
+                                       is dropped rather than minted.
 
-Covered acceptance criteria (KNOX-3455, "Bucket 1" -- the subset backed by product
-code on master; the requested-audience-vs-subject-aud cases wait on KNOX-3461 and the
-requested-scope cases wait on scope support landing):
+Covered acceptance criteria (parent KNOX-3455, split across sub-tasks that all land on
+master):
+
+KNOX-3465 -- backed by product code already on master:
   - same-subject exchange returns the expected sub / iss / issued_token_type;
   - a same-subject exchange whose subject token carries no act claim succeeds and the
     minted token likewise carries no act claim (the act-present permutation is covered
@@ -48,6 +62,19 @@ requested-scope cases wait on scope support landing):
   - a delegation exchange against a delegation-disabled topology is rejected with
     "Delegation is not enabled for this topology";
   - a same-subject exchange against a delegation-enabled topology still succeeds.
+
+KNOX-3466 -- same-subject requested-audience authorization, backed by the KNOX-3461
+gateway code. These fail until KNOX-3461 is in the image:
+  - flag on + requested audience carried by the subject token's aud -> succeeds and the
+    exchanged token carries that audience;
+  - flag on + requested audience NOT in the subject token's aud -> invalid_target;
+  - flag on + subject token has no aud at all -> invalid_target;
+  - flag off (the fail-safe default) + passthrough validator -> the requested audience is
+    dropped, not minted, even though the validator would otherwise pass it through;
+  - the flag is orthogonal to delegation: an actor_token exchange against the flag-on
+    topology (which does not enable delegation) is still rejected outright.
+
+KNOX-3467 -- requested-scope cases; deferred until scope support lands.
 """
 
 import unittest
@@ -66,6 +93,14 @@ ISSUED_TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
 GUEST_USER = "guest"
 GUEST_PASSWORD = "guest-password"
 
+# Fixed audiences stamped onto tokens minted by the knoxidf-ldap-aud topology
+# (knoxidf.knox.token.audiences). The same-subject requested-audience tests request one of
+# these (authorized against the subject token's aud) or UNAUTHORIZED_AUDIENCE (which the
+# subject token does not carry, so it must be rejected).
+SUBJECT_AUDIENCE = "https://recipient1"
+OTHER_SUBJECT_AUDIENCE = "https://recipient2"
+UNAUTHORIZED_AUDIENCE = "https://recipient3"
+
 
 class TestTokenExchange(unittest.TestCase):
     """RFC 8693 same-subject and delegation-gating behavior through Knox."""
@@ -78,10 +113,21 @@ class TestTokenExchange(unittest.TestCase):
         # token limit of -1, so repeated minting across tests is not capped (the server-managed
         # KNOXTOKEN service on knoxldap enforces a gateway-wide per-user limit shared by all tests).
         self.mint_url = base_url + "gateway/knoxidf-ldap/knoxidf/api/v1/token"
+        # Same mint path but on a topology that stamps a fixed aud claim (SUBJECT_AUDIENCE,
+        # OTHER_SUBJECT_AUDIENCE) onto every token, for the same-subject requested-audience tests.
+        self.aud_mint_url = base_url + "gateway/knoxidf-ldap-aud/knoxidf/api/v1/token"
         # Token-exchange endpoints: delegation disabled vs. delegation enabled.
         self.exchange_url = base_url + "gateway/knoxidf-token/knoxidf/api/v1/token"
         self.delegation_exchange_url = (
             base_url + "gateway/knoxidf-token-delegation/knoxidf/api/v1/token"
+        )
+        # KNOX-3461 same-subject requested-audience exchange endpoints (both passthrough
+        # validator): the flag is on for the first, off (fail-safe default) for the second.
+        self.same_subject_aud_exchange_url = (
+            base_url + "gateway/knoxidf-token-same-subject-aud/knoxidf/api/v1/token"
+        )
+        self.passthrough_exchange_url = (
+            base_url + "gateway/knoxidf-token-passthrough/knoxidf/api/v1/token"
         )
         self.guest_auth = HTTPBasicAuth(GUEST_USER, GUEST_PASSWORD)
 
@@ -96,6 +142,26 @@ class TestTokenExchange(unittest.TestCase):
         access_token = response.json().get("access_token")
         self.assertTrue(access_token, "KNOXTOKEN did not return an access_token")
         return access_token
+
+    def _mint_subject_token_with_aud(self):
+        """Mint a guest JWT that carries the fixed aud claim from knoxidf-ldap-aud."""
+        response = knox_get(self.aud_mint_url, auth=self.guest_auth)
+        self.assertEqual(
+            response.status_code,
+            200,
+            msg=f"aud subject-token minting failed: {response.status_code} {response.text}",
+        )
+        access_token = response.json().get("access_token")
+        self.assertTrue(access_token, "KNOXTOKEN did not return an access_token")
+        return access_token
+
+    @staticmethod
+    def _aud_values(token):
+        """Return a token's aud claim as a list (JWT aud may serialize as a string or a list)."""
+        aud = get_token_claim(token, "aud")
+        if aud is None:
+            return []
+        return aud if isinstance(aud, list) else [aud]
 
     def _exchange(self, url, subject_token, resources=None, actor_token=None):
         """POST an RFC 8693 token exchange, returning the raw response.
@@ -209,6 +275,83 @@ class TestTokenExchange(unittest.TestCase):
         self.assertTrue(body.get("access_token"), "exchange did not return an access_token")
         self.assertEqual(body.get("issued_token_type"), ISSUED_TOKEN_TYPE_JWT, response.text)
         self.assertEqual(get_token_claim(body["access_token"], "sub"), GUEST_USER)
+
+    # ---- KNOX-3466: same-subject requested-audience authorization (KNOX-3461 code) ----
+    # These exercise delegation.same.subject.requested.audience.enabled and therefore fail
+    # until the KNOX-3461 gateway code is present in the image.
+
+    def test_same_subject_requested_audience_authorized_succeeds(self):
+        """Flag on: a requested audience the subject token already carries is honored and minted."""
+        subject_token = self._mint_subject_token_with_aud()
+        # Precondition: the subject token actually carries the audience we will request.
+        self.assertIn(SUBJECT_AUDIENCE, self._aud_values(subject_token),
+                      "precondition: subject token must carry the requested audience in its aud")
+
+        response = self._exchange(
+            self.same_subject_aud_exchange_url, subject_token, resources=[SUBJECT_AUDIENCE],
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        exchanged = response.json().get("access_token")
+        self.assertTrue(exchanged, "exchange did not return an access_token")
+        self.assertEqual(get_token_claim(exchanged, "sub"), GUEST_USER)
+        # The authorized audience is passed through onto the exchanged token.
+        self.assertIn(SUBJECT_AUDIENCE, self._aud_values(exchanged),
+                      "authorized requested audience must appear on the exchanged token")
+
+    def test_same_subject_requested_audience_unauthorized_rejected(self):
+        """Flag on: a requested audience the subject token does not carry is rejected."""
+        subject_token = self._mint_subject_token_with_aud()
+        self.assertNotIn(UNAUTHORIZED_AUDIENCE, self._aud_values(subject_token),
+                         "precondition: subject token must NOT carry the unauthorized audience")
+
+        response = self._exchange(
+            self.same_subject_aud_exchange_url, subject_token, resources=[UNAUTHORIZED_AUDIENCE],
+        )
+        self._assert_oauth_error(response, 400, "invalid_target",
+                                 "The requested audience is not authorized for this subject")
+
+    def test_same_subject_requested_audience_rejected_when_subject_has_no_aud(self):
+        """Flag on: requesting any audience when the subject token has no aud at all is rejected."""
+        subject_token = self._mint_subject_token()
+        self.assertEqual(self._aud_values(subject_token), [],
+                         "precondition: subject token must carry no aud claim")
+
+        response = self._exchange(
+            self.same_subject_aud_exchange_url, subject_token, resources=[SUBJECT_AUDIENCE],
+        )
+        self._assert_oauth_error(response, 400, "invalid_target",
+                                 "The requested audience is not authorized for this subject")
+
+    def test_same_subject_requested_audience_dropped_when_disabled(self):
+        """Fail-safe default: with the flag off, a passthrough validator still drops the audience.
+
+        The exchange succeeds but the requested audience is NOT minted onto the exchanged token --
+        a passthrough validator alone cannot mint an arbitrarily-audienced token.
+        """
+        subject_token = self._mint_subject_token_with_aud()
+        response = self._exchange(
+            self.passthrough_exchange_url, subject_token, resources=[SUBJECT_AUDIENCE],
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        exchanged = response.json().get("access_token")
+        self.assertTrue(exchanged, "exchange did not return an access_token")
+        self.assertNotIn(SUBJECT_AUDIENCE, self._aud_values(exchanged),
+                         "with the flag off the requested audience must be dropped, not minted")
+
+    def test_delegation_exchange_rejected_on_same_subject_audience_topology(self):
+        """The same-subject flag is orthogonal to delegation: actor_token exchange still rejected.
+
+        knoxidf-token-same-subject-aud enables the requested-audience flag but NOT
+        delegation.server.enabled, so a delegation (actor_token) exchange must still be refused.
+        """
+        subject_token = self._mint_subject_token_with_aud()
+        actor_token = self._mint_subject_token_with_aud()
+        response = self._exchange(
+            self.same_subject_aud_exchange_url, subject_token, resources=[SUBJECT_AUDIENCE],
+            actor_token=actor_token,
+        )
+        self._assert_oauth_error(response, 400, "invalid_request",
+                                 "Delegation is not enabled for this topology")
 
 
 if __name__ == "__main__":
