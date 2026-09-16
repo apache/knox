@@ -666,6 +666,57 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   /**
+   * An update to gateway.cloudera.manager.service.discovery.excluded.role.types on a running gateway must be honored on
+   * the next evaluation, without restarting the monitor - i.e. the config is read fresh per call rather than cached.
+   * <p>
+   * Simulated by a gatewayConfig whose excluded-role-types flips between reads: the first {@code isExcludedRoleType}
+   * evaluation sees the role type excluded, the next sees it no longer excluded. Two scale events for the same
+   * generator-backed, referenced role type are fired in order; with read-fresh config the first is filtered out and
+   * the second becomes relevant and notifies. A cached filter (the previous behavior) would apply the first, excluded
+   * value to both events, and nothing would ever notify.
+   */
+  @Test
+  public void testExcludedRoleTypesConfigUpdateHonoredWithoutRestart() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster RU";
+
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
+    EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes())
+            .andReturn(Collections.singleton(NameNodeServiceModelGenerator.ROLE_TYPE)) // first read: role type excluded
+            .andReturn(Collections.emptySet()).anyTimes();                              // subsequent reads: no longer excluded
+    EasyMock.replay(gatewayConfig);
+
+    final ChangeListener listener = new ChangeListener();
+    final TestablePollingConfigAnalyzer pca =
+            buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(), listener, true, gatewayConfig);
+    pca.setInterval(5);
+
+    // Two scale events for the same generator-backed, referenced role type, evaluated in insertion order.
+    pca.addRestartEvent(clusterName, createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
+        PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
+    pca.addRestartEvent(clusterName, createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
+        PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
+
+    final ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
+    pollingThreadExecutor.execute(pca);
+    pollingThreadExecutor.shutdown();
+    try {
+      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    pca.stop();
+
+    assertTrue("A live update to excluded.role.types must be honored on the next evaluation (config read fresh, not cached)",
+        listener.wasNotified(address, clusterName));
+  }
+
+  /**
    * A scale event for a role type that no ServiceModelGenerator uses (absent from
    * ServiceModelGeneratorsHolder.getAllRoleTypes()) must not be treated as relevant, even with an empty
    * excluded-role-types config: discovery never collects such a role type's config, so a change to it cannot alter
@@ -1030,7 +1081,12 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(excludedServiceTypes).anyTimes();
     EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes()).andReturn(excludedRoleTypes).anyTimes();
     EasyMock.replay(gatewayConfig);
+    return buildPollingConfigAnalyzer(address, clusterName, serviceConfigurationModels, listener, isKnoxGatewayReady, gatewayConfig);
+  }
 
+  private TestablePollingConfigAnalyzer buildPollingConfigAnalyzer(final String address, final String clusterName,
+      final Map<String, ServiceConfigurationModel> serviceConfigurationModels, ChangeListener listener, boolean isKnoxGatewayReady,
+      final GatewayConfig gatewayConfig) throws AliasServiceException {
     // Mock the service discovery details
     ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
     EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
