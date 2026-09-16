@@ -30,6 +30,7 @@ import org.apache.knox.gateway.security.ActorChainPrincipal;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
+import org.apache.knox.gateway.services.knoxidf.delegation.DelegationGroupLookupUnavailableException;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -254,18 +255,35 @@ public class TokenExchangeHandlerTest {
   }
 
   @Test
-  public void testCanActForGroupsUnsupportedOperationMapsToNotImplemented() throws Exception {
+  public void testCanActForGroupsDenialMapsToBadRequest() throws Exception {
+    // The canActFor.groups check now runs inside policy evaluation and fails closed to a denial
+    // (rather than the former "not implemented" 501): a group-based denial is an ordinary policy
+    // rejection and must surface as HTTP 400, indistinguishable from a user-based denial.
     filter.delegationServerEnabled = true;
-    filter.policyEvaluationException =
-        new UnsupportedOperationException("canActFor.groups evaluation not yet implemented");
+    filter.policyDecision = new PolicyDecision("subject_not_allowed", 0);
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
     handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
 
     assertFalse(filter.continued);
-    assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, filter.errorStatus);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+  }
+
+  @Test
+  public void testGroupLookupUnavailableMapsToServerError() throws Exception {
+    // A group-based policy whose LDAP directory is disabled cannot be evaluated: the exchange must
+    // fail with server_error directing the operator to enable LDAP, not a subject_not_allowed deny.
+    filter.delegationServerEnabled = true;
+    filter.policyEvaluationException = new DelegationGroupLookupUnavailableException("alice");
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, filter.errorStatus);
     assertEquals("server_error", filter.error);
-    assertTrue(filter.errorDescription.contains("canActFor.groups"));
+    assertTrue(filter.errorDescription.contains("LDAP"));
   }
 
   @Test

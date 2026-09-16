@@ -29,6 +29,7 @@ import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipal;
 import org.apache.knox.gateway.security.TokenExchangePrincipalImpl;
+import org.apache.knox.gateway.services.knoxidf.delegation.DelegationGroupLookupUnavailableException;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -263,14 +264,21 @@ class TokenExchangeHandler {
             requestedSubjectDiffersFromSubject ? requestedSubjectValue : subjectToken.getSubject(),
             uniqueRequestedAudiences, Collections.emptySet(), requestedSubjectDiffersFromSubject);
 
+        // Policy evaluation resolves canActFor.users and canActFor.groups (the latter via an LDAP
+        // group lookup on the impersonated subject) and returns a decision; a subject that matches
+        // neither is reported as a denial below, not as an error.
         final PolicyDecision policyDecision;
         try {
           policyDecision = filter.evaluateDelegationPolicy(policyCheckRequest);
-        } catch (UnsupportedOperationException e) {
-          // The canActFor.groups group-membership check is intentionally not implemented yet.
-          // Do not suppress or special-case this away; map it to a distinct HTTP status instead.
-          filter.handleValidationError(request, response, HttpServletResponse.SC_NOT_IMPLEMENTED,
-              "server_error", "canActFor.groups evaluation is not yet implemented");
+        } catch (DelegationGroupLookupUnavailableException e) {
+          // The policy is group-based but its canActFor.groups rule could not be evaluated: LDAP is
+          // either disabled/absent or the group lookup itself failed. This is a server-side
+          // condition, not a policy denial, so surface a server_error directing the operator to LDAP
+          // rather than a misleading rejection. The underlying cause is logged by the policy service.
+          filter.handleValidationError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+              "server_error", "This delegation policy restricts canActFor by group, which requires "
+                  + "the LDAP service to resolve group membership; ensure the LDAP service is enabled "
+                  + "and reachable to evaluate group-based delegation policies");
           return;
         }
         if (policyDecision.getDenyReason() != null) {
