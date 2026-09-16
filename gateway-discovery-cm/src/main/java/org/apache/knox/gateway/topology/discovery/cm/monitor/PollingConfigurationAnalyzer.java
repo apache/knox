@@ -68,6 +68,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -153,6 +154,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
   // Timestamp records of the most recent start event query per discovery address
   private Map<String, Instant> eventQueryTimestamps = new ConcurrentHashMap<>();
 
+  // Cluster-wide model inputs (service list + CORE_SETTINGS config) fetched at most once per cluster per polling
+  // cycle and reused across every service examined in that cycle, keyed by "address::cluster". Cleared at the start of
+  // each cycle so it never serves stale data. Only ever accessed from the single polling thread.
+  private final Map<String, ClusterModelInputs> clusterModelInputsByCluster = new HashMap<>();
+
   // The amount of time before "now" to will check for start events the first time
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
 
@@ -234,6 +240,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private void monitorClusterConfigurationChanges() {
     try {
+      // Start of a fresh polling pass: drop the previous cycle's cached per-cluster model inputs so this cycle sees
+      // the current CM state.
+      clusterModelInputsByCluster.clear();
+
       final List<String> clustersToStopMonitoring = new ArrayList<>();
 
       for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
@@ -759,15 +769,16 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
 
-      // Fetch the cluster's service list once (the "summary" view carries clusterRef/displayName), and reuse it both
-      // to obtain the real ApiService for the started service and to locate CORE_SETTINGS. Feeding generators the real
-      // ApiService - rather than a name/type-only stub - keeps the monitor's inputs field-identical to discovery, so
-      // generators that dereference service.getClusterRef().getClusterName() (YarnUI/JobHistoryUI) do not NPE.
-      final ApiServiceList serviceList = api.readServices(clusterName, "summary");
-      final ApiService apiService = findService(serviceList, service, serviceType, clusterName);
-      final ApiServiceConfig coreSettingsConfig = getCoreSettingsConfig(api, clusterName, serviceList);
-      final Set<ServiceModel> serviceModels =
-              ServiceModelFactory.generateServiceModels(apiClient, apiService, svcConfig, roleConfigList, coreSettingsConfig);
+      // The cluster's service list (the "summary" view carries clusterRef/displayName) and CORE_SETTINGS config are
+      // cluster-wide and identical for every service examined this cycle, so they are fetched at most once per cluster
+      // per cycle and reused here. The service list yields the real ApiService for the started service; feeding
+      // generators the real ApiService - rather than a name/type-only stub - keeps the monitor's inputs
+      // field-identical to discovery, so generators that dereference service.getClusterRef().getClusterName()
+      // (YarnUI/JobHistoryUI) do not NPE.
+      final ClusterModelInputs clusterModelInputs = getClusterModelInputs(api, address, clusterName);
+      final ApiService apiService = findService(clusterModelInputs.getServiceList(), service, serviceType, clusterName);
+      final Set<ServiceModel> serviceModels = ServiceModelFactory.generateServiceModels(
+              apiClient, apiService, svcConfig, roleConfigList, clusterModelInputs.getCoreSettingsConfig());
       final ServiceConfigurationModel currentConfig =
               ServiceConfigurationModel.fromServiceModels(serviceModels).get(serviceType);
       // A successful CM call that yields no model means the service is genuinely in an invalid/removed configuration
@@ -854,6 +865,49 @@ public class PollingConfigurationAnalyzer implements Runnable {
     }
     return new ApiService().name(service).type(serviceType)
             .clusterRef(new ApiClusterRef().clusterName(clusterName));
+  }
+
+  /**
+   * Get the cluster-wide model inputs (service list + CORE_SETTINGS config) needed to run the generators, fetching
+   * them from ClouderaManager at most once per cluster per polling cycle and caching them for the remainder of the
+   * cycle. Cluster discovery likewise computes CORE_SETTINGS once for the whole cluster; caching here avoids
+   * re-fetching the same cluster-wide inputs for every service examined in a cycle.
+   *
+   * @throws ApiException if the service list cannot be read from ClouderaManager (propagated to the caller, which
+   *                      treats it as "current configuration unknown" rather than "service removed").
+   */
+  private ClusterModelInputs getClusterModelInputs(final ServicesResourceApi api, final String address,
+                                                   final String clusterName) throws ApiException {
+    final String key = address + FQCN_DELIM + clusterName;
+    ClusterModelInputs inputs = clusterModelInputsByCluster.get(key);
+    if (inputs == null) {
+      final ApiServiceList serviceList = api.readServices(clusterName, "summary");
+      inputs = new ClusterModelInputs(serviceList, getCoreSettingsConfig(api, clusterName, serviceList));
+      clusterModelInputsByCluster.put(key, inputs);
+    }
+    return inputs;
+  }
+
+  /**
+   * Cluster-wide inputs shared by every per-service model computation within a single polling cycle: the cluster's
+   * service list (summary view) and its CORE_SETTINGS configuration.
+   */
+  private static final class ClusterModelInputs {
+    private final ApiServiceList serviceList;
+    private final ApiServiceConfig coreSettingsConfig;
+
+    ClusterModelInputs(final ApiServiceList serviceList, final ApiServiceConfig coreSettingsConfig) {
+      this.serviceList = serviceList;
+      this.coreSettingsConfig = coreSettingsConfig;
+    }
+
+    ApiServiceList getServiceList() {
+      return serviceList;
+    }
+
+    ApiServiceConfig getCoreSettingsConfig() {
+      return coreSettingsConfig;
+    }
   }
 
   /**
