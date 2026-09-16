@@ -89,6 +89,7 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
+import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.ImpersonatedPrincipal;
@@ -2785,6 +2786,122 @@ public class TokenServiceResourceTest {
     assertNull("'act' claim should NOT be present when there is no impersonation", actClaim);
 
     EasyMock.verify(request, context);
+  }
+
+  /**
+   * KNOX-3458: A delegation exchange whose resulting actor chain would stay within the (default)
+   * maximum depth is minted normally. With the default bound of 3 an existing 2-actor chain plus the
+   * new actor lands exactly on the limit.
+   */
+  @Test
+  @SuppressForbidden
+  public void testActClaimAtMaxChainDepthAllowed() throws Exception {
+    configureCommonExpectations(createDelegatedAuthContextExpectations(true, true), true);
+    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 2);
+    final JWTToken parsedToken = getTokenWithSubject(subject);
+
+    assertEquals("alice", parsedToken.getSubject());
+    assertEquals("Resulting chain should sit exactly on the default maximum of 3",
+        3, TokenUtils.extractActorChain(parsedToken).size());
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * KNOX-3458: A delegation exchange whose resulting actor chain would exceed the (default) maximum
+   * depth is rejected before minting. With the default bound of 3 an existing 3-actor chain plus the
+   * new actor would be 4.
+   */
+  @Test
+  @SuppressForbidden
+  public void testExchangeRejectedWhenChainDepthExceeded() throws Exception {
+    configureCommonExpectations(createDelegatedAuthContextExpectations(true, true), true);
+    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 3);
+    final Response response = getRawTokenResponse(subject);
+
+    assertEquals(400, response.getStatus());
+    final String entity = response.getEntity().toString();
+    assertTrue("Error body should explain the depth violation, but was: " + entity,
+        entity.contains("would exceed the configured maximum"));
+    // The rejection must conform to the RFC 8693 (§2.2.2 -> RFC 6749 §5.2) error format:
+    // {"error": "invalid_request", "error_description": ...}.
+    assertTrue("Error body should carry the RFC 8693 invalid_request error code, but was: " + entity,
+        entity.contains("invalid_request"));
+    assertTrue("Error body should carry an error_description, but was: " + entity,
+        entity.contains("error_description"));
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * KNOX-3458: The maximum chain depth is configurable via delegation.max.actor.chain.depth. With the
+   * bound set to 3, an existing 3-actor chain plus the new actor (resulting depth 4) is rejected.
+   */
+  @Test
+  @SuppressForbidden
+  public void testConfiguredMaxChainDepthIsEnforced() throws Exception {
+    final Map<String, String> contextExpectations = createDelegatedAuthContextExpectations(true, true);
+    contextExpectations.put(TokenResource.DELEGATION_MAX_ACTOR_CHAIN_DEPTH, "3");
+    configureCommonExpectations(contextExpectations, true);
+
+    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 3);
+    final Response response = getRawTokenResponse(subject);
+
+    assertEquals(400, response.getStatus());
+    assertTrue(response.getEntity().toString().contains("would exceed the configured maximum"));
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * KNOX-3458: A configured value that is not a positive integer is ignored and the default maximum
+   * (3) is enforced instead - proving the fallback is the default bound, not an unlimited chain: an
+   * existing 10-actor chain (resulting depth 11) is still rejected.
+   */
+  @Test
+  @SuppressForbidden
+  public void testInvalidMaxChainDepthFallsBackToDefault() throws Exception {
+    final Map<String, String> contextExpectations = createDelegatedAuthContextExpectations(true, true);
+    contextExpectations.put(TokenResource.DELEGATION_MAX_ACTOR_CHAIN_DEPTH, "not-a-number");
+    configureCommonExpectations(contextExpectations, true);
+
+    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 10);
+    final Response response = getRawTokenResponse(subject);
+
+    assertEquals(400, response.getStatus());
+
+    EasyMock.verify(request, context);
+  }
+
+  /**
+   * Helper: build a Subject carrying an existing actor chain of the given size plus an impersonation,
+   * so that minting adds one more actor on top of that chain.
+   */
+  private Subject createSubjectWithChainAndImpersonation(String primaryUser, String impersonatedUser, int existingChainSize) {
+    final Subject subject = createSubjectWithOptionalImpersonation(primaryUser, impersonatedUser);
+    if (existingChainSize > 0) {
+      final List<Map<String, Object>> chain = new ArrayList<>();
+      for (int i = 0; i < existingChainSize; i++) {
+        final Map<String, Object> actor = new LinkedHashMap<>();
+        actor.put("sub", "prior-actor-" + i);
+        chain.add(actor);
+      }
+      subject.getPrincipals().add(new ActorChainPrincipalImpl(chain));
+    }
+    return subject;
+  }
+
+  /**
+   * Helper: issue a token with the given subject context and return the raw Response without asserting
+   * success, so error (rejection) paths can be inspected.
+   */
+  @SuppressForbidden
+  private Response getRawTokenResponse(Subject subject) throws Exception {
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    return Subject.doAs(subject, (PrivilegedAction<Response>) tr::doGet);
   }
 
   /**

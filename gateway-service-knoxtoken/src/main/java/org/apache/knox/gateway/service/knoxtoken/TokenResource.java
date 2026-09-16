@@ -99,6 +99,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import org.apache.knox.gateway.util.Tokens;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -155,6 +156,8 @@ public class TokenResource {
   private static final String KNOX_TOKEN_HARDCODED_CLAIM_MAPPINGS = TOKEN_PARAM_PREFIX + "hardcoded.claim.mappings";
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
   private static final String TOKEN_ENABLE_DELEGATED_AUTH = TOKEN_PARAM_PREFIX + "enable.delegated.auth";
+  static final String DELEGATION_MAX_ACTOR_CHAIN_DEPTH = "delegation.max.actor.chain.depth";
+  static final int DELEGATION_MAX_ACTOR_CHAIN_DEPTH_DEFAULT = 3;
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -200,6 +203,7 @@ public class TokenResource {
   private boolean includeGroupsInTokenAllowed;
   private String tokenIssuer;
   private boolean enableDelegatedAuth;
+  private int maxActorChainDepth;
 
   enum UserLimitExceededAction {REMOVE_OLDEST, RETURN_ERROR};
 
@@ -226,7 +230,8 @@ public class TokenResource {
     DISABLED_KNOXSSO_COOKIE(80),
     TOKEN_EXPIRED(90),
     INVALID_AUDIENCE(100),
-    INVALID_RESOURCE(110);
+    INVALID_RESOURCE(110),
+    ACTOR_CHAIN_DEPTH_EXCEEDED(120);
 
     private final int code;
 
@@ -298,6 +303,7 @@ public class TokenResource {
 
     String enableDelegatedAuthParam = context.getInitParameter(TOKEN_ENABLE_DELEGATED_AUTH);
     enableDelegatedAuth = enableDelegatedAuthParam != null && Boolean.parseBoolean(enableDelegatedAuthParam);
+    setDelegationMaxActorChainDepth();
 
     this.tokenIssuer = StringUtils.isBlank(context.getInitParameter(KNOX_TOKEN_ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
@@ -391,6 +397,28 @@ public class TokenResource {
 
     parseHardcodedClaimMappings(context.getInitParameter(KNOX_TOKEN_HARDCODED_CLAIM_MAPPINGS));
     setTokenStateServiceStatusMap();
+  }
+
+  private void setDelegationMaxActorChainDepth() {
+    maxActorChainDepth = DELEGATION_MAX_ACTOR_CHAIN_DEPTH_DEFAULT;
+    final String maxActorChainDepthParam = context.getInitParameter(DELEGATION_MAX_ACTOR_CHAIN_DEPTH);
+    if (StringUtils.isNotBlank(maxActorChainDepthParam)) {
+      try {
+        final int configuredDepth = Integer.parseInt(maxActorChainDepthParam.trim());
+        if (configuredDepth < 1) {
+          logMaxActorChainDepthConfigurationError(maxActorChainDepthParam, new NumberFormatException("value must be a positive integer"));
+        } else {
+          maxActorChainDepth = configuredDepth;
+        }
+      } catch (final NumberFormatException nfe) {
+        logMaxActorChainDepthConfigurationError(maxActorChainDepthParam, nfe);
+      }
+    }
+  }
+
+  private void logMaxActorChainDepthConfigurationError(final String maxActorChainDepthParam, final NumberFormatException nfe) {
+    log.invalidConfigValue(getTopologyName(), DELEGATION_MAX_ACTOR_CHAIN_DEPTH, maxActorChainDepthParam, nfe);
+    log.generalInfoMessage("Using the default maximum actor chain depth of " + DELEGATION_MAX_ACTOR_CHAIN_DEPTH_DEFAULT + ".");
   }
 
   private void parseHardcodedClaimMappings(String raw) {
@@ -945,6 +973,11 @@ public class TokenResource {
       } else {
         response = new TokenResponseContext(null, null, Response.serverError());
       }
+    } catch (ActorChainDepthExceededException e) {
+      log.rejectedTokenExchange(e.getMessage());
+      final Response.Status status = Response.Status.BAD_REQUEST;
+      final Response error = KnoxIDFUtils.error("invalid_request", e.getMessage(), status);
+      return new TokenResponseContext(null, (String) error.getEntity(), Response.status(status));
     } catch (TokenServiceException e) {
       log.unableToIssueToken(e);
       response = new TokenResponseContext(null
@@ -1226,7 +1259,8 @@ public class TokenResource {
     return JsonUtils.renderAsJsonString(body);
   }
 
-  private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences) throws TokenServiceException {
+  private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences)
+      throws TokenServiceException, ActorChainDepthExceededException {
     JWTokenAttributes jwtAttributes;
     JWT token;
     JWTokenAuthority ts = getGatewayServices().getService(ServiceType.TOKEN_SERVICE);
@@ -1276,7 +1310,8 @@ public class TokenResource {
     return token;
   }
 
-  private void handleDelegatedAuthentication(Subject subject, JWTokenAttributesBuilder jwtAttributesBuilder) {
+  private void handleDelegatedAuthentication(Subject subject, JWTokenAttributesBuilder jwtAttributesBuilder)
+      throws ActorChainDepthExceededException {
     if (enableDelegatedAuth) {
       // First check if there's an existing actor chain from a previous token exchange
       Set<ActorChainPrincipal> actorChainPrincipals = subject.getPrincipals(ActorChainPrincipal.class);
@@ -1293,6 +1328,15 @@ public class TokenResource {
         if (primaryPrincipalName != null && impersonatedPrincipalName != null && !primaryPrincipalName.equals(impersonatedPrincipalName)) {
           // Build the new actor chain by adding the current actor (primary principal) to the existing chain
           List<Map<String, Object>> newActorChain = TokenUtils.addActorToChain(existingChain, primaryPrincipalName);
+          // Last chance before minting: reject the exchange if adding this actor would push the 'act'
+          // chain past the configured maximum depth. TokenUtils.addActorToChain / buildNestedActClaim
+          // are otherwise unbounded, so a chain could grow without limit across successive exchanges.
+          if (newActorChain.size() > maxActorChainDepth) {
+            log.actorChainDepthExceeded(newActorChain.size(), maxActorChainDepth);
+            throw new ActorChainDepthExceededException("The resulting actor chain depth (" + newActorChain.size()
+                    + ") would exceed the configured maximum of " + maxActorChainDepth + ".",
+                ErrorCode.ACTOR_CHAIN_DEPTH_EXCEEDED);
+          }
           jwtAttributesBuilder.setActorChain(newActorChain);
           log.addingActorClaimToToken(primaryPrincipalName, impersonatedPrincipalName);
         }
