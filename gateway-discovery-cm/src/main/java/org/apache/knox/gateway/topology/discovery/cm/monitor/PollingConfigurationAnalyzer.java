@@ -21,16 +21,15 @@ import com.cloudera.api.swagger.RolesResourceApi;
 import com.cloudera.api.swagger.ServicesResourceApi;
 import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
+import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
 import com.cloudera.api.swagger.model.ApiEventQueryResult;
-import com.cloudera.api.swagger.model.ApiHostRef;
-import com.cloudera.api.swagger.model.ApiRole;
-import com.cloudera.api.swagger.model.ApiRoleConfig;
 import com.cloudera.api.swagger.model.ApiRoleConfigList;
+import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
+import com.cloudera.api.swagger.model.ApiServiceList;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -48,16 +47,19 @@ import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 import org.apache.knox.gateway.topology.discovery.cm.ApiClientFactory;
+import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscoveryMessages;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
+import org.apache.knox.gateway.topology.discovery.cm.ServiceModelFactory;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceModelGeneratorsHolder;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollector;
 import org.apache.knox.gateway.topology.discovery.cm.ServiceRoleCollectorBuilder;
+import org.apache.knox.gateway.topology.discovery.cm.TypeNameFilter;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptor;
 import org.apache.knox.gateway.topology.simple.SimpleDescriptorFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.KeyStore;
 import java.time.Instant;
@@ -152,6 +154,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
   // Timestamp records of the most recent start event query per discovery address
   private Map<String, Instant> eventQueryTimestamps = new ConcurrentHashMap<>();
 
+  // Cluster-wide model inputs (service list + CORE_SETTINGS config) fetched at most once per cluster per polling
+  // cycle and reused across every service examined in that cycle, keyed by "address::cluster". Cleared at the start of
+  // each cycle so it never serves stale data. Only ever accessed from the single polling thread.
+  private final Map<String, ClusterModelInputs> clusterModelInputsByCluster = new HashMap<>();
+
   // The amount of time before "now" to will check for start events the first time
   private long eventQueryDefaultTimestampOffset = DEFAULT_EVENT_QUERY_DEFAULT_TIMESTAMP_OFFSET;
 
@@ -233,6 +240,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private void monitorClusterConfigurationChanges() {
     try {
+      // Start of a fresh polling pass: drop the previous cycle's cached per-cluster model inputs so this cycle sees
+      // the current CM state.
+      clusterModelInputsByCluster.clear();
+
       final List<String> clustersToStopMonitoring = new ArrayList<>();
 
       for (Map.Entry<String, List<String>> entry : configCache.getClusterNames().entrySet()) {
@@ -244,8 +255,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
           }
           log.checkingClusterConfiguration(clusterName, address);
 
-          // Check here for existing descriptor references, and add to the removal list if there are not any
-          if (!clusterReferencesExist(address, clusterName)) {
+          // Parse the deployed descriptors once per cycle to answer both "is this cluster still referenced?" and
+          // "which CM service types do the descriptors reference?"; add to the removal list if there are no references.
+          final DescriptorReferences descriptorReferences = analyzeDescriptorReferences(address, clusterName);
+          if (!descriptorReferences.referencesExist()) {
             clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
             continue;
           }
@@ -253,7 +266,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
           // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
           // start events, and check the configuration only of the restarted service(s) to identify changes
           // that should trigger re-discovery.
-          final List<RelevantEvent> relevantEvents = getRelevantEvents(address, clusterName);
+          final List<RelevantEvent> relevantEvents =
+                  getRelevantEvents(address, clusterName, descriptorReferences.referencedServiceTypes());
 
           // If there are no recent start events, then nothing to do now
           if (!relevantEvents.isEmpty()) {
@@ -340,25 +354,39 @@ public class PollingConfigurationAnalyzer implements Runnable {
         // Get the previously-recorded configuration
         ServiceConfigurationModel serviceConfig = serviceConfigurations.get(re.getServiceType());
 
-        if (serviceConfig != null) {
-          // Get the current config for the started service, and compare with the previously-recorded config
-          ServiceConfigurationModel currentConfig =
-                          getCurrentServiceConfiguration(address, clusterName, re.getService());
+        // Get the current (model-derived) config for the started service, as a tri-state result so a transient CM
+        // error is never mistaken for a service that produces no model.
+        CurrentServiceConfiguration current =
+                        getCurrentServiceConfiguration(address, clusterName, re.getService(), re.getServiceType());
 
-          if (currentConfig != null) {
+        if (current.isError()) {
+          // CM was unreachable while computing the current configuration: the current state is unknown, so make no
+          // change decision this cycle. This preserves the pre-KNOX-2900 no-op behavior on API errors and prevents a
+          // transient outage from forcing a full re-discovery every polling cycle until CM recovers.
+          log.skippingConfigChangeForUnreachableService(re.getService(), re.getServiceType());
+        } else {
+          final ServiceConfigurationModel currentConfig = current.getModel(); // non-null only when hasModel()
+          if (serviceConfig == null && !current.hasModel()) {
+            // Was and remains in an invalid configuration state (no model either time): nothing to proxy, no change.
+            log.skippingConfigChangeForInvalidService(re.getService(), re.getServiceType());
+          } else if (serviceConfig != null && current.hasModel()) {
+            // Valid before and now: compare the recorded and current configs to detect a change.
             log.analyzingCurrentServiceConfiguration(re.getService());
             try {
               configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
             } catch (Exception e) {
               log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
             }
+          } else if (current.hasModel()) {
+            // No prior config, but the service now produces a model: new / became valid -> re-discover.
+            log.serviceEnabled(re.getService());
+            configHasChanged = true;
+          } else {
+            // Had a prior config but produces no model now: became invalid / was removed -> re-discover so the
+            // service is dropped from the affected topologies (and the scoped-replace merge clears its baseline).
+            log.serviceDisabled(re.getService());
+            configHasChanged = true;
           }
-        } else {
-          // A new service (no prior config) represent a config change, since a descriptor may have referenced
-          // the "new" service, but discovery had previously not succeeded because the service had not been
-          // configured (appropriately) at that time.
-          log.serviceEnabled(re.getService());
-          configHasChanged = true;
         }
 
         handledServiceTypes.add(serviceType);
@@ -403,36 +431,85 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   /**
-   * Determine if any descriptors reference the specified discovery source and cluster.
+   * Parse the deployed descriptors once to determine, in a single pass, both whether any descriptor still references
+   * the given discovery source and cluster and which CM service types those descriptors reference. Merging the two
+   * questions avoids re-parsing every descriptor file twice per polling cycle.
+   * <p>
+   * Two deliberate asymmetries are preserved: a descriptor that cannot be read/parsed, or whose topology is a
+   * read-only override (SimpleDescriptorHandler never regenerates it), still counts as a reference - so the cluster
+   * keeps being monitored - but contributes no referenced service names, because a re-discovery could not act on it.
    *
    * @param source      A discovery source
    * @param clusterName A discovery cluster name
-   *
-   * @return true, if at least one descriptor references the specified discovery information; Otherwise, false.
+   * @return references-exist plus the referenced CM service types; the latter is null when the TopologyService is
+   *         unavailable (references-exist is then true - assume references remain), meaning no relevance filtering.
    */
-  private boolean clusterReferencesExist(final String source, final String clusterName) {
-    boolean remainingClusterRefs = false;
-
-    if (source != null && clusterName != null) {
-      TopologyService ts = getTopologyService();
-      if (ts != null) {
-        for (File f : ts.getDescriptors()) {
-          try {
-            SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
-            if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
-              remainingClusterRefs = true;
-              break;
-            }
-          } catch (IOException e) {
-            // Ignore these errors
-          }
-        }
-      } else {
-        remainingClusterRefs = true; // If the TopologyService is unavailable, assume references remain
-      }
+  private DescriptorReferences analyzeDescriptorReferences(final String source, final String clusterName) {
+    final TopologyService ts = getTopologyService();
+    if (ts == null) {
+      // TopologyService unavailable: assume references remain (keep monitoring) and apply no relevance filtering.
+      return new DescriptorReferences(true, null);
+    }
+    if (source == null || clusterName == null) {
+      return new DescriptorReferences(false, Collections.emptySet());
     }
 
-    return remainingClusterRefs;
+    boolean referencesExist = false;
+    boolean referencesIncomplete = false;
+    final Set<String> referencedServices = new HashSet<>();
+    for (File f : ts.getDescriptors()) {
+      try {
+        SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
+        if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
+          // Any matching descriptor keeps the cluster referenced (monitored), even a read-only-override topology.
+          referencesExist = true;
+          // Only descriptors a re-discovery could act on contribute referenced service names: skip read-only-override
+          // topologies (gateway.read.only.override.topologies - the gateway-site list, NOT the descriptor's own
+          // "read-only" field), which SimpleDescriptorHandler never regenerates.
+          if (!gatewayConfig.getReadOnlyOverrideTopologyNames().contains(sd.getName())) {
+            for (SimpleDescriptor.Service service : sd.getServices()) {
+              referencedServices.add(service.getName());
+            }
+          }
+        }
+      } catch (Exception e) {
+        // A descriptor we cannot read/parse might reference this cluster. Concluding "no references" on incomplete
+        // information would tear down a still-referenced cluster's cache, so remember the gap and assume a reference
+        // remains. It contributes no service names (it cannot be regenerated until fixed, which itself triggers a
+        // fresh discovery).
+        log.errorCheckingClusterReferences(f.getName(), source, clusterName, e);
+        referencesIncomplete = true;
+      }
+    }
+    if (!referencesExist && referencesIncomplete) {
+      // Could not rule out a reference from an unreadable/unparseable descriptor; assume a reference remains and keep
+      // monitoring rather than evict the cache (mirroring the unavailable-TopologyService case above).
+      referencesExist = true;
+    }
+    return new DescriptorReferences(referencesExist, serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices));
+  }
+
+  /**
+   * The outcome of a single descriptor-parsing pass: whether the cluster is still referenced by a deployed descriptor,
+   * and the CM service types those descriptors reference ({@code null} when references could not be determined because
+   * the TopologyService is unavailable, in which case no relevance filtering is applied).
+   */
+  private static final class DescriptorReferences {
+    private final boolean referencesExist;
+    private final Set<String> referencedServiceTypes;
+
+    DescriptorReferences(final boolean referencesExist, final Set<String> referencedServiceTypes) {
+      this.referencesExist = referencesExist;
+      this.referencedServiceTypes = referencedServiceTypes;
+    }
+
+    boolean referencesExist() {
+      return referencesExist;
+    }
+
+    Set<String> referencedServiceTypes() {
+      return referencedServiceTypes;
+    }
   }
 
   /**
@@ -471,10 +548,11 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   /**
    * Get a DiscoveryApiClient for the ClouderaManager instance described by the specified discovery configuration.
+   * Package-visible (rather than private) so tests can substitute a client that returns canned responses or fails.
    *
    * @param discoveryConfig The discovery configuration for interacting with a ClouderaManager instance.
    */
-  private DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
+  protected DiscoveryApiClient getApiClient(final ServiceDiscoveryConfig discoveryConfig) {
     return clients.computeIfAbsent(discoveryConfig.getAddress(),
                                    c -> ApiClientFactory.getApiClient(gatewayConfig, discoveryConfig, aliasService, truststore));
   }
@@ -482,12 +560,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
   /**
    * Get relevant events for the specified ClouderaManager cluster.
    *
-   * @param address     The address of the ClouderaManager instance.
-   * @param clusterName The name of the cluster.
+   * @param address                The address of the ClouderaManager instance.
+   * @param clusterName            The name of the cluster.
+   * @param referencedServiceTypes The CM service types referenced by the deployed descriptors (from
+   *                               {@link #analyzeDescriptorReferences}); null means no relevance filtering.
    *
    * @return A List of StartEvent objects for service start events since the last time they were queried.
    */
-  private List<RelevantEvent> getRelevantEvents(final String address, final String clusterName) {
+  private List<RelevantEvent> getRelevantEvents(final String address, final String clusterName,
+                                                final Set<String> referencedServiceTypes) {
     List<RelevantEvent> relevantEvents = new ArrayList<>();
 
     // Get the last event query timestamp
@@ -512,8 +593,12 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (events.isEmpty()) {
       log.noActivationEventFound();
     } else {
+      // referencedServiceTypes (computed once per cycle by analyzeDescriptorReferences): events for services no
+      // descriptor references are irrelevant - with per-descriptor discovery filtering they are never discovered, so
+      // they must not be treated as "new services" and trigger churn. A null value means references cannot be
+      // determined (no TopologyService), in which case no reference filtering is applied.
       for (ApiEvent event : events) {
-        if (isStartEvent(event) || isScaleEvent(event)) {
+        if (isStartEvent(event, referencedServiceTypes) || isScaleEvent(event, referencedServiceTypes)) {
           relevantEvents.add(new RelevantEvent(event));
         }
       }
@@ -522,7 +607,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     return relevantEvents;
   }
 
-  private boolean isStartEvent(ApiEvent event) {
+  private boolean isStartEvent(ApiEvent event, Set<String> referencedServiceTypes) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String command = getAttribute(attributeMap, COMMAND);
     final String status = getAttribute(attributeMap, COMMAND_STATUS);
@@ -532,20 +617,80 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final boolean clusterRollingOrStalenessRestart = CM_SERVICE.equals(service) && CM_SERVICE_TYPE.equals(serviceType)
             && (ROLLING_RESTART_COMMAND.equals(command) || RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND.equals(command));
     final boolean relevant = (clusterRollingOrStalenessRestart && SUCCEEDED_STATUS.equals(status))
-            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists);
+            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists
+                && !isExcludedServiceType(serviceType) && isReferencedServiceType(serviceType, referencedServiceTypes));
     log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists, clusterRollingOrStalenessRestart);
     return relevant;
   }
 
-  private boolean isScaleEvent(ApiEvent event) {
+  private boolean isScaleEvent(ApiEvent event, Set<String> referencedServiceTypes) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
+    final String roleType = getAttribute(attributeMap, RelevantEvent.ATTR_ROLE);
     final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
-    final boolean relevant = serviceModelGeneratorExists &&
-            (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
-    log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, relevant);
+    final boolean relevant = serviceModelGeneratorExists && !isExcludedServiceType(serviceType)
+            && isReferencedServiceType(serviceType, referencedServiceTypes)
+            && !isExcludedRoleType(roleType)
+            && (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
+    log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, roleType, serviceModelGeneratorExists);
     return relevant;
+  }
+
+  /**
+   * @return true if the given CM service type is referenced by a deployed descriptor for the cluster, or if
+   * references could not be determined ({@code referencedServiceTypes} is null, so no filtering is applied).
+   */
+  private boolean isReferencedServiceType(final String serviceType, final Set<String> referencedServiceTypes) {
+    return referencedServiceTypes == null || referencedServiceTypes.contains(serviceType);
+  }
+
+  /**
+   * Determine whether the given CM service type is configured to be excluded from CM service discovery via
+   * {@code gateway.cloudera.manager.service.discovery.excluded.service.types}. Excluded service types are never
+   * discovered (see ClouderaManagerServiceDiscovery#getClusterServices), so their configuration is never present in
+   * the monitored baseline. Treating their start/scale events as relevant would otherwise cause the analyzer to see a
+   * missing baseline and trigger an unnecessary re-discovery on every restart of such a service.
+   *
+   * @param serviceType the CM service type from an audit event
+   * @return true if the service type is excluded from discovery; false otherwise
+   */
+  private boolean isExcludedServiceType(final String serviceType) {
+    if (serviceType == null) {
+      return false;
+    }
+    final Collection<String> excludedServiceTypes = gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes();
+    if (excludedServiceTypes == null || excludedServiceTypes.isEmpty()) {
+      return false;
+    }
+    return excludedServiceTypes.stream().anyMatch(serviceType::equalsIgnoreCase);
+  }
+
+  /**
+   * Determine whether the given CM role type would be excluded from CM service discovery, using the exact same filter
+   * discovery applies when collecting role configurations (see ServiceRoleCollectorBuilder): the configured
+   * {@code gateway.cloudera.manager.service.discovery.excluded.role.types} deny-list combined with the allow-list of
+   * role types some ServiceModelGenerator actually uses ({@link ServiceModelGeneratorsHolder#getAllRoleTypes()}).
+   * Role types discovery never collects can never produce a service model, so a scale (role added/removed) event for
+   * such a role type must not be treated as relevant - it would otherwise trigger an unnecessary re-discovery that
+   * would recompute an identical model.
+   * <p>
+   * Fails open on a missing/empty role type: the event is kept relevant rather than dropped on missing information.
+   *
+   * @param roleType the CM role type from an audit event
+   * @return true if the role type is excluded from discovery; false otherwise (including when it is null/empty)
+   */
+  private boolean isExcludedRoleType(final String roleType) {
+    if (roleType == null || roleType.isEmpty()) {
+      return false;
+    }
+    // Read the excluded-role-types config fresh on each call (like isExcludedServiceType), so a live update to
+    // gateway.cloudera.manager.service.discovery.excluded.role.types is honored without restarting the monitor. The
+    // allow-list (getAllRoleTypes()) is an immutable, cached set, and scale events are rare, so rebuilding the filter
+    // per call is negligible.
+    final TypeNameFilter roleTypeFilter = new TypeNameFilter(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes(),
+            serviceModelGeneratorsHolder.getAllRoleTypes());
+    return roleTypeFilter.isExcluded(roleType);
   }
 
   @SuppressWarnings("unchecked")
@@ -588,28 +733,34 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   /**
-   * Get the current configuration for the specified service.
+   * Get the current configuration for the specified service, built by running the service model generators exactly
+   * as cluster discovery does and transforming the resulting models the same way the persisted baseline is built.
+   * <p>
+   * Because the baseline is model-derived, computing the current snapshot the same way keeps the two comparable. The
+   * result distinguishes three outcomes so the caller never conflates "the service is genuinely gone" with "we could
+   * not reach Cloudera Manager": a service whose configuration is invalid (no generator produces a model) yields a
+   * {@link CurrentServiceConfiguration#noModel() no-model} result - mirroring its absence from the baseline - while an
+   * {@link ApiException} (CM unreachable) yields an {@link CurrentServiceConfiguration#error() error} result.
    *
    * @param address     The address of the ClouderaManager instance.
    * @param clusterName The name of the cluster.
    * @param service     The name of the service.
+   * @param serviceType The type of the service.
    *
-   * @return A ServiceConfigurationModel object with the configuration properties associated with the specified
-   * service.
+   * @return a {@link CurrentServiceConfiguration}: with-model when the service produced a model, no-model when the CM
+   * call succeeded but produced no model (invalid configuration), or error when the CM call failed.
    */
-  protected ServiceConfigurationModel getCurrentServiceConfiguration(final String address,
-                                                                     final String clusterName,
-                                                                     final String service) {
-    ServiceConfigurationModel currentConfig = null;
-
+  protected CurrentServiceConfiguration getCurrentServiceConfiguration(final String address,
+                                                                       final String clusterName,
+                                                                       final String service,
+                                                                       final String serviceType) {
     log.gettingCurrentClusterConfiguration(service, clusterName, address);
 
-    ApiClient apiClient = getApiClient(configCache.getDiscoveryConfig(address, clusterName));
+    DiscoveryApiClient apiClient = getApiClient(configCache.getDiscoveryConfig(address, clusterName));
     ServicesResourceApi api = new ServicesResourceApi(apiClient);
     try {
       ApiServiceConfig svcConfig = api.readServiceConfig(clusterName, service, "full");
 
-      Map<ApiRole, ApiConfigList> roleConfigs = new HashMap<>();
       RolesResourceApi rolesResourceApi = new RolesResourceApi(apiClient);
       ServiceRoleCollector roleCollector = ServiceRoleCollectorBuilder.newBuilder()
               .gatewayConfig(gatewayConfig)
@@ -618,20 +769,163 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
 
-      for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
-        ApiConfigList configList = roleConfig.getConfig();
-
-        String roleName = roleConfig.getName();
-        String roleType = roleConfig.getRoleType();
-        ApiHostRef hostRef = roleConfig.getHostRef();
-        ApiRole role = new ApiRole().name(roleName).type(roleType).hostRef(hostRef);
-        roleConfigs.put(role, configList);
-      }
-      currentConfig = new ServiceConfigurationModel(svcConfig, roleConfigs);
+      // The cluster's service list (the "summary" view carries clusterRef/displayName) and CORE_SETTINGS config are
+      // cluster-wide and identical for every service examined this cycle, so they are fetched at most once per cluster
+      // per cycle and reused here. The service list yields the real ApiService for the started service; feeding
+      // generators the real ApiService - rather than a name/type-only stub - keeps the monitor's inputs
+      // field-identical to discovery, so generators that dereference service.getClusterRef().getClusterName()
+      // (YarnUI/JobHistoryUI) do not NPE.
+      final ClusterModelInputs clusterModelInputs = getClusterModelInputs(api, address, clusterName);
+      final ApiService apiService = findService(clusterModelInputs.getServiceList(), service, serviceType, clusterName);
+      final Set<ServiceModel> serviceModels = ServiceModelFactory.generateServiceModels(
+              apiClient, apiService, svcConfig, roleConfigList, clusterModelInputs.getCoreSettingsConfig());
+      final ServiceConfigurationModel currentConfig =
+              ServiceConfigurationModel.fromServiceModels(serviceModels).get(serviceType);
+      // A successful CM call that yields no model means the service is genuinely in an invalid/removed configuration
+      // state - distinct from the error case below, where we simply could not reach CM.
+      return currentConfig == null ? CurrentServiceConfiguration.noModel() : CurrentServiceConfiguration.withModel(currentConfig);
     } catch (ApiException e) {
+      // CM was unreachable (network blip, auth failure, transient 5xx). The current configuration is unknown, so
+      // return an explicit error result: the caller must treat this as "unknown", never as "the service is gone" -
+      // otherwise a transient outage would force a full re-discovery every polling cycle until CM recovers.
       log.clouderaManagerConfigurationAPIError(e);
+      return CurrentServiceConfiguration.error();
     }
-    return currentConfig;
+  }
+
+  /**
+   * The outcome of computing a service's current model-derived configuration. Distinguishes three cases so the
+   * caller never conflates a transient CM error with a service that genuinely produces no model:
+   * <ul>
+   *   <li>{@link #withModel(ServiceConfigurationModel) with-model} - the service produced a model;</li>
+   *   <li>{@link #noModel() no-model} - the CM call succeeded but no generator produced a model (invalid/removed);</li>
+   *   <li>{@link #error() error} - the CM call failed and the current configuration is unknown.</li>
+   * </ul>
+   */
+  protected static final class CurrentServiceConfiguration {
+    private enum Status { WITH_MODEL, NO_MODEL, ERROR }
+
+    private final Status status;
+    private final ServiceConfigurationModel model;
+
+    private CurrentServiceConfiguration(final Status status, final ServiceConfigurationModel model) {
+      this.status = status;
+      this.model = model;
+    }
+
+    static CurrentServiceConfiguration withModel(final ServiceConfigurationModel model) {
+      return new CurrentServiceConfiguration(Status.WITH_MODEL, model);
+    }
+
+    static CurrentServiceConfiguration noModel() {
+      return new CurrentServiceConfiguration(Status.NO_MODEL, null);
+    }
+
+    static CurrentServiceConfiguration error() {
+      return new CurrentServiceConfiguration(Status.ERROR, null);
+    }
+
+    boolean isError() {
+      return status == Status.ERROR;
+    }
+
+    boolean hasModel() {
+      return status == Status.WITH_MODEL;
+    }
+
+    /**
+     * @return the model when {@link #hasModel()} is true; {@code null} for the no-model and error results.
+     */
+    ServiceConfigurationModel getModel() {
+      return model;
+    }
+  }
+
+  /**
+   * Find the real {@link ApiService} for the started service in the cluster's service list, so the model generators
+   * receive the same fully-populated object discovery would hand them (notably {@code clusterRef} and
+   * {@code displayName}, which some generators dereference). Falls back to a minimally-populated service that still
+   * has {@code clusterRef} set, so generators reading {@code service.getClusterRef().getClusterName()} never NPE even
+   * when the service is (unexpectedly) absent from the list.
+   *
+   * @param serviceList the cluster's service list (summary view), possibly null
+   * @param service     the name of the started service
+   * @param serviceType the type of the started service
+   * @param clusterName the name of the cluster
+   * @return the real ApiService if present in the list; otherwise a synthetic ApiService with clusterRef populated
+   */
+  private ApiService findService(final ApiServiceList serviceList, final String service, final String serviceType,
+                                 final String clusterName) {
+    if (serviceList != null && serviceList.getItems() != null) {
+      for (ApiService candidate : serviceList.getItems()) {
+        if (service.equals(candidate.getName())) {
+          return candidate;
+        }
+      }
+    }
+    return new ApiService().name(service).type(serviceType)
+            .clusterRef(new ApiClusterRef().clusterName(clusterName));
+  }
+
+  /**
+   * Get the cluster-wide model inputs (service list + CORE_SETTINGS config) needed to run the generators, fetching
+   * them from ClouderaManager at most once per cluster per polling cycle and caching them for the remainder of the
+   * cycle. Cluster discovery likewise computes CORE_SETTINGS once for the whole cluster; caching here avoids
+   * re-fetching the same cluster-wide inputs for every service examined in a cycle.
+   *
+   * @throws ApiException if the service list cannot be read from ClouderaManager (propagated to the caller, which
+   *                      treats it as "current configuration unknown" rather than "service removed").
+   */
+  private ClusterModelInputs getClusterModelInputs(final ServicesResourceApi api, final String address,
+                                                   final String clusterName) throws ApiException {
+    final String key = address + FQCN_DELIM + clusterName;
+    ClusterModelInputs inputs = clusterModelInputsByCluster.get(key);
+    if (inputs == null) {
+      final ApiServiceList serviceList = api.readServices(clusterName, "summary");
+      inputs = new ClusterModelInputs(serviceList, getCoreSettingsConfig(api, clusterName, serviceList));
+      clusterModelInputsByCluster.put(key, inputs);
+    }
+    return inputs;
+  }
+
+  /**
+   * Cluster-wide inputs shared by every per-service model computation within a single polling cycle: the cluster's
+   * service list (summary view) and its CORE_SETTINGS configuration.
+   */
+  private static final class ClusterModelInputs {
+    private final ApiServiceList serviceList;
+    private final ApiServiceConfig coreSettingsConfig;
+
+    ClusterModelInputs(final ApiServiceList serviceList, final ApiServiceConfig coreSettingsConfig) {
+      this.serviceList = serviceList;
+      this.coreSettingsConfig = coreSettingsConfig;
+    }
+
+    ApiServiceList getServiceList() {
+      return serviceList;
+    }
+
+    ApiServiceConfig getCoreSettingsConfig() {
+      return coreSettingsConfig;
+    }
+  }
+
+  /**
+   * Look up the CORE_SETTINGS service configuration for the cluster, needed to run generators faithfully (some HDFS
+   * models read settings from CORE_SETTINGS). Returns {@code null} if the cluster has no CORE_SETTINGS service.
+   *
+   * @param serviceList the cluster's service list (summary view), already fetched by the caller
+   */
+  private ApiServiceConfig getCoreSettingsConfig(final ServicesResourceApi api, final String clusterName,
+                                                 final ApiServiceList serviceList) throws ApiException {
+    if (serviceList != null && serviceList.getItems() != null) {
+      for (ApiService service : serviceList.getItems()) {
+        if (ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE.equals(service.getType())) {
+          return api.readServiceConfig(clusterName, service.getName(), "full");
+        }
+      }
+    }
+    return null;
   }
 
   /**
