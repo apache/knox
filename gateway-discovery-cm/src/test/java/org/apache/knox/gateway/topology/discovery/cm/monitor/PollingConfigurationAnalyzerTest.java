@@ -22,6 +22,9 @@ import com.cloudera.api.swagger.client.ApiResponse;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
+import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiServiceConfig;
+import com.cloudera.api.swagger.model.ApiServiceList;
 import okhttp3.Call;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -277,6 +280,31 @@ public class PollingConfigurationAnalyzerTest {
 
     assertFalse("A transient CM error must not trigger re-discovery, even with a valid prior baseline",
             listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * The cluster-wide model inputs (service list + CORE_SETTINGS) are identical for every service examined in a polling
+   * cycle, so they must be fetched from Cloudera Manager only once per cluster per cycle and reused. Drives the real
+   * {@link PollingConfigurationAnalyzer#getCurrentServiceConfiguration} for two services in the same cluster within a
+   * cycle and asserts the cluster service list was read from CM exactly once.
+   */
+  @Test
+  public void testClusterModelInputsFetchedOncePerClusterAcrossServices() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster MC";
+
+    final CountingDiscoveryApiClient client = countingApiClient(address, clusterName);
+    final ApiClientInjectingPollingConfigAnalyzer pca =
+            buildApiClientInjectingAnalyzer(address, clusterName, Collections.emptyMap(), new ChangeListener(), client);
+
+    // Two different services in the same cluster, examined in the same cycle (the per-cycle cache is only cleared by
+    // monitorClusterConfigurationChanges, not between these direct calls). The cluster-wide service list must be read
+    // from CM once for the first service and reused for the second.
+    pca.getCurrentServiceConfiguration(address, clusterName, "svc-a", NameNodeServiceModelGenerator.SERVICE_TYPE);
+    pca.getCurrentServiceConfiguration(address, clusterName, "svc-b", HiveOnTezServiceModelGenerator.SERVICE_TYPE);
+
+    assertEquals("Cluster-wide service list must be fetched once per cluster per cycle and reused across services",
+        1, client.readServicesCount());
   }
 
   /**
@@ -1426,6 +1454,71 @@ public class PollingConfigurationAnalyzerTest {
     @Override
     public <T> ApiResponse<T> execute(Call call, Type returnType) throws ApiException {
       throw new ApiException("Cloudera Manager unreachable (simulated)");
+    }
+  }
+
+  private static CountingDiscoveryApiClient countingApiClient(final String address, final String clusterName) {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(gatewayConfig);
+
+    final ServiceDiscoveryConfig sdc = EasyMock.createNiceMock(ServiceDiscoveryConfig.class);
+    EasyMock.expect(sdc.getAddress()).andReturn(address).anyTimes();
+    EasyMock.expect(sdc.getUser()).andReturn("u").anyTimes();
+    EasyMock.expect(sdc.getPasswordAlias()).andReturn(null).anyTimes();
+    EasyMock.expect(sdc.getCluster()).andReturn(clusterName).anyTimes();
+    EasyMock.replay(sdc);
+
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.replay(aliasService);
+
+    return new CountingDiscoveryApiClient(gatewayConfig, sdc, aliasService);
+  }
+
+  /**
+   * A DiscoveryApiClient that returns empty canned responses for the CM calls getCurrentServiceConfiguration makes
+   * (readServiceConfig, readRoles, readServices) so the real method runs offline, and counts how many times the
+   * cluster service list (readServices) is read.
+   */
+  private static final class CountingDiscoveryApiClient extends DiscoveryApiClient {
+    private int readServicesCount;
+
+    CountingDiscoveryApiClient(final GatewayConfig gatewayConfig, final ServiceDiscoveryConfig sdConfig, final AliasService aliasService) {
+      super(gatewayConfig, sdConfig, aliasService, null);
+    }
+
+    int readServicesCount() {
+      return readServicesCount;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> ApiResponse<T> execute(Call call, Type returnType) {
+      final Object data;
+      if (ApiServiceList.class.equals(returnType)) {
+        readServicesCount++;
+        data = new ApiServiceList();   // no items -> no CORE_SETTINGS lookup, synthetic ApiService used
+      } else if (ApiRoleList.class.equals(returnType)) {
+        data = new ApiRoleList();      // no items -> no roles -> no models produced
+      } else if (ApiServiceConfig.class.equals(returnType)) {
+        data = new ApiServiceConfig();
+      } else {
+        data = null;
+      }
+      return (ApiResponse<T>) new StubApiResponse<>(data);
+    }
+  }
+
+  private static final class StubApiResponse<T> extends ApiResponse<T> {
+    private final T data;
+
+    StubApiResponse(final T data) {
+      super(200, Collections.emptyMap());
+      this.data = data;
+    }
+
+    @Override
+    public T getData() {
+      return data;
     }
   }
 
