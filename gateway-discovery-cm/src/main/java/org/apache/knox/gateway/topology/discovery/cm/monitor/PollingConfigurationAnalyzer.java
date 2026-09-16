@@ -158,10 +158,6 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
 
-  // Filters CM role types the same way discovery does: the configured excluded-role-types deny-list combined with the
-  // allow-list of role types some ServiceModelGenerator actually uses. Lazily built so it picks up gatewayConfig.
-  private TypeNameFilter roleTypeFilter;
-
   private boolean isActive;
 
   private final GatewayConfig gatewayConfig;
@@ -678,10 +674,12 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (roleType == null || roleType.isEmpty()) {
       return false;
     }
-    if (roleTypeFilter == null) {
-      roleTypeFilter = new TypeNameFilter(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes(),
-              serviceModelGeneratorsHolder.getAllRoleTypes());
-    }
+    // Read the excluded-role-types config fresh on each call (like isExcludedServiceType), so a live update to
+    // gateway.cloudera.manager.service.discovery.excluded.role.types is honored without restarting the monitor. The
+    // allow-list (getAllRoleTypes()) is an immutable, cached set, and scale events are rare, so rebuilding the filter
+    // per call is negligible.
+    final TypeNameFilter roleTypeFilter = new TypeNameFilter(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes(),
+            serviceModelGeneratorsHolder.getAllRoleTypes());
     return roleTypeFilter.isExcluded(roleType);
   }
 
