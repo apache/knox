@@ -17,7 +17,7 @@
 
 <img src="../static/images/knox-logo.gif" alt="Knox" style="width:25%;"/>
 
-# Apache Knox Gateway 3.0.0 User's Guide #
+# Apache Knox Gateway 3.1.0 User's Guide #
 
 
 ## Introduction ##

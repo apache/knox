@@ -18,7 +18,7 @@
 <img src="../../static/images/knox-logo.gif" alt="Knox"/>
 <img src="../../static/images/apache-logo.gif" align="right" alt="Apache"/>
 
-# Apache Knox - KnoxShell 3.0.0 User Guide #
+# Apache Knox - KnoxShell 3.1.0 User Guide #
 
 ## Introduction
 
