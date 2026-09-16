@@ -1,0 +1,215 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""End-to-end tests for RFC 8693 token exchange through a running Knox gateway.
+
+These run in the default docker-compose build (no separate compose stack): the
+subject token is a genuine Knox JWT minted by the KNOXIDF token endpoint on the
+``knoxidf-ldap`` topology (a request with no grant_type falls through to the base
+KNOXTOKEN minting path, issuing a standard token for the Basic-authenticated
+user), then presented to the JWTProvider token-exchange endpoint. That topology
+sets ``knoxidf.knox.token.limit.per.user=-1``, so minting repeatedly across tests
+is not capped -- unlike the server-managed KNOXTOKEN service on ``knoxldap``,
+whose gateway-wide per-user token limit is shared with every other test.
+Because a Knox-issued token verifies against the gateway's own public key, no
+trusted-issuer registration is needed (unlike the external-issuer k8s flow in
+test_k8s_delegation.py).
+
+Two topologies are exercised, both fronting the KNOXIDF token endpoint:
+  - knoxidf-token             -- delegation disabled (the default); used for the
+                                 same-subject happy path and to prove a delegation
+                                 exchange is rejected outright.
+  - knoxidf-token-delegation  -- delegation.server.enabled=true plus both
+                                 requested-audience enforcement flags; used for the
+                                 missing/multiple-audience rejections and to prove a
+                                 same-subject exchange still succeeds there.
+
+Covered acceptance criteria (KNOX-3455, "Bucket 1" -- the subset backed by product
+code on master; the requested-audience-vs-subject-aud cases wait on KNOX-3461 and the
+requested-scope cases wait on scope support landing):
+  - same-subject exchange returns the expected sub / iss / issued_token_type;
+  - a same-subject exchange whose subject token carries no act claim succeeds and the
+    minted token likewise carries no act claim (the act-present permutation is covered
+    by unit tests -- it needs a seeded delegation policy that has no REST admin API);
+  - a delegation exchange with a missing audience is rejected (invalid_request);
+  - a delegation exchange with more than one audience is rejected (invalid_request);
+  - a delegation exchange against a delegation-disabled topology is rejected with
+    "Delegation is not enabled for this topology";
+  - a same-subject exchange against a delegation-enabled topology still succeeds.
+"""
+
+import unittest
+
+from requests.auth import HTTPBasicAuth
+
+from common_utils import gateway_base_url, get_token_claim, knox_get, knox_post
+
+# RFC 8693 token-exchange identifiers.
+TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
+JWT_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:jwt"
+# KNOXIDF always mints a JWT, so the exchange response advertises the JWT URN.
+ISSUED_TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
+
+# The demo LDAP 'guest' user; the knoxldap KNOXTOKEN service authenticates it via Basic.
+GUEST_USER = "guest"
+GUEST_PASSWORD = "guest-password"
+
+
+class TestTokenExchange(unittest.TestCase):
+    """RFC 8693 same-subject and delegation-gating behavior through Knox."""
+
+    def setUp(self):
+        base_url = gateway_base_url()
+        # KNOXIDF token endpoint (Basic auth) on knoxidf-ldap, used only to mint a real Knox
+        # JWT to exchange: a request with no grant_type falls through to the base KNOXTOKEN
+        # minting path and issues a standard token for guest. This topology sets a per-user
+        # token limit of -1, so repeated minting across tests is not capped (the server-managed
+        # KNOXTOKEN service on knoxldap enforces a gateway-wide per-user limit shared by all tests).
+        self.mint_url = base_url + "gateway/knoxidf-ldap/knoxidf/api/v1/token"
+        # Token-exchange endpoints: delegation disabled vs. delegation enabled.
+        self.exchange_url = base_url + "gateway/knoxidf-token/knoxidf/api/v1/token"
+        self.delegation_exchange_url = (
+            base_url + "gateway/knoxidf-token-delegation/knoxidf/api/v1/token"
+        )
+        self.guest_auth = HTTPBasicAuth(GUEST_USER, GUEST_PASSWORD)
+
+    def _mint_subject_token(self):
+        """Mint and return a genuine Knox JWT for the guest user."""
+        response = knox_get(self.mint_url, auth=self.guest_auth)
+        self.assertEqual(
+            response.status_code,
+            200,
+            msg=f"subject-token minting failed: {response.status_code} {response.text}",
+        )
+        access_token = response.json().get("access_token")
+        self.assertTrue(access_token, "KNOXTOKEN did not return an access_token")
+        return access_token
+
+    def _exchange(self, url, subject_token, resources=None, actor_token=None):
+        """POST an RFC 8693 token exchange, returning the raw response.
+
+        resources is conveyed as (possibly repeated) ``resource`` form values;
+        an actor_token (with its required type) turns the request into a
+        delegation exchange.
+        """
+        data = [
+            ("grant_type", TOKEN_EXCHANGE_GRANT),
+            ("subject_token", subject_token),
+            ("subject_token_type", JWT_TOKEN_TYPE),
+        ]
+        if actor_token is not None:
+            data.append(("actor_token", actor_token))
+            data.append(("actor_token_type", JWT_TOKEN_TYPE))
+        for resource in resources or []:
+            data.append(("resource", resource))
+        return knox_post(url, data=data)
+
+    def _assert_oauth_error(self, response, expected_status, expected_error, message_substring):
+        """Assert an RFC 6749 §5.2 style JSON OAuth error with the expected fields."""
+        self.assertEqual(
+            response.status_code,
+            expected_status,
+            msg=f"unexpected status: {response.status_code} {response.text}",
+        )
+        try:
+            body = response.json()
+        except ValueError:
+            body = {}
+        self.assertEqual(body.get("error"), expected_error, response.text)
+        description = body.get("error_description", "")
+        self.assertIn(message_substring, description, response.text)
+
+    def test_same_subject_exchange_returns_expected_claims(self):
+        """A same-subject exchange succeeds and preserves the subject's identity."""
+        subject_token = self._mint_subject_token()
+        response = self._exchange(self.exchange_url, subject_token)
+        self.assertEqual(response.status_code, 200, response.text)
+
+        body = response.json()
+        exchanged = body.get("access_token")
+        self.assertTrue(exchanged, "exchange did not return an access_token")
+        # A serialized JWS has three dot-separated segments (header.payload.signature).
+        self.assertEqual(len(exchanged.split(".")), 3, "access_token is not a JWT")
+        # RFC 8693: KNOXIDF always mints a JWT, so it advertises the JWT URN.
+        self.assertEqual(body.get("issued_token_type"), ISSUED_TOKEN_TYPE_JWT, response.text)
+
+        # sub is preserved from the subject token; iss is present on the minted token.
+        self.assertEqual(get_token_claim(exchanged, "sub"), GUEST_USER)
+        self.assertTrue(get_token_claim(exchanged, "iss"), "minted token has no iss claim")
+
+    def test_same_subject_exchange_without_act_claim_succeeds(self):
+        """no-act permutation: a subject token with no act claim exchanges cleanly.
+
+        The minted token likewise carries no act claim -- a same-subject exchange does
+        not introduce an actor chain. (The act-present permutation is exercised by the
+        TokenExchangeHandler unit tests; producing an act-carrying token end-to-end
+        needs a seeded delegation policy, for which there is no REST admin API.)
+        """
+        subject_token = self._mint_subject_token()
+        self.assertIsNone(get_token_claim(subject_token, "act"),
+                          "precondition: freshly minted subject token must have no act claim")
+
+        response = self._exchange(self.exchange_url, subject_token)
+        self.assertEqual(response.status_code, 200, response.text)
+        exchanged = response.json().get("access_token")
+        self.assertTrue(exchanged, "exchange did not return an access_token")
+        self.assertIsNone(get_token_claim(exchanged, "act"),
+                          "same-subject exchange must not add an act claim")
+
+    def test_delegation_exchange_rejected_when_delegation_disabled(self):
+        """An actor_token exchange against a delegation-disabled topology is rejected."""
+        subject_token = self._mint_subject_token()
+        actor_token = self._mint_subject_token()
+        response = self._exchange(
+            self.exchange_url, subject_token, resources=["https://recipient"],
+            actor_token=actor_token,
+        )
+        self._assert_oauth_error(response, 400, "invalid_request",
+                                 "Delegation is not enabled for this topology")
+
+    def test_delegation_exchange_missing_audience_rejected(self):
+        """On a delegation topology enforcing audience-required, a missing audience is rejected."""
+        subject_token = self._mint_subject_token()
+        actor_token = self._mint_subject_token()
+        response = self._exchange(
+            self.delegation_exchange_url, subject_token, actor_token=actor_token,
+        )
+        self._assert_oauth_error(response, 400, "invalid_request",
+                                 "audience or resource value is required")
+
+    def test_delegation_exchange_multiple_audiences_rejected(self):
+        """On a delegation topology enforcing max-one, more than one audience is rejected."""
+        subject_token = self._mint_subject_token()
+        actor_token = self._mint_subject_token()
+        response = self._exchange(
+            self.delegation_exchange_url, subject_token,
+            resources=["https://recipient1", "https://recipient2"], actor_token=actor_token,
+        )
+        self._assert_oauth_error(response, 400, "invalid_request",
+                                 "Exactly one combined audience or resource value is allowed")
+
+    def test_same_subject_exchange_succeeds_on_delegation_enabled_topology(self):
+        """A same-subject exchange is unaffected by the delegation flags and still succeeds."""
+        subject_token = self._mint_subject_token()
+        response = self._exchange(self.delegation_exchange_url, subject_token)
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertTrue(body.get("access_token"), "exchange did not return an access_token")
+        self.assertEqual(body.get("issued_token_type"), ISSUED_TOKEN_TYPE_JWT, response.text)
+        self.assertEqual(get_token_claim(body["access_token"], "sub"), GUEST_USER)
+
+
+if __name__ == "__main__":
+    unittest.main()
