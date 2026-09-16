@@ -60,8 +60,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
@@ -265,18 +264,11 @@ public class PollingConfigurationAnalyzerTest {
     final ChangeListener listener = new ChangeListener();
     final ApiClientInjectingPollingConfigAnalyzer pca =
             buildApiClientInjectingAnalyzer(address, clusterName, baseline, listener, throwingApiClient(address, clusterName));
-    pca.setInterval(5);
     pca.addRestartEvent(clusterName, startEvent);
 
-    final ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
-    pollingThreadExecutor.execute(pca);
-    pollingThreadExecutor.shutdown();
-    try {
-      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    pca.stop();
+    // Run multiple cycles with the CM API failing every time: a transient error must never trigger re-discovery.
+    pca.runMonitoringCycle();
+    pca.runMonitoringCycle();
 
     assertFalse("A transient CM error must not trigger re-discovery, even with a valid prior baseline",
             listener.wasNotified(address, clusterName));
@@ -566,23 +558,9 @@ public class PollingConfigurationAnalyzerTest {
     try {
       setGatewayServices(gws);
 
-      // Create the monitor
+      // Create the monitor and run a single monitoring pass synchronously
       TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache, aliasService);
-      pca.setInterval(5);
-
-      // Start the polling thread
-      ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
-      pollingThreadExecutor.execute(pca);
-      pollingThreadExecutor.shutdown();
-
-      try {
-        pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        //
-      }
-
-      // Stop the config analyzer thread
-      pca.stop();
+      pca.runMonitoringCycle();
 
       if (descriptor != null && descriptor.exists()) {
         descriptor.deleteOnExit();
@@ -720,9 +698,9 @@ public class PollingConfigurationAnalyzerTest {
     final ChangeListener listener = new ChangeListener();
     final TestablePollingConfigAnalyzer pca =
             buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(), listener, true, gatewayConfig);
-    pca.setInterval(5);
 
-    // Two scale events for the same generator-backed, referenced role type, evaluated in insertion order.
+    // Two scale events for the same generator-backed, referenced role type, evaluated in insertion order within one
+    // cycle: the first isExcludedRoleType read sees the role type excluded, the second sees it no longer excluded.
     pca.addRestartEvent(clusterName, createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
         NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
         PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
@@ -730,15 +708,7 @@ public class PollingConfigurationAnalyzerTest {
         NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
         PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
 
-    final ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
-    pollingThreadExecutor.execute(pca);
-    pollingThreadExecutor.shutdown();
-    try {
-      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    pca.stop();
+    pca.runMonitoringCycle();
 
     assertTrue("A live update to excluded.role.types must be honored on the next evaluation (config read fresh, not cached)",
         listener.wasNotified(address, clusterName));
@@ -1000,21 +970,12 @@ public class PollingConfigurationAnalyzerTest {
       setGatewayServices(gws);
 
       TestablePollingConfigAnalyzer pca = new TestablePollingConfigAnalyzer(gatewayConfig, configCache, aliasService, listener);
-      pca.setInterval(5);
       if (currentServiceName != null) {
         pca.addCurrentServiceConfigModel(address, clusterName, currentServiceName, currentModel);
       }
       pca.addRestartEvent(clusterName, event);
 
-      ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
-      pollingThreadExecutor.execute(pca);
-      pollingThreadExecutor.shutdown();
-      try {
-        pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        //
-      }
-      pca.stop();
+      pca.runMonitoringCycle();
     } finally {
       setGatewayServices(null);
       for (File descriptor : descriptors) {
@@ -1024,6 +985,41 @@ public class PollingConfigurationAnalyzerTest {
       }
     }
     return listener.wasNotified(address, clusterName);
+  }
+
+  /**
+   * Lifecycle / periodic-polling coverage for the real polling thread (the other tests drive runMonitoringCycle
+   * synchronously). Verifies that when the analyzer runs on its own thread: an event that arrives AFTER start is
+   * picked up on a subsequent poll and notifies (so the loop genuinely re-polls on its interval), and that stop()
+   * terminates the loop. Latch-based so it returns as soon as the notification fires rather than waiting a fixed time.
+   */
+  @Test
+  public void testPollingThreadPicksUpEventsArrivingAfterStartAndStops() throws AliasServiceException, InterruptedException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster PT";
+
+    final ChangeListener listener = new ChangeListener(1);
+    final TestablePollingConfigAnalyzer pca =
+            buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(), listener);
+    pca.setInterval(1); // poll every second so the post-start event is picked up quickly
+
+    final Thread pollingThread = new Thread(pca, "test-cm-config-monitor");
+    pollingThread.start();
+    try {
+      // Register the event AFTER the monitor has started: a notification can only fire if the loop re-polls.
+      pca.addRestartEvent(clusterName, createApiEvent(clusterName,
+          PollingConfigurationAnalyzer.CM_SERVICE_TYPE, PollingConfigurationAnalyzer.CM_SERVICE,
+          PollingConfigurationAnalyzer.ROLLING_RESTART_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS,
+          "EV_CLUSTER_ROLLING_RESTARTED"));
+
+      assertTrue("The polling thread must pick up an event that arrives after start, on a subsequent poll",
+          listener.awaitNotification(10, TimeUnit.SECONDS));
+      assertTrue("The change must have been recorded for the cluster", listener.wasNotified(address, clusterName));
+    } finally {
+      pca.stop();
+    }
+    pollingThread.join(TimeUnit.SECONDS.toMillis(10));
+    assertFalse("stop() must terminate the polling loop", pollingThread.isAlive());
   }
 
   private void doTestStartEvent(final ApiEventCategory category) {
@@ -1057,28 +1053,16 @@ public class PollingConfigurationAnalyzerTest {
     // Create the monitor, registering a listener so we can verify that change notification works
     final ChangeListener listener = new ChangeListener();
     final TestablePollingConfigAnalyzer pca = pollingConfigAnalyzer == null ? buildPollingConfigAnalyzer(address, clusterName, serviceConfigurationModels, listener) : pollingConfigAnalyzer;
-    pca.setInterval(5);
 
     // Add updated service config models
     for (String roleType : updatedServiceConfigurationModels.keySet()) {
       pca.addCurrentServiceConfigModel(address, clusterName, roleType, updatedServiceConfigurationModels.get(roleType));
     }
 
-    // Start the polling thread
-    ExecutorService pollingThreadExecutor = Executors.newSingleThreadExecutor();
-    pollingThreadExecutor.execute(pca);
-    pollingThreadExecutor.shutdown();
-
+    // Register the event and run a single monitoring pass synchronously (the event is present before the cycle, so it
+    // is always seen - no polling thread, no fixed wait, no add-after-start race).
     pca.addRestartEvent(clusterName, event);
-
-    try {
-      pollingThreadExecutor.awaitTermination(10, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      //
-    }
-
-    // Stop the config analyzer thread
-    pca.stop();
+    pca.runMonitoringCycle();
 
     return listener;
   }
@@ -1557,11 +1541,30 @@ public class PollingConfigurationAnalyzerTest {
   private static class ChangeListener implements ConfigurationChangeListener {
     private final Map<String, String> notifications = new HashMap<>();
     private final List<String> events = new ArrayList<>();
+    private final CountDownLatch latch;
+
+    // Default constructor for tests that don't need a latch
+    ChangeListener() {
+      this.latch = null;
+    }
+
+    // Constructor for tests that need to await notifications (latch released once per notification),
+    // so a test driving the real polling thread can await notification.
+    ChangeListener(final int expectedNotifications) {
+      this.latch = new CountDownLatch(expectedNotifications);
+    }
+
+    boolean awaitNotification(final long timeout, final TimeUnit unit) throws InterruptedException {
+      return latch != null && latch.await(timeout, unit);
+    }
 
     @Override
     public void onConfigurationChange(String source, String clusterName) {
       notifications.put(source, clusterName);
       events.add(source + "+" + clusterName);
+      if (latch != null) {
+        latch.countDown();
+      }
     }
 
     boolean wasNotified(final String source, final String clusterName) {

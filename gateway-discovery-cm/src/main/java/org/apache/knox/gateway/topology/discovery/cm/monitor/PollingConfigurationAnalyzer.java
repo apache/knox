@@ -166,6 +166,9 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
   private boolean isActive;
 
+  // Sticky gateway-readiness flag: once the gateway reports ready we stop re-checking. Reset at the start of run().
+  private boolean gatewayStatusOk;
+
   private final GatewayConfig gatewayConfig;
 
   private GatewayStatusService gatewayStatusService;
@@ -221,21 +224,30 @@ public class PollingConfigurationAnalyzer implements Runnable {
   public void run() {
     log.startedClouderaManagerConfigMonitor(interval);
     isActive = true;
+    gatewayStatusOk = false;
 
-    boolean gatewayStatusOk = false;
     while (isActive) {
-      if (!gatewayStatusOk) {
-        gatewayStatusOk = getGatewayStatusService() != null && getGatewayStatusService().status();
-      }
-      if (gatewayStatusOk) {
-        monitorClusterConfigurationChanges();
-      } else {
-        log.gatewayIsNotYetReadyToMonitorClouderaManagerConfigs();
-      }
+      runMonitoringCycle();
       waitFor(interval);
     }
 
     log.stoppedClouderaManagerConfigMonitor();
+  }
+
+  /**
+   * Run a single monitoring iteration: gate on gateway readiness (checked until ready, then assumed ready), and when
+   * ready check the monitored clusters for configuration changes. Package-visible so tests can drive one cycle
+   * synchronously instead of running the polling thread.
+   */
+  void runMonitoringCycle() {
+    if (!gatewayStatusOk) {
+      gatewayStatusOk = getGatewayStatusService() != null && getGatewayStatusService().status();
+    }
+    if (gatewayStatusOk) {
+      monitorClusterConfigurationChanges();
+    } else {
+      log.gatewayIsNotYetReadyToMonitorClouderaManagerConfigs();
+    }
   }
 
   private void monitorClusterConfigurationChanges() {
