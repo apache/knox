@@ -245,8 +245,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
           }
           log.checkingClusterConfiguration(clusterName, address);
 
-          // Check here for existing descriptor references, and add to the removal list if there are not any
-          if (!clusterReferencesExist(address, clusterName)) {
+          // Parse the deployed descriptors once per cycle to answer both "is this cluster still referenced?" and
+          // "which CM service types do the descriptors reference?"; add to the removal list if there are no references.
+          final DescriptorReferences descriptorReferences = analyzeDescriptorReferences(address, clusterName);
+          if (!descriptorReferences.referencesExist()) {
             clustersToStopMonitoring.add(address + FQCN_DELIM + clusterName);
             continue;
           }
@@ -254,7 +256,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
           // Configuration changes don't mean anything without corresponding service start/restarts. Therefore, monitor
           // start events, and check the configuration only of the restarted service(s) to identify changes
           // that should trigger re-discovery.
-          final List<RelevantEvent> relevantEvents = getRelevantEvents(address, clusterName);
+          final List<RelevantEvent> relevantEvents =
+                  getRelevantEvents(address, clusterName, descriptorReferences.referencedServiceTypes());
 
           // If there are no recent start events, then nothing to do now
           if (!relevantEvents.isEmpty()) {
@@ -418,46 +421,85 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   /**
-   * Determine if any descriptors reference the specified discovery source and cluster.
+   * Parse the deployed descriptors once to determine, in a single pass, both whether any descriptor still references
+   * the given discovery source and cluster and which CM service types those descriptors reference. Merging the two
+   * questions avoids re-parsing every descriptor file twice per polling cycle.
+   * <p>
+   * Two deliberate asymmetries are preserved: a descriptor that cannot be read/parsed, or whose topology is a
+   * read-only override (SimpleDescriptorHandler never regenerates it), still counts as a reference - so the cluster
+   * keeps being monitored - but contributes no referenced service names, because a re-discovery could not act on it.
    *
    * @param source      A discovery source
    * @param clusterName A discovery cluster name
-   *
-   * @return true, if at least one descriptor references the specified discovery information; Otherwise, false.
+   * @return references-exist plus the referenced CM service types; the latter is null when the TopologyService is
+   *         unavailable (references-exist is then true - assume references remain), meaning no relevance filtering.
    */
-  private boolean clusterReferencesExist(final String source, final String clusterName) {
-    boolean remainingClusterRefs = false;
-
-    if (source != null && clusterName != null) {
-      TopologyService ts = getTopologyService();
-      if (ts != null) {
-        boolean referencesIncomplete = false;
-        for (File f : ts.getDescriptors()) {
-          try {
-            SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
-            if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
-              remainingClusterRefs = true;
-              break;
-            }
-          } catch (Exception e) {
-            // A descriptor we cannot read/parse might reference this cluster. Concluding "no references" on
-            // incomplete information would tear down a still-referenced cluster's cache, so remember the gap and
-            // assume a reference remains below.
-            log.errorCheckingClusterReferences(f.getName(), source, clusterName, e);
-            referencesIncomplete = true;
-          }
-        }
-        if (!remainingClusterRefs && referencesIncomplete) {
-          // Could not rule out a reference from an unreadable/unparseable descriptor; assume a reference remains and
-          // keep monitoring rather than evict the cache (mirroring the unavailable-TopologyService case below).
-          remainingClusterRefs = true;
-        }
-      } else {
-        remainingClusterRefs = true; // If the TopologyService is unavailable, assume references remain
-      }
+  private DescriptorReferences analyzeDescriptorReferences(final String source, final String clusterName) {
+    final TopologyService ts = getTopologyService();
+    if (ts == null) {
+      // TopologyService unavailable: assume references remain (keep monitoring) and apply no relevance filtering.
+      return new DescriptorReferences(true, null);
+    }
+    if (source == null || clusterName == null) {
+      return new DescriptorReferences(false, Collections.emptySet());
     }
 
-    return remainingClusterRefs;
+    boolean referencesExist = false;
+    boolean referencesIncomplete = false;
+    final Set<String> referencedServices = new HashSet<>();
+    for (File f : ts.getDescriptors()) {
+      try {
+        SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
+        if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())) {
+          // Any matching descriptor keeps the cluster referenced (monitored), even a read-only-override topology.
+          referencesExist = true;
+          // Only descriptors a re-discovery could act on contribute referenced service names: skip read-only-override
+          // topologies (gateway.read.only.override.topologies - the gateway-site list, NOT the descriptor's own
+          // "read-only" field), which SimpleDescriptorHandler never regenerates.
+          if (!gatewayConfig.getReadOnlyOverrideTopologyNames().contains(sd.getName())) {
+            for (SimpleDescriptor.Service service : sd.getServices()) {
+              referencedServices.add(service.getName());
+            }
+          }
+        }
+      } catch (Exception e) {
+        // A descriptor we cannot read/parse might reference this cluster. Concluding "no references" on incomplete
+        // information would tear down a still-referenced cluster's cache, so remember the gap and assume a reference
+        // remains. It contributes no service names (it cannot be regenerated until fixed, which itself triggers a
+        // fresh discovery).
+        log.errorCheckingClusterReferences(f.getName(), source, clusterName, e);
+        referencesIncomplete = true;
+      }
+    }
+    if (!referencesExist && referencesIncomplete) {
+      // Could not rule out a reference from an unreadable/unparseable descriptor; assume a reference remains and keep
+      // monitoring rather than evict the cache (mirroring the unavailable-TopologyService case above).
+      referencesExist = true;
+    }
+    return new DescriptorReferences(referencesExist, serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices));
+  }
+
+  /**
+   * The outcome of a single descriptor-parsing pass: whether the cluster is still referenced by a deployed descriptor,
+   * and the CM service types those descriptors reference ({@code null} when references could not be determined because
+   * the TopologyService is unavailable, in which case no relevance filtering is applied).
+   */
+  private static final class DescriptorReferences {
+    private final boolean referencesExist;
+    private final Set<String> referencedServiceTypes;
+
+    DescriptorReferences(final boolean referencesExist, final Set<String> referencedServiceTypes) {
+      this.referencesExist = referencesExist;
+      this.referencedServiceTypes = referencedServiceTypes;
+    }
+
+    boolean referencesExist() {
+      return referencesExist;
+    }
+
+    Set<String> referencedServiceTypes() {
+      return referencedServiceTypes;
+    }
   }
 
   /**
@@ -508,12 +550,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
   /**
    * Get relevant events for the specified ClouderaManager cluster.
    *
-   * @param address     The address of the ClouderaManager instance.
-   * @param clusterName The name of the cluster.
+   * @param address                The address of the ClouderaManager instance.
+   * @param clusterName            The name of the cluster.
+   * @param referencedServiceTypes The CM service types referenced by the deployed descriptors (from
+   *                               {@link #analyzeDescriptorReferences}); null means no relevance filtering.
    *
    * @return A List of StartEvent objects for service start events since the last time they were queried.
    */
-  private List<RelevantEvent> getRelevantEvents(final String address, final String clusterName) {
+  private List<RelevantEvent> getRelevantEvents(final String address, final String clusterName,
+                                                final Set<String> referencedServiceTypes) {
     List<RelevantEvent> relevantEvents = new ArrayList<>();
 
     // Get the last event query timestamp
@@ -538,11 +583,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (events.isEmpty()) {
       log.noActivationEventFound();
     } else {
-      // The CM service types referenced by the deployed descriptors for this cluster. Events for services no
-      // descriptor references are irrelevant: with per-descriptor discovery filtering they are never discovered, so
+      // referencedServiceTypes (computed once per cycle by analyzeDescriptorReferences): events for services no
+      // descriptor references are irrelevant - with per-descriptor discovery filtering they are never discovered, so
       // they must not be treated as "new services" and trigger churn. A null value means references cannot be
       // determined (no TopologyService), in which case no reference filtering is applied.
-      final Set<String> referencedServiceTypes = getReferencedServiceTypes(address, clusterName);
       for (ApiEvent event : events) {
         if (isStartEvent(event, referencedServiceTypes) || isScaleEvent(event, referencedServiceTypes)) {
           relevantEvents.add(new RelevantEvent(event));
@@ -589,50 +633,6 @@ public class PollingConfigurationAnalyzer implements Runnable {
    */
   private boolean isReferencedServiceType(final String serviceType, final Set<String> referencedServiceTypes) {
     return referencedServiceTypes == null || referencedServiceTypes.contains(serviceType);
-  }
-
-  /**
-   * Determine the CM service types referenced by the deployed descriptors targeting the given discovery source and
-   * cluster, by mapping each descriptor's declared Knox service names to CM service types via the registered service
-   * model generators.
-   * <p>
-   * The set is built only from descriptors a re-discovery could actually act on. A descriptor is skipped when it
-   * cannot be read/parsed (logged; it cannot be regenerated until it is fixed, which itself triggers a fresh
-   * discovery) or when its topology is a read-only override (SimpleDescriptorHandler never regenerates it). Filtering
-   * relevance on the remaining descriptors therefore never drops an actionable re-discovery. This intentionally
-   * differs from {@link #clusterReferencesExist(String, String)}, which must instead assume references remain so an
-   * unreadable descriptor never causes the monitored baseline to be discarded.
-   *
-   * @return the referenced CM service types (possibly empty), or null if the TopologyService is unavailable
-   */
-  private Set<String> getReferencedServiceTypes(final String source, final String clusterName) {
-    final TopologyService ts = getTopologyService();
-    if (ts == null) {
-      return null;
-    }
-
-    final Set<String> referencedServices = new HashSet<>();
-    for (File f : ts.getDescriptors()) {
-      try {
-        SimpleDescriptor sd = SimpleDescriptorFactory.parse(f.toPath().toAbsolutePath().toString());
-        // Skip descriptors whose topology is listed in gateway.read.only.override.topologies: SimpleDescriptorHandler
-        // never regenerates them (skipReadOnlyDescriptor), so a re-discovery could not act on them - just as it cannot
-        // act on an unparseable one. This is the gateway-site override list, NOT the descriptor's own "read-only"
-        // field (which only controls Admin UI editability and does not affect discovery).
-        if (source.equals(sd.getDiscoveryAddress()) && clusterName.equals(sd.getCluster())
-            && !gatewayConfig.getReadOnlyOverrideTopologyNames().contains(sd.getName())) {
-          for (SimpleDescriptor.Service service : sd.getServices()) {
-            referencedServices.add(service.getName());
-          }
-        }
-      } catch (Exception e) {
-        // A descriptor we cannot read/parse is skipped: it cannot be re-generated until it is fixed, so it cannot be
-        // the target of a useful re-discovery now. Log the offending file and keep filtering on the descriptors we
-        // could read.
-        log.errorDeterminingReferencedServiceTypes(f.getName(), source, clusterName, e);
-      }
-    }
-    return serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices);
   }
 
   /**
