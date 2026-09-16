@@ -2790,41 +2790,45 @@ public class TokenServiceResourceTest {
 
   /**
    * KNOX-3458: A delegation exchange whose resulting actor chain would stay within the (default)
-   * maximum depth is minted normally. With the default bound of 10 an existing 9-actor chain plus the
+   * maximum depth is minted normally. With the default bound of 3 an existing 2-actor chain plus the
    * new actor lands exactly on the limit.
    */
   @Test
   @SuppressForbidden
   public void testActClaimAtMaxChainDepthAllowed() throws Exception {
     configureCommonExpectations(createDelegatedAuthContextExpectations(true, true), true);
-    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 9);
+    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 2);
     final JWTToken parsedToken = getTokenWithSubject(subject);
 
     assertEquals("alice", parsedToken.getSubject());
-    assertEquals("Resulting chain should sit exactly on the default maximum of 10",
-        10, TokenUtils.extractActorChain(parsedToken).size());
+    assertEquals("Resulting chain should sit exactly on the default maximum of 3",
+        3, TokenUtils.extractActorChain(parsedToken).size());
 
     EasyMock.verify(request, context);
   }
 
   /**
    * KNOX-3458: A delegation exchange whose resulting actor chain would exceed the (default) maximum
-   * depth is rejected before minting. With the default bound of 10 an existing 10-actor chain plus the
-   * new actor would be 11.
+   * depth is rejected before minting. With the default bound of 3 an existing 3-actor chain plus the
+   * new actor would be 4.
    */
   @Test
   @SuppressForbidden
   public void testExchangeRejectedWhenChainDepthExceeded() throws Exception {
     configureCommonExpectations(createDelegatedAuthContextExpectations(true, true), true);
-    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 10);
+    final Subject subject = createSubjectWithChainAndImpersonation("admin", "alice", 3);
     final Response response = getRawTokenResponse(subject);
 
     assertEquals(400, response.getStatus());
     final String entity = response.getEntity().toString();
     assertTrue("Error body should explain the depth violation, but was: " + entity,
         entity.contains("would exceed the configured maximum"));
-    assertTrue("Error body should carry the ACTOR_CHAIN_DEPTH_EXCEEDED code, but was: " + entity,
-        entity.contains(String.valueOf(TokenResource.ErrorCode.ACTOR_CHAIN_DEPTH_EXCEEDED.toInt())));
+    // The rejection must conform to the RFC 8693 (§2.2.2 -> RFC 6749 §5.2) error format:
+    // {"error": "invalid_request", "error_description": ...}.
+    assertTrue("Error body should carry the RFC 8693 invalid_request error code, but was: " + entity,
+        entity.contains("invalid_request"));
+    assertTrue("Error body should carry an error_description, but was: " + entity,
+        entity.contains("error_description"));
 
     EasyMock.verify(request, context);
   }
@@ -2851,7 +2855,7 @@ public class TokenServiceResourceTest {
 
   /**
    * KNOX-3458: A configured value that is not a positive integer is ignored and the default maximum
-   * (10) is enforced instead - proving the fallback is the default bound, not an unlimited chain: an
+   * (3) is enforced instead - proving the fallback is the default bound, not an unlimited chain: an
    * existing 10-actor chain (resulting depth 11) is still rejected.
    */
   @Test

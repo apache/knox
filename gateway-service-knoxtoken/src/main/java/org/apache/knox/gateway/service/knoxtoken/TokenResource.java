@@ -99,6 +99,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import org.apache.knox.gateway.util.Tokens;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -156,7 +157,7 @@ public class TokenResource {
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
   private static final String TOKEN_ENABLE_DELEGATED_AUTH = TOKEN_PARAM_PREFIX + "enable.delegated.auth";
   static final String DELEGATION_MAX_ACTOR_CHAIN_DEPTH = "delegation.max.actor.chain.depth";
-  static final int DELEGATION_MAX_ACTOR_CHAIN_DEPTH_DEFAULT = 10;
+  static final int DELEGATION_MAX_ACTOR_CHAIN_DEPTH_DEFAULT = 3;
   private static final long TOKEN_TTL_DEFAULT = 30000L;
   static final String TOKEN_API_PATH = "knoxtoken/api/v1";
   static final String RESOURCE_PATH = TOKEN_API_PATH + "/token";
@@ -974,9 +975,9 @@ public class TokenResource {
       }
     } catch (ActorChainDepthExceededException e) {
       log.rejectedTokenExchange(e.getMessage());
-      return new TokenResponseContext(null,
-          errorResponseBody(e.getMessage(), e.getErrorCode()),
-          Response.status(Response.Status.BAD_REQUEST));
+      final Response.Status status = Response.Status.BAD_REQUEST;
+      final Response error = KnoxIDFUtils.error("invalid_request", e.getMessage(), status);
+      return new TokenResponseContext(null, (String) error.getEntity(), Response.status(status));
     } catch (TokenServiceException e) {
       log.unableToIssueToken(e);
       response = new TokenResponseContext(null
