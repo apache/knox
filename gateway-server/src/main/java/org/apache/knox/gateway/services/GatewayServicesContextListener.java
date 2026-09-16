@@ -17,8 +17,8 @@
  */
 package org.apache.knox.gateway.services;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import org.apache.knox.gateway.GatewayServer;
 import org.apache.knox.gateway.services.topology.TopologyService;

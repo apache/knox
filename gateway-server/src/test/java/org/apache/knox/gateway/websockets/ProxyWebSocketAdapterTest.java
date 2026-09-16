@@ -21,7 +21,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.websocket.ClientEndpointConfig;
+import jakarta.websocket.ClientEndpointConfig;
 import java.security.KeyStore;
 
 public class ProxyWebSocketAdapterTest {

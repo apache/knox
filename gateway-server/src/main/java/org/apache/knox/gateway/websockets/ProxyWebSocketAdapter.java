@@ -33,15 +33,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.CloseReason;
-import javax.websocket.DeploymentException;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.WebSocketContainer;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.ee8.websocket.javax.client.JavaxWebSocketClientContainerProvider;
+import org.eclipse.jetty.ee10.websocket.jakarta.client.JakartaWebSocketClientContainerProvider;
 import org.eclipse.jetty.websocket.api.Callback;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -53,7 +53,7 @@ import org.eclipse.jetty.websocket.api.StatusCode;
  *
  * <p>The frontend (browser to Knox) side uses the native Jetty 12
  * WebSocket API via {@link Session.Listener.AbstractAutoDemanding}. The
- * backend (Knox to downstream) side stays on JSR-356 ({@code javax.websocket}).
+ * backend (Knox to downstream) side stays on JSR-356 ({@code jakarta.websocket}).
  *
  * @since 0.10
  */
@@ -94,7 +94,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   /** Session between the backend (outbound) and Knox */
-  private javax.websocket.Session backendSession;
+  private jakarta.websocket.Session backendSession;
 
   /** JSR-356 client container used to connect to the backend */
   private WebSocketContainer container;
@@ -194,7 +194,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
    *
    * <p>In Jetty 12 the old {@code org.eclipse.jetty.websocket.jsr356.ClientContainer}
    * cast is no longer available; the supported way to configure SSL for the
-   * JSR-356 client is to hand {@link JavaxWebSocketClientContainerProvider}
+   * JSR-356 client is to hand {@link JakartaWebSocketClientContainerProvider}
    * a pre-configured {@link HttpClient}.
    */
   private WebSocketContainer buildBackendContainer() {
@@ -211,7 +211,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
     HttpClient httpClient = new HttpClient();
     httpClient.setSslContextFactory(sslContextFactory);
     LOG.logMessage("Truststore for websocket setup");
-    return JavaxWebSocketClientContainerProvider.getContainer(httpClient);
+    return JakartaWebSocketClientContainerProvider.getContainer(httpClient);
   }
 
 
@@ -358,7 +358,7 @@ public class ProxyWebSocketAdapter extends Session.Listener.AbstractAutoDemandin
       }
 
       @Override
-      public void onMessagePong(javax.websocket.PongMessage message, Object session) {
+      public void onMessagePong(jakarta.websocket.PongMessage message, Object session) {
         LOG.logMessage("[From Backend <---]: PONG");
         remoteLock.lock();
         try {

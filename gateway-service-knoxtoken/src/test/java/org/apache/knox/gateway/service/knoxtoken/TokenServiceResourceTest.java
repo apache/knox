@@ -66,13 +66,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import javax.security.auth.Subject;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -254,11 +254,11 @@ public class TokenServiceResourceTest {
       ArrayList<X509Certificate> certArrayList = new ArrayList<>();
       certArrayList.add(trustedCertMock);
       X509Certificate[] certs = {};
-      EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
+      EasyMock.expect(request.getAttribute("jakarta.servlet.request.X509Certificate")).andReturn(certArrayList.toArray(certs)).anyTimes();
       EasyMock.replay(trustedCertMock);
     }
     else {
-      EasyMock.expect(request.getAttribute("javax.servlet.request.X509Certificate")).andReturn(null).anyTimes();
+      EasyMock.expect(request.getAttribute("jakarta.servlet.request.X509Certificate")).andReturn(null).anyTimes();
     }
 
     EasyMock.replay(principal, services, context, request, aliasService, config);

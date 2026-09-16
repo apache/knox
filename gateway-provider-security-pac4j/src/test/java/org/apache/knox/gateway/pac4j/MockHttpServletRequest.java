@@ -19,9 +19,9 @@ package org.apache.knox.gateway.pac4j;
 
 import org.easymock.EasyMock;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import java.util.Collections;
 import java.util.Enumeration;

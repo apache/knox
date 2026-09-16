@@ -76,7 +76,7 @@ import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.ee8.webapp.WebAppContext;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
@@ -87,7 +87,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
@@ -584,18 +584,17 @@ public class GatewayServer {
           .filter(e -> !e.getValue().equals(config.getGatewayPort()))
           .forEach( entry ->  {
             log.createJettyHandler(entry.getKey());
-            // Deployed topologies register their ee8 WebAppContext in the
-            // deployments map keyed by context path. (The ContextHandlerCollection
-            // holds the *core* ContextHandlers returned by getCoreContextHandler(),
-            // which are not ee8 WebAppContext instances, so it cannot be filtered
-            // by type to recover them.) Binding the virtual host on the ee8
-            // WebAppContext propagates to its core context handler.
+            // Deployed topologies register their ee10 WebAppContext in the
+            // deployments map keyed by context path. Under Jetty 12 EE10 the
+            // WebAppContext is itself a core ContextHandler (it is what gets
+            // added to the ContextHandlerCollection), so binding the virtual
+            // host on it takes effect directly.
             final WebAppContext context = deployments
                 .get("/" + config.getGatewayPath() + "/" + entry.getKey());
 
             if(context !=  null) {
               context.setVirtualHosts(
-                  new String[]{"@" + entry.getKey().toLowerCase(Locale.ROOT)});
+                  List.of("@" + entry.getKey().toLowerCase(Locale.ROOT)));
             } else {
               // no topology found for mapping entry.getKey()
               log.noMappedTopologyFound(entry.getKey());
@@ -916,14 +915,21 @@ public class GatewayServer {
     context.setAttribute( GatewayServices.GATEWAY_NAME, config.getGatewayPath());
     // Add support for JSPs.
     context.setAttribute(
-        "org.eclipse.jetty.ee8.webapp.ContainerIncludeJarPattern",
-        ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$" );
+        "org.eclipse.jetty.ee10.webapp.ContainerIncludeJarPattern",
+        ".*/jakarta\\.servlet\\.jsp\\.jstl-.*\\.jar$|.*/[^/]*taglibs.*\\.jar$" );
     context.setTempDirectory( FileUtils.getFile( warFile, "META-INF", "temp" ) );
     context.setErrorHandler( createErrorHandler() );
-    context.setInitParameter("org.eclipse.jetty.ee8.servlet.Default.dirAllowed", "false");
+    context.setInitParameter("org.eclipse.jetty.ee10.servlet.Default.dirAllowed", "false");
+    // Jetty 12 / Servlet 6 (EE10) rejects ambiguous URIs (e.g. encoded path
+    // separators %2F) with 400 at the servlet layer unless the ServletHandler is
+    // told to decode them. Knox proxies backends (WebHDFS/WEBHBASE row keys, etc.)
+    // whose paths legitimately carry encoded slashes, so decode them here — this,
+    // together with UriCompliance.LEGACY on the connector, restores the Jetty 9.4
+    // pass-through behavior.
+    context.getServletHandler().setDecodeAmbiguousURIs(true);
     ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
     context.setClassLoader(jspClassLoader);
-    // Jetty 12's ee8 form parser reads the max form content size and max form keys
+    // Jetty 12's ee10 form parser reads the max form content size and max form keys
     // from the context (ContextHandler.getMaxFormContentSize()/getMaxFormKeys() and
     // the core Context attribute) — never from Server-level attributes — so the
     // gateway-configured limits must be applied per WebApp context here.
@@ -1034,9 +1040,9 @@ public class GatewayServer {
       WebAppContext oldContext = deployments.get( newContext.getContextPath() );
       deployments.put( newContext.getContextPath(), newContext );
       if( oldContext != null ) {
-        contexts.removeHandler( oldContext.getCoreContextHandler() );
+        contexts.removeHandler( oldContext );
       }
-      contexts.addHandler( newContext.getCoreContextHandler() );
+      contexts.addHandler( newContext );
 
       processApplicationPathAliases(warDir, topology);
 
@@ -1059,7 +1065,7 @@ public class GatewayServer {
       if (warDir.getName().contains(appName) && !aliases.isEmpty()) {
         aliases.forEach(alias -> {
           WebAppContext aliasContext = createWebAppContext(topology, warDir, alias);
-          contexts.addHandler(aliasContext.getCoreContextHandler());
+          contexts.addHandler(aliasContext);
         });
       }
     });
@@ -1114,7 +1120,7 @@ public class GatewayServer {
       for( WebAppContext context : deactivate ) {
         String contextPath = context.getContextPath();
         deployments.remove( contextPath );
-        contexts.removeHandler( context.getCoreContextHandler() );
+        contexts.removeHandler( context );
         try {
           context.stop();
         } catch( Exception e ) {

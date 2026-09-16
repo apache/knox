@@ -21,7 +21,7 @@ import org.apache.knox.gateway.config.Configure;
 import org.apache.knox.gateway.ha.provider.HaProvider;
 import org.apache.knox.gateway.ha.provider.HaServiceConfig;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 public class RMUIHaDispatch extends RMHaBaseDispatcher {
     private static final String RESOURCE_ROLE = "YARNUI";

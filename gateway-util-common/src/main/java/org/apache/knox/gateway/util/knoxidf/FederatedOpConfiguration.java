@@ -16,7 +16,7 @@
  */
 package org.apache.knox.gateway.util.knoxidf;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 public class FederatedOpConfiguration {
     private final boolean enabled;

@@ -1326,7 +1326,7 @@ In essence, a user can add a custom validator by following these  steps. The cor
 3. The class should implement the method *String getName()* that may returns a string constant. The step-9  will need this user defined string constant.
 4. The class should implement the method *boolean validate(HttpServletRequest httpRequest, FilterConfig filterConfig)*. This is the key method which will validate the request based on 'httpRequest' and 'filterConfig'. In most common cases, user may need to use HTTP headers value to validate. For example, client can get a token from an authentication service and pass it as HTTP header. This validate method needs to extract that header and verify the token. In some instance, the server may need to contact the same authentication service to validate.
 5. Create a text file src/resources/META-INF/services and add fully qualified name of your custom validator class (e.g. *com.company.knox.validator.CustomValidator*).
-6. You may need to include the packages "org.apache.knox.gateway-provider-security-preauth"  of version 0.12+ and  "javax.servlet.javax.servlet-api" of version 3.1.0+ in pom.xml.
+6. You may need to include the packages "org.apache.knox.gateway-provider-security-preauth"  of version 0.12+ and  "jakarta.servlet.jakarta.servlet-api" of version 6.0.0+ in pom.xml.
 7. Build your custom jar.
 8. Deploy the jar in $GATEWAY_HOME/ext directory.
 9. Add/modify a parameter called *preauth.validation.method* with the name of validator used in step #3. Optionally, you may add any new parameter that may be required only for your CustomValidator.
@@ -1339,8 +1339,8 @@ In essence, a user can add a custom validator by following these  steps. The cor
 	import org.apache.knox.gateway.preauth.filter.PreAuthValidator;
 	import com.google.common.base.Strings;
 	
-	import javax.servlet.FilterConfig;
-	import javax.servlet.http.HttpServletRequest;
+	import jakarta.servlet.FilterConfig;
+	import jakarta.servlet.http.HttpServletRequest;
 	
 	public class CustomValidator extends PreAuthValidator {
 	  //Any string constant value should work for these 3 variables
@@ -1387,8 +1387,8 @@ In essence, a user can add a custom validator by following these  steps. The cor
 **POM file (Step-6)**
 
     <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
         <scope>provided</scope>
     </dependency>
 
@@ -1742,8 +1742,8 @@ For the identity assertion filter itself it is just a matter of extension and th
 package org.apache.knox.gateway.identityasserter.caseshifter.filter;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 
 public class CaseShifterIdentityAssertionFilter extends CommonIdentityAssertionFilter {

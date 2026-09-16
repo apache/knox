@@ -25,7 +25,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.net.ssl.SSLContext;
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;

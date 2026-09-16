@@ -18,9 +18,9 @@
 package org.apache.knox.gateway.identityasserter.concat.filter;
 
 import javax.security.auth.Subject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
 
 import org.apache.knox.gateway.identityasserter.common.filter.CommonIdentityAssertionFilter;
 

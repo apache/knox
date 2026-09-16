@@ -242,15 +242,15 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 		import java.util.Set;
 		
 		import javax.security.auth.Subject;
-		import javax.servlet.Filter;
-		import javax.servlet.FilterChain;
-		import javax.servlet.FilterConfig;
-		import javax.servlet.ServletException;
-		import javax.servlet.ServletRequest;
-		import javax.servlet.ServletResponse;
-		import javax.servlet.http.Cookie;
-		import javax.servlet.http.HttpServletRequest;
-		import javax.servlet.http.HttpServletResponse;
+		import jakarta.servlet.Filter;
+		import jakarta.servlet.FilterChain;
+		import jakarta.servlet.FilterConfig;
+		import jakarta.servlet.ServletException;
+		import jakarta.servlet.ServletRequest;
+		import jakarta.servlet.ServletResponse;
+		import jakarta.servlet.http.Cookie;
+		import jakarta.servlet.http.HttpServletRequest;
+		import jakarta.servlet.http.HttpServletResponse;
 		
 		import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 		import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
@@ -647,7 +647,7 @@ and the CertificateUtil class is below:
 	import java.security.cert.X509Certificate;
 	import java.security.interfaces.RSAPublicKey;
 
-	import javax.servlet.ServletException;
+	import jakarta.servlet.ServletException;
 
 	public class CertificateUtil {
 		private static final String PEM_HEADER = "-----BEGIN CERTIFICATE-----\n";

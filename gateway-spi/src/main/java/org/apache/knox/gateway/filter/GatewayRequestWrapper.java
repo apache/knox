@@ -20,8 +20,8 @@ package org.apache.knox.gateway.filter;
 import org.apache.knox.gateway.util.MimeTypes;
 
 import jakarta.activation.MimeType;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
 public class GatewayRequestWrapper extends HttpServletRequestWrapper implements GatewayRequest {
 

@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.config;
 
-import javax.servlet.FilterConfig;
+import jakarta.servlet.FilterConfig;
 
 public class FilterConfigurationAdapter implements ConfigurationAdapter {
 

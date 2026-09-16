@@ -17,9 +17,9 @@
  */
 package org.apache.knox.test.mock;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -48,17 +48,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 
   @Override
   public String encodeRedirectURL( String s ) {
-    return null;
-  }
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public String encodeUrl( String s ) {
-    return null;
-  }
-
-  @Override
-  public String encodeRedirectUrl( String s ) {
     return null;
   }
 
@@ -102,11 +91,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 
   @Override
   public void setStatus( int i ) {
-  }
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public void setStatus( int i, String s ) {
   }
 
   @Override

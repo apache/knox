@@ -17,7 +17,7 @@
  */
 package org.apache.knox.gateway.trace;
 
-import org.eclipse.jetty.ee8.nested.ErrorHandler;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 
 /**
  * Gateway error handler for generated (Jetty) error pages.
@@ -28,9 +28,10 @@ import org.eclipse.jetty.ee8.nested.ErrorHandler;
  * servlet layer wrap was intentionally dropped in the Jetty 12 migration.
  * Reason:
  * {@link TraceResponse} is now a core {@code org.eclipse.jetty.server.Response}
- * wrapper. EE8 error handler operates on the servlet layer, so the
- * two no longer compose directly. Response body tracing is performed
- * uniformly at the core layer by {@code TraceHandler}.
+ * wrapper. This handler now extends the core
+ * {@code org.eclipse.jetty.server.handler.ErrorHandler} directly, so response
+ * body tracing is performed uniformly at the core layer by {@code TraceHandler}
+ * rather than at the (EE10) servlet layer.
  */
 public class KnoxErrorHandler extends ErrorHandler {
 

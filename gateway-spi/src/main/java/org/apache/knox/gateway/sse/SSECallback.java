@@ -22,8 +22,8 @@ import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.knox.gateway.SpiGatewayMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class SSECallback implements FutureCallback<SSEResponse> {
