@@ -26,13 +26,13 @@
       
       
       
-        <link rel="canonical" href="https://knox.apache.org/config_tls_client_certificate_authentication_provider/">
+        <link rel="canonical" href="https://knox.apache.org/knox_sso_logout/">
       
       
-        <link rel="prev" href="../config_sso_cookie_provider/">
+        <link rel="prev" href="../config_knox_sso/">
       
       
-        <link rel="next" href="../config_pac4j_provider/">
+        <link rel="next" href="../config_apikey/">
       
       
         
@@ -43,7 +43,7 @@
     
     
       
-        <title>TLS Client Certificate - Apache Knox</title>
+        <title>Knox SSO Logout - Apache Knox</title>
       
     
     
@@ -96,7 +96,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tls-client-certificate-provider" class="md-skip">
+        <a href="#knoxsso-logout" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              TLS Client Certificate
+              Knox SSO Logout
             
           </span>
         </div>
@@ -1187,10 +1187,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -1219,11 +1217,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_7_1" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3_7_1" >
         
           
           <label class="md-nav__link" for="__nav_4_3_7_1" id="__nav_4_3_7_1_label" tabindex="0">
@@ -1244,7 +1244,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_7_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_7_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1525,35 +1525,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    TLS Client Certificate
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../config_tls_client_certificate_authentication_provider/" class="md-nav__link">
         
   
   
@@ -1569,52 +1544,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#tls-client-certificate-provider" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TLS Client Certificate Provider
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="TLS Client Certificate Provider">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1688,8 +1617,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -1714,13 +1645,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3_7_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_7_2" checked>
         
           
           <label class="md-nav__link" for="__nav_4_3_7_2" id="__nav_4_3_7_2_label" tabindex="0">
@@ -1741,7 +1670,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_7_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_3_7_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_3_7_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1784,10 +1713,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../knox_sso_logout/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knox SSO Logout
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1803,6 +1759,210 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#user-facing-logout-logoutjsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User-Facing Logout (logout.jsp)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User-Facing Logout (logout.jsp)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logout-flow-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logout Flow Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logout Flow Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#programmatic-logout-knoxssout-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Programmatic Logout (KNOXSSOUT Service)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Programmatic Logout (KNOXSSOUT Service)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logout-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logout Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logout Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knox-application-logout-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Knox Application Logout (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-logout-federated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Logout (Federated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-logoutjsp-vs-webssoutresource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison: logout.jsp vs WebSSOutResource
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparison: logout.jsp vs WebSSOutResource">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#topology-configuration-knoxsso-knoxssout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topology Configuration (KNOXSSO / KNOXSSOUT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gateway-configuration-gateway-sitexml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gateway Configuration (gateway-site.xml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequence-diagram-logoutjsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequence Diagram (logout.jsp)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -3501,6 +3661,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3509,22 +3671,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#tls-client-certificate-provider" class="md-nav__link">
+  <a href="#user-facing-logout-logoutjsp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        TLS Client Certificate Provider
+        User-Facing Logout (logout.jsp)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="TLS Client Certificate Provider">
+    <nav class="md-nav" aria-label="User-Facing Logout (logout.jsp)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#logout-flow-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Logout Flow Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logout Flow Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process Details
       
     </span>
   </a>
@@ -3533,6 +3718,139 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#programmatic-logout-knoxssout-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Programmatic Logout (KNOXSSOUT Service)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Programmatic Logout (KNOXSSOUT Service)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logout-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logout Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logout Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#knox-application-logout-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Knox Application Logout (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-logout-federated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Logout (Federated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-logoutjsp-vs-webssoutresource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison: logout.jsp vs WebSSOutResource
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparison: logout.jsp vs WebSSOutResource">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#topology-configuration-knoxsso-knoxssout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topology Configuration (KNOXSSO / KNOXSSOUT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gateway-configuration-gateway-sitexml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gateway Configuration (gateway-site.xml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequence-diagram-logoutjsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequence Diagram (logout.jsp)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -3553,49 +3871,198 @@
 
 
 
-  <h1>TLS Client Certificate</h1>
-
-<!--
-   Licensed to the Apache Software Foundation (ASF) under one or more
-   contributor license agreements.  See the NOTICE file distributed with
-   this work for additional information regarding copyright ownership.
-   The ASF licenses this file to You under the Apache License, Version 2.0
-   (the "License"); you may not use this file except in compliance with
-   the License.  You may obtain a copy of the License at
-
-       https://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
--->
-<!---
-   Licensed to the Apache Software Foundation (ASF) under one or more
-   contributor license agreements.  See the NOTICE file distributed with
-   this work for additional information regarding copyright ownership.
-   The ASF licenses this file to You under the Apache License, Version 2.0
-   (the "License"); you may not use this file except in compliance with
-   the License.  You may obtain a copy of the License at
-
-       https://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
---->
-
-<h2 id="tls-client-certificate-provider">TLS Client Certificate Provider<a class="headerlink" href="#tls-client-certificate-provider" title="Permanent link">&para;</a></h2>
-<p>The TLS client certificate authentication provider enables establishing the user based on the client provided TLS certificate. The user will be the DN from the certificate. This provider requires that the gateway is configured to require client authentication with either <code>gateway.client.auth.wanted</code> or <code>gateway.client.auth.needed</code> ( #[Mutual Authentication with SSL] ).</p>
-<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">&lt;provider&gt;</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="nt">&lt;role&gt;</span>authentication<span class="nt">&lt;/role&gt;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">&lt;name&gt;</span>ClientCert<span class="nt">&lt;/name&gt;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">&lt;enabled&gt;</span>true<span class="nt">&lt;/enabled&gt;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">&lt;/provider&gt;</span>
+<h1 id="knoxsso-logout">KnoxSSO Logout<a class="headerlink" href="#knoxsso-logout" title="Permanent link">&para;</a></h1>
+<p>Apache Knox provides multiple ways to handle session logout, ranging from user-facing pages to programmatic REST endpoints.</p>
+<h2 id="user-facing-logout-logoutjsp">User-Facing Logout (logout.jsp)<a class="headerlink" href="#user-facing-logout-logoutjsp" title="Permanent link">&para;</a></h2>
+<p>The primary logout mechanism for end-users is managed by <code>logout.jsp</code> within the <code>knoxauth</code> application. It provides a UI to terminate sessions and redirect users.</p>
+<h3 id="logout-flow-overview">Logout Flow Overview<a class="headerlink" href="#logout-flow-overview" title="Permanent link">&para;</a></h3>
+<p>The logout process can be triggered by navigating to the <code>logout.jsp</code> endpoint. The behavior of this page is controlled by several query parameters.</p>
+<h4 id="query-parameters">Query Parameters<a class="headerlink" href="#query-parameters" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>originalUrl</code></td>
+<td>The URL to which the user should be redirected after logout. This URL must be whitelisted.</td>
+</tr>
+<tr>
+<td><code>returnToApp</code></td>
+<td>If set to <code>1</code>, and <code>originalUrl</code> is valid, the user is immediately redirected to the <code>originalUrl</code>.</td>
+</tr>
+<tr>
+<td><code>globalLogout</code></td>
+<td>If set to <code>1</code>, the KnoxSSO session cookie and associated pac4j cookies are removed, and the user is redirected to the configured global logout page.</td>
+</tr>
+<tr>
+<td><code>autoGlobalLogout</code></td>
+<td>If set to <code>1</code>, the page will automatically trigger the global logout process upon loading.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="process-details">Process Details<a class="headerlink" href="#process-details" title="Permanent link">&para;</a></h4>
+<ol>
+<li>
+<p><strong>Validation</strong>:
+   The <code>originalUrl</code> (if provided) is validated against the configured whitelist (<code>knoxsso.redirect.whitelist.regex</code>). If validation fails, a security warning is displayed.</p>
+</li>
+<li>
+<p><strong>Session Termination (Global Logout)</strong>:
+   When a global logout is initiated:</p>
+<ul>
+<li>The SSO cookie (default <code>hadoop-jwt</code>) is invalidated by setting its <code>Max-Age</code> to 0.</li>
+<li>Various <code>pac4j</code> session cookies are removed.</li>
+<li>The user is redirected to the <code>knox.global.logout.page.url</code> configured in <code>gateway-site.xml</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Return to Application</strong>:
+   If <code>returnToApp=1</code> is provided, Knox redirects the user back to the <code>originalUrl</code>. Note: this does not invalidate the SSO session; if the cookie is still valid, the user may be automatically logged back in.</p>
+</li>
+</ol>
+<h2 id="programmatic-logout-knoxssout-service">Programmatic Logout (KNOXSSOUT Service)<a class="headerlink" href="#programmatic-logout-knoxssout-service" title="Permanent link">&para;</a></h2>
+<p>For applications that need to trigger a logout programmatically (e.g., via AJAX/XHR) or require server-side state cleanup, Knox provides the <code>KNOXSSOUT</code> service, implemented by <code>WebSSOutResource</code>.</p>
+<h3 id="endpoint">Endpoint<a class="headerlink" href="#endpoint" title="Permanent link">&para;</a></h3>
+<p><code>GET/POST /&lt;gateway-path&gt;/&lt;topology&gt;/knoxssout/api/v1/webssout</code></p>
+<h3 id="key-responsibilities">Key Responsibilities<a class="headerlink" href="#key-responsibilities" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Browser Cookie Removal</strong>: It explicitly clears the SSO cookie (e.g., <code>hadoop-jwt</code>) by returning a <code>Set-Cookie</code> header with <code>Max-Age=0</code> and the appropriate domain/path.</li>
+<li><strong>Server-Side Token Revocation</strong>: If the Knox <code>TokenStateService</code> is enabled (<code>knox.token.exp.server-managed=true</code>), this service will actively revoke the JWT token. This prevents the token from being used in subsequent requests even if the browser fails to clear the cookie.</li>
+<li><strong>Concurrent Session Management</strong>: It interacts with the <code>ConcurrentSessionVerifier</code> to ensure that the user's active session count is correctly decremented upon logout.</li>
+<li><strong>Response Format</strong>: Returns a JSON object:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">&quot;loggedOut&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></li>
+</ul>
+<h2 id="logout-types">Logout Types<a class="headerlink" href="#logout-types" title="Permanent link">&para;</a></h2>
+<p>Knox distinguishes between terminating the local Knox session and the broader global SSO session.</p>
+<h3 id="knox-application-logout-local">Knox Application Logout (Local)<a class="headerlink" href="#knox-application-logout-local" title="Permanent link">&para;</a></h3>
+<p>This terminates the session within the Knox Gateway.
+* <strong>Action</strong>: The <code>hadoop-jwt</code> cookie is removed, and the token is revoked (if server-managed state is enabled).
+* <strong>Result</strong>: The user is logged out of Knox, but their session at the <strong>Identity Provider (IdP)</strong> remains active.
+* <strong>Trigger</strong>: Calling the <code>KNOXSSOUT</code> service or visiting <code>logout.jsp</code> without the <code>globalLogout</code> parameter.</p>
+<h3 id="global-logout-federated">Global Logout (Federated)<a class="headerlink" href="#global-logout-federated" title="Permanent link">&para;</a></h3>
+<p>This terminates the session both in Knox and at the external Identity Provider.
+* <strong>Action</strong>: Knox clears the local cookies/tokens and then redirects the browser to the <strong>Global Logout Page URL</strong>.
+* <strong>Result</strong>: The user is logged out of Knox and the central IdP (e.g., SAML, OIDC). They must re-authenticate at the IdP to access any SSO-protected resource.
+* <strong>Trigger</strong>: Clicking the "Global Logout" button on <code>logout.jsp</code> or passing <code>globalLogout=1</code>.
+* <strong>Requirement</strong>: Requires <code>knox.global.logout.page.url</code> to be configured in <code>gateway-site.xml</code>.</p>
+<h2 id="comparison-logoutjsp-vs-webssoutresource">Comparison: logout.jsp vs WebSSOutResource<a class="headerlink" href="#comparison-logoutjsp-vs-webssoutresource" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>logout.jsp</th>
+<th>WebSSOutResource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Target Audience</strong></td>
+<td>End-users (Browser)</td>
+<td>Applications (REST API)</td>
+</tr>
+<tr>
+<td><strong>Response</strong></td>
+<td>HTML/UI</td>
+<td>JSON/XML</td>
+</tr>
+<tr>
+<td><strong>Global Logout</strong></td>
+<td>Supported (via redirect)</td>
+<td>Not directly (Cookie/Token only)</td>
+</tr>
+<tr>
+<td><strong>Token Revocation</strong></td>
+<td>Indirect (via Global Logout)</td>
+<td>Direct (via TokenStateService)</td>
+</tr>
+<tr>
+<td><strong>Use Case</strong></td>
+<td>Redirecting after logout</td>
+<td>Background session cleanup</td>
+</tr>
+<tr>
+<td>## Configuration</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The logout flow parameters are typically defined in the topology file. Note that while <code>WebSSOutResource</code> belongs to the <strong>KNOXSSOUT</strong> service, the <code>logout.jsp</code> UI specifically searches the topology for the <strong>KNOXSSO</strong> service to retrieve its configuration.</p>
+<h3 id="topology-configuration-knoxsso-knoxssout">Topology Configuration (KNOXSSO / KNOXSSOUT)<a class="headerlink" href="#topology-configuration-knoxsso-knoxssout" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>knoxsso.cookie.name</code></td>
+<td>The name of the SSO cookie to be cleared.</td>
+<td><code>hadoop-jwt</code></td>
+</tr>
+<tr>
+<td><code>knoxsso.redirect.whitelist.regex</code></td>
+<td>Whitelist for <code>originalUrl</code> redirection.</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note</strong>: For the <code>logout.jsp</code> UI to find these parameters, they should be defined under the <code>KNOXSSO</code> service role in your topology. The <code>KNOXSSOUT</code> service also uses <code>knoxsso.cookie.name</code> to identify which cookie to invalidate programmatically.</p>
+</blockquote>
+<h3 id="gateway-configuration-gateway-sitexml">Gateway Configuration (gateway-site.xml)<a class="headerlink" href="#gateway-configuration-gateway-sitexml" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>knox.global.logout.page.url</code></td>
+<td>URL of the global logout page (e.g., IdP logout).</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>knox.homepage.logout.enabled</code></td>
+<td>Enables logout from the Knox home page.</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sequence-diagram-logoutjsp">Sequence Diagram (logout.jsp)<a class="headerlink" href="#sequence-diagram-logoutjsp" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sequenceDiagram
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    participant User
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    participant App as Application
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    participant Knox as Knox (logout.jsp)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    participant IdP as Global Logout Page (IdP)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    User-&gt;&gt;Knox: GET /knoxauth/logout.jsp?originalUrl=...
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    Knox-&gt;&gt;Knox: Validate originalUrl
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    alt Valid Redirect
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        Knox--&gt;&gt;User: Display Logout Page
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        alt User chooses Global Logout
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>            User-&gt;&gt;Knox: POST /knoxauth/logout.jsp (globalLogout=1)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            Knox-&gt;&gt;Knox: Invalidate Cookies
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>            Knox--&gt;&gt;User: Redirect to Global Logout Page
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>            User-&gt;&gt;IdP: GET Global Logout URL
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        else User chooses Return to App
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>            User-&gt;&gt;Knox: GET /knoxauth/logout.jsp?returnToApp=1&amp;originalUrl=...
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            Knox--&gt;&gt;User: Redirect to originalUrl
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>        end
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    else Invalid Redirect
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        Knox--&gt;&gt;User: Display Error
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    end
 </code></pre></div>
 
 
