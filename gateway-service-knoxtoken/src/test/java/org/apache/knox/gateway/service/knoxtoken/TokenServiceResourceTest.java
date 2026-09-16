@@ -136,6 +136,7 @@ public class TokenServiceResourceTest {
   private HttpServletRequest request;
   private String[] resourceParamValues;
   private List<String> exchangeRequestedAudiences;
+  private Integer exchangeRequestedTtlSec;
   private JWTokenAuthority authority;
   private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
@@ -209,6 +210,10 @@ public class TokenServiceResourceTest {
     if (exchangeRequestedAudiences != null) {
       EasyMock.expect(request.getAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR))
           .andReturn(exchangeRequestedAudiences).anyTimes();
+    }
+    if (exchangeRequestedTtlSec != null) {
+      EasyMock.expect(request.getAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR))
+          .andReturn(exchangeRequestedTtlSec).anyTimes();
     }
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
@@ -880,6 +885,68 @@ public class TokenServiceResourceTest {
     assertTrue(expiresDate.after(now));
     long diff = expiresDate.getTime() - now.getTime();
     assertTrue(diff < 60000L && diff > 30000L);
+  }
+
+  /**
+   * KNOX-3459: When an upstream token exchange conveys an authoritative delegation-policy TTL, the
+   * minted token honors it directly and it takes precedence over - is not capped by - the topology
+   * knox.token.ttl upper bound. Here the policy TTL (3600s) is far larger than the topology cap (60s),
+   * so a token whose lifetime exceeds the cap proves the policy value bypassed it rather than being
+   * clamped down.
+   */
+  @Test
+  @SuppressForbidden
+  public void testDelegationPolicyTtlIsHonoredAndBypassesTopologyCap() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", "60000"); // 60s topology cap
+    exchangeRequestedTtlSec = 3600; // 1h authoritative policy TTL
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    assertTrue(authority.verifyToken(parsedToken));
+
+    final long diff = parsedToken.getExpiresDate().getTime() - System.currentTimeMillis();
+    assertTrue("Policy TTL must not be capped by the smaller topology knox.token.ttl", diff > 60000L);
+    assertTrue("Token lifetime should reflect the 3600s policy TTL", diff <= 3600000L);
+  }
+
+  /**
+   * KNOX-3459: The authoritative delegation-policy TTL also bypasses the client-supplied lifespan
+   * shorten-only clamp. A lifespan of 30s would normally win over a 60s topology cap, but the policy
+   * TTL (3600s) is authoritative, so the minted token's lifetime reflects the policy value, not the
+   * much smaller lifespan.
+   */
+  @Test
+  @SuppressForbidden
+  public void testDelegationPolicyTtlBypassesLifespanClamp() throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put("knox.token.ttl", "60000"); // 60s topology cap
+    contextExpectations.put(TokenResource.LIFESPAN, "PT30S"); // client-supplied 30s lifespan
+    exchangeRequestedTtlSec = 3600; // 1h authoritative policy TTL
+    configureCommonExpectations(contextExpectations);
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    assertTrue(authority.verifyToken(parsedToken));
+
+    final long diff = parsedToken.getExpiresDate().getTime() - System.currentTimeMillis();
+    assertTrue("Policy TTL must override the shorter client lifespan", diff > 60000L);
+    assertTrue("Token lifetime should reflect the 3600s policy TTL", diff <= 3600000L);
   }
 
   @Test

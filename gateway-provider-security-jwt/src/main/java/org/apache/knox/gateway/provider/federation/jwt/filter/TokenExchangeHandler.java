@@ -293,6 +293,8 @@ class TokenExchangeHandler {
         auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
             ActionOutcome.SUCCESS, auditMessage(policyDecision, actorIdentity, subjectToken,
                 requestedSubjectValue, uniqueRequestedAudiences));
+
+        request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
       }
 
       final Subject subject;
