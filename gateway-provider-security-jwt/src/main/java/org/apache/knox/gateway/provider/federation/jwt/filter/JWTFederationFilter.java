@@ -131,6 +131,18 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Has no effect on a same-subject exchange.
   public static final String DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE = "delegation.enforce.requested.audience.max.one";
 
+  // Topology provider param (default false/absent). Gates whether a
+  // same-subject token exchange may honor a requested audience/resource at
+  // all. While off (the fail-safe default), the requested audience is ignored
+  // for same-subject exchanges, so a passthrough audience validator cannot
+  // mint an arbitrarily-audienced token without authorization. While on, the
+  // requested audience is honored but must be authorized against the subject
+  // token's own aud claim; any requested value the subject token does not
+  // already carry is rejected. This applies only to same-subject exchanges and
+  // is independent of the delegation.* flags (delegation exchanges are
+  // authorized by the delegation policy regardless of this flag).
+  public static final String TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED = "token.exchange.same.subject.requested.audience.enabled";
+
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
   }
@@ -165,6 +177,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean delegationRequestedSubjectEnabled;
   private boolean delegationEnforceRequestedAudienceRequired;
   private boolean delegationEnforceRequestedAudienceMaxOne;
+  private boolean tokenExchangeSameSubjectRequestedAudienceEnabled;
 
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
@@ -233,6 +246,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationRequestedSubjectEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_REQUESTED_SUBJECT_ENABLED));
     delegationEnforceRequestedAudienceRequired = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED));
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
+    tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
 
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
@@ -707,6 +721,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   boolean isDelegationEnforceRequestedAudienceMaxOne() {
     return delegationEnforceRequestedAudienceMaxOne;
+  }
+
+  boolean isTokenExchangeSameSubjectRequestedAudienceEnabled() {
+    return tokenExchangeSameSubjectRequestedAudienceEnabled;
   }
 
   PolicyDecision evaluateDelegationPolicy(PolicyCheckRequest request) {

@@ -493,7 +493,10 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testResourceBodyParamConveyedAsRequestedAudiences() throws Exception {
-    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // Same-subject exchange: honoring is enabled and the subject token carries the requested
+    // audiences in its aud claim, so they are authorized and conveyed downstream.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "https://recipient1", "https://recipient2"));
     handler.handle(exchangeRequest("subtok",
         new String[] {"https://recipient1", "https://recipient2"}, null), response, chain);
 
@@ -504,8 +507,9 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testAudienceBodyParamConveyedAsRequestedAudiences() throws Exception {
-    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
     // RFC 8693 audience is a logical service name and is not URI-constrained
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
     handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
 
     assertTrue(filter.continued);
@@ -514,7 +518,8 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testResourceAndAudienceCombinedResourceFirst() throws Exception {
-    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "https://recipient1", "service-a"));
     handler.handle(exchangeRequest("subtok",
         new String[] {"https://recipient1"}, new String[] {"service-a"}), response, chain);
 
@@ -523,7 +528,8 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testCommaSeparatedResourceValuesAreSplit() throws Exception {
-    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "https://recipient1", "https://recipient2"));
     handler.handle(exchangeRequest("subtok",
         new String[] {"https://recipient1, https://recipient2"}, null), response, chain);
 
@@ -569,6 +575,89 @@ public class TokenExchangeHandlerTest {
 
     assertTrue(filter.continued);
     assertFalse(requestedAudiencesAttr.hasCaptured());
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceIgnoredWhenFlagDisabled() throws Exception {
+    // Fail-safe default: for a same-subject exchange the requested audience is dropped entirely
+    // (not conveyed downstream), so a passthrough audience validator cannot mint an
+    // arbitrarily-audienced token without authorization. The exchange still succeeds.
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
+
+    assertTrue(filter.continued);
+    assertFalse(requestedAudiencesAttr.hasCaptured());
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceAuthorizedWhenSubsetOfSubjectTokenAudience() throws Exception {
+    // Honoring on: a requested audience the subject token already carries is authorized and
+    // conveyed, even when the subject token carries additional audiences.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a", "service-b", "service-c"));
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
+
+    assertTrue(filter.continued);
+    assertEquals(Arrays.asList("service-a"), requestedAudiencesAttr.getValue());
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceRejectedWhenNotInSubjectTokenAudience() throws Exception {
+    // Honoring on but the requested audience is not among the subject token's own aud claim:
+    // rejected as invalid_target and never conveyed.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-b"}), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    assertFalse(requestedAudiencesAttr.hasCaptured());
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceRejectedWhenOnlySomeAreInSubjectTokenAudience() throws Exception {
+    // Honoring on with multiple requested audiences, only some of which the subject token carries:
+    // every requested value must be authorized, so the whole request is rejected (containsAll checks
+    // all of them, not just one).
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a", "service-b"}), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    assertFalse(requestedAudiencesAttr.hasCaptured());
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceRejectedWhenSubjectTokenHasNoAudience() throws Exception {
+    // Honoring on and a requested audience present, but the subject token carries no aud claim:
+    // there is nothing to authorize against, so the request is rejected.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    assertFalse(requestedAudiencesAttr.hasCaptured());
+  }
+
+  @Test
+  public void testDelegationExchangeConveysRequestedAudienceRegardlessOfSameSubjectFlag() throws Exception {
+    // Regression: the same-subject flag does not affect a delegation exchange. With the flag off
+    // and the policy allowing, the requested audience is still conveyed (it was authorized by the
+    // delegation policy, not the subject token's aud claim).
+    filter.delegationServerEnabled = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    handler.handle(delegationRequest("subtok", "acttok", JWT_TYPE, null,
+        new String[] {"https://recipient1"}, null), response, chain);
+
+    assertTrue(filter.continued);
+    assertTrue(requestedAudiencesAttr.hasCaptured());
+    assertEquals(Arrays.asList("https://recipient1"), requestedAudiencesAttr.getValue());
   }
 
   @Test
@@ -1066,7 +1155,10 @@ public class TokenExchangeHandlerTest {
   @Test
   public void testAudienceMaxOneFlagDoesNotApplyToNonDelegationExchange() throws Exception {
     filter.delegationEnforceRequestedAudienceMaxOne = true;
-    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // Same-subject honoring on, both requested audiences present in the subject token's aud: the
+    // max-one delegation flag must not gate a same-subject exchange, so both are conveyed.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "aud1", "aud2"));
     handler.handle(exchangeRequest("subtok", null, new String[] {"aud1", "aud2"}), response, chain);
 
     assertTrue(filter.continued);
@@ -1161,6 +1253,20 @@ public class TokenExchangeHandlerTest {
     return jwt;
   }
 
+  /**
+   * Like {@link #jwt(String, String)} but with an {@code aud} claim, used to authorize a
+   * same-subject exchange's requested audience against the subject token's own audiences.
+   */
+  private static JWT jwtWithAudiences(String subject, String issuer, String... audiences) {
+    final JWT jwt = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwt.getSubject()).andReturn(subject).anyTimes();
+    EasyMock.expect(jwt.getIssuer()).andReturn(issuer).anyTimes();
+    EasyMock.expect(jwt.getClaimAsObject(EasyMock.anyString())).andReturn(null).anyTimes();
+    EasyMock.expect(jwt.getAudienceClaims()).andReturn(audiences).anyTimes();
+    EasyMock.replay(jwt);
+    return jwt;
+  }
+
   private static JWT jwtWithActClaim(String subject, String issuer, Map<String, Object> actClaim) {
     final JWT jwt = EasyMock.createNiceMock(JWT.class);
     EasyMock.expect(jwt.getSubject()).andReturn(subject).anyTimes();
@@ -1187,6 +1293,7 @@ public class TokenExchangeHandlerTest {
     private boolean delegationRequestedSubjectEnabled;
     private boolean delegationEnforceRequestedAudienceRequired;
     private boolean delegationEnforceRequestedAudienceMaxOne;
+    private boolean tokenExchangeSameSubjectRequestedAudienceEnabled;
     // Defaults to an "allow" decision so every pre-existing test that never sets this field
     // keeps passing unmodified.
     private PolicyDecision policyDecision = new PolicyDecision(null, 0);
@@ -1211,6 +1318,11 @@ public class TokenExchangeHandlerTest {
     @Override
     boolean isDelegationEnforceRequestedAudienceMaxOne() {
       return delegationEnforceRequestedAudienceMaxOne;
+    }
+
+    @Override
+    boolean isTokenExchangeSameSubjectRequestedAudienceEnabled() {
+      return tokenExchangeSameSubjectRequestedAudienceEnabled;
     }
 
     @Override
