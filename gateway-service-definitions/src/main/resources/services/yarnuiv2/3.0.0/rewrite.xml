@@ -371,6 +371,9 @@
     <match pattern="{scheme}://{host}:{port}/jobhistory/{**}">
       <rewrite template="{$frontend[url]}/jobhistory/{**}?{scheme}?{host}?{port}"/>
     </match>
+    <match pattern="*://*:*/history/{**}?spark4=true?{**}">
+      <rewrite template="{$frontend[url]}/spark4history/history/{**}?{**}"/>
+    </match>
     <match pattern="*://*:*/history/{**}?{**}">
       <rewrite template="{$frontend[url]}/sparkhistory/history/{**}?{**}"/>
     </match>
