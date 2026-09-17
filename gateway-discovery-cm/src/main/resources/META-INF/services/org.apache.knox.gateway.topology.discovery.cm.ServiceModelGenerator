@@ -37,6 +37,7 @@ org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaUIServiceModelG
 org.apache.knox.gateway.topology.discovery.cm.model.kudu.KuduUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyForSpark3ServiceModelGenerator
+org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyForSpark4ServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.oozie.OozieUIServiceModelGenerator
 org.apache.knox.gateway.topology.discovery.cm.model.phoenix.PhoenixServiceModelGenerator
