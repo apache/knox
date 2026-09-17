@@ -184,7 +184,7 @@ public class TokenResource {
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private static final Gson GSON = new Gson();
   // Non-final and package-private to allow test injection of a mock Auditor, matching the
-  // already-established pattern in TokenExchangeHandler.auditor / DelegationPolicyResource.auditor.
+  // already-established pattern in TokenExchangeAuditing.auditor / DelegationPolicyResource.auditor.
   static Auditor auditor = AuditServiceFactory.getAuditService()
       .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
           AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);

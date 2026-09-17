@@ -72,7 +72,7 @@ public class TokenExchangeHandlerTest {
   private FilterChain chain;
   private Capture<Object> requestedAudiencesAttr;
   private Capture<Object> requestedTtlAttr;
-  private static final Auditor ORIGINAL_AUDITOR = TokenExchangeHandler.auditor;
+  private static final Auditor ORIGINAL_AUDITOR = TokenExchangeAuditing.auditor;
   private Auditor auditor;
 
   @Before
@@ -87,16 +87,16 @@ public class TokenExchangeHandlerTest {
     // unmodified.
     auditor = EasyMock.createNiceMock(Auditor.class);
     EasyMock.replay(auditor);
-    TokenExchangeHandler.auditor = auditor;
+    TokenExchangeAuditing.auditor = auditor;
   }
 
   @After
   public void tearDown() {
-    TokenExchangeHandler.auditor = ORIGINAL_AUDITOR;
+    TokenExchangeAuditing.auditor = ORIGINAL_AUDITOR;
   }
 
   /**
-   * Replaces TokenExchangeHandler.auditor with a strict mock expecting exactly one audit()
+   * Replaces TokenExchangeAuditing.auditor with a strict mock expecting exactly one audit()
    * call matching the given action/resourceName/resourceType/outcome, replays it, and returns
    * a Capture of the message argument for the caller to assert further content against after
    * invoking handler.handle(...) and calling EasyMock.verify(auditor).
@@ -109,7 +109,7 @@ public class TokenExchangeHandlerTest {
         EasyMock.eq(outcome), EasyMock.capture(message));
     EasyMock.expectLastCall().once();
     EasyMock.replay(auditor);
-    TokenExchangeHandler.auditor = auditor;
+    TokenExchangeAuditing.auditor = auditor;
     return message;
   }
 
@@ -352,6 +352,24 @@ public class TokenExchangeHandlerTest {
     EasyMock.verify(auditor);
     assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
     assertTrue(auditMessage.getValue().contains("requested_resources=[service-a]"));
+    assertTrue(auditMessage.getValue().contains("audiences_honored=true"));
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceDroppedWhenHonoringDisabledAuditsNotHonored() throws Exception {
+    // Honoring off but the request carried audiences: they are silently dropped. The SUCCESS record
+    // still lists what was requested but must report audiences_honored=false, so a reader never
+    // mistakes the listed-but-dropped requested_resources for honored ones.
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.SUCCESS);
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
+
+    assertTrue(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
+    assertTrue(auditMessage.getValue().contains("requested_resources=[service-a]"));
+    assertTrue(auditMessage.getValue().contains("audiences_honored=false"));
   }
 
   @Test

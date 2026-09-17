@@ -18,12 +18,6 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import org.apache.commons.lang3.StringUtils;
 
-import org.apache.knox.gateway.audit.api.Action;
-import org.apache.knox.gateway.audit.api.ActionOutcome;
-import org.apache.knox.gateway.audit.api.AuditServiceFactory;
-import org.apache.knox.gateway.audit.api.Auditor;
-import org.apache.knox.gateway.audit.api.ResourceType;
-import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -103,12 +97,8 @@ class TokenExchangeHandler {
 
   // Larger than an allowed SPIFFE ID
   private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
-  // Non-final and package-private to allow test injection of a mock Auditor (see
-  // DelegationPolicyResource.auditor for the identical, already-established pattern).
-  static Auditor auditor = AuditServiceFactory.getAuditService()
-      .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
-          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   private final JWTFederationFilter filter;
+  private final TokenExchangeAuditing auditing = new TokenExchangeAuditing();
 
   TokenExchangeHandler(JWTFederationFilter filter) {
     this.filter = filter;
@@ -186,7 +176,7 @@ class TokenExchangeHandler {
         // yields a consistent audit resourceName and actor_authority/actor_id, mirroring the
         // delegation branch. act_chain_depth reports the delegation history the subject_token already
         // carries (it is exchanged as-is; TokenResource preserves any existing chain).
-        final ActorIdentity subjectAsActor = deriveActorIdentity(subjectToken);
+        final ActorIdentity subjectAsActor = ActorIdentity.fromJwt(subjectToken);
         final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
         final int actChainDepth = TokenUtils.extractActorChain(subjectToken).size();
         if (!requestedAudiences.isEmpty() && filter.isTokenExchangeSameSubjectRequestedAudienceEnabled()) {
@@ -196,10 +186,8 @@ class TokenExchangeHandler {
           // external policy.
           final Set<String> subjectAudiences = audienceClaimSet(subjectToken);
           if (!subjectAudiences.containsAll(uniqueRequestedAudiences)) {
-            auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(subjectAsActor), ResourceType.PRINCIPAL,
-                ActionOutcome.FAILURE, auditMessage("token_exchange_denied",
-                    "deny_reason=requested_audience_not_authorized", subjectAsActor, subjectToken,
-                    null, uniqueRequestedAudiences, actChainDepth));
+            auditing.denied(subjectAsActor, subjectToken, null,
+                "requested_audience_not_authorized", uniqueRequestedAudiences, actChainDepth);
             filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                 "invalid_target",
                 "The requested audience is not authorized for this subject");
@@ -209,10 +197,11 @@ class TokenExchangeHandler {
         }
         // else: same-subject exchange with honoring disabled (the fail-safe default) -- the requested
         // audience is dropped so a passthrough audience validator cannot mint an arbitrarily-audienced
-        // token without authorization; KNOXTOKEN falls back to the audience validator's default.
-        auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(subjectAsActor), ResourceType.PRINCIPAL,
-            ActionOutcome.SUCCESS, auditMessage("token_exchange_allowed", null, subjectAsActor,
-                subjectToken, null, uniqueRequestedAudiences, actChainDepth));
+        // token without authorization; KNOXTOKEN falls back to the audience validator's default. The
+        // SUCCESS record still lists the requested resources but reports audiences_honored=false, so a
+        // dropped request is never mistaken for an honored one.
+        auditing.allowed(subjectAsActor, subjectToken, null, uniqueRequestedAudiences,
+            conveyRequestedAudiences, actChainDepth);
       }
 
       final Subject subject;
@@ -310,8 +299,9 @@ class TokenExchangeHandler {
         return DelegationTokenExchangeOutcome.rejected();
       }
     }
+    final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
     final JWT actorIdentitySource = hasActorToken ? actorToken : subjectToken;
-    final ActorIdentity actorIdentity = deriveActorIdentity(actorIdentitySource);
+    final ActorIdentity actorIdentity = ActorIdentity.fromJwt(actorIdentitySource);
 
     // A single policy-evaluation call per exchange, carrying the full validated requested-
     // resource set and an always-empty requestedScopes set (scope enforcement is deferred).
@@ -333,11 +323,8 @@ class TokenExchangeHandler {
       // rather than a misleading rejection. The underlying cause is logged by the policy service.
       // Audit it as an UNAVAILABLE outcome so every delegation exchange (allow/deny/unavailable)
       // leaves a TOKEN_EXCHANGE record.
-      final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
-      auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
-          ActionOutcome.UNAVAILABLE, auditMessage("token_exchange_unavailable",
-              "reason=delegation_group_lookup_unavailable", actorIdentity, subjectToken,
-              requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
+      auditing.unavailable(actorIdentity, subjectToken, requestedSubjectValue,
+          "delegation_group_lookup_unavailable", uniqueRequestedAudiences, actChainDepth);
       filter.handleValidationError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
           "server_error", "This delegation policy restricts canActFor by group, which requires "
               + "the LDAP service to resolve group membership; ensure the LDAP service is enabled "
@@ -345,19 +332,16 @@ class TokenExchangeHandler {
       return DelegationTokenExchangeOutcome.rejected();
     }
 
-    final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
     if (policyDecision.getDenyReason() != null) {
-      auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
-          ActionOutcome.FAILURE, auditMessage(policyDecision, actorIdentity, subjectToken,
-              requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
+      auditing.denied(actorIdentity, subjectToken, requestedSubjectValue,
+          policyDecision.getDenyReason(), uniqueRequestedAudiences, actChainDepth);
       // A single, generic denial that does not identify which requested value failed.
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request", "The token exchange request is rejected by policy");
       return DelegationTokenExchangeOutcome.rejected();
     }
-    auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
-        ActionOutcome.SUCCESS, auditMessage(policyDecision, actorIdentity, subjectToken,
-            requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
+    auditing.allowed(actorIdentity, subjectToken, requestedSubjectValue, uniqueRequestedAudiences,
+        !requestedAudiences.isEmpty(), actChainDepth);
 
     request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
 
@@ -488,102 +472,6 @@ class TokenExchangeHandler {
     @SuppressWarnings("rawtypes")
     final HashSet emptySet = new HashSet();
     return new Subject(true, principals, emptySet, emptySet);
-  }
-
-  private static final String K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX = "system:serviceaccount:";
-  private static final String K8S_SA_ACTOR_AUTHORITY = "K8S_SA";
-  private static final String USER_ACTOR_AUTHORITY = "USER";
-
-  /**
-   * Derive the (actorAuthority, actorId) pair identifying the actor for a delegation policy
-   * check, from the actor's validated JWT (the actor_token when one is present, or the
-   * subject_token acting as actor for a headless delegation exchange). actorAuthority is a
-   * fixed type tag identifying what kind of actor this is. Delegation policies are
-   * registered and looked up by the (actorAuthority, actorId) pair. A Kubernetes
-   * service-account subject (sub of the form
-   * "system:serviceaccount:&lt;namespace&gt;:&lt;sa-name&gt;") is tagged K8S_SA, with an
-   * actorId composed of its issuer, namespace, and service-account name, concatenated with
-   * colon separators. Every other subject is tagged USER, with its own subject as actorId
-   * verbatim. Knox managed client policies, tagged with CLIENT_ID, are deferred.
-   *
-   * @param actorJwt the actor's validated JWT
-   * @return the derived actor identity
-   */
-  private static ActorIdentity deriveActorIdentity(JWT actorJwt) {
-    final String subject = actorJwt.getSubject();
-    if (subject != null && subject.startsWith(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX)) {
-      final String namespaceAndName = subject.substring(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX.length());
-      return new ActorIdentity(K8S_SA_ACTOR_AUTHORITY, actorJwt.getIssuer() + ":" + namespaceAndName);
-    }
-    return new ActorIdentity(USER_ACTOR_AUTHORITY, subject);
-  }
-
-  /** The actorAuthority/actorId pair derived by {@link #deriveActorIdentity(JWT)}. */
-  private static final class ActorIdentity {
-    private final String actorAuthority;
-    private final String actorId;
-
-    ActorIdentity(String actorAuthority, String actorId) {
-      this.actorAuthority = actorAuthority;
-      this.actorId = actorId;
-    }
-  }
-
-  /**
-   * The (actorAuthority, actorId) pair is delegation policy's unique lookup key, see
-   * {@link #deriveActorIdentity(JWT)}, and hence can act as the audit record's unique
-   * resourceName.
-   */
-  private static String auditResourceName(ActorIdentity actorIdentity) {
-    return actorIdentity.actorAuthority + "/" + actorIdentity.actorId;
-  }
-
-  /**
-   * Builds the audit message for one policy-decision outcome. {@code actChainDepth} is the depth of
-   * the delegation history arriving on the subject_token (0 for a headless exchange, whose incoming
-   * chain is not propagated). Deliberately omits every field this decision point does not have:
-   * issued_token_jti, issued_token_expiry, and issued_subject (only known later, at minting time);
-   * scope (out of scope for this task).
-   */
-  private static String auditMessage(PolicyDecision policyDecision, ActorIdentity actorIdentity,
-                                      JWT subjectToken, String requestedSubjectValue,
-                                      Set<String> uniqueRequestedAudiences, int actChainDepth) {
-    final boolean denied = policyDecision.getDenyReason() != null;
-    return auditMessage(denied ? "token_exchange_denied" : "token_exchange_allowed",
-        denied ? "deny_reason=" + policyDecision.getDenyReason() : null,
-        actorIdentity, subjectToken, requestedSubjectValue, uniqueRequestedAudiences, actChainDepth);
-  }
-
-  /**
-   * Builds the audit message for one exchange outcome. {@code eventType} is the {@code event_type}
-   * value (token_exchange_allowed / token_exchange_denied / token_exchange_unavailable) and
-   * {@code reasonField} is a fully-formed, pre-labeled reason token (e.g. {@code deny_reason=...})
-   * appended verbatim, or null when there is none. {@code actChainDepth} is the depth of the
-   * delegation history arriving on the subject_token (0 for a headless exchange, whose incoming
-   * chain is not propagated). Deliberately omits every field this decision point does not have:
-   * issued_token_jti, issued_token_expiry, and issued_subject (only known later, at minting time,
-   * where TokenResource emits them); scope (out of scope for this task).
-   */
-  private static String auditMessage(String eventType, String reasonField, ActorIdentity actorIdentity,
-                                      JWT subjectToken, String requestedSubjectValue,
-                                      Set<String> uniqueRequestedAudiences, int actChainDepth) {
-    final StringBuilder message = new StringBuilder();
-    message.append("event_type=").append(eventType);
-    if (reasonField != null) {
-      message.append(' ').append(reasonField);
-    }
-    message.append(" actor_authority=").append(actorIdentity.actorAuthority);
-    message.append(" actor_id=").append(actorIdentity.actorId);
-    message.append(" subject_token_iss=").append(auditLabel(subjectToken.getIssuer()));
-    message.append(" subject_token_sub=").append(auditLabel(subjectToken.getSubject()));
-    message.append(" requested_subject=").append(auditLabel(requestedSubjectValue));
-    message.append(" requested_resources=").append(uniqueRequestedAudiences);
-    message.append(" act_chain_depth=").append(actChainDepth);
-    return message.toString();
-  }
-
-  private static String auditLabel(String value) {
-    return value != null ? value : "";
   }
 
   /**
