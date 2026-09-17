@@ -76,7 +76,9 @@ Open redirects are prevented both at registration and at authorization time.
 
 - The **host** component may not contain a wildcard.
 - **HTTPS is required.** Plain `http://` is accepted only for loopback hosts (`localhost`,
-  `127.0.0.1`, `::1`), per RFC 8252 for native apps.
+  `127.0.0.1`, `::1`), per RFC 8252 for native apps. Extra loopback hostnames can be added with the
+  `knoxidf.custom.loopback.hosts` topology parameter (see
+  [Configuration](configuration.md#core-knoxidf-service-parameters)); the built-in three are always included.
 - A wildcard `*` is permitted only at the **end of the path**, never in the host, query, or
   fragment.
 
@@ -185,6 +187,40 @@ tampered discovery document cannot point key resolution at an attacker-controlle
 endpoint. This check can be relaxed for development with
 `knox.token.exchange.dynamic.jwks.allow.http=true` on the token-exchange `JWTProvider` (see the
 [Configuration Reference](configuration.md#provider-related-properties-sample-topologies)).
+
+## Delegation authorization
+
+[Token exchange with delegation](token_exchange.md) lets one identity obtain a token that acts on
+behalf of another, so it is governed by a chain of fail-safe controls. The full model is on the
+[Token Exchange & Delegation](token_exchange.md) page; the security-relevant guarantees are:
+
+- **Everything is off until explicitly enabled.** `delegation.server.enabled`,
+  `delegation.requested.subject.enabled`, and the requested-audience switches all default to
+  `false`. A topology that has not opted in performs no delegated exchange, and a same-subject
+  exchange silently drops any requested audience rather than honoring it.
+- **Delegation is default-denied and policy-gated.** Even with delegation enabled, an actor may act
+  for another subject only when an operator-authored [delegation policy](token_exchange.md#delegation-policies)
+  for that actor's `(actorAuthority, actorId)` authorizes it — via an explicit user allow-list or an
+  LDAP-group allow-list. Headless (`requested_subject`) exchange additionally requires the policy's
+  `allowHeadlessExchange`.
+- **Denials leak nothing.** Whatever the reason a policy rejects an exchange
+  (`actor_not_registered`, `headless_not_allowed`, `subject_not_allowed`, …), the caller receives
+  the single generic response `400 invalid_request` "The token exchange request is rejected by
+  policy". The specific reason is recorded only in the [audit log](operations.md#auditing), so the
+  endpoint cannot be used to probe who may act for whom.
+- **Requested audiences are authorized, not trusted.** A same-subject exchange may only convey an
+  audience already present in the subject token's own `aud`; a mismatch is rejected with
+  `400 invalid_target`. For delegated exchanges, `delegation.enforce.requested.audience.required`
+  and `.max.one` further constrain how many audiences a caller may request.
+- **Group evaluation fails closed on infrastructure loss.** A `canActForGroups` rule needs Knox's
+  LDAP service to resolve the subject's membership. If LDAP is disabled or unreachable, the exchange
+  fails with `500 server_error` — it is never treated as an implicit allow. Deploy LDAP wherever
+  group-based policies are used.
+- **The actor chain is bounded.** `delegation.max.actor.chain.depth` (default `3`) caps how deeply
+  on-behalf-of exchanges may be nested; the cap cannot be disabled by misconfiguration.
+
+The delegation-policy admin API carries the `KNOXIDF_ADMIN` role and must be exposed only on an
+administrator-restricted topology, exactly like the [trusted issuer registry](#trusted-issuer-registry).
 
 ## Secret handling
 

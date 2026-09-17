@@ -61,6 +61,7 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 | `knoxidf.auto.consent.enabled` | `false` | When `true`, the [consent screen](security.md#consent) is skipped. This is a **server-side** decision and is never read from a client request parameter. |
 | `knoxidf.client.registration.anonymous.allowed` | `false` | When `true`, [dynamic client registration](security.md#dynamic-client-registration) accepts anonymous callers. Secure by default. |
 | `knoxidf.registration.allowed.scopes` | OIDC-standard set | Comma-separated server-side whitelist of scopes a client may put in its `allowed_scopes` at [registration](security.md#registerable-scope-whitelist). An explicit value is **authoritative** (replaces the default). `openid` is always registerable. Blank/unset ⇒ `openid,profile,email,address,phone,offline_access`. |
+| `knoxidf.custom.loopback.hosts` | (none) | Comma-separated **additional** hostnames treated as loopback when validating a registered `redirect_uri`, permitting plain `http://` for those hosts (per RFC 8252). These are added to — they do not replace — the built-in `localhost`, `127.0.0.1`, and `::1`. |
 | `token.exchange.topology.name` | (none) | Name of the token-exchange topology (fronted by `JWTProvider`) to which the `token_endpoint` and `userinfo_endpoint` are redirected in discovery. See the [two-topology model](getting_started.md#3-deploy-the-knoxidf-topologies). |
 | `federated.op.names` | (none) | Comma-separated list of federated OP logical names to enable. See [Federated OP parameters](#federated-op-parameters). |
 
@@ -115,6 +116,32 @@ the resolved attributes to the token (and to the UserInfo response). If it is **
 | `user.params.provider.ldap.systemUser` | `uid=admin,ou=people,dc=hadoop,dc=apache,dc=org` | Bind DN for attribute lookups. |
 | `user.params.provider.ldap.systemPasswordAlias` | — | **Required** alias for the system-user password. There is no plaintext fallback — if the alias is absent or unresolvable, initialization fails with an `IllegalStateException` (fail-closed). |
 
+## Token exchange and delegation
+
+[Token exchange and delegation](token_exchange.md) is configured across three places: provider
+parameters on the `JWTProvider` fronting the token-exchange topology, a service parameter on
+`KNOXTOKEN`, and the `KNOXIDF_ADMIN` delegation-policy resource. All of the switches are **off by
+default** (fail-safe).
+
+### `JWTProvider` provider parameters (token-exchange topology)
+
+Set inside the `<provider><role>federation</role><name>JWTProvider</name>…</provider>` element of
+the token-exchange topology.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `delegation.server.enabled` | `false` | Master switch for delegated (on-behalf-of and headless) exchange. While `false`, any delegated exchange is rejected with `invalid_request` before any policy lookup. |
+| `delegation.requested.subject.enabled` | `false` | Whether the `requested_subject` parameter is read, enabling **headless** delegation. Has no effect unless `delegation.server.enabled=true`. |
+| `delegation.enforce.requested.audience.required` | `false` | For a delegated exchange, require at least one distinct requested `resource`/`audience`, else `invalid_request`. |
+| `delegation.enforce.requested.audience.max.one` | `false` | For a delegated exchange, allow at most one distinct combined requested `resource`/`audience`, else `invalid_request`. Combine with the previous flag for an "exactly one audience" rule. |
+| `token.exchange.same.subject.requested.audience.enabled` | `false` | For a **same-subject** exchange, whether a requested audience is honored. When `false`, requested audiences are silently dropped; when `true`, each is validated against the subject token's own `aud` (else `400 invalid_target`). |
+
+### `KNOXTOKEN` service parameter
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `delegation.max.actor.chain.depth` | `3` | Maximum depth of the `act` (actor) chain the KNOXTOKEN service will mint. Exceeding it rejects the exchange with `invalid_request`. A non-numeric or non-positive value is ignored and `3` applies — the cap is never disabled. Only active with `knox.token.enable.delegated.auth`. |
+
 ## Gateway-site properties
 
 These are set in `$KNOX_HOME/conf/gateway-site.xml` and shared with the rest of Knox.
@@ -128,6 +155,7 @@ These are set in `$KNOX_HOME/conf/gateway-site.xml` and shared with the rest of 
 | `gateway.signing.keystore.name` | (gateway identity keystore) | Keystore holding the signing key(s). |
 | `gateway.signing.keystore.type` | (gateway default) | Keystore type (e.g. `JKS`, `PKCS12`). |
 | `gateway.signing.keystore.password.alias` | (gateway default) | Alias of the keystore password. |
+| `gateway.signing.key.passphrase.alias` | `signing.key.passphrase` | Alias of the passphrase protecting the signing key itself. Consulted only when a dedicated `gateway.signing.keystore.name` is set; when no separate signing keystore is configured, the gateway identity key's passphrase alias is used instead. |
 
 ### Persistence and database
 
@@ -145,12 +173,16 @@ setup is required to get started. H2 lives in its own folder under the gateway s
 | `gateway.database.port` | (none) | Database port. |
 | `gateway.database.name` | `GATEWAY_DATABASE` | Database/schema name. |
 | `gateway.database.ssl.enabled` | `false` | Enable TLS to the database. |
-| `gateway.database.ssl.truststore.path` / `.alias` | (none) | Truststore path / password alias for the database TLS connection. |
+| `gateway.database.ssl.verify.server.cert` | `true` | Verify the database server's certificate when TLS is enabled. |
+| `gateway.database.ssl.truststore.file` | (none) | Path to the truststore used to verify the database server certificate. |
+| `gateway.database.ssl.truststore.type` | `JKS` | Type of the database truststore (e.g. `JKS`, `PKCS12`). |
 | `gateway.database.h2.encryption.enabled` | `false` | Enable H2 at-rest encryption (`AES` cipher) for the embedded database. When `true`, the encryption passphrase is read from the credential-store alias named below. Has no effect on external database types. |
 | `gateway.database.h2.encryption.passphrase.alias` | `h2_encryption_passphrase` | Name of the credential-store alias holding the H2 file-encryption passphrase. Provision it before enabling encryption; startup fails fast if enabled and the alias is missing. |
 
 Database credentials are supplied as aliases (`gateway_database_user`,
-`gateway_database_password`) — see [Getting Started](getting_started.md#2-install-and-start-knox).
+`gateway_database_password`) — see [Getting Started](getting_started.md#2-install-and-start-knox). When
+the database truststore is password-protected, its password is likewise read from the
+`gateway_database_ssl_truststore_password` credential alias rather than being written in the clear.
 
 > **`derbydb` is no longer supported.** The embedded backend is now H2 only; the Apache Derby driver
 > has been removed from the Knox distribution. A `gateway.database.type=derbydb` value is no longer a
@@ -204,17 +236,32 @@ and is safe to re-run — tokens already present in the destination are skipped.
 folder (`tokens/`) is left untouched; it is simply no longer read. Afterwards, remove the Derby jar
 from `ext/` and optionally delete the stale `tokens/` folder.
 
-> See [Migrating tokens from a legacy embedded Derby database](../config_knox_token.html#Migrating+tokens+from+a+legacy+embedded+Derby+database)
+> See [Migrating tokens from a legacy embedded Derby database](../config_knox_token.md#migrating-tokens-from-a-legacy-embedded-derby-database)
 > in the Token configuration guide for the full procedure and command arguments.
 
 ### Trusted OIDC issuer registry
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `gateway.trustedoidcissuer.discovery.cache.ttl.secs` | `600` | How long a fetched issuer JWKS/discovery document is cached before re-fetch. |
-| `gateway.trustedoidcissuer.discovery.connect.timeout.ms` | `3000` | Connect timeout when fetching an issuer's discovery/JWKS document. |
-| `gateway.trustedoidcissuer.discovery.read.timeout.ms` | `10000` | Read timeout for the same fetch. |
+| `gateway.trusted.oidc.issuer.discovery.cache.ttl.secs` | `600` | How long a fetched issuer JWKS/discovery document is cached before re-fetch. |
+| `gateway.trusted.oidc.issuer.discovery.connect.timeout.ms` | `3000` | Connect timeout when fetching an issuer's discovery/JWKS document. |
+| `gateway.trusted.oidc.issuer.discovery.read.timeout.ms` | `10000` | Read timeout for the same fetch. |
 | `gateway.trusted.oidc.issuer.max.issuers` | `10000` | Upper bound on the number of registered trusted issuers. Registration returns `409 issuer_limit_reached` once reached. |
+
+### Delegation policy service
+
+Gateway-wide settings for the [delegation policy service](token_exchange.md#delegation-policies)
+and the minted delegated-token lifetime. The `knox.delegation.*` TTL bounds are **init-parameters of
+the `KNOXIDF_ADMIN` delegation-policies resource** (the administrator topology), not gateway-site
+properties; they validate `tokenTtlSec` at policy-authoring time.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `gateway.delegation.service.token.ttl.sec` | `3600` | Effective lifetime (seconds) of a minted delegated token when its policy does not set `tokenTtlSec`. Must fall within the `knox.delegation.min/max.token.ttl.sec` bounds, else the admin resource fails fast at startup. |
+| `gateway.delegation.service.list.max.total` | `10000` | Maximum policies returned by an unfiltered list; reaching it sets `hasMore` in the response. |
+| `gateway.delegation.service.list.max.per.authority` | `10000` | Maximum policies returned when listing is filtered by `actorAuthority`. |
+| `knox.delegation.min.token.ttl.sec` | `60` | Lower bound (seconds) for a policy's `tokenTtlSec`. Set as an init-param on the `KNOXIDF_ADMIN` delegation-policies resource. |
+| `knox.delegation.max.token.ttl.sec` | `86400` | Upper bound (seconds) for a policy's `tokenTtlSec`. Must be ≥ the min bound, and the `gateway.delegation.service.token.ttl.sec` default must fall within `[min, max]`, else the admin resource fails fast at startup. |
 
 ### Federated OP back-channel
 

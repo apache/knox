@@ -60,6 +60,7 @@ topology. It provides:
 | Client Credentials flow | Machine-to-machine token issuance. |
 | Authorization Code flow + PKCE | Interactive user login with PKCE (S256) for public clients and `client_secret` for confidential clients. |
 | Refresh tokens | Refresh-token grant with rotation. |
+| [Token exchange / delegation](token_exchange.md) | RFC 8693 token exchange — same-subject audience narrowing and policy-gated on-behalf-of / headless delegation. |
 | Consent | A one-time-per-(user, client) consent screen for the Authorization Code flow. |
 | Federation (optional) | Broker login to one or more external OIDC Providers and re-issue Knox tokens. |
 | Attribute enrichment | Hard-coded ID-token claims and pluggable user-parameter providers (e.g. LDAP attributes). |
@@ -78,6 +79,7 @@ token. This keeps KnoxIDF modular and composable with the rest of Knox.
 - **[Getting Started](getting_started.md)** — build, deploy, register a client, and run your first flow.
 - **[Endpoint Reference](endpoints.md)** — every REST endpoint KnoxIDF exposes.
 - **[Configuration Reference](configuration.md)** — every configuration parameter.
+- **[Token Exchange & Delegation](token_exchange.md)** — RFC 8693 token exchange and on-behalf-of delegation policies.
 - **[Security](security.md)** — client authentication, PKCE, consent, redirect-URI validation, and secret handling.
 - **[Federation](federation.md)** — brokering login to external OIDC Providers.
 - **[Operations](operations.md)** — high availability, rate limiting, signing-key rotation, and auditing.
