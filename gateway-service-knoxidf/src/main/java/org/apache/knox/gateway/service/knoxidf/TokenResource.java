@@ -212,6 +212,9 @@ public class TokenResource extends PasscodeTokenResourceBase {
     @Override
     protected ResponseMap buildResponseMap(JWT token, long expires) throws TokenServiceException {
         final ResponseMap responseMap = super.buildResponseMap(token, expires);
+        // RFC 8693 §2.2.1 / RFC 6749 §5.1: expires_in is a relative lifetime in seconds, not the
+        // inherited KNOXTOKEN absolute epoch-ms expiry.
+        addExpiryIfNotNever(responseMap.map);
 
         // RFC 8693 §2.2.1 requires the response to state the type of the issued token. Every KnoxIDF
         // grant (authorization_code, refresh_token and the client_credentials/other grants routed to
