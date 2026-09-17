@@ -32,6 +32,8 @@ from common_utils import (
 class TestKnoxIDF(unittest.TestCase):
     """OIDC provider tests covering discovery, client credentials, and auth code flows."""
 
+    EXPECTED_TOKEN_TTL_SECONDS = 86400
+
     def setUp(self):
         # Get the Knox Gateway URL from environment variables
         self.base_url = gateway_base_url()
@@ -39,6 +41,12 @@ class TestKnoxIDF(unittest.TestCase):
         self.knoxidf_token_url = f"{self.base_url}gateway/knoxidf-token/"
         self.username = "guest"
         self.password = "guest-password"
+
+    def _assert_expires_in_relative_seconds(self, tokens):
+        self.assertIn("expires_in", tokens)
+        expires_in = tokens["expires_in"]
+        self.assertIsInstance(expires_in, int)
+        self.assertEqual(expires_in, self.EXPECTED_TOKEN_TTL_SECONDS)
 
     def test_discovery(self):
         """
@@ -105,6 +113,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertIn("access_token", tokens)
         self.assertEqual(tokens["token_type"], "Bearer")
         self.assertEqual(tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
+        self._assert_expires_in_relative_seconds(tokens)
 
     def test_authorization_code_flow(self):
         """
@@ -143,6 +152,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertIn("id_token", tokens)
         self.assertIn("refresh_token", tokens)
         self.assertEqual(tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
+        self._assert_expires_in_relative_seconds(tokens)
 
         refresh_token = tokens["refresh_token"]
         print(f"Refresh token: {refresh_token}")
@@ -162,6 +172,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertIn("access_token", new_tokens)
         self.assertIn("refresh_token", new_tokens)
         self.assertEqual(new_tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
+        self._assert_expires_in_relative_seconds(new_tokens)
 
         # Verify rotation: new refresh token should be different
         self.assertNotEqual(refresh_token, new_tokens["refresh_token"])
