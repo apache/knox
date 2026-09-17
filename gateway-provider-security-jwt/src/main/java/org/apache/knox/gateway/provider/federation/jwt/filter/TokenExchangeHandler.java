@@ -198,13 +198,15 @@ class TokenExchangeHandler {
       final boolean requestedSubjectDiffersFromSubject =
           requestedSubjectValue != null && !requestedSubjectValue.equals(subjectToken.getSubject());
 
+      JWT actorToken = null;
       // The request is a delegation token exchange if either an actor_token is present or
       // a requested_subject that differs from the subject_token sub claim is present. The
       // latter is 'headless' delegation exchange for which the subject_token is the actor.
       // actorToken is parsed once, below, and reused both for the policy check and for Subject
       // construction further down; it stays null when hasActorToken is false.
-      JWT actorToken = null;
-      if (hasActorToken || requestedSubjectDiffersFromSubject) {
+      final boolean delegationExchange = hasActorToken || requestedSubjectDiffersFromSubject;
+      boolean conveyRequestedAudiences = false;
+      if (delegationExchange) {
         // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is
         // set to true. When true, only authorized token exchanges will be permitted.
         // Otherwise, any actor could impersonate any subject without authorization.
@@ -297,7 +299,26 @@ class TokenExchangeHandler {
                 requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
 
         request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
+        // Delegation exchange: the requested audiences were authorized by the delegation policy above.
+        conveyRequestedAudiences = !requestedAudiences.isEmpty();
+      } else if (!requestedAudiences.isEmpty() && filter.isTokenExchangeSameSubjectRequestedAudienceEnabled()) {
+        // Same-subject exchange, honoring enabled: authorize each requested audience against the
+        // subject token's own aud claim; a value the subject token does not already carry is
+        // rejected. This is what allows a passthrough audience validator to be used safely for
+        // same-subject exchanges without an external policy.
+        final Set<String> subjectAudiences = audienceClaimSet(subjectToken);
+        final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
+        if (!subjectAudiences.containsAll(uniqueRequestedAudiences)) {
+          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_target",
+              "The requested audience is not authorized for this subject");
+          return;
+        }
+        conveyRequestedAudiences = true;
       }
+      // else: same-subject exchange with honoring disabled (the fail-safe default) -- the requested
+      // audience is dropped so a passthrough audience validator cannot mint an arbitrarily-audienced
+      // token without authorization; KNOXTOKEN falls back to the audience validator's default.
 
       final Subject subject;
       if (hasActorToken) {
@@ -314,32 +335,10 @@ class TokenExchangeHandler {
       }
 
       // Convey the requested resource/audience to the downstream KNOXTOKEN service. Set only when
-      // present so that KNOXTOKEN falls back to its resource query parameter otherwise; when set,
-      // the body value takes precedence over the query parameter.
-      if (!requestedAudiences.isEmpty()) {
-        final boolean sameSubjectExchange = !hasActorToken && !requestedSubjectDiffersFromSubject;
-        if (!sameSubjectExchange) {
-          // Delegation exchange: the requested audiences were already authorized by the delegation policy above.
-          request.setAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR, requestedAudiences);
-        } else if (filter.isDelegationSameSubjectRequestedAudienceEnabled()) {
-          // Same-subject exchange, honoring enabled: authorize each requested audience against the
-          // subject token's own aud claim; a value the subject token does not already carry is
-          // rejected. This is what allows a passthrough audience validator to be used safely for
-          // same-subject exchanges without an external policy.
-          final Set<String> subjectAudiences = audienceClaimSet(subjectToken);
-          final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
-          if (!subjectAudiences.containsAll(uniqueRequestedAudiences)) {
-            filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                "invalid_target",
-                "The requested audience is not authorized for this subject");
-            return;
-          }
-          request.setAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR, requestedAudiences);
-        }
-        // else: same-subject exchange with honoring disabled (the fail-safe default) -- ignore the
-        // requested audience entirely so a passthrough audience validator cannot mint an
-        // arbitrarily-audienced token without authorization. Leaving the attribute unset makes
-        // KNOXTOKEN fall back to the audience validator's default.
+      // authorized above so that KNOXTOKEN falls back to its resource query parameter otherwise;
+      // when set, the body value takes precedence over the query parameter.
+      if (conveyRequestedAudiences) {
+        request.setAttribute(CommonTokenConstants.REQUESTED_AUDIENCES_REQUEST_ATTR, requestedAudiences);
       }
 
       filter.continueWithEstablishedSecurityContext(subject, request, response, chain);
