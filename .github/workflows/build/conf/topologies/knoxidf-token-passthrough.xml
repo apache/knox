@@ -18,7 +18,7 @@ the License.
 <!--
   Fail-safe control for the same-subject requested-audience feature (KNOX-3461).
   Identical to knoxidf-token-same-subject-aud.xml (including the 'passthrough'
-  audience validator) EXCEPT that dtoken.exchange.same.subject.requested.audience.enabled
+  audience validator) EXCEPT that token.exchange.same.subject.requested.audience.enabled
   is left at its default (off).
 
   With the flag off, a same-subject exchange must NOT honor a requested audience

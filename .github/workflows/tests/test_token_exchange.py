@@ -40,7 +40,7 @@ The topologies exercised, all fronting the KNOXIDF token endpoint:
                                        requested-audience enforcement flags; used for the
                                        missing/multiple-audience rejections and to prove a
                                        same-subject exchange still succeeds there.
-  - knoxidf-token-same-subject-aud  -- dtoken.exchange.same.subject.requested.audience.enabled
+  - knoxidf-token-same-subject-aud  -- token.exchange.same.subject.requested.audience.enabled
                                        =true with a 'passthrough' audience validator
                                        (KNOX-3461); authorizes a requested audience on a
                                        same-subject exchange against the subject token's
@@ -283,9 +283,15 @@ class TestTokenExchange(unittest.TestCase):
     def test_same_subject_requested_audience_authorized_succeeds(self):
         """Flag on: a requested audience the subject token already carries is honored and minted."""
         subject_token = self._mint_subject_token_with_aud()
-        # Precondition: the subject token actually carries the audience we will request.
-        self.assertIn(SUBJECT_AUDIENCE, self._aud_values(subject_token),
+        # Precondition: the subject token carries the audience we will request AND a second,
+        # unrequested one -- so asserting the exchanged token carries *exactly* the requested
+        # audience below rules out an implementation that ignores the request and simply copies
+        # the subject token's whole aud set through.
+        subject_auds = self._aud_values(subject_token)
+        self.assertIn(SUBJECT_AUDIENCE, subject_auds,
                       "precondition: subject token must carry the requested audience in its aud")
+        self.assertIn(OTHER_SUBJECT_AUDIENCE, subject_auds,
+                      "precondition: subject token must also carry a second, unrequested audience")
 
         response = self._exchange(
             self.same_subject_aud_exchange_url, subject_token, resources=[SUBJECT_AUDIENCE],
@@ -294,14 +300,22 @@ class TestTokenExchange(unittest.TestCase):
         exchanged = response.json().get("access_token")
         self.assertTrue(exchanged, "exchange did not return an access_token")
         self.assertEqual(get_token_claim(exchanged, "sub"), GUEST_USER)
-        # The authorized audience is passed through onto the exchanged token.
-        self.assertIn(SUBJECT_AUDIENCE, self._aud_values(exchanged),
-                      "authorized requested audience must appear on the exchanged token")
+        # Only the requested audience is minted onto the exchanged token -- not the subject
+        # token's full aud set. Equality (not membership) is what distinguishes "honored the
+        # request" from "passed every subject audience through, ignoring the request".
+        self.assertEqual(set(self._aud_values(exchanged)), {SUBJECT_AUDIENCE},
+                         "exchanged token must carry exactly the requested audience")
 
     def test_same_subject_requested_audience_unauthorized_rejected(self):
         """Flag on: a requested audience the subject token does not carry is rejected."""
         subject_token = self._mint_subject_token_with_aud()
-        self.assertNotIn(UNAUTHORIZED_AUDIENCE, self._aud_values(subject_token),
+        # The subject token must carry a non-empty aud, just not the one we request. Asserting it
+        # is non-empty keeps this distinct from the has-no-aud-at-all boundary case below: here the
+        # rejection is specifically "this audience isn't among the subject's", not "no aud exists".
+        subject_auds = self._aud_values(subject_token)
+        self.assertTrue(subject_auds,
+                        "precondition: subject token must carry at least one audience")
+        self.assertNotIn(UNAUTHORIZED_AUDIENCE, subject_auds,
                          "precondition: subject token must NOT carry the unauthorized audience")
 
         response = self._exchange(
