@@ -87,6 +87,10 @@ import com.nimbusds.jose.proc.SecurityContext;
 import de.thetaphi.forbiddenapis.SuppressForbidden;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
@@ -114,6 +118,7 @@ import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.services.token.impl.JDBCTokenStateService;
 import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.JsonUtils;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Assert;
@@ -138,6 +143,8 @@ public class TokenServiceResourceTest {
   private String[] resourceParamValues;
   private List<String> exchangeRequestedAudiences;
   private Integer exchangeRequestedTtlSec;
+  private Boolean tokenExchangeRequestOriginated;
+  private static final Auditor ORIGINAL_AUDITOR = TokenResource.auditor;
   private JWTokenAuthority authority;
   private TestTokenStateService tss = new TestTokenStateService();
   private char[] hmacSecret;
@@ -163,6 +170,7 @@ public class TokenServiceResourceTest {
   @After
   public void cleanUp() {
     this.usersCanSeeAllTokens.clear();
+    TokenResource.auditor = ORIGINAL_AUDITOR;
   }
 
   private void configureCommonExpectations(Map<String, String> contextExpectations) throws Exception {
@@ -215,6 +223,10 @@ public class TokenServiceResourceTest {
     if (exchangeRequestedTtlSec != null) {
       EasyMock.expect(request.getAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR))
           .andReturn(exchangeRequestedTtlSec).anyTimes();
+    }
+    if (Boolean.TRUE.equals(tokenExchangeRequestOriginated)) {
+      EasyMock.expect(request.getAttribute(CommonTokenConstants.TOKEN_EXCHANGE_REQUEST_ATTR))
+          .andReturn(Boolean.TRUE).anyTimes();
     }
 
     GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
@@ -567,6 +579,62 @@ public class TokenServiceResourceTest {
     assertEquals(2, audiences.size());
     assertTrue(audiences.contains("https://recipient1"));
     assertTrue(audiences.contains("service-a"));
+  }
+
+  @Test
+  public void testExchangeOriginatedMintEmitsTokenExchangeAudit() throws Exception {
+    // KNOX-3460: a mint that the token-exchange path marked as exchange-originated must emit a
+    // mint-time TOKEN_EXCHANGE audit carrying the fields only known post-mint: jti, expiry, and
+    // issued subject. This record correlates with the pre-mint decision the exchange handler audited.
+    tokenExchangeRequestOriginated = true;
+    final Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations);
+
+    final Auditor auditor = EasyMock.createMock(Auditor.class);
+    final Capture<String> message = EasyMock.newCapture();
+    auditor.audit(EasyMock.eq(Action.TOKEN_EXCHANGE), EasyMock.eq(USER_NAME),
+        EasyMock.eq(ResourceType.PRINCIPAL), EasyMock.eq(ActionOutcome.SUCCESS),
+        EasyMock.capture(message));
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(auditor);
+    TokenResource.auditor = auditor;
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+
+    JWT parsedToken = new JWTToken(getTagValue(retResponse.getEntity().toString(), "access_token"));
+    EasyMock.verify(auditor);
+    assertTrue(message.getValue().contains("event_type=token_exchange_minted"));
+    assertTrue(message.getValue().contains("issued_token_jti=" + TokenUtils.getTokenId(parsedToken)));
+    assertTrue(message.getValue().contains("issued_token_expiry="));
+    assertTrue(message.getValue().contains("issued_subject=" + USER_NAME));
+  }
+
+  @Test
+  public void testOrdinaryIssuanceEmitsNoTokenExchangeAudit() throws Exception {
+    // Ordinary (non-exchange) token issuance carries no exchange marker and must NOT emit any
+    // TOKEN_EXCHANGE mint audit -- explicitly out of scope for KNOX-3460. The strict mock has no
+    // expectations, so any audit() call fails the test.
+    final Map<String, String> contextExpectations = new HashMap<>();
+    configureCommonExpectations(contextExpectations);
+
+    final Auditor auditor = EasyMock.createMock(Auditor.class);
+    EasyMock.replay(auditor);
+    TokenResource.auditor = auditor;
+
+    TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+
+    Response retResponse = tr.doGet();
+    assertEquals(200, retResponse.getStatus());
+    EasyMock.verify(auditor);
   }
 
   @Test

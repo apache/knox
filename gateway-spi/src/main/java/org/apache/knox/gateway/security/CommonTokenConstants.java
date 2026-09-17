@@ -61,4 +61,13 @@ public interface CommonTokenConstants {
      */
     String REQUESTED_TTL_REQUEST_ATTR = "knox.token.requested.ttl";
 
+    /**
+     * Request attribute set by the RFC 8693 token-exchange path (JWTFederationFilter) for every
+     * dispatched token-exchange request -- same-subject and delegation alike -- before the exchange
+     * handler runs. Its presence marks the request as exchange-originated so the downstream KNOXTOKEN
+     * service can emit a mint-time TOKEN_EXCHANGE audit only for exchange mints, not for ordinary
+     * token issuance. The value is {@code Boolean.TRUE}.
+     */
+    String TOKEN_EXCHANGE_REQUEST_ATTR = "knox.jwt.token.exchange.request";
+
 }

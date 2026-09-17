@@ -288,6 +288,29 @@ public class TokenExchangeHandlerTest {
   }
 
   @Test
+  public void testGroupLookupUnavailableAuditsUnavailable() throws Exception {
+    // The LDAP-unavailable server_error path is a genuine "could not decide" outcome, distinct from
+    // allow/deny: it must emit an UNAVAILABLE TOKEN_EXCHANGE record so every delegation outcome is
+    // audited, not just the ones where a policy decision was actually reached.
+    filter.delegationServerEnabled = true;
+    filter.policyEvaluationException = new DelegationGroupLookupUnavailableException("alice");
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/svc-dataservice",
+        ResourceType.PRINCIPAL, ActionOutcome.UNAVAILABLE);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, filter.errorStatus);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_unavailable"));
+    assertTrue(auditMessage.getValue().contains("reason=delegation_group_lookup_unavailable"));
+    assertTrue(auditMessage.getValue().contains("actor_authority=USER"));
+    assertTrue(auditMessage.getValue().contains("actor_id=svc-dataservice"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
+  }
+
+  @Test
   public void testSameSubjectExchangeNeverCallsPolicyEvaluation() throws Exception {
     filter.policyEvaluationException = new UnsupportedOperationException("must not be called");
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
@@ -295,6 +318,59 @@ public class TokenExchangeHandlerTest {
 
     assertTrue(filter.continued);
     assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testSameSubjectExchangeAuditsSuccess() throws Exception {
+    // A plain same-subject exchange previously emitted no TOKEN_EXCHANGE record (only the generic
+    // AUTHENTICATION audit). It must now audit SUCCESS with the subject acting as its own actor.
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.SUCCESS);
+    handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
+
+    assertTrue(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
+    assertTrue(auditMessage.getValue().contains("actor_authority=USER"));
+    assertTrue(auditMessage.getValue().contains("actor_id=alice"));
+    assertTrue(auditMessage.getValue().contains("subject_token_iss=KNOXSSO"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
+  }
+
+  @Test
+  public void testSameSubjectExchangeWithAuthorizedRequestedAudienceAuditsSuccess() throws Exception {
+    // Honoring on and the requested audience is authorized (carried by the subject token): the
+    // exchange succeeds and audits SUCCESS once.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.SUCCESS);
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-a"}), response, chain);
+
+    assertTrue(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_allowed"));
+    assertTrue(auditMessage.getValue().contains("requested_resources=[service-a]"));
+  }
+
+  @Test
+  public void testSameSubjectRequestedAudienceRejectionAuditsFailure() throws Exception {
+    // Honoring on but the requested audience is not among the subject token's own aud claim: the
+    // exchange is rejected as invalid_target and must audit FAILURE with the deny reason.
+    filter.tokenExchangeSameSubjectRequestedAudienceEnabled = true;
+    filter.valid.put("subtok", jwtWithAudiences("alice", "KNOXSSO", "service-a"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
+    handler.handle(exchangeRequest("subtok", null, new String[] {"service-b"}), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_target", filter.error);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_denied"));
+    assertTrue(auditMessage.getValue().contains("deny_reason=requested_audience_not_authorized"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
   }
 
   @Test

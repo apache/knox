@@ -70,6 +70,12 @@ import com.nimbusds.jose.util.ByteUtils;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.audit.api.Action;
+import org.apache.knox.gateway.audit.api.ActionOutcome;
+import org.apache.knox.gateway.audit.api.AuditServiceFactory;
+import org.apache.knox.gateway.audit.api.Auditor;
+import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -177,6 +183,11 @@ public class TokenResource {
   public static final String KNOX_TOKEN_ISSUER = TOKEN_PARAM_PREFIX + "issuer";
   private static TokenServiceMessages log = MessagesFactory.get(TokenServiceMessages.class);
   private static final Gson GSON = new Gson();
+  // Non-final and package-private to allow test injection of a mock Auditor, matching the
+  // already-established pattern in TokenExchangeHandler.auditor / DelegationPolicyResource.auditor.
+  static Auditor auditor = AuditServiceFactory.getAuditService()
+      .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
+          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   protected long tokenTTL = TOKEN_TTL_DEFAULT;
   private String tokenType;
   private String tokenTTLAsText;
@@ -1307,7 +1318,31 @@ public class TokenResource {
 
     jwtAttributes = jwtAttributesBuilder.build();
     token = ts.issueToken(jwtAttributes);
+    auditTokenExchangeMint(token, expires, userContext.userName);
     return token;
+  }
+
+  /**
+   * Emit a mint-time TOKEN_EXCHANGE audit for an RFC 8693 exchange-originated mint, carrying the
+   * fields only known after minting: the token id (jti), the token's expiry, and the issued subject.
+   * The request is exchange-originated when the token-exchange path (JWTFederationFilter) marked it
+   * via {@link CommonTokenConstants#TOKEN_EXCHANGE_REQUEST_ATTR}; ordinary (non-exchange) token
+   * issuance carries no such marker and is deliberately not audited here. This mint record shares the
+   * request's audit correlation id with the pre-mint decision record emitted by the exchange handler,
+   * tying the two together.
+   *
+   * @param token         the freshly minted token
+   * @param expires       the token's expiry (epoch millis), as resolved for this mint
+   * @param issuedSubject the effective (possibly impersonated) subject the token was issued for
+   */
+  private void auditTokenExchangeMint(JWT token, long expires, String issuedSubject) {
+    if (!Boolean.TRUE.equals(request.getAttribute(CommonTokenConstants.TOKEN_EXCHANGE_REQUEST_ATTR))) {
+      return;
+    }
+    final String jti = TokenUtils.getTokenId(token);
+    auditor.audit(Action.TOKEN_EXCHANGE, issuedSubject, ResourceType.PRINCIPAL, ActionOutcome.SUCCESS,
+        "event_type=token_exchange_minted issued_token_jti=" + jti
+            + " issued_token_expiry=" + expires + " issued_subject=" + issuedSubject);
   }
 
   private void handleDelegatedAuthentication(Subject subject, JWTokenAttributesBuilder jwtAttributesBuilder)
