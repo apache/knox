@@ -246,6 +246,16 @@ public class TokenResource extends PasscodeTokenResourceBase {
         return responseMap;
     }
 
+    @Override
+    protected void addExpiryIfNotNever(Map<String, Object> map) {
+        long expiresIn = getTokenLifetimeInSeconds();
+        if (expiresIn != -1) {
+            map.put(EXPIRES_IN, expiresIn);
+        } else {
+            map.remove(EXPIRES_IN);
+        }
+    }
+
     // Package-private for testability (the single-use rotation guard is exercised by
     // TokenResourceRefreshTokenRotationTest); not part of the public resource API.
     Response handleRefreshToken() {

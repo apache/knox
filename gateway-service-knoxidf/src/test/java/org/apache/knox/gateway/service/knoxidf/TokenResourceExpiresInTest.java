@@ -28,6 +28,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -104,5 +105,16 @@ public class TokenResourceExpiresInTest {
 
         assertEquals("RFC 8693 §2.2.1 requires the issued_token_type of the minted JWT.",
                 ISSUED_TOKEN_TYPE_JWT_VALUE, issuedTokenType);
+    }
+
+    @Test
+    public void testExpiresInIsOmittedForUnlimitedLifetime() throws Exception {
+        final TestableTokenResource resource = new TestableTokenResource();
+        resource.configure(-1L, clientCredentialsRequest());
+
+        final Map<String, Object> map = resource.responseMap(jwt(), System.currentTimeMillis() + ONE_HOUR_MS);
+
+        assertFalse("expires_in is OPTIONAL (RFC 8693 §2.2.1) and must be omitted for an unlimited-lifetime token.",
+                map.containsKey(EXPIRES_IN));
     }
 }

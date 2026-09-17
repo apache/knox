@@ -190,7 +190,7 @@ access-token / refresh-token pair. Requires `client_secret`.
   "access_token": "<JWT>",
   "token_id": "<UUID>",
   "token_type": "Bearer",
-  "expires_in": 1699999999999,
+  "expires_in": 86400,
   "managed_token": "true",
   "id_token": "<JWT>",
   "refresh_token": "<JWT>",
