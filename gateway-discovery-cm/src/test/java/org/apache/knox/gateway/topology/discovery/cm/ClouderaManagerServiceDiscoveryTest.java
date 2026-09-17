@@ -60,6 +60,7 @@ import org.apache.knox.gateway.topology.discovery.cm.model.hive.WebHCatServiceMo
 import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.impala.ImpalaUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.kudu.KuduUIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyForSpark4ServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.livy.LivyServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiRegistryServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.nifi.NifiServiceModelGenerator;
@@ -592,6 +593,30 @@ public class ClouderaManagerServiceDiscoveryTest {
     ServiceDiscovery.Cluster cluster = doTestLivyDiscovery(hostName, port, true);
     assertNotNull(cluster);
     List<String> livyURLs = cluster.getServiceURLs("LIVYSERVER");
+    assertNotNull(livyURLs);
+    assertEquals(1, livyURLs.size());
+    assertEquals("https://" + hostName + ":" + port, livyURLs.get(0));
+  }
+
+  @Test
+  public void testLivyForSpark4Discovery() {
+    final String hostName    = "livy-host";
+    final String port        = "28998";
+    ServiceDiscovery.Cluster cluster = doTestLivyForSpark4Discovery(hostName, port, false);
+    assertNotNull(cluster);
+    List<String> livyURLs = cluster.getServiceURLs("LIVY_FOR_SPARK4");
+    assertNotNull(livyURLs);
+    assertEquals(1, livyURLs.size());
+    assertEquals("http://" + hostName + ":" + port, livyURLs.get(0));
+  }
+
+  @Test
+  public void testLivyForSpark4DiscoverySSL() {
+    final String hostName    = "livy-host";
+    final String port        = "28998";
+    ServiceDiscovery.Cluster cluster = doTestLivyForSpark4Discovery(hostName, port, true);
+    assertNotNull(cluster);
+    List<String> livyURLs = cluster.getServiceURLs("LIVY_FOR_SPARK4");
     assertNotNull(livyURLs);
     assertEquals(1, livyURLs.size());
     assertEquals("https://" + hostName + ":" + port, livyURLs.get(0));
@@ -1416,6 +1441,22 @@ public class ClouderaManagerServiceDiscoveryTest {
                            roleProperties);
   }
 
+  private ServiceDiscovery.Cluster doTestLivyForSpark4Discovery(final String  hostName,
+                                                       final String  port,
+                                                       final Boolean isSSL) {
+    // Configure the role
+    Map<String, String> roleProperties = new HashMap<>();
+    roleProperties.put("livy_server_port", port);
+    roleProperties.put("ssl_enabled", String.valueOf(isSSL));
+
+    return doTestDiscovery(hostName,
+            "LIVY_FOR_SPARK4-1",
+            LivyForSpark4ServiceModelGenerator.SERVICE_TYPE,
+            "LIVY_FOR_SPARK4-LIVY_SERVER_FOR_SPARK4-1",
+            LivyForSpark4ServiceModelGenerator.ROLE_TYPE,
+            Collections.emptyMap(),
+            roleProperties);
+  }
 
   private ServiceDiscovery.Cluster doTestPhoenixDiscovery(final String hostName,
                                                           final String port,
