@@ -17,7 +17,7 @@ the License.
 -->
 <!--
   Same-subject requested-audience exchange topology (KNOX-3461). The JWTProvider
-  turns on delegation.same.subject.requested.audience.enabled, which authorizes a
+  turns on token.exchange.same.subject.requested.audience.enabled, which authorizes a
   requested audience on a same-subject exchange against the subject token's own
   aud claim: a requested value the subject token already carries is honored (and
   minted onto the exchanged token), a value it does not carry is rejected with
@@ -44,7 +44,7 @@ the License.
             <!-- Authorize a requested audience on a same-subject exchange against the
                  subject token's own aud claim. Off by default (the fail-safe): the
                  requested audience is ignored so no arbitrary aud can be minted. -->
-            <name>delegation.same.subject.requested.audience.enabled</name>
+            <name>token.exchange.same.subject.requested.audience.enabled</name>
             <value>true</value>
          </param>
       </provider>

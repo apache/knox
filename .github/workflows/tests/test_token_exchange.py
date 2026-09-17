@@ -40,7 +40,7 @@ The topologies exercised, all fronting the KNOXIDF token endpoint:
                                        requested-audience enforcement flags; used for the
                                        missing/multiple-audience rejections and to prove a
                                        same-subject exchange still succeeds there.
-  - knoxidf-token-same-subject-aud  -- delegation.same.subject.requested.audience.enabled
+  - knoxidf-token-same-subject-aud  -- dtoken.exchange.same.subject.requested.audience.enabled
                                        =true with a 'passthrough' audience validator
                                        (KNOX-3461); authorizes a requested audience on a
                                        same-subject exchange against the subject token's
@@ -277,7 +277,7 @@ class TestTokenExchange(unittest.TestCase):
         self.assertEqual(get_token_claim(body["access_token"], "sub"), GUEST_USER)
 
     # ---- KNOX-3466: same-subject requested-audience authorization (KNOX-3461 code) ----
-    # These exercise delegation.same.subject.requested.audience.enabled and therefore fail
+    # These exercise token.exchange.same.subject.requested.audience.enabled and therefore fail
     # until the KNOX-3461 gateway code is present in the image.
 
     def test_same_subject_requested_audience_authorized_succeeds(self):
