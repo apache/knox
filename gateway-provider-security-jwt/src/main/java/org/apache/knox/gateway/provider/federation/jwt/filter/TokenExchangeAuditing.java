@@ -24,6 +24,7 @@ import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -81,12 +82,40 @@ final class TokenExchangeAuditing {
   }
 
   /**
+   * Audit a request rejected by RFC 8693 request validation, before any policy decision or token
+   * mint. Emitted for every validation failure so the audit trail records who attempted an invalid
+   * exchange and why (compliance regimes such as SOC 2 and FedRAMP expect all request failures to
+   * be audited); downstream log processing can rate-limit or aggregate on the machine-parseable
+   * {@code reason} code to bound the volume an unauthenticated flood could produce.
+   *
+   * <p>The message is deliberately compact because most rejections occur before the request's
+   * identity is fully known: {@code subjectToken} is null for a rejection that happens before it is
+   * parsed (its subject and the resourceName are then reported as unknown), and
+   * {@code requestedSubject} is null when not applicable. When a subject_token is present its
+   * identity is used as the record's resourceName; the true actor of an on-behalf-of exchange (the
+   * actor_token) may not yet be parsed at the point of rejection.</p>
+   */
+  void rejected(String reason, JWT subjectToken, String requestedSubject) {
+    // A rejection carries only what is known at the point of failure: the actor and the requested
+    // resources/chain-depth may be unknown (unparsed), so they default to unknown/empty in the
+    // shared message format below.
+    final ActorIdentity actor = subjectToken != null ? ActorIdentity.fromJwt(subjectToken) : null;
+    final String resourceName = actor != null ? actor.resourceName() : "unknown";
+    auditor.audit(Action.TOKEN_EXCHANGE, resourceName, ResourceType.PRINCIPAL, ActionOutcome.FAILURE,
+        message("token_exchange_rejected", "reason=" + reason, actor, subjectToken, requestedSubject,
+            Collections.emptySet(), false, 0));
+  }
+
+  /**
    * Builds the audit message for one exchange outcome. {@code eventType} is the {@code event_type}
-   * value (token_exchange_allowed / token_exchange_denied / token_exchange_unavailable) and
-   * {@code reasonField} is a fully-formed, pre-labeled reason token (e.g. {@code deny_reason=...})
-   * appended verbatim, or null when there is none. {@code actChainDepth} is the depth of the
-   * delegation history arriving on the subject_token (0 for a headless exchange, whose incoming
-   * chain is not propagated).
+   * value (token_exchange_allowed / token_exchange_denied / token_exchange_unavailable /
+   * token_exchange_rejected) and {@code reasonField} is a fully-formed, pre-labeled reason token
+   * (e.g. {@code deny_reason=...} or {@code reason=...}) appended verbatim, or null when there is
+   * none. {@code actChainDepth} is the depth of the delegation history arriving on the subject_token
+   * (0 for a headless exchange, whose incoming chain is not propagated).
+   *
+   * <p>{@code actor} and {@code subjectToken} may be null for a rejection audited before the
+   * request's identity could be established; their fields are then reported empty.</p>
    */
   private static String message(String eventType, String reasonField, ActorIdentity actor,
                                 JWT subjectToken, String requestedSubject,
@@ -97,10 +126,10 @@ final class TokenExchangeAuditing {
     if (reasonField != null) {
       message.append(' ').append(reasonField);
     }
-    message.append(" actor_authority=").append(actor.actorAuthority);
-    message.append(" actor_id=").append(actor.actorId);
-    message.append(" subject_token_iss=").append(label(subjectToken.getIssuer()));
-    message.append(" subject_token_sub=").append(label(subjectToken.getSubject()));
+    message.append(" actor_authority=").append(actor != null ? label(actor.actorAuthority) : "");
+    message.append(" actor_id=").append(actor != null ? label(actor.actorId) : "");
+    message.append(" subject_token_iss=").append(label(subjectToken != null ? subjectToken.getIssuer() : null));
+    message.append(" subject_token_sub=").append(label(subjectToken != null ? subjectToken.getSubject() : null));
     message.append(" requested_subject=").append(label(requestedSubject));
     message.append(" requested_resources=").append(requestedResources);
     message.append(" audiences_honored=").append(audiencesHonored);

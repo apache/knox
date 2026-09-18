@@ -134,7 +134,9 @@ class TokenExchangeHandler {
     try {
       requestedAudiences = parseRequestedAudiences(bodyRequest);
     } catch (InvalidResourceException e) {
-      // RFC 8707 section 2: a malformed resource yields the invalid_target error code.
+      // RFC 8707 section 2: a malformed resource yields the invalid_target error code. Audited
+      // before the subject_token is parsed, so no request identity is yet known.
+      auditing.rejected("invalid_resource", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_target", e.getMessage());
       return;
@@ -143,7 +145,9 @@ class TokenExchangeHandler {
     try {
       final JWT subjectToken = filter.parseAndValidateJWT(request, response, chain, subjectTokenValue);
       if (subjectToken == null) {
-        // Validation failed, error response already sent
+        // Validation failed, error response already sent. The subject_token could not be validated,
+        // so no identity is available for the audit record beyond the reason code.
+        auditing.rejected("subject_token_invalid", null, null);
         return;
       }
 
@@ -227,6 +231,9 @@ class TokenExchangeHandler {
 
       filter.continueWithEstablishedSecurityContext(subject, request, response, chain);
     } catch (ParseException | UnknownTokenException e) {
+      // A token (subject or actor) failed to parse mid-exchange; the offending token's identity is
+      // not reliably available, so audit with the reason code alone.
+      auditing.rejected("token_parse_failed", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
           "invalid_request", "Failed to parse token in token exchange: " + e.getMessage());
     }
@@ -238,13 +245,17 @@ class TokenExchangeHandler {
     final String actorTokenType = bodyRequest.getParameter(ACTOR_TOKEN_TYPE);
     final boolean hasActorTokenType = actorTokenType != null && !actorTokenType.isEmpty();
 
+    // These parameter checks run before the subject_token is parsed, so no request identity is yet
+    // known; each rejection is audited with only its reason code (see TokenExchangeAuditing.rejected).
     // RFC 8693 section 2.1: subject_token and subject_token_type are REQUIRED.
     if (subjectTokenValue == null || subjectTokenValue.isEmpty()) {
+      auditing.rejected("subject_token_missing", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "the subject_token parameter is required");
       return false;
     }
     if (subjectTokenType == null || subjectTokenType.isEmpty()) {
+      auditing.rejected("subject_token_type_missing", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "the subject_token_type parameter is required");
       return false;
@@ -252,22 +263,26 @@ class TokenExchangeHandler {
     // RFC 8693 section 2.1: actor_token_type is REQUIRED when actor_token is present and MUST NOT
     // be present otherwise.
     if (hasActorToken && !hasActorTokenType) {
+      auditing.rejected("actor_token_type_missing", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "actor_token_type is required when actor_token is present");
       return false;
     }
     if (!hasActorToken && hasActorTokenType) {
+      auditing.rejected("actor_token_type_unexpected", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "actor_token_type must not be present without actor_token");
       return false;
     }
     // Only JWT-family token types are supported.
     if (isNotSupportedTokenType(subjectTokenType)) {
+      auditing.rejected("unsupported_subject_token_type", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "unsupported subject_token_type " + subjectTokenType);
       return false;
     }
     if (hasActorToken && isNotSupportedTokenType(actorTokenType)) {
+      auditing.rejected("unsupported_actor_token_type", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "invalid_request", "unsupported actor_token_type " + actorTokenType);
       return false;
@@ -281,7 +296,7 @@ class TokenExchangeHandler {
       List<String> requestedAudiences)
       throws IOException, ServletException, ParseException, UnknownTokenException {
     final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
-    if (!validateDelegationExchangeRequest(request, response, hasActorToken,
+    if (!validateDelegationExchangeRequest(request, response, subjectToken, hasActorToken,
         requestedSubjectDiffersFromSubject, requestedSubjectValue, uniqueRequestedAudiences)) {
       // Rejected; error response already sent.
       return DelegationTokenExchangeOutcome.rejected();
@@ -295,7 +310,9 @@ class TokenExchangeHandler {
     if (hasActorToken) {
       actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
       if (actorToken == null) {
-        // Validation failed, error response already sent
+        // Validation failed, error response already sent. The subject_token is valid, so audit with
+        // its identity; the actor_token that failed is the reason.
+        auditing.rejected("actor_token_invalid", subjectToken, requestedSubjectValue);
         return DelegationTokenExchangeOutcome.rejected();
       }
     }
@@ -349,12 +366,15 @@ class TokenExchangeHandler {
   }
 
   private boolean validateDelegationExchangeRequest(HttpServletRequest request, HttpServletResponse response,
-      boolean hasActorToken, boolean requestedSubjectDiffersFromSubject, String requestedSubjectValue,
-      Set<String> uniqueRequestedAudiences) throws IOException {
+      JWT subjectToken, boolean hasActorToken, boolean requestedSubjectDiffersFromSubject,
+      String requestedSubjectValue, Set<String> uniqueRequestedAudiences) throws IOException {
+    // These checks run after the subject_token is validated, so each rejection is audited with the
+    // subject_token's identity and the attempted requested_subject (see TokenExchangeAuditing.rejected).
     // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is set to true. When
     // true, only authorized token exchanges will be permitted. Otherwise, any actor could impersonate
     // any subject without authorization.
     if (!filter.isDelegationServerEnabled()) {
+      auditing.rejected("delegation_disabled", subjectToken, requestedSubjectValue);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request", "Delegation is not enabled for this topology");
       return false;
@@ -363,6 +383,7 @@ class TokenExchangeHandler {
     // but not both. Allow a requested_subject to be defined when an actor_token is present only if the
     // value matches the subject_token sub claim.
     if (hasActorToken && requestedSubjectDiffersFromSubject) {
+      auditing.rejected("requested_subject_actor_token_conflict", subjectToken, requestedSubjectValue);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request",
           "requested_subject must not differ from subject_token's subject when actor_token is present");
@@ -370,12 +391,14 @@ class TokenExchangeHandler {
     }
     // For headless delegation the requested_subject value must be well-formed.
     if (!hasActorToken && isRequestedSubjectMalformed(requestedSubjectValue)) {
+      auditing.rejected("requested_subject_malformed", subjectToken, requestedSubjectValue);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request", "The requested_subject value is malformed");
       return false;
     }
     // When configured, at least one audience/resource value is required.
     if (filter.isDelegationEnforceRequestedAudienceRequired() && uniqueRequestedAudiences.isEmpty()) {
+      auditing.rejected("requested_audience_required", subjectToken, requestedSubjectValue);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request",
           "At least one audience or resource value is required for a delegation exchange");
@@ -383,6 +406,7 @@ class TokenExchangeHandler {
     }
     // When configured, at most one distinct combined audience/resource value is allowed.
     if (filter.isDelegationEnforceRequestedAudienceMaxOne() && uniqueRequestedAudiences.size() > 1) {
+      auditing.rejected("requested_audience_not_unique", subjectToken, requestedSubjectValue);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request",
           "Exactly one combined audience or resource value is allowed for a delegation exchange");

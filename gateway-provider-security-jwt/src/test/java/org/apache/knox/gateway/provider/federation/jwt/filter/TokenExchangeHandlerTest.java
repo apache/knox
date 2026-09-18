@@ -115,58 +115,89 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testSubjectTokenRequired() throws Exception {
+    // Rejected before the subject_token is parsed, so the record's resourceName is "unknown".
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request(null, JWT_TYPE, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("subject_token"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=subject_token_missing"));
   }
 
   @Test
   public void testSubjectTokenTypeRequired() throws Exception {
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", null, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("subject_token_type"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=subject_token_type_missing"));
   }
 
   @Test
   public void testActorTokenTypeRequiredWhenActorPresent() throws Exception {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, "acttok", null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("actor_token_type is required"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=actor_token_type_missing"));
   }
 
   @Test
   public void testActorTokenTypeForbiddenWithoutActor() throws Exception {
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, null, JWT_TYPE), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("must not be present"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=actor_token_type_unexpected"));
   }
 
   @Test
   public void testUnsupportedSubjectTokenType() throws Exception {
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", SAML2_TYPE, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("subject_token_type"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=unsupported_subject_token_type"));
   }
 
   @Test
   public void testUnsupportedActorTokenType() throws Exception {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, "acttok", SAML2_TYPE), response, chain);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("actor_token_type"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=unsupported_actor_token_type"));
   }
 
   @Test
@@ -550,16 +581,26 @@ public class TokenExchangeHandlerTest {
 
   @Test
   public void testSubjectValidationFailureDoesNotEstablishContext() throws Exception {
-    // "subtok" is not in the valid map -> parseAndValidateJWT returns null (error already sent)
+    // "subtok" is not in the valid map -> parseAndValidateJWT returns null (error already sent).
+    // The subject_token could not be validated, so the rejection is audited with resourceName
+    // "unknown" and reason=subject_token_invalid.
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=subject_token_invalid"));
   }
 
   @Test
   public void testActorValidationFailureDoesNotEstablishContext() throws Exception {
     filter.delegationServerEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
-    // "acttok" is not valid
+    // "acttok" is not valid. The subject_token is valid, so the rejection is audited with the
+    // subject's identity as resourceName and reason=actor_token_invalid.
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
     assertFalse(filter.continued);
     // RecordingFilter.parseAndValidateJWT does not call handleValidationError itself when a
@@ -573,16 +614,27 @@ public class TokenExchangeHandlerTest {
     assertEquals(-1, filter.errorStatus);
     assertNull(filter.error);
     assertNull(filter.errorDescription);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=actor_token_invalid"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
   }
 
   @Test
   public void testUnparseableSubjectTokenReturnsInvalidRequest() throws Exception {
     filter.throwOnParse.add("subtok");
+    // The subject_token throws on parse, caught by the outer handler; audited with resourceName
+    // "unknown" and reason=token_parse_failed.
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
     assertEquals(HttpServletResponse.SC_UNAUTHORIZED, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("Failed to parse token in token exchange"));
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=token_parse_failed"));
   }
 
   @Test
@@ -633,11 +685,18 @@ public class TokenExchangeHandlerTest {
   @Test
   public void testInvalidResourceUriRejectedAsInvalidTarget() throws Exception {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    // A malformed resource is rejected before the subject_token is parsed, so the record's
+    // resourceName is "unknown" and reason=invalid_resource.
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "unknown",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(exchangeRequest("subtok", new String[] {"not-a-uri"}, null), response, chain);
 
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_target", filter.error);
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=invalid_resource"));
   }
 
   @Test
@@ -758,12 +817,20 @@ public class TokenExchangeHandlerTest {
   public void testGateRejectsActorTokenPresentWhenDelegationServerDisabled() throws Exception {
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    // The subject_token is valid, so the delegation-disabled rejection is audited with the
+    // subject's identity as resourceName and reason=delegation_disabled.
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
 
     assertFalse(filter.continued);
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertTrue(filter.errorDescription.contains("Delegation is not enabled for this topology"));
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=delegation_disabled"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
   }
 
   @Test
@@ -797,6 +864,8 @@ public class TokenExchangeHandlerTest {
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     filter.valid.put("acttok", jwt("svc-dataservice", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE, "bob"), response, chain);
 
     assertFalse(filter.continued);
@@ -804,6 +873,11 @@ public class TokenExchangeHandlerTest {
     assertEquals("invalid_request", filter.error);
     assertEquals("requested_subject must not differ from subject_token's subject when actor_token is present",
         filter.errorDescription);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=requested_subject_actor_token_conflict"));
+    // requested_subject the actor attempted to impersonate is recorded.
+    assertTrue(auditMessage.getValue().contains("requested_subject=bob"));
   }
 
   @Test
@@ -987,12 +1061,18 @@ public class TokenExchangeHandlerTest {
     filter.delegationServerEnabled = true;
     filter.delegationRequestedSubjectEnabled = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    final Capture<String> malformedAuditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(delegationRequest("subtok", null, null, "b\u0007ob", null, null), response, chain);
 
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
     assertEquals("invalid_request", filter.error);
     assertEquals("The requested_subject value is malformed", filter.errorDescription);
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(malformedAuditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(malformedAuditMessage.getValue().contains("reason=requested_subject_malformed"));
+    assertTrue(malformedAuditMessage.getValue().contains("subject_token_sub=alice"));
   }
 
   @Test
@@ -1034,6 +1114,8 @@ public class TokenExchangeHandlerTest {
     filter.delegationEnforceRequestedAudienceRequired = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null, null), response, chain);
 
     assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
@@ -1041,6 +1123,10 @@ public class TokenExchangeHandlerTest {
     assertEquals("At least one audience or resource value is required for a delegation exchange",
         filter.errorDescription);
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=requested_audience_required"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
   }
 
   @Test
@@ -1106,6 +1192,8 @@ public class TokenExchangeHandlerTest {
     filter.delegationEnforceRequestedAudienceMaxOne = true;
     filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
     filter.valid.put("actortok", jwt("alice", "KNOXSSO"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
     handler.handle(delegationRequest("subtok", "actortok", JWT_TYPE, null, null,
         new String[] {"aud1", "aud2"}), response, chain);
 
@@ -1114,6 +1202,10 @@ public class TokenExchangeHandlerTest {
     assertEquals("Exactly one combined audience or resource value is allowed for a delegation exchange",
         filter.errorDescription);
     assertFalse(filter.continued);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=requested_audience_not_unique"));
+    assertTrue(auditMessage.getValue().contains("subject_token_sub=alice"));
   }
 
   @Test
