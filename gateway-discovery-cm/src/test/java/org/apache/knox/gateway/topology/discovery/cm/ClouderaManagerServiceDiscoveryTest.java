@@ -626,7 +626,7 @@ public class ClouderaManagerServiceDiscoveryTest {
   @Test
   public void testLivyForSpark4Discovery() {
     final String hostName    = "livy-host";
-    final String port        = "28998";
+    final String port        = "29998";
     ServiceDiscovery.Cluster cluster = doTestLivyForSpark4Discovery(hostName, port, false);
     assertNotNull(cluster);
     List<String> livyURLs = cluster.getServiceURLs("LIVY_FOR_SPARK4");
@@ -638,7 +638,7 @@ public class ClouderaManagerServiceDiscoveryTest {
   @Test
   public void testLivyForSpark4DiscoverySSL() {
     final String hostName    = "livy-host";
-    final String port        = "28998";
+    final String port        = "29998";
     ServiceDiscovery.Cluster cluster = doTestLivyForSpark4Discovery(hostName, port, true);
     assertNotNull(cluster);
     List<String> livyURLs = cluster.getServiceURLs("LIVY_FOR_SPARK4");
