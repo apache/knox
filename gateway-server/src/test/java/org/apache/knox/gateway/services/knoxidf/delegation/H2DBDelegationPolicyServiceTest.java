@@ -128,6 +128,27 @@ public class H2DBDelegationPolicyServiceTest {
     assertEquals("actor-restart", fetched.get().getActorId());
   }
 
+  /**
+   * KNOX-3475: a revoked (not deleted) policy persisted on the embedded H2 backend that runs in
+   * production must be denied by evaluate() -- the check is inherited from
+   * {@link JdbcDelegationPolicyService} and this proves it fires on the real subclass.
+   */
+  @Test
+  public void shouldDenyEvaluateWhenPolicyRevoked() throws Exception {
+    service = newH2Service();
+    final Instant now = Instant.now();
+    final Map<String, Set<String>> resourcePolicy = new HashMap<>();
+    resourcePolicy.put("/api/v1", Collections.singleton("read"));
+    service.register(new DelegationPolicy(null, "oidc", "revoked-actor", null, DelegationPolicy.STATUS_REVOKED,
+        null, null, null, now, now, false,
+        Collections.singleton("alice"), Collections.emptySet(), resourcePolicy));
+
+    final PolicyDecision decision = service.evaluate(new PolicyCheckRequest(
+        "oidc", "revoked-actor", "alice",
+        Collections.singleton("/api/v1"), Collections.singleton("read"), false));
+    assertEquals("policy_not_active", decision.getDenyReason());
+  }
+
   private H2DBDelegationPolicyService newH2Service() throws Exception {
     final MasterService masterService = EasyMock.createNiceMock(MasterService.class);
     EasyMock.expect(masterService.getMasterSecret()).andReturn("M4st3RSecret!".toCharArray()).anyTimes();

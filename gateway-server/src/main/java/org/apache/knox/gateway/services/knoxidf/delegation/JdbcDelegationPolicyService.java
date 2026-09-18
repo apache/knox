@@ -232,6 +232,13 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     }
     final DelegationPolicy policy = policyOpt.get();
 
+    // Step 1.5: a policy that is not active (e.g. revoked instead of deleted) must not authorize.
+    // The registration still exists, but its authorization has been withdrawn, so the exchange is
+    // denied here before any user/group/resource/scope check is considered.
+    if (!policy.isActive()) {
+      return deny("policy_not_active");
+    }
+
     // Step 2: headless exchange check
     if (request.isHeadlessExchange() && !policy.isAllowHeadlessExchange()) {
       return deny("headless_not_allowed");
