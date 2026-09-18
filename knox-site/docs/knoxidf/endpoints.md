@@ -192,10 +192,9 @@ access-token / refresh-token pair. Requires `client_secret`.
   "token_id": "<UUID>",
   "token_type": "Bearer",
   "expires_in": 86400,
-  "managed_token": "true",
+  "managed_token": "false",
   "id_token": "<JWT>",
-  "refresh_token": "<JWT>",
-  "passcode": "<Base64(tokenId)::Base64(passcode)>"
+  "refresh_token": "<JWT>"
 }
 ```
 
@@ -237,7 +236,7 @@ wire-level reference.
   "token_type": "Bearer",
   "issued_token_type": "urn:ietf:params:oauth:token-type:jwt",
   "expires_in": 86400,
-  "managed_token": "true"
+  "managed_token": "false"
 }
 ```
 
