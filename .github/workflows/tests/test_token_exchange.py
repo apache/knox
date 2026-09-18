@@ -81,7 +81,14 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, get_token_claim, knox_get, knox_post
+from common_utils import (
+    gateway_base_url,
+    get_token_claim,
+    knox_delete,
+    knox_get,
+    knox_post,
+    knox_put,
+)
 
 # RFC 8693 token-exchange identifiers.
 TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
@@ -101,9 +108,27 @@ SUBJECT_AUDIENCE = "https://recipient1"
 OTHER_SUBJECT_AUDIENCE = "https://recipient2"
 UNAUTHORIZED_AUDIENCE = "https://recipient3"
 
+# The demo LDAP 'admin' principal -- the only one KNOXIDF_ADMIN.acl (admin;*;*) on the
+# knoxidf-admin topology permits, and how the delegation-policy admin REST API is reached.
+ADMIN_USER = "admin"
+ADMIN_PASSWORD = "admin-password"
 
-class TestTokenExchange(unittest.TestCase):
-    """RFC 8693 same-subject and delegation-gating behavior through Knox."""
+# ActorIdentity.fromJwt (gateway-provider-security-jwt) tags every non-k8s-serviceaccount JWT
+# subject with the fixed authority "USER" and actorId = the JWT's own sub. Both the subject and
+# actor tokens below are guest-minted, so the actor registers as (USER, guest) -- matching the
+# subject name (guest) the policy must be allowed to act for.
+DELEGATION_POLICY_ACTOR_AUTHORITY = "USER"
+DELEGATION_POLICY_ACTOR_ID = GUEST_USER
+DELEGATION_POLICY_RESOURCE = "https://delegated-resource"
+
+
+class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
+    """RFC 8693 same-subject and delegation-gating behavior through Knox.
+
+    The fixture fronts every KNOXIDF endpoint the suite touches -- six mint/exchange
+    topologies plus the delegation-policy admin API -- so it legitimately carries more
+    than the default instance-attribute budget.
+    """
 
     def setUp(self):
         base_url = gateway_base_url()
@@ -129,7 +154,14 @@ class TestTokenExchange(unittest.TestCase):
         self.passthrough_exchange_url = (
             base_url + "gateway/knoxidf-token-passthrough/knoxidf/api/v1/token"
         )
+        # Delegation-policy admin REST API (KNOXIDF_ADMIN role on the knoxidf-admin topology).
+        # The policy store it writes to is a gateway-wide singleton, so a policy registered here
+        # is seen by the exchange performed on knoxidf-token-delegation.
+        self.admin_policy_url = (
+            base_url + "gateway/knoxidf-admin/knoxidf/admin/v1/delegation-policies"
+        )
         self.guest_auth = HTTPBasicAuth(GUEST_USER, GUEST_PASSWORD)
+        self.admin_auth = HTTPBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
 
     def _mint_subject_token(self):
         """Mint and return a genuine Knox JWT for the guest user."""
@@ -196,6 +228,103 @@ class TestTokenExchange(unittest.TestCase):
         self.assertEqual(body.get("error"), expected_error, response.text)
         description = body.get("error_description", "")
         self.assertIn(message_substring, description, response.text)
+
+    # ---- KNOX-3475: delegation-policy status (active/revoked) admin helpers ----
+    # Every helper operates on the one (USER, guest) policy this test needs, read straight from
+    # the module constants, so none of them thread the actor/resource identity through as args.
+
+    def _find_policy_registration_id(self):
+        """Return the registrationId of the (USER, guest) policy, or None."""
+        response = knox_get(
+            self.admin_policy_url,
+            params={"actorAuthority": DELEGATION_POLICY_ACTOR_AUTHORITY},
+            auth=self.admin_auth,
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        for policy in response.json().get("policies", []):
+            if policy.get("actorId") == DELEGATION_POLICY_ACTOR_ID:
+                return policy.get("registrationId")
+        return None
+
+    def _delete_policy_if_present(self):
+        """Best-effort cleanup: remove any existing (USER, guest) policy (idempotent)."""
+        registration_id = self._find_policy_registration_id()
+        if registration_id is not None:
+            knox_delete(self.admin_policy_url + "/" + registration_id, auth=self.admin_auth)
+
+    @staticmethod
+    def _policy_body(status):
+        """The (USER, guest) delegation-policy request body carrying the given status."""
+        return {
+            "actorAuthority": DELEGATION_POLICY_ACTOR_AUTHORITY,
+            "actorId": DELEGATION_POLICY_ACTOR_ID,
+            "status": status,
+            "canActForUsers": [GUEST_USER],
+            "resourcePolicy": {DELEGATION_POLICY_RESOURCE: []},
+        }
+
+    def _register_policy(self, status):
+        """POST a fresh delegation policy with the given status. Returns its registrationId."""
+        response = knox_post(
+            self.admin_policy_url, json=self._policy_body(status), auth=self.admin_auth,
+        )
+        self.assertEqual(response.status_code, 201, response.text)
+        return response.json()["registrationId"]
+
+    def _set_policy_status(self, registration_id, status):
+        """PUT a full-replace update of the (USER, guest) policy to the given status.
+
+        Identity fields (actorAuthority/actorId/createdBy/createdAt) are immutable server-side,
+        so this updates the same row rather than creating a new one -- the "revoked, not deleted"
+        scenario the bug is about.
+        """
+        response = knox_put(
+            self.admin_policy_url + "/" + registration_id,
+            json=self._policy_body(status),
+            auth=self.admin_auth,
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
+
+    def test_delegation_exchange_denied_after_policy_revoked(self):
+        """KNOX-3475: an ACTIVE policy authorizes a delegation exchange; revoking the SAME policy
+        (status="revoked", not deleted) denies the identical exchange.
+
+        This is the first end-to-end happy-path delegation exchange in the suite -- it needs a
+        seeded active policy, which the KNOXIDF_ADMIN REST API now provides.
+        """
+        # Known-clean start: (USER, guest) is a process-wide row in the gateway-wide H2 policy
+        # store and could carry over from a previous run. Clean up afterwards regardless of outcome.
+        self._delete_policy_if_present()
+        self.addCleanup(self._delete_policy_if_present)
+
+        registration_id = self._register_policy("active")
+
+        subject_token = self._mint_subject_token()
+        actor_token = self._mint_subject_token()
+
+        # ACTIVE: the delegation exchange is authorized end to end.
+        allowed = self._exchange(
+            self.delegation_exchange_url, subject_token,
+            resources=[DELEGATION_POLICY_RESOURCE], actor_token=actor_token,
+        )
+        self.assertEqual(allowed.status_code, 200, allowed.text)
+        self.assertTrue(
+            allowed.json().get("access_token"), "authorized exchange did not return an access_token"
+        )
+
+        # Revoke the SAME policy record (full-replace via PUT /{registrationId}) -- not deleted.
+        revoked = self._set_policy_status(registration_id, "revoked")
+        self.assertEqual(revoked.get("status"), "revoked", revoked)
+
+        # REVOKED: the identical exchange (same tokens, same resource) is now denied by policy.
+        # Reusing the same subject/actor tokens isolates the policy's status as the only variable
+        # that changed between the two exchanges.
+        denied = self._exchange(
+            self.delegation_exchange_url, subject_token,
+            resources=[DELEGATION_POLICY_RESOURCE], actor_token=actor_token,
+        )
+        self._assert_oauth_error(denied, 400, "invalid_request", "rejected by policy")
 
     def test_same_subject_exchange_returns_expected_claims(self):
         """A same-subject exchange succeeds and preserves the subject's identity."""

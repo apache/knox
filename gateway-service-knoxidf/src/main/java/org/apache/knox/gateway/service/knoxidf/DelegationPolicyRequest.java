@@ -30,9 +30,6 @@ import java.util.Set;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DelegationPolicyRequest {
 
-  public static final String STATUS_ACTIVE = "active";
-  public static final String STATUS_REVOKED = "revoked";
-
   private String actorAuthority;
   private String actorId;
   private String name;

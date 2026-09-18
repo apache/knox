@@ -333,9 +333,9 @@ public class DelegationPolicyResource {
           "tokenTtlSec must be between " + minTokenTtlSec + " and " + maxTokenTtlSec + " seconds (inclusive)");
     }
     final String status = effectiveStatus(req.getStatus());
-    if (!DelegationPolicyRequest.STATUS_ACTIVE.equals(status) && !DelegationPolicyRequest.STATUS_REVOKED.equals(status)) {
+    if (!DelegationPolicy.STATUS_ACTIVE.equals(status) && !DelegationPolicy.STATUS_REVOKED.equals(status)) {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
-          "status must be \"" + DelegationPolicyRequest.STATUS_ACTIVE + "\" or \"" + DelegationPolicyRequest.STATUS_REVOKED + "\"");
+          "status must be \"" + DelegationPolicy.STATUS_ACTIVE + "\" or \"" + DelegationPolicy.STATUS_REVOKED + "\"");
     }
     if (req.getCanActForUsers().isEmpty() && req.getCanActForGroups().isEmpty()) {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
@@ -353,9 +353,9 @@ public class DelegationPolicyResource {
         req.getResourcePolicy());
   }
 
-  /** Null/empty status is accepted and defaults to {@link DelegationPolicyRequest#STATUS_ACTIVE}. */
+  /** Null/empty status is accepted and defaults to {@link DelegationPolicy#STATUS_ACTIVE}. */
   private static String effectiveStatus(String status) {
-    return StringUtils.isBlank(status) ? DelegationPolicyRequest.STATUS_ACTIVE : status;
+    return StringUtils.isBlank(status) ? DelegationPolicy.STATUS_ACTIVE : status;
   }
 
   private static DelegationPolicyResponse toResponse(DelegationPolicy policy) {

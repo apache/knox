@@ -163,6 +163,22 @@ public class DelegationPolicyTest {
     assertTrue("Null value set in resourcePolicy should become empty set", scopes.isEmpty());
   }
 
+  @Test
+  public void isActiveOnlyForExactlyActiveStatus() {
+    assertTrue("\"active\" must be active", policyWithStatus(DelegationPolicy.STATUS_ACTIVE).isActive());
+    assertFalse("\"revoked\" must not be active", policyWithStatus(DelegationPolicy.STATUS_REVOKED).isActive());
+    assertFalse("null status must not be active", policyWithStatus(null).isActive());
+    assertFalse("unknown status must not be active", policyWithStatus("suspended").isActive());
+  }
+
+  private static DelegationPolicy policyWithStatus(String status) {
+    return new DelegationPolicy(
+        "reg-id", "oidc", "actorId",
+        "test-policy", status, 3600, "desc", "admin",
+        Instant.now(), Instant.now(), false,
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+  }
+
   private static DelegationPolicy policy(Set<String> users, Set<String> groups, Map<String, Set<String>> resourcePolicy) {
     return new DelegationPolicy(
         "reg-id", "oidc", "actorId",

@@ -27,6 +27,9 @@ import java.util.Set;
  */
 public class DelegationPolicy {
 
+  public static final String STATUS_ACTIVE = "active";
+  public static final String STATUS_REVOKED = "revoked";
+
   private final String registrationId;
   private final String actorAuthority;
   private final String actorId;
@@ -87,6 +90,10 @@ public class DelegationPolicy {
 
   public String getStatus() {
     return status;
+  }
+
+  public boolean isActive() {
+    return STATUS_ACTIVE.equals(status);
   }
 
   public Integer getTokenTtlSec() {

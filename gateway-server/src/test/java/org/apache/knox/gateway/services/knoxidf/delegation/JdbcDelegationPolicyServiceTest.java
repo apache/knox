@@ -693,6 +693,43 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   @Test
+  public void testEvaluateDenyRevokedPolicy() throws Exception {
+    // A policy that exists but is revoked (not deleted) must never authorize, regardless of the
+    // user/resource/scope it would otherwise match.
+    service.register(policy("oidc", "revoked-actor", null, DelegationPolicy.STATUS_REVOKED,
+        null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api/v1", "read")));
+
+    final PolicyDecision decision = service.evaluate(
+        new PolicyCheckRequest("oidc", "revoked-actor", "alice", Set.of("/api/v1"), Collections.singleton("read"), false));
+    assertEquals("policy_not_active", decision.getDenyReason());
+    assertEquals(0, decision.getEffectiveTtlSec());
+  }
+
+  @Test
+  public void testEvaluateDenyAfterPolicyUpdatedToRevoked() throws Exception {
+    // The exact KNOX-3475 scenario: an active policy authorizes, then the SAME record is updated
+    // (not deleted) to revoked and must stop authorizing.
+    final DelegationPolicy active = service.register(policy("oidc", "toggle", null, DelegationPolicy.STATUS_ACTIVE,
+        null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api/v1", "read")));
+    final PolicyCheckRequest req =
+        new PolicyCheckRequest("oidc", "toggle", "alice", Set.of("/api/v1"), Collections.singleton("read"), false);
+    assertNull("active policy must authorize", service.evaluate(req).getDenyReason());
+
+    service.update(active.getRegistrationId(), policy("oidc", "toggle", null, DelegationPolicy.STATUS_REVOKED,
+        null, null, null, Instant.now(),
+        Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api/v1", "read")));
+
+    final PolicyDecision decision = service.evaluate(req);
+    assertEquals("policy_not_active", decision.getDenyReason());
+    assertEquals(0, decision.getEffectiveTtlSec());
+  }
+
+  @Test
   public void testEvaluateAuthorizedEmptyRequestedScopes() throws Exception {
     registerPolicy("oidc", "noscope",
         Collections.singleton("alice"), Collections.emptySet(),
