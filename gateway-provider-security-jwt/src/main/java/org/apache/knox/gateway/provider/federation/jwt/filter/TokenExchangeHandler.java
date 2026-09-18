@@ -18,12 +18,6 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import org.apache.commons.lang3.StringUtils;
 
-import org.apache.knox.gateway.audit.api.Action;
-import org.apache.knox.gateway.audit.api.ActionOutcome;
-import org.apache.knox.gateway.audit.api.AuditServiceFactory;
-import org.apache.knox.gateway.audit.api.Auditor;
-import org.apache.knox.gateway.audit.api.ResourceType;
-import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
 import org.apache.knox.gateway.security.CommonTokenConstants;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
@@ -103,12 +97,8 @@ class TokenExchangeHandler {
 
   // Larger than an allowed SPIFFE ID
   private static final int MAX_REQUESTED_SUBJECT_LENGTH = 4096;
-  // Non-final and package-private to allow test injection of a mock Auditor (see
-  // DelegationPolicyResource.auditor for the identical, already-established pattern).
-  static Auditor auditor = AuditServiceFactory.getAuditService()
-      .getAuditor(AuditConstants.DEFAULT_AUDITOR_NAME,
-          AuditConstants.KNOX_SERVICE_NAME, AuditConstants.KNOX_COMPONENT_NAME);
   private final JWTFederationFilter filter;
+  private final TokenExchangeAuditing auditing = new TokenExchangeAuditing();
 
   TokenExchangeHandler(JWTFederationFilter filter) {
     this.filter = filter;
@@ -129,46 +119,11 @@ class TokenExchangeHandler {
     // unwrapped request. The wrapped request is still used below so downstream processing is
     // unchanged.
     final HttpServletRequest bodyRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
-
     final String subjectTokenValue = bodyRequest.getParameter(JWTFederationFilter.SUBJECT_TOKEN);
-    final String subjectTokenType = bodyRequest.getParameter(SUBJECT_TOKEN_TYPE);
     final String actorTokenValue = bodyRequest.getParameter(JWTFederationFilter.ACTOR_TOKEN);
-    final String actorTokenType = bodyRequest.getParameter(ACTOR_TOKEN_TYPE);
     final boolean hasActorToken = actorTokenValue != null && !actorTokenValue.isEmpty();
-    final boolean hasActorTokenType = actorTokenType != null && !actorTokenType.isEmpty();
 
-    // RFC 8693 section 2.1: subject_token and subject_token_type are REQUIRED.
-    if (subjectTokenValue == null || subjectTokenValue.isEmpty()) {
-      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request", "the subject_token parameter is required");
-      return;
-    }
-    if (subjectTokenType == null || subjectTokenType.isEmpty()) {
-      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request", "the subject_token_type parameter is required");
-      return;
-    }
-    // RFC 8693 section 2.1: actor_token_type is REQUIRED when actor_token is present and MUST NOT
-    // be present otherwise.
-    if (hasActorToken && !hasActorTokenType) {
-      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request", "actor_token_type is required when actor_token is present");
-      return;
-    }
-    if (!hasActorToken && hasActorTokenType) {
-      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request", "actor_token_type must not be present without actor_token");
-      return;
-    }
-    // Only JWT-family token types are supported.
-    if (isNotSupportedTokenType(subjectTokenType)) {
-      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request", "unsupported subject_token_type " + subjectTokenType);
-      return;
-    }
-    if (hasActorToken && isNotSupportedTokenType(actorTokenType)) {
-      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-          "invalid_request", "unsupported actor_token_type " + actorTokenType);
+    if (!validateExchangeRequestParameters(request, response, bodyRequest, subjectTokenValue, hasActorToken)) {
       return;
     }
 
@@ -179,7 +134,9 @@ class TokenExchangeHandler {
     try {
       requestedAudiences = parseRequestedAudiences(bodyRequest);
     } catch (InvalidResourceException e) {
-      // RFC 8707 section 2: a malformed resource yields the invalid_target error code.
+      // RFC 8707 section 2: a malformed resource yields the invalid_target error code. Audited
+      // before the subject_token is parsed, so no request identity is yet known.
+      auditing.rejected("invalid_resource", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_target", e.getMessage());
       return;
@@ -188,7 +145,9 @@ class TokenExchangeHandler {
     try {
       final JWT subjectToken = filter.parseAndValidateJWT(request, response, chain, subjectTokenValue);
       if (subjectToken == null) {
-        // Validation failed, error response already sent
+        // Validation failed, error response already sent. The subject_token could not be validated,
+        // so no identity is available for the audit record beyond the reason code.
+        auditing.rejected("subject_token_invalid", null, null);
         return;
       }
 
@@ -207,118 +166,47 @@ class TokenExchangeHandler {
       final boolean delegationExchange = hasActorToken || requestedSubjectDiffersFromSubject;
       boolean conveyRequestedAudiences = false;
       if (delegationExchange) {
-        // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is
-        // set to true. When true, only authorized token exchanges will be permitted.
-        // Otherwise, any actor could impersonate any subject without authorization.
-        if (!filter.isDelegationServerEnabled()) {
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_request", "Delegation is not enabled for this topology");
+        final DelegationTokenExchangeOutcome outcome = handleDelegationExchange(request, response, chain,
+            subjectToken, hasActorToken, actorTokenValue, requestedSubjectValue,
+            requestedSubjectDiffersFromSubject, requestedAudiences);
+        if (outcome.rejected) {
+          // Rejected; error response already sent.
           return;
         }
-        // A delegation exchange request can use actor_token or requested_subject for headless
-        // exchanges, but not both. Allow a requested_subject to be defined when an actor_token
-        // is present only if the value matches the subject_token sub claim.
-        if (hasActorToken && requestedSubjectDiffersFromSubject) {
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_request",
-              "requested_subject must not differ from subject_token's subject when actor_token is present");
-          return;
-        }
-        // For headless delegation the requested_subject value must be well-formed.
-        if (!hasActorToken && isRequestedSubjectMalformed(requestedSubjectValue)) {
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_request", "The requested_subject value is malformed");
-          return;
-        }
+        actorToken = outcome.actorToken;
+        conveyRequestedAudiences = outcome.conveyRequestedAudiences;
+      } else {
+        // Same-subject exchange. The subject is its own actor, so deriveActorIdentity(subjectToken)
+        // yields a consistent audit resourceName and actor_authority/actor_id, mirroring the
+        // delegation branch. act_chain_depth reports the delegation history the subject_token already
+        // carries (it is exchanged as-is; TokenResource preserves any existing chain).
+        final ActorIdentity subjectAsActor = ActorIdentity.fromJwt(subjectToken);
         final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
-        // When configured, at least one audience/resource value is required.
-        if (filter.isDelegationEnforceRequestedAudienceRequired() && uniqueRequestedAudiences.isEmpty()) {
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_request",
-              "At least one audience or resource value is required for a delegation exchange");
-          return;
-        }
-        // When configured, at most one distinct combined audience/resource value is allowed.
-        if (filter.isDelegationEnforceRequestedAudienceMaxOne() && uniqueRequestedAudiences.size() > 1) {
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_request",
-              "Exactly one combined audience or resource value is allowed for a delegation exchange");
-          return;
-        }
-
-        // The actor for this exchange is the actor_token's identity when an actor_token is
-        // present, or the subject_token's identity when this is a headless delegation
-        // exchange. Either way it must be parsed/validated before the policy check below; when
-        // an actor_token is present it is reused for Subject construction further down.
-        if (hasActorToken) {
-          actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
-          if (actorToken == null) {
-            // Validation failed, error response already sent
+        final int actChainDepth = TokenUtils.extractActorChain(subjectToken).size();
+        if (!requestedAudiences.isEmpty() && filter.isTokenExchangeSameSubjectRequestedAudienceEnabled()) {
+          // Honoring enabled: authorize each requested audience against the subject token's own aud
+          // claim; a value the subject token does not already carry is rejected. This is what allows a
+          // passthrough audience validator to be used safely for same-subject exchanges without an
+          // external policy.
+          final Set<String> subjectAudiences = audienceClaimSet(subjectToken);
+          if (!subjectAudiences.containsAll(uniqueRequestedAudiences)) {
+            auditing.denied(subjectAsActor, subjectToken, null,
+                "requested_audience_not_authorized", uniqueRequestedAudiences, actChainDepth);
+            filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+                "invalid_target",
+                "The requested audience is not authorized for this subject");
             return;
           }
+          conveyRequestedAudiences = true;
         }
-        final JWT actorIdentitySource = hasActorToken ? actorToken : subjectToken;
-        final ActorIdentity actorIdentity = deriveActorIdentity(actorIdentitySource);
-
-        // A single policy-evaluation call per exchange, carrying the full validated requested-
-        // resource set and an always-empty requestedScopes set (scope enforcement is deferred).
-        final PolicyCheckRequest policyCheckRequest = new PolicyCheckRequest(
-            actorIdentity.actorAuthority, actorIdentity.actorId,
-            requestedSubjectDiffersFromSubject ? requestedSubjectValue : subjectToken.getSubject(),
-            uniqueRequestedAudiences, Collections.emptySet(), requestedSubjectDiffersFromSubject);
-
-        // Policy evaluation resolves canActFor.users and canActFor.groups (the latter via an LDAP
-        // group lookup on the impersonated subject) and returns a decision; a subject that matches
-        // neither is reported as a denial below, not as an error.
-        final PolicyDecision policyDecision;
-        try {
-          policyDecision = filter.evaluateDelegationPolicy(policyCheckRequest);
-        } catch (DelegationGroupLookupUnavailableException e) {
-          // The policy is group-based but its canActFor.groups rule could not be evaluated: LDAP is
-          // either disabled/absent or the group lookup itself failed. This is a server-side
-          // condition, not a policy denial, so surface a server_error directing the operator to LDAP
-          // rather than a misleading rejection. The underlying cause is logged by the policy service.
-          filter.handleValidationError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-              "server_error", "This delegation policy restricts canActFor by group, which requires "
-                  + "the LDAP service to resolve group membership; ensure the LDAP service is enabled "
-                  + "and reachable to evaluate group-based delegation policies");
-          return;
-        }
-        final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
-        if (policyDecision.getDenyReason() != null) {
-          auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
-              ActionOutcome.FAILURE, auditMessage(policyDecision, actorIdentity, subjectToken,
-                  requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
-          // A single, generic denial that does not identify which requested value failed.
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_request", "The token exchange request is rejected by policy");
-          return;
-        }
-        auditor.audit(Action.TOKEN_EXCHANGE, auditResourceName(actorIdentity), ResourceType.PRINCIPAL,
-            ActionOutcome.SUCCESS, auditMessage(policyDecision, actorIdentity, subjectToken,
-                requestedSubjectValue, uniqueRequestedAudiences, actChainDepth));
-
-        request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
-        // Delegation exchange: the requested audiences were authorized by the delegation policy above.
-        conveyRequestedAudiences = !requestedAudiences.isEmpty();
-      } else if (!requestedAudiences.isEmpty() && filter.isTokenExchangeSameSubjectRequestedAudienceEnabled()) {
-        // Same-subject exchange, honoring enabled: authorize each requested audience against the
-        // subject token's own aud claim; a value the subject token does not already carry is
-        // rejected. This is what allows a passthrough audience validator to be used safely for
-        // same-subject exchanges without an external policy.
-        final Set<String> subjectAudiences = audienceClaimSet(subjectToken);
-        final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
-        if (!subjectAudiences.containsAll(uniqueRequestedAudiences)) {
-          filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "invalid_target",
-              "The requested audience is not authorized for this subject");
-          return;
-        }
-        conveyRequestedAudiences = true;
+        // else: same-subject exchange with honoring disabled (the fail-safe default) -- the requested
+        // audience is dropped so a passthrough audience validator cannot mint an arbitrarily-audienced
+        // token without authorization; KNOXTOKEN falls back to the audience validator's default. The
+        // SUCCESS record still lists the requested resources but reports audiences_honored=false, so a
+        // dropped request is never mistaken for an honored one.
+        auditing.allowed(subjectAsActor, subjectToken, null, uniqueRequestedAudiences,
+            conveyRequestedAudiences, actChainDepth);
       }
-      // else: same-subject exchange with honoring disabled (the fail-safe default) -- the requested
-      // audience is dropped so a passthrough audience validator cannot mint an arbitrarily-audienced
-      // token without authorization; KNOXTOKEN falls back to the audience validator's default.
 
       final Subject subject;
       if (hasActorToken) {
@@ -343,9 +231,188 @@ class TokenExchangeHandler {
 
       filter.continueWithEstablishedSecurityContext(subject, request, response, chain);
     } catch (ParseException | UnknownTokenException e) {
+      // A token (subject or actor) failed to parse mid-exchange; the offending token's identity is
+      // not reliably available, so audit with the reason code alone.
+      auditing.rejected("token_parse_failed", null, null);
       filter.handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
           "invalid_request", "Failed to parse token in token exchange: " + e.getMessage());
     }
+  }
+
+  private boolean validateExchangeRequestParameters(HttpServletRequest request, HttpServletResponse response,
+                                                    HttpServletRequest bodyRequest, String subjectTokenValue, boolean hasActorToken) throws IOException {
+    final String subjectTokenType = bodyRequest.getParameter(SUBJECT_TOKEN_TYPE);
+    final String actorTokenType = bodyRequest.getParameter(ACTOR_TOKEN_TYPE);
+    final boolean hasActorTokenType = actorTokenType != null && !actorTokenType.isEmpty();
+
+    // These parameter checks run before the subject_token is parsed, so no request identity is yet
+    // known; each rejection is audited with only its reason code (see TokenExchangeAuditing.rejected).
+    // RFC 8693 section 2.1: subject_token and subject_token_type are REQUIRED.
+    if (subjectTokenValue == null || subjectTokenValue.isEmpty()) {
+      auditing.rejected("subject_token_missing", null, null);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "the subject_token parameter is required");
+      return false;
+    }
+    if (subjectTokenType == null || subjectTokenType.isEmpty()) {
+      auditing.rejected("subject_token_type_missing", null, null);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "the subject_token_type parameter is required");
+      return false;
+    }
+    // RFC 8693 section 2.1: actor_token_type is REQUIRED when actor_token is present and MUST NOT
+    // be present otherwise.
+    if (hasActorToken && !hasActorTokenType) {
+      auditing.rejected("actor_token_type_missing", null, null);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "actor_token_type is required when actor_token is present");
+      return false;
+    }
+    if (!hasActorToken && hasActorTokenType) {
+      auditing.rejected("actor_token_type_unexpected", null, null);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "actor_token_type must not be present without actor_token");
+      return false;
+    }
+    // Only JWT-family token types are supported.
+    if (isNotSupportedTokenType(subjectTokenType)) {
+      auditing.rejected("unsupported_subject_token_type", null, null);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "unsupported subject_token_type " + subjectTokenType);
+      return false;
+    }
+    if (hasActorToken && isNotSupportedTokenType(actorTokenType)) {
+      auditing.rejected("unsupported_actor_token_type", null, null);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+              "invalid_request", "unsupported actor_token_type " + actorTokenType);
+      return false;
+    }
+    return true;
+  }
+
+  private DelegationTokenExchangeOutcome handleDelegationExchange(HttpServletRequest request,
+      HttpServletResponse response, FilterChain chain, JWT subjectToken, boolean hasActorToken,
+      String actorTokenValue, String requestedSubjectValue, boolean requestedSubjectDiffersFromSubject,
+      List<String> requestedAudiences)
+      throws IOException, ServletException, ParseException, UnknownTokenException {
+    final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
+    if (!validateDelegationExchangeRequest(request, response, subjectToken, hasActorToken,
+        requestedSubjectDiffersFromSubject, requestedSubjectValue, uniqueRequestedAudiences)) {
+      // Rejected; error response already sent.
+      return DelegationTokenExchangeOutcome.rejected();
+    }
+
+    // The actor for this exchange is the actor_token's identity when an actor_token is
+    // present, or the subject_token's identity when this is a headless delegation
+    // exchange. Either way it must be parsed/validated before the policy check below; when
+    // an actor_token is present it is reused for Subject construction further down.
+    JWT actorToken = null;
+    if (hasActorToken) {
+      actorToken = filter.parseAndValidateJWT(request, response, chain, actorTokenValue);
+      if (actorToken == null) {
+        // Validation failed, error response already sent. The subject_token is valid, so audit with
+        // its identity; the actor_token that failed is the reason.
+        auditing.rejected("actor_token_invalid", subjectToken, requestedSubjectValue);
+        return DelegationTokenExchangeOutcome.rejected();
+      }
+    }
+    final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
+    final JWT actorIdentitySource = hasActorToken ? actorToken : subjectToken;
+    final ActorIdentity actorIdentity = ActorIdentity.fromJwt(actorIdentitySource);
+
+    // A single policy-evaluation call per exchange, carrying the full validated requested-
+    // resource set and an always-empty requestedScopes set (scope enforcement is deferred).
+    final PolicyCheckRequest policyCheckRequest = new PolicyCheckRequest(
+        actorIdentity.actorAuthority, actorIdentity.actorId,
+        requestedSubjectDiffersFromSubject ? requestedSubjectValue : subjectToken.getSubject(),
+        uniqueRequestedAudiences, Collections.emptySet(), requestedSubjectDiffersFromSubject);
+
+    // Policy evaluation resolves canActFor.users and canActFor.groups (the latter via an LDAP
+    // group lookup on the impersonated subject) and returns a decision; a subject that matches
+    // neither is reported as a denial below, not as an error.
+    final PolicyDecision policyDecision;
+    try {
+      policyDecision = filter.evaluateDelegationPolicy(policyCheckRequest);
+    } catch (DelegationGroupLookupUnavailableException e) {
+      // The policy is group-based but its canActFor.groups rule could not be evaluated: LDAP is
+      // either disabled/absent or the group lookup itself failed. This is a server-side
+      // condition, not a policy denial, so surface a server_error directing the operator to LDAP
+      // rather than a misleading rejection. The underlying cause is logged by the policy service.
+      // Audit it as an UNAVAILABLE outcome so every delegation exchange (allow/deny/unavailable)
+      // leaves a TOKEN_EXCHANGE record.
+      auditing.unavailable(actorIdentity, subjectToken, requestedSubjectValue,
+          "delegation_group_lookup_unavailable", uniqueRequestedAudiences, actChainDepth);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+          "server_error", "This delegation policy restricts canActFor by group, which requires "
+              + "the LDAP service to resolve group membership; ensure the LDAP service is enabled "
+              + "and reachable to evaluate group-based delegation policies");
+      return DelegationTokenExchangeOutcome.rejected();
+    }
+
+    if (policyDecision.getDenyReason() != null) {
+      auditing.denied(actorIdentity, subjectToken, requestedSubjectValue,
+          policyDecision.getDenyReason(), uniqueRequestedAudiences, actChainDepth);
+      // A single, generic denial that does not identify which requested value failed.
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request", "The token exchange request is rejected by policy");
+      return DelegationTokenExchangeOutcome.rejected();
+    }
+    auditing.allowed(actorIdentity, subjectToken, requestedSubjectValue, uniqueRequestedAudiences,
+        !requestedAudiences.isEmpty(), actChainDepth);
+
+    request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
+
+    return DelegationTokenExchangeOutcome.authorized(actorToken, !requestedAudiences.isEmpty());
+  }
+
+  private boolean validateDelegationExchangeRequest(HttpServletRequest request, HttpServletResponse response,
+      JWT subjectToken, boolean hasActorToken, boolean requestedSubjectDiffersFromSubject,
+      String requestedSubjectValue, Set<String> uniqueRequestedAudiences) throws IOException {
+    // These checks run after the subject_token is validated, so each rejection is audited with the
+    // subject_token's identity and the attempted requested_subject (see TokenExchangeAuditing.rejected).
+    // Delegation exchanges are default denied unless DELEGATION_SERVER_ENABLED is set to true. When
+    // true, only authorized token exchanges will be permitted. Otherwise, any actor could impersonate
+    // any subject without authorization.
+    if (!filter.isDelegationServerEnabled()) {
+      auditing.rejected("delegation_disabled", subjectToken, requestedSubjectValue);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request", "Delegation is not enabled for this topology");
+      return false;
+    }
+    // A delegation exchange request can use actor_token or requested_subject for headless exchanges,
+    // but not both. Allow a requested_subject to be defined when an actor_token is present only if the
+    // value matches the subject_token sub claim.
+    if (hasActorToken && requestedSubjectDiffersFromSubject) {
+      auditing.rejected("requested_subject_actor_token_conflict", subjectToken, requestedSubjectValue);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request",
+          "requested_subject must not differ from subject_token's subject when actor_token is present");
+      return false;
+    }
+    // For headless delegation the requested_subject value must be well-formed.
+    if (!hasActorToken && isRequestedSubjectMalformed(requestedSubjectValue)) {
+      auditing.rejected("requested_subject_malformed", subjectToken, requestedSubjectValue);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request", "The requested_subject value is malformed");
+      return false;
+    }
+    // When configured, at least one audience/resource value is required.
+    if (filter.isDelegationEnforceRequestedAudienceRequired() && uniqueRequestedAudiences.isEmpty()) {
+      auditing.rejected("requested_audience_required", subjectToken, requestedSubjectValue);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request",
+          "At least one audience or resource value is required for a delegation exchange");
+      return false;
+    }
+    // When configured, at most one distinct combined audience/resource value is allowed.
+    if (filter.isDelegationEnforceRequestedAudienceMaxOne() && uniqueRequestedAudiences.size() > 1) {
+      auditing.rejected("requested_audience_not_unique", subjectToken, requestedSubjectValue);
+      filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
+          "invalid_request",
+          "Exactly one combined audience or resource value is allowed for a delegation exchange");
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -429,84 +496,6 @@ class TokenExchangeHandler {
     @SuppressWarnings("rawtypes")
     final HashSet emptySet = new HashSet();
     return new Subject(true, principals, emptySet, emptySet);
-  }
-
-  private static final String K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX = "system:serviceaccount:";
-  private static final String K8S_SA_ACTOR_AUTHORITY = "K8S_SA";
-  private static final String USER_ACTOR_AUTHORITY = "USER";
-
-  /**
-   * Derive the (actorAuthority, actorId) pair identifying the actor for a delegation policy
-   * check, from the actor's validated JWT (the actor_token when one is present, or the
-   * subject_token acting as actor for a headless delegation exchange). actorAuthority is a
-   * fixed type tag identifying what kind of actor this is. Delegation policies are
-   * registered and looked up by the (actorAuthority, actorId) pair. A Kubernetes
-   * service-account subject (sub of the form
-   * "system:serviceaccount:&lt;namespace&gt;:&lt;sa-name&gt;") is tagged K8S_SA, with an
-   * actorId composed of its issuer, namespace, and service-account name, concatenated with
-   * colon separators. Every other subject is tagged USER, with its own subject as actorId
-   * verbatim. Knox managed client policies, tagged with CLIENT_ID, are deferred.
-   *
-   * @param actorJwt the actor's validated JWT
-   * @return the derived actor identity
-   */
-  private static ActorIdentity deriveActorIdentity(JWT actorJwt) {
-    final String subject = actorJwt.getSubject();
-    if (subject != null && subject.startsWith(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX)) {
-      final String namespaceAndName = subject.substring(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX.length());
-      return new ActorIdentity(K8S_SA_ACTOR_AUTHORITY, actorJwt.getIssuer() + ":" + namespaceAndName);
-    }
-    return new ActorIdentity(USER_ACTOR_AUTHORITY, subject);
-  }
-
-  /** The actorAuthority/actorId pair derived by {@link #deriveActorIdentity(JWT)}. */
-  private static final class ActorIdentity {
-    private final String actorAuthority;
-    private final String actorId;
-
-    ActorIdentity(String actorAuthority, String actorId) {
-      this.actorAuthority = actorAuthority;
-      this.actorId = actorId;
-    }
-  }
-
-  /**
-   * The (actorAuthority, actorId) pair is delegation policy's unique lookup key, see
-   * {@link #deriveActorIdentity(JWT)}, and hence can act as the audit record's unique
-   * resourceName.
-   */
-  private static String auditResourceName(ActorIdentity actorIdentity) {
-    return actorIdentity.actorAuthority + "/" + actorIdentity.actorId;
-  }
-
-  /**
-   * Builds the audit message for one policy-decision outcome. {@code actChainDepth} is the depth of
-   * the delegation history arriving on the subject_token (0 for a headless exchange, whose incoming
-   * chain is not propagated). Deliberately omits every field this decision point does not have:
-   * issued_token_jti, issued_token_expiry, and issued_subject (only known later, at minting time);
-   * scope (out of scope for this task).
-   */
-  private static String auditMessage(PolicyDecision policyDecision, ActorIdentity actorIdentity,
-                                      JWT subjectToken, String requestedSubjectValue,
-                                      Set<String> uniqueRequestedAudiences, int actChainDepth) {
-    final StringBuilder message = new StringBuilder();
-    final boolean denied = policyDecision.getDenyReason() != null;
-    message.append("event_type=").append(denied ? "token_exchange_denied" : "token_exchange_allowed");
-    if (denied) {
-      message.append(" deny_reason=").append(policyDecision.getDenyReason());
-    }
-    message.append(" actor_authority=").append(actorIdentity.actorAuthority);
-    message.append(" actor_id=").append(actorIdentity.actorId);
-    message.append(" subject_token_iss=").append(auditLabel(subjectToken.getIssuer()));
-    message.append(" subject_token_sub=").append(auditLabel(subjectToken.getSubject()));
-    message.append(" requested_subject=").append(auditLabel(requestedSubjectValue));
-    message.append(" requested_resources=").append(uniqueRequestedAudiences);
-    message.append(" act_chain_depth=").append(actChainDepth);
-    return message.toString();
-  }
-
-  private static String auditLabel(String value) {
-    return value != null ? value : "";
   }
 
   /**
@@ -618,5 +607,27 @@ class TokenExchangeHandler {
     InvalidResourceException(String message) {
       super(message);
     }
+  }
+
+  private static final class DelegationTokenExchangeOutcome {
+    private final boolean rejected;
+    private final JWT actorToken;
+
+    private final boolean conveyRequestedAudiences;
+
+    private DelegationTokenExchangeOutcome(boolean rejected, JWT actorToken,
+                                           boolean conveyRequestedAudiences) {
+      this.rejected = rejected;
+      this.actorToken = actorToken;
+      this.conveyRequestedAudiences = conveyRequestedAudiences;
+    }
+
+    static DelegationTokenExchangeOutcome rejected() {
+      return new DelegationTokenExchangeOutcome(true, null, false);
+    }
+    static DelegationTokenExchangeOutcome authorized(JWT actorToken, boolean conveyRequestedAudiences) {
+      return new DelegationTokenExchangeOutcome(false, actorToken, conveyRequestedAudiences);
+    }
+
   }
 }

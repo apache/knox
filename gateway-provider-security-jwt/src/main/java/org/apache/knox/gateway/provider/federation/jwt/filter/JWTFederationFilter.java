@@ -66,6 +66,7 @@ import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDE
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_ID;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
+import static org.apache.knox.gateway.security.CommonTokenConstants.TOKEN_EXCHANGE_REQUEST_ATTR;
 import static org.apache.knox.gateway.util.AuthFilterUtils.DEFAULT_AUTH_UNAUTHENTICATED_PATHS_PARAM;
 
 public class JWTFederationFilter extends AbstractJWTFilter {
@@ -87,12 +88,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   public static final String SUBJECT_TOKEN_TYPE = "subject_token_type";
   public static final String ACTOR_TOKEN_TYPE = "actor_token_type";
 
-  // Set by doFilter only when it dispatches a genuine RFC 8693 token-exchange request (identified by
-  // getWireToken from the body-only grant_type). resolveRegisteredIssuerJwks trusts a runtime-registered
-  // external issuer's JWKS only when this attribute is present, binding that decision to the actual
-  // dispatched code path rather than to request.getParameter(GRANT_TYPE) -- which the Servlet API also
-  // populates from the URL query string, letting a plain Bearer request spoof it with ?grant_type=...
-  static final String TOKEN_EXCHANGE_REQUEST_ATTR = "knox.jwt.token.exchange.request";
   // RFC 8693 section 3 token type identifiers. Only JWT-family types are supported for exchange;
   // Knox issues JWT access tokens, so the access_token URN is accepted as an alias for jwt.
   public static final String TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt";
