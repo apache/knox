@@ -81,20 +81,14 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import (
-    gateway_base_url,
-    get_token_claim,
-    knox_delete,
-    knox_get,
-    knox_post,
-    knox_put,
+from common_utils import gateway_base_url, get_token_claim, knox_get
+from delegation_helpers import (
+    ISSUED_TOKEN_TYPE_JWT,
+    DelegationPolicyAdmin,
+    assert_oauth_error,
+    aud_values,
+    token_exchange,
 )
-
-# RFC 8693 token-exchange identifiers.
-TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
-JWT_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:jwt"
-# KNOXIDF always mints a JWT, so the exchange response advertises the JWT URN.
-ISSUED_TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
 
 # The demo LDAP 'guest' user; the knoxldap KNOXTOKEN service authenticates it via Basic.
 GUEST_USER = "guest"
@@ -162,6 +156,12 @@ class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance
         )
         self.guest_auth = HTTPBasicAuth(GUEST_USER, GUEST_PASSWORD)
         self.admin_auth = HTTPBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+        # Shared client for the one (USER, guest) delegation policy this suite seeds; the
+        # per-status helpers below delegate to it, so the KNOX-3475 test body is unchanged.
+        self._policy_admin = DelegationPolicyAdmin(
+            self, self.admin_policy_url, self.admin_auth,
+            (DELEGATION_POLICY_ACTOR_AUTHORITY, DELEGATION_POLICY_ACTOR_ID),
+        )
 
     def _mint_subject_token(self):
         """Mint and return a genuine Knox JWT for the guest user."""
@@ -189,87 +189,42 @@ class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance
 
     @staticmethod
     def _aud_values(token):
-        """Return a token's aud claim as a list (JWT aud may serialize as a string or a list)."""
-        aud = get_token_claim(token, "aud")
-        if aud is None:
-            return []
-        return aud if isinstance(aud, list) else [aud]
+        """Return a token's aud claim as a list (delegates to the shared helper)."""
+        return aud_values(token)
 
     def _exchange(self, url, subject_token, resources=None, actor_token=None):
         """POST an RFC 8693 token exchange, returning the raw response.
 
-        resources is conveyed as (possibly repeated) ``resource`` form values;
-        an actor_token (with its required type) turns the request into a
+        Thin wrapper over ``delegation_helpers.token_exchange`` (shared with
+        test_delegation.py): resources is conveyed as (possibly repeated) ``resource``
+        form values; an actor_token (with its required type) turns the request into a
         delegation exchange.
         """
-        data = [
-            ("grant_type", TOKEN_EXCHANGE_GRANT),
-            ("subject_token", subject_token),
-            ("subject_token_type", JWT_TOKEN_TYPE),
-        ]
-        if actor_token is not None:
-            data.append(("actor_token", actor_token))
-            data.append(("actor_token_type", JWT_TOKEN_TYPE))
-        for resource in resources or []:
-            data.append(("resource", resource))
-        return knox_post(url, data=data)
+        return token_exchange(url, subject_token, resources=resources, actor_token=actor_token)
 
     def _assert_oauth_error(self, response, expected_status, expected_error, message_substring):
-        """Assert an RFC 6749 §5.2 style JSON OAuth error with the expected fields."""
-        self.assertEqual(
-            response.status_code,
-            expected_status,
-            msg=f"unexpected status: {response.status_code} {response.text}",
-        )
-        try:
-            body = response.json()
-        except ValueError:
-            body = {}
-        self.assertEqual(body.get("error"), expected_error, response.text)
-        description = body.get("error_description", "")
-        self.assertIn(message_substring, description, response.text)
+        """Assert an RFC 6749 §5.2 style JSON OAuth error (delegates to the shared helper)."""
+        assert_oauth_error(self, response, expected_status, expected_error, message_substring)
 
     # ---- KNOX-3475: delegation-policy status (active/revoked) admin helpers ----
-    # Every helper operates on the one (USER, guest) policy this test needs, read straight from
-    # the module constants, so none of them thread the actor/resource identity through as args.
+    # Thin wrappers over the shared DelegationPolicyAdmin client (self._policy_admin), which is
+    # scoped to the one (USER, guest) actor this suite seeds; the per-status body (canActForUsers
+    # =[guest], resourcePolicy={RESOURCE: []}) is supplied here so the client stays generic.
 
     def _find_policy_registration_id(self):
         """Return the registrationId of the (USER, guest) policy, or None."""
-        response = knox_get(
-            self.admin_policy_url,
-            params={"actorAuthority": DELEGATION_POLICY_ACTOR_AUTHORITY},
-            auth=self.admin_auth,
-        )
-        self.assertEqual(response.status_code, 200, response.text)
-        for policy in response.json().get("policies", []):
-            if policy.get("actorId") == DELEGATION_POLICY_ACTOR_ID:
-                return policy.get("registrationId")
-        return None
+        return self._policy_admin.find_registration_id()
 
     def _delete_policy_if_present(self):
         """Best-effort cleanup: remove any existing (USER, guest) policy (idempotent)."""
-        registration_id = self._find_policy_registration_id()
-        if registration_id is not None:
-            knox_delete(self.admin_policy_url + "/" + registration_id, auth=self.admin_auth)
-
-    @staticmethod
-    def _policy_body(status):
-        """The (USER, guest) delegation-policy request body carrying the given status."""
-        return {
-            "actorAuthority": DELEGATION_POLICY_ACTOR_AUTHORITY,
-            "actorId": DELEGATION_POLICY_ACTOR_ID,
-            "status": status,
-            "canActForUsers": [GUEST_USER],
-            "resourcePolicy": {DELEGATION_POLICY_RESOURCE: []},
-        }
+        self._policy_admin.delete_if_present()
 
     def _register_policy(self, status):
         """POST a fresh delegation policy with the given status. Returns its registrationId."""
-        response = knox_post(
-            self.admin_policy_url, json=self._policy_body(status), auth=self.admin_auth,
+        return self._policy_admin.register(
+            status=status, can_act_for_users=[GUEST_USER],
+            resource_policy={DELEGATION_POLICY_RESOURCE: []},
         )
-        self.assertEqual(response.status_code, 201, response.text)
-        return response.json()["registrationId"]
 
     def _set_policy_status(self, registration_id, status):
         """PUT a full-replace update of the (USER, guest) policy to the given status.
@@ -278,13 +233,10 @@ class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance
         so this updates the same row rather than creating a new one -- the "revoked, not deleted"
         scenario the bug is about.
         """
-        response = knox_put(
-            self.admin_policy_url + "/" + registration_id,
-            json=self._policy_body(status),
-            auth=self.admin_auth,
+        return self._policy_admin.update(
+            registration_id, status=status, can_act_for_users=[GUEST_USER],
+            resource_policy={DELEGATION_POLICY_RESOURCE: []},
         )
-        self.assertEqual(response.status_code, 200, response.text)
-        return response.json()
 
     def test_delegation_exchange_denied_after_policy_revoked(self):
         """KNOX-3475: an ACTIVE policy authorizes a delegation exchange; revoking the SAME policy

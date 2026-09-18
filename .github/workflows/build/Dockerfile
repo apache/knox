@@ -49,6 +49,7 @@ ADD .github/workflows/build/conf/topologies/k8sauth.xml /knox-runtime/conf/topol
 ADD .github/workflows/build/conf/topologies/knoxidf-ldap.xml /knox-runtime/conf/topologies/knoxidf-ldap.xml
 ADD .github/workflows/build/conf/topologies/knoxidf-token.xml /knox-runtime/conf/topologies/knoxidf-token.xml
 ADD .github/workflows/build/conf/topologies/knoxidf-token-delegation.xml /knox-runtime/conf/topologies/knoxidf-token-delegation.xml
+ADD .github/workflows/build/conf/topologies/knoxidf-token-delegation-policy.xml /knox-runtime/conf/topologies/knoxidf-token-delegation-policy.xml
 ADD .github/workflows/build/conf/topologies/knoxidf-ldap-aud.xml /knox-runtime/conf/topologies/knoxidf-ldap-aud.xml
 ADD .github/workflows/build/conf/topologies/knoxidf-token-same-subject-aud.xml /knox-runtime/conf/topologies/knoxidf-token-same-subject-aud.xml
 ADD .github/workflows/build/conf/topologies/knoxidf-token-passthrough.xml /knox-runtime/conf/topologies/knoxidf-token-passthrough.xml

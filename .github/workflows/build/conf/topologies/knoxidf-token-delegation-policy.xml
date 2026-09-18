@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements. See the NOTICE file distributed with this
+work for additional information regarding copyright ownership. The ASF
+licenses this file to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<!--
+  Policy-backed RFC 8693 delegation topology (KNOX-3476). Unlike
+  knoxidf-token-delegation.xml (which only proves the delegation gate and
+  audience enforcement, both of which run before any policy lookup), this
+  topology drives the full delegation path end to end against a seeded
+  delegation policy, so it must actually MINT the delegation result:
+
+    - delegation.server.enabled                       turns on RFC 8693 delegation.
+    - delegation.requested.subject.enabled            allows a headless exchange
+      (requested_subject, no actor_token) so the subject_token's own identity acts
+      on behalf of the impersonated requested_subject.
+    - delegation.enforce.requested.audience.required  a delegation exchange must
+      carry at least one audience/resource value, and
+    - delegation.enforce.requested.audience.max.one   at most one distinct value.
+    - knoxidf.knox.token.enable.delegated.auth=true   emits the nested act claim
+      ({"sub": subject, "act": {"sub": actor}}) so the minted token records the
+      actor chain; without it a delegation exchange succeeds but no act is stamped.
+    - knoxidf.knox.token.audience.validator=passthrough  mints the requested
+      resource as the exchanged token's aud (the delegation path conveys the
+      requested resource as the requested audience), so aud can be asserted.
+
+  The delegation policy store is the gateway-wide embedded H2 service (KNOX-3401);
+  the delegation integration tests seed per-actor policies through the KNOXIDF_ADMIN
+  REST API on knoxidf-admin.xml, which write to that same singleton store.
+
+  The service TTL is deliberately large (86400000 ms = 86400 s) so a policy that
+  sets a smaller tokenTtlSec is provably what caps the minted token's lifetime.
+-->
+<topology>
+    <gateway>
+      <provider>
+         <role>federation</role>
+         <name>JWTProvider</name>
+         <enabled>true</enabled>
+         <param>
+            <name>knox.token.exp.server-managed</name>
+            <value>true</value>
+         </param>
+         <param>
+            <!-- Turn on RFC 8693 delegation exchange for this topology. -->
+            <name>delegation.server.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <!-- Allow headless delegation: a requested_subject with no actor_token, so the
+                 subject_token's own identity acts on behalf of the requested subject. -->
+            <name>delegation.requested.subject.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <!-- A delegation exchange must carry at least one audience/resource value. -->
+            <name>delegation.enforce.requested.audience.required</name>
+            <value>true</value>
+         </param>
+         <param>
+            <!-- A delegation exchange must carry at most one distinct audience/resource value. -->
+            <name>delegation.enforce.requested.audience.max.one</name>
+            <value>true</value>
+         </param>
+      </provider>
+      <provider>
+            <role>identity-assertion</role>
+            <name>Default</name>
+            <enabled>true</enabled>
+      </provider>
+    </gateway>
+
+    <service>
+        <role>KNOXIDF</role>
+        <param>
+           <name>knoxidf.knox.token.ttl</name>
+           <value>86400000</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.limit.per.user</name>
+            <value>-1</value>
+        </param>
+        <param>
+            <!-- Emit the nested act claim recording the actor chain on a delegation exchange. -->
+            <name>knoxidf.knox.token.enable.delegated.auth</name>
+            <value>true</value>
+        </param>
+        <param>
+            <!-- Mint the requested resource as the exchanged token's aud. Safe here because the
+                 delegation policy authorizes the requested resource before it is conveyed. -->
+            <name>knoxidf.knox.token.audience.validator</name>
+            <value>passthrough</value>
+        </param>
+        <param>
+            <name>knoxidf.auto.consent.enabled</name>
+            <value>true</value>
+        </param>
+    </service>
+</topology>
