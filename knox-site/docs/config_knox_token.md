@@ -68,6 +68,8 @@ Resulting in a JSON response that contains the token, the expiration and the opt
 
           `{"access_token":"eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJndWVzdCIsImF1ZCI6InRva2VuYmFzZWQiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNDg5OTQyMTg4fQ.bcqSK7zMnABEM_HVsm3oWNDrQ_ei7PcMI4AtZEERY9LaPo9dzugOg3PA5JH2BRF-lXM3tuEYuZPaZVf8PenzjtBbuQsCg9VVImuu2r1YNVJlcTQ7OV-eW50L6OTI0uZfyrFwX6C7jVhf7d7YR1NNxs4eVbXpS1TZ5fDIRSfU3MU","target_url":"https://localhost:8443/gateway/tokenbased","token_type":"Bearer ","expires_in":1489942188233}`
 
+> **Note on `expires_in`.** For this classic KnoxToken service, `expires_in` is an **absolute expiry timestamp in epoch milliseconds** (the same instant as the token's `exp` claim, in milliseconds), not a relative duration. This is long-standing behavior and is unchanged. The separate [KnoxIDF OAuth2/OIDC provider](knoxidf/index.md), by contrast, returns an RFC 6749-compliant **relative lifetime in seconds** on its [`/token` endpoint](knoxidf/endpoints.md#token-endpoint) — do not assume the two endpoints report `expires_in` the same way.
+
 The following curl example shows how to add a bearer token to an Authorization header:
 
     curl -ivk -H "Authorization: Bearer eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJndWVzdCIsImF1ZCI6InRva2VuYmFzZWQiLCJpc3MiOiJLTk9YU1NPIiwiZXhwIjoxNDg5OTQyMTg4fQ.bcqSK7zMnABEM_HVsm3oWNDrQ_ei7PcMI4AtZEERY9LaPo9dzugOg3PA5JH2BRF-lXM3tuEYuZPaZVf8PenzjtBbuQsCg9VVImuu2r1YNVJlcTQ7OV-eW50L6OTI0uZfyrFwX6C7jVhf7d7YR1NNxs4eVbXpS1TZ5fDIRSfU3MU" https://localhost:8443/gateway/tokenbased/webhdfs/v1/tmp?op=LISTSTATUS

@@ -119,6 +119,7 @@ nav:
       - Getting Started: knoxidf/getting_started.md
       - Endpoint Reference: knoxidf/endpoints.md
       - Configuration Reference: knoxidf/configuration.md
+      - Token Exchange & Delegation: knoxidf/token_exchange.md
       - Security: knoxidf/security.md
       - Federation: knoxidf/federation.md
       - Operations: knoxidf/operations.md

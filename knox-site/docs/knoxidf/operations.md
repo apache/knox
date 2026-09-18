@@ -82,6 +82,22 @@ The identity row and its attributes are written in a **single transaction**, and
 constraint on `(provider, external_issuer, external_subject)` makes concurrent first-logins of the
 same user converge on one row.
 
+## Delegation policies
+
+When [token exchange with delegation](token_exchange.md) is enabled, KnoxIDF stores the
+operator-authored [delegation policies](token_exchange.md#delegation-policies) that decide which
+actor may act on behalf of which subjects. These policies live in the same persistence backend as
+the other KnoxIDF stores — embedded H2 by default, or a JDBC store when
+`gateway.service.DelegationPolicyService.impl` is pinned to `JdbcDelegationPolicyService` (see
+[Backend selection](#backend-selection)). Treat the backend choice as gateway-wide: for any
+multi-instance deployment, delegation policies must be in the shared external database so every
+instance authorizes exchanges identically.
+
+Policies are created and maintained through the
+[Delegation Policies admin API](endpoints.md#delegation-policies-admin) on the `KNOXIDF_ADMIN`
+topology; the minted delegated-token lifetime and the listing caps are tuned with the
+[`gateway.delegation.service.*` and `knox.delegation.*` properties](configuration.md#delegation-policy-service).
+
 ## Signing-key rotation
 
 KnoxIDF signs issued JWTs with the gateway signing key (`gateway.signing.key.alias`, default
@@ -127,6 +143,28 @@ administration — are audited with the acting principal and outcome.
 Audit output is configured through the gateway's Log4j2 configuration
 (`$KNOX_HOME/conf/gateway-log4j2.xml`), the same as every other Knox audit stream; see
 [Audit](../config_audit.md) for audit-appender and retention configuration.
+
+### Token-exchange and delegation auditing
+
+Every [token exchange](token_exchange.md) is audited, whether it is allowed or denied — this is the
+**only** place the reason for a policy denial is recorded, since the endpoint deliberately returns a
+generic error to the caller. Each record's message carries:
+
+| Field | Meaning |
+|-------|---------|
+| `event_type` | `token_exchange_allowed` or `token_exchange_denied`. |
+| `deny_reason` | Present only on a denial: the specific cause (e.g. `actor_not_registered`, `headless_not_allowed`, `subject_not_allowed`). |
+| `actor_authority` | The acting party's authority — `USER` or `K8S_SA`. |
+| `actor_id` | The acting party's identity (the `sub`, or `<issuer>:<namespace>:<name>` for a ServiceAccount). |
+| `subject_token_iss` / `subject_token_sub` | Issuer and subject of the presented `subject_token`. |
+| `requested_subject` | The impersonated identity for a headless exchange (blank otherwise). |
+| `requested_resources` | The distinct requested `resource`/`audience` values. |
+| `act_chain_depth` | Depth of the resulting `act` (actor) chain. |
+
+Administrative changes to delegation policies are audited separately under the
+delegation-lifecycle action, recording the `event_type` (`policy_registered`, `policy_updated`,
+`policy_deleted`, `policy_read`, `policy_listed`), the affected policy, the acting operator
+(`performed_by`), and the outcome.
 
 ## High availability
 
@@ -200,6 +238,7 @@ enabled, fronted by the rate-limiting filter above.
 - [ ] `knoxidf.auto.consent.enabled` reviewed (default `false`).
 - [ ] Federated OP client secrets stored as aliases, not plaintext.
 - [ ] Trusted-issuer registry (`KNOXIDF_ADMIN`) exposed only on an administrator-restricted topology.
+- [ ] Delegation-policy admin API (`KNOXIDF_ADMIN`) exposed only on an administrator-restricted topology; delegation switches (`delegation.server.enabled`, …) reviewed (default `false`).
 - [ ] Rate limiting enabled (WebAppSec provider on the topology, and/or at the edge) for the token / authorize / registration endpoints.
 - [ ] Federated-OP back-channel timeouts (`gateway.knoxidf.federated.op.connect.timeout.ms` / `.read.timeout.ms`) reviewed for your OP.
 - [ ] Audit log retention configured.

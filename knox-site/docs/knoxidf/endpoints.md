@@ -53,6 +53,7 @@ The administrative endpoints (service role `KNOXIDF_ADMIN`) live under a separat
 | [Consent page](#consent-page) | `authConsent` | GET | `KNOXIDF` |
 | [Consent decision](#consent-page) | `knoxidf/api/v1/authorize/consentAccepted`, `…/consentDenied` | POST | `KNOXIDF` |
 | [Trusted OIDC Issuers (admin)](#trusted-oidc-issuers-admin) | `knoxidf/admin/v1/trusted-oidc-issuers` | GET, POST, DELETE | `KNOXIDF_ADMIN` |
+| [Delegation Policies (admin)](#delegation-policies-admin) | `knoxidf/admin/v1/delegation-policies` | GET, POST, PUT, DELETE | `KNOXIDF_ADMIN` |
 
 ---
 
@@ -153,9 +154,9 @@ in `sso.unauthenticated.path.list`).
 
 `POST /knoxidf/api/v1/token` &nbsp; `Content-Type: application/x-www-form-urlencoded`
 
-Issues tokens. Supports the **Client Credentials**, **Authorization Code**, and **Refresh
-Token** grants. Client authentication is enforced here — see
-[Security](security.md#token-endpoint-client-authentication).
+Issues tokens. Supports the **Client Credentials**, **Authorization Code**, **Refresh
+Token**, and [**Token Exchange**](#token-exchange-grant) (RFC 8693) grants. Client authentication
+is enforced here — see [Security](security.md#token-endpoint-client-authentication).
 
 ### Authorization Code grant
 
@@ -191,10 +192,9 @@ access-token / refresh-token pair. Requires `client_secret`.
   "token_id": "<UUID>",
   "token_type": "Bearer",
   "expires_in": 86400,
-  "managed_token": "true",
+  "managed_token": "false",
   "id_token": "<JWT>",
-  "refresh_token": "<JWT>",
-  "passcode": "<Base64(tokenId)::Base64(passcode)>"
+  "refresh_token": "<JWT>"
 }
 ```
 
@@ -207,6 +207,47 @@ plus any allowed profile claims (`preferred_username`, `email`, `email_verified`
 **Errors:** `invalid_grant` (missing/expired/replayed code, `redirect_uri` or `client_id`
 mismatch, PKCE failure, bad `client_secret`, disabled/expired refresh token) or
 `invalid_request` (unsupported `grant_type`).
+
+### Token Exchange grant
+
+Trades one JWT for another under [RFC 8693](https://www.rfc-editor.org/rfc/rfc8693) — either for
+the same subject (e.g. to narrow a token's audience) or, when delegation is enabled, for a
+different subject on whose behalf a trusted actor acts. The concepts, switches, and delegation-policy
+model are covered on the [Token Exchange & Delegation](token_exchange.md) page; this section is the
+wire-level reference.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `grant_type` | Yes | `urn:ietf:params:oauth:grant-type:token-exchange`. |
+| `subject_token` | Yes | The token whose subject the exchange is for. |
+| `subject_token_type` | Yes | `urn:ietf:params:oauth:token-type:jwt` or its alias `urn:ietf:params:oauth:token-type:access_token`; any other type → `invalid_request`. |
+| `actor_token` | No | Token of the acting party in an on-behalf-of exchange. |
+| `actor_token_type` | Conditional | Required when `actor_token` is present, and must be absent otherwise. Same JWT-family types. |
+| `requested_subject` | No | Subject to impersonate in a headless exchange. Read only when `delegation.requested.subject.enabled=true`. |
+| `resource` | No | Target service URI(s), RFC 8707. Absolute URI, no fragment, else `invalid_target`. Repeatable / comma-splittable. |
+| `audience` | No | Logical target audience(s). Repeatable / comma-splittable. |
+
+**Success (`200`):** the standard token response, extended with the RFC 8693 `issued_token_type`:
+
+```json
+{
+  "access_token": "<JWT>",
+  "token_id": "<UUID>",
+  "token_type": "Bearer",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:jwt",
+  "expires_in": 86400,
+  "managed_token": "false"
+}
+```
+
+`expires_in` is a **relative lifetime in seconds** (RFC 6749 §5.1), and is omitted entirely for a
+non-expiring token.
+
+**Errors:** `invalid_request` (unsupported token type, `actor_token`/`actor_token_type` mismatch,
+malformed `requested_subject`, delegation disabled, or a policy denial — the specific reason is
+audited, not returned), `invalid_target` (bad `resource` URI, or a requested audience not authorized
+for the subject), `401 invalid_request` (unregistered issuer or expired external token), and
+`500 server_error` (LDAP unavailable while evaluating a group-based policy).
 
 ---
 
@@ -266,6 +307,12 @@ use on `/token`), and the stored `redirect_uris` and `allowed_scopes`.
 **Errors:** `access_denied` (anonymous caller when disabled), `invalid_request` (missing/invalid
 `redirect_uris`, wrong scheme), `invalid_scope` (`allowed_scopes` omits `openid`).
 
+!!! note "Use `/client/register`, not the bare `/client` path"
+    Registration is served **only** by `POST /knoxidf/api/v1/client/register`. Although the discovery
+    document's `registration_endpoint` points at the bare `knoxidf/api/v1/client` path, a plain `GET`
+    or `POST` to that path is not implemented and returns `500`. Always post registrations to the
+    `/register` sub-path.
+
 ---
 
 ## Consent page
@@ -304,3 +351,55 @@ Knox will accept during federated login.
 
 **Errors:** `400 invalid_request` (missing/non-HTTPS `issuerUrl`, malformed JSON),
 `409 issuer_exists`, `409 issuer_limit_reached` (issuer cap), `500 storage_error`.
+
+---
+
+## Delegation Policies (admin)
+
+Base path `knoxidf/admin/v1/delegation-policies`, served by the `KNOXIDF_ADMIN` service role
+(a separate, administrator-only topology). Manages the [delegation policies](token_exchange.md#delegation-policies)
+that authorize an actor to act on behalf of other subjects during a
+[delegated token exchange](token_exchange.md#delegated-exchange).
+
+| Method | Path | Purpose | Success |
+|--------|------|---------|---------|
+| `POST` | `/delegation-policies` | Register a new policy (fails if the actor already has one). | `201` |
+| `PUT` | `/delegation-policies` | Register-or-update by actor identity: create, or replace the existing policy for the same `(actorAuthority, actorId)`. | `201` created / `200` replaced |
+| `GET` | `/delegation-policies` | List policies; optional `?actorAuthority=` filter. Response carries a `hasMore` flag. | `200` |
+| `GET` | `/delegation-policies/{registrationId}` | Read one policy. | `200` |
+| `PUT` | `/delegation-policies/{registrationId}` | Full replace of one policy by id (`actorAuthority`/`actorId` are immutable). | `200` |
+| `DELETE` | `/delegation-policies/{registrationId}` | Delete a policy (id must exist). | `204` |
+
+**Request body** (`POST`/`PUT`, `Content-Type: application/json`):
+
+```json
+{
+  "actorAuthority": "USER",
+  "actorId": "svc-etl",
+  "name": "ETL batch delegation",
+  "description": "Lets the ETL service act for analysts",
+  "status": "active",
+  "canActForUsers": ["analyst1", "analyst2"],
+  "canActForGroups": ["analysts"],
+  "allowHeadlessExchange": true,
+  "tokenTtlSec": 3600,
+  "resourcePolicy": { "https://data.example.com": ["read"] }
+}
+```
+
+`actorAuthority` and `actorId` are required; at least one of `canActForUsers` / `canActForGroups`
+must be non-empty; `status` defaults to `active` and must be `active` or `revoked`; `tokenTtlSec`,
+when supplied, must fall within `[knox.delegation.min.token.ttl.sec, knox.delegation.max.token.ttl.sec]`
+(defaults 60–86400). The response echoes the stored policy plus the generated `registrationId` and
+`createdBy` / `createdAt` / `updatedAt` audit fields.
+
+!!! note "`hasMore` is a capacity flag, not a pagination cursor"
+    The list response's `hasMore` signals that the configured listing cap
+    (`gateway.delegation.service.list.max.total` / `.list.max.per.authority`) was reached and some
+    policies were not returned. There is no continuation token — narrow the result with
+    `?actorAuthority=` or raise the cap.
+
+**Errors:** `400 invalid_request` (malformed JSON, missing `actorAuthority`/`actorId`, empty
+act-for sets, out-of-range `tokenTtlSec`, bad `status`), `404 policy_not_found` (unknown
+`registrationId`, or an id whose `actorAuthority`/`actorId` does not match on `PUT /{id}`),
+`409 actor_exists` (`POST` for an actor that already has a policy), `500 storage_error`.
