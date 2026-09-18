@@ -37,6 +37,8 @@ public class KnoxIDFServiceDeploymentContributor extends JerseyServiceDeployment
 
     @Override
     protected String[] getPatterns() {
-        return new String[] { "knoxidf/api/**?**" };
+        // The pattern .well-known/oauth-authorization-server routes the RFC 8414 OAuth 2.0 Authorization Server Metadata doc.
+        // Served from topology root alongside the api-path variant (knoxidf/api/.well-known/oauth-authorization-server)
+        return new String[] { "knoxidf/api/**?**", ".well-known/oauth-authorization-server?**" };
     }
 }

@@ -88,6 +88,54 @@ class TestKnoxIDF(unittest.TestCase):
             ["openid", "profile", "email", "offline_access"],
         )
 
+    def test_oauth_authorization_server_metadata(self):
+        """
+        Test the RFC 8414 OAuth 2.0 Authorization Server Metadata endpoint, served at both the
+        KnoxIDF API path and the topology root. The two documents must be identical, must advertise
+        the same authorization server as OIDC discovery, and must omit OIDC-only claims.
+        """
+        api_url = f"{self.knoxidf_ldap_url}knoxidf/api/v1/.well-known/oauth-authorization-server"
+        root_url = f"{self.knoxidf_ldap_url}.well-known/oauth-authorization-server"
+
+        api_response = knox_get(api_url)
+        root_response = knox_get(root_url)
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(root_response.status_code, 200)
+        self.assertIn("application/json", api_response.headers.get("Content-Type", ""))
+
+        metadata = api_response.json()
+        # Both placements return the byte-identical document.
+        self.assertEqual(api_response.text, root_response.text)
+
+        # Same authorization server as the OIDC discovery document (see test_discovery). The token
+        # endpoint is advertised on the token-exchange topology (token.exchange.topology.name).
+        expected_issuer = f"{self.knoxidf_ldap_url}knoxidf"
+        expected_auth_endpoint = f"{self.knoxidf_ldap_url}knoxidf/api/v1/authorize"
+        expected_token_endpoint = f"{self.knoxidf_token_url}knoxidf/api/v1/token"
+        expected_jwks_uri = f"{self.knoxidf_ldap_url}knoxidf/api/v1/jwks"
+
+        self.assertEqual(metadata.get("issuer"), expected_issuer)
+        self.assertEqual(metadata.get("authorization_endpoint"), expected_auth_endpoint)
+        self.assertEqual(metadata.get("token_endpoint"), expected_token_endpoint)
+        self.assertEqual(metadata.get("jwks_uri"), expected_jwks_uri)
+        self.assertEqual(metadata.get("response_types_supported"), ["code"])
+        self.assertEqual(
+            metadata.get("grant_types_supported"),
+            [
+                "authorization_code",
+                "refresh_token",
+                "client_credentials",
+                "urn:ietf:params:oauth:grant-type:token-exchange",
+            ],
+        )
+        self.assertEqual(metadata.get("code_challenge_methods_supported"), ["S256"])
+        self.assertIn("client_secret_post", metadata.get("token_endpoint_auth_methods_supported"))
+
+        # OIDC-only claims must NOT appear in the OAuth-only document.
+        self.assertNotIn("userinfo_endpoint", metadata)
+        self.assertNotIn("id_token_signing_alg_values_supported", metadata)
+        self.assertNotIn("subject_types_supported", metadata)
+
     def test_client_credentials_flow(self):
         """
         Test OIDC Client Credentials Flow.

@@ -44,6 +44,7 @@ The administrative endpoints (service role `KNOXIDF_ADMIN`) live under a separat
 | Endpoint | Path | Methods | Role |
 |----------|------|---------|------|
 | [Discovery](#discovery-endpoint) | `knoxidf/api/v1/.well-known/openid-configuration` | GET | `KNOXIDF` |
+| [Authorization Server Metadata](#oauth-20-authorization-server-metadata-endpoint) | `.well-known/oauth-authorization-server`, `knoxidf/api/v1/.well-known/oauth-authorization-server` | GET | `KNOXIDF` |
 | [Authorization](#authorization-endpoint) | `knoxidf/api/v1/authorize` | GET, POST | `KNOXIDF` |
 | [Federated callback](#federated-callback) | `knoxidf/api/v1/authorize/callback` | GET | `KNOXIDF` |
 | [Token](#token-endpoint) | `knoxidf/api/v1/token` | POST | `KNOXIDF` |
@@ -98,6 +99,55 @@ Notable metadata:
 - **`client_id_metadata_document_supported: false`** — Knox does not resolve a URL-style
   `client_id` as a Client ID Metadata Document (OAuth CIMD draft, referenced by the MCP
   authorization spec); clients must use dynamic registration instead.
+
+---
+
+## OAuth 2.0 Authorization Server Metadata endpoint
+
+`GET /.well-known/oauth-authorization-server`
+`GET /knoxidf/api/v1/.well-known/oauth-authorization-server`
+
+Returns the [RFC 8414](https://www.rfc-editor.org/rfc/rfc8414) OAuth 2.0 Authorization Server
+Metadata document. This is the OAuth-only counterpart of the [Discovery endpoint](#discovery-endpoint):
+it describes the **same** authorization server (identical `issuer` and endpoint URLs) but omits the
+OpenID Connect-only claims (`userinfo_endpoint`, `id_token_signing_alg_values_supported`,
+`subject_types_supported`). OAuth 2.0 clients that are not OIDC-aware — including MCP clients, which
+mandate RFC 8414 — look for this document specifically.
+
+The document is served at two locations that return the **byte-identical** body:
+
+- **`/.well-known/oauth-authorization-server`** (topology root) — the well-known location OAuth
+  clients probe relative to the base URL.
+- **`knoxidf/api/v1/.well-known/oauth-authorization-server`** — alongside the OIDC discovery
+  document, for callers that address the KnoxIDF API path directly.
+
+> **Note.** RFC 8414 §3 inserts the well-known string at the *host* root and §3.3 requires the
+> metadata `issuer` to equal the identifier the client discovered it from. The Knox gateway servlet
+> is mounted under `/gateway/<topology>/`, so a true host-root document is not possible; the
+> topology-root path above is the closest practical placement. Both documents reuse the single
+> `issuer` value the OIDC discovery document already advertises, so all of Knox's metadata documents
+> agree on one authorization server identity.
+
+Example document:
+
+```json
+{
+  "issuer": "https://knox:8443/gateway/knoxidf-ldap/knoxidf",
+  "authorization_endpoint": "https://knox:8443/gateway/knoxidf-ldap/knoxidf/api/v1/authorize",
+  "token_endpoint": "https://knox:8443/gateway/knoxidf-token/knoxidf/api/v1/token",
+  "registration_endpoint": "https://knox:8443/gateway/knoxidf-ldap/knoxidf/api/v1/client/register",
+  "jwks_uri": "https://knox:8443/gateway/knoxidf-ldap/knoxidf/api/v1/jwks",
+  "response_types_supported": ["code"],
+  "token_endpoint_auth_methods_supported": ["client_secret_post", "none"],
+  "grant_types_supported": ["authorization_code", "refresh_token", "client_credentials", "urn:ietf:params:oauth:grant-type:token-exchange"],
+  "scopes_supported": ["openid", "profile", "email", "offline_access"],
+  "code_challenge_methods_supported": ["S256"]
+}
+```
+
+The `token_endpoint_auth_methods_supported`, `code_challenge_methods_supported`, and endpoint URLs
+carry the same meaning as in the [Discovery document](#discovery-endpoint); `grant_types_supported`
+includes the [RFC 8693](https://www.rfc-editor.org/rfc/rfc8693) token-exchange grant type.
 
 ---
 

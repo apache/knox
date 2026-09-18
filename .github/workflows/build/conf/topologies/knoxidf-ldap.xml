@@ -38,6 +38,16 @@
             <value>anon</value>
           </param>
          <param>
+            <!-- RFC 8414 OAuth 2.0 Authorization Server Metadata is public discovery, like the
+                 OIDC document above; served at both the API path and the topology root. -->
+            <name>urls./knoxidf/api/v1/.well-known/oauth-authorization-server</name>
+            <value>anon</value>
+         </param>
+         <param>
+            <name>urls./.well-known/oauth-authorization-server</name>
+            <value>anon</value>
+         </param>
+         <param>
             <name>urls./**</name>
             <value>authcBasic</value>
          </param>

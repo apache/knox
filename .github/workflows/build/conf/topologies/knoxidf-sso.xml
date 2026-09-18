@@ -40,7 +40,7 @@
             </param>
             <param>
                 <name>sso.unauthenticated.path.list</name>
-                <value>/knoxidf/api/v1/authorize/callback;/knoxidf/api/v1/jwks;/knoxidf/api/v1/.well-known/openid-configuration;/knoxidf/api/v1/client/register</value>
+                <value>/knoxidf/api/v1/authorize/callback;/knoxidf/api/v1/jwks;/knoxidf/api/v1/.well-known/openid-configuration;/knoxidf/api/v1/client/register;/knoxidf/api/v1/.well-known/oauth-authorization-server;/.well-known/oauth-authorization-server</value>
             </param>
         </provider>
         <provider>
