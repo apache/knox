@@ -31,7 +31,7 @@ public class LivyForSpark4ServiceModelGeneratorTest extends AbstractServiceModel
     final Map<String, String> serviceConfig = Collections.emptyMap();
     final Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(LivyForSpark4ServiceModelGenerator.SSL_ENABLED, "false");
-    roleConfig.put(LivyForSpark4ServiceModelGenerator.LIVY_SERVER_PORT, "28998");
+    roleConfig.put(LivyForSpark4ServiceModelGenerator.LIVY_SERVER_PORT, "29998");
 
     validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
   }
