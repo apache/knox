@@ -158,7 +158,18 @@
                     <groupId>org.opensaml</groupId>
                     <artifactId>opensaml-security-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>jakarta.json</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <!-- replace org.glassfish:jakarta.json pulled in by opensaml-storage-impl
+             with org.eclipse.parsson:parsson. -->
+        <dependency>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>parsson</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.knox</groupId>
