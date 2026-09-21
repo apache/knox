@@ -74,11 +74,24 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
     def tearDown(self) -> None:
         self.connection.unbind()
 
-    def rdn_values(self, base: str, ldap_filter: str) -> list[str]:
-        """Run a subtree search and return the leading RDN value of each entry."""
-        self.connection.search(base, ldap_filter, search_scope=ldap3.SUBTREE)
+    def search(
+        self, base: str, ldap_filter: str, controls: list[tuple] = None
+    ) -> list[ldap3.Entry]:
+        """Run a subtree search and return the entries.
+           Re-running search will invalidate the entries."""
+
+        self.connection.search(
+            base,
+            ldap_filter,
+            search_scope=ldap3.SUBTREE,
+            attributes=ldap3.ALL_ATTRIBUTES,
+            controls=controls)
+        return self.connection.entries
+
+    def rdn_values(self, entries: list[ldap3.Entry]) -> list[str]:
+        """Extract the RDN value of each entry."""
         values = []
-        for entry in self.connection.entries:
+        for entry in entries:
             # entry_dn looks like "uid=guest,ou=people,..." or "cn=level1,ou=groups,..."
             first_rdn = entry.entry_dn.split(",", 1)[0]
             values.append(first_rdn.split("=", 1)[1])
@@ -103,46 +116,46 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
 
     def test_search_all_users_by_objectclass(self) -> None:
         """All inetOrgPerson entries under ou=people are returned."""
-        users = self.rdn_values(PEOPLE_BASE, "(objectClass=inetOrgPerson)")
+        users = self.rdn_values(self.search(PEOPLE_BASE, "(objectClass=inetOrgPerson)"))
         for expected in ("guest", "admin", "sam", "tom", "recursiveUser"):
             self.assertIn(expected, users)
 
     def test_search_all_groups_by_objectclass(self) -> None:
         """All groupOfNames entries under ou=groups are returned."""
-        groups = self.rdn_values(GROUPS_BASE, "(objectClass=groupOfNames)")
+        groups = self.rdn_values(self.search(GROUPS_BASE, "(objectClass=groupOfNames)"))
         for expected in ("analyst", "scientist", "admin", "level1", "level2", "level3"):
             self.assertIn(expected, groups)
 
     def test_search_groups_by_cn_wildcard(self) -> None:
         """A cn wildcard filter returns only the matching groups."""
-        groups = self.rdn_values(GROUPS_BASE, "(cn=level*)")
+        groups = self.rdn_values(self.search(GROUPS_BASE, "(cn=level*)"))
         self.assertEqual({"level1", "level2", "level3"}, set(groups))
 
     def test_search_user_by_uid(self) -> None:
         """A single user can still be looked up by uid."""
-        users = self.rdn_values(PEOPLE_BASE, "(uid=sam)")
+        users = self.rdn_values(self.search(PEOPLE_BASE, "(uid=sam)"))
         self.assertIn("sam", users)
 
     def test_search_all_users_by_objectclass_proxy_dn(self) -> None:
         """All inetOrgPerson entries under ou=people are returned."""
-        users = self.rdn_values(PROXY_PEOPLE_BASE, "(objectClass=inetOrgPerson)")
+        users = self.rdn_values(self.search(PROXY_PEOPLE_BASE, "(objectClass=inetOrgPerson)"))
         for expected in ("guest", "admin", "sam", "tom", "recursiveUser"):
             self.assertIn(expected, users)
 
     def test_search_all_groups_by_objectclass_proxy_dn(self) -> None:
         """All groupOfNames entries under ou=groups are returned."""
-        groups = self.rdn_values(PROXY_GROUPS_BASE, "(objectClass=groupOfNames)")
+        groups = self.rdn_values(self.search(PROXY_GROUPS_BASE, "(objectClass=groupOfNames)"))
         for expected in ("analyst", "scientist", "admin", "level1", "level2", "level3"):
             self.assertIn(expected, groups)
 
     def test_search_groups_by_cn_wildcard_proxy_dn(self) -> None:
         """A cn wildcard filter returns only the matching groups."""
-        groups = self.rdn_values(PROXY_GROUPS_BASE, "(cn=level*)")
+        groups = self.rdn_values(self.search(PROXY_GROUPS_BASE, "(cn=level*)"))
         self.assertEqual({"level1", "level2", "level3"}, set(groups))
 
     def test_search_user_by_uid_proxy_dn(self) -> None:
         """A single user can still be looked up by uid."""
-        users = self.rdn_values(PROXY_PEOPLE_BASE, "(uid=sam)")
+        users = self.rdn_values(self.search(PROXY_PEOPLE_BASE, "(uid=sam)"))
         self.assertIn("sam", users)
 
 

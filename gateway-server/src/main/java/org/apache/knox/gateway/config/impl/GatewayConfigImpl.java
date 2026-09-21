@@ -401,6 +401,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   public static final int DEFAULT_LDAP_MAX_SIZE_LIMIT = 1000;
   /* The default max time for LDAP search in milliseconds */
   public static final int DEFAULT_LDAP_MAX_TIME_LIMIT = 60 * 1000;
+  public static final boolean DEFAULT_LDAP_DN_MAPPING_ENABLED = true;
 
   public GatewayConfigImpl() {
     init();
@@ -1931,6 +1932,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getLDAPMaxTimeLimit() {
     return getInt(LDAP_MAX_TIME_LIMIT, DEFAULT_LDAP_MAX_TIME_LIMIT);
+  }
+
+  @Override
+  public boolean getLDAPDnMappingEnabled() {
+    return getBoolean(LDAP_DN_MAPPING_ENABLED, DEFAULT_LDAP_DN_MAPPING_ENABLED);
   }
 
   @Override

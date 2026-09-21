@@ -54,6 +54,7 @@ class TestKnoxAuthService(unittest.TestCase):
         # Check for Actor Group header - should be empty for guest
         prefix = 'x-knox-actor-groups'
         all_groups = collect_actor_group_values(response, prefix=prefix)
+        print(f"Found groups: {all_groups}")
         self.assertEqual(
             len(all_groups),
             0,
@@ -83,6 +84,7 @@ class TestKnoxAuthService(unittest.TestCase):
         # We mapped admin to 'longGroupName1,longGroupName2,longGroupName3,longGroupName4'
         prefix = 'x-knox-actor-groups'
         all_groups = collect_actor_group_values(response, prefix=prefix)
+        print(f"Found groups: {all_groups}")
         self.assertTrue(len(all_groups) > 0, f"No headers found starting with {prefix}")
         for header_name in response.headers:
             if header_name.lower().startswith(prefix.lower()):
@@ -120,6 +122,7 @@ class TestKnoxAuthService(unittest.TestCase):
         # Check for Actor Group headers
         prefix = 'x-knox-actor-groups'
         all_groups = collect_actor_group_values(response, prefix=prefix)
+        print(f"Found groups: {all_groups}")
 
         expected_groups = ['level1', 'level2', 'level3']
         self.assertEqual(len(all_groups), len(expected_groups))
