@@ -182,7 +182,7 @@ class TokenExchangeHandler {
         // carries (it is exchanged as-is; TokenResource preserves any existing chain).
         final ActorIdentity subjectAsActor = ActorIdentity.fromJwt(subjectToken);
         final Set<String> uniqueRequestedAudiences = distinctNonBlankValues(requestedAudiences);
-        final int actChainDepth = TokenUtils.extractActorChain(subjectToken).size();
+        final List<Map<String, Object>> actChain = TokenUtils.extractActorChain(subjectToken);
         if (!requestedAudiences.isEmpty() && filter.isTokenExchangeSameSubjectRequestedAudienceEnabled()) {
           // Honoring enabled: authorize each requested audience against the subject token's own aud
           // claim; a value the subject token does not already carry is rejected. This is what allows a
@@ -191,7 +191,7 @@ class TokenExchangeHandler {
           final Set<String> subjectAudiences = audienceClaimSet(subjectToken);
           if (!subjectAudiences.containsAll(uniqueRequestedAudiences)) {
             auditing.denied(subjectAsActor, subjectToken, null,
-                "requested_audience_not_authorized", uniqueRequestedAudiences, actChainDepth);
+                "requested_audience_not_authorized", uniqueRequestedAudiences, actChain);
             filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                 "invalid_target",
                 "The requested audience is not authorized for this subject");
@@ -205,7 +205,7 @@ class TokenExchangeHandler {
         // SUCCESS record still lists the requested resources but reports audiences_honored=false, so a
         // dropped request is never mistaken for an honored one.
         auditing.allowed(subjectAsActor, subjectToken, null, uniqueRequestedAudiences,
-            conveyRequestedAudiences, actChainDepth);
+            conveyRequestedAudiences, actChain);
       }
 
       final Subject subject;
@@ -316,7 +316,7 @@ class TokenExchangeHandler {
         return DelegationTokenExchangeOutcome.rejected();
       }
     }
-    final int actChainDepth = hasActorToken ? TokenUtils.extractActorChain(subjectToken).size() : 0;
+    final List<Map<String, Object>> actChain = hasActorToken ? TokenUtils.extractActorChain(subjectToken) : Collections.emptyList();
     final JWT actorIdentitySource = hasActorToken ? actorToken : subjectToken;
     final ActorIdentity actorIdentity = ActorIdentity.fromJwt(actorIdentitySource);
 
@@ -341,7 +341,7 @@ class TokenExchangeHandler {
       // Audit it as an UNAVAILABLE outcome so every delegation exchange (allow/deny/unavailable)
       // leaves a TOKEN_EXCHANGE record.
       auditing.unavailable(actorIdentity, subjectToken, requestedSubjectValue,
-          "delegation_group_lookup_unavailable", uniqueRequestedAudiences, actChainDepth);
+          "delegation_group_lookup_unavailable", uniqueRequestedAudiences, actChain);
       filter.handleValidationError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
           "server_error", "This delegation policy restricts canActFor by group, which requires "
               + "the LDAP service to resolve group membership; ensure the LDAP service is enabled "
@@ -351,14 +351,14 @@ class TokenExchangeHandler {
 
     if (policyDecision.getDenyReason() != null) {
       auditing.denied(actorIdentity, subjectToken, requestedSubjectValue,
-          policyDecision.getDenyReason(), uniqueRequestedAudiences, actChainDepth);
+          policyDecision.getDenyReason(), uniqueRequestedAudiences, actChain);
       // A single, generic denial that does not identify which requested value failed.
       filter.handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
           "invalid_request", "The token exchange request is rejected by policy");
       return DelegationTokenExchangeOutcome.rejected();
     }
     auditing.allowed(actorIdentity, subjectToken, requestedSubjectValue, uniqueRequestedAudiences,
-        !requestedAudiences.isEmpty(), actChainDepth);
+        !requestedAudiences.isEmpty(), actChain);
 
     request.setAttribute(CommonTokenConstants.REQUESTED_TTL_REQUEST_ATTR, policyDecision.getEffectiveTtlSec());
 

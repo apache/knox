@@ -501,6 +501,7 @@ public class TokenExchangeHandlerTest {
     assertTrue(auditMessage.getValue().contains("actor_id=svc-dataservice"));
     // subject_token carries no prior 'act' chain, so the audited incoming depth is 0
     assertTrue(auditMessage.getValue().contains("act_chain_depth=0"));
+    assertFalse(auditMessage.getValue().contains("act_chain="));
   }
 
   @Test
@@ -516,6 +517,7 @@ public class TokenExchangeHandlerTest {
 
     EasyMock.verify(auditor);
     assertTrue(auditMessage.getValue().contains("act_chain_depth=2"));
+    assertTrue(auditMessage.getValue().contains("act_chain=actor-1<-actor-2"));
   }
 
   @Test
