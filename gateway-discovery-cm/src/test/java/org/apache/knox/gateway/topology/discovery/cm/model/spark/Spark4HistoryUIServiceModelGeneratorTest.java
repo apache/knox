@@ -30,8 +30,8 @@ public class Spark4HistoryUIServiceModelGeneratorTest extends AbstractServiceMod
     final Map<String, String> serviceConfig = Collections.emptyMap();
     final Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(Spark4HistoryUIServiceModelGenerator.SSL_ENABLED, "false");
-    roleConfig.put(Spark4HistoryUIServiceModelGenerator.HISTORY_SERVER_PORT, "18089");
-    roleConfig.put(Spark4HistoryUIServiceModelGenerator.SSL_SERVER_PORT, "18489");
+    roleConfig.put(Spark4HistoryUIServiceModelGenerator.HISTORY_SERVER_PORT, "18090");
+    roleConfig.put(Spark4HistoryUIServiceModelGenerator.SSL_SERVER_PORT, "18490");
 
     validateServiceModel(createServiceModel(serviceConfig, roleConfig), serviceConfig, roleConfig);
   }
