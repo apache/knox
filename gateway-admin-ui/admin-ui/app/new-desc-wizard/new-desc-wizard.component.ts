@@ -57,6 +57,7 @@ export class NewDescWizardComponent implements OnInit {
         'KNOXSSO',
         'KNOXTOKEN',
         'LIVYSERVER',
+        'LIVY_FOR_SPARK3',
         'LOGSEARCH',
         'NAMENODE',
         'NIFI',
