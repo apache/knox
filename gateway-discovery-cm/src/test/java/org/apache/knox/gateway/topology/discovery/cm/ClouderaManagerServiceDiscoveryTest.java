@@ -70,6 +70,7 @@ import org.apache.knox.gateway.topology.discovery.cm.model.phoenix.PhoenixServic
 import org.apache.knox.gateway.topology.discovery.cm.model.ranger.RangerServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.solr.SolrServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.spark.Spark3HistoryUIServiceModelGenerator;
+import org.apache.knox.gateway.topology.discovery.cm.model.spark.Spark4HistoryUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.spark.SparkHistoryUIServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.zeppelin.ZeppelinServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
@@ -796,6 +797,16 @@ public class ClouderaManagerServiceDiscoveryTest {
   }
 
   @Test
+  public void testSpark4HistoryUIDiscovery() {
+    doTestSpark4HistoryUIDiscovery("spark-history-host", "18090", "18490", false);
+  }
+
+  @Test
+  public void testSpark4HistoryUIDiscoverySSL() {
+    doTestSpark4HistoryUIDiscovery("spark-history-host", "18090", "18490", true);
+  }
+
+  @Test
   public void testZeppelinDiscovery() {
     doTestZeppelinDiscovery("ZEPPELIN", false);
   }
@@ -1230,6 +1241,21 @@ public class ClouderaManagerServiceDiscoveryTest {
                            Spark3HistoryUIServiceModelGenerator.SERVICE_TYPE,
                            "SPAR4fcf419a-SPARK3_YARN_HISTORY_SERVER-12345",
                            Spark3HistoryUIServiceModelGenerator.ROLE_TYPE,
+                           Collections.emptyMap(),
+                           roleProperties);
+  }
+
+  private ServiceDiscovery.Cluster doTestSpark4HistoryUIDiscovery(final String  hostName,
+                                                                  final String  port,
+                                                                  final String  sslPort,
+                                                                  final boolean isSSL) {
+    Map<String, String> roleProperties = sparkHistoryUIRoleProperties(port, sslPort, isSSL);
+
+    return doTestDiscovery(hostName,
+                           "SPARK4_ON_YARN-1",
+                           Spark4HistoryUIServiceModelGenerator.SERVICE_TYPE,
+                           "SPAR4fcf419a-SPARK4_YARN_HISTORY_SERVER-12345",
+                           Spark4HistoryUIServiceModelGenerator.ROLE_TYPE,
                            Collections.emptyMap(),
                            roleProperties);
   }

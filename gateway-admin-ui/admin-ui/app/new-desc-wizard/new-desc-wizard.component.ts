@@ -71,6 +71,7 @@ export class NewDescWizardComponent implements OnInit {
         'SOLR',
         'SPARKHISTORYUI',
         'SPARK3HISTORYUI',
+        'SPARK4HISTORYUI',
         'STORM',
         'STORM-LOGVIEWER',
         'SUPERSET',
