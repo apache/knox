@@ -22,9 +22,12 @@ import org.apache.knox.gateway.audit.api.AuditServiceFactory;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -56,18 +59,18 @@ final class TokenExchangeAuditing {
    *                         mistakes a listed-but-dropped {@code requested_resources} for honored)
    */
   void allowed(ActorIdentity actor, JWT subjectToken, String requestedSubject,
-               Set<String> requestedResources, boolean audiencesHonored, int actChainDepth) {
+               Set<String> requestedResources, boolean audiencesHonored, List<Map<String, Object>> actChain) {
     auditor.audit(Action.TOKEN_EXCHANGE, actor.resourceName(), ResourceType.PRINCIPAL,
         ActionOutcome.SUCCESS, message("token_exchange_allowed", null, actor, subjectToken,
-            requestedSubject, requestedResources, audiencesHonored, actChainDepth));
+            requestedSubject, requestedResources, audiencesHonored, actChain));
   }
 
   /** Audit a policy/validation denial. Nothing is minted, so no audiences are honored. */
   void denied(ActorIdentity actor, JWT subjectToken, String requestedSubject, String denyReason,
-              Set<String> requestedResources, int actChainDepth) {
+              Set<String> requestedResources, List<Map<String, Object>> actChain) {
     auditor.audit(Action.TOKEN_EXCHANGE, actor.resourceName(), ResourceType.PRINCIPAL,
         ActionOutcome.FAILURE, message("token_exchange_denied", "deny_reason=" + denyReason, actor,
-            subjectToken, requestedSubject, requestedResources, false, actChainDepth));
+            subjectToken, requestedSubject, requestedResources, false, actChain));
   }
 
   /**
@@ -75,10 +78,10 @@ final class TokenExchangeAuditing {
    * delegation policy needs is unavailable). Nothing is minted, so no audiences are honored.
    */
   void unavailable(ActorIdentity actor, JWT subjectToken, String requestedSubject, String reason,
-                   Set<String> requestedResources, int actChainDepth) {
+                   Set<String> requestedResources, List<Map<String, Object>> actChain) {
     auditor.audit(Action.TOKEN_EXCHANGE, actor.resourceName(), ResourceType.PRINCIPAL,
         ActionOutcome.UNAVAILABLE, message("token_exchange_unavailable", "reason=" + reason, actor,
-            subjectToken, requestedSubject, requestedResources, false, actChainDepth));
+            subjectToken, requestedSubject, requestedResources, false, actChain));
   }
 
   /**
@@ -103,7 +106,7 @@ final class TokenExchangeAuditing {
     final String resourceName = actor != null ? actor.resourceName() : "unknown";
     auditor.audit(Action.TOKEN_EXCHANGE, resourceName, ResourceType.PRINCIPAL, ActionOutcome.FAILURE,
         message("token_exchange_rejected", "reason=" + reason, actor, subjectToken, requestedSubject,
-            Collections.emptySet(), false, 0));
+            Collections.emptySet(), false, Collections.emptyList()));
   }
 
   /**
@@ -111,8 +114,9 @@ final class TokenExchangeAuditing {
    * value (token_exchange_allowed / token_exchange_denied / token_exchange_unavailable /
    * token_exchange_rejected) and {@code reasonField} is a fully-formed, pre-labeled reason token
    * (e.g. {@code deny_reason=...} or {@code reason=...}) appended verbatim, or null when there is
-   * none. {@code actChainDepth} is the depth of the delegation history arriving on the subject_token
-   * (0 for a headless exchange, whose incoming chain is not propagated).
+   * none. {@code actChain} is the delegation history arriving on the subject_token, from which both
+   * {@code act_chain_depth} and the rendered {@code act_chain} are derived (empty for a headless
+   * exchange, whose incoming chain is not propagated).
    *
    * <p>{@code actor} and {@code subjectToken} may be null for a rejection audited before the
    * request's identity could be established; their fields are then reported empty.</p>
@@ -120,7 +124,7 @@ final class TokenExchangeAuditing {
   private static String message(String eventType, String reasonField, ActorIdentity actor,
                                 JWT subjectToken, String requestedSubject,
                                 Set<String> requestedResources, boolean audiencesHonored,
-                                int actChainDepth) {
+                                List<Map<String, Object>> actChain) {
     final StringBuilder message = new StringBuilder();
     message.append("event_type=").append(eventType);
     if (reasonField != null) {
@@ -133,7 +137,11 @@ final class TokenExchangeAuditing {
     message.append(" requested_subject=").append(label(requestedSubject));
     message.append(" requested_resources=").append(requestedResources);
     message.append(" audiences_honored=").append(audiencesHonored);
-    message.append(" act_chain_depth=").append(actChainDepth);
+    message.append(" act_chain_depth=").append(actChain == null ? 0 : actChain.size());
+    final String renderedChain = SubjectUtils.renderActorChain(actChain);
+    if (!renderedChain.isEmpty()) {
+      message.append(" act_chain=").append(renderedChain);
+    }
     return message.toString();
   }
 

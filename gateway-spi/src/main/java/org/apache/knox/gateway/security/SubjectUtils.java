@@ -24,6 +24,8 @@ import javax.security.auth.Subject;
 import java.security.AccessController;
 import java.security.Principal;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -104,6 +106,37 @@ public class SubjectUtils {
 
   public static Set<ActorChainPrincipal> getActorChainPrincipal(Subject currentSubject, Subject subject) {
     return currentSubject.getPrincipals(ActorChainPrincipal.class);
+  }
+
+  public static ActorChainPrincipal getActorChainPrincipal(Subject subject) {
+    if (subject == null) {
+      return null;
+    }
+    final Set<ActorChainPrincipal> principals = subject.getPrincipals(ActorChainPrincipal.class);
+    return principals.isEmpty() ? null : principals.iterator().next();
+  }
+
+  public static String renderActorChain(List<Map<String, Object>> actorChain) {
+    if (actorChain == null || actorChain.isEmpty()) {
+      return "";
+    }
+    final StringBuilder sb = new StringBuilder();
+    for (Map<String, Object> actor : actorChain) {
+      if (sb.length() > 0) {
+        sb.append("<-");
+      }
+      final Object iss = actor.get("iss");
+      if (iss != null) {
+        sb.append(iss).append('/');
+      }
+      final Object sub = actor.get("sub");
+      sb.append(sub == null ? "" : sub.toString());
+    }
+    return sb.toString();
+  }
+
+  public static String renderActorChain(ActorChainPrincipal principal) {
+    return principal == null ? "" : renderActorChain(principal.getActorChain());
   }
 
   /**

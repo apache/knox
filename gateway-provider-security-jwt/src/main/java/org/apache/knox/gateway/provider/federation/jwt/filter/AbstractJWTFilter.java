@@ -370,7 +370,12 @@ public abstract class AbstractJWTFilter implements Filter {
       auditService.attachContext(context);
       String sourceUri = (String)request.getAttribute( AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME );
       if (sourceUri != null) {
-        auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+        final String actorChain = SubjectUtils.renderActorChain(SubjectUtils.getActorChainPrincipal(subject));
+        if (actorChain.isEmpty()) {
+          auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
+        } else {
+          auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "act_chain=" + actorChain );
+        }
       }
     }
 
