@@ -18,7 +18,10 @@ package org.apache.knox.gateway.provider.federation;
 
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.AudienceValidationResult;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.RequestAudienceValidator;
+import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -44,9 +47,15 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -228,6 +237,9 @@ public class CommonJWTFilterTest {
   }
 
   static final class TestHandler extends AbstractJWTFilter {
+    int lastValidationErrorStatus;
+    String lastValidationErrorMessage;
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
@@ -235,13 +247,206 @@ public class CommonJWTFilterTest {
 
     @Override
     protected void handleValidationError(HttpServletRequest request, HttpServletResponse response, int status, String error) throws IOException {
-
+      lastValidationErrorStatus = status;
+      lastValidationErrorMessage = error;
     }
 
     @Override
     public void destroy() {
 
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // W-5: RequestAudienceValidator threaded through validateToken() /
+  // doFullTokenValidation()
+  // ---------------------------------------------------------------------
+
+  private static final RequestAudienceValidator DEFAULT_AUDIENCE_VALIDATOR =
+      (req, tok, configuredAudiences) -> AudienceValidationResult.of(AbstractJWTFilter.matchesConfiguredAudiences(tok, configuredAudiences));
+
+  private static void setField(final Object target, final String fieldName, final Object value) throws Exception {
+    Field field = AbstractJWTFilter.class.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(target, value);
+  }
+
+  private static boolean invokeValidateToken4Arg(final AbstractJWTFilter handler, final HttpServletRequest request,
+      final HttpServletResponse response, final FilterChain chain, final JWT token) throws Exception {
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("validateToken", HttpServletRequest.class,
+        HttpServletResponse.class, FilterChain.class, JWT.class);
+    m.setAccessible(true);
+    return invokeBoolean(m, handler, request, response, chain, token);
+  }
+
+  private static boolean invokeValidateToken5Arg(final AbstractJWTFilter handler, final HttpServletRequest request,
+      final HttpServletResponse response, final FilterChain chain, final JWT token,
+      final RequestAudienceValidator validator) throws Exception {
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("validateToken", HttpServletRequest.class,
+        HttpServletResponse.class, FilterChain.class, JWT.class, RequestAudienceValidator.class);
+    m.setAccessible(true);
+    return invokeBoolean(m, handler, request, response, chain, token, validator);
+  }
+
+  private static boolean invokeDoFullTokenValidation7Arg(final AbstractJWTFilter handler,
+      final HttpServletRequest request, final HttpServletResponse response, final JWT token, final String tokenId,
+      final String displayableToken, final String displayableTokenId, final Set<URI> registeredIssuerJwks)
+      throws Exception {
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("doFullTokenValidation", HttpServletRequest.class,
+        HttpServletResponse.class, JWT.class, String.class, String.class, String.class, Set.class);
+    m.setAccessible(true);
+    return invokeBoolean(m, handler, request, response, token, tokenId, displayableToken, displayableTokenId,
+        registeredIssuerJwks);
+  }
+
+  private static boolean invokeDoFullTokenValidation8Arg(final AbstractJWTFilter handler,
+      final HttpServletRequest request, final HttpServletResponse response, final JWT token, final String tokenId,
+      final String displayableToken, final String displayableTokenId, final Set<URI> registeredIssuerJwks,
+      final RequestAudienceValidator validator) throws Exception {
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("doFullTokenValidation", HttpServletRequest.class,
+        HttpServletResponse.class, JWT.class, String.class, String.class, String.class, Set.class,
+        RequestAudienceValidator.class);
+    m.setAccessible(true);
+    return invokeBoolean(m, handler, request, response, token, tokenId, displayableToken, displayableTokenId,
+        registeredIssuerJwks, validator);
+  }
+
+  private static boolean invokeBoolean(final Method m, final Object target, final Object... args) throws Exception {
+    try {
+      return (Boolean) m.invoke(target, args);
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof Exception) {
+        throw (Exception) cause;
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private JWT newAudienceTestToken(final String issuer, final String[] tokenAudiences) {
+    JWT token = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(token.getIssuer()).andReturn(issuer).anyTimes();
+    EasyMock.expect(token.getAudienceClaims()).andReturn(tokenAudiences).anyTimes();
+    EasyMock.expect(token.getExpiresDate()).andReturn(null).anyTimes();
+    EasyMock.expect(token.getNotBeforeDate()).andReturn(null).anyTimes();
+    EasyMock.replay(token);
+    return token;
+  }
+
+  private void configureIssuerAndAudiences(final String issuer, final List<String> configuredAudiences) throws Exception {
+    setField(handler, "expectedIssuers", Collections.singletonList(issuer));
+    setField(handler, "audiences", configuredAudiences);
+  }
+
+  /** Allows verifyTokenSignature()'s cache check to short-circuit straight to "already verified". */
+  private void allowSignatureVerificationToSucceed() throws Exception {
+    SignatureVerificationCache cache = EasyMock.createNiceMock(SignatureVerificationCache.class);
+    EasyMock.expect(cache.hasSignatureBeenVerified(anyString())).andReturn(true).anyTimes();
+    EasyMock.replay(cache);
+    setField(handler, "signatureVerificationCache", cache);
+  }
+
+  @Test
+  public void testValidateTokenForwarderMatchesExplicitDefaultLambdaOnReject() throws Exception {
+    final String issuer = "https://issuer.example.com";
+    configureIssuerAndAudiences(issuer, Collections.singletonList("expected-audience"));
+    JWT token = newAudienceTestToken(issuer, new String[] {"other-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+
+    boolean viaForwarder = invokeValidateToken4Arg((TestHandler) handler, request, response, chain, token);
+    boolean viaExplicitLambda = invokeValidateToken5Arg((TestHandler) handler, request, response, chain, token, DEFAULT_AUDIENCE_VALIDATOR);
+
+    assertFalse(viaForwarder);
+    assertEquals(viaExplicitLambda, viaForwarder);
+  }
+
+  @Test
+  public void testValidateTokenForwarderMatchesExplicitDefaultLambdaOnAccept() throws Exception {
+    final String issuer = "https://issuer.example.com";
+    configureIssuerAndAudiences(issuer, Collections.singletonList("expected-audience"));
+    allowSignatureVerificationToSucceed();
+    JWT token = newAudienceTestToken(issuer, new String[] {"expected-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+
+    boolean viaForwarder = invokeValidateToken4Arg((TestHandler) handler, request, response, chain, token);
+    boolean viaExplicitLambda = invokeValidateToken5Arg((TestHandler) handler, request, response, chain, token, DEFAULT_AUDIENCE_VALIDATOR);
+
+    assertTrue(viaForwarder);
+    assertEquals(viaExplicitLambda, viaForwarder);
+  }
+
+  @Test
+  public void testDoFullTokenValidationForwarderMatchesExplicitDefaultLambdaOnReject() throws Exception {
+    setField(handler, "audiences", Collections.singletonList("expected-audience"));
+    JWT token = newAudienceTestToken("unused-issuer", new String[] {"other-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+
+    boolean viaForwarder = invokeDoFullTokenValidation7Arg((TestHandler) handler, request, response, token, null,
+        "tok", "id", Collections.emptySet());
+    boolean viaExplicitLambda = invokeDoFullTokenValidation8Arg((TestHandler) handler, request, response, token, null,
+        "tok", "id", Collections.emptySet(), DEFAULT_AUDIENCE_VALIDATOR);
+
+    assertFalse(viaForwarder);
+    assertEquals(viaExplicitLambda, viaForwarder);
+  }
+
+  @Test
+  public void testDoFullTokenValidationForwarderMatchesExplicitDefaultLambdaOnAccept() throws Exception {
+    setField(handler, "audiences", Collections.singletonList("expected-audience"));
+    allowSignatureVerificationToSucceed();
+    JWT token = newAudienceTestToken("unused-issuer", new String[] {"expected-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+
+    boolean viaForwarder = invokeDoFullTokenValidation7Arg((TestHandler) handler, request, response, token, null,
+        "tok", "id", Collections.emptySet());
+    boolean viaExplicitLambda = invokeDoFullTokenValidation8Arg((TestHandler) handler, request, response, token, null,
+        "tok", "id", Collections.emptySet(), DEFAULT_AUDIENCE_VALIDATOR);
+
+    assertTrue(viaForwarder);
+    assertEquals(viaExplicitLambda, viaForwarder);
+  }
+
+  @Test
+  public void testCustomValidatorAlwaysTrueOverridesMismatchedAudienceToAccept() throws Exception {
+    final String issuer = "https://issuer.example.com";
+    configureIssuerAndAudiences(issuer, Collections.singletonList("expected-audience"));
+    allowSignatureVerificationToSucceed();
+    // Token audience does NOT match the configured list -- the default check would reject this.
+    JWT token = newAudienceTestToken(issuer, new String[] {"other-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+    RequestAudienceValidator alwaysTrue = (req, tok, configuredAudiences) -> AudienceValidationResult.of(true);
+
+    boolean result = invokeValidateToken5Arg((TestHandler) handler, request, response, chain, token, alwaysTrue);
+
+    assertTrue("Custom validator returning true should accept the request despite the audience mismatch", result);
+  }
+
+  @Test
+  public void testCustomValidatorAlwaysFalseOverridesMatchedAudienceToReject() throws Exception {
+    final String issuer = "https://issuer.example.com";
+    configureIssuerAndAudiences(issuer, Collections.singletonList("expected-audience"));
+    // Token audience DOES match the configured list -- the default check would accept this.
+    JWT token = newAudienceTestToken(issuer, new String[] {"expected-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+    RequestAudienceValidator alwaysFalse = (req, tok, configuredAudiences) -> AudienceValidationResult.of(false);
+    TestHandler testHandler = (TestHandler) handler;
+
+    boolean result = invokeValidateToken5Arg(testHandler, request, response, chain, token, alwaysFalse);
+
+    assertFalse("Custom validator returning false should reject the request despite the audience match", result);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, testHandler.lastValidationErrorStatus);
+    assertEquals("Bad request: missing required token audience", testHandler.lastValidationErrorMessage);
   }
 
 }

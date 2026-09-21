@@ -581,6 +581,13 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
       final FilterChain chain, final JWT token)
       throws IOException, ServletException {
+    return validateToken(request, response, chain, token,
+        (req, tok, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(tok, configuredAudiences)));
+  }
+
+  protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
+      final FilterChain chain, final JWT token, final RequestAudienceValidator requestAudienceValidator)
+      throws IOException, ServletException {
     final String tokenId = TokenUtils.getTokenId(token);
     final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
@@ -588,7 +595,7 @@ public abstract class AbstractJWTFilter implements Filter {
       // Issuer in the static trusted list: full validation using the provider-configured
       // PEM/JWKS/instance-key chain. An empty set signals "use verifyTokenSignature()".
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, Set.of());
+          displayableToken, displayableTokenId, Set.of(), requestAudienceValidator);
     }
     // For issuers not in the static list, subclasses may resolve JWKS for a runtime-registered issuer.
     // An empty result means "not applicable for this request" and the token is rejected.
@@ -596,7 +603,7 @@ public abstract class AbstractJWTFilter implements Filter {
     final Set<URI> registeredIssuerJwks = resolveRegisteredIssuerJwks(token.getIssuer(), request);
     if (!registeredIssuerJwks.isEmpty()) {
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, registeredIssuerJwks);
+          displayableToken, displayableTokenId, registeredIssuerJwks, requestAudienceValidator);
     }
     handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     return false;
@@ -636,9 +643,19 @@ public abstract class AbstractJWTFilter implements Filter {
       final JWT token, final String tokenId, final String displayableToken,
       final String displayableTokenId, final Set<URI> registeredIssuerJwks)
       throws IOException, ServletException {
+    return doFullTokenValidation(request, response, token, tokenId, displayableToken, displayableTokenId,
+        registeredIssuerJwks,
+        (req, tok, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(tok, configuredAudiences)));
+  }
+
+  private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
+      final JWT token, final String tokenId, final String displayableToken,
+      final String displayableTokenId, final Set<URI> registeredIssuerJwks,
+      final RequestAudienceValidator requestAudienceValidator)
+      throws IOException, ServletException {
     try {
       if (tokenIsStillValid(token)) {
-        if (validateAudiences(token)) {
+        if (requestAudienceValidator.validate(request, token, audiences).isValid()) {
           Date nbf = token.getNotBeforeDate();
           if (nbf == null || new Date().after(nbf)) {
             final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
