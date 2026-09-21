@@ -309,25 +309,40 @@ public abstract class AbstractJWTFilter implements Filter {
    * @return true if an expected audience is present, otherwise false
    */
   protected boolean validateAudiences(final JWT jwtToken) {
+    return matchesConfiguredAudiences(jwtToken, audiences);
+  }
+
+  /**
+   * Validate whether any of the accepted audience claims is present in the
+   * issued token claims list for audience.
+   *
+   * @param jwtToken
+   *          the JWT token where the allowed audiences will be found
+   * @param configuredAudiences
+   *          the configured list of acceptable audiences, or null if any
+   *          audience is acceptable
+   * @return true if an expected audience is present, otherwise false
+   */
+  public static boolean matchesConfiguredAudiences(final JWT jwtToken, final List<String> configuredAudiences) {
     boolean valid = false;
 
     String[] tokenAudienceList = jwtToken.getAudienceClaims();
     // if there were no expected audiences configured then just
     // consider any audience acceptable
-    if (audiences == null) {
+    if (configuredAudiences == null) {
       valid = true;
     } else {
       // if any of the configured audiences is found then consider it
       // acceptable
       if (tokenAudienceList != null) {
         for (String aud : tokenAudienceList) {
-          if (audiences.contains(aud)) {
+          if (configuredAudiences.contains(aud)) {
             log.jwtAudienceValidated();
             valid = true;
             break;
           }
         }
-      } else if (audiences.contains("NONE")) {
+      } else if (configuredAudiences.contains("NONE")) {
         log.jwtAudienceValidated();
         valid = true;
       }
