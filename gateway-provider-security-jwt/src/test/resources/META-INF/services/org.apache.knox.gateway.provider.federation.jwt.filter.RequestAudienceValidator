@@ -1,0 +1,1 @@
+org.apache.knox.gateway.provider.federation.jwt.filter.RequestAudienceValidatorServiceTest$DummyValidator
