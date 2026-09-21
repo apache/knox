@@ -30,6 +30,7 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.knox.gateway.provider.federation.JWTFederationFilterTest;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -78,11 +79,12 @@ public class RequestAudienceValidatorServiceTest {
   }
 
   @Test
-  public void testGetValidatorMapContainsExactlyTheDummy() {
+  public void testGetValidatorMapContainsExactlyTheRegisteredTestFixtures() {
     final RequestAudienceValidatorService service = new RequestAudienceValidatorService();
     final Map<String, RequestAudienceValidator> validatorMap = service.getValidatorMap();
-    assertEquals(1, validatorMap.size());
+    assertEquals(2, validatorMap.size());
     assertTrue(validatorMap.containsKey(DummyValidator.NAME));
+    assertTrue(validatorMap.containsKey(JWTFederationFilterTest.RecordingRequestAudienceValidator.NAME));
   }
 
   public static class DummyValidator implements RequestAudienceValidator {

@@ -177,6 +177,16 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
 
+  // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
+  // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
+  private final RequestAudienceValidatorService requestAudienceValidatorService = new RequestAudienceValidatorService();
+
+  // Defaults to a validator that reproduces the existing fixed-audience-list
+  // check; overwritten in init() only if RequestAudienceValidatorService's
+  // REQUEST_AUDIENCE_VALIDATOR_PARAM names a discoverable implementation.
+  private RequestAudienceValidator requestAudienceValidator =
+      (request, token, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(token, configuredAudiences));
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init(filterConfig);
@@ -243,6 +253,17 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
     tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
 
+    final Optional<RequestAudienceValidator> configuredValidator =
+        requestAudienceValidatorService.getValidator(filterConfig);
+    if (configuredValidator.isPresent()) {
+      requestAudienceValidator = configuredValidator.get();
+      try {
+        requestAudienceValidator.init(filterConfig);
+      } catch (Exception e) {
+        throw new ServletException(e);
+      }
+    }
+
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
     /* prepare a list of allowed unauthenticated paths */
@@ -253,6 +274,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   @Override
   public void destroy() {
+    requestAudienceValidator.destroy();
   }
 
   @Override
@@ -317,7 +339,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
       if (TokenType.JWT.equals(tokenType)) {
         try {
-          JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue);
+          JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue, requestAudienceValidator);
           if (token != null) {
             /* Only a JWT the caller presented as this request's credential will be captured for
             forwarding downstream. TokenType.JWT also covers refresh_token and client_assertion
@@ -651,12 +673,22 @@ public class JWTFederationFilter extends AbstractJWTFilter {
    * @throws IOException if an I/O error occurs during validation
    * @throws ServletException if a servlet error occurs during validation
    */
-  // package-private: also invoked by TokenExchangeHandler
+  // package-private: also invoked by TokenExchangeHandler. Both TokenExchangeHandler call sites
+  // intentionally keep calling this 4-arg overload -- RFC 8693 token exchange subject/actor token
+  // validation is out of scope for the pluggable audience-validator feature and continues to use
+  // the fixed knox.token.audiences check.
   JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
                                   FilterChain chain, String tokenValue)
       throws ParseException, IOException, ServletException {
+    return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator);
+  }
+
+  JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
+                                  FilterChain chain, String tokenValue,
+                                  RequestAudienceValidator requestAudienceValidator)
+      throws ParseException, IOException, ServletException {
     JWT token = new JWTToken(tokenValue);
-    if (validateToken(request, response, chain, token)) {
+    if (validateToken(request, response, chain, token, requestAudienceValidator)) {
       return token;
     }
     // Validation failed - error response already sent by validateToken
