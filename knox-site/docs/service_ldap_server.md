@@ -46,6 +46,9 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
 | `gateway.ldap.max.size.limit` | 1000 | The maximum size limit of the result set returned by search requests. |
 | `gateway.ldap.max.time.limit` | 60000 | The maximum time limit for search requests in milliseconds. |
+| `gateway.ldap.dn.mapping.enabled` | True | Enables or disables mapping remote DNs to the LDAP server base DN. |
+| `gateway.ldap.recursive.group.resolution` | False | Enables or disables retrieval of transitive group membership through recursive search queries against remote LDAP backends. |
+| `gateway.ldap.recursive.group.resolution.max.depth` | 3 | Maximum depth of recursion for transitive group membership retrieval. |
 
 ### Bind Credentials
 

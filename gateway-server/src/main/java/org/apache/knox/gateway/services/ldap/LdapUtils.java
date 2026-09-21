@@ -18,11 +18,42 @@ package org.apache.knox.gateway.services.ldap;
 
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.name.Rdn;
 
 public class LdapUtils {
+
+    public static boolean isGroupEntry(Entry entry) throws LdapException {
+        final Attribute objectClass = entry.get("objectClass");
+        if (objectClass == null) {
+            return false;
+        }
+        for (Value value : objectClass) {
+            final String objectClassName = value.getString();
+            if ("groupOfNames".equalsIgnoreCase(objectClassName) || "groupOfUniqueNames".equalsIgnoreCase(objectClassName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isUserEntry(Entry entry) throws LdapException {
+        final Attribute objectClass = entry.get("objectClass");
+        if (objectClass == null) {
+            return false;
+        }
+        for (Value value : objectClass) {
+            final String objectClassName = value.getString();
+            if ("inetOrgPerson".equalsIgnoreCase(objectClassName)
+                    || "person".equalsIgnoreCase(objectClassName)
+                    || "organizationalPerson".equalsIgnoreCase(objectClassName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static String extractUsernameFromDn(Dn dn) {
         if (dn == null || dn.isEmpty()) {
