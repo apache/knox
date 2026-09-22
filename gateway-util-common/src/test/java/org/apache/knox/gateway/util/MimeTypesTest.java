@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 
 public class MimeTypesTest {
 
@@ -109,30 +110,17 @@ public class MimeTypesTest {
     assertThat(MimeTypes.getCharset(type, null), nullValue());
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateRejectsMalformedMimeType() {
-    MimeTypes.create("not-a-mime-type", null);
-  }
-
   @Test
-  public void testCreateIncludesOriginalMimeTypeInParseExceptionMessage() {
-    try {
-      MimeTypes.create("not-a-mime-type", null);
-    } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("not-a-mime-type"));
-      return;
-    }
-    throw new AssertionError("Expected an IllegalArgumentException");
+  public void testCreateRejectsMalformedMimeType() {
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class, () -> MimeTypes.create("not-a-mime-type", null));
+
+    assertThat(exception.getMessage(), is("not-a-mime-type"));
   }
 
   @Test
   public void testCreateRejectsEmptyMimeType() {
-    try {
-      MimeTypes.create("", null);
-    } catch (IllegalArgumentException e) {
-      return;
-    }
-    throw new AssertionError("Expected an IllegalArgumentException");
+    assertThrows(IllegalArgumentException.class, () -> MimeTypes.create("", null));
   }
 
   @Test
