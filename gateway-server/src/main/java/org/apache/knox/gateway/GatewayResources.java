@@ -95,9 +95,9 @@ public interface GatewayResources {
   @Resource( text="The private signing key was not found in the signing keystore using the alias name {0}. The alias could be missing or the password could be incorrect.")
   String privateSigningKeyNotFound( String alias );
 
-  @Resource( text="The private signing key found in the signing keystore using the alias name {0} is not a RSAPrivateKey")
+  @Resource( text="The private signing key found in the signing keystore using the alias name {0} is not a supported private key type (expected an RSAPrivateKey or ECPrivateKey)")
   String privateSigningKeyWrongType( String alias );
 
-  @Resource( text="The public signing key found in the signing keystore using the alias name {0} is not a RSAPublicKey")
+  @Resource( text="The public signing key found in the signing keystore using the alias name {0} is not a supported public key type (expected an RSAPublicKey or ECPublicKey)")
   String publicSigningKeyWrongType( String alias );
 }

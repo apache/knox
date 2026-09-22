@@ -25,9 +25,12 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
@@ -46,10 +49,13 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.BadJOSEException;
@@ -84,6 +90,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   // Only standard RSA and HMAC signature algorithms are accepted
   // https://tools.ietf.org/html/rfc7518
   private static final Set<String> SUPPORTED_PKI_SIG_ALGS = new HashSet<>(Arrays.asList("RS256", "RS384", "RS512", "PS256", "PS384", "PS512"));
+  private static final Set<String> SUPPORTED_EC_SIG_ALGS = new HashSet<>(Arrays.asList("ES256", "ES384", "ES512"));
   private static final Set<String> SUPPORTED_HMAC_SIG_ALGS = new HashSet<>(Arrays.asList("HS256", "HS384", "HS512"));
   private AliasService aliasService;
   private KeystoreService keystoreService;
@@ -91,7 +98,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   private char[] cachedSigningKeyPassphrase;
   private byte[] cachedSigningHmacSecret;
-  private RSAPrivateKey signingKey;
+  private PrivateKey signingKey;
 
   /* Cache JWKS Key source which has its own cache for the jwk keys */
   private Map<String, JWKSource<SecurityContext>> cachedJwkSources = new HashMap<>();
@@ -115,14 +122,14 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     } else {
       jwtAttributes.setKid(cachedSigningKeyID.isPresent() ? cachedSigningKeyID.get() : null);
     }
-    final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)
+    final JWT token = SUPPORTED_PKI_SIG_ALGS.contains(algorithm) || SUPPORTED_EC_SIG_ALGS.contains(algorithm) || SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)
         ? new JWTToken(jwtAttributes)
         : null;
     if (token != null) {
       if (SUPPORTED_HMAC_SIG_ALGS.contains(algorithm)) {
         signTokenWithHMAC(token);
       } else {
-        signTokenWithRSA(token, jwtAttributes.getSigningKeystoreName(), jwtAttributes.getSigningKeystoreAlias(), jwtAttributes.getSigningKeystorePassphrase());
+        signTokenWithPKI(token, jwtAttributes.getSigningKeystoreName(), jwtAttributes.getSigningKeystoreAlias(), jwtAttributes.getSigningKeystorePassphrase());
       }
       return token;
     } else {
@@ -130,22 +137,44 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     }
   }
 
-  private void signTokenWithRSA(final JWT token, String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase) throws TokenServiceException {
+  private void signTokenWithPKI(final JWT token, String signingKeystoreName, String signingKeystoreAlias, char[] signingKeystorePassphrase) throws TokenServiceException {
     try {
-      final RSAPrivateKey key = getSigningKey(signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase);
-      // allowWeakKey to not break existing 1024 bit certificates
-      final JWSSigner signer = new RSASSASigner(key, true);
+      final String algorithm = token.getSignatureAlgorithm().getName();
+      final PrivateKey key = getSigningKey(signingKeystoreName, signingKeystoreAlias, signingKeystorePassphrase);
+      final JWSSigner signer;
+      if (key instanceof RSAPrivateKey) {
+        if (!SUPPORTED_PKI_SIG_ALGS.contains(algorithm)) {
+          throw new TokenServiceException("Cannot sign token with algorithm " + algorithm + " using an RSA signing key");
+        }
+        // allowWeakKey to not break existing 1024 bit certificates
+        signer = new RSASSASigner((RSAPrivateKey) key, true);
+      } else if (key instanceof ECPrivateKey) {
+        if (!SUPPORTED_EC_SIG_ALGS.contains(algorithm)) {
+          throw new TokenServiceException("Cannot sign token with algorithm " + algorithm + " using an EC signing key");
+        }
+        final ECPrivateKey ecKey = (ECPrivateKey) key;
+        final Curve actualCurve = Curve.forECParameterSpec(ecKey.getParams());
+        final Set<Curve> expectedCurves = Curve.forJWSAlgorithm(token.getSignatureAlgorithm());
+        if (actualCurve == null || expectedCurves == null || !expectedCurves.contains(actualCurve)) {
+          throw new TokenServiceException("Cannot sign token with algorithm " + algorithm
+              + " using an EC signing key on curve " + (actualCurve != null ? actualCurve.getName() : "unknown"));
+        }
+        signer = new ECDSASigner(ecKey);
+      } else {
+        throw new TokenServiceException("Cannot sign token - unsupported signing key type: "
+            + (key == null ? "null" : key.getClass().getName()));
+      }
       token.sign(signer);
-    } catch (KeystoreServiceException e) {
+    } catch (KeystoreServiceException | JOSEException e) {
       throw new TokenServiceException(e);
     }
   }
 
-  private RSAPrivateKey getSigningKey(final String signingKeystoreName, final String signingKeystoreAlias, final char[] signingKeystorePassphrase)
+  private PrivateKey getSigningKey(final String signingKeystoreName, final String signingKeystoreAlias, final char[] signingKeystorePassphrase)
       throws KeystoreServiceException, TokenServiceException {
 
     if (signingKeystorePassphrase != null) {
-      return (RSAPrivateKey) keystoreService.getSigningKey(signingKeystoreName, getSigningKeyAlias(signingKeystoreAlias), getSigningKeyPassphrase(signingKeystorePassphrase));
+      return (PrivateKey) keystoreService.getSigningKey(signingKeystoreName, getSigningKeyAlias(signingKeystoreAlias), getSigningKeyPassphrase(signingKeystorePassphrase));
     }
 
     return signingKey;
@@ -198,18 +227,26 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   @Override
   public boolean verifyToken(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
     final String signatureAlgorithm = token.getSignatureAlgorithm().getName();
-    return SUPPORTED_HMAC_SIG_ALGS.contains(signatureAlgorithm) ? verifyTokenUsingHMAC(token) : verifyTokenUsingRSA(token, publicKey);
+    return SUPPORTED_HMAC_SIG_ALGS.contains(signatureAlgorithm) ? verifyTokenUsingHMAC(token) : verifyTokenUsingPKI(token, publicKey);
   }
 
-  private boolean verifyTokenUsingRSA(JWT token, RSAPublicKey publicKey) throws TokenServiceException {
+  private boolean verifyTokenUsingPKI(JWT token, PublicKey publicKey) throws TokenServiceException {
     try {
       PublicKey key = publicKey;
       if (key == null) {
         key = selectVerificationKey(token);
       }
-      final JWSVerifier verifier = new RSASSAVerifier((RSAPublicKey) key);
+      final JWSVerifier verifier;
+      if (key instanceof RSAPublicKey) {
+        verifier = new RSASSAVerifier((RSAPublicKey) key);
+      } else if (key instanceof ECPublicKey) {
+        verifier = new ECDSAVerifier((ECPublicKey) key);
+      } else {
+        throw new TokenServiceException("Cannot verify token - unsupported public key type: "
+            + (key == null ? "null" : key.getClass().getName()));
+      }
       return token.verify(verifier);
-    } catch (KeyStoreException | KeystoreServiceException e) {
+    } catch (KeyStoreException | KeystoreServiceException | JOSEException e) {
       throw new TokenServiceException("Cannot verify token.", e);
     }
   }
@@ -230,12 +267,21 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       if (kid != null) {
         for (final String alias : aliases) {
           final Certificate cert = keystore.getCertificate(alias);
-          if (cert == null || !(cert.getPublicKey() instanceof RSAPublicKey)) {
+          if (cert == null) {
             continue;
           }
+          final PublicKey candidateKey = cert.getPublicKey();
           try {
-            if (kid.equals(TokenUtils.getThumbprint((RSAPublicKey) cert.getPublicKey(), "SHA-256"))) {
-              return cert.getPublicKey();
+            final String candidateKid;
+            if (candidateKey instanceof RSAPublicKey) {
+              candidateKid = TokenUtils.getThumbprint((RSAPublicKey) candidateKey, "SHA-256");
+            } else if (candidateKey instanceof ECPublicKey) {
+              candidateKid = TokenUtils.getThumbprint((ECPublicKey) candidateKey, "SHA-256");
+            } else {
+              continue;
+            }
+            if (kid.equals(candidateKid)) {
+              return candidateKey;
             }
           } catch (JOSEException e) {
             // Cannot compute this key's thumbprint; skip it and try the next alias.
@@ -380,10 +426,15 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       if (publicKey == null) {
         throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias));
       }
-      else if (! (publicKey instanceof  RSAPublicKey)) {
+      else if (publicKey instanceof RSAPublicKey) {
+        cachedSigningKeyID = Optional.of(TokenUtils.getThumbprint((RSAPublicKey) publicKey, "SHA-256"));
+      }
+      else if (publicKey instanceof ECPublicKey) {
+        cachedSigningKeyID = Optional.of(TokenUtils.getThumbprint((ECPublicKey) publicKey, "SHA-256"));
+      }
+      else {
         throw new ServiceLifecycleException(RESOURCES.publicSigningKeyWrongType(signingKeyAlias));
       }
-      cachedSigningKeyID = Optional.of(TokenUtils.getThumbprint((RSAPublicKey) publicKey, "SHA-256"));
     } catch (KeyStoreException e) {
       throw new ServiceLifecycleException(RESOURCES.publicSigningKeyNotFound(signingKeyAlias), e);
     } catch (final JOSEException e) {
@@ -398,10 +449,10 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       if (key == null) {
         throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(signingKeyAlias));
       }
-      else if (! (key instanceof RSAPrivateKey)) {
+      else if (! (key instanceof RSAPrivateKey || key instanceof ECPrivateKey)) {
         throw new ServiceLifecycleException(RESOURCES.privateSigningKeyWrongType(signingKeyAlias));
       }
-      signingKey = (RSAPrivateKey) key;
+      signingKey = (PrivateKey) key;
     } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
       throw new ServiceLifecycleException(RESOURCES.privateSigningKeyNotFound(signingKeyAlias), e);
     }
