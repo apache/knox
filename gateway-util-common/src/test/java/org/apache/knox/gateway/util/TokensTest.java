@@ -62,8 +62,8 @@ public class TokensTest {
 
     @Test
     public void testTokenIdDisplayTextShortTokenId() {
-        // Too short to abbreviate meaningfully -> returned verbatim.
-        assertEquals("app", Tokens.getTokenIDDisplayText("app"));
+        // Too short to abbreviate safely -> null (never the raw value, which audit masking relies on).
+        assertNull(Tokens.getTokenIDDisplayText("app"));
     }
 
     @Test

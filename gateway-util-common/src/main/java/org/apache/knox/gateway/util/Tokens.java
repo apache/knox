@@ -45,12 +45,12 @@ public class Tokens {
     /**
      * Get a String derived from a Knox token id, which is suitable for presentation (e.g., logging) without
      * compromising security. A generated UUID id is abbreviated to its first and last dash-delimited groups; a
-     * user-supplied token id (e.g. a client_id) is abbreviated as first...last when long enough, otherwise shown
-     * verbatim. A null or empty id yields null.
+     * user-supplied token id (e.g. a client_id) is abbreviated as first...last when long enough. A value that is
+     * null, empty, or too short to abbreviate safely yields null (the raw value is never returned).
      *
      * @param tokenId A Knox token id.
      *
-     * @return An abbreviated form of the specified token id, or null if it is null or empty.
+     * @return An abbreviated form of the specified token id, or null if it cannot be abbreviated safely.
      */
     public static String getTokenIDDisplayText(final String tokenId) {
         String displayText = null;
@@ -65,8 +65,6 @@ public class Tokens {
                                             "%s...%s",
                                             tokenId.substring(0, 3),
                                             tokenId.substring(tokenId.length() - 3));
-            } else {
-                displayText = tokenId;
             }
         }
         return displayText;
