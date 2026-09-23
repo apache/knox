@@ -258,7 +258,7 @@ public class CommonJWTFilterTest {
   }
 
   // ---------------------------------------------------------------------
-  // W-5: RequestAudienceValidator threaded through validateToken() /
+  // RequestAudienceValidator threaded through validateToken() /
   // doFullTokenValidation()
   // ---------------------------------------------------------------------
 

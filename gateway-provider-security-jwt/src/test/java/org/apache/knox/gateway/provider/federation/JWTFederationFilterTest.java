@@ -433,7 +433,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   }
 
   // ---------------------------------------------------------------------
-  // W-6: RequestAudienceValidator wired into JWTFederationFilter's
+  // RequestAudienceValidator wired into JWTFederationFilter's
   // direct-bearer JWT path (init()/destroy()/doFilter()).
   // ---------------------------------------------------------------------
 

@@ -47,9 +47,7 @@ public interface RequestAudienceValidator {
     // override this. Called unconditionally at filter shutdown on
     // whichever implementation the filter is currently holding, so this
     // must be safe to call even when init() was never called on this
-    // instance (true of the built-in fallback -- see the
-    // JWTFederationFilter wiring in W-6, whose destroy() has no presence
-    // check).
+    // instance.
   }
 
   default String getName() {
