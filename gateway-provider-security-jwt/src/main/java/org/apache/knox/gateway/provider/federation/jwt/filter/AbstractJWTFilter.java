@@ -317,7 +317,7 @@ public abstract class AbstractJWTFilter implements Filter {
    * issued token claims list for audience.
    *
    * @param jwtToken
-   *          the JWT token where the allowed audiences will be found
+   *          the JWT token where the audiences to verify will be found
    * @param configuredAudiences
    *          the configured list of acceptable audiences, or null if any
    *          audience is acceptable
@@ -639,15 +639,6 @@ public abstract class AbstractJWTFilter implements Filter {
    *     {@link #verifyTokenSignature(JWT)} is used instead (provider-configured PEM / JWKS /
    *     instance-key chain).
    */
-  private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
-      final JWT token, final String tokenId, final String displayableToken,
-      final String displayableTokenId, final Set<URI> registeredIssuerJwks)
-      throws IOException, ServletException {
-    return doFullTokenValidation(request, response, token, tokenId, displayableToken, displayableTokenId,
-        registeredIssuerJwks,
-        (req, tok, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(tok, configuredAudiences)));
-  }
-
   private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
       final JWT token, final String tokenId, final String displayableToken,
       final String displayableTokenId, final Set<URI> registeredIssuerJwks,
