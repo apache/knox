@@ -44,10 +44,11 @@ public class JWTokenAttributes {
   private final String clientId;
   private final List<Map<String, Object>> actorChain;
   private final Map<String, Object> customAttributes;
+  private final String tokenId;
 
   JWTokenAttributes(String userName, List<String> audiences, String algorithm, long issueTime, long expires, String signingKeystoreName, String signingKeystoreAlias,
       char[] signingKeystorePassphrase, boolean managed, String jku, String type, Set<String> groups, String kid, String issuer, String clientId, List<Map<String, Object>> actorChain,
-                    Map<String, Object> customAttributes) {
+                    Map<String, Object> customAttributes, String tokenId) {
     this.userName = userName;
     this.audiences = audiences;
     this.algorithm = algorithm;
@@ -65,6 +66,7 @@ public class JWTokenAttributes {
     this.clientId = clientId;
     this.actorChain = actorChain;
     this.customAttributes = customAttributes;
+    this.tokenId = tokenId;
   }
     public String getUserName() {
         return userName;
@@ -168,5 +170,10 @@ public class JWTokenAttributes {
 
   public Map<String, Object> getCustomAttributes() {
       return customAttributes;
+  }
+
+  /** The requested {@code knox.id}/{@code token_id}, or null to let {@code JWTToken} generate a UUID. */
+  public String getTokenId() {
+    return tokenId;
   }
 }

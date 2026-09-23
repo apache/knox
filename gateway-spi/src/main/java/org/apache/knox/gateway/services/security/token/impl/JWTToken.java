@@ -112,8 +112,12 @@ public class JWTToken implements JWT {
       builder.claim(ACT_CLAIM, nestedAct);
     }
 
-    // Add a private UUID claim for uniqueness
-    builder.claim(KNOX_ID_CLAIM, String.valueOf(UUID.randomUUID()));
+    // Add the knox.id claim: a caller-supplied token id (e.g. a user-chosen client_id) when
+    // present, otherwise a random UUID for uniqueness.
+    final String requestedTokenId = jwtAttributes.getTokenId();
+    final String knoxId = (requestedTokenId == null || requestedTokenId.isEmpty())
+        ? String.valueOf(UUID.randomUUID()) : requestedTokenId;
+    builder.claim(KNOX_ID_CLAIM, knoxId);
 
     builder.claim(MANAGED_TOKEN_CLAIM, String.valueOf(jwtAttributes.isManaged()));
 

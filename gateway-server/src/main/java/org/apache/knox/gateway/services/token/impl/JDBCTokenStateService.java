@@ -20,9 +20,11 @@ package org.apache.knox.gateway.services.token.impl;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.DataSourceProvider;
+import org.apache.knox.gateway.database.JDBCUtils;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenAlreadyExistsException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenMigrationTarget;
 import org.apache.knox.gateway.services.security.token.TokenStateServiceException;
@@ -119,6 +121,9 @@ public class JDBCTokenStateService extends AbstractPersistentTokenStateService i
       }
     } catch (SQLException e) {
       log.errorSavingTokenInDatabase(Tokens.getTokenIDDisplayText(tokenId), e.getMessage(), e);
+      if (JDBCUtils.isUniqueConstraintViolation(e)) {
+        throw new TokenAlreadyExistsException("A token with id " + Tokens.getTokenIDDisplayText(tokenId) + " already exists", e);
+      }
       throw new TokenStateServiceException("An error occurred while saving token " + Tokens.getTokenIDDisplayText(tokenId) + " in the database", e);
     }
   }
