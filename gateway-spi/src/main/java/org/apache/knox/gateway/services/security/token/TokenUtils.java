@@ -26,6 +26,7 @@ import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.Tokens;
 
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletContext;
@@ -36,7 +37,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.text.ParseException;
-import java.util.UUID;
 
 public class TokenUtils {
   public static final String ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID = "currentKnoxSsoCookieTokenId";
@@ -63,11 +63,8 @@ public class TokenUtils {
    * is returned verbatim as the token id.
    */
   public static String getTokenId(String token) throws ParseException {
-    try {
-      UUID.fromString(token);
+    if (Tokens.isUUID(token)) {
       return token;
-    } catch (IllegalArgumentException e) {
-      //NOP: not a UUID; it is either a serialized JWT or a user-supplied token id
     }
     if (isSerializedJWT(token)) {
       try {

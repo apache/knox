@@ -19,6 +19,7 @@ package org.apache.knox.gateway.util;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 public class Tokens {
 
@@ -42,22 +43,47 @@ public class Tokens {
     }
 
     /**
-     * Get a String derived from a Knox token UUID String, which is suitable for presentation (e.g., logging) without
-     * compromising security.
+     * Get a String derived from a Knox token id, which is suitable for presentation (e.g., logging) without
+     * compromising security. A generated UUID id is abbreviated to its first and last dash-delimited groups; a
+     * user-supplied token id (e.g. a client_id) is abbreviated as first...last when long enough, otherwise shown
+     * verbatim. A null or empty id yields null.
      *
-     * @param uuid A Knox token UUID String.
+     * @param tokenId A Knox token id.
      *
-     * @return An abbreviated form of the specified UUID String.
+     * @return An abbreviated form of the specified token id, or null if it is null or empty.
      */
-    public static String getTokenIDDisplayText(final String uuid) {
+    public static String getTokenIDDisplayText(final String tokenId) {
         String displayText = null;
-        if (uuid != null && uuid.length() == 36 && uuid.contains("-")) {
-            displayText = String.format(Locale.ROOT,
-                                        "%s...%s",
-                                        uuid.substring(0, uuid.indexOf('-')),
-                                        uuid.substring(uuid.lastIndexOf('-') + 1));
+        if (tokenId != null && !tokenId.isEmpty()) {
+            if (isUUID(tokenId)) {
+                displayText = String.format(Locale.ROOT,
+                                            "%s...%s",
+                                            tokenId.substring(0, tokenId.indexOf('-')),
+                                            tokenId.substring(tokenId.lastIndexOf('-') + 1));
+            } else if (tokenId.length() >= 7) {
+                displayText = String.format(Locale.ROOT,
+                                            "%s...%s",
+                                            tokenId.substring(0, 3),
+                                            tokenId.substring(tokenId.length() - 3));
+            } else {
+                displayText = tokenId;
+            }
         }
         return displayText;
+    }
+
+    /**
+     * @param value A String to test.
+     *
+     * @return true if the value is a valid UUID (e.g. a generated Knox token id); false otherwise.
+     */
+    public static boolean isUUID(final String value) {
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     public static Set<String> getDisplayableTokenIDsText(final Set<String> tokenIds) {
