@@ -143,7 +143,7 @@ public class AbstractIdentityAssertionFilterAuthTokenTest {
     final PassThroughAssertionFilter filter = new PassThroughAssertionFilter();
     final Subject ambientSubject = buildSubject();
     Subject.doAs(ambientSubject, (PrivilegedExceptionAction<Void>) () -> {
-      filter.assertIdentity(new HttpServletRequestWrapper(request), response, chain);
+      filter.doFilter(request, response, chain);
       return null;
     });
 
@@ -234,9 +234,13 @@ public class AbstractIdentityAssertionFilterAuthTokenTest {
       return principalName;
     }
 
-    void assertIdentity(HttpServletRequestWrapper request, ServletResponse response, FilterChain chain)
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
         throws IOException, ServletException {
-      continueChainAsPrincipal(request, response, chain, "alice", null);
+      // No mapped principal and no groups: exactly the inputs that make
+      // continueChainAsPrincipal reuse the ambient Subject instead of building a new one.
+      continueChainAsPrincipal(new HttpServletRequestWrapper((HttpServletRequest) request), response,
+          chain, "alice", null);
     }
   }
 
