@@ -54,8 +54,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class JDBCTokenStateServiceTest {
 
@@ -124,12 +124,8 @@ public class JDBCTokenStateServiceTest {
     final long issueTime = System.currentTimeMillis();
     jdbcTokenStateService.addToken(tokenId, issueTime, issueTime + 1000, 1000);
 
-    try {
-      jdbcTokenStateService.addToken(tokenId, issueTime, issueTime + 2000, 2000);
-      fail("Expected a TokenAlreadyExistsException for a duplicate token_id");
-    } catch (TokenAlreadyExistsException e) {
-      // expected: the primary key rejected the duplicate id
-    }
+    assertThrows(TokenAlreadyExistsException.class,
+        () -> jdbcTokenStateService.addToken(tokenId, issueTime, issueTime + 2000, 2000));
 
     // Exactly one row survives, and its state is that of the original (winning) insert.
     assertEquals(1, getLongTokenAttributeFromDatabase(null, GET_TOKENS_COUNT_SQL));

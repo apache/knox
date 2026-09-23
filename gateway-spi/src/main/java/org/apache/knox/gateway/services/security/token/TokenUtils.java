@@ -56,18 +56,36 @@ public class TokenUtils {
   }
 
   /**
-   * If the supplied 'token' conforms the UUID string representation, we consider
-   * that as the token ID; otherwise we expect that 'token' is the entire JWT, and
-   * we get the token ID from it
+   * Resolves the token id from a value that is either a token id or an entire serialized JWT.
+   * A UUID is returned as-is. Otherwise the value is parsed as a JWT (to read the {@code knox.id}
+   * claim) only when it has the compact JWT shape; anything else — including a user-supplied
+   * client_id used as the token id (which may itself contain dots, e.g. {@code com.example.app}) —
+   * is returned verbatim as the token id.
    */
   public static String getTokenId(String token) throws ParseException {
     try {
       UUID.fromString(token);
       return token;
     } catch (IllegalArgumentException e) {
-      //NOP: the supplied token is not a UUID, we expect the entire JWT
+      //NOP: not a UUID; it is either a serialized JWT or a user-supplied token id
     }
-    return getTokenId(new JWTToken(token));
+    if (isSerializedJWT(token)) {
+      try {
+        return getTokenId(new JWTToken(token));
+      } catch (ParseException e) {
+        //NOP: dot-delimited but not a real JWT (e.g. a dotted client_id); treat it as the token id
+      }
+    }
+    return token;
+  }
+
+  /**
+   * A compact-serialized JWT is a dot-delimited value with three segments (JWS; an unsigned token
+   * keeps a trailing empty segment) or five segments (JWE). Any other shape is a plain token id.
+   */
+  private static boolean isSerializedJWT(String token) {
+    final int segments = token.split("\\.", -1).length;
+    return segments == 3 || segments == 5;
   }
 
   /**
