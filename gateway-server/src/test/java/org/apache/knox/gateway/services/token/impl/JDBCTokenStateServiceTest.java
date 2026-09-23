@@ -25,6 +25,7 @@ import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.apache.knox.gateway.database.DatabaseType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenAlreadyExistsException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
@@ -53,6 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class JDBCTokenStateServiceTest {
@@ -111,6 +113,23 @@ public class JDBCTokenStateServiceTest {
 
     assertEquals(expiration, getLongTokenAttributeFromDatabase(tokenId, TokenStateDatabase.GET_TOKEN_EXPIRATION_SQL));
     assertEquals(issueTime + maxLifetimeDuration, getLongTokenAttributeFromDatabase(tokenId, TokenStateDatabase.GET_MAX_LIFETIME_SQL));
+  }
+
+  @Test
+  public void testAddDuplicateTokenIdThrowsTokenAlreadyExists() throws Exception {
+    truncateDatabase();
+    // A second insert of the same token_id must surface the unique-constraint violation as
+    // TokenAlreadyExistsException rather than overwriting or failing generically.
+    final String tokenId = "duplicate-client-id";
+    final long issueTime = System.currentTimeMillis();
+    jdbcTokenStateService.addToken(tokenId, issueTime, issueTime + 1000, 1000);
+
+    assertThrows(TokenAlreadyExistsException.class,
+        () -> jdbcTokenStateService.addToken(tokenId, issueTime, issueTime + 2000, 2000));
+
+    // Exactly one row survives, and its state is that of the original (winning) insert.
+    assertEquals(1, getLongTokenAttributeFromDatabase(null, GET_TOKENS_COUNT_SQL));
+    assertEquals(issueTime + 1000, jdbcTokenStateService.getTokenExpiration(tokenId));
   }
 
   @Test

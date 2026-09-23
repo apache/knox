@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -107,6 +108,7 @@ import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.PersistentTokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenAlreadyExistsException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -140,6 +142,7 @@ public class TokenServiceResourceTest {
 
   private ServletContext context;
   private HttpServletRequest request;
+  private String clientIdParamValue;
   private String[] resourceParamValues;
   private List<String> exchangeRequestedAudiences;
   private Integer exchangeRequestedTtlSec;
@@ -170,6 +173,7 @@ public class TokenServiceResourceTest {
   @After
   public void cleanUp() {
     this.usersCanSeeAllTokens.clear();
+    this.clientIdParamValue = null;
     TokenResource.auditor = ORIGINAL_AUDITOR;
   }
 
@@ -210,6 +214,8 @@ public class TokenServiceResourceTest {
     if (contextExpectations.containsKey(TokenResource.QUERY_PARAMETER_DOAS)) {
       EasyMock.expect(request.getParameter(TokenResource.QUERY_PARAMETER_DOAS)).andReturn(contextExpectations.get(TokenResource.QUERY_PARAMETER_DOAS)).anyTimes();
     }
+    // The client-credentials clientId query param (null unless a test opts a value in).
+    EasyMock.expect(request.getParameter("clientId")).andReturn(clientIdParamValue).anyTimes();
     EasyMock.expect(request.getParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
     final Map<String, String[]> parameterMap = new HashMap<>();
     if (resourceParamValues != null) {
@@ -2099,6 +2105,116 @@ public class TokenServiceResourceTest {
   }
 
   @Test
+  public void testUserSuppliedClientIdUsedWhenEnabled() throws Exception {
+    final String supplied = "my-app.dev_1";
+    // The returned client_id is the token's token_id, so equality proves it became the identifier.
+    final String clientId = registerClientCredentials("true", supplied, 200);
+    assertEquals(supplied, clientId);
+  }
+
+  @Test
+  public void testUserSuppliedClientIdIgnoredWhenDisabledByDefault() throws Exception {
+    final String supplied = "my-app.dev_1";
+    final String clientId = registerClientCredentials(null, supplied, 200);
+    assertNotEquals(supplied, clientId);
+    assertGeneratedUuid(clientId);
+  }
+
+  @Test
+  public void testUserSuppliedClientIdIgnoredWhenExplicitlyDisabled() throws Exception {
+    final String supplied = "my-app.dev_1";
+    final String clientId = registerClientCredentials("false", supplied, 200);
+    assertNotEquals(supplied, clientId);
+    assertGeneratedUuid(clientId);
+  }
+
+  @Test
+  public void testOmittedClientIdReturnsGeneratedIdWhenEnabled() throws Exception {
+    final String clientId = registerClientCredentials("true", null, 200);
+    assertGeneratedUuid(clientId);
+  }
+
+  @Test
+  public void testInvalidUserSuppliedClientIdRejected() throws Exception {
+    tryInvalidUserSuppliedClientId("bad id/with*chars");
+    tryInvalidUserSuppliedClientId(StringUtils.repeat('a', 129));
+  }
+
+  private void tryInvalidUserSuppliedClientId(String supplied) throws Exception {
+    try {
+      tss = new PersistentTestTokenStateService();
+      clientIdParamValue = supplied;
+      final Map<String, String> contextExpectations = new HashMap<>();
+      contextExpectations.put("clientid.allowUserSuppliedClientId", "true");
+      configureCommonExpectations(contextExpectations, Boolean.TRUE);
+      final ClientCredentialsResource ccr = new ClientCredentialsResource();
+      ccr.request = request;
+      ccr.context = context;
+      ccr.init();
+
+      final Response response = ccr.doPost();
+      assertEquals(400, response.getStatus());
+      assertEquals("invalid_request", getTagValue(response.getEntity().toString(), "error"));
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
+  @Test
+  public void testDuplicateUserSuppliedClientIdConflict() throws Exception {
+    final String supplied = "dup-app_1";
+    try {
+      tss = new DuplicateRejectingTokenStateService();
+      clientIdParamValue = supplied;
+      final Map<String, String> contextExpectations = new HashMap<>();
+      contextExpectations.put("clientid.allowUserSuppliedClientId", "true");
+      configureCommonExpectations(contextExpectations, Boolean.TRUE);
+      final ClientCredentialsResource ccr = new ClientCredentialsResource();
+      ccr.request = request;
+      ccr.context = context;
+      ccr.init();
+
+      final Response first = ccr.doPost();
+      assertEquals(200, first.getStatus());
+      assertEquals(supplied, getTagValue(first.getEntity().toString(), ClientCredentialsResource.CLIENT_ID));
+
+      final Response second = ccr.doPost();
+      assertEquals(409, second.getStatus());
+      assertEquals("invalid_client", getTagValue(second.getEntity().toString(), "error"));
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
+  private String registerClientCredentials(String allowUserSuppliedClientId, String suppliedClientId, int expectedStatus) throws Exception {
+    try {
+      tss = new PersistentTestTokenStateService();
+      clientIdParamValue = suppliedClientId;
+      final Map<String, String> contextExpectations = new HashMap<>();
+      if (allowUserSuppliedClientId != null) {
+        contextExpectations.put("clientid.allowUserSuppliedClientId", allowUserSuppliedClientId);
+      }
+      configureCommonExpectations(contextExpectations, Boolean.TRUE);
+      final ClientCredentialsResource ccr = new ClientCredentialsResource();
+      ccr.request = request;
+      ccr.context = context;
+      ccr.init();
+
+      final Response response = ccr.doPost();
+      assertEquals(expectedStatus, response.getStatus());
+      return getTagValue(response.getEntity().toString(), ClientCredentialsResource.CLIENT_ID);
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
+  private static void assertGeneratedUuid(String clientId) {
+    assertNotNull(clientId);
+    // A generated id is a random UUID; UUID.fromString throws if it is not.
+    UUID.fromString(clientId);
+  }
+
+  @Test
   public void testClientCredentialsResponse() throws Exception {
     tryClientCredentialsResource(null);
     tryClientCredentialsResource("30000");
@@ -2671,6 +2787,23 @@ public class TokenServiceResourceTest {
   }
 
   private static class PersistentTestTokenStateService extends TestTokenStateService implements PersistentTokenStateService {
+  }
+
+  /**
+   * Persistent token state service that mirrors the KNOX_TOKENS.token_id primary-key guarantee:
+   * a second {@code addToken} for an id already present throws {@link TokenAlreadyExistsException},
+   * exactly as {@code JDBCTokenStateService} translates a unique-constraint violation.
+   */
+  private static class DuplicateRejectingTokenStateService extends PersistentTestTokenStateService {
+    private final Set<String> knownTokenIds = ConcurrentHashMap.newKeySet();
+
+    @Override
+    public void addToken(String tokenId, long issueTime, long expiration, long maxLifetimeDuration) {
+      if (!knownTokenIds.add(tokenId)) {
+        throw new TokenAlreadyExistsException("A token with id " + tokenId + " already exists");
+      }
+      super.addToken(tokenId, issueTime, expiration, maxLifetimeDuration);
+    }
   }
 
   private static class TestJWTokenAuthority implements JWTokenAuthority {

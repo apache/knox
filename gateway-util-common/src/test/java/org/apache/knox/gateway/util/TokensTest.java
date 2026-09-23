@@ -47,25 +47,23 @@ public class TokensTest {
     }
 
     @Test
-    public void testTokenIdDisplayTextShortUUID() {
-        final String tokenId = UUID.randomUUID().toString();
-        doTestTokenDisplay(tokenId.substring(1), true);
+    public void testTokenIdDisplayTextNonUuid() {
+        // A user-supplied client_id used as the token id is not a UUID; it must still be
+        // abbreviated for logging (rather than rendering as null).
+        doTestNonUuidTokenDisplay("my-app.prod_1");
     }
 
     @Test
-    public void testTokenIdDisplayTextInvalidUUID() {
-        final String tokenId = UUID.randomUUID().toString();
-        // Strip the '-' from the token ID
-        char[] invalid = new char[tokenId.length() - 4];
-        int count = 0;
-        for (int i = 0 ; i < tokenId.length(); i++) {
-            char c = tokenId.charAt(i);
-            if (c != '-') {
-                invalid[count++] = tokenId.charAt(i);
-            }
-        }
-        // Invoke the test with the invalid ID
-        doTestTokenDisplay(new String(invalid), true);
+    public void testTokenIdDisplayTextNonUuidNoDashes() {
+        // A 32-char, dashless value is not a valid UUID but is a legitimate token id; abbreviate it.
+        final String tokenId = UUID.randomUUID().toString().replace("-", "");
+        doTestNonUuidTokenDisplay(tokenId);
+    }
+
+    @Test
+    public void testTokenIdDisplayTextShortTokenId() {
+        // Too short to abbreviate safely -> null (never the raw value, which audit masking relies on).
+        assertNull(Tokens.getTokenIDDisplayText("app"));
     }
 
     @Test
@@ -85,6 +83,14 @@ public class TokensTest {
 
     private void doTestTokenDisplay(final String tokenId) {
         doTestTokenDisplay(tokenId, false);
+    }
+
+    private void doTestNonUuidTokenDisplay(final String tokenId) {
+        final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
+        assertNotNull(displayableTokenId);
+        assertTrue(displayableTokenId.length() < tokenId.length());
+        assertEquals(tokenId.substring(0, 3) + "..." + tokenId.substring(tokenId.length() - 3),
+                     displayableTokenId);
     }
 
     private void doTestTokenDisplay(final String tokenId, final Boolean invalidID) {
