@@ -187,6 +187,9 @@ public interface TokenStateServiceMessages {
   @Message(level = MessageLevel.ERROR, text = "An error occurred while saving token {0} in the database : {1}")
   void errorSavingTokenInDatabase(String tokenId, String errorMessage, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.WARN, text = "Token {0} already exists in the database")
+  void tokenAlreadyExistsInDatabase(String tokenId);
+
   @Message(level = MessageLevel.DEBUG, text = "Token {0} has been removed from the database")
   void removedTokenFromDatabase(String tokenId);
 
