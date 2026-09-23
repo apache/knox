@@ -22,6 +22,7 @@ import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.security.SubjectUtils;
 
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -112,7 +113,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   @Override
   protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     EasyMock.expect(request.getHeader("Authorization"))
-        .andReturn(JWTFederationFilter.BEARER + " " + jwt.serialize());
+        .andReturn(JWTFederationFilter.BEARER + " " + jwt.serialize()).anyTimes();
   }
 
   @Override
@@ -817,6 +818,35 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
     EasyMock.verify(strictIssuerSvc);
+  }
+
+  /**
+   * RFC 8693 token exchange is out of scope for downstream token forwarding: a {@code subject_token}
+   * is presented in order to mint a new token, not as the credential the caller authenticated this
+   * request with. The same-subject branch of TokenExchangeHandler routes through
+   * AbstractJWTFilter.createSubjectFromToken, which must not capture it.
+   */
+  @Test
+  public void testSameSubjectExchangeDoesNotCaptureAuthToken() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT subjectJwt = getJWT(KNOX_ISSUER, "some-user",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final TrustedOidcIssuerService strictIssuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.replay(strictIssuerSvc);
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(strictIssuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
+    Assert.assertNull("An RFC 8693 subject_token must not be captured for downstream forwarding",
+        SubjectUtils.getAuthToken(chain.subject));
   }
 
   /**

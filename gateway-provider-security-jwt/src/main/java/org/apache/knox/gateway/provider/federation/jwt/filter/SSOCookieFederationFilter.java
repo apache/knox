@@ -253,7 +253,9 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
         try {
           JWT token = new JWTToken(wireToken);
           if (validateToken(req, res, chain, token)) {
-            Subject subject = createSubjectFromToken(token);
+            /* The SSO cookie is the credential the caller authenticated with,
+            so it is forwardable, save the token as private credential */
+            Subject subject = createSubjectFromCallerToken(token);
             request.setAttribute(TokenUtils.ATTR_CURRENT_KNOXSSO_COOKIE_TOKEN_ID, token.getClaim(JWTToken.KNOX_ID_CLAIM));
             continueWithEstablishedSecurityContext(subject, req, res, chain);
 

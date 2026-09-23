@@ -55,6 +55,9 @@ ADD .github/workflows/build/conf/topologies/knoxidf-token-same-subject-aud.xml /
 ADD .github/workflows/build/conf/topologies/knoxidf-token-passthrough.xml /knox-runtime/conf/topologies/knoxidf-token-passthrough.xml
 ADD .github/workflows/build/conf/topologies/knoxsso.xml /knox-runtime/conf/topologies/knoxsso.xml
 ADD .github/workflows/build/conf/topologies/knoxidf-sso.xml /knox-runtime/conf/topologies/knoxidf-sso.xml
+ADD .github/workflows/build/conf/topologies/knoxauthtoken.xml /knox-runtime/conf/topologies/knoxauthtoken.xml
+ADD .github/workflows/build/conf/topologies/knoxauthtokenlimit.xml /knox-runtime/conf/topologies/knoxauthtokenlimit.xml
+ADD .github/workflows/build/conf/topologies/knoxauthtokencollide.xml /knox-runtime/conf/topologies/knoxauthtokencollide.xml
 
 RUN chown -R gateway /knox-runtime/
 

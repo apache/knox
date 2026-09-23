@@ -280,9 +280,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
     }
 
-    Pair<TokenType, String> wireToken = null;
+    WireToken wireToken = null;
     try {
-      wireToken = getWireToken(request);
+      wireToken = parseWireToken(request);
     } catch (SecurityException e) {
       handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
       throw e;
@@ -292,7 +292,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // grant_type is in the request body. The subject_token/actor_token are read from the unwrapped
     // request by the handler. Reading the body only happens on this (header-less) grant-flow path,
     // so a proxied backend's body is never consumed by the header-authenticated path.
-    if (wireToken != null && TokenType.TokenExchange.equals(wireToken.getLeft())) {
+    if (wireToken != null && TokenType.TokenExchange.equals(wireToken.getType())) {
       // Bind the "this is token exchange" decision to the dispatched path so that only the
       // subject_token/actor_token validated inside the handler can unlock registered-issuer JWKS.
       request.setAttribute(TOKEN_EXCHANGE_REQUEST_ATTR, Boolean.TRUE);
@@ -306,20 +306,27 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // TokenType.AuthCode when the grant_type is in the request body and no Bearer/Basic credentials
     // were presented. Forward to the service without a gateway-established token so that public PKCE
     // clients (no secret) are not rejected here.
-    if (wireToken != null && TokenType.AuthCode.equals(wireToken.getLeft())) {
+    if (wireToken != null && TokenType.AuthCode.equals(wireToken.getType())) {
       continueWithAuthorizationCodeGrant(request, response, chain);
       return;
     }
 
-    if (wireToken != null && wireToken.getLeft() != null && wireToken.getRight() != null) {
-      TokenType tokenType  = wireToken.getLeft();
-      String    tokenValue = wireToken.getRight();
+    if (wireToken != null && wireToken.getType() != null && wireToken.getValue() != null) {
+      TokenType tokenType  = wireToken.getType();
+      String    tokenValue = wireToken.getValue();
 
       if (TokenType.JWT.equals(tokenType)) {
         try {
           JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue);
           if (token != null) {
-            Subject subject = createSubjectFromToken(token);
+            /* Only a JWT the caller presented as this request's credential will be captured for
+            forwarding downstream. TokenType.JWT also covers refresh_token and client_assertion
+            JWTs read from the request body (see getClientTokenFromParams); those are grant
+            artifacts and must never be echoed by KNOX-AUTH-SERVICE. parseWireToken decided
+            which of the two this is at the point where it read the token. */
+            Subject subject = wireToken.isCallerCredential()
+                ? createSubjectFromCallerToken(token)
+                : createSubjectFromToken(token); // This is where we save the token as private credential
             addKnoxIDFAttributes(request, token);
             continueWithEstablishedSecurityContext(subject, (HttpServletRequest) request, (HttpServletResponse) response, chain);
           }
@@ -352,7 +359,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       }
     } else {
       // no token provided in header
-      log.missingTokenFromHeader(wireToken);
+      log.missingTokenFromHeader(wireToken == null ? null : wireToken.asPair());
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
   }
@@ -392,42 +399,118 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     return new String(Base64.getDecoder().decode(toBeDecoded.getBytes(UTF_8)), UTF_8);
   }
 
+  /**
+   * A token read off the wire, together with <em>where it was read from</em>. Provenance is decided
+   * by {@link JWTFederationFilter#parseWireToken(ServletRequest)} at the point it reads the token,
+   * rather than re-derived afterwards from the shape of the request: the presence of an
+   * {@code Authorization} header does not mean the token came from it, because
+   * {@link JWTFederationFilter#parseFromHTTPBasicCredentials(String, ServletRequest)} can decline a
+   * credential-shaped header and leave the token to be read from a grant-flow body parameter.
+   */
+  static final class WireToken {
+    private final TokenType type;
+    private final String value;
+    private final boolean callerCredential;
+
+    private WireToken(final TokenType type, final String value, final boolean callerCredential) {
+      this.type = type;
+      this.value = value;
+      this.callerCredential = callerCredential;
+    }
+
+    /**
+     * A token the caller presented as this request's own credential: an {@code Authorization}
+     * header, or the configured token query parameter. Only these may be captured for forwarding
+     * downstream.
+     */
+    static WireToken callerCredential(final TokenType type, final String value) {
+      return new WireToken(type, value, true);
+    }
+
+    /**
+     * A token presented as a grant-flow artifact -- a {@code refresh_token}, a
+     * {@code client_assertion} or an RFC 8693 {@code subject_token}. It is used to mint a new
+     * token, not to authenticate this request, so it must never be echoed downstream.
+     */
+    static WireToken grantArtifact(final TokenType type, final String value) {
+      return new WireToken(type, value, false);
+    }
+
+    TokenType getType() {
+      return type;
+    }
+
+    String getValue() {
+      return value;
+    }
+
+    boolean isCallerCredential() {
+      return callerCredential;
+    }
+
+    Pair<TokenType, String> asPair() {
+      return Pair.of(type, value);
+    }
+  }
+
+  /**
+   * Recognizes the {@code Authorization} header forms that may carry the caller's own credential.
+   * A header recognized here is only a candidate: {@link #parseFromHTTPBasicCredentials(String,
+   * ServletRequest)} may still decline it, in which case the token is read from elsewhere and is
+   * not the caller's credential. That is why provenance is recorded by the parse and not inferred
+   * from this predicate.
+   */
+  private static boolean isCallerCredentialHeader(final String header) {
+    return header != null
+        && (header.startsWith(BEARER) || header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT)));
+  }
+
   public Pair<TokenType, String> getWireToken(final ServletRequest request) throws IOException {
-      Pair<TokenType, String> parsed = null;
-      String token = null;
+    final WireToken wireToken = parseWireToken(request);
+    return wireToken == null ? null : wireToken.asPair();
+  }
+
+  /**
+   * Reads this request's token and records whether the caller presented it as their own credential.
+   *
+   * @param request the request to read
+   * @return the token and its provenance, or {@code null} when the request carries no token
+   * @throws IOException if the request body cannot be read
+   */
+  WireToken parseWireToken(final ServletRequest request) throws IOException {
       final String header = ((HttpServletRequest)request).getHeader("Authorization");
-      if (header != null) {
+      if (isCallerCredentialHeader(header)) {
           if (header.startsWith(BEARER)) {
               // what follows the bearer designator should be the JWT token being used
               // to request or as an access token
-              token = header.substring(BEARER.length());
+              final String token = header.substring(BEARER.length());
 
               // if this appears to be a JWT token then attempt to use it as such
               // otherwise assume it is a passcode token
-              if (isJWT(token)) {
-                parsed = Pair.of(TokenType.JWT, token);
-              } else {
-                parsed = Pair.of(TokenType.Passcode, token);
-              }
-          } else if (header.toLowerCase(Locale.ROOT).startsWith(BASIC.toLowerCase(Locale.ROOT))) {
+              return WireToken.callerCredential(isJWT(token) ? TokenType.JWT : TokenType.Passcode, token);
+          } else {
               // what follows the Basic designator should be the JWT token or the unique token ID being used
               // to request or as an access token
-              parsed = parseFromHTTPBasicCredentials(header, request);
+              final Pair<TokenType, String> basic = parseFromHTTPBasicCredentials(header, request);
+              if (basic != null) {
+                return WireToken.callerCredential(basic.getLeft(), basic.getRight());
+              }
+              // The header was credential-shaped but carried no token we recognize, so fall through.
+              // Anything found below did NOT come from this header and is not the caller's credential.
           }
       }
 
-      if (parsed == null) {
-        parsed = parseFromGrantTypeFlow(request);
+      final Pair<TokenType, String> grantFlow = parseFromGrantTypeFlow(request);
+      if (grantFlow != null) {
+        return WireToken.grantArtifact(grantFlow.getLeft(), grantFlow.getRight());
       }
 
-      if (parsed == null) {
-        token = request.getParameter(this.paramName);
-        if (token != null) {
-          parsed = Pair.of(TokenType.JWT, token);
-        }
+      final String queryParamToken = request.getParameter(this.paramName);
+      if (queryParamToken != null) {
+        return WireToken.callerCredential(TokenType.JWT, queryParamToken);
       }
 
-      return parsed;
+      return null;
     }
 
     private Pair<TokenType, String> parseFromGrantTypeFlow(ServletRequest request) throws IOException {
@@ -535,7 +618,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       try {
         final JWT token = parseAndValidateJWT(request, response, chain, ssoCookie.getValue());
         if (token != null) {
-          final Subject subject = createSubjectFromToken(token);
+          // A KnoxSSO cookie is the credential the caller authenticated with, so it is forwardable
+          final Subject subject = createSubjectFromCallerToken(token);
           continueWithEstablishedSecurityContext(subject, request, response, chain);
           // we found a valid cookie we don't need to keep checking anymore
           return true;

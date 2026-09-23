@@ -74,6 +74,11 @@ public class TokenIDAsHTTPBasicCredsFederationFilterTest extends JWTAsHTTPBasicC
     }
 
     @Override
+    protected boolean forwardsAuthToken() {
+      return false;
+    }
+
+    @Override
     protected void setTokenOnRequest(final HttpServletRequest request, final SignedJWT jwt) {
       try {
         final long issueTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);

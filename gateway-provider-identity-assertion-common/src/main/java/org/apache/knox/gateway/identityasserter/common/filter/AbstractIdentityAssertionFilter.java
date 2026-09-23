@@ -177,6 +177,9 @@ public abstract class AbstractIdentityAssertionFilter extends AbstractIdentityAs
             subject.getPrincipals().add(tokenExchangePrincipal);
           }
 
+          /* Preservice caller's captured auth token as credential (and not as principal) */
+          subject.getPrivateCredentials().addAll(SubjectUtils.getAuthTokenCredentials(currentSubject));
+
           doAs(request, response, chain, subject);
         }
         else {

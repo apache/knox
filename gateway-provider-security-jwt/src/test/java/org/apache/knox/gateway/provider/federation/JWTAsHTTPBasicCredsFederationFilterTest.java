@@ -80,7 +80,7 @@ public class JWTAsHTTPBasicCredsFederationFilterTest extends AbstractJWTFilterTe
         final byte[] basicAuth =
                 (authUsername + ":" + (authPassword != null ? authPassword : "")).getBytes(StandardCharsets.UTF_8);
         final String authHeaderValue = "Basic " + Base64.getEncoder().encodeToString(basicAuth);
-        EasyMock.expect((Object)request.getHeader("Authorization")).andReturn(authHeaderValue);
+        EasyMock.expect((Object)request.getHeader("Authorization")).andReturn(authHeaderValue).anyTimes();
     }
 
     @Test

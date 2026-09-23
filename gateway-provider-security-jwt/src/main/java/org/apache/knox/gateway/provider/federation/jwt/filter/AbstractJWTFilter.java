@@ -69,6 +69,7 @@ import org.apache.knox.gateway.filter.AbstractGatewayFilter;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.ActorChainPrincipalImpl;
+import org.apache.knox.gateway.security.AuthTokenCredential;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
@@ -409,7 +410,47 @@ public abstract class AbstractJWTFilter implements Filter {
     return createSubjectFromToken(new JWTToken(token));
   }
 
+  /**
+   * Builds a Subject for a validated JWT <em>without</em> capturing the token for downstream
+   * forwarding. This is the safe default, and it is what grant-flow artifacts must use: a
+   * {@code refresh_token}, a {@code client_assertion} or an RFC 8693 {@code subject_token} is
+   * presented in order to mint a new token, not as the credential the caller authenticated this
+   * request with, so KNOX-AUTH-SERVICE must never echo it downstream.
+   *
+   * @see #createSubjectFromCallerToken(JWT)
+   */
   protected Subject createSubjectFromToken(final JWT token) throws UnknownTokenException {
+    return createSubjectFromToken(token, null);
+  }
+
+  /**
+   * Builds a Subject for a validated JWT that the caller presented as this request's own
+   * credential, an {@code Authorization: Bearer}/{@code Basic} JWT, the configured token query
+   * parameter, or a KnoxSSO cookie. The serialized token is carried on the Subject as an
+   * {@link org.apache.knox.gateway.security.AuthTokenCredential} so that KNOX-AUTH-SERVICE can
+   * forward it downstream when the operator opts in via
+   * {@code preauth.auth.header.auth.token.name}.
+   *
+   * @see #createSubjectFromToken(JWT)
+   */
+  protected Subject createSubjectFromCallerToken(final JWT token) throws UnknownTokenException {
+    return createSubjectFromToken(token, token.toString());
+  }
+
+  /**
+   * The single point at which a validated JWT becomes a Subject, and therefore the method to
+   * override to decorate that Subject: both {@link #createSubjectFromToken(JWT)} and
+   * {@link #createSubjectFromCallerToken(JWT)} delegate here, so an override sees the caller's own
+   * credential and a grant-flow artifact alike, told apart by {@code serializedToken}.
+   *
+   * @param token the validated JWT
+   * @param serializedToken the token's serialized form when it is the credential the caller
+   *        authenticated this request with and may therefore be forwarded downstream, or
+   *        {@code null} when it must not be captured
+   * @return the Subject for the authenticated request
+   * @throws UnknownTokenException if the token's state cannot be resolved
+   */
+  protected Subject createSubjectFromToken(final JWT token, final String serializedToken) throws UnknownTokenException {
     String principal = token.getSubject();
     String claimvalue = null;
     if (expectedPrincipalClaim != null) {
@@ -424,7 +465,7 @@ public abstract class AbstractJWTFilter implements Filter {
     // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
     // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    return createSubjectFromTokenData(principal, claimvalue, null, actorChain);
+    return createSubjectFromTokenData(principal, claimvalue, null, actorChain, serializedToken);
   }
 
   public Subject createSubjectFromTokenIdentifier(final String tokenId) throws UnknownTokenException {
@@ -463,6 +504,28 @@ public abstract class AbstractJWTFilter implements Filter {
                                                final String expectedPrincipalClaimValue,
                                                final String tokenId,
                                                final List<Map<String, Object>> actorChain) {
+    return createSubjectFromTokenData(principal, expectedPrincipalClaimValue, tokenId, actorChain, null);
+  }
+
+  /**
+   * Create a Subject from the data of a validated token.
+   *
+   * @param principal                    the token's subject
+   * @param expectedPrincipalClaimValue  the value of the configured principal claim, if any
+   * @param tokenId                      the token's id, if any
+   * @param actorChain                   the RFC 8693 delegation actor chain, if any
+   * @param serializedToken              the serialized JWT to carry in the subject's private
+   *                                     credentials so that it can be forwarded downstream,
+   *                                     or null when there is no JWT behind this identity
+   *                                     (for example a passcode token)
+   * @return a read-only Subject representing the authenticated caller
+   */
+  @SuppressWarnings("rawtypes")
+  protected Subject createSubjectFromTokenData(final String principal,
+                                               final String expectedPrincipalClaimValue,
+                                               final String tokenId,
+                                               final List<Map<String, Object>> actorChain,
+                                               final String serializedToken) {
     String claimValue =
               (expectedPrincipalClaimValue != null) ? expectedPrincipalClaimValue.toLowerCase(Locale.ROOT) : null;
 
@@ -486,7 +549,17 @@ public abstract class AbstractJWTFilter implements Filter {
     // To modify the Principals Set, the caller must have AuthPermission("modifyPrincipals").
     // To modify the public credential Set, the caller must have AuthPermission("modifyPublicCredentials").
     // To modify the private credential Set, the caller must have AuthPermission("modifyPrivateCredentials").
-    return new Subject(true, principals, emptySet, emptySet);
+    // The caller's token is carried as a private credential rather than a principal: it is a
+    // credential, not an identity, and must never be picked up as a user name by
+    // SubjectUtils.getPrimaryPrincipalName. The Subject is read-only, so this has to be handed
+    // to the constructor, it cannot be added afterwards. Note this must be a set of its own:
+    // emptySet is shared with the public credentials argument and must stay empty.
+    Set<Object> privateCredentials = new HashSet<>();
+    if (serializedToken != null) {
+      privateCredentials.add(new AuthTokenCredential(serializedToken));
+    }
+
+    return new Subject(true, principals, emptySet, privateCredentials);
   }
 
 
