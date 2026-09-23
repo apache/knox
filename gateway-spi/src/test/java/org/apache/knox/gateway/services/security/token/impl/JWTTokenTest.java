@@ -129,6 +129,27 @@ public class JWTTokenTest {
   }
 
   @Test
+  public void testKnoxIdClaimHonoursSuppliedTokenId() throws Exception {
+    final String suppliedTokenId = "my-app.dev_1";
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setUserName("john.doe@example.com")
+        .setAlgorithm("RS256").setTokenId(suppliedTokenId).build());
+
+    // A supplied token id becomes the knox.id claim verbatim instead of a generated UUID.
+    assertEquals(suppliedTokenId, token.getClaim(JWTToken.KNOX_ID_CLAIM));
+  }
+
+  @Test
+  public void testKnoxIdClaimGeneratesUuidWhenTokenIdBlank() throws Exception {
+    // An empty supplied token id must fall back to a generated UUID (unchanged legacy behavior).
+    JWT token = new JWTToken(new JWTokenAttributesBuilder().setUserName("john.doe@example.com")
+        .setAlgorithm("RS256").setTokenId("").build());
+
+    final String knoxId = token.getClaim(JWTToken.KNOX_ID_CLAIM);
+    assertNotNull(knoxId);
+    assertNotNull(UUID.fromString(knoxId));
+  }
+
+  @Test
   public void testTokenCreationWithAudienceListSingle() throws Exception {
     List<String> audiences = new ArrayList<>();
     audiences.add("https://login.example.com");

@@ -45,6 +45,7 @@ public class JWTokenAttributesBuilder {
   private String clientId;
   private List<Map<String, Object>> actorChain;
   private Map<String, Object> customAttributes;
+  private String tokenId;
 
   public JWTokenAttributesBuilder setUserName(String userName) {
     this.userName = userName;
@@ -159,8 +160,14 @@ public class JWTokenAttributesBuilder {
     return this;
   }
 
+  /** Sets the {@code knox.id}/{@code token_id}; null or empty (the default) generates a UUID. */
+  public JWTokenAttributesBuilder setTokenId(String tokenId) {
+    this.tokenId = tokenId;
+    return this;
+  }
+
   public JWTokenAttributes build() {
     return new JWTokenAttributes(userName, (audiences == null ? new ArrayList<>() : audiences), algorithm, issueTime, expires, signingKeystoreName, signingKeystoreAlias,
-        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, actorChain, customAttributes);
+        signingKeystorePassphrase, managed, jku, type, groups, kid, issuer, clientId, actorChain, customAttributes, tokenId);
   }
 }

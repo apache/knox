@@ -21,13 +21,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.junit.Test;
+
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.RSASSASigner;
 
 /**
  * Test class for TokenUtils, focusing on RFC 8693 actor chain functionality.
@@ -240,5 +247,43 @@ public class TokenUtilsTest {
     assertEquals("issuer1", extractedChain.get(0).get("iss"));
     assertEquals("actor2", extractedChain.get(1).get("sub"));
     assertEquals("actor3", extractedChain.get(2).get("sub"));
+  }
+
+  @Test
+  public void testGetTokenIdReturnsUuidVerbatim() throws Exception {
+    final String uuid = UUID.randomUUID().toString();
+    assertEquals(uuid, TokenUtils.getTokenId(uuid));
+  }
+
+  @Test
+  public void testGetTokenIdReturnsUserSuppliedClientId() throws Exception {
+    // The reported bug: a non-UUID token id (a user-supplied client_id) is neither a UUID nor a
+    // parseable JWT, so it must be returned verbatim instead of being parsed as a JWT.
+    final String clientId = "my-app.prod_1";
+    assertEquals(clientId, TokenUtils.getTokenId(clientId));
+  }
+
+  @Test
+  public void testGetTokenIdReturnsDottedClientId() throws Exception {
+    // Two dots makes this JWT-shaped, but it is not a real JWT; the parse-failure fallback must
+    // still return it verbatim as the token id.
+    final String clientId = "com.example.app";
+    assertEquals(clientId, TokenUtils.getTokenId(clientId));
+  }
+
+  @Test
+  public void testGetTokenIdExtractsFromSerializedJwt() throws Exception {
+    final String knoxId = "known-knox-id";
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    final KeyPair keyPair = kpg.genKeyPair();
+
+    final JWTToken token = new JWTToken(new JWTokenAttributesBuilder()
+        .setUserName("john.doe@example.com").setAlgorithm("RS256").setTokenId(knoxId).build());
+    final JWSSigner signer = new RSASSASigner((RSAPrivateKey) keyPair.getPrivate());
+    token.sign(signer);
+
+    // A full serialized JWT is still parsed to read its knox.id claim.
+    assertEquals(knoxId, TokenUtils.getTokenId(token.toString()));
   }
 }

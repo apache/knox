@@ -59,3 +59,36 @@ In this deployment example the TTL is set to 74000 ms which is translated to sec
 
 Note that in both of the above responses that there is a client_id and the client_secret.
 The key_id may be used in management operations of the API Key lifecycle by those with appropriate permissions to do so.
+
+### User-supplied client_id
+
+By default the `client_id` is a server-generated UUID. Well-known identity providers (Auth0, Okta,
+Keycloak) instead let the caller choose the client identifier at registration time. The CLIENTID
+API supports the same when the topology opts in via `clientid.allowUserSuppliedClientId`:
+
+    <service>
+        <role>CLIENTID</role>
+        <param>
+            <name>clientid.allowUserSuppliedClientId</name>
+            <value>true</value>
+        </param>
+    </service>
+
+When enabled, a caller may pass a `clientId` query parameter and that value becomes the returned
+`client_id` (which is the token's `token_id` primary key), instead of a generated UUID:
+
+    $ curl -ivku guest:guest-password -X POST "https://localhost:8443/gateway/sandbox/clientid/api/v1/oauth/credentials?clientId=my-app.prod"
+    {"client_secret":"WXpOa1l6SmxPRFF0...","client_id":"my-app.prod"}
+
+Behavior and constraints:
+
+* **Default off.** When `clientid.allowUserSuppliedClientId` is unset or `false` (the default), a
+  supplied `clientId` is ignored and a UUID is generated — existing integrations are unaffected.
+* **Optional.** Even when enabled, omitting the `clientId` parameter preserves the generated-UUID
+  behavior.
+* **Validation.** A supplied `clientId` must match `^[A-Za-z0-9._-]{1,128}$` (alphanumerics plus
+  dot, underscore, and hyphen; 1 to 128 characters, matching the `token_id` column width). An
+  invalid value returns `400 Bad Request` with an `invalid_request` error.
+* **Uniqueness.** The `client_id` is the `token_id` primary key, so it must be unique. Supplying a
+  `clientId` that already exists returns `409 Conflict` with an `invalid_client` error. Uniqueness
+  is enforced atomically by the database, so there is no check-then-insert race across an HA pair.

@@ -42,6 +42,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
+import org.apache.knox.gateway.services.security.token.TokenAlreadyExistsException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -145,6 +146,11 @@ public class DefaultTokenStateService implements TokenStateService {
                              long   expiration,
                              long   maxLifetimeDuration) {
     validateTokenIdentifier(tokenId);
+    // Best-effort duplicate rejection on the in-memory path (the KNOX_TOKENS.token_id primary key
+    // is the authoritative guarantee on the persistent path; see JDBCTokenStateService).
+    if (tokenExpirations.containsKey(tokenId)) {
+      throw new TokenAlreadyExistsException("A token with id " + Tokens.getTokenIDDisplayText(tokenId) + " already exists");
+    }
     setIssueTime(tokenId, issueTime);
     tokenExpirations.put(tokenId, expiration);
     setMaxLifetime(tokenId, issueTime, maxLifetimeDuration);

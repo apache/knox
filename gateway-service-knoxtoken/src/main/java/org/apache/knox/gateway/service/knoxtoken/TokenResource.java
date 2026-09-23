@@ -1270,6 +1270,15 @@ public class TokenResource {
     return JsonUtils.renderAsJsonString(body);
   }
 
+  /**
+   * Hook for a subclass to supply the token's {@code knox.id}/{@code token_id}. Defaults to null
+   * (generate a UUID); {@link ClientCredentialsResource} overrides it to honor a user-supplied
+   * {@code clientId}.
+   */
+  protected String getRequestedTokenId() {
+    return null;
+  }
+
   private JWT getJWT(UserContext userContext, long issueTime, long expires, String jku, List<String> audiences)
       throws TokenServiceException, ActorChainDepthExceededException {
     JWTokenAttributes jwtAttributes;
@@ -1285,7 +1294,8 @@ public class TokenResource {
         .setExpires(expires)
         .setManaged(managedToken)
         .setJku(jku)
-        .setType(tokenType);
+        .setType(tokenType)
+        .setTokenId(getRequestedTokenId());
     if (audiences != null && !audiences.isEmpty()) {
       jwtAttributesBuilder.setAudiences(audiences);
     }
