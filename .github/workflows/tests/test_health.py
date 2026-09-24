@@ -20,7 +20,7 @@ import unittest
 
 import requests
 
-from common_utils import assert_hsts_header, gateway_base_url, knox_get
+from common_utils import assert_hsts_header, gateway_base_url, knox_get, knox_post
 
 
 class TestKnoxHealth(unittest.TestCase):
@@ -94,6 +94,56 @@ class TestKnoxHealth(unittest.TestCase):
         self.assertEqual(response.text.strip(), "OK")
         content_type = response.headers.get("Content-Type", "")
         self.assertIn("text/plain", content_type)
+
+    def test_health_ping_accepts_post(self):
+        """Ping supports POST for health probes that cannot use GET."""
+        url = self.base_url + "gateway/health/v1/ping"
+        response = knox_post(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text.strip(), "OK")
+        self.assertIn("text/plain", response.headers.get("Content-Type", ""))
+        self.assertEqual(
+            response.headers.get("Cache-Control"),
+            "must-revalidate,no-cache,no-store",
+        )
+
+    def test_health_metrics_pretty_query_changes_serialization(self):
+        """The pretty query parameter produces human-readable JSON output."""
+        url = self.base_url + "gateway/health/v1/metrics"
+        compact = knox_get(url)
+        pretty = knox_get(url + "?pretty=true")
+
+        self.assertEqual(compact.status_code, 200)
+        self.assertEqual(pretty.status_code, 200)
+        self.assertTrue(
+            len(pretty.text) > len(compact.text),
+            msg="pretty metrics should include formatting whitespace",
+        )
+        self.assertIn("\n", pretty.text)
+        self.assertEqual(json.loads(compact.text), json.loads(pretty.text))
+
+    def test_gateway_status_reports_ready(self):
+        """Gateway status reports a valid readiness state independently of ping."""
+        url = self.base_url + "gateway/health/v1/gateway-status"
+        response = knox_get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(response.text.strip(), {"OK", "PENDING"})
+        self.assertIn("text/plain", response.headers.get("Content-Type", ""))
+        assert_hsts_header(self, response)
+        self.assertEqual(
+            response.headers.get("Cache-Control"),
+            "must-revalidate,no-cache,no-store",
+        )
+
+    def test_gateway_status_rejects_unknown_path_suffix(self):
+        """Readiness must not silently handle a misspelled health endpoint."""
+        url = self.base_url + "gateway/health/v1/gateway-status/unknown"
+        response = knox_get(url)
+
+        self.assertEqual(response.status_code, 404)
+        assert_hsts_header(self, response)
 
 
 if __name__ == '__main__':
