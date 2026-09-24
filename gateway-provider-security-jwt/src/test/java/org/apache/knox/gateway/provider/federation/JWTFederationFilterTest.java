@@ -451,6 +451,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     static volatile boolean initCalled;
     static volatile boolean destroyCalled;
     static volatile int validateCallCount;
+    static volatile boolean throwOnDestroy;
 
     public RecordingRequestAudienceValidator() {
     }
@@ -459,6 +460,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
       initCalled = false;
       destroyCalled = false;
       validateCallCount = 0;
+      throwOnDestroy = false;
     }
 
     @Override
@@ -469,6 +471,9 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     @Override
     public void destroy() {
       destroyCalled = true;
+      if (throwOnDestroy) {
+        throw new IllegalStateException("boom");
+      }
     }
 
     @Override
@@ -586,6 +591,22 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     handler.destroy();
 
     assertTrue("destroy() should have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled);
+  }
+
+  /**
+   * destroy() is void on both Filter and RequestAudienceValidator -- a misbehaving validator
+   * must not be able to abort the filter's own shutdown by throwing out of destroy().
+   */
+  @Test
+  public void testDestroyDoesNotPropagateExceptionFromConfiguredRequestAudienceValidator() throws Exception {
+    final Properties props = getProperties();
+    props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
+    handler.init(new TestFilterConfig(props));
+    RecordingRequestAudienceValidator.throwOnDestroy = true;
+
+    handler.destroy();
+
+    assertTrue("destroy() should still have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled);
   }
 
 }

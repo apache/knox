@@ -274,7 +274,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   @Override
   public void destroy() {
-    requestAudienceValidator.destroy();
+    try {
+      requestAudienceValidator.destroy();
+    } catch (final RuntimeException e) {
+      LOGGER.failedToDestroyAudienceValidator(e);
+    }
   }
 
   @Override
@@ -662,7 +666,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   }
 
   /**
-   * Parse and validate a JWT token.
+   * Parse and validate a JWT token with the default request audience validator.
+   *
+   * The default audience validator matches the configured list of allowed audiences.
    *
    * @param request the HTTP request
    * @param response the HTTP response
@@ -673,16 +679,25 @@ public class JWTFederationFilter extends AbstractJWTFilter {
    * @throws IOException if an I/O error occurs during validation
    * @throws ServletException if a servlet error occurs during validation
    */
-  // package-private: also invoked by TokenExchangeHandler. Both TokenExchangeHandler call sites
-  // intentionally keep calling this 4-arg overload -- RFC 8693 token exchange subject/actor token
-  // validation is out of scope for the pluggable audience-validator feature and continues to use
-  // the fixed knox.token.audiences check.
   JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
                                   FilterChain chain, String tokenValue)
       throws ParseException, IOException, ServletException {
     return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator);
   }
 
+
+  /**
+   * Parse and validate a JWT token.
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param chain the filter chain
+   * @param tokenValue the JWT string to parse
+   * @param requestAudienceValidator the RequestAudienceValidator to use for aud claim validation
+   * @return the parsed and validated JWT, or null if validation failed
+   * @throws ParseException if the JWT cannot be parsed
+   * @throws IOException if an I/O error occurs during validation
+   * @throws ServletException if a servlet error occurs during validation
+   */
   JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
                                   FilterChain chain, String tokenValue,
                                   RequestAudienceValidator requestAudienceValidator)

@@ -301,13 +301,14 @@ public abstract class AbstractJWTFilter implements Filter {
 
   /**
    * Validate whether any of the accepted audience claims is present in the
-   * issued token claims list for audience. Override this method in subclasses
-   * in order to customize the audience validation behavior.
+   * issued token claims list for audience. This method is here for backwards compatibility
+   * with external code. To customize audience validation logic, use a RequestAudienceValidator.
    *
    * @param jwtToken
    *          the JWT token where the allowed audiences will be found
    * @return true if an expected audience is present, otherwise false
    */
+  @Deprecated
   protected boolean validateAudiences(final JWT jwtToken) {
     return matchesConfiguredAudiences(jwtToken, audiences);
   }
@@ -646,7 +647,8 @@ public abstract class AbstractJWTFilter implements Filter {
       throws IOException, ServletException {
     try {
       if (tokenIsStillValid(token)) {
-        if (requestAudienceValidator.validate(request, token, audiences).isValid()) {
+        final AudienceValidationResult audienceValidationResult = validateAudience(request, token, requestAudienceValidator);
+        if (audienceValidationResult.isValid()) {
           Date nbf = token.getNotBeforeDate();
           if (nbf == null || new Date().after(nbf)) {
             final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
@@ -678,7 +680,11 @@ public abstract class AbstractJWTFilter implements Filter {
                 "Bad request: the NotBefore check failed");
           }
         } else {
-          log.failedToValidateAudience(displayableToken, displayableTokenId);
+          if (audienceValidationResult.message() != null) {
+            log.failedToValidateAudience(displayableToken, displayableTokenId, audienceValidationResult.message());
+          } else {
+            log.failedToValidateAudience(displayableToken, displayableTokenId);
+          }
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "Bad request: missing required token audience");
         }
@@ -695,6 +701,20 @@ public abstract class AbstractJWTFilter implements Filter {
       handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
     }
     return false;
+  }
+
+  /**
+   * Runs the configured {@link RequestAudienceValidator} and shields the caller from a
+   * misbehaving implementation throwing out of {@code validate()}; such a failure is treated
+   * as a rejected audience rather than propagating and failing the request some other way.
+   */
+  private AudienceValidationResult validateAudience(final HttpServletRequest request, final JWT token,
+      final RequestAudienceValidator requestAudienceValidator) {
+    try {
+      return requestAudienceValidator.validate(request, token, audiences);
+    } catch (final RuntimeException e) {
+      return new AudienceValidationResult(false, "RequestAudienceValidator threw an exception: " + e.getMessage());
+    }
   }
 
   /**

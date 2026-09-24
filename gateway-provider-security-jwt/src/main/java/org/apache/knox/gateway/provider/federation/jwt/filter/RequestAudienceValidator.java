@@ -33,6 +33,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
  * mutate any state that is not itself already safe for concurrent access,
  * and must not assume init() and validate() run on the same thread.
  */
+@FunctionalInterface
 public interface RequestAudienceValidator {
 
   AudienceValidationResult validate(HttpServletRequest request, JWT token, List<String> configuredAudiences);
@@ -50,7 +51,13 @@ public interface RequestAudienceValidator {
     // instance.
   }
 
+  /**
+   * @return an identifier for this validator, used as the lookup key in
+   *     {@code request.audience.validator}. Defaults to the implementing class's fully-qualified
+   *     name, which is collision-resistant without requiring every implementation to override
+   *     this; implementations registered under a shorter configured name should override it.
+   */
   default String getName() {
-    return "default";
+    return getClass().getName();
   }
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -29,7 +30,7 @@ public class AudienceValidationResultTest {
   public void testConstructorWithMessage() {
     final AudienceValidationResult result = new AudienceValidationResult(false, "reason");
     assertFalse(result.isValid());
-    assertTrue("reason".equals(result.message()));
+    assertEquals("reason", result.message());
   }
 
   @Test

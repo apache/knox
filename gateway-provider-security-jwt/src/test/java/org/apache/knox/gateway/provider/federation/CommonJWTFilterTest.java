@@ -362,6 +362,54 @@ public class CommonJWTFilterTest {
     assertEquals("Bad request: missing required token audience", testHandler.lastValidationErrorMessage);
   }
 
+  /**
+   * A validator that throws must not propagate the exception out of validateToken() -- it is
+   * treated as a rejected audience, same as a validator that returns false, and the client still
+   * sees the generic message rather than a 500 or the exception detail.
+   */
+  @Test
+  public void testCustomValidatorThrowingExceptionRejectsWithGenericClientMessage() throws Exception {
+    final String issuer = "https://issuer.example.com";
+    final TestHandler testHandler = (TestHandler) handler;
+    configureIssuerAndAudiences(testHandler, issuer, Collections.singletonList("expected-audience"));
+    JWT token = newAudienceTestToken(issuer, new String[] {"expected-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+    RequestAudienceValidator throwing = (req, tok, configuredAudiences) -> {
+      throw new IllegalStateException("boom");
+    };
+
+    boolean result = testHandler.callValidateToken(request, response, chain, token, throwing);
+
+    assertFalse("A validator that throws should be treated as a rejected audience", result);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, testHandler.lastValidationErrorStatus);
+    assertEquals("Bad request: missing required token audience", testHandler.lastValidationErrorMessage);
+  }
+
+  /**
+   * A validator's rejection message is for logging only -- it must never leak into the
+   * client-facing error message, which stays the fixed generic text regardless.
+   */
+  @Test
+  public void testCustomValidatorRejectionMessageDoesNotReplaceGenericClientMessage() throws Exception {
+    final String issuer = "https://issuer.example.com";
+    final TestHandler testHandler = (TestHandler) handler;
+    configureIssuerAndAudiences(testHandler, issuer, Collections.singletonList("expected-audience"));
+    JWT token = newAudienceTestToken(issuer, new String[] {"expected-audience"});
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    FilterChain chain = EasyMock.createNiceMock(FilterChain.class);
+    RequestAudienceValidator rejectWithMessage =
+        (req, tok, configuredAudiences) -> new AudienceValidationResult(false, "internal reason not for the client");
+
+    boolean result = testHandler.callValidateToken(request, response, chain, token, rejectWithMessage);
+
+    assertFalse(result);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, testHandler.lastValidationErrorStatus);
+    assertEquals("Bad request: missing required token audience", testHandler.lastValidationErrorMessage);
+  }
+
   // ---------------------------------------------------------------------
   // Shared helpers for the tests above.
   // ---------------------------------------------------------------------

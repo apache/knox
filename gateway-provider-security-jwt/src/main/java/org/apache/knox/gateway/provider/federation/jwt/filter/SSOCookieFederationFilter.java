@@ -252,6 +252,10 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
         String wireToken = ssoCookie.getValue();
         try {
           JWT token = new JWTToken(wireToken);
+          // This filter only handles interactive SSO cookie-based sessions, not delegation/
+          // token-exchange flows, so it intentionally uses the default audience-matching check
+          // rather than being wired to a configurable RequestAudienceValidator. A future
+          // enhancement could generalize pluggable audience validation to this filter as well.
           if (validateToken(req, res, chain, token)) {
             /* The SSO cookie is the credential the caller authenticated with,
             so it is forwardable, save the token as private credential */
