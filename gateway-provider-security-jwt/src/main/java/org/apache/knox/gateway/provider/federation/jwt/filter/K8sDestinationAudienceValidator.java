@@ -138,8 +138,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   /**
    * Whether the {@code aud} claim must be non-empty and every entry must match (@code true), or
    * whether at least one entry matching is sufficient ({@code false}), which is the ordinary RFC
-   * 7519 "am I an intended audience" semantic. Defaults to {@code false}, since nothing on the
-   * token-minting side of this system guarantees a token carries only a single audience.
+   * 7519 semantic: the destination is an allowed audience. Defaults to {@code false}.
    *
    * <p>This is independent of, and does not substitute for, the minting-side controls over how
    * many audiences a delegation token may request that JWTFederationFilter itself exposes. A
