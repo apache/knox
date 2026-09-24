@@ -1,0 +1,161 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.knox.gateway.provider.federation.jwt.filter;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Optional;
+import org.junit.Test;
+
+public class AudienceResourceTest {
+
+  @Test
+  public void testParseBareServiceHasRootResourcePath() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local/ns/svc");
+    assertTrue(parsed.isPresent());
+    final AudienceResource r = parsed.get();
+    assertEquals("cluster.local", r.host());
+    assertEquals(443, r.effectivePort());
+    assertEquals("ns", r.namespace());
+    assertEquals("svc", r.serviceName());
+    assertEquals("/", r.resourcePathRaw());
+    assertEquals("/", r.resourcePathEncoded());
+  }
+
+  @Test
+  public void testParseWithResourcePath() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local/ns/svc/a/b");
+    assertTrue(parsed.isPresent());
+    assertEquals("/a/b", parsed.get().resourcePathRaw());
+    assertEquals("/a/b", parsed.get().resourcePathEncoded());
+  }
+
+  @Test
+  public void testTrailingSlashTidiedNotMismatch() {
+    final Optional<AudienceResource> withSlash = AudienceResource.parse("https://cluster.local/ns/svc/a/b/");
+    final Optional<AudienceResource> withoutSlash = AudienceResource.parse("https://cluster.local/ns/svc/a/b");
+    assertTrue(withSlash.isPresent());
+    assertTrue(withoutSlash.isPresent());
+    assertEquals(withoutSlash.get().resourcePathRaw(), withSlash.get().resourcePathRaw());
+  }
+
+  @Test
+  public void testExplicitPort() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local:8443/ns/svc/a");
+    assertTrue(parsed.isPresent());
+    assertEquals(8443, parsed.get().effectivePort());
+  }
+
+  @Test
+  public void testExplicitDefaultPortNormalizesSameAsAbsent() {
+    final Optional<AudienceResource> explicit = AudienceResource.parse("https://cluster.local:443/ns/svc/a");
+    final Optional<AudienceResource> absent = AudienceResource.parse("https://cluster.local/ns/svc/a");
+    assertTrue(explicit.isPresent());
+    assertTrue(absent.isPresent());
+    assertEquals(absent.get().effectivePort(), explicit.get().effectivePort());
+  }
+
+  @Test
+  public void testRejectWrongScheme() {
+    assertFalse(AudienceResource.parse("http://cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectNoAuthority() {
+    assertFalse(AudienceResource.parse("https:///ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectUserinfoPresent() {
+    assertFalse(AudienceResource.parse("https://user@cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectTooFewPathSegments() {
+    assertFalse(AudienceResource.parse("https://cluster.local/ns").isPresent());
+    assertFalse(AudienceResource.parse("https://cluster.local/").isPresent());
+    assertFalse(AudienceResource.parse("https://cluster.local").isPresent());
+  }
+
+  @Test
+  public void testRejectNonUrlLogicalName() {
+    assertFalse(AudienceResource.parse("service-a").isPresent());
+  }
+
+  @Test
+  public void testRejectBarePath() {
+    assertFalse(AudienceResource.parse("/api/v1").isPresent());
+  }
+
+  @Test
+  public void testRejectDotDotSegment() {
+    assertFalse(AudienceResource.parse("https://cluster.local/ns/svc/../a").isPresent());
+    assertFalse(AudienceResource.parse("https://cluster.local/ns/svc/a/..").isPresent());
+  }
+
+  @Test
+  public void testRejectDotSegment() {
+    assertFalse(AudienceResource.parse("https://cluster.local/ns/svc/a/./b").isPresent());
+  }
+
+  @Test
+  public void testRejectEmptySegment() {
+    assertFalse(AudienceResource.parse("https://cluster.local/ns/svc//").isPresent());
+    assertFalse(AudienceResource.parse("https://cluster.local/ns/svc/a//b").isPresent());
+  }
+
+  @Test
+  public void testUnencodedAudiencePathCarriesBothCandidateForms() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local/ns/svc/a b");
+    assertTrue(parsed.isPresent());
+    assertEquals("/a b", parsed.get().resourcePathRaw());
+    assertEquals("/a%20b", parsed.get().resourcePathEncoded());
+  }
+
+  @Test
+  public void testAlreadyEscapedAudiencePathHasIdenticalCandidates() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local/ns/svc/a%20b");
+    assertTrue(parsed.isPresent());
+    assertEquals("/a%20b", parsed.get().resourcePathRaw());
+    assertEquals("/a%20b", parsed.get().resourcePathEncoded());
+  }
+
+  @Test
+  public void testEscapedSlashNeverEqualsLiteralSlash() {
+    final Optional<AudienceResource> escaped = AudienceResource.parse("https://cluster.local/ns/svc/a%2Fb");
+    final Optional<AudienceResource> literal = AudienceResource.parse("https://cluster.local/ns/svc/a/b");
+    assertTrue(escaped.isPresent());
+    assertTrue(literal.isPresent());
+    assertFalse(escaped.get().resourcePathRaw().equals(literal.get().resourcePathRaw()));
+    assertFalse(escaped.get().resourcePathEncoded().equals(literal.get().resourcePathEncoded()));
+  }
+
+  @Test
+  public void testRejectNullAndEmpty() {
+    assertFalse(AudienceResource.parse(null).isPresent());
+    assertFalse(AudienceResource.parse("").isPresent());
+    assertFalse(AudienceResource.parse("   ").isPresent());
+  }
+
+  @Test
+  public void testSchemeComparedCaseInsensitively() {
+    assertTrue(AudienceResource.parse("HTTPS://cluster.local/ns/svc").isPresent());
+  }
+}
