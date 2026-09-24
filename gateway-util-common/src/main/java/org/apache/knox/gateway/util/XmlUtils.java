@@ -74,6 +74,7 @@ public class XmlUtils {
    * @return the root object of the content tree
    * @throws IOException   if the file cannot be read
    * @throws JAXBException if the content cannot be parsed or unmarshalled
+   * @since 3.1.0
    */
   public static <T> T unmarshal(Unmarshaller unmarshaller, Class<T> type, File file) throws IOException, JAXBException {
     try (InputStream input = Files.newInputStream(file.toPath())) {
@@ -91,6 +92,7 @@ public class XmlUtils {
    * @param <T>          the expected type of the root object
    * @return the root object of the content tree
    * @throws JAXBException if the content cannot be parsed or unmarshalled
+   * @since 3.1.0
    */
   public static <T> T unmarshal(Unmarshaller unmarshaller, Class<T> type, String systemId, InputStream input) throws JAXBException {
     try {
