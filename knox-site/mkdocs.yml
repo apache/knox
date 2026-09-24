@@ -74,6 +74,7 @@ nav:
                 - LDAP Authentication Cache: config_ldap_authc_cache.md
               - PAM Authentication: config_pam_authn.md
               - Pre-auth SSO: config_preauth_sso_provider.md
+              - Request Audience Validator: config_request_audience_validator.md
               - SSO Cookie: config_sso_cookie_provider.md
               - TLS Client Certificate: config_tls_client_certificate_authentication_provider.md
               - PAC4J: config_pac4j_provider.md
