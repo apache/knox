@@ -22,10 +22,11 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 
-import javax.xml.XMLConstants;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -33,30 +34,69 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.xml.secure.SecureDocumentBuilderFactory;
+import org.apache.commons.xml.secure.SecureTransformerFactory;
+import org.apache.commons.xml.secure.SecureXMLInputFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+/**
+ * XML parsing and serialization helpers.
+ *
+ * <p>Factories come from <a href="https://commons.apache.org/proper/commons-secure-xml/">Apache Commons Secure XML</a>,
+ * which ignores external resources (DTDs, entities, XInclude, stylesheets).</p>
+ */
 public class XmlUtils {
 
   public static Document readXml( File file ) throws ParserConfigurationException, IOException, SAXException {
-    return readXml(Files.newInputStream(file.toPath()));
+    try (InputStream input = Files.newInputStream(file.toPath())) {
+      return readXml(input);
+    }
   }
 
   public static Document readXml( InputStream input ) throws ParserConfigurationException, IOException, SAXException {
-    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
-    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-    DocumentBuilder b = f.newDocumentBuilder();
-    return b.parse( input );
+    return newDocumentBuilder().parse( input );
   }
 
   public static Document readXml( InputSource source ) throws ParserConfigurationException, IOException, SAXException {
-    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
-    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-    DocumentBuilder b = f.newDocumentBuilder();
-    return b.parse( source );
+    return newDocumentBuilder().parse( source );
+  }
+
+  /**
+   * Unmarshals the XML content of a file.
+   *
+   * @param unmarshaller the JAXB unmarshaller to use
+   * @param type         the expected type of the root object
+   * @param file         the file to read
+   * @param <T>          the expected type of the root object
+   * @return the root object of the content tree
+   * @throws IOException   if the file cannot be read
+   * @throws JAXBException if the content cannot be parsed or unmarshalled
+   */
+  public static <T> T unmarshal(Unmarshaller unmarshaller, Class<T> type, File file) throws IOException, JAXBException {
+    try (InputStream input = Files.newInputStream(file.toPath())) {
+      return unmarshal(unmarshaller, type, file.toURI().toString(), input);
+    }
+  }
+
+  /**
+   * Unmarshals XML content from a stream, parsed by Apache Commons Secure XML.
+   *
+   * @param unmarshaller the JAXB unmarshaller to use
+   * @param type         the expected type of the root object
+   * @param systemId     the system identifier of the content, used as base URI; may be {@code null}
+   * @param input        the stream to read, not closed by this method
+   * @param <T>          the expected type of the root object
+   * @return the root object of the content tree
+   * @throws JAXBException if the content cannot be parsed or unmarshalled
+   */
+  public static <T> T unmarshal(Unmarshaller unmarshaller, Class<T> type, String systemId, InputStream input) throws JAXBException {
+    try {
+      return type.cast(unmarshaller.unmarshal(SecureXMLInputFactory.newFactory().createXMLEventReader(systemId, input)));
+    } catch (XMLStreamException e) {
+      throw new JAXBException(e);
+    }
   }
 
   public static void writeXml( Document document, Writer writer ) throws TransformerException {
@@ -76,8 +116,7 @@ public class XmlUtils {
 
   public static Transformer getTransformer( boolean standalone, boolean indent, int indentNumber,
                                             boolean omitXmlDeclaration) throws TransformerException {
-    TransformerFactory f = TransformerFactory.newInstance();
-    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+    TransformerFactory f = SecureTransformerFactory.newInstance();
     if ( indent ) {
       f.setAttribute( "indent-number", indentNumber );
     }
@@ -102,13 +141,19 @@ public class XmlUtils {
   }
 
   public static Document createDocument(boolean standalone) throws ParserConfigurationException {
-    DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
-    f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
-    f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-    DocumentBuilder b = f.newDocumentBuilder();
-    Document d = b.newDocument();
+    Document d = newDocumentBuilder().newDocument();
     d.setXmlStandalone( standalone );
     return d;
+  }
+
+  private static DocumentBuilder newDocumentBuilder() {
+    try {
+      return SecureDocumentBuilderFactory.newInstance().newDocumentBuilder();
+    } catch (final ParserConfigurationException e) {
+      // JAXP implementations fail while the factory is configured, not when a builder is created,
+      // so this is not expected to happen.
+      throw new IllegalStateException("Failed to instantiate a DocumentBuilder.", e);
+    }
   }
 
 }

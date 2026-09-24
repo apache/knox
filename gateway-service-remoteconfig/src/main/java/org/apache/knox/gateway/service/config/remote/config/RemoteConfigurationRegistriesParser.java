@@ -17,11 +17,13 @@
 package org.apache.knox.gateway.service.config.remote.config;
 
 import org.apache.knox.gateway.service.config.remote.RemoteConfigurationRegistryConfig;
+import org.apache.knox.gateway.util.XmlUtils;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,11 +37,11 @@ class RemoteConfigurationRegistriesParser {
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(RemoteConfigurationRegistries.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            RemoteConfigurationRegistries parsedContent = (RemoteConfigurationRegistries) jaxbUnmarshaller.unmarshal(file);
+            RemoteConfigurationRegistries parsedContent = XmlUtils.unmarshal(jaxbUnmarshaller, RemoteConfigurationRegistries.class, file);
             if (parsedContent != null) {
                 result.addAll(parsedContent.getRegistryConfigurations());
             }
-        } catch (JAXBException e) {
+        } catch (JAXBException | IOException e) {
             e.printStackTrace();
         }
 

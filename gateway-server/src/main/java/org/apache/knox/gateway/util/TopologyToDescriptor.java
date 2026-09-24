@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.xml.secure.SecureSchemaFactory;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.model.DescriptorConfiguration;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 
@@ -96,13 +98,13 @@ public class TopologyToDescriptor {
 
   private Topology parseTopology(final String xsd, final String topologyFile)
       throws JAXBException, SAXException, IOException {
-    try (InputStream topologyFileStream = Files
-        .newInputStream(Paths.get(topologyFile))) {
+      final Path path = Paths.get(topologyFile);
+      try (InputStream topologyFileStream = Files.newInputStream(path)) {
       final Schema schema = getSchema(xsd);
       final JAXBContext jc = JAXBContext.newInstance(Topology.class);
       final Unmarshaller unmarshaller = jc.createUnmarshaller();
       unmarshaller.setSchema(schema);
-      return (Topology) unmarshaller.unmarshal(topologyFileStream);
+      return XmlUtils.unmarshal(unmarshaller, Topology.class, path.toUri().toString(), topologyFileStream);
     } catch (SAXException | JAXBException | IOException e) {
       LOG.errorParsingTopology(topologyFile);
       throw e;
@@ -110,7 +112,7 @@ public class TopologyToDescriptor {
   }
 
   private Schema getSchema(final String xsd) throws SAXException {
-    final SchemaFactory schemaFactory = SchemaFactory
+    final SchemaFactory schemaFactory = SecureSchemaFactory
         .newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
     final URL schemaUrl = TopologyToDescriptor.class.getResource(xsd);
     return schemaFactory.newSchema(schemaUrl);
