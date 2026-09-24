@@ -98,8 +98,8 @@ public class TopologyToDescriptor {
 
   private Topology parseTopology(final String xsd, final String topologyFile)
       throws JAXBException, SAXException, IOException {
-      final Path path = Paths.get(topologyFile);
-      try (InputStream topologyFileStream = Files.newInputStream(path)) {
+    final Path path = Paths.get(topologyFile);
+    try (InputStream topologyFileStream = Files.newInputStream(path)) {
       final Schema schema = getSchema(xsd);
       final JAXBContext jc = JAXBContext.newInstance(Topology.class);
       final Unmarshaller unmarshaller = jc.createUnmarshaller();

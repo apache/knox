@@ -17,6 +17,11 @@
  */
 package org.apache.knox.gateway.service.admin;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
@@ -26,13 +31,9 @@ import jakarta.ws.rs.ext.Provider;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
+
 import org.apache.knox.gateway.service.definition.ServiceDefinitionPair;
 import org.apache.knox.gateway.util.XmlUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 
 @Provider
 @Consumes({ MediaType.APPLICATION_XML })
