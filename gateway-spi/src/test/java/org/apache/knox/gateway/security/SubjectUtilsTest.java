@@ -18,12 +18,17 @@
 package org.apache.knox.gateway.security;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.security.auth.Subject;
 
 import org.junit.Test;
 
@@ -71,5 +76,51 @@ public class SubjectUtilsTest {
     final List<Map<String, Object>> chain = Arrays.asList(actor("idp1", "svc-c"), actor("idp2", "svc-a"));
     assertEquals("idp1/svc-c<-idp2/svc-a",
         SubjectUtils.renderActorChain(new ActorChainPrincipalImpl(chain)));
+  }
+
+  private static final String SERIALIZED_TOKEN = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJndWVzdCJ9.c2ln";
+
+  @Test
+  public void testGetAuthTokenReturnsTokenFromPrivateCredential() {
+    final Subject subject = new Subject();
+    subject.getPrivateCredentials().add(new AuthTokenCredential(SERIALIZED_TOKEN));
+    assertEquals(SERIALIZED_TOKEN, SubjectUtils.getAuthToken(subject));
+  }
+
+  @Test
+  public void testGetAuthTokenNullWhenNoCredentialPresent() {
+    final Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal("guest"));
+    assertNull(SubjectUtils.getAuthToken(subject));
+  }
+
+  @Test
+  public void testGetAuthTokenNullForNullSubject() {
+    assertNull(SubjectUtils.getAuthToken(null));
+  }
+
+  @Test
+  public void testGetAuthTokenCredentialsReturnsCredential() {
+    final Subject subject = new Subject();
+    final AuthTokenCredential credential = new AuthTokenCredential(SERIALIZED_TOKEN);
+    subject.getPrivateCredentials().add(credential);
+
+    final Set<AuthTokenCredential> credentials = SubjectUtils.getAuthTokenCredentials(subject);
+    assertEquals(1, credentials.size());
+    assertTrue(credentials.contains(credential));
+  }
+
+  @Test
+  public void testGetAuthTokenCredentialsEmptyForNullSubject() {
+    assertTrue(SubjectUtils.getAuthTokenCredentials(null).isEmpty());
+  }
+
+  /* Unrelated private credentials must not be mistaken for an auth token. */
+  @Test
+  public void testGetAuthTokenIgnoresOtherPrivateCredentials() {
+    final Subject subject = new Subject();
+    subject.getPrivateCredentials().add("some-unrelated-credential");
+    assertNull(SubjectUtils.getAuthToken(subject));
+    assertTrue(SubjectUtils.getAuthTokenCredentials(subject).isEmpty());
   }
 }

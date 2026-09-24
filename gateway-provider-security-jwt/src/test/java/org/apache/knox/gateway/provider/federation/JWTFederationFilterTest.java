@@ -17,10 +17,14 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
+import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter.JWT_DEFAULT_ISSUER;
 import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.DEFAULT_SSO_COOKIE_NAME;
 import static org.junit.Assert.assertEquals;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Properties;
 import javax.security.auth.Subject;
@@ -33,8 +37,11 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -44,6 +51,8 @@ import org.junit.Test;
 import com.nimbusds.jwt.SignedJWT;
 
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
+
+  private static final String TOKEN_QUERY_PARAM = "knoxtoken";
 
   @Before
   public void setUp() {
@@ -64,7 +73,9 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   @Override
   protected void setTokenOnRequest(HttpServletRequest request, SignedJWT jwt) {
     String token = TestJWTFederationFilter.BEARER + " " + jwt.serialize();
-    EasyMock.expect(request.getHeader("Authorization")).andReturn(token);
+    // anyTimes: the filter also re-reads this header to decide whether the JWT was presented as
+    // the caller's own credential (and is therefore forwardable) or as a grant-flow parameter
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(token).anyTimes();
   }
 
   @Override
@@ -206,6 +217,9 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     if (tssEnabled) {
       Assert.assertTrue(chain.doFilterCalled);
       Assert.assertNotNull(chain.subject);
+      // There is no JWT behind a passcode token, so nothing must be captured for forwarding
+      Assert.assertNull("A passcode token must not be captured as an auth token credential",
+          SubjectUtils.getAuthToken(chain.subject));
     } else {
       Assert.assertFalse(chain.doFilterCalled);
     }
@@ -247,9 +261,166 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     if (validCookie) {
       assertEquals(1, chain.getSubject().getPrincipals().size());
       assertEquals(subject, chain.getSubject().getPrincipals().iterator().next().getName());
+      // The KnoxSSO cookie is the credential the caller authenticated with, so it is captured
+      assertEquals("The cookie's JWT should be carried as a private credential for forwarding",
+          jwt.serialize(), SubjectUtils.getAuthToken(chain.getSubject()));
     } else {
       EasyMock.verify(response);
     }
+  }
+
+  /*
+   * A refresh_token is a grant artifact presented in the request body to mint a new token -- not
+   * the credential the caller authenticated this request with -- so it must never be captured for
+   * forwarding downstream.
+   */
+  @Test
+  public void testRefreshTokenJWTIsNotCapturedForForwarding() throws Exception {
+    assertGrantFlowJWTIsNotCaptured(JWTFederationFilter.REFRESH_TOKEN,
+        JWTFederationFilter.REFRESH_TOKEN_PARAM, null, null, null);
+  }
+
+  /*
+   * The dangerous shape: a credential-shaped Authorization header IS present, but it carries no
+   * token this filter recognizes, so parseFromHTTPBasicCredentials declines it and the token is
+   * still read from the grant-flow body. The mere presence of the header must not be mistaken for
+   * "the caller presented this token".
+   */
+  @Test
+  public void testRefreshTokenIsNotCapturedWhenABasicHeaderIsAlsoPresent() throws Exception {
+    assertGrantFlowJWTIsNotCaptured(JWTFederationFilter.REFRESH_TOKEN,
+        JWTFederationFilter.REFRESH_TOKEN_PARAM, null, "Basic " + encodeBasic("alice:secret"), null);
+  }
+
+  @Test
+  public void testClientAssertionIsNotCapturedWhenABasicHeaderIsAlsoPresent() throws Exception {
+    assertGrantFlowJWTIsNotCaptured(CLIENT_CREDENTIALS, JWTFederationFilter.CLIENT_ASSERTION,
+        JWTFederationFilter.CLIENT_ASSERTION_JWT_BEARER, "Basic " + encodeBasic("clientid:"), null);
+  }
+
+  /*
+   * getWireToken consults the query parameter LAST, after the grant-flow body, so a request that
+   * carries both must be treated as the grant flow it is -- the query parameter's presence proves
+   * nothing about where the validated token came from.
+   */
+  @Test
+  public void testRefreshTokenIsNotCapturedWhenTheTokenQueryParamIsAlsoPresent() throws Exception {
+    assertGrantFlowJWTIsNotCaptured(JWTFederationFilter.REFRESH_TOKEN,
+        JWTFederationFilter.REFRESH_TOKEN_PARAM, null, null, "some-unrelated-value");
+  }
+
+  /*
+   * createSubjectFromToken(JWT, String) is the one place a validated JWT becomes a Subject, and
+   * subclasses hook it to decorate that Subject (TokenExchangeHandlerTest does exactly this). A
+   * hook that only the grant-flow path routes through is a trap: the main Bearer path would build
+   * Subjects the subclass never sees. Both paths must land on the same overridable method, with the
+   * serialized token present only for the caller's own credential.
+   */
+  @Test
+  public void testBothTokenPathsRouteThroughTheSameOverridableHook() throws Exception {
+    final HookRecordingFilter filter = new HookRecordingFilter();
+    filter.setTokenService(new TestJWTokenAuthority(publicKey));
+    filter.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
+        new Date(System.currentTimeMillis() + 60000), privateKey);
+
+    // the caller's own credential: the hook is handed the serialized token to capture
+    final HttpServletRequest bearerRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(bearerRequest.getHeader("Authorization"))
+        .andReturn(JWTFederationFilter.BEARER + jwt.serialize()).anyTimes();
+    EasyMock.expect(bearerRequest.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.replay(bearerRequest);
+    filter.doFilter(bearerRequest, EasyMock.createNiceMock(HttpServletResponse.class), new TestFilterChain());
+    assertEquals("The caller-credential path must route through the hook", 1, filter.hookInvocations);
+    assertEquals(jwt.serialize(), filter.lastSerializedToken);
+
+    // a grant artifact: the same hook, told not to capture
+    filter.hookInvocations = 0;
+    final HttpServletRequest grantRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(grantRequest.getHeader("Authorization")).andReturn(null).anyTimes();
+    EasyMock.expect(grantRequest.getParameter(GRANT_TYPE))
+        .andReturn(JWTFederationFilter.REFRESH_TOKEN).anyTimes();
+    EasyMock.expect(grantRequest.getParameter(JWTFederationFilter.REFRESH_TOKEN_PARAM))
+        .andReturn(jwt.serialize()).anyTimes();
+    EasyMock.expect(grantRequest.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(grantRequest.getPathInfo()).andReturn("resource").anyTimes();
+    EasyMock.replay(grantRequest);
+    filter.doFilter(grantRequest, EasyMock.createNiceMock(HttpServletResponse.class), new TestFilterChain());
+    assertEquals("The grant-flow path must route through the same hook", 1, filter.hookInvocations);
+    Assert.assertNull("A grant artifact must reach the hook with nothing to capture",
+        filter.lastSerializedToken);
+  }
+
+  private static final class HookRecordingFilter extends TestJWTFederationFilter {
+    private int hookInvocations;
+    private String lastSerializedToken;
+
+    @Override
+    protected Subject createSubjectFromToken(JWT token, String serializedToken) throws UnknownTokenException {
+      hookInvocations++;
+      lastSerializedToken = serializedToken;
+      return super.createSubjectFromToken(token, serializedToken);
+    }
+  }
+
+  private static String encodeBasic(String credentials) {
+    return Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+  }
+
+  /*
+   * Likewise a client_assertion JWT (e.g. a Kubernetes service account token) authenticates the
+   * client to the token endpoint; it is not the caller's access credential.
+   */
+  @Test
+  public void testClientAssertionJWTIsNotCapturedForForwarding() throws Exception {
+    assertGrantFlowJWTIsNotCaptured(CLIENT_CREDENTIALS, JWTFederationFilter.CLIENT_ASSERTION,
+        JWTFederationFilter.CLIENT_ASSERTION_JWT_BEARER, null, null);
+  }
+
+  /**
+   * @param grantType the grant_type body parameter
+   * @param tokenParam the body parameter carrying the grant artifact JWT
+   * @param clientAssertionType the client_assertion_type body parameter, or null
+   * @param authorizationHeader an Authorization header to send alongside the body, or null for none
+   * @param queryParamTokenValue a value for the configured token query parameter, or null for none
+   */
+  private void assertGrantFlowJWTIsNotCaptured(String grantType, String tokenParam, String clientAssertionType,
+      String authorizationHeader, String queryParamTokenValue) throws Exception {
+    final Properties properties = getProperties();
+    if (queryParamTokenValue != null) {
+      properties.put(JWTFederationFilter.KNOX_TOKEN_QUERY_PARAM_NAME, TOKEN_QUERY_PARAM);
+    }
+    handler.init(new TestFilterConfig(properties));
+
+    final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
+        new Date(System.currentTimeMillis() + 60000), privateKey);
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getHeader("Authorization")).andReturn(authorizationHeader).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+    if (queryParamTokenValue != null) {
+      EasyMock.expect(request.getParameter(TOKEN_QUERY_PARAM))
+          .andReturn(queryParamTokenValue).anyTimes();
+    }
+    EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
+    if (clientAssertionType != null) {
+      EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION_TYPE))
+          .andReturn(clientAssertionType).anyTimes();
+    }
+    EasyMock.expect(request.getParameter(tokenParam)).andReturn(jwt.serialize()).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("The grant flow should have authenticated", chain.doFilterCalled);
+    Assert.assertNull("A " + grantType + " JWT is a grant artifact and must not be captured for forwarding",
+        SubjectUtils.getAuthToken(chain.subject));
   }
 
 }

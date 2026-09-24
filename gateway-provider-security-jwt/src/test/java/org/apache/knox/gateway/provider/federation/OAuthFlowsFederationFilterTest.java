@@ -100,6 +100,11 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
     }
 
     @Override
+    protected boolean forwardsAuthToken() {
+      return false;
+    }
+
+    @Override
     protected void setTokenOnRequest(HttpServletRequest request, String authUsername, String authPassword) {
         EasyMock.expect((Object)request.getHeader("Authorization")).andReturn("");
         EasyMock.expect((Object)request.getContentType()).andReturn("application/x-www-form-urlencoded").anyTimes();

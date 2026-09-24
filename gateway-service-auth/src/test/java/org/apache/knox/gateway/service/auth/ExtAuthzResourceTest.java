@@ -17,7 +17,10 @@
  */
 package org.apache.knox.gateway.service.auth;
 
+import static org.junit.Assert.assertEquals;
+
 import org.apache.knox.gateway.filter.security.AbstractIdentityAssertionBase;
+import org.apache.knox.gateway.security.AuthTokenCredential;
 import org.apache.knox.gateway.security.GroupPrincipal;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
@@ -43,12 +46,16 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExtAuthzResourceTest {
 
   private static final String USER_NAME = "test-username";
+  private static final String AUTH_TOKEN_HEADER = "X-Knox-Auth-Token";
+  private static final String TOKEN = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0LXVzZXJuYW1lIn0.c2lnbmF0dXJl";
   private ServletContext context;
   private HttpServletRequest request;
   private HttpServletResponse response;
@@ -139,6 +146,63 @@ public class ExtAuthzResourceTest {
     executeResourceWithAdditionalPath(extAuthzResource);
 
     EasyMock.verify(response);
+  }
+
+  @Test
+  public void testPopulatingAuthTokenHeader() throws Exception {
+    subject.getPrivateCredentials().add(new AuthTokenCredential(TOKEN));
+    final Map<String, String> headers = configureAuthTokenExpectations(AUTH_TOKEN_HEADER);
+
+    final ExtAuthzResource extAuthzResource = new ExtAuthzResource();
+    extAuthzResource.context = context;
+    extAuthzResource.response = response;
+    extAuthzResource.request = request;
+    assertEquals(HttpServletResponse.SC_OK, executeResource(extAuthzResource).getStatus());
+    assertEquals("The bare serialized token should be emitted, with no Bearer prefix",
+        TOKEN, headers.get(AUTH_TOKEN_HEADER));
+  }
+
+  @Test
+  public void testAuthTokenHeaderIsNotPopulatedWhenParamIsUnset() throws Exception {
+    subject.getPrivateCredentials().add(new AuthTokenCredential(TOKEN));
+    final Map<String, String> headers = configureAuthTokenExpectations(null);
+
+    final ExtAuthzResource extAuthzResource = new ExtAuthzResource();
+    extAuthzResource.context = context;
+    extAuthzResource.response = response;
+    extAuthzResource.request = request;
+    assertEquals(HttpServletResponse.SC_OK, executeResource(extAuthzResource).getStatus());
+    assertEquals("Only the actor id header is expected when the token header is not configured",
+        Collections.singleton(ExtAuthzResource.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME), headers.keySet());
+  }
+
+  /** Executes the resource on its own root path, where no additional-path handling applies. */
+  private Response executeResource(final ExtAuthzResource extAuthzResource) throws PrivilegedActionException {
+    return (Response) Subject.doAs(subject, (PrivilegedExceptionAction<Object>) () -> {
+      extAuthzResource.init();
+      return extAuthzResource.doGet();
+    });
+  }
+
+  /**
+   * @param authTokenHeaderName the configured auth token header name, or null to leave it unset
+   * @return the live map of headers set on the response
+   */
+  private Map<String, String> configureAuthTokenExpectations(String authTokenHeaderName) {
+    final Map<String, String> headers = new LinkedHashMap<>();
+    context = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(context.getInitParameter(AbstractAuthResource.AUTH_TOKEN_HEADER_NAME))
+        .andReturn(authTokenHeaderName).anyTimes();
+    request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(AbstractIdentityAssertionBase.ROLES_LOOKUP_EXECUTED)).andReturn(false).anyTimes();
+    response = EasyMock.createNiceMock(HttpServletResponse.class);
+    response.setHeader(EasyMock.anyString(), EasyMock.anyString());
+    EasyMock.expectLastCall().andAnswer(() -> {
+      headers.put((String) EasyMock.getCurrentArguments()[0], (String) EasyMock.getCurrentArguments()[1]);
+      return null;
+    }).anyTimes();
+    EasyMock.replay(context, request, response);
+    return headers;
   }
 
   private int calculateGroupStringSize(Collection<String> groups) {

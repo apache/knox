@@ -34,4 +34,31 @@ public interface AuthMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
   void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.WARN, text = "The authenticated user''s token ({0} bytes) exceeds the configured {1} of {2} bytes; "
+      + "the {3} response header is omitted. Raise the limit, and the proxy''s response header buffer, if the token is needed downstream.")
+  void authTokenTooLargeToForward(int tokenLength, String limitParamName, int limit, String headerName);
+
+  @Message(level = MessageLevel.WARN, text = "The {0} service parameter is set to ''{1}'', which is not a usable HTTP response header name; "
+      + "the authenticated user''s token is not forwarded.")
+  void authTokenHeaderNameNotUsable(String paramName, String headerName);
+
+  @Message(level = MessageLevel.WARN, text = "The {0} service parameter value ''{1}'' is not a number; falling back to the default of {2}.")
+  void limitNotANumber(String paramName, String configuredValue, String defaultValue);
+
+  @Message(level = MessageLevel.WARN, text = "The {0} service parameter is set to ''{1}'', which is not a usable HTTP response header name; "
+      + "falling back to ''{2}''.")
+  void headerNameNotUsableFallingBack(String paramName, String headerName, String defaultName);
+
+  @Message(level = MessageLevel.WARN, text = "The {0} service parameter is set to ''{1}'', which is not a usable HTTP response header name; "
+      + "the parameter is ignored.")
+  void headerNameNotUsableDropped(String paramName, String headerName);
+
+  @Message(level = MessageLevel.WARN, text = "The authenticated user''s token is not a well-formed JWS compact serialization, so the {0} "
+      + "response header is omitted rather than written with an unvalidated value.")
+  void authTokenNotWellFormed(String headerName);
+
+  @Message(level = MessageLevel.WARN, text = "The {0} service parameter is set to ''{1}'', which collides with an identity header this "
+      + "service already emits; the token header is omitted so the identity header is not overwritten.")
+  void authTokenHeaderNameCollides(String paramName, String headerName);
+
 }
