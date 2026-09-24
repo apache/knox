@@ -26,6 +26,7 @@ import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -93,7 +94,7 @@ public class XmlUtils {
    */
   public static <T> T unmarshal(Unmarshaller unmarshaller, Class<T> type, String systemId, InputStream input) throws JAXBException {
     try {
-      return type.cast(unmarshaller.unmarshal(SecureXMLInputFactory.newFactory().createXMLEventReader(systemId, input)));
+      return type.cast(unmarshaller.unmarshal(XmlInputFactoryHolder.INSTANCE.createXMLEventReader(systemId, input)));
     } catch (XMLStreamException e) {
       throw new JAXBException(e);
     }
@@ -154,6 +155,11 @@ public class XmlUtils {
       // so this is not expected to happen.
       throw new IllegalStateException("Failed to instantiate a DocumentBuilder.", e);
     }
+  }
+
+  private static final class XmlInputFactoryHolder {
+    // Never reconfigured after creation, so it can be shared between threads.
+    static final XMLInputFactory INSTANCE = SecureXMLInputFactory.newFactory();
   }
 
 }
