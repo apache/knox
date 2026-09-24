@@ -25,12 +25,12 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
-import javax.xml.XMLConstants;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.xml.secure.SecureTransformerFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.knox.gateway.filter.rewrite.impl.xml.XmlUrlRewriteRulesExporter;
 import org.apache.knox.gateway.filter.rewrite.impl.xml.XmlUrlRewriteRulesImporter;
@@ -54,8 +54,7 @@ public class UrlRewriteRulesDescriptorAdapter extends XmlAdapter<Object, UrlRewr
 
   private static InputStream nodeToInputStream(Node node) throws Exception {
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      TransformerFactory transformerFactory = TransformerFactory.newInstance();
-      transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      TransformerFactory transformerFactory = SecureTransformerFactory.newInstance();
       transformerFactory.newTransformer().transform(new DOMSource(node), new StreamResult(outputStream));
       return new ByteArrayInputStream(outputStream.toByteArray());
     }
