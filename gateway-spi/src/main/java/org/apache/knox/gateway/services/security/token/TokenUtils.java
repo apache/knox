@@ -17,6 +17,8 @@
 package org.apache.knox.gateway.services.security.token;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jose.jwk.ThumbprintUtils;
 import com.nimbusds.jose.util.Base64URL;
@@ -30,6 +32,7 @@ import org.apache.knox.gateway.util.Tokens;
 
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletContext;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -140,6 +143,23 @@ public class TokenUtils {
     params.put("kty", KeyType.RSA.getValue());
     params.put("n", Base64URL.encode(publicKey.getModulus()).toString());
     return ThumbprintUtils.compute(hashAlgorithm, params).toString();
+  }
+
+  /**
+   * Utility method to calculate public key thumbprint
+   * @param publicKey
+   * @param hashAlgorithm
+   * @return
+   * @throws JOSEException
+   */
+  public static String getThumbprint(final ECPublicKey publicKey, final String hashAlgorithm)
+      throws JOSEException {
+    final Curve curve = Curve.forECParameterSpec(publicKey.getParams());
+    if (curve == null) {
+      throw new JOSEException("Unrecognized EC curve for public key");
+    }
+    final ECKey ecKey = new ECKey.Builder(curve, publicKey).build();
+    return ecKey.computeThumbprint(hashAlgorithm).toString();
   }
 
   /**
