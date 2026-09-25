@@ -38,7 +38,17 @@ For a token in scope, each entry in its `aud` claim is expected to be a URL of t
 
     https://cluster-domain[:port]/namespace/service-name[/resource-path]
 
+This is the simple case, and applies whenever `request.audience.k8s.audience.path.prefix` (see below) is left unset: namespace and service-name must begin straight after the authority.
+
 This format is a deployment convention, not something any RFC prescribes or anything else in Knox validates on the token-minting side — an operator's delegation policies and the callers requesting a delegated token are what make the `aud` values actually take this shape. An entry that does not parse as this shape (wrong scheme, missing authority, userinfo present, fewer than two path segments, an unnormalized or empty path segment, and so on) is never treated as a match candidate, even for a check this validator is not currently configured to perform.
+
+###### Optional path prefix ######
+
+`request.audience.k8s.audience.path.prefix` is an optional parameter for deployments that need an `aud` entry's path to carry extra leading segments before namespace and service-name, for example for network routing. Left unset (the default), an entry must take the simple form shown above. When set, an entry instead takes the form:
+
+    https://cluster-domain[:port]/[skipped-segments/]path-prefix/namespace/service-name[/resource-path]
+
+The path is searched for the first (leftmost) occurrence of `/path-prefix/`; namespace, service-name, and resource-path are then parsed starting right after it. Everything before that point — the `skipped-segments`, if any — is skipped over unparsed, not validated: `audience.path.prefix` only locates where parsing resumes. It is ordinarily a single path segment, but it may itself contain `/` to require several contiguous segments to appear together, as one indivisible token, before parsing resumes. An entry whose path never contains `/path-prefix/` does not parse, the same as any other ill-shaped entry — this parameter relocates where namespace and service-name are read from, it does not make the check more permissive.
 
 ##### How it works #####
 
@@ -74,6 +84,7 @@ request.audience.k8s.path.header.name | HTTP header carrying the path to match a
 request.audience.k8s.path.header.from.url | Whether the header above carries a full URL whose path component should be extracted, rather than already being the bare path to match. Only read when that header parameter is itself configured. | `false`
 request.audience.k8s.cluster-domains | Comma-separated allow-list of cluster domains (host, with an optional `:port`, defaulting to `443`) an `aud` entry's authority may match. Always enforced; there is no way to disable this check. | `service.local` (a placeholder that fails closed until set to the deployment's own cluster domain(s))
 request.audience.k8s.require-all-audiences-match | Whether at least one `aud` entry matching the destination is sufficient (`false`, the ordinary "am I an intended audience" semantic of [RFC 7519 §4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)), or whether the claim must be non-empty and every entry must match (`true`). See the note below on combining this with the minting-side flags. | `false`
+request.audience.k8s.audience.path.prefix | Optional path prefix searched for in each `aud` entry's path before namespace and service-name are parsed out of it — see Optional path prefix above. | n/a (unset; an entry's path must then begin with namespace and service-name straight after the authority)
 
 `request.audience.k8s.require-all-audiences-match=true` is independent of, and does not by itself prevent, a delegation token being minted with more than one audience in the first place — it only changes how this validator reacts to one once presented. `JWTFederationFilter` separately exposes `delegation.enforce.requested.audience.required` and `delegation.enforce.requested.audience.max.one`, which constrain what a delegation token may be minted with. A deployment that wants every delegation token to carry exactly one audience should set all three: the two minting-side flags stop a multi-audience token from being issued, and `require-all-audiences-match` independently rejects one at the destination even if it is minted anyway, for example by an older or misconfigured issuer.
 
@@ -128,6 +139,7 @@ The validator rejects the request (a bad-request response, since audience valida
 * a token carrying an `act` claim has no `aud` claim at all;
 * a configured header is missing, empty, or fails to parse in the shape this validator requires for it (an unparseable SPIFFE id, a server-name header that doesn't end in the configured cluster-suffix with exactly two labels before it, and so on);
 * both namespace sources are configured and disagree;
+* `audience.path.prefix` is configured and an entry's path never contains it as its own segment (or contiguous run of segments), so namespace and service-name cannot be located;
 * no `aud` entry both parses as the documented URL shape and matches every segment this validator is configured to check (or, with `require-all-audiences-match=true`, any entry fails to).
 
 A token with no `act` claim is unaffected by any of the above and is validated against the fixed `knox.token.audiences` list as usual.
