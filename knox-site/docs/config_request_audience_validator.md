@@ -63,7 +63,7 @@ A configuration that sets a SPIFFE-id header and a path header but no server-nam
 
 At least one of the three header parameters must be configured, or the topology fails to start.
 
-Namespace and service-name segments are compared case-insensitively, as DNS labels. The resource path is compared case-sensitively, and never percent-decoded on either side — a raw and a percent-encoded candidate are both derived from the `aud` entry's path and either is accepted, but an escaped `%2F` in either value is never treated as equal to a literal `/`. A path taken from a header is required to already be free of `.` and `..` segments and of empty segments; such a value is rejected rather than normalized, since normalizing it here could disagree with however the component that actually routes the request resolves it.
+Namespace and service-name segments are compared case-insensitively. The resource path is compared case-sensitively, and never percent-decoded on either side — a raw and a percent-encoded candidate are both derived from the `aud` entry's path and either is accepted, but an escaped `%2F` in either value is never treated as equal to a literal `/`. A path taken from a header is required to already be free of `.` and `..` segments and of empty segments; such a value is rejected rather than normalized, since normalizing it here could disagree with however the component that actually routes the request resolves it.
 
 ##### Prerequisites #####
 

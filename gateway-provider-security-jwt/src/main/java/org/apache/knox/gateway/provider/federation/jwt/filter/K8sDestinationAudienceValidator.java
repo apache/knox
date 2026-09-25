@@ -164,8 +164,6 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    */
   public static final String AUDIENCE_PATH_PREFIX_PARAM = PARAM_PREFIX + "audience.path.prefix";
 
-  private static final int DEFAULT_HTTPS_PORT = 443;
-
   private String namespaceFromSpiffeIdHeader;
   private String serverNameHeader;
   private String serverNameClusterSuffix;
@@ -401,7 +399,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
         return Optional.empty();
       }
       final int explicitPort = uri.getPort();
-      final int port = explicitPort < 0 ? DEFAULT_HTTPS_PORT : explicitPort;
+      final int port = explicitPort < 0 ? AudienceResource.DEFAULT_HTTPS_PORT : explicitPort;
       return Optional.of(new ClusterDomain(uri.getHost().toLowerCase(Locale.ROOT), port));
     }
   }

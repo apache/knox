@@ -52,6 +52,29 @@ public class AudienceResourceTest {
   }
 
   @Test
+  public void testQueryStringStrippedFromResourcePath() {
+    final Optional<AudienceResource> parsed = parse("https://cluster.local/ns/svc/a/b?x=1&y=2");
+    assertTrue(parsed.isPresent());
+    assertEquals("/a/b", parsed.get().resourcePathRaw());
+  }
+
+  @Test
+  public void testFragmentStrippedFromResourcePath() {
+    final Optional<AudienceResource> parsed = parse("https://cluster.local/ns/svc/a/b#section");
+    assertTrue(parsed.isPresent());
+    assertEquals("/a/b", parsed.get().resourcePathRaw());
+  }
+
+  @Test
+  public void testQueryStringStrippedBeforePathPrefixSearch() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse(
+        "https://cluster.local/prefix/ns/svc/a?x=1", "prefix");
+    assertTrue(parsed.isPresent());
+    assertEquals("ns", parsed.get().namespace());
+    assertEquals("/a", parsed.get().resourcePathRaw());
+  }
+
+  @Test
   public void testTrailingSlashTidiedNotMismatch() {
     final Optional<AudienceResource> withSlash = parse("https://cluster.local/ns/svc/a/b/");
     final Optional<AudienceResource> withoutSlash = parse("https://cluster.local/ns/svc/a/b");

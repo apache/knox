@@ -65,7 +65,7 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   private static final Pattern DNS_LABEL_PATTERN = Pattern.compile("[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?");
   private static final Pattern PERCENT_ENCODED_OCTET = Pattern.compile("%[0-9A-Fa-f]{2}");
   private static final int DNS_LABEL_MAX_LENGTH = 63;
-  private static final int DEFAULT_HTTPS_PORT = 443;
+  static final int DEFAULT_HTTPS_PORT = 443;
 
   /**
    * Parses a single {@code aud} claim entry as a k8s-style destination URL. Returns
@@ -77,6 +77,9 @@ public record AudienceResource(String host, int effectivePort, String namespace,
    * already in RFC 3986 remove_dot_segments normal form -- rather than throwing.
    *
    * <p>See the class javadoc for exactly how {@code pathPrefix} is searched for and consumed.
+   *
+   * <p>A {@code ?query} or {@code #fragment} on the entry is discarded before the path is parsed,
+   * so it plays no part in {@code pathPrefix} matching or in the resulting resource path.
    */
   public static Optional<AudienceResource> parse(String audEntry, String pathPrefix) {
     if (audEntry == null) {
@@ -98,6 +101,10 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     }
     final String authorityPart = entry.substring(0, pathStart);
     String rawPath = entry.substring(pathStart);
+    final int queryOrFragment = indexOfFirst(rawPath, '?', '#');
+    if (queryOrFragment >= 0) {
+      rawPath = rawPath.substring(0, queryOrFragment);
+    }
 
     // authorityPart comes from entry.substring(...), which never returns null, so
     // URISyntaxException is the only exception new URI(String) can throw here.
@@ -190,5 +197,17 @@ public record AudienceResource(String host, int effectivePort, String namespace,
 
   static boolean isValidDnsLabel(String label) {
     return label != null && label.length() <= DNS_LABEL_MAX_LENGTH && DNS_LABEL_PATTERN.matcher(label).matches();
+  }
+
+  private static int indexOfFirst(String value, char a, char b) {
+    final int idxA = value.indexOf(a);
+    final int idxB = value.indexOf(b);
+    if (idxA < 0) {
+      return idxB;
+    }
+    if (idxB < 0) {
+      return idxA;
+    }
+    return Math.min(idxA, idxB);
   }
 }
