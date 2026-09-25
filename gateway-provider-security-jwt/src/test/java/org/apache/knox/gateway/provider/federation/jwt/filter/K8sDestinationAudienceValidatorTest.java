@@ -724,11 +724,25 @@ public class K8sDestinationAudienceValidatorTest {
   // ---- audience.path.prefix ----
 
   @Test
-  public void testAudiencePathPrefixConfiguredAndFoundIsAccepted() throws Exception {
+  public void testAudiencePathPrefixConfiguredAndFoundImmediatelyAfterAuthorityIsAccepted() throws Exception {
     final Map<String, String> params = baseParamsWithAllThreeHeaders();
-    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "id/cluster-1");
+    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "prefix");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationToken("https://cluster.local/id/cluster-1/ns/svc/a");
+    final JWT token = delegationToken("https://cluster.local/prefix/ns/svc/a");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(PATH_HEADER, "/a");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertTrue(validator.validate(request, token, null).isValid());
+  }
+
+  @Test
+  public void testAudiencePathPrefixConfiguredAndFoundAfterLeadingSegmentsIsAccepted() throws Exception {
+    final Map<String, String> params = baseParamsWithAllThreeHeaders();
+    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "prefix");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken("https://cluster.local/id/cluster-1/prefix/ns/svc/a");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
@@ -740,7 +754,7 @@ public class K8sDestinationAudienceValidatorTest {
   @Test
   public void testAudiencePathPrefixConfiguredButAbsentFromAudEntryIsRejected() throws Exception {
     final Map<String, String> params = baseParamsWithAllThreeHeaders();
-    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "id/cluster-1");
+    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "prefix");
     final K8sDestinationAudienceValidator validator = init(params);
     final JWT token = delegationToken("https://cluster.local/ns/svc/a");
     final Map<String, String> headers = new HashMap<>();
@@ -752,18 +766,23 @@ public class K8sDestinationAudienceValidatorTest {
   }
 
   @Test
-  public void testAudiencePathPrefixUnconfiguredRequiresNamespaceImmediatelyAfterAuthority() throws Exception {
-    // With AUDIENCE_PATH_PREFIX_PARAM left unset, an aud entry carrying unrelated leading segments
-    // (as it would if minted with a prefix in mind) must not match -- confirming this feature is
-    // fully opt-in and behaves exactly as before when unconfigured.
-    final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
-    final JWT token = delegationToken("https://cluster.local/id/cluster-1/ns/svc/a");
+  public void testAudiencePathPrefixIsFullyOptIn() throws Exception {
+    // The identical aud entry: rejected when AUDIENCE_PATH_PREFIX_PARAM is left unset (namespace
+    // and service-name must begin straight after the authority), accepted once it is configured
+    // with the prefix that entry's path actually carries.
+    final JWT token = delegationToken("https://cluster.local/prefix/ns/svc/a");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
     headers.put(PATH_HEADER, "/a");
-    final HttpServletRequest request = requestWithHeaders(headers);
-    assertFalse(validator.validate(request, token, null).isValid());
+
+    final K8sDestinationAudienceValidator unconfigured = init(baseParamsWithAllThreeHeaders());
+    assertFalse(unconfigured.validate(requestWithHeaders(headers), token, null).isValid());
+
+    final Map<String, String> configuredParams = baseParamsWithAllThreeHeaders();
+    configuredParams.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "prefix");
+    final K8sDestinationAudienceValidator configured = init(configuredParams);
+    assertTrue(configured.validate(requestWithHeaders(headers), token, null).isValid());
   }
 
   // ---- getName() ----

@@ -29,16 +29,17 @@ import org.eclipse.jetty.util.URIUtil;
  * {@code https://host[:port]/[skipped-segments/]namespace/service-name[/resource-path]}.
  *
  * <p>The optional {@code skipped-segments} prefix gives an {@code aud} entry more flexibility
- * in case it's needed for network routing. When {@link #parse(String, String)} is given
- * a non-blank {@code pathPrefix}, the path is searched -- segment by segment, starting from
- * the first one -- for the first place {@code pathPrefix}'s own segments occur contiguously;
- * namespace, service-name and resource-path parsing then resumes on whatever follows that
- * occurrence. Everything up to and including it is discarded unparsed: {@code pathPrefix}
- * only locates where the parse resumes, and is otherwise not validated or retained. An
- * entry whose path never contains those segments does not parse, the same as any other
- * ill-shaped entry. {@link #parse(String)} is exactly {@link #parse(String, String)} with
- * a {@code null} prefix, i.e. no search at all: the path must begin with namespace
- * and service-name straight after the authority.
+ * in case it's needed for network routing. When {@link #parse(String, String)} is given a
+ * non-blank {@code pathPrefix}, the path is searched, as a plain literal substring with no
+ * decoding, for the first (leftmost) place {@code "/" + pathPrefix + "/"} occurs; namespace,
+ * service-name and resource-path parsing then resumes right after it, at that shared "/".
+ * Everything up to and including it is discarded unparsed: {@code pathPrefix} only locates
+ * where the parse resumes, and is otherwise not validated or retained. {@code pathPrefix} is
+ * ordinarily a single path segment, but it may itself contain "/" to require several contiguous
+ * segments as one indivisible token. An entry whose path never contains it does not parse, the
+ * same as any other ill-shaped entry. A {@code null} or blank {@code pathPrefix} disables the
+ * search entirely: the path must begin with namespace and service-name straight after the
+ * authority.
  *
  * <p>Host, namespace, and service-name are lower-cased at parse time, since all three are
  * compared case-insensitively against trusted-header-derived values; this keeps that comparison
@@ -67,22 +68,13 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   private static final int DEFAULT_HTTPS_PORT = 443;
 
   /**
-   * Equivalent to {@link #parse(String, String)} with a {@code null} pathPrefix, i.e. namespace
-   * and service-name must begin straight after the authority, with no leading segments skipped.
-   */
-  public static Optional<AudienceResource> parse(String audEntry) {
-    return parse(audEntry, null);
-  }
-
-  /**
    * Parses a single {@code aud} claim entry as a k8s-style destination URL. Returns
    * {@link Optional#empty()} for any entry that is not a well-formed
    * {@code https://host[:port]/[skipped-segments/]namespace/service-name[/resource-path]} URL --
    * including a {@code null} or blank entry, a non-{@code https} scheme, a missing or
-   * userinfo-carrying authority, a path whose segments never contain a non-blank
-   * {@code pathPrefix}'s own segments contiguously, fewer than two path segments once past any
-   * such prefix, or a resource path that is not already in RFC 3986 remove_dot_segments normal
-   * form -- rather than throwing.
+   * userinfo-carrying authority, a path that never contains a non-blank {@code pathPrefix},
+   * fewer than two path segments once past any such prefix, or a resource path that is not
+   * already in RFC 3986 remove_dot_segments normal form -- rather than throwing.
    *
    * <p>See the class javadoc for exactly how {@code pathPrefix} is searched for and consumed.
    */
@@ -105,7 +97,7 @@ public record AudienceResource(String host, int effectivePort, String namespace,
       return Optional.empty();
     }
     final String authorityPart = entry.substring(0, pathStart);
-    final String rawPath = entry.substring(pathStart);
+    String rawPath = entry.substring(pathStart);
 
     // authorityPart comes from entry.substring(...), which never returns null, so
     // URISyntaxException is the only exception new URI(String) can throw here.
@@ -121,18 +113,16 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     final int explicitPort = uri.getPort();
     final int effectivePort = explicitPort < 0 ? DEFAULT_HTTPS_PORT : explicitPort;
 
-    final String[] pathSegments = rawPath.substring(1).split("/", -1);
-    int fromIndex = 0;
-    final String[] prefixSegments = splitPrefix(pathPrefix);
-    if (prefixSegments != null) {
-      final int prefixStart = findPrefix(pathSegments, prefixSegments);
-      if (prefixStart < 0) {
+    if (pathPrefix != null && !pathPrefix.isBlank()) {
+      final String needle = "/" + pathPrefix + "/";
+      final int found = rawPath.indexOf(needle);
+      if (found < 0) {
         return Optional.empty();
       }
-      fromIndex = prefixStart + prefixSegments.length;
+      rawPath = rawPath.substring(found + needle.length() - 1);
     }
 
-    final Optional<ResourceShape> shape = parseShape(pathSegments, fromIndex);
+    final Optional<ResourceShape> shape = parseShape(rawPath);
     if (shape.isEmpty()) {
       return Optional.empty();
     }
@@ -149,14 +139,15 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   private record ResourceShape(String namespace, String serviceName, String resourcePath) {
   }
 
-  private static Optional<ResourceShape> parseShape(String[] segments, int fromIndex) {
-    if (segments.length - fromIndex < 2) {
+  private static Optional<ResourceShape> parseShape(String rawPath) {
+    final String[] segments = rawPath.substring(1).split("/", -1);
+    if (segments.length < 2) {
       return Optional.empty();
     }
-    final String namespace = segments[fromIndex].toLowerCase(Locale.ROOT);
-    final String serviceName = segments[fromIndex + 1].toLowerCase(Locale.ROOT);
+    final String namespace = segments[0].toLowerCase(Locale.ROOT);
+    final String serviceName = segments[1].toLowerCase(Locale.ROOT);
     final StringBuilder remainder = new StringBuilder();
-    for (int i = fromIndex + 2; i < segments.length; i++) {
+    for (int i = 2; i < segments.length; i++) {
       remainder.append('/').append(segments[i]);
     }
     final Optional<String> tidied = normalizeAndTidy(remainder.toString());
@@ -164,51 +155,6 @@ public record AudienceResource(String host, int effectivePort, String namespace,
       return Optional.empty();
     }
     return Optional.of(new ResourceShape(namespace, serviceName, tidied.get()));
-  }
-
-  /**
-   * Splits a configured {@code audience.path.prefix}-style value into the segments {@link
-   * #findPrefix} searches for. A single leading and trailing "/" are stripped first if present,
-   * so {@code "a/b}, {@code "/a/b"} and {@code "a/b/"} are
-   * equivalent. Returns {@code null} for a {@code null} value, or one that is blank once trimmed
-   * and stripped of those slashes -- either way, meaning the search is disabled.
-   */
-  private static String[] splitPrefix(String pathPrefix) {
-    if (pathPrefix == null) {
-      return null;
-    }
-    String value = pathPrefix.trim();
-    if (value.startsWith("/")) {
-      value = value.substring(1);
-    }
-    if (value.endsWith("/")) {
-      value = value.substring(0, value.length() - 1);
-    }
-    return value.isEmpty() ? null : value.split("/", -1);
-  }
-
-  /**
-   * Returns the index into {@code pathSegments} of the first segment of the first place {@code
-   * prefixSegments} occurs contiguously within it, comparing segments literally
-   * (case-sensitively, with no decoding), or -1 if it never does.
-   */
-  private static int findPrefix(String[] pathSegments, String[] prefixSegments) {
-    final int lastStart = pathSegments.length - prefixSegments.length;
-    for (int start = 0; start <= lastStart; start++) {
-      if (matchesAt(pathSegments, start, prefixSegments)) {
-        return start;
-      }
-    }
-    return -1;
-  }
-
-  private static boolean matchesAt(String[] pathSegments, int start, String[] prefixSegments) {
-    for (int i = 0; i < prefixSegments.length; i++) {
-      if (!pathSegments[start + i].equals(prefixSegments[i])) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /**
