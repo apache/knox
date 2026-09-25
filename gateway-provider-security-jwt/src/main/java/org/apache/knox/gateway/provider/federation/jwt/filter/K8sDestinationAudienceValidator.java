@@ -36,11 +36,13 @@ import org.apache.knox.gateway.util.SpiffeId;
  * A {@link RequestAudienceValidator} that checks a delegation token's {@code aud} claim against
  * the request's actual destination, rather than against a fixed configured list. Each {@code aud}
  * entry is expected to be a URL of the form
- * {@code https://cluster-domain[:port]/namespace/service-name[/resource-path]}; the segments this
- * validator is configured to check are compared against the corresponding piece of the request's
- * actual destination, and every entry must have this shape to be considered a match candidate,
- * even if the segments an enabled check needs could otherwise be pulled out of a differently
- * shaped value.
+ * {@code https://cluster-domain[:port]/[skipped-segments/]namespace/service-name[/resource-path]};
+ * the segments this validator is configured to check are compared against the corresponding piece
+ * of the request's actual destination, and every entry must have this shape to be considered a
+ * match candidate, even if the segments an enabled check needs could otherwise be pulled out of a
+ * differently shaped value. The optional {@code skipped-segments} prefix is only present, and only
+ * searched for, when {@link #AUDIENCE_PATH_PREFIX_PARAM} is configured; see that constant and
+ * {@link AudienceResource#parse(String, String)}.
  *
  * <p>Only tokens that carry a delegation {@code act} claim are routed through this validator; see
  * {@link #validate(HttpServletRequest, JWT, List)}.
@@ -151,6 +153,16 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   public static final String REQUIRE_ALL_AUDIENCES_MATCH_PARAM = PARAM_PREFIX + "require-all-audiences-match";
   public static final boolean REQUIRE_ALL_AUDIENCES_MATCH_DEFAULT = false;
 
+  /**
+   * Optional path prefix that, when set, an {@code aud} entry's path is searched for before
+   * namespace and service-name are parsed out of it -- see {@link AudienceResource#parse(String,
+   * String)} for exactly how. This lets an {@code aud} entry have network routing flexibility
+   * in case it is to be treated as a resource for RFC 8707 in the future. No default:
+   * if left unset, an entry's path must begin with namespace and service-name straight after the
+   * authority, exactly as when this parameter did not exist.
+   */
+  public static final String AUDIENCE_PATH_PREFIX_PARAM = PARAM_PREFIX + "audience.path.prefix";
+
   private static final int DEFAULT_HTTPS_PORT = 443;
 
   private String namespaceFromSpiffeIdHeader;
@@ -160,6 +172,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   private boolean pathHeaderFromUrl;
   private List<ClusterDomain> clusterDomains;
   private boolean requireAllAudiencesMatch;
+  private String audiencePathPrefix;
 
   @Override
   public void init(final FilterConfig filterConfig) throws Exception {
@@ -192,6 +205,8 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
     final String requireAllParam = filterConfig.getInitParameter(REQUIRE_ALL_AUDIENCES_MATCH_PARAM);
     requireAllAudiencesMatch = requireAllParam == null ? REQUIRE_ALL_AUDIENCES_MATCH_DEFAULT : Boolean.parseBoolean(requireAllParam);
+
+    audiencePathPrefix = blankToNull(filterConfig.getInitParameter(AUDIENCE_PATH_PREFIX_PARAM));
   }
 
   @Override
@@ -238,7 +253,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
     String firstFailureReason = null;
     for (final String audienceClaim : audienceClaims) {
-      final Optional<AudienceResource> parsed = AudienceResource.parse(audienceClaim);
+      final Optional<AudienceResource> parsed = AudienceResource.parse(audienceClaim, audiencePathPrefix);
       if (parsed.isEmpty()) {
         final String reason = "aud entry is not a valid k8s destination URL: " + audienceClaim;
         if (requireAllAudiencesMatch) {

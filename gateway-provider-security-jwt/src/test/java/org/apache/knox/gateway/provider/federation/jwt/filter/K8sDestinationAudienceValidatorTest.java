@@ -721,6 +721,51 @@ public class K8sDestinationAudienceValidatorTest {
     assertTrue(validator.validate(request, token, null).isValid());
   }
 
+  // ---- audience.path.prefix ----
+
+  @Test
+  public void testAudiencePathPrefixConfiguredAndFoundIsAccepted() throws Exception {
+    final Map<String, String> params = baseParamsWithAllThreeHeaders();
+    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "id/cluster-1");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken("https://cluster.local/id/cluster-1/ns/svc/a");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(PATH_HEADER, "/a");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertTrue(validator.validate(request, token, null).isValid());
+  }
+
+  @Test
+  public void testAudiencePathPrefixConfiguredButAbsentFromAudEntryIsRejected() throws Exception {
+    final Map<String, String> params = baseParamsWithAllThreeHeaders();
+    params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "id/cluster-1");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken("https://cluster.local/ns/svc/a");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(PATH_HEADER, "/a");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertFalse(validator.validate(request, token, null).isValid());
+  }
+
+  @Test
+  public void testAudiencePathPrefixUnconfiguredRequiresNamespaceImmediatelyAfterAuthority() throws Exception {
+    // With AUDIENCE_PATH_PREFIX_PARAM left unset, an aud entry carrying unrelated leading segments
+    // (as it would if minted with a prefix in mind) must not match -- confirming this feature is
+    // fully opt-in and behaves exactly as before when unconfigured.
+    final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
+    final JWT token = delegationToken("https://cluster.local/id/cluster-1/ns/svc/a");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(PATH_HEADER, "/a");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertFalse(validator.validate(request, token, null).isValid());
+  }
+
   // ---- getName() ----
 
   @Test

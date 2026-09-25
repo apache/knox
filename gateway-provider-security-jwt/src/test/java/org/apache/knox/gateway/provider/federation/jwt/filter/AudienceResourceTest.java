@@ -228,4 +228,87 @@ public class AudienceResourceTest {
     assertEquals("ns", parsed.get().namespace());
     assertEquals("svc", parsed.get().serviceName());
   }
+
+  @Test
+  public void testNullOrBlankPathPrefixDisablesSearch() {
+    final Optional<AudienceResource> viaNull = AudienceResource.parse("https://cluster.local/ns/svc", null);
+    final Optional<AudienceResource> viaEmpty = AudienceResource.parse("https://cluster.local/ns/svc", "");
+    final Optional<AudienceResource> viaBlank = AudienceResource.parse("https://cluster.local/ns/svc", "   ");
+    assertTrue(viaNull.isPresent());
+    assertTrue(viaEmpty.isPresent());
+    assertTrue(viaBlank.isPresent());
+    assertEquals("ns", viaNull.get().namespace());
+    assertEquals("ns", viaEmpty.get().namespace());
+    assertEquals("ns", viaBlank.get().namespace());
+  }
+
+  @Test
+  public void testPathPrefixFoundImmediatelyAfterAuthority() {
+    final Optional<AudienceResource> parsed =
+        AudienceResource.parse("https://cluster.local/id/cluster-1/ns/svc/a", "id/cluster-1");
+    assertTrue(parsed.isPresent());
+    assertEquals("ns", parsed.get().namespace());
+    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("/a", parsed.get().resourcePathRaw());
+  }
+
+  @Test
+  public void testPathPrefixFoundAfterSkippedLeadingSegments() {
+    // Segments before the prefix (here, "extra") are never parsed or validated -- just skipped.
+    final Optional<AudienceResource> parsed =
+        AudienceResource.parse("https://cluster.local/extra/id/cluster-1/ns/svc", "id/cluster-1");
+    assertTrue(parsed.isPresent());
+    assertEquals("ns", parsed.get().namespace());
+    assertEquals("svc", parsed.get().serviceName());
+  }
+
+  @Test
+  public void testPathPrefixFirstOccurrenceWins() {
+    // The prefix's segments recur later in the path (as a namespace/service-name pair); the
+    // first occurrence is the one used, not the second.
+    final Optional<AudienceResource> parsed =
+        AudienceResource.parse("https://cluster.local/id/cluster-1/id/cluster-1/svc", "id/cluster-1");
+    assertTrue(parsed.isPresent());
+    assertEquals("id", parsed.get().namespace());
+    assertEquals("cluster-1", parsed.get().serviceName());
+  }
+
+  @Test
+  public void testPathPrefixNotFoundDoesNotParse() {
+    assertFalse(AudienceResource.parse("https://cluster.local/ns/svc", "id/cluster-1").isPresent());
+    assertFalse(AudienceResource.parse("https://cluster.local/id/other-cluster/ns/svc", "id/cluster-1").isPresent());
+  }
+
+  @Test
+  public void testPathPrefixLeavingTooFewSegmentsDoesNotParse() {
+    assertFalse(AudienceResource.parse("https://cluster.local/id/cluster-1", "id/cluster-1").isPresent());
+    assertFalse(AudienceResource.parse("https://cluster.local/id/cluster-1/ns", "id/cluster-1").isPresent());
+  }
+
+  @Test
+  public void testPathPrefixMatchedCaseSensitively() {
+    assertFalse(AudienceResource.parse("https://cluster.local/ID/CLUSTER-1/ns/svc", "id/cluster-1").isPresent());
+  }
+
+  @Test
+  public void testPathPrefixLeadingAndTrailingSlashIgnored() {
+    final String entry = "https://cluster.local/id/cluster-1/ns/svc";
+    final Optional<AudienceResource> bare = AudienceResource.parse(entry, "id/cluster-1");
+    final Optional<AudienceResource> leading = AudienceResource.parse(entry, "/id/cluster-1");
+    final Optional<AudienceResource> trailing = AudienceResource.parse(entry, "id/cluster-1/");
+    final Optional<AudienceResource> both = AudienceResource.parse(entry, "/id/cluster-1/");
+    assertTrue(bare.isPresent());
+    assertTrue(leading.isPresent());
+    assertTrue(trailing.isPresent());
+    assertTrue(both.isPresent());
+    assertEquals("ns", leading.get().namespace());
+    assertEquals("ns", trailing.get().namespace());
+    assertEquals("ns", both.get().namespace());
+  }
+
+  @Test
+  public void testPathPrefixDoesNotMatchPartialSegment() {
+    // "id/cluster-1" must match whole segments, not a substring straddling segment boundaries.
+    assertFalse(AudienceResource.parse("https://cluster.local/id/cluster-10/ns/svc", "id/cluster-1").isPresent());
+  }
 }
