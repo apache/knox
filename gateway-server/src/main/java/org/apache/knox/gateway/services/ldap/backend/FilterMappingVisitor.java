@@ -27,6 +27,10 @@ import org.apache.directory.api.ldap.model.schema.SchemaManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Function;
+
+import static org.apache.knox.gateway.services.ldap.backend.RemoteSchemaConverter.DN_VALUED_ATTRIBUTES;
 
 /**
  * FilterVisitor that maps LDAP search filters from the proxy attributes to
@@ -38,12 +42,14 @@ public class FilterMappingVisitor implements FilterVisitor {
     private final String userObjectClass;
     private final String groupObjectClass;
     private final SchemaManager schemaManager;
+    private final Function<String, String> dnConverter;
 
-    public FilterMappingVisitor(String userIdentifierAttribute, String userObjectClass, String groupObjectClass, SchemaManager schemaManager) {
+    public FilterMappingVisitor(String userIdentifierAttribute, String userObjectClass, String groupObjectClass, SchemaManager schemaManager, Function<String, String> dnConverter) {
         this.userIdentifierAttribute = userIdentifierAttribute;
         this.userObjectClass = userObjectClass;
         this.groupObjectClass = groupObjectClass;
         this.schemaManager = schemaManager;
+        this.dnConverter = dnConverter;
     }
 
     @Override
@@ -66,6 +72,17 @@ public class FilterMappingVisitor implements FilterVisitor {
         if ("uid".equalsIgnoreCase(currentAttribute) && !"uid".equalsIgnoreCase(userIdentifierAttribute)) {
             leafNode.setAttribute(userIdentifierAttribute);
             leafNode.setAttributeType(schemaManager.getAttributeType(userIdentifierAttribute));
+        }
+
+        // Map the dn-valued attributes from the proxy base dn to remote base dn
+        if (DN_VALUED_ATTRIBUTES.contains(currentAttribute.toLowerCase(Locale.ROOT))) {
+            if (leafNode instanceof SimpleNode) {
+                SimpleNode valueNode = (SimpleNode) leafNode;
+                Value currentValue = valueNode.getValue();
+                if (currentValue != null) {
+                    valueNode.setValue(new Value(dnConverter.apply(currentValue.toString())));
+                }
+            }
         }
 
         // Map group or user object class values to the configured values

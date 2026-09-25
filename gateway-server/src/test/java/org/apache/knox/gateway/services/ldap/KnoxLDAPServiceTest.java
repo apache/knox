@@ -182,6 +182,7 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
         expect(mockConfig.getLDAPMaxSizeLimit()).andReturn(1000).atLeastOnce();
         expect(mockConfig.getLDAPMaxTimeLimit()).andReturn(60000).atLeastOnce();
+        expect(mockConfig.getLDAPDnMappingEnabled()).andReturn(true).atLeastOnce();
         replay(mockConfig);
     }
 

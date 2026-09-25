@@ -92,6 +92,7 @@ public class LdapProxyBackend implements LdapBackend {
     private String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
     private String proxyUserSearchBase;
     private String proxyGroupSearchBase;
+    private boolean dnMappingEnabled;
 
     // Backend configuration
     private String remoteBaseDn;  // Base DN for remote server searches (e.g., dc=hadoop,dc=apache,dc=org)
@@ -168,6 +169,8 @@ public class LdapProxyBackend implements LdapBackend {
         proxyUserSearchBase = "ou=people," + proxyBaseDn;
         proxyGroupSearchBase = "ou=groups," + proxyBaseDn;
 
+        dnMappingEnabled = Boolean.parseBoolean(config.get("dnMappingEnabled"));
+
         // Remote base DN is for searching the remote LDAP server
         remoteBaseDn = config.get("remoteBaseDn");
         if (remoteBaseDn == null || remoteBaseDn.isEmpty()) {
@@ -190,7 +193,8 @@ public class LdapProxyBackend implements LdapBackend {
                 remoteGroupSearchBase,
                 remoteUserIdentifierAttribute,
                 remoteUserObjectClass,
-                remoteGroupObjectClass);
+                remoteGroupObjectClass,
+                dnMappingEnabled);
 
         // Configure group lookup
         useMemberOf = Boolean.parseBoolean(config.getOrDefault("useMemberOf", "false"));

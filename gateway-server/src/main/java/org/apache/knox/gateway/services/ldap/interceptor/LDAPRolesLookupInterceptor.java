@@ -39,8 +39,10 @@ import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -78,21 +80,80 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             throw new LdapException(e);
         }
 
-        if (!entries.isEmpty()) {
-            for (Entry entry : entries) {
-                try {
+        final List<Entry> roleEntries = new ArrayList<>();
+        final List<Entry> resultEntries = new ArrayList<>(entries.size());
+        for (Entry entry : entries) {
+            try {
+                if (LdapUtils.isGroupEntry(entry)) {
+                    roleEntries.addAll(translateGroupEntry(entry));
+                } else {
                     final String username = LdapUtils.extractUsernameFromEntry(entry, "uid", "cn");
                     final Set<String> groups = fetchGroups(entry);
                     final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
                     modifyEntry(entry, roles);
-                } catch (Exception e) {
-                    LOG.ldapRolesLookupFailed("Error while updating entry with roles lookup results", e);
-                    throw new LdapException(e);
+                    resultEntries.add(entry);
+                }
+            } catch (Exception e) {
+                LOG.ldapRolesLookupFailed(entry.getDn().getName(), e);
+                throw new LdapException(e);
+            }
+        }
+        resultEntries.addAll(deduplicate(roleEntries));
+
+        return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, ctx.getSession().getDirectoryService().getSchemaManager());
+    }
+
+    private Collection<? extends Entry> deduplicate(List<Entry> roleEntries) throws LdapException {
+        Map<Dn, Entry> dedup = new HashMap<>();
+        for (Entry entry : roleEntries) {
+            Dn dn = entry.getDn();
+            if (!dedup.containsKey(dn)) {
+                dedup.put(dn, entry);
+            } else {
+                combineGroupEntry(dedup.get(dn), entry);
+            }
+        }
+        return dedup.values();
+    }
+
+    private void combineGroupEntry(Entry entry1, Entry entry2) throws LdapException {
+        // combine member attribute from both entries
+        Attribute entry1Member = entry1.get("member");
+        Attribute entry2Member = entry2.get("member");
+        if (entry1Member == null && entry2Member != null) {
+            entry1.add(entry2Member);
+        } else if (entry1Member != null && entry2Member != null) {
+            for (Value value : entry2Member) {
+                if (!entry1Member.contains(value)) {
+                    entry1Member.add(value);
                 }
             }
         }
+    }
 
-        return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, ctx.getSession().getDirectoryService().getSchemaManager());
+    /**
+     * Translates a group entry into zero or more entries representing the roles the group
+     * maps to, renaming each entry's DN (and cn) to the role name. Groups with no role mapping
+     * are dropped from the result set.
+     */
+    List<Entry> translateGroupEntry(Entry entry) throws Exception {
+        final String groupName = LdapUtils.extractGroupName(entry.getDn());
+        if (groupName == null) {
+            return List.of();
+        }
+        final Collection<String> roles = rolesLookupService.lookupRoles(null, Set.of(groupName));
+        final List<Entry> translatedEntries = new ArrayList<>();
+        for (String role : roles) {
+            final Dn roleDn = renameCnRdn(entry.getDn(), role);
+            if (roleDn != null) {
+                final Entry roleEntry = entry.clone();
+                roleEntry.setDn(roleDn);
+                roleEntry.removeAttributes("cn", "memberOf");
+                roleEntry.add("cn", role);
+                translatedEntries.add(roleEntry);
+            }
+        }
+        return translatedEntries;
     }
 
     private Set<String> fetchGroups(final Entry entry) {
@@ -144,17 +205,21 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     }
 
     private void addRoleAttribute(Entry entry, String role, Dn templateDn) throws LdapException {
-        if (templateDn != null) {
-            // Create a new DN by replacing the CN of the template DN
-            List<Rdn> rdns = new ArrayList<>(templateDn.getRdns());
-            if (!rdns.isEmpty() && rdns.get(0).getType().equalsIgnoreCase("cn")) {
-                rdns.set(0, new Rdn("cn", role));
-                Dn roleDn = new Dn(rdns.toArray(new Rdn[0]));
-                entry.add("memberOf", roleDn.getName());
-                return;
-            }
+        final Dn roleDn = templateDn == null ? null : renameCnRdn(templateDn, role);
+        entry.add("memberOf", roleDn != null ? roleDn.getName() : "cn=" + role);
+    }
+
+    /**
+     * Builds a new DN by replacing the leading "cn" RDN of the given DN with the given value.
+     * Returns null if the DN's leading RDN is not "cn", since there is no safe way to rename it.
+     */
+    private static Dn renameCnRdn(Dn dn, String newCnValue) throws LdapException {
+        final List<Rdn> rdns = new ArrayList<>(dn.getRdns());
+        if (rdns.isEmpty() || !rdns.get(0).getType().equalsIgnoreCase("cn")) {
+            return null;
         }
-        entry.add("memberOf", "cn=" + role);
+        rdns.set(0, new Rdn("cn", newCnValue));
+        return new Dn(rdns.toArray(new Rdn[0]));
     }
 
 }
