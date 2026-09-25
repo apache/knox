@@ -29,6 +29,7 @@ import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlImpl;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -130,6 +131,58 @@ public class LDAPRolesLookupInterceptorTest {
         Entry modifiedEntry = entries.get();
         assertMemberOf(modifiedEntry, "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
         assertFalse(entries.next());
+    }
+
+    @Test
+    public void testRolesLookupKeysOnUidFromDnWhenUidAttributeTrimmed() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+
+        final Capture<String> usernameCapture = EasyMock.newCapture();
+        expect(mockRolesService.lookupRoles(EasyMock.capture(usernameCapture), anyObject()))
+                .andReturn(Arrays.asList("roleA"))
+                .atLeastOnce();
+        replay(mockRolesService);
+
+        final TestContext testContext = createTestContext(false, mockRolesService);
+
+        // Simulate a client (e.g. Hadoop LdapGroupsMapping) that did NOT request uid: the entry
+        // carries only cn and memberOf, but the DN still holds the stable uid in its RDN.
+        final Entry userEntry =
+                new DefaultEntry(schemaManager, "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org");
+        userEntry.add("cn", "Alice Display Name");
+        userEntry.add("memberOf", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
+        assertNull("Precondition: uid attribute must be absent to exercise the DN path", userEntry.get("uid"));
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        testContext.interceptor.search(testContext.ctx);
+
+        assertEquals("Role lookup must be keyed on the uid from the DN, not the cn display name",
+                "alice", usernameCapture.getValue());
+    }
+
+    @Test
+    public void testRolesLookupFallsBackToAttributeForNonUidDn() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+
+        final Capture<String> usernameCapture = EasyMock.newCapture();
+        expect(mockRolesService.lookupRoles(EasyMock.capture(usernameCapture), anyObject()))
+                .andReturn(Arrays.asList("roleA"))
+                .atLeastOnce();
+        replay(mockRolesService);
+
+        final TestContext testContext = createTestContext(false, mockRolesService);
+
+        // The DN is not uid-based, so the lookup must fall back to the uid attribute on the entry.
+        final Entry userEntry =
+                new DefaultEntry(schemaManager, "cn=Bob Display Name,ou=people,dc=hadoop,dc=apache,dc=org");
+        userEntry.add("uid", "bob");
+        userEntry.add("memberOf", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        testContext.interceptor.search(testContext.ctx);
+
+        assertEquals("Role lookup must fall back to the uid attribute when the DN is not uid-based",
+                "bob", usernameCapture.getValue());
     }
 
     private TestContext createTestContext(boolean bypass, LDAPRolesLookupService rolesService) throws Exception {
