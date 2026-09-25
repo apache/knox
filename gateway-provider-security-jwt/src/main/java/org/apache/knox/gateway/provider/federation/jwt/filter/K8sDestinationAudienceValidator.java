@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -157,9 +159,8 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * Optional path prefix that, when set, an {@code aud} entry's path is searched for before
    * namespace and service-name are parsed out of it -- see {@link AudienceResource#parse(String,
    * String)} for exactly how. This lets an {@code aud} entry have network routing flexibility
-   * in case it is to be treated as a resource for RFC 8707 in the future. No default:
-   * if left unset, an entry's path must begin with namespace and service-name straight after the
-   * authority, exactly as when this parameter did not exist.
+   * in the future. No default: if left unset, an entry's path must begin with namespace and
+   * service-name straight after the authority, exactly as when this parameter did not exist.
    */
   public static final String AUDIENCE_PATH_PREFIX_PARAM = PARAM_PREFIX + "audience.path.prefix";
 
@@ -189,8 +190,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
     serverNameClusterSuffix = paramOrDefault(filterConfig, SERVER_NAME_CLUSTER_SUFFIX_PARAM, SERVER_NAME_CLUSTER_SUFFIX_DEFAULT);
 
-    final String pathHeaderFromUrlParam = filterConfig.getInitParameter(PATH_HEADER_FROM_URL_PARAM);
-    pathHeaderFromUrl = pathHeaderFromUrlParam == null ? PATH_HEADER_FROM_URL_DEFAULT : Boolean.parseBoolean(pathHeaderFromUrlParam);
+    pathHeaderFromUrl = Boolean.parseBoolean(filterConfig.getInitParameter(PATH_HEADER_FROM_URL_PARAM));
 
     final String clusterDomainsParam = paramOrDefault(filterConfig, CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAINS_DEFAULT);
     clusterDomains = new ArrayList<>();
@@ -203,8 +203,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
       clusterDomains.add(parsed.get());
     }
 
-    final String requireAllParam = filterConfig.getInitParameter(REQUIRE_ALL_AUDIENCES_MATCH_PARAM);
-    requireAllAudiencesMatch = requireAllParam == null ? REQUIRE_ALL_AUDIENCES_MATCH_DEFAULT : Boolean.parseBoolean(requireAllParam);
+    requireAllAudiencesMatch = Boolean.parseBoolean(filterConfig.getInitParameter(REQUIRE_ALL_AUDIENCES_MATCH_PARAM));
 
     audiencePathPrefix = blankToNull(filterConfig.getInitParameter(AUDIENCE_PATH_PREFIX_PARAM));
   }
@@ -224,61 +223,71 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     final Optional<String> namespaceFromSpiffeId = namespaceFromSpiffeIdHeader == null
         ? Optional.empty() : namespaceFromHeader(request);
     if (namespaceFromSpiffeIdHeader != null && namespaceFromSpiffeId.isEmpty()) {
-      return new AudienceValidationResult(false,
-          "Missing or unparseable destination SPIFFE id in header " + namespaceFromSpiffeIdHeader);
+      return new AudienceValidationResult(false, "Missing or unparseable destination SPIFFE id in header "
+          + namespaceFromSpiffeIdHeader + ": " + request.getHeader(namespaceFromSpiffeIdHeader));
     }
 
     final Optional<DestinationServiceName> destinationServiceName = serverNameHeader == null
         ? Optional.empty() : destinationServiceNameFromHeader(request);
     if (serverNameHeader != null && destinationServiceName.isEmpty()) {
-      return new AudienceValidationResult(false,
-          "Missing or unparseable destination server name in header " + serverNameHeader);
+      return new AudienceValidationResult(false, "Missing or unparseable destination server name in header "
+          + serverNameHeader + ": " + request.getHeader(serverNameHeader));
     }
 
     if (namespaceFromSpiffeId.isPresent() && destinationServiceName.isPresent()
         && !namespaceFromSpiffeId.get().equals(destinationServiceName.get().namespace())) {
       return new AudienceValidationResult(false,
-          "Destination namespace from " + namespaceFromSpiffeIdHeader + " disagrees with namespace from "
+          "Destination namespace " + namespaceFromSpiffeId.get() + " from header " + namespaceFromSpiffeIdHeader
+              + " disagrees with namespace " + destinationServiceName.get().namespace() + " from header "
               + serverNameHeader);
     }
 
     final Optional<String> requestPath = pathHeader == null ? Optional.empty() : pathFromHeader(request);
     if (pathHeader != null && requestPath.isEmpty()) {
-      return new AudienceValidationResult(false, "Missing or unparseable destination path in header " + pathHeader);
+      return new AudienceValidationResult(false, "Missing or unparseable destination path in header "
+          + pathHeader + ": " + request.getHeader(pathHeader));
     }
 
     final String namespace = namespaceFromSpiffeId.isPresent() ? namespaceFromSpiffeId.get()
         : destinationServiceName.map(DestinationServiceName::namespace).orElse(null);
     final String serviceName = destinationServiceName.map(DestinationServiceName::serviceName).orElse(null);
-
-    String firstFailureReason = null;
-    for (final String audienceClaim : audienceClaims) {
-      final Optional<AudienceResource> parsed = AudienceResource.parse(audienceClaim, audiencePathPrefix);
-      if (parsed.isEmpty()) {
-        final String reason = "aud entry is not a valid k8s destination URL: " + audienceClaim;
-        if (requireAllAudiencesMatch) {
-          return new AudienceValidationResult(false, reason);
-        }
-        firstFailureReason = firstFailureReason == null ? reason : firstFailureReason;
-        continue;
-      }
-      if (matches(parsed.get(), namespace, serviceName, requestPath.orElse(null))) {
-        if (!requireAllAudiencesMatch) {
-          return AudienceValidationResult.of(true);
-        }
-      } else {
-        final String reason = "aud entry does not match request destination: " + audienceClaim;
-        if (requireAllAudiencesMatch) {
-          return new AudienceValidationResult(false, reason);
-        }
-        firstFailureReason = firstFailureReason == null ? reason : firstFailureReason;
-      }
-    }
+    final String path = requestPath.orElse(null);
 
     if (requireAllAudiencesMatch) {
+      for (final String audienceClaim : audienceClaims) {
+        final Optional<String> failure = matchFailureReason(audienceClaim, namespace, serviceName, path);
+        if (failure.isPresent()) {
+          return new AudienceValidationResult(false, failure.get());
+        }
+      }
       return AudienceValidationResult.of(true);
     }
-    return new AudienceValidationResult(false, firstFailureReason);
+
+    String lastFailureReason = null;
+    for (final String audienceClaim : audienceClaims) {
+      final Optional<String> failure = matchFailureReason(audienceClaim, namespace, serviceName, path);
+      if (failure.isEmpty()) {
+        return AudienceValidationResult.of(true);
+      }
+      lastFailureReason = failure.get();
+    }
+    return new AudienceValidationResult(false, lastFailureReason);
+  }
+
+  /**
+   * The failure reason for a single {@code aud} entry against the request's actual destination, or
+   * {@link Optional#empty()} if it matches.
+   */
+  private Optional<String> matchFailureReason(final String audienceClaim, final String namespace,
+      final String serviceName, final String requestPath) {
+    final Optional<AudienceResource> parsed = AudienceResource.parse(audienceClaim, audiencePathPrefix);
+    if (parsed.isEmpty()) {
+      return Optional.of("aud entry is not a valid k8s destination URL: " + audienceClaim);
+    }
+    if (!matches(parsed.get(), namespace, serviceName, requestPath)) {
+      return Optional.of("aud entry does not match request destination: " + audienceClaim);
+    }
+    return Optional.empty();
   }
 
   private boolean matches(final AudienceResource candidate, final String namespace, final String serviceName,
@@ -368,44 +377,32 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   }
 
   private record ClusterDomain(String host, int port) {
+    /**
+     * Parses an admin-configured allow-list entry the same way {@link AudienceResource#parse(String,
+     * String)} parses an {@code aud} entry's authority -- by handing it to {@link URI} rather than
+     * hand-validating its characters -- since this value is only ever compared against a parsed
+     * {@code aud} entry's host and port, never validated on its own.
+     */
     static Optional<ClusterDomain> parse(final String entry) {
       if (entry == null) {
         return Optional.empty();
       }
       final String value = entry.trim();
-      if (value.isEmpty() || value.indexOf('/') >= 0 || value.indexOf('@') >= 0 || value.contains("://")) {
-        return Optional.empty();
-      }
-      final int colon = value.lastIndexOf(':');
-      if (colon < 0) {
-        return Optional.of(new ClusterDomain(value.toLowerCase(Locale.ROOT), DEFAULT_HTTPS_PORT));
-      }
-      final String host = value.substring(0, colon);
-      final String portPart = value.substring(colon + 1);
-      if (host.isEmpty() || portPart.isEmpty() || !isAllDigits(portPart)) {
-        return Optional.empty();
-      }
-      try {
-        final int port = Integer.parseInt(portPart);
-        if (port < 1 || port > 65535) {
-          return Optional.empty();
-        }
-        return Optional.of(new ClusterDomain(host.toLowerCase(Locale.ROOT), port));
-      } catch (final NumberFormatException e) {
-        return Optional.empty();
-      }
-    }
-
-    private static boolean isAllDigits(final String value) {
       if (value.isEmpty()) {
-        return false;
+        return Optional.empty();
       }
-      for (int i = 0; i < value.length(); i++) {
-        if (!Character.isDigit(value.charAt(i))) {
-          return false;
-        }
+      final URI uri;
+      try {
+        uri = new URI("https://" + value);
+      } catch (final URISyntaxException e) {
+        return Optional.empty();
       }
-      return true;
+      if (uri.getHost() == null || uri.getUserInfo() != null || !uri.getRawPath().isEmpty()) {
+        return Optional.empty();
+      }
+      final int explicitPort = uri.getPort();
+      final int port = explicitPort < 0 ? DEFAULT_HTTPS_PORT : explicitPort;
+      return Optional.of(new ClusterDomain(uri.getHost().toLowerCase(Locale.ROOT), port));
     }
   }
 

@@ -18,8 +18,8 @@
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -97,16 +97,10 @@ public class K8sDestinationAudienceValidatorTest {
   public void testInitThrowsWhenNoHeaderParamConfigured() {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
-    try {
-      init(params);
-      fail("Expected ServletException");
-    } catch (final ServletException e) {
-      assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM));
-      assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM));
-      assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.PATH_HEADER_PARAM));
-    } catch (final Exception e) {
-      fail("Expected ServletException, got " + e);
-    }
+    final ServletException e = assertThrows(ServletException.class, () -> init(params));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.PATH_HEADER_PARAM));
   }
 
   @Test
@@ -137,7 +131,7 @@ public class K8sDestinationAudienceValidatorTest {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "cluster.local/extra");
-    assertInitThrows(params);
+    assertThrows(ServletException.class, () -> init(params));
   }
 
   @Test
@@ -145,7 +139,7 @@ public class K8sDestinationAudienceValidatorTest {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "user@cluster.local");
-    assertInitThrows(params);
+    assertThrows(ServletException.class, () -> init(params));
   }
 
   @Test
@@ -153,7 +147,7 @@ public class K8sDestinationAudienceValidatorTest {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "https://cluster.local");
-    assertInitThrows(params);
+    assertThrows(ServletException.class, () -> init(params));
   }
 
   @Test
@@ -161,18 +155,7 @@ public class K8sDestinationAudienceValidatorTest {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "cluster.local:abc");
-    assertInitThrows(params);
-  }
-
-  private static void assertInitThrows(final Map<String, String> params) {
-    try {
-      init(params);
-      fail("Expected ServletException");
-    } catch (final ServletException e) {
-      // expected
-    } catch (final Exception e) {
-      fail("Expected ServletException, got " + e);
-    }
+    assertThrows(ServletException.class, () -> init(params));
   }
 
   // ---- no-act-claim fallthrough ----
