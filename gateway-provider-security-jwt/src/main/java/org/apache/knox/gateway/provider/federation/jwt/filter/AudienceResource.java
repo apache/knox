@@ -19,28 +19,32 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.eclipse.jetty.util.URIUtil;
 
 /**
  * The pieces of a single "aud" claim entry that carries a k8s-style destination URL:
  * {@code https://host[:port]/namespace/service-name[/resource-path]}.
  *
  * <p>The resource path is kept in both of its comparison forms -- exactly as it stood in the
- * entry, and with any character illegal in a URI path percent-encoded, leaving "%" and "/"
- * untouched -- since a match against either form is acceptable and the two forms are otherwise
- * indistinguishable once only one is kept.
+ * entry, and percent-encoded -- since a match against either form is acceptable. Namespace
+ * and service-name never need an encoded form -- {@link #isValidDnsLabel} restricts both
+ * to characters no encoder ever touches -- so they are read once, from the raw path, with
+ * no encoded counterpart.
+ *
+ * <p>An aud entry is for a delegation token is requested by the service that is about to call
+ * the destination it describes, so a value that escapes some characters but not others within the same
+ * resource path is out of scope: a path is treated as already encoded the moment it contains any
+ * {@code %XY} escape, even if it contains any unencoded characters.
  */
 public record AudienceResource(String host, int effectivePort, String namespace, String serviceName,
     String resourcePathRaw, String resourcePathEncoded) {
 
   private static final Pattern DNS_LABEL_PATTERN = Pattern.compile("[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?");
+  private static final Pattern PERCENT_ENCODED_OCTET = Pattern.compile("%[0-9A-Fa-f]{2}");
   private static final int DNS_LABEL_MAX_LENGTH = 63;
   private static final int DEFAULT_HTTPS_PORT = 443;
-  private static final String UNRESERVED_MARKS = "-._~";
-  private static final String SUB_DELIMS = "!$&'()*+,;=";
 
   public static Optional<AudienceResource> parse(String audEntry) {
     if (audEntry == null) {
@@ -65,7 +69,7 @@ public record AudienceResource(String host, int effectivePort, String namespace,
 
     final URI uri;
     try {
-      uri = new URI(minimalEncode(authorityPart));
+      uri = new URI(authorityPart);
     } catch (URISyntaxException e) {
       return Optional.empty();
     }
@@ -75,26 +79,18 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     final int explicitPort = uri.getPort();
     final int effectivePort = explicitPort < 0 ? DEFAULT_HTTPS_PORT : explicitPort;
 
-    final Optional<ResourceShape> rawShape = parseShape(rawPath);
-    if (rawShape.isEmpty()) {
+    final Optional<ResourceShape> shape = parseShape(rawPath);
+    if (shape.isEmpty()) {
       return Optional.empty();
     }
-    final ResourceShape raw = rawShape.get();
+    final ResourceShape resource = shape.get();
+    final String resourcePathRaw = resource.resourcePath();
+    final String resourcePathEncoded = PERCENT_ENCODED_OCTET.matcher(resourcePathRaw).find()
+        ? resourcePathRaw
+        : URIUtil.encodePath(resourcePathRaw);
 
-    final String encodedPath = minimalEncode(rawPath);
-    final String resourcePathEncoded;
-    if (encodedPath.equals(rawPath)) {
-      resourcePathEncoded = raw.resourcePath();
-    } else {
-      final Optional<ResourceShape> encodedShape = parseShape(encodedPath);
-      if (encodedShape.isEmpty()) {
-        return Optional.empty();
-      }
-      resourcePathEncoded = encodedShape.get().resourcePath();
-    }
-
-    return Optional.of(new AudienceResource(uri.getHost(), effectivePort, raw.namespace(), raw.serviceName(),
-        raw.resourcePath(), resourcePathEncoded));
+    return Optional.of(new AudienceResource(uri.getHost(), effectivePort, resource.namespace(), resource.serviceName(),
+        resourcePathRaw, resourcePathEncoded));
   }
 
   private record ResourceShape(String namespace, String serviceName, String resourcePath) {
@@ -154,39 +150,5 @@ public record AudienceResource(String host, int effectivePort, String namespace,
 
   static boolean isValidDnsLabel(String label) {
     return label != null && label.length() <= DNS_LABEL_MAX_LENGTH && DNS_LABEL_PATTERN.matcher(label).matches();
-  }
-
-  /**
-   * Percent-encodes every character illegal in a URI path -- space, non-ASCII, and the delimiters
-   * HTTP implementations quote -- while leaving "%" and "/" exactly as they are, so this can never
-   * introduce or remove a path segment boundary or re-encode an escape already present.
-   */
-  static String minimalEncode(String value) {
-    final StringBuilder result = new StringBuilder(value.length());
-    int i = 0;
-    while (i < value.length()) {
-      final int codePoint = value.codePointAt(i);
-      final int charCount = Character.charCount(codePoint);
-      if (isSafe(codePoint)) {
-        result.appendCodePoint(codePoint);
-      } else {
-        for (byte b : value.substring(i, i + charCount).getBytes(StandardCharsets.UTF_8)) {
-          result.append('%').append(String.format(Locale.ROOT, "%02X", b & 0xFF));
-        }
-      }
-      i += charCount;
-    }
-    return result.toString();
-  }
-
-  private static boolean isSafe(int codePoint) {
-    if (codePoint < '!' || codePoint > '~') {
-      return false;
-    }
-    final char c = (char) codePoint;
-    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
-      return true;
-    }
-    return UNRESERVED_MARKS.indexOf(c) >= 0 || SUB_DELIMS.indexOf(c) >= 0 || c == ':' || c == '@' || c == '/' || c == '%';
   }
 }
