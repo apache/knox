@@ -81,7 +81,15 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         if (!entries.isEmpty()) {
             for (Entry entry : entries) {
                 try {
-                    final String username = LdapUtils.extractUsernameFromEntry(entry, "uid", "cn");
+                    // Key the role lookup on the stable uid, never a display name. The entry's DN
+                    // (uid=...,ou=people,...) is always present, whereas the uid *attribute* is
+                    // stripped when the LDAP client (e.g. Hadoop LdapGroupsMapping) does not request
+                    // it, leaving only cn and resolving the wrong roles. Prefer the uid from the DN,
+                    // falling back to entry attributes for non-uid-based DNs.
+                    String username = LdapUtils.extractUsernameFromDn(entry.getDn());
+                    if (username == null) {
+                        username = LdapUtils.extractUsernameFromEntry(entry, "uid", "cn");
+                    }
                     final Set<String> groups = fetchGroups(entry);
                     final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
                     modifyEntry(entry, roles);
