@@ -45,6 +45,22 @@ public class DestinationServiceNameTest {
   }
 
   @Test
+  public void testServiceNameAndNamespaceLowercased() {
+    final Optional<DestinationServiceName> parsed = DestinationServiceName.parse("SVC.NS.svc.cluster.local", SUFFIX);
+    assertTrue(parsed.isPresent());
+    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("ns", parsed.get().namespace());
+  }
+
+  @Test
+  public void testWhitespacePaddedHeaderValueTrimmed() {
+    final Optional<DestinationServiceName> parsed = DestinationServiceName.parse("  svc.ns.svc.cluster.local  ", SUFFIX);
+    assertTrue(parsed.isPresent());
+    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("ns", parsed.get().namespace());
+  }
+
+  @Test
   public void testRejectNonNumericPort() {
     assertFalse(DestinationServiceName.parse("svc.ns.svc.cluster.local:abc", SUFFIX).isPresent());
   }
@@ -55,7 +71,12 @@ public class DestinationServiceNameTest {
   }
 
   @Test
-  public void testRejectMissingSuffix() {
+  public void testRejectNoSuffixAtAll() {
+    assertFalse(DestinationServiceName.parse("svc.ns", SUFFIX).isPresent());
+  }
+
+  @Test
+  public void testRejectMismatchedSuffix() {
     assertFalse(DestinationServiceName.parse("svc.ns.other.suffix", SUFFIX).isPresent());
   }
 
@@ -86,5 +107,11 @@ public class DestinationServiceNameTest {
   public void testRejectEmptyLabel() {
     assertFalse(DestinationServiceName.parse(".ns.svc.cluster.local", SUFFIX).isPresent());
     assertFalse(DestinationServiceName.parse("svc..svc.cluster.local", SUFFIX).isPresent());
+  }
+
+  @Test
+  public void testRejectInternalWhitespaceInLabel() {
+    assertFalse(DestinationServiceName.parse("svc .ns.svc.cluster.local", SUFFIX).isPresent());
+    assertFalse(DestinationServiceName.parse("svc.n s.svc.cluster.local", SUFFIX).isPresent());
   }
 }

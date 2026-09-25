@@ -17,11 +17,15 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import java.util.Locale;
 import java.util.Optional;
 
 /**
  * The service name and namespace parsed out of a destination FQDN header value of the form
  * {@code server-name.namespace<clusterSuffix>}, optionally followed by {@code :port}.
+ *
+ * <p>Both are lower-cased at parse time, matching {@link AudienceResource}'s namespace and
+ * service-name, so that a comparison between the two is a plain, case-sensitive {@code equals}.
  */
 public record DestinationServiceName(String serviceName, String namespace) {
 
@@ -50,7 +54,7 @@ public record DestinationServiceName(String serviceName, String namespace) {
     if (!AudienceResource.isValidDnsLabel(serviceName) || !AudienceResource.isValidDnsLabel(namespace)) {
       return Optional.empty();
     }
-    return Optional.of(new DestinationServiceName(serviceName, namespace));
+    return Optional.of(new DestinationServiceName(serviceName.toLowerCase(Locale.ROOT), namespace.toLowerCase(Locale.ROOT)));
   }
 
   private static boolean isAllDigits(String value) {

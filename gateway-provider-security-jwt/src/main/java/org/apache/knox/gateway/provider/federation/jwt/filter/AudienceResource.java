@@ -19,6 +19,7 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.eclipse.jetty.util.URIUtil;
@@ -27,16 +28,23 @@ import org.eclipse.jetty.util.URIUtil;
  * The pieces of a single "aud" claim entry that carries a k8s-style destination URL:
  * {@code https://host[:port]/namespace/service-name[/resource-path]}.
  *
- * <p>The resource path is kept in both of its comparison forms -- exactly as it stood in the
- * entry, and percent-encoded -- since a match against either form is acceptable. Namespace
- * and service-name never need an encoded form -- {@link #isValidDnsLabel} restricts both
- * to characters no encoder ever touches -- so they are read once, from the raw path, with
- * no encoded counterpart.
+ * <p>Host, namespace, and service-name are lower-cased at parse time, since all three are
+ * compared case-insensitively against trusted-header-derived values; this keeps that comparison
+ * a plain, symmetric {@code equals} wherever it happens, rather than an {@code equalsIgnoreCase}
+ * that every comparison site has to remember to use. The resource path is compared
+ * case-sensitively, so it is left exactly as it stood in the entry.
  *
- * <p>An aud entry is for a delegation token is requested by the service that is about to call
- * the destination it describes, so a value that escapes some characters but not others within the same
+ * <p>The resource path is kept in both of its comparison forms -- exactly as it stood in the
+ * entry, and percent-encoded -- since a match against either form is acceptable. Namespace and
+ * service-name are read once, from the raw path, with no encoded counterpart: a real destination's
+ * namespace and service name are always valid DNS labels, which never contain a character an
+ * encoder would touch, so parsing does not need to validate that they are -- a value that is not
+ * a valid label simply will not match a real namespace or service name.
+ *
+ * <p>An aud entry for a delegation token is requested by the service that is about to call the
+ * destination it describes, so a value that escapes some characters but not others within the same
  * resource path is out of scope: a path is treated as already encoded the moment it contains any
- * {@code %XY} escape, even if it contains any unencoded characters.
+ * {@code %XY} escape, even if it also contains unencoded characters.
  */
 public record AudienceResource(String host, int effectivePort, String namespace, String serviceName,
     String resourcePathRaw, String resourcePathEncoded) {
@@ -46,6 +54,14 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   private static final int DNS_LABEL_MAX_LENGTH = 63;
   private static final int DEFAULT_HTTPS_PORT = 443;
 
+  /**
+   * Parses a single {@code aud} claim entry as a k8s-style destination URL. Returns
+   * {@link Optional#empty()} for any entry that is not a well-formed
+   * {@code https://host[:port]/namespace/service-name[/resource-path]} URL -- including a
+   * {@code null} or blank entry, a non-{@code https} scheme, a missing or userinfo-carrying
+   * authority, fewer than two path segments, or a resource path that is not already in RFC 3986
+   * remove_dot_segments normal form -- rather than throwing.
+   */
   public static Optional<AudienceResource> parse(String audEntry) {
     if (audEntry == null) {
       return Optional.empty();
@@ -61,12 +77,14 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     }
 
     final int pathStart = entry.indexOf('/', schemeSep + 3);
-    final String authorityPart = entry.substring(0, pathStart < 0 ? entry.length() : pathStart);
-    final String rawPath = pathStart < 0 ? "" : entry.substring(pathStart);
-    if (rawPath.isEmpty()) {
+    if (pathStart < 0) {
       return Optional.empty();
     }
+    final String authorityPart = entry.substring(0, pathStart);
+    final String rawPath = entry.substring(pathStart);
 
+    // authorityPart comes from entry.substring(...), which never returns null, so
+    // URISyntaxException is the only exception new URI(String) can throw here.
     final URI uri;
     try {
       uri = new URI(authorityPart);
@@ -89,8 +107,8 @@ public record AudienceResource(String host, int effectivePort, String namespace,
         ? resourcePathRaw
         : URIUtil.encodePath(resourcePathRaw);
 
-    return Optional.of(new AudienceResource(uri.getHost(), effectivePort, resource.namespace(), resource.serviceName(),
-        resourcePathRaw, resourcePathEncoded));
+    return Optional.of(new AudienceResource(uri.getHost().toLowerCase(Locale.ROOT), effectivePort,
+        resource.namespace(), resource.serviceName(), resourcePathRaw, resourcePathEncoded));
   }
 
   private record ResourceShape(String namespace, String serviceName, String resourcePath) {
@@ -101,11 +119,8 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     if (segments.length < 2) {
       return Optional.empty();
     }
-    final String namespace = segments[0];
-    final String serviceName = segments[1];
-    if (!isValidDnsLabel(namespace) || !isValidDnsLabel(serviceName)) {
-      return Optional.empty();
-    }
+    final String namespace = segments[0].toLowerCase(Locale.ROOT);
+    final String serviceName = segments[1].toLowerCase(Locale.ROOT);
     final StringBuilder remainder = new StringBuilder();
     for (int i = 2; i < segments.length; i++) {
       remainder.append('/').append(segments[i]);

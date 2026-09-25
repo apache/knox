@@ -73,8 +73,27 @@ public class AudienceResourceTest {
   }
 
   @Test
+  public void testTrailingColonWithNoPortDigitsDefaultsToStandardPort() {
+    // java.net.URI accepts a bare trailing colon (no port digits) without throwing, and reports
+    // getPort() == -1 for it, same as when the colon is absent entirely.
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local:/ns/svc");
+    assertTrue(parsed.isPresent());
+    assertEquals(443, parsed.get().effectivePort());
+  }
+
+  @Test
   public void testRejectWrongScheme() {
     assertFalse(AudienceResource.parse("http://cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectMissingSchemeSeparator() {
+    assertFalse(AudienceResource.parse("https:/cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectEmptyScheme() {
+    assertFalse(AudienceResource.parse("://cluster.local/ns/svc").isPresent());
   }
 
   @Test
@@ -82,9 +101,22 @@ public class AudienceResourceTest {
     assertFalse(AudienceResource.parse("https:///ns/svc").isPresent());
   }
 
+  // The authority is handed to java.net.URI, so its own well-tested parsing -- not a hand-rolled
+  // character check -- decides what counts as userinfo or an illegal character; these tests just
+  // confirm this class rejects what java.net.URI flags, not reproduce URI's own test suite.
   @Test
   public void testRejectUserinfoPresent() {
     assertFalse(AudienceResource.parse("https://user@cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectUserinfoWithPassword() {
+    assertFalse(AudienceResource.parse("https://user:pass@cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testRejectAuthorityWithIllegalCharacter() {
+    assertFalse(AudienceResource.parse("https://clus ter.local/ns/svc").isPresent());
   }
 
   @Test
@@ -122,6 +154,22 @@ public class AudienceResourceTest {
   }
 
   @Test
+  public void testEmptyNamespaceOrServiceNameSegmentParses() {
+    // Namespace and service-name are not validated as DNS labels here (see the class javadoc): an
+    // empty segment parses successfully rather than being rejected, since it simply will not match
+    // a real namespace or service name later.
+    final Optional<AudienceResource> emptyNamespace = AudienceResource.parse("https://cluster.local//svc/a");
+    assertTrue(emptyNamespace.isPresent());
+    assertEquals("", emptyNamespace.get().namespace());
+    assertEquals("svc", emptyNamespace.get().serviceName());
+
+    final Optional<AudienceResource> emptyServiceName = AudienceResource.parse("https://cluster.local/ns//a");
+    assertTrue(emptyServiceName.isPresent());
+    assertEquals("ns", emptyServiceName.get().namespace());
+    assertEquals("", emptyServiceName.get().serviceName());
+  }
+
+  @Test
   public void testUnencodedAudiencePathCarriesBothCandidateForms() {
     final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local/ns/svc/a b");
     assertTrue(parsed.isPresent());
@@ -155,7 +203,29 @@ public class AudienceResourceTest {
   }
 
   @Test
+  public void testWhitespacePaddedEntryTrimmed() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("  https://cluster.local/ns/svc  ");
+    assertTrue(parsed.isPresent());
+    assertEquals("cluster.local", parsed.get().host());
+  }
+
+  @Test
   public void testSchemeComparedCaseInsensitively() {
     assertTrue(AudienceResource.parse("HTTPS://cluster.local/ns/svc").isPresent());
+  }
+
+  @Test
+  public void testHostLowercased() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://Cluster.Local/ns/svc");
+    assertTrue(parsed.isPresent());
+    assertEquals("cluster.local", parsed.get().host());
+  }
+
+  @Test
+  public void testNamespaceAndServiceNameLowercased() {
+    final Optional<AudienceResource> parsed = AudienceResource.parse("https://cluster.local/NS/SVC");
+    assertTrue(parsed.isPresent());
+    assertEquals("ns", parsed.get().namespace());
+    assertEquals("svc", parsed.get().serviceName());
   }
 }

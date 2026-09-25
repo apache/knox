@@ -221,7 +221,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     }
 
     if (namespaceFromSpiffeId.isPresent() && destinationServiceName.isPresent()
-        && !namespaceFromSpiffeId.get().equalsIgnoreCase(destinationServiceName.get().namespace())) {
+        && !namespaceFromSpiffeId.get().equals(destinationServiceName.get().namespace())) {
       return new AudienceValidationResult(false,
           "Destination namespace from " + namespaceFromSpiffeIdHeader + " disagrees with namespace from "
               + serverNameHeader);
@@ -271,10 +271,10 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     if (!matchesClusterDomain(candidate)) {
       return false;
     }
-    if (namespace != null && !namespace.equalsIgnoreCase(candidate.namespace())) {
+    if (namespace != null && !namespace.equals(candidate.namespace())) {
       return false;
     }
-    if (serviceName != null && !serviceName.equalsIgnoreCase(candidate.serviceName())) {
+    if (serviceName != null && !serviceName.equals(candidate.serviceName())) {
       return false;
     }
     if (requestPath != null
@@ -286,19 +286,24 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   private boolean matchesClusterDomain(final AudienceResource candidate) {
     for (final ClusterDomain allowed : clusterDomains) {
-      if (allowed.host().equalsIgnoreCase(candidate.host()) && allowed.port() == candidate.effectivePort()) {
+      if (allowed.host().equals(candidate.host()) && allowed.port() == candidate.effectivePort()) {
         return true;
       }
     }
     return false;
   }
 
+  /**
+   * The SPIFFE id's namespace, lower-cased to match {@link AudienceResource#namespace()} and
+   * {@link DestinationServiceName#namespace()} so every namespace comparison in this class is a
+   * plain, case-sensitive {@code equals}.
+   */
   private Optional<String> namespaceFromHeader(final HttpServletRequest request) {
     final String headerValue = request.getHeader(namespaceFromSpiffeIdHeader);
     if (headerValue == null || headerValue.isEmpty()) {
       return Optional.empty();
     }
-    return SpiffeId.parse(headerValue).map(SpiffeId::namespace);
+    return SpiffeId.parse(headerValue).map(id -> id.namespace().toLowerCase(Locale.ROOT));
   }
 
   private Optional<DestinationServiceName> destinationServiceNameFromHeader(final HttpServletRequest request) {
@@ -358,7 +363,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
       }
       final int colon = value.lastIndexOf(':');
       if (colon < 0) {
-        return Optional.of(new ClusterDomain(value, DEFAULT_HTTPS_PORT));
+        return Optional.of(new ClusterDomain(value.toLowerCase(Locale.ROOT), DEFAULT_HTTPS_PORT));
       }
       final String host = value.substring(0, colon);
       final String portPart = value.substring(colon + 1);
@@ -370,7 +375,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
         if (port < 1 || port > 65535) {
           return Optional.empty();
         }
-        return Optional.of(new ClusterDomain(host, port));
+        return Optional.of(new ClusterDomain(host.toLowerCase(Locale.ROOT), port));
       } catch (final NumberFormatException e) {
         return Optional.empty();
       }
