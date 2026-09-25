@@ -22,7 +22,9 @@ import java.util.Optional;
 
 /**
  * The service name and namespace parsed out of a destination FQDN header value of the form
- * {@code server-name.namespace<clusterSuffix>}, optionally followed by {@code :port}.
+ * {@code server-name.namespace<clusterSuffix>}, optionally followed by {@code :port}. The header
+ * value is trusted, so a trailing {@code :port}, if present, is only stripped off, never
+ * validated or retained -- an incorrect value simply fails to match later.
  *
  * <p>Both are lower-cased at parse time, matching {@link AudienceResource}'s namespace and
  * service-name, so that a comparison between the two is a plain, case-sensitive {@code equals}.
@@ -36,9 +38,6 @@ public record DestinationServiceName(String serviceName, String namespace) {
     String value = headerValue.trim();
     final int colon = value.lastIndexOf(':');
     if (colon >= 0) {
-      if (!isAllDigits(value.substring(colon + 1))) {
-        return Optional.empty();
-      }
       value = value.substring(0, colon);
     }
     if (!value.endsWith(clusterSuffix)) {
@@ -51,21 +50,9 @@ public record DestinationServiceName(String serviceName, String namespace) {
     }
     final String serviceName = labels[0];
     final String namespace = labels[1];
-    if (!AudienceResource.isValidDnsLabel(serviceName) || !AudienceResource.isValidDnsLabel(namespace)) {
+    if (serviceName.isEmpty() || namespace.isEmpty()) {
       return Optional.empty();
     }
     return Optional.of(new DestinationServiceName(serviceName.toLowerCase(Locale.ROOT), namespace.toLowerCase(Locale.ROOT)));
-  }
-
-  private static boolean isAllDigits(String value) {
-    if (value.isEmpty()) {
-      return false;
-    }
-    for (int i = 0; i < value.length(); i++) {
-      if (!Character.isDigit(value.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 }

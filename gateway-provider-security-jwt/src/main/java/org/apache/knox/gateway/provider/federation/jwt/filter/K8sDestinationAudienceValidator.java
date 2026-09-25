@@ -348,25 +348,13 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
       if (pathStart < 0) {
         return Optional.empty();
       }
-      final int queryOrFragment = indexOfFirst(headerValue, pathStart, '?', '#');
+      final int queryOrFragment = AudienceResource.indexOfFirst(headerValue, pathStart, '?', '#');
       rawPath = queryOrFragment < 0 ? headerValue.substring(pathStart) : headerValue.substring(pathStart, queryOrFragment);
     } else {
-      final int queryOrFragment = indexOfFirst(headerValue, 0, '?', '#');
+      final int queryOrFragment = AudienceResource.indexOfFirst(headerValue, 0, '?', '#');
       rawPath = queryOrFragment < 0 ? headerValue : headerValue.substring(0, queryOrFragment);
     }
     return AudienceResource.normalizeAndTidy(rawPath);
-  }
-
-  private static int indexOfFirst(final String value, final int fromIndex, final char a, final char b) {
-    final int idxA = value.indexOf(a, fromIndex);
-    final int idxB = value.indexOf(b, fromIndex);
-    if (idxA < 0) {
-      return idxB;
-    }
-    if (idxB < 0) {
-      return idxA;
-    }
-    return Math.min(idxA, idxB);
   }
 
   @Override

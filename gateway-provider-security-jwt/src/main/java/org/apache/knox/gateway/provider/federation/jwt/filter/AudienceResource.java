@@ -62,9 +62,7 @@ import org.eclipse.jetty.util.URIUtil;
 public record AudienceResource(String host, int effectivePort, String namespace, String serviceName,
     String resourcePathRaw, String resourcePathEncoded) {
 
-  private static final Pattern DNS_LABEL_PATTERN = Pattern.compile("[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])?");
   private static final Pattern PERCENT_ENCODED_OCTET = Pattern.compile("%[0-9A-Fa-f]{2}");
-  private static final int DNS_LABEL_MAX_LENGTH = 63;
   static final int DEFAULT_HTTPS_PORT = 443;
 
   /**
@@ -101,7 +99,7 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     }
     final String authorityPart = entry.substring(0, pathStart);
     String rawPath = entry.substring(pathStart);
-    final int queryOrFragment = indexOfFirst(rawPath, '?', '#');
+    final int queryOrFragment = indexOfFirst(rawPath, 0, '?', '#');
     if (queryOrFragment >= 0) {
       rawPath = rawPath.substring(0, queryOrFragment);
     }
@@ -195,13 +193,14 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     return Optional.of(tidied.toString());
   }
 
-  static boolean isValidDnsLabel(String label) {
-    return label != null && label.length() <= DNS_LABEL_MAX_LENGTH && DNS_LABEL_PATTERN.matcher(label).matches();
-  }
-
-  private static int indexOfFirst(String value, char a, char b) {
-    final int idxA = value.indexOf(a);
-    final int idxB = value.indexOf(b);
+  /**
+   * The first index at or after {@code fromIndex} where either {@code a} or {@code b} occurs, or
+   * {@code -1} if neither does. Shared by {@link K8sDestinationAudienceValidator} for stripping a
+   * query string or fragment off of a request path taken from a header.
+   */
+  static int indexOfFirst(String value, int fromIndex, char a, char b) {
+    final int idxA = value.indexOf(a, fromIndex);
+    final int idxB = value.indexOf(b, fromIndex);
     if (idxA < 0) {
       return idxB;
     }

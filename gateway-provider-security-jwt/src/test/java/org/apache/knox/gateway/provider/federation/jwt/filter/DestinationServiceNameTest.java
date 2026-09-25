@@ -61,13 +61,18 @@ public class DestinationServiceNameTest {
   }
 
   @Test
-  public void testRejectNonNumericPort() {
-    assertFalse(DestinationServiceName.parse("svc.ns.svc.cluster.local:abc", SUFFIX).isPresent());
-  }
-
-  @Test
-  public void testRejectEmptyPort() {
-    assertFalse(DestinationServiceName.parse("svc.ns.svc.cluster.local:", SUFFIX).isPresent());
+  public void testTrailingColonSuffixStrippedRegardlessOfContent() {
+    // The header is trusted, and the port is never retained or compared, so whatever follows the
+    // last colon is simply stripped rather than validated as a port -- a real mismatch, whatever
+    // its shape, only ever fails later, at comparison.
+    final Optional<DestinationServiceName> nonNumeric = DestinationServiceName.parse("svc.ns.svc.cluster.local:abc", SUFFIX);
+    final Optional<DestinationServiceName> empty = DestinationServiceName.parse("svc.ns.svc.cluster.local:", SUFFIX);
+    assertTrue(nonNumeric.isPresent());
+    assertTrue(empty.isPresent());
+    assertEquals("svc", nonNumeric.get().serviceName());
+    assertEquals("ns", nonNumeric.get().namespace());
+    assertEquals("svc", empty.get().serviceName());
+    assertEquals("ns", empty.get().namespace());
   }
 
   @Test
@@ -110,8 +115,14 @@ public class DestinationServiceNameTest {
   }
 
   @Test
-  public void testRejectInternalWhitespaceInLabel() {
-    assertFalse(DestinationServiceName.parse("svc .ns.svc.cluster.local", SUFFIX).isPresent());
-    assertFalse(DestinationServiceName.parse("svc.n s.svc.cluster.local", SUFFIX).isPresent());
+  public void testNonLabelContentInSegmentParsesButWillNotMatch() {
+    // The header is trusted, so a segment is not validated as a DNS label here -- only that it is
+    // non-empty; a value that is not a real label simply will not match a real service name or
+    // namespace later. See AudienceResourceTest.testEmptyNamespaceOrServiceNameSegmentParses for
+    // the equivalent, deliberate non-validation on the aud-entry side.
+    final Optional<DestinationServiceName> parsed = DestinationServiceName.parse("svc .n s.svc.cluster.local", SUFFIX);
+    assertTrue(parsed.isPresent());
+    assertEquals("svc ", parsed.get().serviceName());
+    assertEquals("n s", parsed.get().namespace());
   }
 }
