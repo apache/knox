@@ -19,8 +19,6 @@ package org.apache.knox.gateway.topology.discovery.cm;
 import com.cloudera.api.swagger.RolesResourceApi;
 import com.cloudera.api.swagger.ServicesResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
-import com.cloudera.api.swagger.model.ApiConfigList;
-import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiRoleConfig;
 import com.cloudera.api.swagger.model.ApiRoleConfigList;
 import com.cloudera.api.swagger.model.ApiService;
@@ -39,7 +37,6 @@ import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
-import org.apache.knox.gateway.topology.discovery.cm.model.opensearch.OpenSearchApiMasterServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.monitor.ClouderaManagerClusterConfigurationMonitor;
 
 import java.net.SocketException;
@@ -83,8 +80,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   .addItemsItem(new ApiRoleConfig().name(CM_ROLE_TYPE).roleType(CM_ROLE_TYPE));
 
   public static final String CORE_SETTINGS_TYPE = "CORE_SETTINGS";
-
-  private ServiceModelGeneratorsHolder serviceModelGeneratorsHolder = ServiceModelGeneratorsHolder.getInstance();
 
   private boolean debug;
 
@@ -284,20 +279,25 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
 
     ClouderaManagerCluster cluster = new ClouderaManagerCluster(clusterName);
     cluster.addServiceModels(serviceModels);
+    // Record the CM service types this discovery was responsible for, so the configuration monitor can scope-replace
+    // the persisted baseline instead of overwriting it. An empty includedServices means "discover everything", which
+    // maps to a null scope (full replace).
+    cluster.setInScopeServiceTypes(
+        (includedServices == null || includedServices.isEmpty())
+            ? null
+            : ServiceModelGeneratorsHolder.getInstance().getServiceTypesForServices(includedServices));
     log.discoveredCluster(clusterName);
     return cluster;
   }
 
-  @SuppressWarnings("PMD.UnusedFormalParameter")
   private Set<ServiceModel> discoverService(DiscoveryApiClient client, String clusterName, Collection<String> includedServices,
                                             ApiService service, ServicesResourceApi servicesResourceApi,
                                             ServiceRoleCollector roleCollector, ApiServiceConfig coreSettingsConfig) throws ApiException {
-    Set<ServiceModel> serviceModels = new HashSet<>();
-    final List<ServiceModelGenerator> modelGenerators = serviceModelGeneratorsHolder.getServiceModelGenerators(service.getType());
-    //if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
-      //log.skipServiceDiscovery(service.getName(), service.getType());
-      //continue;
-    //}
+    final List<ServiceModelGenerator> modelGenerators = ServiceModelGeneratorsHolder.getInstance().getServiceModelGenerators(service.getType());
+    if (shouldSkipServiceDiscovery(modelGenerators, includedServices)) {
+      log.skipServiceDiscovery(service.getName(), service.getType());
+      return Collections.emptySet();
+    }
     log.discoveringService(service.getName(), service.getType());
     ApiServiceConfig serviceConfig = null;
     /* no reason to check service config for CM or CORE_SETTINGS services */
@@ -305,64 +305,15 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
       serviceConfig = getServiceConfig(client.getConfig(), servicesResourceApi, service);
     }
     ApiRoleConfigList roleConfigList = getAllServiceRoleConfigurations(client.getConfig(), roleCollector, clusterName, service);
+    Set<ServiceModel> serviceModels = ServiceModelFactory.generateServiceModels(client, service, serviceConfig, roleConfigList, coreSettingsConfig);
     if (roleConfigList != null && roleConfigList.getItems() != null) {
-      List<ApiRole> allApiRoles = new ArrayList<>();
-      for (ApiRoleConfig roleConfig : roleConfigList.getItems()) {
-        ApiRole role = new ApiRole()
-            .name(roleConfig.getName())
-            .type(roleConfig.getRoleType())
-            .hostRef(roleConfig.getHostRef());
-        allApiRoles.add(role);
-
-        ApiConfigList roleConfigs = roleConfig.getConfig();
-        ServiceRoleDetails serviceRoleDetails = new ServiceRoleDetails(service, serviceConfig, role, roleConfigs);
-        log.discoveringServiceRole(role.getName(), role.getType());
-
-        Set<ServiceModel> modelsForRole = generateServiceModels(client, serviceRoleDetails, coreSettingsConfig, modelGenerators, roleConfigList);
-
-        log.discoveredServiceRole(role.getName(), role.getType());
-
-        serviceModels.addAll(modelsForRole);
-      }
-      String allServiceRoles = allApiRoles.stream().map(r -> r.getName() + " (" + r.getType() + ")").collect(Collectors.joining(", "));
+      String allServiceRoles = roleConfigList.getItems().stream()
+          .map(rc -> rc.getName() + " (" + rc.getRoleType() + ")").collect(Collectors.joining(", "));
       log.processedServiceRoles(service.getName(), allServiceRoles);
     }
 
     log.discoveredService(service.getName(), service.getType());
     return serviceModels;
-  }
-
-  private Set<ServiceModel> generateServiceModels(DiscoveryApiClient client, ServiceRoleDetails serviceRoleDetails,
-                                                  ApiServiceConfig coreSettingsConfig, List<ServiceModelGenerator> modelGenerators,
-                                                  ApiRoleConfigList roleConfigList) throws ApiException {
-    Set<ServiceModel> serviceModels = new HashSet<>();
-
-    if (modelGenerators != null) {
-      for (ServiceModelGenerator serviceModelGenerator : modelGenerators) {
-        if (OpenSearchApiMasterServiceModelGenerator.shouldSkipGeneratorWhenOpenSearchMaster(serviceModelGenerator, roleConfigList)) {
-          continue;
-        }
-
-        ServiceModel serviceModel = generateServiceModel(client, serviceRoleDetails, coreSettingsConfig, serviceModelGenerator);
-        if (serviceModel != null) {
-          serviceModels.add(serviceModel);
-        }
-      }
-    }
-
-    return serviceModels;
-  }
-
-  private static ServiceModel generateServiceModel(DiscoveryApiClient client, ServiceRoleDetails sd,
-                                                   ApiServiceConfig coreSettingsConfig, ServiceModelGenerator serviceModelGenerator) throws ApiException {
-    serviceModelGenerator.setApiClient(client);
-    ServiceModelGeneratorHandleResponse response = serviceModelGenerator.handles(sd.getService(), sd.getServiceConfig(), sd.getRole(), sd.getRoleConfig());
-    if (response.handled()) {
-      return serviceModelGenerator.generateService(sd.getService(), sd.getServiceConfig(), sd.getRole(), sd.getRoleConfig(), coreSettingsConfig);
-    } else if (!response.getConfigurationIssues().isEmpty()) {
-      log.serviceRoleHasConfigurationIssues(sd.getRole().getName(), String.join(";", response.getConfigurationIssues()));
-    }
-    return null;
   }
 
   private ApiServiceConfig coreSettingsConfig(DiscoveryApiClient client, ServicesResourceApi servicesResourceApi, List<ApiService> serviceList) throws ApiException {
@@ -374,7 +325,6 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
     return null;
   }
 
-  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private boolean shouldSkipServiceDiscovery(List<ServiceModelGenerator> modelGenerators, Collection<String> includedServices) {
     if (includedServices == null || includedServices.isEmpty()) {
       // per the contract of org.apache.knox.gateway.topology.discovery.ServiceDiscovery.discover(GatewayConfig, ServiceDiscoveryConfig, String, Collection<String>):
@@ -483,35 +433,5 @@ public class ClouderaManagerServiceDiscovery implements ServiceDiscovery, Cluste
   public void onConfigurationChange(String source, String clusterName) {
     log.clearServiceDiscoveryRepository();
     repository.clear();
-  }
-
-  private static class ServiceRoleDetails {
-    private final ApiService service;
-    private final ApiServiceConfig serviceConfig;
-    private final ApiRole role;
-    private final ApiConfigList roleConfig;
-
-    ServiceRoleDetails(ApiService service, ApiServiceConfig serviceConfig, ApiRole role, ApiConfigList roleConfig) {
-      this.service = service;
-      this.serviceConfig = serviceConfig;
-      this.role = role;
-      this.roleConfig = roleConfig;
-    }
-
-    public ApiService getService() {
-      return service;
-    }
-
-    public ApiServiceConfig getServiceConfig() {
-      return serviceConfig;
-    }
-
-    public ApiRole getRole() {
-      return role;
-    }
-
-    public ApiConfigList getRoleConfig() {
-      return roleConfig;
-    }
   }
 }
