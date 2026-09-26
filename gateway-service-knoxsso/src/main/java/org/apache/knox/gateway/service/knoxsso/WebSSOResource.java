@@ -289,40 +289,12 @@ public class WebSSOResource {
       // we need to get it from the request parameters
       removeOriginalUrlCookie = false;
       original = getOriginalUrlFromQueryParams();
-      if (original.isEmpty()) {
-        LOGGER.originalURLNotFound();
-        throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
-      }
-
-      boolean validRedirect = true;
-
-      try {
-        // A redirect target embedding userinfo (e.g. https://knox-host:8443@evil/) is
-        // never legitimate; reject it before the host-only whitelist check.
-        if (Urls.containsUserInfo(original)) {
-          validRedirect = false;
-          LOGGER.userInfoInOriginalURL(Log4jAuditor.maskTokenFromURL(original));
-        } else if (whitelist != null) {
-          // If there is a whitelist defined, then the original URL must be validated against it.
-          // If there is no whitelist, then everything is valid.
-          validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
-          if (!validRedirect) {
-            LOGGER.whiteListMatchFail(Log4jAuditor.maskTokenFromURL(original), whitelist);
-          }
-        }
-      } catch (MalformedURLException e) {
-        throw new WebApplicationException("Malformed original URL: " + original,
-                Response.Status.BAD_REQUEST);
-      }
-
-      if (!validRedirect) {
-        throw new WebApplicationException("Original URL not valid for redirect.",
-                                          Response.Status.BAD_REQUEST);
-      }
     } else {
       // There should only be one original url cookie for the given path
       original = originalUrlCookies.get(0).getValue();
     }
+
+    validateOriginalUrl(original);
 
     Principal p = request.getUserPrincipal();
     ConcurrentSessionVerifier verifier = services.getService(ServiceType.CONCURRENT_SESSION_VERIFIER);
@@ -391,6 +363,39 @@ public class WebSSOResource {
 
 
     return Response.seeOther(location).entity("{ \"redirectTo\" : " + original + " }").build();
+  }
+
+  private void validateOriginalUrl(String original) {
+    if (original == null || original.isEmpty()) {
+      LOGGER.originalURLNotFound();
+      throw new WebApplicationException("Original URL not found in the request.", Response.Status.BAD_REQUEST);
+    }
+
+    boolean validRedirect = true;
+
+    try {
+      // A redirect target embedding userinfo (e.g. https://knox-host:8443@evil/) is
+      // never legitimate; reject it before the host-only whitelist check.
+      if (Urls.containsUserInfo(original)) {
+        validRedirect = false;
+        LOGGER.userInfoInOriginalURL(Log4jAuditor.maskTokenFromURL(original));
+      } else if (whitelist != null) {
+        // If there is a whitelist defined, then the original URL must be validated against it.
+        // If there is no whitelist, then everything is valid.
+        validRedirect = RegExUtils.checkBaseUrlAgainstWhitelist(whitelist, original);
+        if (!validRedirect) {
+          LOGGER.whiteListMatchFail(Log4jAuditor.maskTokenFromURL(original), whitelist);
+        }
+      }
+    } catch (MalformedURLException e) {
+      throw new WebApplicationException("Malformed original URL: " + original,
+              Response.Status.BAD_REQUEST);
+    }
+
+    if (!validRedirect) {
+      throw new WebApplicationException("Original URL not valid for redirect.",
+                                        Response.Status.BAD_REQUEST);
+    }
   }
 
   protected String getOriginalUrlFromQueryParams() {
