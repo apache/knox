@@ -177,10 +177,6 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
 
-  // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
-  // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
-  private final RequestAudienceValidatorService requestAudienceValidatorService = new RequestAudienceValidatorService();
-
   // Defaults to a validator that reproduces the existing fixed-audience-list
   // check; overwritten in init() only if RequestAudienceValidatorService's
   // REQUEST_AUDIENCE_VALIDATOR_PARAM names a discoverable implementation.
@@ -252,6 +248,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationEnforceRequestedAudienceRequired = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED));
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
     tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
+
+    // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
+    // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
+    final RequestAudienceValidatorService requestAudienceValidatorService = new RequestAudienceValidatorService();
 
     final Optional<RequestAudienceValidator> configuredValidator =
         requestAudienceValidatorService.getValidator(filterConfig);
