@@ -21,24 +21,8 @@ package org.apache.knox.gateway.provider.federation.jwt.filter;
  * Outcome of a {@link RequestAudienceValidator} check: whether the request's
  * token satisfies the audience requirement, and an optional message.
  */
-public final class AudienceValidationResult {
-  private final boolean isValid;
-  private final String message;
-
-  public AudienceValidationResult(final boolean isValid, final String message) {
-    this.isValid = isValid;
-    this.message = message;
-  }
-
+public record AudienceValidationResult(boolean isValid, String message) {
   public static AudienceValidationResult of(final boolean isValid) {
     return new AudienceValidationResult(isValid, null);
-  }
-
-  public boolean isValid() {
-    return isValid;
-  }
-
-  public String message() {
-    return message;
   }
 }
