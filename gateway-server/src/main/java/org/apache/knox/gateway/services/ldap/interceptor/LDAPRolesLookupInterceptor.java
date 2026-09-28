@@ -26,6 +26,8 @@ import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.message.Control;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.name.Rdn;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
+import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursorImpl;
 import org.apache.directory.server.core.api.interceptor.BaseInterceptor;
@@ -38,6 +40,7 @@ import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
 import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +52,17 @@ import java.util.Set;
  */
 public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
+    /**
+     * Attributes the interceptor must be able to read to do its job, regardless of what the client
+     * requested. Each entry is added to the backend search when the client omitted it, and stripped
+     * back out afterwards. The list is owned by the interceptor rather than being configurable: an
+     * attribute only belongs here if code in this class actually consumes it (today, uid keys the role
+     * lookup), so the augment set and the code that reads it stay in lockstep. To have the lookup use a
+     * new attribute (e.g. objectClass to distinguish user vs group entries), add it here and the code
+     * that consumes it.
+     */
+    private static final List<String> REQUIRED_ATTRIBUTES = Arrays.asList("uid");
 
     private final LDAPRolesLookupService rolesLookupService;
 
@@ -68,6 +82,22 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             }
         }
 
+        final SchemaManager schemaManager = ctx.getSession().getDirectoryService().getSchemaManager();
+
+        // The role lookup must be keyed on the stable user id, which lives in the uid attribute
+        // (for Active Directory the backend maps sAMAccountName onto uid). The DN's RDN is not a
+        // reliable source: an AD DN is cn=<display name>,... rather than uid=... When the LDAP
+        // client (e.g. Hadoop LdapGroupsMapping) does not request the attributes the lookup needs,
+        // they are trimmed from the returned entries and the lookup would fall back to the cn display
+        // name, resolving the wrong roles. Force the required attributes to be returned for the lookup,
+        // then strip out the ones the client did not ask for so the response only carries what was
+        // requested.
+        final List<String> augmentedAttributes = attributesToAugment(ctx, schemaManager);
+        final String[] originalReturningAttributes = ctx.getReturningAttributesString();
+        if (!augmentedAttributes.isEmpty()) {
+            ctx.setReturningAttributes(withAttributes(originalReturningAttributes, augmentedAttributes));
+        }
+
         final List<Entry> entries = new ArrayList<>();
         try (EntryFilteringCursor cursor = next(ctx)) {
             while (cursor.next()) {
@@ -78,21 +108,55 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             throw new LdapException(e);
         }
 
-        if (!entries.isEmpty()) {
-            for (Entry entry : entries) {
-                try {
-                    final String username = LdapUtils.extractUsernameFromEntry(entry, "uid", "cn");
-                    final Set<String> groups = fetchGroups(entry);
-                    final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
-                    modifyEntry(entry, roles);
-                } catch (Exception e) {
-                    LOG.ldapRolesLookupFailed("Error while updating entry with roles lookup results", e);
-                    throw new LdapException(e);
+        for (Entry entry : entries) {
+            try {
+                final String username = LdapUtils.extractUsernameFromEntry(entry, "uid", "cn");
+                final Set<String> groups = fetchGroups(entry);
+                final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
+                modifyEntry(entry, roles);
+                for (String attribute : augmentedAttributes) {
+                    // These attributes were added only to resolve the lookup; remove them so the response
+                    // honors the client's original request.
+                    entry.removeAttributes(attribute);
                 }
+            } catch (Exception e) {
+                LOG.ldapRolesLookupFailed("Error while updating entry with roles lookup results", e);
+                throw new LdapException(e);
             }
         }
 
-        return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, ctx.getSession().getDirectoryService().getSchemaManager());
+        if (!augmentedAttributes.isEmpty()) {
+            ctx.setReturningAttributes(originalReturningAttributes == null ? new String[0] : originalReturningAttributes);
+        }
+
+        return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    /**
+     * Computes which of the {@link #REQUIRED_ATTRIBUTES} the client did not already request and that
+     * must therefore be added to the search so the role lookup can read them. Returns the attributes to
+     * add, or an empty list when the request already covers them (e.g. a {@code *} all-user-attributes
+     * request, or an explicit list that names them). The per-attribute {@code contains} check accounts
+     * for the {@code *}/{@code +}/{@code 1.1} flags against each attribute's usage.
+     */
+    private List<String> attributesToAugment(SearchOperationContext ctx, SchemaManager schemaManager) throws LdapException {
+        final List<String> toAugment = new ArrayList<>();
+        for (String attributeName : REQUIRED_ATTRIBUTES) {
+            final AttributeType attributeType = schemaManager.lookupAttributeTypeRegistry(attributeName);
+            if (!ctx.contains(schemaManager, attributeType)) {
+                toAugment.add(attributeName);
+            }
+        }
+        return toAugment;
+    }
+
+    private String[] withAttributes(String[] attributes, List<String> additional) {
+        final List<String> combined = new ArrayList<>();
+        if (attributes != null) {
+            combined.addAll(Arrays.asList(attributes));
+        }
+        combined.addAll(additional);
+        return combined.toArray(new String[0]);
     }
 
     private Set<String> fetchGroups(final Entry entry) {
