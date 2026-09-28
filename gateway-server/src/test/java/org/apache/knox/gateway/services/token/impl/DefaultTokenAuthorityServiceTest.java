@@ -22,6 +22,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.Principal;
+import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Collections;
@@ -712,5 +713,126 @@ public class DefaultTokenAuthorityServiceTest {
 
     opt = ta.getCachedSigningKeyID();
     assertTrue("Missing expected KID value", opt.isPresent());
+  }
+
+  /**
+   * When the signing keystore holds an EC key, issueToken/verifyToken/start() must all take the
+   * EC branches introduced for KNOX-3281 instead of hard-failing on the RSA-only casts.
+   */
+  @Test
+  public void testTokenCreationWithECSigningKey() throws Exception {
+    final String userName = "john.doe@example.com";
+    final String alias = "gateway-identity";
+    final char[] passphrase = "horton".toCharArray();
+
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+    kpg.initialize(256);
+    final KeyPair ecPair = kpg.generateKeyPair();
+
+    final KeyStore signingKeystore = KeyStore.getInstance("JKS");
+    signingKeystore.load(null, null);
+    final Certificate cert = X509CertificateUtil.generateCertificate("CN=ec-signing", ecPair, 365, "SHA256withECDSA");
+    signingKeystore.setKeyEntry(alias, ecPair.getPrivate(), passphrase, new Certificate[]{cert});
+
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn(alias).anyTimes();
+
+    final KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);
+    EasyMock.expect(ks.getSigningKeystore()).andReturn(signingKeystore).anyTimes();
+
+    final AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getSigningKeyPassphrase()).andReturn(passphrase).anyTimes();
+
+    EasyMock.replay(config, ks, as);
+
+    final DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
+    ta.init(config, new HashMap<>());
+    ta.start();
+
+    final JWT token = ta.issueToken(new JWTokenAttributesBuilder().setUserName(userName).setAlgorithm("ES256").build());
+    assertEquals("john.doe@example.com", token.getSubject());
+    assertTrue(token.getHeader().contains("ES256"));
+
+    assertTrue(ta.verifyToken(token));
+  }
+
+  /**
+   * A requested algorithm from the wrong key family (EC algorithm against an RSA signing key)
+   * must fail fast with a TokenServiceException, not silently produce an unsigned token via
+   * JWTToken.sign()'s swallowed JOSEException.
+   */
+  @Test(expected = TokenServiceException.class)
+  public void testTokenCreationAlgorithmKeyMismatch() throws Exception {
+    final String alias = "gateway-identity";
+    final char[] passphrase = "horton".toCharArray();
+
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    final KeyPair rsaPair = kpg.generateKeyPair();
+
+    final KeyStore signingKeystore = KeyStore.getInstance("JKS");
+    signingKeystore.load(null, null);
+    final Certificate cert = X509CertificateUtil.generateCertificate("CN=rsa-signing", rsaPair, 365, "SHA256withRSA");
+    signingKeystore.setKeyEntry(alias, rsaPair.getPrivate(), passphrase, new Certificate[]{cert});
+
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn(alias).anyTimes();
+
+    final KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);
+    EasyMock.expect(ks.getSigningKeystore()).andReturn(signingKeystore).anyTimes();
+
+    final AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getSigningKeyPassphrase()).andReturn(passphrase).anyTimes();
+
+    EasyMock.replay(config, ks, as);
+
+    final DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
+    ta.init(config, new HashMap<>());
+    ta.start();
+
+    ta.issueToken(new JWTokenAttributesBuilder().setUserName("john.doe@example.com").setAlgorithm("ES256").build());
+  }
+
+  /**
+   * start() must accept an EC signing key: the public-key branch computes the cached KID via the
+   * new EC thumbprint overload, and the private-key branch accepts ECPrivateKey.
+   */
+  @Test
+  public void testServiceStartWithECSigningKey() throws Exception {
+    final String alias = "gateway-identity";
+    final char[] passphrase = "horton".toCharArray();
+
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+    kpg.initialize(256);
+    final KeyPair ecPair = kpg.generateKeyPair();
+
+    final KeyStore signingKeystore = KeyStore.getInstance("JKS");
+    signingKeystore.load(null, null);
+    final Certificate cert = X509CertificateUtil.generateCertificate("CN=ec-signing", ecPair, 365, "SHA256withECDSA");
+    signingKeystore.setKeyEntry(alias, ecPair.getPrivate(), passphrase, new Certificate[]{cert});
+
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(config.getSigningKeyAlias()).andReturn(alias).anyTimes();
+
+    final KeystoreService ks = EasyMock.createNiceMock(KeystoreService.class);
+    EasyMock.expect(ks.getSigningKeystore()).andReturn(signingKeystore).anyTimes();
+
+    final AliasService as = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(as.getSigningKeyPassphrase()).andReturn(passphrase).anyTimes();
+
+    EasyMock.replay(config, ks, as);
+
+    final DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(as);
+    ta.setKeystoreService(ks);
+    ta.init(config, new HashMap<>());
+    ta.start();
+
+    final Optional<String> kid = ta.getCachedSigningKeyID();
+    assertTrue("Missing expected KID value for EC signing key", kid.isPresent());
   }
 }
