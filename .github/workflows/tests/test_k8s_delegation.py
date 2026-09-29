@@ -22,18 +22,36 @@ OIDC issuer at https://k3s:6443 and exports, to the shared volume mounted at
 /k3s, a freshly minted projected token for ServiceAccount test-sa in namespace
 test (see docker-compose.yml).
 
-Two topologies are exercised:
-  - knoxidf-admin  -- the KNOXIDF_ADMIN TrustedOIDCIssuers registry admin API,
-                      restricted to the LDAP 'admin' user (HTTP Basic).
-  - knoxidf-token  -- the JWTProvider token endpoint that performs the exchange.
+Four topologies are exercised:
+  - knoxidf-admin                    -- the KNOXIDF_ADMIN admin APIs: the
+                                        TrustedOIDCIssuers registry and the
+                                        delegation-policy store, both restricted to
+                                        the LDAP 'admin' user (HTTP Basic).
+  - knoxidf-token                    -- the JWTProvider token endpoint used for the
+                                        same-subject and negative-path exchanges.
+  - knoxidf-token-delegation-policy  -- the delegation-enabled token endpoint
+                                        (delegation.server.enabled,
+                                        delegation.requested.subject.enabled, nested
+                                        act claim, passthrough audience) that performs
+                                        the policy-enforced delegation exchanges.
+  - knoxidf-ldap                     -- mint endpoint used to obtain a genuine Knox
+                                        user token for the delegation subject_token.
 
-Because the registry is a gateway-wide service, an issuer registered through the
-admin topology is trusted by the token-exchange path on the token topology.
+Because both the issuer registry and the delegation-policy store are gateway-wide
+services, an issuer registered -- or a policy seeded -- through the admin topology is
+seen by the token-exchange path on the token topologies.
 
-Covered acceptance criteria: real SA token is a genuine OIDC-issued JWT (AC2),
-same-subject exchange succeeds (AC3), an unregistered issuer is rejected without
-a JWKS fetch (AC6), an expired token is rejected before signature verification
-(AC7), and the full admin lifecycle register/list/refresh/remove works (AC8/AC9).
+Covered acceptance criteria span two sibling tickets. The harness ticket: real SA
+token is a genuine OIDC-issued JWT (AC2), same-subject exchange succeeds (AC3), an
+unregistered issuer is rejected without a JWKS fetch (AC6), an expired token is
+rejected before signature verification (AC7), and the full admin lifecycle
+register/list/refresh/remove works (AC8/AC9). The policy-enforcement ticket
+(KNOX-3493): an interactive delegation exchange with an SA actor_token and a
+Knox-user subject_token succeeds under a matching policy and is rejected by policy
+otherwise (AC4), and a headless exchange with an SA subject_token + requested_subject
+succeeds when the policy allows headless delegation and is rejected when it does not
+(AC5). Both AC4/AC5 denials are RFC 8693 invalid_request (HTTP 400), the same
+policy-denial contract the KNOX-3476 delegation suite (test_delegation.py) asserts.
 """
 
 import base64
@@ -42,7 +60,14 @@ import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, knox_get, knox_post, knox_delete
+from common_utils import gateway_base_url, get_token_claim, knox_get, knox_post, knox_delete
+from delegation_helpers import (
+    ISSUED_TOKEN_TYPE_JWT,
+    DelegationPolicyAdmin,
+    assert_oauth_error,
+    aud_values,
+    token_exchange,
+)
 
 # The LDAP 'admin' user is the only principal the knoxidf-admin ACL permits
 # (see conf/topologies/knoxidf-admin.xml and the demo users.ldif).
@@ -62,6 +87,25 @@ SA_TOKEN_FILE = "/k3s/sa-token"
 
 # An issuer that is never registered, used to prove unregistered issuers are rejected.
 UNREGISTERED_ISSUER = "https://unregistered.example.com"
+
+# The k3s ServiceAccount whose projected token the bootstrap exports (test-sa in namespace
+# test); this is the token's 'sub' and, on a delegation exchange, the actor recorded in act.sub.
+SA_SUBJECT = "system:serviceaccount:test:test-sa"
+# ActorIdentity.fromJwt (gateway-provider-security-jwt) tags a k8s SA subject with this
+# authority and an actorId of "<issuer>:<namespace>:<sa-name>" -- the delegation policy's key.
+K8S_SA_ACTOR_AUTHORITY = "K8S_SA"
+SA_SUBJECT_PREFIX = "system:serviceaccount:"
+
+# Demo LDAP users (uid == cn, password "<user>-password"). tom is the impersonated subject on
+# the allow paths; sam is the user a mismatched policy authorizes instead, so the AC4 deny path
+# is a genuine policy decision (actor known, subject not permitted) rather than a missing policy.
+IMPERSONATED_USER = "tom"
+IMPERSONATED_PASSWORD = "tom-password"
+OTHER_USER = "sam"
+
+# The delegation topology requires exactly one absolute-URI resource per exchange
+# (delegation.enforce.requested.audience.required + .max.one); minted as the token's aud.
+DELEGATED_RESOURCE = "https://k8s-delegated-resource"
 
 
 def _b64url(raw):
@@ -90,13 +134,22 @@ def _unsigned_jwt(payload):
     ])
 
 
-class TestK8sDelegation(unittest.TestCase):
+class TestK8sDelegation(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
     """RFC 8693 token exchange of real k8s ServiceAccount tokens through Knox."""
 
     def setUp(self):
         base_url = gateway_base_url()
         self.admin_url = base_url + "gateway/knoxidf-admin/knoxidf/admin/v1/trusted-oidc-issuers"
         self.token_url = base_url + "gateway/knoxidf-token/knoxidf/api/v1/token"
+        # Delegation-policy admin API and the delegation-enabled exchange endpoint (AC4/AC5),
+        # plus the LDAP mint endpoint for the Knox-user subject_token of an interactive exchange.
+        self.admin_policy_url = (
+            base_url + "gateway/knoxidf-admin/knoxidf/admin/v1/delegation-policies"
+        )
+        self.delegation_url = (
+            base_url + "gateway/knoxidf-token-delegation-policy/knoxidf/api/v1/token"
+        )
+        self.mint_url = base_url + "gateway/knoxidf-ldap/knoxidf/api/v1/token"
         try:
             with open(SA_TOKEN_FILE, encoding="utf-8") as handle:
                 self.sa_token = handle.read().strip()
@@ -214,6 +267,114 @@ class TestK8sDelegation(unittest.TestCase):
         after_removal = self._exchange(self.sa_token)
         self.assertEqual(after_removal.status_code, 401, after_removal.text)
         self.assertIn("invalid_request", after_removal.text)
+
+    # -- AC4/AC5: policy-enforced delegation of k8s SA tokens (KNOX-3493) -----------------
+
+    def _ensure_issuer_registered(self):
+        """Register the k3s issuer for one test (clean start), removing it on teardown.
+
+        The delegation exchange validates the SA token (actor or subject) against the
+        gateway-wide trusted-issuer registry, so the k3s issuer must be registered first.
+        """
+        self._remove_issuer(ISSUER_URL)
+        self.assertEqual(self._register_issuer(ISSUER_URL).status_code, 201)
+        self.addCleanup(self._remove_issuer, ISSUER_URL)
+
+    def _sa_actor_id(self):
+        """The delegation-policy actorId ActorIdentity.fromJwt derives for the exported SA token.
+
+        Computed from the token itself -- "<iss>:<namespace>:<sa-name>" -- rather than hardcoded,
+        so it stays correct if the bootstrap issuer or ServiceAccount ever changes.
+        """
+        issuer = get_token_claim(self.sa_token, "iss")
+        subject = get_token_claim(self.sa_token, "sub")
+        return issuer + ":" + subject[len(SA_SUBJECT_PREFIX):]
+
+    def _sa_policy_admin(self):
+        """A DelegationPolicyAdmin scoped to the k8s SA actor, cleaned up after the test."""
+        policy_admin = DelegationPolicyAdmin(
+            self, self.admin_policy_url, self._admin_auth(),
+            (K8S_SA_ACTOR_AUTHORITY, self._sa_actor_id()))
+        policy_admin.delete_if_present()
+        self.addCleanup(policy_admin.delete_if_present)
+        return policy_admin
+
+    def _mint_user_token(self, username, password):
+        """Mint a genuine Knox JWT for a demo LDAP user via the knoxidf-ldap endpoint."""
+        response = knox_get(self.mint_url, auth=HTTPBasicAuth(username, password))
+        self.assertEqual(response.status_code, 200, response.text)
+        token = response.json().get("access_token")
+        self.assertTrue(token, response.text)
+        return token
+
+    def _assert_sa_delegated_token(self, response, impersonated, resource):
+        """Assert a 200 delegation exchange whose minted token records the SA acting for a user."""
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        minted = body.get("access_token")
+        self.assertTrue(minted, response.text)
+        self.assertEqual(body.get("issued_token_type"), ISSUED_TOKEN_TYPE_JWT, response.text)
+        # sub is the impersonated user; the nested act claim records the SA as the acting party.
+        self.assertEqual(get_token_claim(minted, "sub"), impersonated, response.text)
+        act = get_token_claim(minted, "act")
+        self.assertIsInstance(act, dict, f"expected a nested act claim, got: {act}")
+        self.assertEqual(act.get("sub"), SA_SUBJECT, response.text)
+        # The requested resource is minted as the token's audience (passthrough validator).
+        self.assertIn(resource, aud_values(minted), response.text)
+
+    def test_ac4_sa_actor_token_delegation_succeeds_with_matching_policy(self):
+        """AC4: SA actor_token + Knox-user subject_token succeeds when a policy authorizes it."""
+        self._ensure_issuer_registered()
+        self._sa_policy_admin().register(
+            can_act_for_users=[IMPERSONATED_USER], resource_policy={DELEGATED_RESOURCE: []})
+
+        # subject_token is the impersonated Knox user; actor_token is the real k3s SA token.
+        subject_token = self._mint_user_token(IMPERSONATED_USER, IMPERSONATED_PASSWORD)
+        response = token_exchange(
+            self.delegation_url, subject_token,
+            resources=[DELEGATED_RESOURCE], actor_token=self.sa_token)
+        self._assert_sa_delegated_token(response, IMPERSONATED_USER, DELEGATED_RESOURCE)
+
+    def test_ac4_sa_actor_token_delegation_rejected_without_matching_policy(self):
+        """AC4: the same exchange is rejected when no policy lets the SA act for the user."""
+        self._ensure_issuer_registered()
+        # A policy exists for the SA actor but authorizes a different user, so acting for the
+        # impersonated user is an active policy denial rather than a merely missing policy.
+        self._sa_policy_admin().register(
+            can_act_for_users=[OTHER_USER], resource_policy={DELEGATED_RESOURCE: []})
+
+        subject_token = self._mint_user_token(IMPERSONATED_USER, IMPERSONATED_PASSWORD)
+        response = token_exchange(
+            self.delegation_url, subject_token,
+            resources=[DELEGATED_RESOURCE], actor_token=self.sa_token)
+        assert_oauth_error(self, response, 400, "invalid_request", "rejected by policy")
+
+    def test_ac5_sa_headless_delegation_succeeds_when_allowed(self):
+        """AC5: headless exchange (SA subject_token + requested_subject) succeeds when allowed."""
+        self._ensure_issuer_registered()
+        self._sa_policy_admin().register(
+            allow_headless_exchange=True, can_act_for_users=[IMPERSONATED_USER],
+            resource_policy={DELEGATED_RESOURCE: []})
+
+        # The SA token is the subject_token and, headless, the acting party; tom is impersonated.
+        response = token_exchange(
+            self.delegation_url, self.sa_token,
+            resources=[DELEGATED_RESOURCE], requested_subject=IMPERSONATED_USER)
+        self._assert_sa_delegated_token(response, IMPERSONATED_USER, DELEGATED_RESOURCE)
+
+    def test_ac5_sa_headless_delegation_rejected_when_not_allowed(self):
+        """AC5: the same headless request is denied when the policy forbids headless exchange."""
+        self._ensure_issuer_registered()
+        # Identical grant to the success case except headless exchange is not permitted, so the
+        # headless flag is provably the sole cause of the denial.
+        self._sa_policy_admin().register(
+            allow_headless_exchange=False, can_act_for_users=[IMPERSONATED_USER],
+            resource_policy={DELEGATED_RESOURCE: []})
+
+        response = token_exchange(
+            self.delegation_url, self.sa_token,
+            resources=[DELEGATED_RESOURCE], requested_subject=IMPERSONATED_USER)
+        assert_oauth_error(self, response, 400, "invalid_request", "rejected by policy")
 
 
 if __name__ == "__main__":
