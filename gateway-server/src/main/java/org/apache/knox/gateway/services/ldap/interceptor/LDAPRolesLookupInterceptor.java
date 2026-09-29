@@ -19,6 +19,8 @@ package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
+import org.apache.directory.api.ldap.model.entry.DefaultAttribute;
+import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -64,7 +66,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
      * new attribute (e.g. objectClass to distinguish user vs group entries), add it here and the code
      * that consumes it.
      */
-    private static final List<String> REQUIRED_ATTRIBUTES = Arrays.asList("uid");
+    private static final List<String> REQUIRED_ATTRIBUTES = Arrays.asList("uid", "objectClass");
 
     private final LDAPRolesLookupService rolesLookupService;
 
@@ -125,6 +127,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                         // These attributes were added only to resolve the lookup; remove them so the response
                         // honors the client's original request.
                         entry.removeAttributes(attribute);
+                    }
                     resultEntries.add(entry);
                 }
             } catch (Exception e) {
@@ -134,7 +137,11 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         }
         resultEntries.addAll(deduplicate(roleEntries));
 
-        return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, ctx.getSession().getDirectoryService().getSchemaManager());
+        if (!augmentedAttributes.isEmpty()) {
+            ctx.setReturningAttributes(originalReturningAttributes == null ? new String[0] : originalReturningAttributes);
+        }
+
+        return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, schemaManager);
     }
 
     private Collection<? extends Entry> deduplicate(List<Entry> roleEntries) throws LdapException {
@@ -144,35 +151,39 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             if (!dedup.containsKey(dn)) {
                 dedup.put(dn, entry);
             } else {
-                combineGroupEntry(dedup.get(dn), entry);
+                addMembersToGroupEntry(dedup.get(dn), entry);
             }
         }
         return dedup.values();
     }
 
-    private void combineGroupEntry(Entry entry1, Entry entry2) throws LdapException {
-        // combine member attribute from both entries
-        Attribute entry1Member = entry1.get("member");
-        Attribute entry2Member = entry2.get("member");
-        if (entry1Member == null && entry2Member != null) {
-            entry1.add(entry2Member);
-        } else if (entry1Member != null && entry2Member != null) {
-            for (Value value : entry2Member) {
-                if (!entry1Member.contains(value)) {
-                    entry1Member.add(value);
-                }
-            } catch (Exception e) {
-                LOG.ldapRolesLookupFailed("Error while updating entry with roles lookup results", e);
-                throw new LdapException(e);
+    /**
+     * Adds member and uniqueMember attributes from source entry into destination entry.
+     * @param destination the destination entry
+     * @param source the source entry
+     * @throws LdapException
+     */
+    private void addMembersToGroupEntry(Entry destination, Entry source) throws LdapException {
+        Attribute sourceMembers = source.get("member");
+        Attribute sourceUniqueMembers = source.get("uniqueMember");
+
+        Attribute destinationMembers = destination.get("member");
+        if ((sourceMembers != null || sourceUniqueMembers != null) && destinationMembers == null) {
+            // create member Attribute for destination Entry
+            destinationMembers = new DefaultAttribute(schemaManager.getAttributeType("member"));
+            destination.add(destinationMembers);
+        }
+
+        if (sourceMembers != null) {
+            for (Value value : sourceMembers) {
+                destinationMembers.add(value.getString());
             }
         }
-    }
-
-        if (!augmentedAttributes.isEmpty()) {
-            ctx.setReturningAttributes(originalReturningAttributes == null ? new String[0] : originalReturningAttributes);
+        if (sourceUniqueMembers != null) {
+            for (Value value : sourceUniqueMembers) {
+                destinationMembers.add(value.getString());
+            }
         }
-
-        return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
     }
 
     /**
@@ -200,6 +211,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         }
         combined.addAll(additional);
         return combined.toArray(new String[0]);
+    }
 
     /**
      * Translates a group entry into zero or more entries representing the roles the group
@@ -216,10 +228,10 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         for (String role : roles) {
             final Dn roleDn = renameCnRdn(entry.getDn(), role);
             if (roleDn != null) {
-                final Entry roleEntry = entry.clone();
-                roleEntry.setDn(roleDn);
-                roleEntry.removeAttributes("cn", "memberOf");
+                final Entry roleEntry = new DefaultEntry(schemaManager, roleDn);
                 roleEntry.add("cn", role);
+                roleEntry.add("objectClass", "groupOfNames");
+                addMembersToGroupEntry(roleEntry, entry);
                 translatedEntries.add(roleEntry);
             }
         }

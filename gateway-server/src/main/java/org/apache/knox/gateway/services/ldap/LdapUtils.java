@@ -22,8 +22,18 @@ import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.name.Rdn;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
+import org.apache.directory.api.ldap.model.schema.SchemaManager;
+
+import java.util.Locale;
+import java.util.Set;
 
 public class LdapUtils {
+    // Attributes whose values are distinguished names and therefore need remote->proxy
+    // DN rewriting. Other attribute values (mail, description, ...) are copied verbatim.
+    public static final String DISTINGUISHED_NAME_SYNTAX_OID = "1.3.6.1.4.1.1466.115.121.1.12";
+    public static final Set<String> DN_VALUED_ATTRIBUTES = Set.of(
+            "member", "uniquemember", "memberof", "manager", "owner", "seealso");
 
     public static boolean isGroupEntry(Entry entry) throws LdapException {
         final Attribute objectClass = entry.get("objectClass");
@@ -94,5 +104,28 @@ public class LdapUtils {
             }
         }
         return null;
+    }
+
+
+    /**
+     * Returns whether the attribute is DN-valued.
+     *
+     * @param attributeName the name of the attribute
+     * @param schemaManager the schema manager
+     * @return true if the attribute is DN-valued
+     */
+    public static boolean isDnValued(String attributeName, SchemaManager schemaManager) {
+        return DN_VALUED_ATTRIBUTES.contains(attributeName.toLowerCase(Locale.ROOT)) ||
+                isDnValued(schemaManager.getAttributeType(attributeName));
+    }
+
+    /**
+     * Returns whether the attribute type is DN-valued.
+     *
+     * @param attributeType the attribute type
+     * @return true if the attribute is DN-valued
+     */
+    public static boolean isDnValued(AttributeType attributeType) {
+        return attributeType != null && DISTINGUISHED_NAME_SYNTAX_OID.equalsIgnoreCase(attributeType.getSyntaxOid());
     }
 }

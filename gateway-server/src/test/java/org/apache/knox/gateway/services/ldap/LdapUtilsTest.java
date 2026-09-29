@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.ldap;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -150,6 +151,59 @@ public class LdapUtilsTest {
     @Test
     public void testExtractGroupNameWithEmptyDn() {
         assertNull(LdapUtils.extractGroupName(new Dn()));
+    }
+
+    @Test
+    public void testIsDnValuedWithHardcodedAttributeShortCircuitsSchemaManager() {
+        // A null SchemaManager would NPE if isDnValued(AttributeType) were reached, so this
+        // proves the hardcoded-set check short-circuits before touching the schemaManager.
+        assertTrue(LdapUtils.isDnValued("member", null));
+    }
+
+    @Test
+    public void testIsDnValuedWithHardcodedAttributeIsCaseInsensitive() {
+        assertTrue(LdapUtils.isDnValued("MemberOf", null));
+    }
+
+    @Test
+    public void testIsDnValuedWithSchemaDerivedDnSyntaxAttributeNotHardcoded() throws Exception {
+        final AttributeType customDnAttrType = new AttributeType("1.2.3.4.5.6.7");
+        customDnAttrType.setNames("customDnAttr");
+        customDnAttrType.setSchemaName("other");
+        customDnAttrType.setSyntaxOid(LdapUtils.DISTINGUISHED_NAME_SYNTAX_OID);
+        customDnAttrType.setSingleValued(false);
+        schemaManager.add(customDnAttrType);
+
+        assertTrue(LdapUtils.isDnValued("customDnAttr", schemaManager));
+    }
+
+    @Test
+    public void testIsDnValuedWithNonDnAttribute() {
+        assertFalse(LdapUtils.isDnValued("cn", schemaManager));
+    }
+
+    @Test
+    public void testIsDnValuedWithUnknownAttribute() {
+        assertFalse(LdapUtils.isDnValued("someUnknownAttribute", schemaManager));
+    }
+
+    @Test
+    public void testIsDnValuedAttributeTypeWithDnSyntax() {
+        final AttributeType attributeType = new AttributeType("1.2.3.4.5.6.8");
+        attributeType.setSyntaxOid(LdapUtils.DISTINGUISHED_NAME_SYNTAX_OID);
+        assertTrue(LdapUtils.isDnValued(attributeType));
+    }
+
+    @Test
+    public void testIsDnValuedAttributeTypeWithNonDnSyntax() {
+        final AttributeType attributeType = new AttributeType("1.2.3.4.5.6.9");
+        attributeType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.15");
+        assertFalse(LdapUtils.isDnValued(attributeType));
+    }
+
+    @Test
+    public void testIsDnValuedAttributeTypeWithNull() {
+        assertFalse(LdapUtils.isDnValued((AttributeType) null));
     }
 
     private Entry createEntry(final String dn, final String objectClass) throws Exception {

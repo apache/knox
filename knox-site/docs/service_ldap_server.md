@@ -146,7 +146,7 @@ The interceptor will skip role mapping for a search request if the RolesLookupBy
 | :--- | :--- | :--- |
 | Tag | 0x01 | The Boolean Tag value |
 | Length | 0x01 | The length of the value in bytes |
-| Bypass | 0x00 or Oxff | 0x00 corresponds to `false` and 0xff corresponds to `true |
+| Bypass | 0x00 or 0xff | 0x00 corresponds to `false` and 0xff corresponds to `true |
 
 
 For example, the control can be added to the `ldapsearch` cli using the `-e` option.

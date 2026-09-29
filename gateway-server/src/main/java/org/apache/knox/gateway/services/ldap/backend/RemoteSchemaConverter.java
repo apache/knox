@@ -42,11 +42,6 @@ public class RemoteSchemaConverter {
     public static final Set<String> SENSITIVE_ATTRIBUTES = Set.of(
             "userpassword", "unicodepwd", "userpkcs12");
 
-    // Attributes whose values are distinguished names and therefore need remote->proxy
-    // DN rewriting. Other attribute values (mail, description, ...) are copied verbatim.
-    public static final Set<String> DN_VALUED_ATTRIBUTES = Set.of(
-            "member", "uniquemember", "memberof", "manager", "owner", "seealso");
-
     // Proxy configuration
     private final String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
     private final String proxyUserSearchBase;
@@ -105,12 +100,14 @@ public class RemoteSchemaConverter {
         }
 
         // Copy attributes from the backend response, skipping credential-bearing ones so
-        // they are never exposed through the proxy.
+        // they are never exposed through the proxy. getId() may return the attribute's numeric
+        // OID rather than its name for schema-aware attributes, so the name must come from
+        // getUpId() (the attribute name as originally supplied) for the name-based checks below.
         for (Attribute attribute : sourceEntry.getAttributes()) {
-            if (SENSITIVE_ATTRIBUTES.contains(attribute.getId().toLowerCase(Locale.ROOT))) {
+            if (SENSITIVE_ATTRIBUTES.contains(attribute.getUpId().toLowerCase(Locale.ROOT))) {
                 continue;
             }
-            copyAttribute(sourceEntry, entry, attribute.getId());
+            copyAttribute(sourceEntry, entry, attribute.getUpId(), schemaManager);
         }
 
         // Map user entry identifier attribute to uid for consistency if needed
@@ -163,13 +160,15 @@ public class RemoteSchemaConverter {
      * @param source The remote entry
      * @param target The proxy entry
      * @param attributeName The name of the attribute to copy
+     * @param schemaManager the schema manager
      */
-    public void copyAttribute(Entry source, Entry target, String attributeName) {
+    public void copyAttribute(Entry source, Entry target, String attributeName, SchemaManager schemaManager) {
         final Attribute attribute = source.get(attributeName);
         if (attribute != null) {
             // Only rewrite DNs for DN-valued attributes; other values (e.g. mail, description)
             // are copied verbatim so they are not corrupted if they happen to contain a base DN.
-            final boolean convertDn = dnMappingEnabled && DN_VALUED_ATTRIBUTES.contains(attributeName.toLowerCase(Locale.ROOT));
+            final boolean convertDn = dnMappingEnabled && LdapUtils.isDnValued(attributeName, schemaManager);
+
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
             for (Value value : attribute) {
                 String valueString = convertDn ? convertRemoteDnToProxyDn(value.toString()) : value.toString();

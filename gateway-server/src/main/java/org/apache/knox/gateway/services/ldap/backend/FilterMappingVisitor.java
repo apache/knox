@@ -23,21 +23,19 @@ import org.apache.directory.api.ldap.model.filter.ExprNode;
 import org.apache.directory.api.ldap.model.filter.FilterVisitor;
 import org.apache.directory.api.ldap.model.filter.LeafNode;
 import org.apache.directory.api.ldap.model.filter.SimpleNode;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.knox.gateway.services.ldap.LdapUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Function;
-
-import static org.apache.knox.gateway.services.ldap.backend.RemoteSchemaConverter.DN_VALUED_ATTRIBUTES;
 
 /**
  * FilterVisitor that maps LDAP search filters from the proxy attributes to
  * remote attributes.
  */
 public class FilterMappingVisitor implements FilterVisitor {
-
     private final String userIdentifierAttribute;
     private final String userObjectClass;
     private final String groupObjectClass;
@@ -75,12 +73,15 @@ public class FilterMappingVisitor implements FilterVisitor {
         }
 
         // Map the dn-valued attributes from the proxy base dn to remote base dn
-        if (DN_VALUED_ATTRIBUTES.contains(currentAttribute.toLowerCase(Locale.ROOT))) {
-            if (leafNode instanceof SimpleNode) {
-                SimpleNode valueNode = (SimpleNode) leafNode;
-                Value currentValue = valueNode.getValue();
-                if (currentValue != null) {
-                    valueNode.setValue(new Value(dnConverter.apply(currentValue.toString())));
+        if (currentAttribute != null) {
+            AttributeType attributeType = schemaManager.getAttributeType(currentAttribute);
+            if (attributeType != null && LdapUtils.isDnValued(attributeType)) {
+                if (leafNode instanceof SimpleNode) {
+                    SimpleNode valueNode = (SimpleNode) leafNode;
+                    Value currentValue = valueNode.getValue();
+                    if (currentValue != null) {
+                        valueNode.setValue(new Value(dnConverter.apply(currentValue.toString())));
+                    }
                 }
             }
         }
