@@ -31,6 +31,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.security.auth.Subject;
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
@@ -447,37 +449,37 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
    */
   public static class RecordingRequestAudienceValidator implements RequestAudienceValidator {
     public static final String NAME = "RecordingRequestAudienceValidator";
-    static volatile boolean initCalled;
-    static volatile boolean destroyCalled;
-    static volatile int validateCallCount;
-    static volatile boolean throwOnDestroy;
+    static final AtomicBoolean initCalled = new AtomicBoolean();
+    static final AtomicBoolean destroyCalled = new AtomicBoolean();
+    static final AtomicInteger validateCallCount = new AtomicInteger();
+    static final AtomicBoolean throwOnDestroy = new AtomicBoolean();
 
     public RecordingRequestAudienceValidator() {
     }
 
     static void reset() {
-      initCalled = false;
-      destroyCalled = false;
-      validateCallCount = 0;
-      throwOnDestroy = false;
+      initCalled.set(false);
+      destroyCalled.set(false);
+      validateCallCount.set(0);
+      throwOnDestroy.set(false);
     }
 
     @Override
     public void init(FilterConfig filterConfig) {
-      initCalled = true;
+      initCalled.set(true);
     }
 
     @Override
     public void destroy() {
-      destroyCalled = true;
-      if (throwOnDestroy) {
+      destroyCalled.set(true);
+      if (throwOnDestroy.get()) {
         throw new IllegalStateException("boom");
       }
     }
 
     @Override
     public AudienceValidationResult validate(HttpServletRequest request, JWT token, List<String> configuredAudiences) {
-      validateCallCount++;
+      validateCallCount.incrementAndGet();
       return AudienceValidationResult.of(true);
     }
 
@@ -538,7 +540,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     props.put(getAudienceProperty(), "bar");
     props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
     handler.init(new TestFilterConfig(props));
-    assertTrue("init() should have been called on the resolved validator", RecordingRequestAudienceValidator.initCalled);
+    assertTrue("init() should have been called on the resolved validator", RecordingRequestAudienceValidator.initCalled.get());
 
     final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
         new Date(new Date().getTime() + 5000), privateKey);
@@ -553,7 +555,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     final TestFilterChain chain = new TestFilterChain();
     handler.doFilter(request, response, chain);
 
-    assertEquals(1, RecordingRequestAudienceValidator.validateCallCount);
+    assertEquals(1, RecordingRequestAudienceValidator.validateCallCount.get());
     Assert.assertTrue("doFilterCalled should be true.", chain.doFilterCalled);
   }
 
@@ -589,7 +591,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
     handler.destroy();
 
-    assertTrue("destroy() should have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled);
+    assertTrue("destroy() should have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled.get());
   }
 
   /**
@@ -601,11 +603,11 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     final Properties props = getProperties();
     props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
     handler.init(new TestFilterConfig(props));
-    RecordingRequestAudienceValidator.throwOnDestroy = true;
+    RecordingRequestAudienceValidator.throwOnDestroy.set(true);
 
     handler.destroy();
 
-    assertTrue("destroy() should still have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled);
+    assertTrue("destroy() should still have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled.get());
   }
 
 }
