@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.preauth.k8s;
+package org.apache.knox.gateway.util;
 
 import java.net.URI;
 import java.net.URISyntaxException;

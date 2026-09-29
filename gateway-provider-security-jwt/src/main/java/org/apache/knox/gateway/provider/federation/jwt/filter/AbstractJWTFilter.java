@@ -301,33 +301,49 @@ public abstract class AbstractJWTFilter implements Filter {
 
   /**
    * Validate whether any of the accepted audience claims is present in the
-   * issued token claims list for audience. Override this method in subclasses
-   * in order to customize the audience validation behavior.
+   * issued token claims list for audience. This method is here for backwards compatibility
+   * with external code. To customize audience validation logic, use a RequestAudienceValidator.
    *
    * @param jwtToken
    *          the JWT token where the allowed audiences will be found
    * @return true if an expected audience is present, otherwise false
    */
+  @Deprecated
   protected boolean validateAudiences(final JWT jwtToken) {
+    return matchesConfiguredAudiences(jwtToken, audiences);
+  }
+
+  /**
+   * Validate whether any of the accepted audience claims is present in the
+   * issued token claims list for audience.
+   *
+   * @param jwtToken
+   *          the JWT token where the audiences to verify will be found
+   * @param configuredAudiences
+   *          the configured list of acceptable audiences, or null if any
+   *          audience is acceptable
+   * @return true if an expected audience is present, otherwise false
+   */
+  public static boolean matchesConfiguredAudiences(final JWT jwtToken, final List<String> configuredAudiences) {
     boolean valid = false;
 
     String[] tokenAudienceList = jwtToken.getAudienceClaims();
     // if there were no expected audiences configured then just
     // consider any audience acceptable
-    if (audiences == null) {
+    if (configuredAudiences == null) {
       valid = true;
     } else {
       // if any of the configured audiences is found then consider it
       // acceptable
       if (tokenAudienceList != null) {
         for (String aud : tokenAudienceList) {
-          if (audiences.contains(aud)) {
+          if (configuredAudiences.contains(aud)) {
             log.jwtAudienceValidated();
             valid = true;
             break;
           }
         }
-      } else if (audiences.contains("NONE")) {
+      } else if (configuredAudiences.contains("NONE")) {
         log.jwtAudienceValidated();
         valid = true;
       }
@@ -566,6 +582,13 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
       final FilterChain chain, final JWT token)
       throws IOException, ServletException {
+    return validateToken(request, response, chain, token,
+        (req, tok, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(tok, configuredAudiences)));
+  }
+
+  protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
+      final FilterChain chain, final JWT token, final RequestAudienceValidator requestAudienceValidator)
+      throws IOException, ServletException {
     final String tokenId = TokenUtils.getTokenId(token);
     final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
     final String displayableToken = Tokens.getTokenDisplayText(token.toString());
@@ -573,7 +596,7 @@ public abstract class AbstractJWTFilter implements Filter {
       // Issuer in the static trusted list: full validation using the provider-configured
       // PEM/JWKS/instance-key chain. An empty set signals "use verifyTokenSignature()".
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, Set.of());
+          displayableToken, displayableTokenId, Set.of(), requestAudienceValidator);
     }
     // For issuers not in the static list, subclasses may resolve JWKS for a runtime-registered issuer.
     // An empty result means "not applicable for this request" and the token is rejected.
@@ -581,7 +604,7 @@ public abstract class AbstractJWTFilter implements Filter {
     final Set<URI> registeredIssuerJwks = resolveRegisteredIssuerJwks(token.getIssuer(), request);
     if (!registeredIssuerJwks.isEmpty()) {
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, registeredIssuerJwks);
+          displayableToken, displayableTokenId, registeredIssuerJwks, requestAudienceValidator);
     }
     handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     return false;
@@ -619,11 +642,13 @@ public abstract class AbstractJWTFilter implements Filter {
    */
   private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
       final JWT token, final String tokenId, final String displayableToken,
-      final String displayableTokenId, final Set<URI> registeredIssuerJwks)
+      final String displayableTokenId, final Set<URI> registeredIssuerJwks,
+      final RequestAudienceValidator requestAudienceValidator)
       throws IOException, ServletException {
     try {
       if (tokenIsStillValid(token)) {
-        if (validateAudiences(token)) {
+        final AudienceValidationResult audienceValidationResult = validateAudience(request, token, requestAudienceValidator);
+        if (audienceValidationResult.isValid()) {
           Date nbf = token.getNotBeforeDate();
           if (nbf == null || new Date().after(nbf)) {
             final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
@@ -655,7 +680,11 @@ public abstract class AbstractJWTFilter implements Filter {
                 "Bad request: the NotBefore check failed");
           }
         } else {
-          log.failedToValidateAudience(displayableToken, displayableTokenId);
+          if (audienceValidationResult.message() != null) {
+            log.failedToValidateAudience(displayableToken, displayableTokenId, audienceValidationResult.message());
+          } else {
+            log.failedToValidateAudience(displayableToken, displayableTokenId);
+          }
           handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
               "Bad request: missing required token audience");
         }
@@ -672,6 +701,20 @@ public abstract class AbstractJWTFilter implements Filter {
       handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
     }
     return false;
+  }
+
+  /**
+   * Runs the configured {@link RequestAudienceValidator} and shields the caller from a
+   * misbehaving implementation throwing out of {@code validate()}; such a failure is treated
+   * as a rejected audience rather than propagating and failing the request some other way.
+   */
+  private AudienceValidationResult validateAudience(final HttpServletRequest request, final JWT token,
+      final RequestAudienceValidator requestAudienceValidator) {
+    try {
+      return requestAudienceValidator.validate(request, token, audiences);
+    } catch (final RuntimeException e) {
+      return new AudienceValidationResult(false, "RequestAudienceValidator threw an exception: " + e.getMessage());
+    }
   }
 
   /**

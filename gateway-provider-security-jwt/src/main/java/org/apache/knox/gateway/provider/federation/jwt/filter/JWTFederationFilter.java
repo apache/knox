@@ -177,6 +177,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
 
+  // Defaults to a validator that reproduces the existing fixed-audience-list
+  // check; overwritten in init() only if RequestAudienceValidatorService's
+  // REQUEST_AUDIENCE_VALIDATOR_PARAM names a discoverable implementation.
+  private RequestAudienceValidator requestAudienceValidator =
+      (request, token, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(token, configuredAudiences));
+
   @Override
   public void init( FilterConfig filterConfig ) throws ServletException {
     super.init(filterConfig);
@@ -243,6 +249,21 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
     tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
 
+    // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
+    // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
+    final RequestAudienceValidatorService requestAudienceValidatorService = new RequestAudienceValidatorService();
+
+    final Optional<RequestAudienceValidator> configuredValidator =
+        requestAudienceValidatorService.getValidator(filterConfig);
+    if (configuredValidator.isPresent()) {
+      requestAudienceValidator = configuredValidator.get();
+      try {
+        requestAudienceValidator.init(filterConfig);
+      } catch (Exception e) {
+        throw new ServletException(e);
+      }
+    }
+
     final String unAuthPathString = filterConfig
         .getInitParameter(JWT_UNAUTHENTICATED_PATHS_PARAM);
     /* prepare a list of allowed unauthenticated paths */
@@ -253,6 +274,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   @Override
   public void destroy() {
+    try {
+      requestAudienceValidator.destroy();
+    } catch (final RuntimeException e) {
+      LOGGER.failedToDestroyAudienceValidator(e);
+    }
   }
 
   @Override
@@ -317,7 +343,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
       if (TokenType.JWT.equals(tokenType)) {
         try {
-          JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue);
+          JWT token = parseAndValidateJWT((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenValue, requestAudienceValidator);
           if (token != null) {
             /* Only a JWT the caller presented as this request's credential will be captured for
             forwarding downstream. TokenType.JWT also covers refresh_token and client_assertion
@@ -640,7 +666,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   }
 
   /**
-   * Parse and validate a JWT token.
+   * Parse and validate a JWT token with the default request audience validator.
+   *
+   * The default audience validator matches the configured list of allowed audiences.
    *
    * @param request the HTTP request
    * @param response the HTTP response
@@ -651,12 +679,31 @@ public class JWTFederationFilter extends AbstractJWTFilter {
    * @throws IOException if an I/O error occurs during validation
    * @throws ServletException if a servlet error occurs during validation
    */
-  // package-private: also invoked by TokenExchangeHandler
   JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
                                   FilterChain chain, String tokenValue)
       throws ParseException, IOException, ServletException {
+    return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator);
+  }
+
+
+  /**
+   * Parse and validate a JWT token.
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param chain the filter chain
+   * @param tokenValue the JWT string to parse
+   * @param requestAudienceValidator the RequestAudienceValidator to use for aud claim validation
+   * @return the parsed and validated JWT, or null if validation failed
+   * @throws ParseException if the JWT cannot be parsed
+   * @throws IOException if an I/O error occurs during validation
+   * @throws ServletException if a servlet error occurs during validation
+   */
+  JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
+                                  FilterChain chain, String tokenValue,
+                                  RequestAudienceValidator requestAudienceValidator)
+      throws ParseException, IOException, ServletException {
     JWT token = new JWTToken(tokenValue);
-    if (validateToken(request, response, chain, token)) {
+    if (validateToken(request, response, chain, token, requestAudienceValidator)) {
       return token;
     }
     // Validation failed - error response already sent by validateToken

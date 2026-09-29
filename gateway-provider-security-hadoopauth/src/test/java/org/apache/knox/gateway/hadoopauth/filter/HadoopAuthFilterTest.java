@@ -38,6 +38,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.context.ContextAttributes;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.RequestAudienceValidatorService;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -600,6 +601,7 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_USE_COOKIE)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_COOKIE_NAME)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(RequestAudienceValidatorService.REQUEST_AUDIENCE_VALIDATOR_PARAM)).andReturn(null).anyTimes();
     }
 
     final ServletContext servletContext = createMock(ServletContext.class);

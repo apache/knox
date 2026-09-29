@@ -20,21 +20,30 @@ package org.apache.knox.gateway.provider.federation;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_CREDENTIALS;
 import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter.JWT_DEFAULT_ISSUER;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.RequestAudienceValidatorService.REQUEST_AUDIENCE_VALIDATOR_PARAM;
 import static org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter.DEFAULT_SSO_COOKIE_NAME;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.security.auth.Subject;
 import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.AudienceValidationResult;
 import org.apache.knox.gateway.provider.federation.jwt.filter.JWTFederationFilter;
+import org.apache.knox.gateway.provider.federation.jwt.filter.RequestAudienceValidator;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificationCache;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.security.SubjectUtils;
@@ -58,6 +67,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   public void setUp() {
     handler = new TestJWTFederationFilter();
     ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+    RecordingRequestAudienceValidator.reset();
   }
 
   @Override
@@ -387,40 +397,217 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
    */
   private void assertGrantFlowJWTIsNotCaptured(String grantType, String tokenParam, String clientAssertionType,
       String authorizationHeader, String queryParamTokenValue) throws Exception {
-    final Properties properties = getProperties();
-    if (queryParamTokenValue != null) {
-      properties.put(JWTFederationFilter.KNOX_TOKEN_QUERY_PARAM_NAME, TOKEN_QUERY_PARAM);
+      final Properties properties = getProperties();
+      if (queryParamTokenValue != null) {
+          properties.put(JWTFederationFilter.KNOX_TOKEN_QUERY_PARAM_NAME, TOKEN_QUERY_PARAM);
+      }
+      handler.init(new TestFilterConfig(properties));
+
+      final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
+              new Date(System.currentTimeMillis() + 60000), privateKey);
+
+      final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+      EasyMock.expect(request.getHeader("Authorization")).andReturn(authorizationHeader).anyTimes();
+      EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+      if (queryParamTokenValue != null) {
+          EasyMock.expect(request.getParameter(TOKEN_QUERY_PARAM))
+                  .andReturn(queryParamTokenValue).anyTimes();
+      }
+      EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
+      if (clientAssertionType != null) {
+          EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION_TYPE))
+                  .andReturn(clientAssertionType).anyTimes();
+      }
+      EasyMock.expect(request.getParameter(tokenParam)).andReturn(jwt.serialize()).anyTimes();
+      EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+      EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+
+      final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+      EasyMock.replay(request, response);
+
+      final TestFilterChain chain = new TestFilterChain();
+      handler.doFilter(request, response, chain);
+
+      Assert.assertTrue("The grant flow should have authenticated", chain.doFilterCalled);
+      Assert.assertNull("A " + grantType + " JWT is a grant artifact and must not be captured for forwarding",
+              SubjectUtils.getAuthToken(chain.subject));
+  }
+
+  // ---------------------------------------------------------------------
+  // RequestAudienceValidator wired into JWTFederationFilter's
+  // direct-bearer JWT path (init()/destroy()/doFilter()).
+  // ---------------------------------------------------------------------
+
+  /**
+   * ServiceLoader-discoverable test fixture, distinct from
+   * RequestAudienceValidatorServiceTest's DummyValidator, that records
+   * whether init()/destroy() were called and how many times validate() ran --
+   * proof that a configured validator is actually resolved and invoked by
+   * JWTFederationFilter, not just registered. Always accepts, so tests using
+   * it can also prove a custom validator overrides the default audience
+   * check rather than supplementing it. Static state is reset in setUp().
+   */
+  public static class RecordingRequestAudienceValidator implements RequestAudienceValidator {
+    public static final String NAME = "RecordingRequestAudienceValidator";
+    static final AtomicBoolean initCalled = new AtomicBoolean();
+    static final AtomicBoolean destroyCalled = new AtomicBoolean();
+    static final AtomicInteger validateCallCount = new AtomicInteger();
+    static final AtomicBoolean throwOnDestroy = new AtomicBoolean();
+
+    public RecordingRequestAudienceValidator() {
     }
-    handler.init(new TestFilterConfig(properties));
+
+    static void reset() {
+      initCalled.set(false);
+      destroyCalled.set(false);
+      validateCallCount.set(0);
+      throwOnDestroy.set(false);
+    }
+
+    @Override
+    public void init(FilterConfig filterConfig) {
+      initCalled.set(true);
+    }
+
+    @Override
+    public void destroy() {
+      destroyCalled.set(true);
+      if (throwOnDestroy.get()) {
+        throw new IllegalStateException("boom");
+      }
+    }
+
+    @Override
+    public AudienceValidationResult validate(HttpServletRequest request, JWT token, List<String> configuredAudiences) {
+      validateCallCount.incrementAndGet();
+      return AudienceValidationResult.of(true);
+    }
+
+    @Override
+    public String getName() {
+      return NAME;
+    }
+  }
+
+  /**
+   * The single most important regression test in this task: with
+   * request.audience.validator left unset, a mismatched-audience direct-bearer
+   * token must still be rejected exactly as it was before RequestAudienceValidator
+   * existed -- SC_BAD_REQUEST with the unchanged message text.
+   */
+  @Test
+  public void testRejectsMismatchedAudienceWhenNoValidatorConfigured() throws Exception {
+    final Properties props = getProperties();
+    props.put(getAudienceProperty(), "foo");
+    handler.init(new TestFilterConfig(props));
 
     final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
-        new Date(System.currentTimeMillis() + 60000), privateKey);
-
+        new Date(new Date().getTime() + 5000), privateKey);
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    EasyMock.expect(request.getHeader("Authorization")).andReturn(authorizationHeader).anyTimes();
-    EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
-    if (queryParamTokenValue != null) {
-      EasyMock.expect(request.getParameter(TOKEN_QUERY_PARAM))
-          .andReturn(queryParamTokenValue).anyTimes();
-    }
-    EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
-    if (clientAssertionType != null) {
-      EasyMock.expect(request.getParameter(JWTFederationFilter.CLIENT_ASSERTION_TYPE))
-          .andReturn(clientAssertionType).anyTimes();
-    }
-    EasyMock.expect(request.getParameter(tokenParam)).andReturn(jwt.serialize()).anyTimes();
+    setTokenOnRequest(request, jwt);
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
     EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
 
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request: missing required token audience");
+    EasyMock.expectLastCall().once();
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertFalse("doFilterCalled should not be true.", chain.doFilterCalled);
+    EasyMock.verify(response);
+  }
+
+  @Test
+  public void testInitWithUnknownRequestAudienceValidatorNameThrowsServletException() throws Exception {
+    final Properties props = getProperties();
+    props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, "not-a-registered-validator");
+
+    try {
+      handler.init(new TestFilterConfig(props));
+      fail("Expected ServletException");
+    } catch (ServletException e) {
+      assertTrue(e.getMessage().contains("not-a-registered-validator"));
+    }
+  }
+
+  @Test
+  public void testConfiguredRequestAudienceValidatorIsInvokedFromDoFilter() throws Exception {
+    final Properties props = getProperties();
+    props.put(getAudienceProperty(), "bar");
+    props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
+    handler.init(new TestFilterConfig(props));
+    assertTrue("init() should have been called on the resolved validator", RecordingRequestAudienceValidator.initCalled.get());
+
+    final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
+        new Date(new Date().getTime() + 5000), privateKey);
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    setTokenOnRequest(request, jwt);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     EasyMock.replay(request, response);
 
     final TestFilterChain chain = new TestFilterChain();
     handler.doFilter(request, response, chain);
 
-    Assert.assertTrue("The grant flow should have authenticated", chain.doFilterCalled);
-    Assert.assertNull("A " + grantType + " JWT is a grant artifact and must not be captured for forwarding",
-        SubjectUtils.getAuthToken(chain.subject));
+    assertEquals(1, RecordingRequestAudienceValidator.validateCallCount.get());
+    Assert.assertTrue("doFilterCalled should be true.", chain.doFilterCalled);
+  }
+
+  @Test
+  public void testConfiguredRequestAudienceValidatorAcceptsDespiteMismatchedAudience() throws Exception {
+    final Properties props = getProperties();
+    props.put(getAudienceProperty(), "foo");
+    props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
+    handler.init(new TestFilterConfig(props));
+
+    final SignedJWT jwt = getJWT(JWT_DEFAULT_ISSUER, "alice",
+        new Date(new Date().getTime() + 5000), privateKey);
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    setTokenOnRequest(request, jwt);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Custom validator returning true should accept the request despite the audience mismatch",
+        chain.doFilterCalled);
+  }
+
+  @Test
+  public void testDestroyPropagatesToConfiguredRequestAudienceValidator() throws Exception {
+    final Properties props = getProperties();
+    props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
+    handler.init(new TestFilterConfig(props));
+
+    handler.destroy();
+
+    assertTrue("destroy() should have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled.get());
+  }
+
+  /**
+   * destroy() is void on both Filter and RequestAudienceValidator -- a misbehaving validator
+   * must not be able to abort the filter's own shutdown by throwing out of destroy().
+   */
+  @Test
+  public void testDestroyDoesNotPropagateExceptionFromConfiguredRequestAudienceValidator() throws Exception {
+    final Properties props = getProperties();
+    props.put(REQUEST_AUDIENCE_VALIDATOR_PARAM, RecordingRequestAudienceValidator.NAME);
+    handler.init(new TestFilterConfig(props));
+    RecordingRequestAudienceValidator.throwOnDestroy.set(true);
+
+    handler.destroy();
+
+    assertTrue("destroy() should still have been called on the resolved validator", RecordingRequestAudienceValidator.destroyCalled.get());
   }
 
 }

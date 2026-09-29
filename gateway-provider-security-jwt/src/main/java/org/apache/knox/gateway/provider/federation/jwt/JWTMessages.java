@@ -28,6 +28,12 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute for token {0} ({1})" )
   void failedToValidateAudience(String tokenDisplayText, String tokenId);
 
+  @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute for token {0} ({1}): {2}" )
+  void failedToValidateAudience(String tokenDisplayText, String tokenId, String reason);
+
+  @Message( level = MessageLevel.WARN, text = "Unable to cleanly destroy the configured audience validator: {0}" )
+  void failedToDestroyAudienceValidator(@StackTrace( level = MessageLevel.ERROR) Exception e);
+
   @Message( level = MessageLevel.WARN, text = "Failed to verify the token signature of {0} ({1})" )
   void failedToVerifyTokenSignature(String tokenDisplayText, String tokenId);
 
