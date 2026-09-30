@@ -357,6 +357,63 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
+    public void testLdapBackendPasswordAliasIsResolved() throws Exception {
+        final String alias = "my-ad-password";
+        final String secret = "s3cr3t-ad-pass";
+        final String aliasRef = AliasService.ALIAS_PREFIX + alias + "}";
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        expect(aliasService.isAlias(aliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(aliasRef)).andReturn(alias).anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway(alias)).andReturn(secret.toCharArray()).anyTimes();
+        replay(aliasService);
+        serverManager = new KnoxLDAPServerManager(aliasService);
+
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        backendConfig.put("systemPassword", aliasRef);
+
+        initializeWithLdapBackendConfig(backendConfig);
+
+        // createInterceptors mutates the interceptor config map in place before it reaches the backend.
+        assertEquals("Alias reference should be resolved to the credential-store secret",
+                secret, backendConfig.get("systemPassword"));
+    }
+
+    @Test
+    public void testLdapBackendLiteralPasswordIsUnchanged() throws Exception {
+        // Default alias service (setUp) resolves nothing; a literal password is not an alias.
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        assertEquals("admin-password", backendConfig.get("systemPassword"));
+
+        initializeWithLdapBackendConfig(backendConfig);
+
+        assertEquals("A literal password must be passed through untouched",
+                "admin-password", backendConfig.get("systemPassword"));
+    }
+
+    @Test
+    public void testLdapBackendUnresolvablePasswordAliasIsLeftUnchanged() throws Exception {
+        final String aliasRef = AliasService.ALIAS_PREFIX + "missing}";
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        expect(aliasService.isAlias(aliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(aliasRef)).andReturn("missing").anyTimes();
+        expect(aliasService.getPasswordFromAliasForGateway("missing")).andReturn(null).anyTimes();
+        replay(aliasService);
+        serverManager = new KnoxLDAPServerManager(aliasService);
+
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        backendConfig.put("systemPassword", aliasRef);
+
+        initializeWithLdapBackendConfig(backendConfig);
+
+        // An unresolvable alias is left untouched (and logged at ERROR); the backend bind then fails
+        // naturally rather than the alias silently resolving to a different credential.
+        assertEquals("An unresolvable alias should be left as-is",
+                aliasRef, backendConfig.get("systemPassword"));
+    }
+
+    @Test
     public void testStartWithMultipleBackends() throws Exception {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
@@ -757,6 +814,19 @@ public class KnoxLDAPServerManagerTest {
         config.put("baseDn", "dc=file,dc=com");
         config.put("dataFile", tempLdapFile.getAbsolutePath());
         return config;
+    }
+
+    /** Initialize the current server manager with a single "ldapbackend" interceptor using the given config. */
+    private void initializeWithLdapBackendConfig(Map<String, String> backendConfig) throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("ldapbackend")).anyTimes();
+        expect(mockConfig.getLDAPInterceptorConfig("ldapbackend")).andReturn(backendConfig).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
     }
 
     private Map<String, String> createLdapBackendInterceptorConfig() {

@@ -209,7 +209,7 @@ limitations under the License.
     </property>
     <property>
         <name>gateway.ldap.interceptor.demoldap.systemPassword</name>
-        <value>guest-password</value>
+        <value>S{ALIAS=gateway_ldap_demoldap_system_password}</value>
     </property>
     <property>
         <name>gateway.ldap.interceptor.demoldap.userSearchBase</name>

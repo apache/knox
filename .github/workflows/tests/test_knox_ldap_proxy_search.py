@@ -24,6 +24,13 @@ with gateway.ldap.ssl.enabled=true, and it in turn proxies to the demo LDAP
 backend over LDAPS as well (gateway.ldap.interceptor.demoldap.url=ldaps://...).
 The gateway presents a self-signed dev certificate in CI, so certificate
 validation is disabled on the client side.
+
+The demo backend's system (bind) password is supplied to the proxy via a
+credential-store alias (gateway.ldap.interceptor.demoldap.systemPassword=
+S{ALIAS=gateway_ldap_demoldap_system_password}, seeded in gateway.sh). The proxy
+must resolve that alias to bind to the demo LDAP; if resolution regressed the
+literal alias string would be used as the password and every search below would
+fail on a bind error. This suite therefore also covers KNOX-3497.
 """
 
 from __future__ import annotations
