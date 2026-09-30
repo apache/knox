@@ -199,7 +199,7 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.baseDn` | N/A | **Required**. The base DN of the LDAP proxy server. |
 | `gateway.ldap.interceptor.<name>.remoteBaseDn` | N/A | **Required**. The base DN of the remote LDAP server. |
 | `gateway.ldap.interceptor.<name>.systemUsername` | N/A | Bind DN for the remote server (alias: `bindDn`). |
-| `gateway.ldap.interceptor.<name>.systemPassword` | N/A | Password for the bind DN (alias: `bindPassword`). |
+| `gateway.ldap.interceptor.<name>.systemPassword` | N/A | Password for the bind DN (alias: `bindPassword`). May be a literal value or a credential store alias reference `S{ALIAS=...}` (see note below). |
 | `gateway.ldap.interceptor.<name>.userSearchBase` | `ou=people,{remoteBaseDn}` | Base DN for user searches on the remote server. |
 | `gateway.ldap.interceptor.<name>.groupSearchBase` | `ou=groups,{remoteBaseDn}` | Base DN for group searches on the remote server. |
 | `gateway.ldap.interceptor.<name>.userIdentifierAttribute` | `uid` | Attribute used for user lookup (e.g., `sAMAccountName` for AD). |
@@ -212,6 +212,21 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.maxResultSetSize` | `0` | Maximum number of results to return from a search, regardless of paging. 0 means unlimited. |
 
 NOTE: If this value is undefined and the interceptor was created by the KnoxLDAPServerManager, the KnoxLDAPServerManager will set the `gateway.ldap.interceptor.<name>.maxResultSetSize` value to be 1 greater than the proxy's `gateway.ldap.max.size.limit` configuration. This will ensure that the proxy returns a "Size limit exceeded" result if the backend has more results than the proxy's limit.
+
+##### Credential store aliases for backend passwords
+
+The proxy backend's password properties (`systemPassword`/`bindPassword` and `trustStorePassword`) accept a credential store alias reference of the form `S{ALIAS=my-alias}` in addition to a literal value ([KNOX-3497](https://issues.apache.org/jira/browse/KNOX-3497)). When a value is an alias reference, Knox resolves it from the gateway credential store at startup so the secret does not need to live in cleartext in `gateway-site.xml`. Literal values are used as-is. If an alias cannot be resolved it is left unchanged and an ERROR is logged, so the backend bind fails rather than silently binding with a different credential.
+
+```bash
+knoxcli.sh create-alias my_backend_bind_password --value <password>
+```
+
+```xml
+<property>
+    <name>gateway.ldap.interceptor.adexample.systemPassword</name>
+    <value>S{ALIAS=my_backend_bind_password}</value>
+</property>
+```
 
 ## Active Directory (AD) Integration
 
