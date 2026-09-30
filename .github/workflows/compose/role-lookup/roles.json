@@ -1,0 +1,72 @@
+[
+  {
+    "id": "admin",
+    "type": "user",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "admin"
+      }
+    ]
+  },
+  {
+    "id": "admin",
+    "type": "group",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "admin"
+      }
+    ]
+  },
+  {
+    "id": "analyst",
+    "type": "group",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "analyst"
+      }
+    ]
+  },
+  {
+    "id": "scientist",
+    "type": "group",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "scientist"
+      }
+    ]
+  },
+  {
+    "id": "level1",
+    "type": "group",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "level1"
+      }
+    ]
+  },
+  {
+    "id": "level2",
+    "type": "group",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "level2"
+      }
+    ]
+  },
+  {
+    "id": "level3",
+    "type": "group",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "level3"
+      }
+    ]
+  }
+]

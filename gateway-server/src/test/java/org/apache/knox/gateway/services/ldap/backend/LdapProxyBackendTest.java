@@ -159,7 +159,8 @@ public class LdapProxyBackendTest {
                 "systemUsername", "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org",
                 "systemPassword", "guest-password",
                 "userSearchBase", "ou=people,dc=hadoop,dc=apache,dc=org",
-                "groupSearchBase", "ou=groups,dc=hadoop,dc=apache,dc=org");
+                "groupSearchBase", "ou=groups,dc=hadoop,dc=apache,dc=org",
+                "dnMappingEnabled", "true");
     }
 
     private static void loadLdif(CoreSession session, String ldifResource) throws Exception {

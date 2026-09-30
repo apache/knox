@@ -73,6 +73,7 @@ class TestKnoxAuthServicePreAuthAndPaths(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers.get("x-knox-actor-username"), "admin")
         groups = collect_actor_group_values(response, prefix="x-knox-actor-groups")
+        print(f"Found groups: {groups}")
         for name in ("longGroupName1", "longGroupName2"):
             self.assertIn(name, groups)
 

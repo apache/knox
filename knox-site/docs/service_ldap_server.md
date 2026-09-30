@@ -46,6 +46,9 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
 | `gateway.ldap.max.size.limit` | 1000 | The maximum size limit of the result set returned by search requests. |
 | `gateway.ldap.max.time.limit` | 60000 | The maximum time limit for search requests in milliseconds. |
+| `gateway.ldap.dn.mapping.enabled` | True | Enables or disables mapping remote DNs to the LDAP server base DN. |
+| `gateway.ldap.recursive.group.resolution` | False | Enables or disables retrieval of transitive group membership through recursive search queries against remote LDAP backends. |
+| `gateway.ldap.recursive.group.resolution.max.depth` | 3 | Maximum depth of recursion for transitive group membership retrieval. |
 
 ### Bind Credentials
 
@@ -143,7 +146,7 @@ The interceptor will skip role mapping for a search request if the RolesLookupBy
 | :--- | :--- | :--- |
 | Tag | 0x01 | The Boolean Tag value |
 | Length | 0x01 | The length of the value in bytes |
-| Bypass | 0x00 or Oxff | 0x00 corresponds to `false` and 0xff corresponds to `true |
+| Bypass | 0x00 or 0xff | 0x00 corresponds to `false` and 0xff corresponds to `true |
 
 
 For example, the control can be added to the `ldapsearch` cli using the `-e` option.

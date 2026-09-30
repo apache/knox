@@ -162,6 +162,7 @@ public interface GatewayConfig {
   String LDAP_SSL_ENABLED_CIPHER_SUITES = "gateway.ldap.ssl.enabled.cipher.suites";
   String LDAP_MAX_SIZE_LIMIT = "gateway.ldap.max.size.limit";
   String LDAP_MAX_TIME_LIMIT = "gateway.ldap.max.time.limit";
+  String LDAP_DN_MAPPING_ENABLED = "gateway.ldap.dn.mapping.enabled";
 
   // TrustedOidcIssuerService gateway-level params and their default values
   String TRUSTED_OIDC_ISSUER_PREFIX = "gateway.trusted.oidc.issuer.";
@@ -1285,6 +1286,11 @@ public interface GatewayConfig {
    * @return the maximum time limit for LDAP search in milliseconds
    */
   int getLDAPMaxTimeLimit();
+
+  /**
+   * @return true if DN mapping in the LDAP service is enabled
+   */
+  boolean getLDAPDnMappingEnabled();
 
   /**
    * @return set of all property names in the configuration

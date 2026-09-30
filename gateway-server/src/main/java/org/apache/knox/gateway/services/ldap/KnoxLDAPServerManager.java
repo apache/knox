@@ -86,6 +86,7 @@ public class KnoxLDAPServerManager {
     private int port;
     private String baseDn;
     private String bindUser;
+    private boolean dnMappingEnabled;
     // Secure (LDAPS) transport configuration
     private boolean sslEnabled;
     private String sslKeystorePath;
@@ -122,6 +123,7 @@ public class KnoxLDAPServerManager {
         this.baseDn = config.getLDAPBaseDN();
         this.bindUser = config.getLDAPBindUser();
         validateBindUser();
+        this.dnMappingEnabled = config.getLDAPDnMappingEnabled();
 
         maxSizeLimit = config.getLDAPMaxSizeLimit();
         maxTimeLimit = config.getLDAPMaxTimeLimit();
@@ -173,6 +175,7 @@ public class KnoxLDAPServerManager {
 
             // Add common configuration
             interceptorConfig.put("baseDn", baseDn);
+            interceptorConfig.put("dnMappingEnabled", String.valueOf(dnMappingEnabled));
             if (!interceptorConfig.containsKey("maxResultSetSize")) {
                 // Set the backend to return more results than the proxy's size limit.
                 // This will ensure that the proxy will return "Size limit exceeded"
