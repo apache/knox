@@ -385,8 +385,6 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
           return verified;
         }
       } catch (TokenServiceException e) {
-        /* failed to verify token, log and move on. Report the cause, not the wrapper --
-         * "Cannot verify token." on its own never told anybody anything. */
         LOG.jwksVerificationFailed(url.toString(),
             e.getCause() != null ? e.getCause().toString() : e.toString(), e);
       }
