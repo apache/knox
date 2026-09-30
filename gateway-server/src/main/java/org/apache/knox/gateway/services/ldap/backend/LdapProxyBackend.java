@@ -77,6 +77,9 @@ import java.util.stream.Collectors;
 public class LdapProxyBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
+    private static final String[] ALL_ATTRIBUTES = new String[]{"*"};
+    private static final String[] ALL_ATTRIBUTES_AND_MEMBEROF = new String[]{"*", "memberOf"};
+
     static final String TYPE = "ldap";
 
     private String name;
@@ -561,7 +564,8 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
-            List<Entry> searchResults = performPagedSearch(connection, remoteSearchBase, remoteFilter, searchScope, "*");
+            String[] attributes = useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
+            List<Entry> searchResults = performPagedSearch(connection, remoteSearchBase, remoteFilter, searchScope, attributes);
             for (Entry entry : searchResults) {
                 addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
                 results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
