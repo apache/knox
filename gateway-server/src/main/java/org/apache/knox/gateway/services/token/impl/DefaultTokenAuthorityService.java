@@ -43,7 +43,6 @@ import java.util.Set;
 
 import javax.net.ssl.SSLException;
 
-import com.google.common.net.InetAddresses;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -81,6 +80,7 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.HttpUtils;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
@@ -337,20 +337,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * Whether a JWKS failure is a TLS/trust failure against an IP literal host, the one case where
    * {@code certificate_unknown(46)} says nothing at all about the contents of the truststore.
    *
-   * @param jwksUrl the JWKS endpoint that was being fetched; the caller guarantees it is non-null
+   * @param jwksUrl the JWKS endpoint that was being fetched
    * @param failure the failure to inspect
    * @return {@code true} when the host is an IP literal and the chain carries a TLS/trust failure
    */
   static boolean isIpLiteralTlsFailure(final String jwksUrl, final Throwable failure) {
-    try {
-      final String host = URI.create(jwksUrl).getHost();
-
-      /* isUriInetAddress parses the URI form of an IP literal, so an IPv6 host keeps its brackets */
-      return host != null && InetAddresses.isUriInetAddress(host) && isTlsTrustFailure(failure);
-    } catch (IllegalArgumentException e) {
-      /* not a URI we can reason about; we have nothing useful to add */
-      return false;
-    }
+    return HttpUtils.isIpLiteralHost(jwksUrl) && isTlsTrustFailure(failure);
   }
 
   /* Determins if the exception was an SSLException or CertificateException */
