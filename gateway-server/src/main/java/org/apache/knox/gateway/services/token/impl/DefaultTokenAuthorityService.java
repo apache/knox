@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
@@ -40,6 +41,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.net.ssl.SSLException;
+
+import com.google.common.net.InetAddresses;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -62,6 +66,7 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.Service;
@@ -85,6 +90,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   // https://tools.ietf.org/html/rfc7518
   private static final Set<String> SUPPORTED_PKI_SIG_ALGS = new HashSet<>(Arrays.asList("RS256", "RS384", "RS512", "PS256", "PS384", "PS512"));
   private static final Set<String> SUPPORTED_HMAC_SIG_ALGS = new HashSet<>(Arrays.asList("HS256", "HS384", "HS512"));
+
+  /* How far down a cause chain to walk before giving up. */
+  private static final int MAX_CAUSE_DEPTH = 20;
   private AliasService aliasService;
   private KeystoreService keystoreService;
   private GatewayConfig config;
@@ -312,9 +320,49 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         verified = true;
       }
     } catch (BadJOSEException | JOSEException | ParseException | MalformedURLException e) {
+      if (isIpLiteralTlsFailure(jwksUrl, e)) {
+        /* BC-FIPS refuses HTTPS endpoint identification against a bare IP */
+        if (FipsUtils.isFipsEnabledWithBCProvider()) {
+          LOG.jwksIpLiteralHostUnderFips(jwksUrl);
+        } else {
+          LOG.jwksIpLiteralHost(jwksUrl);
+        }
+      }
       throw new TokenServiceException("Cannot verify token.", e);
     }
     return verified;
+  }
+
+  /**
+   * Whether a JWKS failure is a TLS/trust failure against an IP literal host, the one case where
+   * {@code certificate_unknown(46)} says nothing at all about the contents of the truststore.
+   *
+   * @param jwksUrl the JWKS endpoint that was being fetched; the caller guarantees it is non-null
+   * @param failure the failure to inspect
+   * @return {@code true} when the host is an IP literal and the chain carries a TLS/trust failure
+   */
+  static boolean isIpLiteralTlsFailure(final String jwksUrl, final Throwable failure) {
+    try {
+      final String host = URI.create(jwksUrl).getHost();
+
+      /* isUriInetAddress parses the URI form of an IP literal, so an IPv6 host keeps its brackets */
+      return host != null && InetAddresses.isUriInetAddress(host) && isTlsTrustFailure(failure);
+    } catch (IllegalArgumentException e) {
+      /* not a URI we can reason about; we have nothing useful to add */
+      return false;
+    }
+  }
+
+  /* Determins if the exception was an SSLException or CertificateException */
+  private static boolean isTlsTrustFailure(final Throwable failure) {
+    Throwable cause = failure;
+    for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
+      if (cause instanceof SSLException || cause instanceof CertificateException) {
+        return true;
+      }
+      cause = cause.getCause() == cause ? null : cause.getCause();
+    }
+    return false;
   }
 
   @Override
@@ -328,8 +376,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
           return verified;
         }
       } catch (TokenServiceException e) {
-        /* failed to verify token, log and move on */
-        LOG.jwksVerificationFailed(url.toString(), e.toString(), e);
+        LOG.jwksVerificationFailed(url.toString(),
+            e.getCause() != null ? e.getCause().toString() : e.toString(), e);
       }
     }
     return verified;
