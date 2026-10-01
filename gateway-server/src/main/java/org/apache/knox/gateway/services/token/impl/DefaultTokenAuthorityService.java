@@ -337,29 +337,20 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * Whether a JWKS failure is a TLS/trust failure against an IP literal host, the one case where
    * {@code certificate_unknown(46)} says nothing at all about the contents of the truststore.
    *
-   * @param jwksUrl the JWKS endpoint that was being fetched, possibly {@code null}
+   * @param jwksUrl the JWKS endpoint that was being fetched; the caller guarantees it is non-null
    * @param failure the failure to inspect
    * @return {@code true} when the host is an IP literal and the chain carries a TLS/trust failure
    */
   static boolean isIpLiteralTlsFailure(final String jwksUrl, final Throwable failure) {
-    if (jwksUrl == null) {
-      return false;
-    }
-    final String host;
     try {
-      host = URI.create(jwksUrl).getHost();
+      final String host = URI.create(jwksUrl).getHost();
+
+      /* isUriInetAddress parses the URI form of an IP literal, so an IPv6 host keeps its brackets */
+      return host != null && InetAddresses.isUriInetAddress(host) && isTlsTrustFailure(failure);
     } catch (IllegalArgumentException e) {
       /* not a URI we can reason about; we have nothing useful to add */
       return false;
     }
-    if (host == null) {
-      return false;
-    }
-    /* getHost() hands an IPv6 literal with brackets. Sanitize it */
-    final String bare = host.length() > 1 && host.charAt(0) == '['
-        ? host.substring(1, host.length() - 1) : host;
-
-    return InetAddresses.isInetAddress(bare) && isTlsTrustFailure(failure);
   }
 
   /* Determins if the exception was an SSLException or CertificateException */
