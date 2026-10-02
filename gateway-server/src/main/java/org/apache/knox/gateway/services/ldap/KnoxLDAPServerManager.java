@@ -204,7 +204,7 @@ public class KnoxLDAPServerManager {
     }
 
     /**
-     * Resolves gateway credential-store alias references (e.g. {@code S{ALIAS=my-ad-password}}) held in the
+     * Resolves gateway credential-store alias references (e.g. {@code ${ALIAS=my-ad-password}}) held in the
      * backend password properties, replacing each with the secret fetched from the gateway credential store.
      * Literal (non-alias) values are left untouched for backward compatibility; an unresolvable alias is
      * left as-is and logged at ERROR, so the backend bind fails rather than silently using a different credential.

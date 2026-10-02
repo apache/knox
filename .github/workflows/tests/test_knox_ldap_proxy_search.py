@@ -27,7 +27,7 @@ validation is disabled on the client side.
 
 The demo backend's system (bind) password is supplied to the proxy via a
 credential-store alias (gateway.ldap.interceptor.demoldap.systemPassword=
-S{ALIAS=gateway_ldap_demoldap_system_password}, seeded in gateway.sh). The proxy
+${ALIAS=gateway_ldap_demoldap_system_password}, seeded in gateway.sh). The proxy
 must resolve that alias to bind to the demo LDAP; if resolution regressed the
 literal alias string would be used as the password and every search below would
 fail on a bind error. This suite therefore also covers KNOX-3497.
