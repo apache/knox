@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.provider.federation;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
@@ -24,6 +25,8 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
@@ -354,6 +357,78 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
   public void testInvalidPEMInvalidJwksWithFallback() throws Exception {
     // No-op: The SSOCookieProvider does not appear to support the JWKS URL(s) config like the
     // JWTFederationFilter does, so this test does not apply
+  }
+
+  /*
+   * KNOX-3501: a hadoop-jwt cookie whose token has no server-managed state record must still be
+   * rejected by default -- "no state" is indistinguishable from "revoked", so tolerating it is an
+   * explicit opt-in (AbstractJWTFilter.ALLOW_UNKNOWN_COOKIE_TOKEN_STATE).
+   */
+  @Test
+  public void testUnknownTokenStateRedirectsToLoginByDefault() throws Exception {
+    assertCookieAuthWithUnknownTokenState(null, false);
+  }
+
+  @Test
+  public void testUnknownTokenStateAllowedWhenConfigured() throws Exception {
+    assertCookieAuthWithUnknownTokenState("true", true);
+  }
+
+  /**
+   * Drives the hadoop-jwt cookie path with server-managed token state enabled and a state service
+   * that has never heard of the cookie's token -- the asymmetric-configuration case where KnoxSSO
+   * issued the cookie without recording state while this topology requires it.
+   *
+   * @param allowUnknownCookieState value for ALLOW_UNKNOWN_COOKIE_TOKEN_STATE, or null to leave the
+   *     parameter absent (the default).
+   */
+  private void assertCookieAuthWithUnknownTokenState(final String allowUnknownCookieState,
+                                                     final boolean expectAuthenticated) throws Exception {
+    final String tokenId = "9c02f4de-1c6a-45f9-9f64-6d8d0f2b7b7e";
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tokenStateService.getTokenExpiration(tokenId))
+        .andThrow(new UnknownTokenException(tokenId)).anyTimes();
+    EasyMock.expect(tokenStateService.getTokenMetadata(tokenId))
+        .andThrow(new UnknownTokenException(tokenId)).anyTimes();
+
+    final Properties filterConfig = getProperties();
+    filterConfig.setProperty(TokenStateService.CONFIG_SERVER_MANAGED, "true");
+    if (allowUnknownCookieState != null) {
+      filterConfig.setProperty(AbstractJWTFilter.ALLOW_UNKNOWN_COOKIE_TOKEN_STATE, allowUnknownCookieState);
+    }
+    handler.init(new TestFilterConfig(filterConfig, tokenStateService));
+    // init() re-reads the token service from the (mocked) GatewayServices that TestFilterConfig
+    // supplies whenever a TokenStateService is present, clobbering what setUp() installed.
+    ((TestSSOCookieFederationProvider) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice", "bar",
+        new Date(System.currentTimeMillis() + 60000L), new Date(), privateKey,
+        JWSAlgorithm.RS256.getName(), tokenId);
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { new Cookie("hadoop-jwt", jwt.serialize()) }).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null).anyTimes();
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    final Capture<String> redirect = EasyMock.newCapture();
+    if (!expectAuthenticated) {
+      response.sendRedirect(EasyMock.capture(redirect));
+      EasyMock.expectLastCall().atLeastOnce();
+    }
+    EasyMock.replay(request, response, tokenStateService);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    EasyMock.verify(response);
+    Assert.assertEquals(expectAuthenticated, chain.doFilterCalled);
+    if (expectAuthenticated) {
+      Assert.assertEquals("alice", chain.getSubject().getPrincipals().iterator().next().getName());
+    } else {
+      Assert.assertTrue("Expected a redirect back to the KnoxSSO login page, got: " + redirect.getValue(),
+          redirect.getValue().startsWith("https://localhost:8443/authserver"));
+    }
   }
 
   @Test

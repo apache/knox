@@ -61,6 +61,10 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Unable to verify token expiration: {0}" )
   void unableToVerifyExpiration(@StackTrace( level = MessageLevel.DEBUG) Exception e);
 
+  @Message( level = MessageLevel.WARN, text = "No server-managed token state found for cookie token ({0}); "
+      + "falling back to the token's own expiration. {1} is enabled." )
+  void unknownCookieTokenStateTolerated(String tokenId, String paramName);
+
   @Message( level = MessageLevel.WARN, text = "Unable to verify passcode token ({0}) due to missing or incorrect token state service configuration.")
   void unableToVerifyPasscodeToken(String tokenId);
 

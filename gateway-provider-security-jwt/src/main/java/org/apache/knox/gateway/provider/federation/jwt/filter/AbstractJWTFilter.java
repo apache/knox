@@ -108,6 +108,13 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String IDLE_TIMEOUT_POSTFIX = " exceeded idle timeout";
 
   /**
+   * Topology provider param (default false). When true, a JWT presented in a <em>cookie</em> whose
+   * Knox token id has no server-managed state is validated against its own {@code exp} claim
+   * instead of being rejected.
+   */
+  public static final String ALLOW_UNKNOWN_COOKIE_TOKEN_STATE = "knox.token.allow.unknown.cookie.state";
+
+  /**
    * If specified, this configuration property refers to the signature algorithm which a received
    * token must match. Otherwise, the default value "RS256" is used
    */
@@ -136,6 +143,7 @@ public abstract class AbstractJWTFilter implements Filter {
 
   private TokenStateService tokenStateService;
   private TokenMAC tokenMAC;
+  private boolean allowUnknownCookieTokenState;
   protected long idleTimeoutSeconds = -1;
   protected String topologyName;
   protected boolean isJwtInstanceKeyFallback = JWT_INSTANCE_KEY_FALLBACK_DEFAULT;
@@ -170,6 +178,9 @@ public abstract class AbstractJWTFilter implements Filter {
         }
       }
     }
+
+    allowUnknownCookieTokenState =
+        Boolean.parseBoolean(filterConfig.getInitParameter(ALLOW_UNKNOWN_COOKIE_TOKEN_STATE));
 
     // Setup the verified tokens cache
     topologyName = context != null ? (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE) : null;
@@ -251,7 +262,16 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected boolean tokenIsStillValid(final JWT jwtToken) throws UnknownTokenException {
-    Date expires = getServerManagedStateExpiration(TokenUtils.getTokenId(jwtToken));
+    return tokenIsStillValid(jwtToken, false);
+  }
+
+  /**
+   * @param tolerateUnknownState when true, a token with no server-managed state record falls back to
+   *     its own {@code exp} claim instead of raising {@link UnknownTokenException}; see
+   *     {@link #ALLOW_UNKNOWN_COOKIE_TOKEN_STATE}.
+   */
+  protected boolean tokenIsStillValid(final JWT jwtToken, final boolean tolerateUnknownState) throws UnknownTokenException {
+    Date expires = getServerManagedStateExpiration(TokenUtils.getTokenId(jwtToken), tolerateUnknownState);
     if (expires == null) {
       // if there is no expiration date then the lifecycle is tied entirely to
       // the cookie validity - otherwise ensure that the current time is before
@@ -262,11 +282,18 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   protected boolean tokenIsStillValid(final String tokenId) throws UnknownTokenException {
-    Date expires = getServerManagedStateExpiration(tokenId);
+    Date expires = getServerManagedStateExpiration(tokenId, false);
     return expires == null || (new Date().before(expires));
   }
 
-  private Date getServerManagedStateExpiration(final String tokenId) throws UnknownTokenException {
+  /**
+   * @param tolerateUnknownState when true, a token the state service has never heard of resolves to
+   *     no server-managed expiration (so the caller falls back to the token's own {@code exp}
+   *     claim) instead of raising {@link UnknownTokenException}. Only ever true for a cookie-borne
+   *     JWT in a provider that opted in via {@link #ALLOW_UNKNOWN_COOKIE_TOKEN_STATE}.
+   */
+  private Date getServerManagedStateExpiration(final String tokenId, final boolean tolerateUnknownState)
+      throws UnknownTokenException {
     Date expires = null;
     // Server-managed token state is keyed by the Knox token id (the knox.id claim). An
     // externally-issued token accepted on the token-exchange path (e.g. a Kubernetes
@@ -276,9 +303,18 @@ public abstract class AbstractJWTFilter implements Filter {
     // null/empty id to the state service would raise IllegalArgumentException (surfacing as a
     // 500), rather than the UnknownTokenException the caller handles gracefully.
     if (tokenStateService != null && tokenId != null && !tokenId.isEmpty()) {
-      long value = tokenStateService.getTokenExpiration(tokenId);
-      if (value > 0) {
-        expires = new Date(value);
+      try {
+        long value = tokenStateService.getTokenExpiration(tokenId);
+        if (value > 0) {
+          expires = new Date(value);
+        }
+      } catch (UnknownTokenException e) {
+        if (!tolerateUnknownState) {
+          throw e;
+        }
+        log.unknownCookieTokenStateTolerated(Tokens.getTokenIDDisplayText(tokenId),
+            ALLOW_UNKNOWN_COOKIE_TOKEN_STATE);
+        return null;
       }
     }
     return expires;
@@ -295,8 +331,35 @@ public abstract class AbstractJWTFilter implements Filter {
    * {@link UnknownTokenException} (a spurious 401), rather than simply resolving to no metadata.
    */
   private TokenMetadata getTokenMetadata(final String tokenId) throws UnknownTokenException {
-    return (tokenStateService == null || tokenId == null || tokenId.isEmpty())
-        ? null : tokenStateService.getTokenMetadata(tokenId);
+    return getTokenMetadata(tokenId, false);
+  }
+
+  /**
+   * @param tolerateUnknownState when true, a token the state service has never heard of resolves to
+   *     {@code null} metadata instead of raising {@link UnknownTokenException}. Only ever true for
+   *     a cookie based JWT in a provider that opted in via
+   *     {@link #ALLOW_UNKNOWN_COOKIE_TOKEN_STATE}.
+   *
+   *     <p>Null metadata is already the "no server-managed state" case throughout validation:
+   *     {@link #isTokenEnabled} and {@link #isIdleTimeoutLimitNotExceeded} both pass and
+   *     {@link #markLastUsedAt} is a no-op. So a tolerated cookie is <em>not</em> subject to
+   *     idle-timeout enforcement, and cannot be disabled through server-managed metadata.
+   */
+  private TokenMetadata getTokenMetadata(final String tokenId, final boolean tolerateUnknownState)
+      throws UnknownTokenException {
+    if (tokenStateService == null || tokenId == null || tokenId.isEmpty()) {
+      return null;
+    }
+    try {
+      return tokenStateService.getTokenMetadata(tokenId);
+    } catch (UnknownTokenException e) {
+      if (!tolerateUnknownState) {
+        throw e;
+      }
+      log.unknownCookieTokenStateTolerated(Tokens.getTokenIDDisplayText(tokenId),
+          ALLOW_UNKNOWN_COOKIE_TOKEN_STATE);
+      return null;
+    }
   }
 
   /**
@@ -582,12 +645,36 @@ public abstract class AbstractJWTFilter implements Filter {
   protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
       final FilterChain chain, final JWT token)
       throws IOException, ServletException {
+    return validateToken(request, response, chain, token, false);
+  }
+
+  /**
+   * @param cookieAuth true when {@code token} was presented in a cookie rather than in the
+   *     {@code Authorization} header. Only a cookie may be exempted from a missing server-managed
+   *     token state record, and only when {@link #ALLOW_UNKNOWN_COOKIE_TOKEN_STATE} is enabled.
+   */
+  protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
+      final FilterChain chain, final JWT token, final boolean cookieAuth)
+      throws IOException, ServletException {
     return validateToken(request, response, chain, token,
-        (req, tok, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(tok, configuredAudiences)));
+        (req, tok, configuredAudiences) -> AudienceValidationResult.of(matchesConfiguredAudiences(tok, configuredAudiences)),
+        cookieAuth);
   }
 
   protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
       final FilterChain chain, final JWT token, final RequestAudienceValidator requestAudienceValidator)
+      throws IOException, ServletException {
+    return validateToken(request, response, chain, token, requestAudienceValidator, false);
+  }
+
+  /**
+   * @param cookieAuth true when {@code token} was presented in a cookie rather than in the
+   *     {@code Authorization} header. Only a cookie may be exempted from a missing server-managed
+   *     token state record, and only when {@link #ALLOW_UNKNOWN_COOKIE_TOKEN_STATE} is enabled.
+   */
+  protected boolean validateToken(final HttpServletRequest request, final HttpServletResponse response,
+      final FilterChain chain, final JWT token, final RequestAudienceValidator requestAudienceValidator,
+      final boolean cookieAuth)
       throws IOException, ServletException {
     final String tokenId = TokenUtils.getTokenId(token);
     final String displayableTokenId = Tokens.getTokenIDDisplayText(tokenId);
@@ -596,7 +683,7 @@ public abstract class AbstractJWTFilter implements Filter {
       // Issuer in the static trusted list: full validation using the provider-configured
       // PEM/JWKS/instance-key chain. An empty set signals "use verifyTokenSignature()".
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, Set.of(), requestAudienceValidator);
+          displayableToken, displayableTokenId, Set.of(), requestAudienceValidator, cookieAuth);
     }
     // For issuers not in the static list, subclasses may resolve JWKS for a runtime-registered issuer.
     // An empty result means "not applicable for this request" and the token is rejected.
@@ -604,7 +691,7 @@ public abstract class AbstractJWTFilter implements Filter {
     final Set<URI> registeredIssuerJwks = resolveRegisteredIssuerJwks(token.getIssuer(), request);
     if (!registeredIssuerJwks.isEmpty()) {
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, registeredIssuerJwks, requestAudienceValidator);
+          displayableToken, displayableTokenId, registeredIssuerJwks, requestAudienceValidator, cookieAuth);
     }
     handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
     return false;
@@ -639,19 +726,24 @@ public abstract class AbstractJWTFilter implements Filter {
    *     JWKS URIs (resolved for the issuer from the runtime registry); if empty,
    *     {@link #verifyTokenSignature(JWT)} is used instead (provider-configured PEM / JWKS /
    *     instance-key chain).
+   * @param cookieAuth true when the token was presented in a cookie; see
+   *     {@link #ALLOW_UNKNOWN_COOKIE_TOKEN_STATE}.
    */
   private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
       final JWT token, final String tokenId, final String displayableToken,
       final String displayableTokenId, final Set<URI> registeredIssuerJwks,
-      final RequestAudienceValidator requestAudienceValidator)
+      final RequestAudienceValidator requestAudienceValidator, final boolean cookieAuth)
       throws IOException, ServletException {
     try {
-      if (tokenIsStillValid(token)) {
+      // A missing server-managed state record is tolerated only for a cookie, and only when the
+      // provider opted in.
+      final boolean tolerateUnknownState = cookieAuth && allowUnknownCookieTokenState;
+      if (tokenIsStillValid(token, tolerateUnknownState)) {
         final AudienceValidationResult audienceValidationResult = validateAudience(request, token, requestAudienceValidator);
         if (audienceValidationResult.isValid()) {
           Date nbf = token.getNotBeforeDate();
           if (nbf == null || new Date().after(nbf)) {
-            final TokenMetadata tokenMetadata = getTokenMetadata(tokenId);
+            final TokenMetadata tokenMetadata = getTokenMetadata(tokenId, tolerateUnknownState);
             if (isTokenEnabled(tokenMetadata)) {
               if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
                 final boolean sigOk = registeredIssuerJwks.isEmpty()

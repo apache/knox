@@ -48,6 +48,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -155,6 +156,65 @@ public class CommonJWTFilterTest {
     doTestIsStillValid(tss);
   }
 
+  /*
+   * KNOX-3501: with tolerateUnknownState set (a cookie in a provider that opted in via
+   * ALLOW_UNKNOWN_COOKIE_TOKEN_STATE), a token the state service has never heard of resolves to
+   * "no server-managed expiration" so the caller can fall back to the token's own exp claim,
+   * instead of raising UnknownTokenException the way testIsStillValidUnknownToken asserts.
+   */
+  @Test
+  public void testIsStillValidUnknownTokenTolerated() throws Exception {
+    assertTrue("Expected an unknown token to fall back to its own (future) exp claim.",
+        doTestIsStillValid(unknownTokenStateService(), true));
+  }
+
+  @Test
+  public void testIsStillValidUnknownTokenToleratedStillHonoursJwtExpiry() throws Exception {
+    assertFalse("Expected an unknown token with an elapsed exp claim to be invalid.",
+        doTestIsStillValid(unknownTokenStateService(), true, System.currentTimeMillis() - 300000));
+  }
+
+  /*
+   * The tokenId overload is the one the passcode path uses; it must keep rejecting an unknown
+   * token. (The supplied KNOX-3501 patch broke its only call site outright.)
+   */
+  @Test(expected = UnknownTokenException.class)
+  public void testIsStillValidByTokenIdUnknownToken() throws Exception {
+    final TokenStateService tss = unknownTokenStateService();
+    setTokenStateService(tss);
+
+    final Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", String.class);
+    m.setAccessible(true);
+    invokeUnwrapped(m, UUID.randomUUID().toString());
+  }
+
+  @Test
+  public void testIsStillValidByTokenId() throws Exception {
+    final long expiration = System.currentTimeMillis() + 300000;
+    final TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tss.getTokenExpiration(anyObject(String.class))).andReturn(expiration).anyTimes();
+    EasyMock.replay(tss);
+    setTokenStateService(tss);
+
+    final Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", String.class);
+    m.setAccessible(true);
+    assertTrue("Expected the token to be valid because it has not yet expired.",
+        (Boolean) invokeUnwrapped(m, UUID.randomUUID().toString()));
+  }
+
+  private TokenStateService unknownTokenStateService() throws Exception {
+    final TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+    final String tokenId = UUID.randomUUID().toString();
+    EasyMock.expect(tss.getTokenExpiration(anyObject(JWT.class)))
+            .andThrow(new UnknownTokenException(tokenId))
+            .anyTimes();
+    EasyMock.expect(tss.getTokenExpiration(anyObject(String.class)))
+            .andThrow(new UnknownTokenException(tokenId))
+            .anyTimes();
+    EasyMock.replay(tss);
+    return tss;
+  }
+
   @Test
   public void testUnauthenticatedList() throws Exception {
     HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
@@ -204,6 +264,39 @@ public class CommonJWTFilterTest {
   }
 
   private boolean doTestIsStillValid(final TokenStateService tss) throws Exception {
+    setTokenStateService(tss);
+
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", JWT.class);
+    m.setAccessible(true);
+    return (Boolean) invokeUnwrapped(m, mockJWT(null));
+  }
+
+  /** As {@link #doTestIsStillValid(TokenStateService)}, but for the tolerateUnknownState overload. */
+  private boolean doTestIsStillValid(final TokenStateService tss, final boolean tolerateUnknownState)
+      throws Exception {
+    return doTestIsStillValid(tss, tolerateUnknownState, System.currentTimeMillis() + 300000);
+  }
+
+  private boolean doTestIsStillValid(final TokenStateService tss, final boolean tolerateUnknownState,
+                                     final long jwtExpiration) throws Exception {
+    setTokenStateService(tss);
+
+    Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", JWT.class, boolean.class);
+    m.setAccessible(true);
+    return (Boolean) invokeUnwrapped(m, mockJWT(new Date(jwtExpiration)), tolerateUnknownState);
+  }
+
+  private JWT mockJWT(final Date expires) {
+    JWT jwt = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwt.getClaim(JWTToken.KNOX_ID_CLAIM)).andReturn(UUID.randomUUID().toString()).anyTimes();
+    if (expires != null) {
+      EasyMock.expect(jwt.getExpiresDate()).andReturn(expires).anyTimes();
+    }
+    EasyMock.replay(jwt);
+    return jwt;
+  }
+
+  private void setTokenStateService(final TokenStateService tss) throws Exception {
     GatewayConfig gwConf = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gwConf.isServerManagedTokenStateEnabled()).andReturn(true).anyTimes();
     EasyMock.replay(gwConf);
@@ -212,18 +305,15 @@ public class CommonJWTFilterTest {
     EasyMock.expect(sc.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gwConf).anyTimes();
     EasyMock.replay(sc);
 
-    JWT jwt = EasyMock.createNiceMock(JWT.class);
-    EasyMock.expect(jwt.getClaim(JWTToken.KNOX_ID_CLAIM)).andReturn(UUID.randomUUID().toString()).anyTimes();
-    EasyMock.replay(jwt);
-
     Field tokenStateServiceField = AbstractJWTFilter.class.getDeclaredField("tokenStateService");
     tokenStateServiceField.setAccessible(true);
     tokenStateServiceField.set(handler, tss);
+  }
 
-    Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", JWT.class);
-    m.setAccessible(true);
+  /** Invoke a private filter method, surfacing the real cause rather than the reflection wrapper. */
+  private Object invokeUnwrapped(final Method m, final Object... args) throws Exception {
     try {
-      return (Boolean) m.invoke(handler, jwt);
+      return m.invoke(handler, args);
     } catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
       if (cause instanceof Exception) {

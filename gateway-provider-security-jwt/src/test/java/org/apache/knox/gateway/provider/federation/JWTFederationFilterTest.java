@@ -57,11 +57,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.SignedJWT;
 
 public class JWTFederationFilterTest extends AbstractJWTFilterTest {
 
   private static final String TOKEN_QUERY_PARAM = "knoxtoken";
+  private static final String COOKIE_TOKEN_ID = "f0b0e2cc-5f1f-4a27-9f05-04b1ac1f6d41";
+  private static final String COOKIE_SUBJECT = "bob";
 
   @Before
   public void setUp() {
@@ -232,6 +235,147 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
           SubjectUtils.getAuthToken(chain.subject));
     } else {
       Assert.assertFalse(chain.doFilterCalled);
+    }
+  }
+
+  /*
+   * KNOX-3501: a hadoop-jwt cookie whose token has no server-managed state record must still be
+   * rejected by default -- "no state" is indistinguishable from "revoked", so tolerating it is an
+   * explicit opt-in (AbstractJWTFilter.ALLOW_UNKNOWN_COOKIE_TOKEN_STATE).
+   */
+  @Test
+  public void testCookieAuthUnknownTokenStateRejectedByDefault() throws Exception {
+    assertAuthWithServerManagedState(unknownTokenStateService(true), null, true,
+        validCookieJwt(), false);
+  }
+
+  @Test
+  public void testCookieAuthUnknownTokenStateAllowedWhenConfigured() throws Exception {
+    assertAuthWithServerManagedState(unknownTokenStateService(false), "true", true,
+        validCookieJwt(), true);
+  }
+
+  /*
+   * The metadata lookup that immediately follows the expiration lookup raises UnknownTokenException
+   * for the very same unknown token. Tolerating only the expiration lookup leaves the request
+   * failing for the reason the opt-in was supposed to excuse, so both must be tolerated together.
+   */
+  @Test
+  public void testCookieAuthUnknownTokenMetadataAllowedWhenConfigured() throws Exception {
+    assertAuthWithServerManagedState(unknownTokenStateService(true), "true", true,
+        validCookieJwt(), true);
+  }
+
+  /*
+   * The opt-in tolerates only the complete absence of state. A token the state service knows about
+   * and reports as expired is still rejected.
+   */
+  @Test
+  public void testCookieAuthKnownButExpiredTokenStateStillRejected() throws Exception {
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tokenStateService.getTokenExpiration(COOKIE_TOKEN_ID))
+        .andReturn(System.currentTimeMillis() - 60000L).anyTimes();
+    assertAuthWithServerManagedState(tokenStateService, "true", true, validCookieJwt(), false);
+  }
+
+  /*
+   * With state absent and tolerated, the cookie's lifecycle falls back to the token's own exp claim
+   * -- which must still be honoured.
+   */
+  @Test
+  public void testCookieAuthUnknownTokenStateStillHonoursJwtExpiry() throws Exception {
+    final SignedJWT expiredJwt = cookieJwt(new Date(System.currentTimeMillis() - 60000L));
+    assertAuthWithServerManagedState(unknownTokenStateService(true), "true", true, expiredJwt, false);
+  }
+
+  /*
+   * The opt-in is scoped to cookies. A JWT presented in the Authorization header is expected to be
+   * a Knox-managed token, so unknown state there stays a 401 even with the parameter enabled.
+   */
+  @Test
+  public void testBearerAuthUnknownTokenStateRejectedEvenWhenConfigured() throws Exception {
+    assertAuthWithServerManagedState(unknownTokenStateService(true), "true", false,
+        validCookieJwt(), false);
+  }
+
+  private SignedJWT validCookieJwt() throws Exception {
+    return cookieJwt(new Date(System.currentTimeMillis() + 60000L));
+  }
+
+  private SignedJWT cookieJwt(final Date expires) throws Exception {
+    return getJWT(JWT_DEFAULT_ISSUER, COOKIE_SUBJECT, "bar", expires, new Date(), privateKey,
+        JWSAlgorithm.RS256.getName(), COOKIE_TOKEN_ID);
+  }
+
+  /**
+   * A TokenStateService that has never heard of {@link #COOKIE_TOKEN_ID}, exactly as a real one
+   * behaves for a cookie minted by an issuer that does not record token state.
+   *
+   * @param unknownMetadataToo when false, only the expiration lookup raises; used to show that
+   *     tolerating that lookup alone is not sufficient.
+   */
+  private TokenStateService unknownTokenStateService(final boolean unknownMetadataToo) throws Exception {
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tokenStateService.getTokenExpiration(COOKIE_TOKEN_ID))
+        .andThrow(new UnknownTokenException(COOKIE_TOKEN_ID)).anyTimes();
+    if (unknownMetadataToo) {
+      EasyMock.expect(tokenStateService.getTokenMetadata(COOKIE_TOKEN_ID))
+          .andThrow(new UnknownTokenException(COOKIE_TOKEN_ID)).anyTimes();
+    }
+    return tokenStateService;
+  }
+
+  /**
+   * Drives the filter with server-managed token state enabled, presenting the JWT either in a
+   * hadoop-jwt cookie or in the Authorization header.
+   *
+   * @param allowUnknownCookieState value for ALLOW_UNKNOWN_COOKIE_TOKEN_STATE, or null to leave the
+   *     parameter absent (the default).
+   */
+  private void assertAuthWithServerManagedState(final TokenStateService tokenStateService,
+                                                final String allowUnknownCookieState,
+                                                final boolean useCookie,
+                                                final SignedJWT jwt,
+                                                final boolean expectAuthenticated) throws Exception {
+    final Properties properties = getProperties();
+    properties.put(TokenStateService.CONFIG_SERVER_MANAGED, "true");
+    if (useCookie) {
+      properties.put(JWTFederationFilter.KNOX_TOKEN_USE_COOKIE, "true");
+    }
+    if (allowUnknownCookieState != null) {
+      properties.put(AbstractJWTFilter.ALLOW_UNKNOWN_COOKIE_TOKEN_STATE, allowUnknownCookieState);
+    }
+    handler.init(new TestFilterConfig(properties, tokenStateService));
+    // init() re-reads the token service from the (mocked) GatewayServices that TestFilterConfig
+    // supplies whenever a TokenStateService is present, clobbering what setUp() installed.
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    if (useCookie) {
+      final Cookie cookie = EasyMock.createNiceMock(Cookie.class);
+      EasyMock.expect(cookie.getName()).andReturn(DEFAULT_SSO_COOKIE_NAME).anyTimes();
+      EasyMock.expect(cookie.getValue()).andReturn(jwt.serialize()).anyTimes();
+      EasyMock.replay(cookie);
+      EasyMock.expect(request.getCookies()).andReturn(new Cookie[] { cookie }).anyTimes();
+    } else {
+      setTokenOnRequest(request, jwt);
+    }
+
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    if (!expectAuthenticated) {
+      response.sendError(EasyMock.eq(HttpServletResponse.SC_UNAUTHORIZED), EasyMock.anyString());
+      EasyMock.expectLastCall().atLeastOnce();
+    }
+    EasyMock.replay(tokenStateService, request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    EasyMock.verify(response);
+    assertEquals(expectAuthenticated, chain.doFilterCalled);
+    if (expectAuthenticated) {
+      assertEquals(COOKIE_SUBJECT, chain.getSubject().getPrincipals().iterator().next().getName());
     }
   }
 
