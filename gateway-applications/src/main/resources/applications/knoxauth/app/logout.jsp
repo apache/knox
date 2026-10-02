@@ -16,10 +16,8 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.apache.knox.gateway.topology.Topology" %>
 <%@ page import="org.apache.knox.gateway.topology.Service" %>
-<%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
 <%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
 <%@ page import="org.apache.knox.gateway.config.GatewayConfig" %>
-<%@ page import="java.net.MalformedURLException" %>
 <%@ page import="org.apache.knox.gateway.util.Urls" %>
 <%@ page import="org.apache.commons.text.StringEscapeUtils" %>
 
@@ -57,6 +55,9 @@
 
     <%
         String originalUrl = request.getParameter("originalUrl");
+        if (originalUrl == null) {
+            originalUrl = "";
+        }
         originalUrl = originalUrl.replaceAll("&", "%26");
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
@@ -86,14 +87,7 @@
             }
         }
 
-        boolean validRedirect = false;
-        String origUrl = request.getParameter("originalUrl");
-        if (origUrl != null) {
-          validRedirect = RegExUtils.checkWhitelist(whitelist, origUrl);
-        }
-        if (validRedirect) {
-            validRedirect = Urls.isValidURL(originalUrl);
-        }
+        boolean validRedirect = Urls.isValidRedirect(originalUrl, whitelist);
         if (("1".equals(request.getParameter("returnToApp")))) {
           if (validRedirect) {
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);

@@ -14,10 +14,8 @@
 -->
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="java.net.MalformedURLException" %>
 <%@ page import="org.apache.knox.gateway.topology.Topology" %>
 <%@ page import="org.apache.knox.gateway.topology.Service" %>
-<%@ page import="org.apache.knox.gateway.util.RegExUtils" %>
 <%@ page import="org.apache.knox.gateway.util.Urls" %>
 <%@ page import="org.apache.knox.gateway.util.WhitelistUtils" %>
 <%@ page import="org.apache.commons.text.StringEscapeUtils" %>
@@ -41,42 +39,27 @@
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
     <%
-        boolean validRedirect = true;
         String originalUrl = request.getParameter("originalUrl");
         if (originalUrl == null) {
             originalUrl = "";
         }
-        try {
-          if (Urls.containsUserInfo(originalUrl)) {
-            validRedirect = false;
+        Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
+        String whitelist = null;
+        Collection services = topology.getServices();
+        for (Object service : services) {
+          Service svc = (Service)service;
+          if (svc.getRole().equals("KNOXSSO")) {
+            Map<String, String> params = svc.getParams();
+            whitelist = params.get("knoxsso.redirect.whitelist.regex");
           }
         }
-        catch (MalformedURLException ex) {
-          // if not a well formed URL then not a valid redirect
-          validRedirect = false;
-        }
-        if (validRedirect) {
-            validRedirect = Urls.isValidURL(originalUrl);
-        }
-        if (validRedirect) {
-	      Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
-          String whitelist = null;
-          Collection services = topology.getServices();
-          for (Object service : services) {
-            Service svc = (Service)service;
-            if (svc.getRole().equals("KNOXSSO")) {
-              Map<String, String> params = svc.getParams();
-              whitelist = params.get("knoxsso.redirect.whitelist.regex");
-            }
-          }
+        if (whitelist == null) {
+          whitelist = WhitelistUtils.getDispatchWhitelist(request);
           if (whitelist == null) {
-            whitelist = WhitelistUtils.getDispatchWhitelist(request);
-            if (whitelist == null) {
-              whitelist = "";
-            }
+            whitelist = "";
           }
-          validRedirect = RegExUtils.checkWhitelist(whitelist, originalUrl);
         }
+        boolean validRedirect = Urls.isValidRedirect(originalUrl, whitelist);
         if (validRedirect) {
     %>
     <script>

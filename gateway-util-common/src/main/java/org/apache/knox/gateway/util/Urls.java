@@ -96,6 +96,20 @@ public class Urls {
     }
   }
 
+  public static boolean isValidRedirect(String url, String whitelist) {
+    if (url == null || url.isEmpty() || whitelist == null) {
+      return false;
+    }
+    try {
+      if (containsUserInfo(url)) {
+        return false;
+      }
+    } catch (MalformedURLException e) {
+      return false;
+    }
+    return isValidURL(url) && RegExUtils.checkWhitelist(whitelist, url);
+  }
+
   /**
    * Compute the domain name from an URL.
    *
