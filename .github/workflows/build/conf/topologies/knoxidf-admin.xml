@@ -74,5 +74,9 @@
 
     <service>
         <role>KNOXIDF_ADMIN</role>
+        <param>
+            <name>knoxidf.allow.ip.literal.issuer.url</name>
+            <value>false</value>
+        </param>
     </service>
 </topology>

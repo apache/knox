@@ -88,6 +88,10 @@ SA_TOKEN_FILE = "/k3s/sa-token"
 # An issuer that is never registered, used to prove unregistered issuers are rejected.
 UNREGISTERED_ISSUER = "https://unregistered.example.com"
 
+# A bare-IP issuer URL (TEST-NET-3, RFC 5737). The knoxidf-admin topology sets
+# knoxidf.allow.ip.literal.issuer.url=false, so registering this must be rejected.
+IP_LITERAL_ISSUER = "https://203.0.113.5:6443"
+
 # The k3s ServiceAccount whose projected token the bootstrap exports (test-sa in namespace
 # test); this is the token's 'sub' and, on a delegation exchange, the actor recorded in act.sub.
 SA_SUBJECT = "system:serviceaccount:test:test-sa"
@@ -227,6 +231,15 @@ class TestK8sDelegation(unittest.TestCase):  # pylint: disable=too-many-instance
         response = self._exchange(token)
         self.assertEqual(response.status_code, 401, response.text)
         self.assertIn("invalid_request", response.text)
+
+    def test_ip_literal_issuer_registration_rejected(self):
+        """knoxidf-admin runs with knoxidf.allow.ip.literal.issuer.url=false, so a bare-IP
+        issuerUrl is refused at registration rather than failing later on JWKS discovery."""
+        response = self._register_issuer(IP_LITERAL_ISSUER)
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertIn("invalid_request", response.text)
+        # The rejection must keep it out of the registry.
+        self.assertNotIn(IP_LITERAL_ISSUER, self._issuer_urls())
 
     def test_issuer_lifecycle_and_token_exchange(self):
         """AC3/AC7/AC8/AC9: register, exchange a real token, reject an expired one, remove."""

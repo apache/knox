@@ -229,4 +229,23 @@ public class HttpUtilsTest {
     assertThat(isConnectionError(new RuntimeException()), is(false));
     assertThat(isConnectionError(new org.apache.http.conn.ConnectTimeoutException()), is(true));
   }
+
+  @Test
+  public void testIsIpLiteralHost() {
+    // IPv4 literals, with and without a port.
+    assertThat(HttpUtils.isIpLiteralHost("https://203.0.113.5:6443"), is(true));
+    assertThat(HttpUtils.isIpLiteralHost("https://10.0.0.1/.well-known/openid-configuration"), is(true));
+
+    // IPv6 literal: URI.getHost() returns it bracketed, which isUriInetAddress accepts.
+    assertThat(HttpUtils.isIpLiteralHost("https://[2001:db8::1]:6443"), is(true));
+
+    // DNS hostnames are not IP literals.
+    assertThat(HttpUtils.isIpLiteralHost("https://k3s:6443"), is(false));
+    assertThat(HttpUtils.isIpLiteralHost("https://issuer.example.com"), is(false));
+
+    // Null, host-less, and unparseable inputs are all false rather than throwing.
+    assertThat(HttpUtils.isIpLiteralHost(null), is(false));
+    assertThat(HttpUtils.isIpLiteralHost("not a uri"), is(false));
+    assertThat(HttpUtils.isIpLiteralHost("mailto:admin@example.com"), is(false));
+  }
 }
