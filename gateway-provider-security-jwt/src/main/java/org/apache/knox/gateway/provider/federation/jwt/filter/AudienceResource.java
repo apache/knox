@@ -209,4 +209,125 @@ public record AudienceResource(String host, int effectivePort, String namespace,
     }
     return Math.min(idxA, idxB);
   }
+
+  /**
+   * The pieces of a single "aud" claim entry that carries the alternate, DNS-shaped destination
+   * URL: {@code https://<service>[.<namespace>[.svc[.<cluster-domain>]]][:port][/resource-path]}.
+   *
+   * <p>{@code namespace} is {@code null} when the host is a single label (service name only); a
+   * namespace-less host has no destination-namespace information of its own, and it is entirely
+   * up to the caller matching this result to decide what, if anything, it is compared against.
+   *
+   * <p>The resource path here is never prefix-searched the way {@link #parse(String, String)}'s
+   * is: a DNS-form entry has nowhere else for namespace and service-name to live, so the whole
+   * path -- after tidying -- is the resource path.
+   */
+  record DnsAudienceResource(String serviceName, String namespace, String resourcePathRaw,
+      String resourcePathEncoded) {
+  }
+
+  /**
+   * Parses a single {@code aud} claim entry as the alternate, DNS-shaped destination URL whose
+   * host is {@code <service>.<namespace>.svc.<cluster-domain>}, truncated at a label boundary
+   * from the right -- the same shortening an ordinary DNS resolver search path allows. Returns
+   * {@link Optional#empty()} for any entry that is not a well-formed URL of that shape --
+   * including a {@code null} or blank entry, a non-{@code https} scheme, a missing or
+   * userinfo-carrying authority, a host with a trailing {@code "."}, an empty host label, a host
+   * of three or more labels whose third label is not literally {@code "svc"}, a host whose labels
+   * past {@code "svc"} are not a label-boundary prefix of {@code clusterDomain} taken from its
+   * left, or a resource path that is not already in RFC 3986 remove_dot_segments normal form.
+   *
+   * <p>The port, when present, is parsed only so that it does not break parsing of the rest of
+   * the authority; it plays no further part in the result and is not retained, since pinning it
+   * breaks behind a mesh or sidecar that rewrites the port in flight.
+   *
+   * <p>A {@code ?query} or {@code #fragment} on the entry is discarded before the path is parsed,
+   * exactly as in {@link #parse(String, String)}.
+   */
+  static Optional<DnsAudienceResource> parseDnsForm(String audEntry, String clusterDomain) {
+    if (audEntry == null) {
+      return Optional.empty();
+    }
+    final String entry = audEntry.trim();
+    if (entry.isEmpty()) {
+      return Optional.empty();
+    }
+
+    final int schemeSep = entry.indexOf("://");
+    if (schemeSep <= 0 || !"https".equalsIgnoreCase(entry.substring(0, schemeSep))) {
+      return Optional.empty();
+    }
+
+    final int pathStart = entry.indexOf('/', schemeSep + 3);
+    final String authorityPart;
+    String rawPath;
+    if (pathStart < 0) {
+      authorityPart = entry;
+      rawPath = "/";
+    } else {
+      authorityPart = entry.substring(0, pathStart);
+      rawPath = entry.substring(pathStart);
+    }
+    final int queryOrFragment = indexOfFirst(rawPath, 0, '?', '#');
+    if (queryOrFragment >= 0) {
+      rawPath = rawPath.substring(0, queryOrFragment);
+    }
+
+    // authorityPart comes from entry.substring(...), which never returns null, so
+    // URISyntaxException is the only exception new URI(String) can throw here.
+    final URI uri;
+    try {
+      uri = new URI(authorityPart);
+    } catch (URISyntaxException e) {
+      return Optional.empty();
+    }
+    if (uri.getUserInfo() != null || uri.getHost() == null) {
+      return Optional.empty();
+    }
+    final String rawHost = uri.getHost();
+    if (rawHost.endsWith(".")) {
+      return Optional.empty();
+    }
+    final String host = rawHost.toLowerCase(Locale.ROOT);
+    final String[] labels = host.split("\\.", -1);
+    for (final String label : labels) {
+      if (label.isEmpty()) {
+        return Optional.empty();
+      }
+    }
+
+    final String serviceName = labels[0];
+    final String namespace;
+    if (labels.length == 1) {
+      namespace = null;
+    } else {
+      namespace = labels[1];
+      if (labels.length >= 3) {
+        if (!"svc".equals(labels[2])) {
+          return Optional.empty();
+        }
+        final String[] clusterDomainLabels = clusterDomain.toLowerCase(Locale.ROOT).split("\\.", -1);
+        final int remainderLength = labels.length - 3;
+        if (remainderLength > clusterDomainLabels.length) {
+          return Optional.empty();
+        }
+        for (int i = 0; i < remainderLength; i++) {
+          if (!labels[3 + i].equals(clusterDomainLabels[i])) {
+            return Optional.empty();
+          }
+        }
+      }
+    }
+
+    final Optional<String> tidied = normalizeAndTidy(rawPath);
+    if (tidied.isEmpty()) {
+      return Optional.empty();
+    }
+    final String resourcePathRaw = tidied.get();
+    final String resourcePathEncoded = PERCENT_ENCODED_OCTET.matcher(resourcePathRaw).find()
+        ? resourcePathRaw
+        : URIUtil.encodePath(resourcePathRaw);
+
+    return Optional.of(new DnsAudienceResource(serviceName, namespace, resourcePathRaw, resourcePathEncoded));
+  }
 }

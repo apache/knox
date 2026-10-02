@@ -25,14 +25,16 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.knox.gateway.services.security.token.impl.JWT;
-import org.apache.knox.gateway.services.security.token.impl.JWTToken;
-import org.easymock.EasyMock;
 import org.junit.Test;
+
+import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudienceTestSupport.delegationToken;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudienceTestSupport.filterConfig;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudienceTestSupport.nonDelegationToken;
+import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudienceTestSupport.requestWithHeaders;
 
 public class K8sDestinationAudienceValidatorTest {
 
@@ -46,40 +48,6 @@ public class K8sDestinationAudienceValidatorTest {
     final K8sDestinationAudienceValidator validator = new K8sDestinationAudienceValidator();
     validator.init(filterConfig(params));
     return validator;
-  }
-
-  private static FilterConfig filterConfig(final Map<String, String> params) {
-    final FilterConfig filterConfig = EasyMock.createNiceMock(FilterConfig.class);
-    for (final Map.Entry<String, String> entry : params.entrySet()) {
-      EasyMock.expect(filterConfig.getInitParameter(entry.getKey())).andReturn(entry.getValue()).anyTimes();
-    }
-    EasyMock.replay(filterConfig);
-    return filterConfig;
-  }
-
-  private static HttpServletRequest requestWithHeaders(final Map<String, String> headers) {
-    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
-    for (final Map.Entry<String, String> entry : headers.entrySet()) {
-      EasyMock.expect(request.getHeader(entry.getKey())).andReturn(entry.getValue()).anyTimes();
-    }
-    EasyMock.replay(request);
-    return request;
-  }
-
-  private static JWT delegationToken(final String... audiences) {
-    final JWT token = EasyMock.createNiceMock(JWT.class);
-    EasyMock.expect(token.getClaimAsObject(JWTToken.ACT_CLAIM)).andReturn("delegate").anyTimes();
-    EasyMock.expect(token.getAudienceClaims()).andReturn(audiences).anyTimes();
-    EasyMock.replay(token);
-    return token;
-  }
-
-  private static JWT nonDelegationToken(final String... audiences) {
-    final JWT token = EasyMock.createNiceMock(JWT.class);
-    EasyMock.expect(token.getClaimAsObject(JWTToken.ACT_CLAIM)).andReturn(null).anyTimes();
-    EasyMock.expect(token.getAudienceClaims()).andReturn(audiences).anyTimes();
-    EasyMock.replay(token);
-    return token;
   }
 
   private static Map<String, String> baseParamsWithAllThreeHeaders() {
@@ -158,11 +126,58 @@ public class K8sDestinationAudienceValidatorTest {
     assertThrows(ServletException.class, () -> init(params));
   }
 
+  // ---- source SPIFFE id header does not count toward the "at least one of three" rule ----
+
+  @Test
+  public void testInitThrowsWhenOnlySourceSpiffeIdHeaderConfigured() {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
+    final ServletException e = assertThrows(ServletException.class, () -> init(params));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.PATH_HEADER_PARAM));
+  }
+
+  // ---- enforce.act.sub.service-account.matches.source.spiffeid (D8) ----
+
+  @Test
+  public void testInitThrowsWhenEnforceActSubMatchesSourceSpiffeIdButSourceHeaderUnconfigured() {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
+    params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
+    final ServletException e = assertThrows(ServletException.class, () -> init(params));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM));
+    assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM));
+  }
+
+  @Test
+  public void testInitSucceedsWhenEnforceActSubMatchesSourceSpiffeIdAndSourceHeaderConfigured() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
+    params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
+    params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    init(params);
+  }
+
+  @Test
+  public void testInitSucceedsWithEnforceActSubMatchesSourceSpiffeIdLeftAtDefaultAndNoSourceHeaderConfigured()
+      throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
+    init(params);
+  }
+
   // ---- no-act-claim fallthrough ----
 
   @Test
   public void testNoActClaimFallsThroughToMatchesConfiguredAudiences() throws Exception {
-    final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
+    final Map<String, String> params = baseParamsWithAllThreeHeaders();
+    params.put(K8sDestinationAudienceValidator.VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM, "false");
+    final K8sDestinationAudienceValidator validator = init(params);
     final JWT token = nonDelegationToken("configured-audience");
     final HttpServletRequest request = requestWithHeaders(new HashMap<>());
     final AudienceValidationResult result =
@@ -172,8 +187,20 @@ public class K8sDestinationAudienceValidatorTest {
 
   @Test
   public void testNoActClaimFallsThroughAndFailsWhenNotInConfiguredList() throws Exception {
-    final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
+    final Map<String, String> params = baseParamsWithAllThreeHeaders();
+    params.put(K8sDestinationAudienceValidator.VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM, "false");
+    final K8sDestinationAudienceValidator validator = init(params);
     final JWT token = nonDelegationToken("some-other-audience");
+    final HttpServletRequest request = requestWithHeaders(new HashMap<>());
+    final AudienceValidationResult result =
+        validator.validate(request, token, java.util.Collections.singletonList("configured-audience"));
+    assertFalse(result.isValid());
+  }
+
+  @Test
+  public void testNoActClaimValidatedAgainstDestinationByDefault() throws Exception {
+    final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
+    final JWT token = nonDelegationToken("configured-audience");
     final HttpServletRequest request = requestWithHeaders(new HashMap<>());
     final AudienceValidationResult result =
         validator.validate(request, token, java.util.Collections.singletonList("configured-audience"));
