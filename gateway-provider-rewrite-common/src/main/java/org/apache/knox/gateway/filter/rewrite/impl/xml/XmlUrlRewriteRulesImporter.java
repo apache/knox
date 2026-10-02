@@ -20,18 +20,33 @@ package org.apache.knox.gateway.filter.rewrite.impl.xml;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.commons.xml.secure.SecureSAXParserFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.knox.gateway.filter.rewrite.spi.UrlRewriteRulesImporter;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.Reader;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
 public class XmlUrlRewriteRulesImporter implements UrlRewriteRulesImporter {
   private static final DigesterLoader loader = newLoader( new XmlRewriteRulesDigester() );
-  private static final Digester digester = loader.newDigester( new ExtendedBaseRules() );
+  private static final Digester digester = newDigester();
+
+  private static Digester newDigester() {
+    try {
+      Digester digester = loader.newDigester( SecureSAXParserFactory.newInstance().newSAXParser().getXMLReader(), new ExtendedBaseRules() );
+      // Digester opens any absolute system id by itself; a resolver that returns null leaves external
+      // references to Commons Secure XML, which ignores them.
+      digester.setEntityResolver( ( publicId, systemId ) -> null );
+      return digester;
+    } catch( ParserConfigurationException | SAXException e ) {
+      // Only a misconfigured classpath could prevent creating a SAX parser.
+      throw new IllegalStateException( e );
+    }
+  }
 
   @Override
   public String getFormat() {
