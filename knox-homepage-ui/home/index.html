@@ -21,6 +21,82 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 
+    <script>
+        /* Knox Homepage per-instance tile hostname patch.
+         * When multiple instances of the same service are configured,
+         * appends short hostname to tile labels for disambiguation.
+         * Must load before Zone.js to intercept XMLHttpRequest. */
+        (function(){
+          "use strict";
+          var hostMap=[];
+          var patcherActive=false;
+          function extractHostname(url){
+            if(!url)return null;
+            var idx=url.indexOf("host=");
+            if(idx<0)return null;
+            var raw=url.substring(idx+5);
+            var amp=raw.indexOf("&");
+            if(amp>0)raw=raw.substring(0,amp);
+            try{raw=decodeURIComponent(raw);}catch(e){}
+            var m=raw.match(/\/\/([^:\/]+)/);
+            return m?m[1].split(".")[0]:null;
+          }
+          function processTopologyData(data){
+            if(!data)return;
+            var services=[];
+            if(data.topologyInformations){
+              var tis=data.topologyInformations.topologyInformation||data.topologyInformations;
+              if(Array.isArray(tis)){tis.forEach(function(ti){
+                if(ti.uiServices&&ti.uiServices.service){(Array.isArray(ti.uiServices.service)?ti.uiServices.service:[ti.uiServices.service]).forEach(function(s){services.push(s);});}
+                if(ti.apiServices&&ti.apiServices.service){(Array.isArray(ti.apiServices.service)?ti.apiServices.service:[ti.apiServices.service]).forEach(function(s){services.push(s);});}
+              });}
+            }else if(Array.isArray(data)){services=data;}
+            else if(data.services){services=data.services;}
+            services.forEach(function(svc){
+              if(!svc||!svc.serviceUrls||!svc.shortDesc)return;
+              var urls=Array.isArray(svc.serviceUrls)?svc.serviceUrls:[svc.serviceUrls];
+              for(var i=0;i<urls.length;i++){var h=extractHostname(urls[i]);if(h){hostMap.push({shortDesc:svc.shortDesc.trim(),hostname:h,used:false});break;}}
+            });
+            if(hostMap.length>0&&!patcherActive){patcherActive=true;startDomPatcher();}
+          }
+          function patchTiles(){
+            var footers=document.querySelectorAll("mat-grid-tile-footer h3");
+            if(footers.length===0)return;
+            footers.forEach(function(h3){
+              if(h3.getAttribute("data-knox-instance-host"))return;
+              var text=h3.textContent.trim();
+              for(var i=0;i<hostMap.length;i++){var entry=hostMap[i];if(entry.used)continue;var sd=entry.shortDesc;
+                if(text===sd||text===sd+" ("+countByShortDesc(sd)+")"){h3.textContent=sd+" ("+entry.hostname+")";h3.setAttribute("data-knox-instance-host","1");entry.used=true;break;}}
+            });
+          }
+          function countByShortDesc(sd){var c=0;hostMap.forEach(function(e){if(e.shortDesc===sd)c++;});return c;}
+          function startDomPatcher(){
+            patchTiles();
+            var obs=new MutationObserver(function(){patchTiles();});
+            obs.observe(document.body||document.documentElement,{childList:true,subtree:true});
+            var t=setInterval(patchTiles,1000);
+            setTimeout(function(){clearInterval(t);obs.disconnect();patchTiles();},30000);
+          }
+          var _open=XMLHttpRequest.prototype.open;
+          var _send=XMLHttpRequest.prototype.send;
+          XMLHttpRequest.prototype.open=function(method,url){this._knoxPatchUrl=url;return _open.apply(this,arguments);};
+          XMLHttpRequest.prototype.send=function(){
+            var xhr=this;var url=xhr._knoxPatchUrl||"";
+            if(url.indexOf("api/v1/metadata")>-1||url.indexOf("topologies")>-1){
+              xhr.addEventListener("loadend",function(){
+                if(xhr.status!==200)return;
+                try{var data=null;
+                  if(xhr.responseType===""||xhr.responseType==="text"){data=JSON.parse(xhr.responseText);}
+                  else if(xhr.responseType==="json"){data=xhr.response;}
+                  if(data)processTopologyData(data);
+                }catch(e){}
+              });
+            }
+            return _send.apply(this,arguments);
+          };
+        })();
+    </script>
+
 	<script>
 	  window['base-href'] = window.location.pathname;
 	</script>
