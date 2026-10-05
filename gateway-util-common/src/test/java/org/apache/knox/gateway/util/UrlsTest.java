@@ -33,6 +33,8 @@ public class UrlsTest {
   private static final String LOGOUT_LOCAL_ORIGINAL_URL = "https://localhost:8443/gateway/homepage/home?profile=token";
   private static final String LOGOUT_ORIGINAL_URL_WITH_PARAMETERS = "https://knoxhost.site:8443/gateway/homepage/session/api/v1/sessioninfo?logoutPageProfile=token&logoutPageTopologies=cdp-proxy-token";
   private static final String LOGOUT_ORIGINAL_URL_WITH_PARAMETERS_ENCODED = "https://knoxhost.site:8443/gateway/homepage/session/api/v1/sessioninfo%3FlogoutPageProfile=token%26logoutPageTopologies=cdp-proxy-token";
+  private static final String LOCALHOST_WHITELIST = "^https?://localhost(:[0-9]+)?(/.*)?$";
+  private static final String DERIVED_DEFAULT_WHITELIST = "^\\/.*$;^https?:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+\\/?.*$";
 
   /*
    * Domain name creation follows the following algorithm:
@@ -119,6 +121,34 @@ public class UrlsTest {
     assertTrue(Urls.isValidURL(LOGOUT_LOCAL_ORIGINAL_URL));
     assertTrue(Urls.isValidURL(LOGOUT_ORIGINAL_URL_WITH_PARAMETERS));
     assertTrue(Urls.isValidURL(LOGOUT_ORIGINAL_URL_WITH_PARAMETERS_ENCODED));
+  }
+
+  @Test
+  public void testValidRedirect() throws Exception {
+    assertTrue(Urls.isValidRedirect(VALID_LOCAL_ORIGINAL_URL, LOCALHOST_WHITELIST));
+    assertTrue(Urls.isValidRedirect(LOGOUT_LOCAL_ORIGINAL_URL, LOCALHOST_WHITELIST));
+
+    assertFalse(Urls.isValidRedirect("https://malicious.link/phish", LOCALHOST_WHITELIST));
+    assertFalse(Urls.isValidRedirect(INVALID_ORIGINAL_URL, LOCALHOST_WHITELIST));
+    assertFalse(Urls.isValidRedirect("/gateway/homepage/home", LOCALHOST_WHITELIST));
+  }
+
+  @Test
+  public void testValidRedirectRejectsUserInfo() throws Exception {
+    assertFalse(Urls.isValidRedirect("https://localhost:8443@malicious.link/", LOCALHOST_WHITELIST));
+    assertFalse(Urls.isValidRedirect("https://localhost:8443%2f@malicious.link/", LOCALHOST_WHITELIST));
+    assertFalse(Urls.isValidRedirect("https://localhost:8443\\@malicious.link/", LOCALHOST_WHITELIST));
+
+    assertTrue(RegExUtils.checkWhitelist(DERIVED_DEFAULT_WHITELIST, "https://localhost:8443@malicious.link/"));
+    assertFalse(Urls.isValidRedirect("https://localhost:8443@malicious.link/", DERIVED_DEFAULT_WHITELIST));
+  }
+
+  @Test
+  public void testValidRedirectWithMissingInput() throws Exception {
+    assertFalse(Urls.isValidRedirect(null, LOCALHOST_WHITELIST));
+    assertFalse(Urls.isValidRedirect("", LOCALHOST_WHITELIST));
+    assertFalse(Urls.isValidRedirect(VALID_LOCAL_ORIGINAL_URL, null));
+    assertFalse(Urls.isValidRedirect(VALID_LOCAL_ORIGINAL_URL, ""));
   }
 
 }
