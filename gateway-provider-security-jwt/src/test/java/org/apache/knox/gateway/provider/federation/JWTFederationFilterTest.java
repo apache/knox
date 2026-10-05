@@ -289,6 +289,33 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
   }
 
   /*
+   * KNOX-3501: tolerating absent state falls back to the token's own exp claim, so there must BE
+   * one. A cookie with no exp claim has no expiry from either source and would authenticate
+   * forever, which is precisely what the fallback is supposed to bound. It must be rejected.
+   */
+  @Test
+  public void testCookieAuthUnknownTokenStateRejectedWhenJwtHasNoExpiry() throws Exception {
+    assertAuthWithServerManagedState(unknownTokenStateService(true), "true", true,
+        cookieJwt(null), false);
+  }
+
+  /*
+   * The expiration and metadata records live in separate tables written by separate calls, so the
+   * expiration lookup can succeed while the metadata lookup raises. That token demonstrably HAS
+   * server-managed state, so the opt-in -- which excuses only the complete absence of state --
+   * must not suppress the enabled/disabled gate for it.
+   */
+  @Test
+  public void testCookieAuthKnownStateButUnknownMetadataStillRejected() throws Exception {
+    final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
+    EasyMock.expect(tokenStateService.getTokenExpiration(COOKIE_TOKEN_ID))
+        .andReturn(System.currentTimeMillis() + 60000L).anyTimes();
+    EasyMock.expect(tokenStateService.getTokenMetadata(COOKIE_TOKEN_ID))
+        .andThrow(new UnknownTokenException(COOKIE_TOKEN_ID)).anyTimes();
+    assertAuthWithServerManagedState(tokenStateService, "true", true, validCookieJwt(), false);
+  }
+
+  /*
    * The opt-in is scoped to cookies. A JWT presented in the Authorization header is expected to be
    * a Knox-managed token, so unknown state there stays a 401 even with the parameter enabled.
    */
