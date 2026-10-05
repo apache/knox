@@ -935,7 +935,7 @@ public class DefaultKeystoreServiceTest {
     KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
     X509Certificate cert = X509CertificateUtil.generateCertificate(
-        String.format(Locale.ROOT, "CN=%s,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", this.getClass().getName()),
+        String.format(Locale.ROOT, "CN=%s,OU=Test,O=Hadoop,L=Test,ST=Test,C=US", this.getClass().getSimpleName()),
         keyPair,
         365,
         config.getSelfSigningCertificateAlgorithm());
