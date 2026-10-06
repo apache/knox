@@ -18,7 +18,8 @@
 /**
  * Knox Authentication Theme Configuration
  *
- * This file configures the default theme for the Knox authentication page.
+ * This file configures the default theme for Knox authentication pages
+ * (login.html and logout.jsp).
  *
  * DEPLOYMENT CONFIGURATION:
  *

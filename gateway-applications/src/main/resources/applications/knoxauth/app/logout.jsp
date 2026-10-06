@@ -25,6 +25,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+        <title>KnoxSSO - Session Termination</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
@@ -39,9 +40,24 @@
         <link href="styles/bootstrap-icons.min.css" media="all" rel="stylesheet" type="text/css">
         <link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
+        <script type="text/javascript" src="theme-config.js"></script>
+        <script type="text/javascript" src="js/knox-theme.js"></script>
+
         <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
 
         <script type="text/javascript" src="js/knoxauth.js"></script>
+
+        <script type="text/javascript">
+           $(function() {
+                var updateBoxPosition = function() {
+                    $('#signout-container').css({
+                        'margin-top' : ($(window).height() - $('#signout-container').height()) / 2
+                    });
+                };
+                $(window).resize(updateBoxPosition);
+                setTimeout(updateBoxPosition, 50);
+            });
+        </script>
 
        <%
        final boolean autoGlobalLogout = "1".equals(request.getParameter("autoGlobalLogout"));
@@ -167,44 +183,47 @@
         <%
             if (validRedirect) {
         %>
-          <h1 style="color: gray;">Session Termination</h1>
-          <div style="background: dark-gray;" class="l2-logo">
-              <p style="color: white;display: block">
+          <div class="signout-content l2-logo">
+              <h1 class="signout-title">Session Termination</h1>
+              <p class="signout-message">
                 Your session has timed out or you have attempted to logout of an application
                 that is participating in SSO. You may establish a new session by returning to
                 the application. If your previously established SSO session is still valid then
                 you will likely be automatically logged into your application. Otherwise, you
                 will be required to login again.
-                <br><a href="?returnToApp=1&originalUrl=<%= StringEscapeUtils.escapeHtml4(originalUrl) %>" >Return to Application</a>
+              </p>
+              <p class="signout-actions">
+                <a href="?returnToApp=1&amp;originalUrl=<%= StringEscapeUtils.escapeHtml4(originalUrl) %>">Return to Application</a>
               </p>
         <%
             if (globalLogoutPageURL != null && !globalLogoutPageURL.isEmpty()) {
         %>
-              <form method="POST" action="#" id="globalLogoutForm">
-                <div>
+              <form method="POST" action="#" id="globalLogoutForm" class="signout-global-form">
+                <p class="signout-global-message">
                 If you would like to logout of the Knox SSO session, you need to do so from
                 the configured SSO provider. Subsequently, authentication will be required to access
                 any SSO protected resources. Note that this may or may not invalidate any previously
                 established application sessions. Application sessions are subject to their application
                 specific session cookies and timeouts.
+                </p>
                 <input type="hidden" name="globalLogout" value="1" id="globalLogoutUrl"/>
-                <button type="submit" style="background: none!important; border: none; padding: 0!important; color: #06A; text-decoration: none; cursor: pointer;">Global Logout</button>
+                <button type="submit" class="signout-global-logout">Global Logout</button>
               </form>
-          </div>
         <%
             }
+        %>
+          </div>
+        <%
         }
         else {
         %>
-        <div style="background: gray;text-color: white;text-align:center;">
-          <h1 style="color: red;">ERROR</h1>
-          <div style="background: white;" class="l-logo">
-          </div>
-          <p style="color: white;display: block">Invalid Redirect: Possible Phishing Attempt</p>
+        <div class="signout-content signout-error l2-logo">
+          <h1 class="signout-title signout-error-title">ERROR</h1>
+          <p class="signout-message signout-error-message">Invalid Redirect: Possible Phishing Attempt</p>
+        </div>
         <%
         }
         %>
-        </div>
     </section>
   </body>
 </html>

@@ -1610,6 +1610,31 @@ body.login {
   font-size: 14px;
   line-height: 1.6;
 }
+.login #signout-container .signout-title {
+  color: gray;
+}
+.login #signout-container .signout-message {
+  color: white;
+  display: block;
+}
+.login #signout-container .signout-error-title {
+  color: red;
+}
+.login #signout-container .signout-error {
+  background: gray;
+  text-align: center;
+}
+.login #signout-container .signout-error-message {
+  color: white;
+}
+.login #signout-container .signout-global-logout {
+  background: none !important;
+  border: none;
+  padding: 0 !important;
+  color: #06A;
+  text-decoration: none;
+  cursor: pointer;
+}
 .login .l-logo {
   text-align: center;
   width: 100%;
