@@ -142,7 +142,7 @@ public class K8sDestinationAudienceValidatorTest {
     assertTrue(e.getMessage().contains(K8sDestinationAudienceValidator.PATH_HEADER_PARAM));
   }
 
-  // ---- enforce.act.sub.service-account.matches.source.spiffeid (D8) ----
+  // ---- enforce.act.sub.service-account.matches.source.spiffeid ----
 
   @Test
   public void testInitThrowsWhenEnforceActSubMatchesSourceSpiffeIdButSourceHeaderUnconfigured() {
@@ -798,24 +798,24 @@ public class K8sDestinationAudienceValidatorTest {
     assertTrue(configured.validate(requestWithHeaders(headers), token, null).isValid());
   }
 
-  // ---- DNS-form matching end-to-end, and the D1 dual-format fallback ----
+  // ---- DNS-form matching end-to-end, and falling back between the two supported aud formats ----
 
   @Test
   public void testDnsFormEntryMatchesEndToEnd() throws Exception {
     final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
-    final JWT token = delegationToken("https://svc.ns.svc.cluster.local/a");
+    final JWT token = delegationToken("https://backend.ns.svc.cluster.local/a");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
-    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(SERVER_NAME_HEADER, "backend.ns" + CLUSTER_SUFFIX);
     headers.put(PATH_HEADER, "/a");
     final HttpServletRequest request = requestWithHeaders(headers);
     assertTrue(validator.validate(request, token, null).isValid());
   }
 
   @Test
-  public void testDnsFormFallsBackToCustomFormOnParseOrMatchFailure() throws Exception {
-    // D1: each aud entry is tried as DNS form first, falling back to custom form both when
-    // DNS-form parsing itself fails, and when it parses but does not match.
+  public void testAudValidationSucceedsIfDnsFormFailsToParseOrMatchAndCustomFormMatches() throws Exception {
+    // Each aud entry is tried as DNS form first, falling back to custom form both when DNS-form
+    // parsing itself fails, and when it parses but does not match.
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "a.b.c.d,knox.local");
@@ -827,17 +827,43 @@ public class K8sDestinationAudienceValidatorTest {
     // DNS-form parse failure: third label "c" is not literally "svc", so this never parses as a
     // k8s service DNS name; it still matches as a custom-form entry against cluster domain
     // "a.b.c.d".
-    final JWT parseFailureToken = delegationToken("https://a.b.c.d/ns/svc");
+    final JWT parseFailureToken = delegationToken("https://a.b.c.d/ns/backend");
     assertTrue(validator.validate(request, parseFailureToken, null).isValid());
 
     // DNS-form parse succeeds (service=knox, namespace=local) but does not match destination
-    // namespace "ns"; the same entry parsed as custom form (namespace=ns, service=svc, from the
-    // path) does.
-    final JWT matchFailureToken = delegationToken("https://knox.local/ns/svc");
+    // namespace "ns"; the same entry parsed as custom form (namespace=ns, service=backend, from
+    // the path) does.
+    final JWT matchFailureToken = delegationToken("https://knox.local/ns/backend");
     assertTrue(validator.validate(request, matchFailureToken, null).isValid());
   }
 
-  // ---- D11: a namespace-less DNS-form host is the one segment compared even when unconfigured ----
+  @Test
+  public void testAudValidationSucceedsWhenEntryIsValidUnderBothFormsAtOnce() throws Exception {
+    // An aud entry can happen to be well-formed and matching under both supported forms at once;
+    // validation must still succeed in that case. Here "backend.ns" is both a two-label DNS-form
+    // host (service=backend, namespace=ns) and an allowed custom-form cluster domain whose first
+    // two path segments are also namespace=ns, service=backend -- so this entry matches the same
+    // destination either way. No path header is configured, since the two forms disagree on the
+    // resource path for this entry ("/ns/backend" for DNS form, "/" for custom form) and that
+    // disagreement is not what this test is about.
+    final String audEntry = "https://backend.ns/ns/backend";
+    assertTrue(AudienceResource.parseDnsForm(audEntry, "cluster.local").isPresent());
+    assertTrue(AudienceResource.parseCustomForm(audEntry, null).isPresent());
+
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM, SERVER_NAME_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "backend.ns");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken(audEntry);
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    headers.put(SERVER_NAME_HEADER, "backend.ns" + CLUSTER_SUFFIX);
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertTrue(validator.validate(request, token, null).isValid());
+  }
+
+  // ---- a namespace-less DNS-form host still requires a namespace to compare against ----
 
   @Test
   public void testNamespaceLessDnsHostRejectedWhenNoNamespaceSourceConfigured() throws Exception {
@@ -845,7 +871,7 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationToken("https://svc/a");
+    final JWT token = delegationToken("https://backend/a");
     final Map<String, String> headers = new HashMap<>();
     headers.put(PATH_HEADER, "/a");
     final AudienceValidationResult result = validator.validate(requestWithHeaders(headers), token, null);
@@ -860,9 +886,9 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationToken("https://svc/a");
+    final JWT token = delegationToken("https://backend/a");
     final Map<String, String> headers = new HashMap<>();
-    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(SERVER_NAME_HEADER, "backend.ns" + CLUSTER_SUFFIX);
     headers.put(PATH_HEADER, "/a");
     final AudienceValidationResult result = validator.validate(requestWithHeaders(headers), token, null);
     assertFalse(result.isValid());
@@ -877,7 +903,7 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, CLUSTER_DOMAIN);
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationToken("https://svc/a");
+    final JWT token = delegationToken("https://backend/a");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(SOURCE_SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/caller");
@@ -896,7 +922,7 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SOURCE_SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationTokenWithActClaim(actorChain("system:serviceaccount:ns:sa"), "https://svc.ns");
+    final JWT token = delegationTokenWithActClaim(actorChain("system:serviceaccount:ns:sa"), "https://backend.ns");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SOURCE_SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(PATH_HEADER, "/");
@@ -912,7 +938,7 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SOURCE_SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationTokenWithActClaim(actorChain("system:serviceaccount:ns:other-sa"), "https://svc.ns");
+    final JWT token = delegationTokenWithActClaim(actorChain("system:serviceaccount:ns:other-sa"), "https://backend.ns");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SOURCE_SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(PATH_HEADER, "/");
@@ -930,7 +956,7 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
     params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_PARAM, "true");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationTokenWithActClaim(actorChain("alice"), "https://svc.ns");
+    final JWT token = delegationTokenWithActClaim(actorChain("alice"), "https://backend.ns");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SOURCE_SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(PATH_HEADER, "/");
@@ -947,7 +973,7 @@ public class K8sDestinationAudienceValidatorTest {
     params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SOURCE_SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationTokenWithActClaim(actorChain("alice"), "https://svc.ns");
+    final JWT token = delegationTokenWithActClaim(actorChain("alice"), "https://backend.ns");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SOURCE_SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(PATH_HEADER, "/");
@@ -960,11 +986,11 @@ public class K8sDestinationAudienceValidatorTest {
   @Test
   public void testCombinedDualFormatFailureMessageIncludesBothSpecificReasons() throws Exception {
     final K8sDestinationAudienceValidator validator = init(baseParamsWithAllThreeHeaders());
-    final String audEntry = "https://cluster.local/other-ns/svc/a";
+    final String audEntry = "https://cluster.local/other-ns/backend/a";
     final JWT token = delegationToken(audEntry);
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
-    headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
+    headers.put(SERVER_NAME_HEADER, "backend.ns" + CLUSTER_SUFFIX);
     headers.put(PATH_HEADER, "/a");
     final AudienceValidationResult result = validator.validate(requestWithHeaders(headers), token, null);
     assertFalse(result.isValid());

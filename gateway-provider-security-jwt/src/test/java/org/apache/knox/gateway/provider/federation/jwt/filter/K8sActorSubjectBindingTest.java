@@ -36,7 +36,7 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudience
 import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudienceTestSupport.requestWithHeaders;
 
 /**
- * Covers the D7/D8/D9 act-sub binding: {@link
+ * Covers the actor-sub binding check: {@link
  * K8sDestinationAudienceValidator#ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM} nesting {@link
  * K8sDestinationAudienceValidator#ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_PARAM}, the unconditional
  * source-header presence/parseability requirement, act-chain ordering (only the most recent actor
@@ -74,7 +74,7 @@ public class K8sActorSubjectBindingTest {
     return headers;
   }
 
-  // ---- D7: matches=false disables the whole check, including is.service.account ----
+  // ---- matches=false disables the whole check, including is.service.account ----
 
   @Test
   public void testMatchesFalseDisablesCheckEvenWhenActorMismatchesSource() throws Exception {
@@ -96,7 +96,7 @@ public class K8sActorSubjectBindingTest {
     assertTrue(validator.validate(request, delegationTokenWithActClaim(actClaim, AUD), null).isValid());
   }
 
-  // ---- D7: matches=true, actor sub is a service account ----
+  // ---- matches=true, actor sub is a service account ----
 
   @Test
   public void testMatchesTrueActorMatchesSourcePasses() throws Exception {
@@ -153,7 +153,7 @@ public class K8sActorSubjectBindingTest {
     assertTrue(validator.validate(request, delegationTokenWithActClaim(actClaim, AUD), null).isValid());
   }
 
-  // ---- D7: is.service.account, consulted only under matches=true ----
+  // ---- is.service.account, consulted only under matches=true ----
 
   @Test
   public void testMatchesTrueIsServiceAccountFalseSkipsNonServiceAccountActorSub() throws Exception {
@@ -195,7 +195,7 @@ public class K8sActorSubjectBindingTest {
     assertTrue(validator.validate(request, delegationTokenWithActClaim(actClaim, AUD), null).isValid());
   }
 
-  // ---- D9: a configured source header must be present and parseable, unconditionally ----
+  // ---- a configured source header must be present and parseable, unconditionally ----
 
   @Test
   public void testSourceHeaderMissingFailsEvenWhenActSubCheckDisabled() throws Exception {

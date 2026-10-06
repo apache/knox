@@ -37,7 +37,7 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudience
  * {@link K8sDestinationAudienceValidator#CLUSTER_DOMAIN_PARAM}, its independence from {@link
  * K8sDestinationAudienceValidator#CLUSTER_DOMAINS_PARAM} and from {@link
  * K8sDestinationAudienceValidator#SERVER_NAME_CLUSTER_SUFFIX_PARAM}, and the dual-format fallback
- * between it and the legacy destination-URL format.
+ * between it and the custom destination-URL format.
  */
 public class K8sDnsAudienceFormatTest {
 
@@ -53,7 +53,7 @@ public class K8sDnsAudienceFormatTest {
     return validator;
   }
 
-  // ---- D4 host shapes, default cluster.domain ----
+  // ---- host shapes, default cluster.domain ----
 
   @Test
   public void testSingleLabelHostMatchesWithSourceSpiffeIdSupplyingNamespace() throws Exception {
@@ -207,7 +207,7 @@ public class K8sDnsAudienceFormatTest {
   }
 
   @Test
-  public void testTrailingDotOnHostIsRejectedAndLegacyFallbackAlsoFails() throws Exception {
+  public void testTrailingDotOnHostIsRejectedAndCustomFormFallbackAlsoFails() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "cluster.local");
@@ -219,10 +219,10 @@ public class K8sDnsAudienceFormatTest {
     assertFalse(validator.validate(request, token, null).isValid());
   }
 
-  // ---- D3: cluster-domains allow-list and port are irrelevant to the DNS form ----
+  // ---- cluster-domains allow-list and port are irrelevant to the DNS form ----
 
   @Test
-  public void testDnsFormIgnoresLegacyClusterDomainsAllowList() throws Exception {
+  public void testDnsFormIgnoresCustomFormClusterDomainsAllowList() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "totally-different.example");
@@ -246,7 +246,7 @@ public class K8sDnsAudienceFormatTest {
     assertTrue(validator.validate(request, token, null).isValid());
   }
 
-  // ---- D2: cluster.domain is independent of server.name.cluster-suffix ----
+  // ---- cluster.domain is independent of server.name.cluster-suffix ----
 
   @Test
   public void testClusterDomainParamIsIndependentOfServerNameClusterSuffix() throws Exception {
@@ -304,10 +304,10 @@ public class K8sDnsAudienceFormatTest {
     assertFalse(validator.validate(request, token, null).isValid());
   }
 
-  // ---- D1 dual-format resolution ----
+  // ---- dual-format resolution ----
 
   @Test
-  public void testTwoLabelLegacyBaseDomainFallsBackToLegacyFormAndMatches() throws Exception {
+  public void testTwoLabelBaseDomainFallsBackToCustomFormAndMatches() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM, SERVER_NAME_HEADER);
@@ -316,7 +316,7 @@ public class K8sDnsAudienceFormatTest {
     final K8sDestinationAudienceValidator validator = init(params);
     // As a DNS-form host, "knox.local" is service="knox", namespace="local", which does not
     // match the destination namespace "ns" below -- so this falls through and is evaluated as
-    // the legacy form instead, where "knox.local" is the cluster domain and "/ns/svc/path" is
+    // the custom form instead, where "knox.local" is the cluster domain and "/ns/svc/path" is
     // the namespace, service name and resource path.
     final JWT token = delegationToken("https://knox.local/ns/svc/path");
     final Map<String, String> headers = new HashMap<>();
@@ -328,12 +328,12 @@ public class K8sDnsAudienceFormatTest {
   }
 
   @Test
-  public void testDnsShapedHostMatchesViaDnsFormEvenWhenLegacyClusterDomainsWouldNeverMatch() throws Exception {
+  public void testDnsShapedHostMatchesViaDnsFormEvenWhenCustomFormClusterDomainsWouldNeverMatch() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
     // Default cluster-domains allow-list ("service.local") would never match this host as a
-    // legacy entry; the DNS form is tried first and succeeds on its own.
+    // custom-form entry; the DNS form is tried first and succeeds on its own.
     final K8sDestinationAudienceValidator validator = init(params);
     final JWT token = delegationToken("https://svc.ns.svc.cluster.local/a/b");
     final Map<String, String> headers = new HashMap<>();
@@ -355,7 +355,7 @@ public class K8sDnsAudienceFormatTest {
     final AudienceValidationResult result = validator.validate(request, token, null);
     assertFalse(result.isValid());
     assertTrue(result.message().contains("k8s service DNS name"));
-    assertTrue(result.message().contains("legacy destination URL"));
+    assertTrue(result.message().contains("custom form destination URL"));
   }
 
   @Test
@@ -364,30 +364,31 @@ public class K8sDnsAudienceFormatTest {
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "service.local");
     final K8sDestinationAudienceValidator validator = init(params);
-    // Parses as DNS form (namespace "otherns" from the host) and also as legacy form (authority
-    // "service.local" is in the allow-list), but neither one's namespace matches the destination.
+    // Parses as DNS form (namespace "local" from the two-label host) and also as custom form
+    // (authority "service.local" is in the allow-list, namespace "otherns" from the path), but
+    // neither one's namespace matches the destination namespace "ns".
     final JWT token = delegationToken("https://service.local/otherns/svc");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     final HttpServletRequest request = requestWithHeaders(headers);
     final AudienceValidationResult result = validator.validate(request, token, null);
     assertFalse(result.isValid());
-    assertTrue(result.message().contains("k8s service DNS name"));
-    assertTrue(result.message().contains("legacy destination URL"));
+    assertTrue(result.message().contains("namespace local does not match destination namespace ns"));
+    assertTrue(result.message().contains("namespace otherns does not match destination namespace ns"));
   }
 
-  // ---- require-all crossed with mixed DNS-form and legacy-form interpretations ----
+  // ---- require-all crossed with mixed DNS-form and custom-form interpretations ----
 
   @Test
-  public void testRequireAllAudiencesMatchAcceptsMixOfDnsAndLegacyEntries() throws Exception {
+  public void testRequireAllAudiencesMatchAcceptsMixOfDnsAndCustomFormEntries() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM, SERVER_NAME_HEADER);
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
-    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "legacy.local");
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "custom.local");
     params.put(K8sDestinationAudienceValidator.REQUIRE_ALL_AUDIENCES_MATCH_PARAM, "true");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationToken("https://svc.ns.svc.cluster.local/a", "https://legacy.local/ns/svc/a");
+    final JWT token = delegationToken("https://svc.ns.svc.cluster.local/a", "https://custom.local/ns/svc/a");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
     headers.put(SERVER_NAME_HEADER, "svc.ns" + CLUSTER_SUFFIX);
@@ -402,10 +403,10 @@ public class K8sDnsAudienceFormatTest {
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.SERVER_NAME_HEADER_PARAM, SERVER_NAME_HEADER);
     params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
-    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "legacy.local");
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "custom.local");
     params.put(K8sDestinationAudienceValidator.REQUIRE_ALL_AUDIENCES_MATCH_PARAM, "true");
     final K8sDestinationAudienceValidator validator = init(params);
-    final JWT token = delegationToken("https://svc.ns.svc.cluster.local/a", "https://legacy.local/ns/svc/a",
+    final JWT token = delegationToken("https://svc.ns.svc.cluster.local/a", "https://custom.local/ns/svc/a",
         "not-a-url-at-all");
     final Map<String, String> headers = new HashMap<>();
     headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");

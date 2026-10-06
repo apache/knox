@@ -33,12 +33,12 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudience
 import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudienceTestSupport.requestWithHeaders;
 
 /**
- * Covers resource-path matching at the validator level: the D12 path-wildcard rule for both
- * {@code aud} formats, exact matching against the raw and percent-encoded candidate forms, the
- * D10 {@link K8sDestinationAudienceValidator#AUDIENCE_PATH_PREFIX_PARAM} legacy-only scoping, the
- * unconditional requirement that a configured {@link K8sDestinationAudienceValidator#PATH_HEADER_PARAM}
- * header be present, and the {@link K8sDestinationAudienceValidator#PATH_HEADER_FROM_URL_PARAM}
- * true/false branches.
+ * Covers resource-path matching at the validator level: the no-path/root-path wildcard rule for
+ * both {@code aud} formats, exact matching against the raw and percent-encoded candidate forms,
+ * {@link K8sDestinationAudienceValidator#AUDIENCE_PATH_PREFIX_PARAM} applying only to the custom
+ * form, the unconditional requirement that a configured {@link
+ * K8sDestinationAudienceValidator#PATH_HEADER_PARAM} header be present, and the {@link
+ * K8sDestinationAudienceValidator#PATH_HEADER_FROM_URL_PARAM} true/false branches.
  *
  * <p>Every test here uses the same destination namespace, {@code ns}, taken from {@link
  * #SPIFFE_HEADER}; namespace is therefore never the reason an entry matches or fails to, keeping
@@ -70,10 +70,10 @@ public class K8sAudiencePathMatchingTest {
     return headers;
   }
 
-  // ---- D12: no path, or exactly "/", matches any request path, for either aud format ----
+  // ---- no path, or exactly "/", matches any request path, for either aud format ----
 
   @Test
-  public void testLegacyFormWithNoPathSegmentMatchesAnyRequestPath() throws Exception {
+  public void testCustomFormWithNoPathSegmentMatchesAnyRequestPath() throws Exception {
     final K8sDestinationAudienceValidator validator = init(baseParams());
     final JWT token = delegationToken("https://service.local/ns/svc");
     final HttpServletRequest request = requestWithHeaders(headersWithPath("/anything/goes"));
@@ -81,7 +81,7 @@ public class K8sAudiencePathMatchingTest {
   }
 
   @Test
-  public void testLegacyFormWithExplicitRootPathMatchesAnyRequestPath() throws Exception {
+  public void testCustomFormWithExplicitRootPathMatchesAnyRequestPath() throws Exception {
     final K8sDestinationAudienceValidator validator = init(baseParams());
     final JWT token = delegationToken("https://service.local/ns/svc/");
     final HttpServletRequest request = requestWithHeaders(headersWithPath("/anything/goes"));
@@ -141,10 +141,10 @@ public class K8sAudiencePathMatchingTest {
     assertTrue(validator.validate(request, token, null).isValid());
   }
 
-  // ---- D10: audience.path.prefix applies only to the legacy form ----
+  // ---- audience.path.prefix applies only to the custom form ----
 
   @Test
-  public void testAudiencePathPrefixAppliesToLegacyFormAndParsingResumesAfterIt() throws Exception {
+  public void testAudiencePathPrefixAppliesToCustomFormAndParsingResumesAfterIt() throws Exception {
     final Map<String, String> params = baseParams();
     params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "internal");
     final K8sDestinationAudienceValidator validator = init(params);
@@ -154,12 +154,12 @@ public class K8sAudiencePathMatchingTest {
   }
 
   @Test
-  public void testLegacyFormFailsToParseWhenConfiguredPrefixIsAbsentFromPath() throws Exception {
+  public void testCustomFormFailsToParseWhenConfiguredPrefixIsAbsentFromPath() throws Exception {
     final Map<String, String> params = baseParams();
     params.put(K8sDestinationAudienceValidator.AUDIENCE_PATH_PREFIX_PARAM, "internal");
     final K8sDestinationAudienceValidator validator = init(params);
     // No "/internal/" segment anywhere in the path, so the prefix search never finds where
-    // namespace and service-name parsing should resume, and the legacy form does not parse.
+    // namespace and service-name parsing should resume, and the custom form does not parse.
     final JWT token = delegationToken("https://service.local/ns/svc/orders/42");
     final HttpServletRequest request = requestWithHeaders(headersWithPath("/orders/42"));
     assertFalse(validator.validate(request, token, null).isValid());
@@ -168,7 +168,7 @@ public class K8sAudiencePathMatchingTest {
   @Test
   public void testDnsFormIgnoresAudiencePathPrefixEvenWhenPathLiterallyContainsIt() throws Exception {
     final Map<String, String> params = baseParams();
-    // If the DNS form searched for and stripped this prefix the way the legacy form does, the
+    // If the DNS form searched for and stripped this prefix the way the custom form does, the
     // leading "/orders/" would be consumed and the remaining resource path would be "/42" --
     // which would not match the request path below. Since the DNS form never applies this
     // parameter, the whole path "/orders/42" is kept as the resource path, and it matches.

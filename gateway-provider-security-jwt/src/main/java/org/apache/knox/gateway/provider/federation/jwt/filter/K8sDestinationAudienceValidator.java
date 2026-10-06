@@ -464,6 +464,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * match failure, so a custom-form entry whose base domain happens to also parse as a DNS-shaped
    * host is still evaluated as a custom-form entry rather than rejected outright.
    *
+   * @param audienceClaim the single {@code aud} claim entry being checked against the destination
    * @param namespace the destination namespace to compare against, or {@code null} exactly when
    *     no destination-namespace source is configured at all -- that is, both
    *     {@link #NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM} and {@link #SERVER_NAME_HEADER_PARAM} are

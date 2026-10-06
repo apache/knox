@@ -91,6 +91,13 @@ public record AudienceResource(String host, int effectivePort, String namespace,
    *
    * <p>A {@code ?query} or {@code #fragment} on the entry is discarded before the path is parsed,
    * so it plays no part in {@code pathPrefix} matching or in the resulting resource path.
+   *
+   * @param audEntry the raw {@code aud} claim entry to parse
+   * @param pathPrefix the leading path segment(s) to search for and skip past, as described
+   *     above, or {@code null}/blank to require namespace and service-name to begin straight
+   *     after the authority
+   * @return the parsed result, or {@link Optional#empty()} if {@code audEntry} is not a
+   *     well-formed custom-form URL as described above
    */
   public static Optional<AudienceResource> parseCustomForm(String audEntry, String pathPrefix) {
     if (audEntry == null) {
@@ -253,6 +260,12 @@ public record AudienceResource(String host, int effectivePort, String namespace,
    *
    * <p>A {@code ?query} or {@code #fragment} on the entry is discarded before the path is parsed,
    * exactly as in {@link #parseCustomForm(String, String)}.
+   *
+   * @param audEntry the raw {@code aud} claim entry to parse
+   * @param clusterDomain the cluster domain a host of three or more labels must truncate to a
+   *     label-boundary prefix of, past the required {@code "svc"} label, as described above
+   * @return the parsed result, or {@link Optional#empty()} if {@code audEntry} is not a
+   *     well-formed DNS-form URL as described above
    */
   static Optional<AudienceResource> parseDnsForm(String audEntry, String clusterDomain) {
     if (audEntry == null) {

@@ -508,11 +508,10 @@ public class AudienceResourceTest {
 
   @Test
   public void testDnsFormBaseDomainWithTwoLabelsAlsoParsesAsDnsForm() {
-    // The regression case behind D1: a custom-form aud with a 2-label base domain, e.g.
-    // "https://knox.local/ns/svc/path", also parses cleanly as DNS form (service=knox,
-    // namespace=local) -- resolving which interpretation is intended is the validator's job
-    // (try DNS form first, fall back to custom form on parse OR match failure), not this
-    // parser's.
+    // A custom-form aud with a 2-label base domain, e.g. "https://knox.local/ns/svc/path", also
+    // parses cleanly as DNS form (service=knox, namespace=local) -- resolving which
+    // interpretation is intended is the validator's job (try DNS form first, fall back to custom
+    // form on parse OR match failure), not this parser's.
     final Optional<AudienceResource> parsed = parseDns("https://knox.local/ns/svc/path");
     assertTrue(parsed.isPresent());
     assertEquals("knox", parsed.get().serviceName());
