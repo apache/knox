@@ -18,9 +18,10 @@
 <service role="LIVY_FOR_SPARK4" name="livy_for_spark4" version="1.0.0">
     <metadata>
         <type>API_AND_UI</type>
-        <context>/livy_for_spark4/</context>
+        <context>/livy_for_spark4/ui?host={{BACKEND_HOST}}</context>
         <shortDesc>Livy for Spark 4</shortDesc>
         <description>Apache Livy is a service that enables easy interaction with a Spark cluster over a REST interface.</description>
+        <iconFileName>livy_for_spark4.png</iconFileName>
     </metadata>
     <routes>
         <route path="/livy_for_spark4/**"/>

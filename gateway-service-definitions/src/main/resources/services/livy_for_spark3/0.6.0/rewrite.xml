@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
    Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
@@ -18,38 +18,38 @@
 <rules>
 
     <rule dir="IN" name="LIVY_FOR_SPARK3/livy_for_spark3/root/v1/inbound/" pattern="*://*:*/**/livy_for_spark3/v1">
-        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}"/>
+        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}" />
     </rule>
     <rule dir="IN" name="LIVY_FOR_SPARK3/livy_for_spark3/path/v1/inbound" pattern="*://*:*/**/livy_for_spark3/v1/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}/{path=**}?{**}"/>
+        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}/{path=**}?{**}" />
     </rule>
 
     <rule dir="IN" name="LIVY_FOR_SPARK3/livy_for_spark3/root/inbound" pattern="*://*:*/**/livy_for_spark3">
-        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}"/>
+        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}" />
     </rule>
     <rule dir="IN" name="LIVY_FOR_SPARK3/livy_for_spark3/path/inbound" pattern="*://*:*/**/livy_for_spark3/{path=**}?{**}">
-        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}/{path=**}?{**}"/>
+        <rewrite template="{$serviceUrl[LIVY_FOR_SPARK3]}/{path=**}?{**}" />
     </rule>
 
     <rule dir="OUT" name="LIVY_FOR_SPARK3/livy_for_spark3/outbound/sparkurl" pattern="*://*:*/proxy/{**}">
-        <rewrite template="{$frontend[url]}/yarn/proxy/{**}"/>
+        <rewrite template="{$frontend[url]}/yarn/proxy/{**}" />
     </rule>
 
     <rule dir="OUT" name="LIVY_FOR_SPARK3/livy_for_spark3/outbound/logs" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}?{**}">
-        <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+        <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{**}?{scheme}?host={$hostmap(host)}?{port}" />
     </rule>
 
     <rule dir="OUT" name="LIVY_FOR_SPARK3/livy_for_spark3/outbound/logs2" pattern="{scheme}://{host}:{port}/node/containerlogs/{**}">
-        <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{scheme}?host={$hostmap(host)}?{port}"/>
+        <rewrite template="{$frontend[url]}/yarn/nodemanager/node/containerlogs/{**}?{scheme}?host={$hostmap(host)}?{port}" />
     </rule>
 
     <rule dir="OUT" name="LIVY_FOR_SPARK3/livy_for_spark3/outbound/headers/ui" pattern="{scheme}://{host}:{port}/ui/">
-        <rewrite template="{$frontend[url]}/livy_for_spark3/ui/"/>
+        <rewrite template="{$frontend[url]}/livy_for_spark3/ui/" />
     </rule>
 
     <filter name="LIVY_FOR_SPARK3/livy_for_spark3/outbound/headers">
         <content type="application/x-http-headers">
-            <apply path="Location" rule="LIVY_FOR_SPARK3/livy_for_spark3/outbound/headers/ui"/>
+            <apply path="Location" rule="LIVY_FOR_SPARK3/livy_for_spark3/outbound/headers/ui" />
         </content>
     </filter>
 
