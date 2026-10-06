@@ -31,5 +31,6 @@
             <rewrite apply="LIVY_FOR_SPARK3/livy_for_spark3/outbound/headers" to="response.headers"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch"
+              ha-classname="org.apache.knox.gateway.ha.dispatch.LivyHaDispatch" />
 </service>
