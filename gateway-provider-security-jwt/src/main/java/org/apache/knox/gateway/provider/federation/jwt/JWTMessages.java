@@ -74,6 +74,12 @@ public interface JWTMessages {
       + "expiration, which requires the token to have one. Please add expiry to token or enable token state." )
   void toleratedCookieTokenHasNoExpiry(String tokenId, String paramName);
 
+  @Message( level = MessageLevel.WARN, text = "Rejecting token ({0}): server-managed token state is enabled "
+      + "but no state record exists for it, so its validity cannot be established. This is expected for a "
+      + "token minted by an issuer that does not record state with this gateway. For a token presented in a "
+      + "cookie, enabling {1} permits falling back to the token''s own exp claim." )
+  void unknownTokenStateRejected(String tokenId, String paramName);
+
   @Message( level = MessageLevel.WARN, text = "Unable to verify passcode token ({0}) due to missing or incorrect token state service configuration.")
   void unableToVerifyPasscodeToken(String tokenId);
 

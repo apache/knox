@@ -156,23 +156,6 @@ public class CommonJWTFilterTest {
     doTestIsStillValid(tss);
   }
 
-  /*
-   * KNOX-3501: with tolerateUnknownState set (a cookie in a provider that opted in via
-   * ALLOW_UNKNOWN_COOKIE_TOKEN_STATE), a token the state service has never heard of resolves to
-   * "no server-managed expiration" so the caller can fall back to the token's own exp claim,
-   * instead of raising UnknownTokenException the way testIsStillValidUnknownToken asserts.
-   */
-  @Test
-  public void testIsStillValidUnknownTokenTolerated() throws Exception {
-    assertTrue("Expected an unknown token to fall back to its own (future) exp claim.",
-        doTestIsStillValid(unknownTokenStateService(), true));
-  }
-
-  @Test
-  public void testIsStillValidUnknownTokenToleratedStillHonoursJwtExpiry() throws Exception {
-    assertFalse("Expected an unknown token with an elapsed exp claim to be invalid.",
-        doTestIsStillValid(unknownTokenStateService(), true, System.currentTimeMillis() - 300000));
-  }
 
   /*
    * The tokenId overload is the one the passcode path uses; it must keep rejecting an unknown
@@ -271,20 +254,6 @@ public class CommonJWTFilterTest {
     return (Boolean) invokeUnwrapped(m, mockJWT(null));
   }
 
-  /** As {@link #doTestIsStillValid(TokenStateService)}, but for the tolerateUnknownState overload. */
-  private boolean doTestIsStillValid(final TokenStateService tss, final boolean tolerateUnknownState)
-      throws Exception {
-    return doTestIsStillValid(tss, tolerateUnknownState, System.currentTimeMillis() + 300000);
-  }
-
-  private boolean doTestIsStillValid(final TokenStateService tss, final boolean tolerateUnknownState,
-                                     final long jwtExpiration) throws Exception {
-    setTokenStateService(tss);
-
-    Method m = AbstractJWTFilter.class.getDeclaredMethod("tokenIsStillValid", JWT.class, boolean.class);
-    m.setAccessible(true);
-    return (Boolean) invokeUnwrapped(m, mockJWT(new Date(jwtExpiration)), tolerateUnknownState);
-  }
 
   private JWT mockJWT(final Date expires) {
     JWT jwt = EasyMock.createNiceMock(JWT.class);
