@@ -43,16 +43,16 @@ import org.apache.knox.gateway.util.SpiffeId;
  * {@code https://<service>.<namespace>.svc.<cluster-domain>[:port][/resource-path]}, and second as
  * {@code https://cluster-domain[:port]/[skipped-segments/]namespace/service-name[/resource-path]}.
  * An entry is accepted as a match candidate if either form accepts it, and is rejected only if
- * neither does. The optional {@code skipped-segments} prefix in the second form is only present,
- * and only searched for, when {@link #AUDIENCE_PATH_PREFIX_PARAM} is configured, and it has no
- * effect on the first form; see that constant and {@link AudienceResource#parse(String, String)}.
- *
+ * neither does. The optional {@code skipped-segments} prefix in the second, custom form is only
+ * present, and only searched for, when {@link #AUDIENCE_PATH_PREFIX_PARAM} is configured, and it
+ * has no effect on the first form; see that constant and
+ * {@link AudienceResource#parseCustomForm(String, String)}.
  * <p>A token carrying a delegation {@code act} claim is always routed through this validator; see
  * {@link #validate(HttpServletRequest, JWT, List)}. A token with no {@code act} claim is too,
  * unless {@link #VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM} is {@code false}.
  *
  * <p>Which segments are actually compared depends entirely on which of this validator's header
- * parameters are configured; for an entry in the second, legacy form, the cluster-domain segment
+ * parameters are configured; for an entry in the second, custom form, the cluster-domain segment
  * is the only one always enforced. Segments with no configured source are not compared at all, so
  * an {@code aud} entry that differs from the request only in an unconfigured segment is accepted.
  *
@@ -179,8 +179,9 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   /**
    * Optional path prefix that, when set, an {@code aud} entry's path is searched for before
-   * namespace and service-name are parsed out of it -- see {@link AudienceResource#parse(String,
-   * String)} for exactly how. This lets an {@code aud} entry have network routing flexibility
+   * namespace and service-name are parsed out of it -- see
+   * {@link AudienceResource#parseCustomForm(String, String)} for exactly how. This lets an
+   * {@code aud} entry have network routing flexibility
    * in the future. No default: if left unset, an entry's path must begin with namespace and
    * service-name straight after the authority, exactly as when this parameter did not exist.
    *
@@ -458,44 +459,51 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   /**
    * The failure reason for a single {@code aud} entry against the request's actual destination, or
-   * {@link Optional#empty()} if either the k8s service DNS name form or the legacy form accepts it.
-   * Tries the DNS form first; falls back to the legacy form on either a parse failure or a match
-   * failure, so a legacy entry whose base domain happens to also parse as a DNS-shaped host is
-   * still evaluated as a legacy entry rather than rejected outright.
+   * {@link Optional#empty()} if either the k8s service DNS name form or the custom form accepts
+   * it. Tries the DNS form first; falls back to the custom form on either a parse failure or a
+   * match failure, so a custom-form entry whose base domain happens to also parse as a DNS-shaped
+   * host is still evaluated as a custom-form entry rather than rejected outright.
+   *
+   * @param namespace the destination namespace to compare against, or {@code null} exactly when
+   *     no destination-namespace source is configured at all -- that is, both
+   *     {@link #NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM} and {@link #SERVER_NAME_HEADER_PARAM} are
+   *     unset. This is a configuration-time fact, not a per-request one: a configured source whose
+   *     header is merely missing or unparseable on a given request fails validation earlier, in
+   *     {@link #validate(HttpServletRequest, JWT, List)}, before this method is ever reached, so by
+   *     the time {@code namespace} is {@code null} here it can only mean no source was configured.
+   *     That distinction is exactly what {@link #dnsMatchFailureReason} relies on: a namespace-less
+   *     DNS-form host is rejected when {@code namespace} is {@code null}, which is the one case in
+   *     this class where a segment with no configured source is still compared against instead of
+   *     being skipped -- see the class javadoc.
+   * @param serviceName the destination service name to compare against, or {@code null} if
+   *     {@link #SERVER_NAME_HEADER_PARAM} is not configured
+   * @param requestPath the destination request path to compare against, or {@code null} if
+   *     {@link #PATH_HEADER_PARAM} is not configured
+   * @param sourceSpiffeId the source workload's SPIFFE id, present only if
+   *     {@link #SOURCE_SPIFFE_ID_HEADER_PARAM} is configured; supplies the namespace for a
+   *     namespace-less DNS-form host
+   * @return the failure reason, or {@link Optional#empty()} if {@code audienceClaim} matches
    */
   private Optional<String> matchFailureReason(final String audienceClaim, final String namespace,
       final String serviceName, final String requestPath, final Optional<SpiffeId> sourceSpiffeId) {
-    final Optional<String> dnsFailure = dnsFormFailureReason(audienceClaim, namespace, serviceName, requestPath, sourceSpiffeId);
+    final Optional<AudienceResource> dnsParsed = AudienceResource.parseDnsForm(audienceClaim, clusterDomain);
+    final Optional<String> dnsFailure = dnsParsed.isPresent()
+        ? dnsMatchFailureReason(dnsParsed.get(), namespace, serviceName, requestPath, sourceSpiffeId)
+        : Optional.of("does not parse as a k8s service DNS name");
     if (dnsFailure.isEmpty()) {
       return Optional.empty();
     }
-    final Optional<String> legacyFailure = legacyFormFailureReason(audienceClaim, namespace, serviceName, requestPath);
-    if (legacyFailure.isEmpty()) {
+
+    final Optional<AudienceResource> customParsed = AudienceResource.parseCustomForm(audienceClaim, audiencePathPrefix);
+    final Optional<String> customFailure = customParsed.isPresent()
+        ? customMatchFailureReason(customParsed.get(), namespace, serviceName, requestPath)
+        : Optional.of("does not parse as a custom form destination URL");
+    if (customFailure.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of("aud entry " + audienceClaim + " does not match the request destination as a k8s"
-        + " service DNS name (" + dnsFailure.get() + ") or as a legacy destination URL (" + legacyFailure.get() + ")");
-  }
 
-  private Optional<String> dnsFormFailureReason(final String audienceClaim, final String namespace,
-      final String serviceName, final String requestPath, final Optional<SpiffeId> sourceSpiffeId) {
-    final Optional<AudienceResource.DnsAudienceResource> parsed = AudienceResource.parseDnsForm(audienceClaim, clusterDomain);
-    if (parsed.isEmpty()) {
-      return Optional.of("does not parse as a k8s service DNS name");
-    }
-    return dnsMatchFailureReason(parsed.get(), namespace, serviceName, requestPath, sourceSpiffeId);
-  }
-
-  private Optional<String> legacyFormFailureReason(final String audienceClaim, final String namespace,
-      final String serviceName, final String requestPath) {
-    final Optional<AudienceResource> parsed = AudienceResource.parse(audienceClaim, audiencePathPrefix);
-    if (parsed.isEmpty()) {
-      return Optional.of("does not parse as a legacy destination URL");
-    }
-    if (!matches(parsed.get(), namespace, serviceName, requestPath)) {
-      return Optional.of("does not match the request destination");
-    }
-    return Optional.empty();
+    return Optional.of("aud entry " + audienceClaim + " does not match the destination in either supported "
+        + "format: DNS name (" + dnsFailure.get() + "); custom form (" + customFailure.get() + ")");
   }
 
   /**
@@ -504,7 +512,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * to compare it against, so the entry does not match, even though the general rule in this class
    * is that a segment with no configured source is not compared.
    */
-  private Optional<String> dnsMatchFailureReason(final AudienceResource.DnsAudienceResource candidate,
+  private Optional<String> dnsMatchFailureReason(final AudienceResource candidate,
       final String namespace, final String serviceName, final String requestPath,
       final Optional<SpiffeId> sourceSpiffeId) {
     final String candidateNamespace;
@@ -516,7 +524,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     } else if (sourceSpiffeId.isEmpty()) {
       return Optional.of("host has no namespace and no source SPIFFE id is available to supply one");
     } else {
-      candidateNamespace = sourceSpiffeId.get().namespace().toLowerCase(Locale.ROOT);
+      candidateNamespace = sourceSpiffeId.get().namespace();
     }
     if (namespace != null && !namespace.equals(candidateNamespace)) {
       return Optional.of("namespace " + candidateNamespace + " does not match destination namespace " + namespace);
@@ -531,18 +539,23 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     return Optional.empty();
   }
 
-  private boolean matches(final AudienceResource candidate, final String namespace, final String serviceName,
-      final String requestPath) {
+  private Optional<String> customMatchFailureReason(final AudienceResource candidate, final String namespace,
+      final String serviceName, final String requestPath) {
     if (!matchesClusterDomain(candidate)) {
-      return false;
+      return Optional.of("cluster domain " + candidate.host() + ":" + candidate.effectivePort()
+          + " is not an allowed cluster domain");
     }
     if (namespace != null && !namespace.equals(candidate.namespace())) {
-      return false;
+      return Optional.of("namespace " + candidate.namespace() + " does not match destination namespace " + namespace);
     }
     if (serviceName != null && !serviceName.equals(candidate.serviceName())) {
-      return false;
+      return Optional.of("service name " + candidate.serviceName() + " does not match destination service name "
+          + serviceName);
     }
-    return matchesPath(candidate.resourcePathRaw(), candidate.resourcePathEncoded(), requestPath);
+    if (!matchesPath(candidate.resourcePathRaw(), candidate.resourcePathEncoded(), requestPath)) {
+      return Optional.of("path does not match request path");
+    }
+    return Optional.empty();
   }
 
   /**
@@ -591,16 +604,20 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   }
 
   /**
-   * Unlike {@link #namespaceFromHeader(HttpServletRequest)}, this is not lower-cased here: it feeds
-   * both the namespace-less-DNS-host fallback and the act-sub comparison, and each lower-cases what
-   * it needs at the comparison site rather than sharing one case-normalized copy.
+   * All three fields are lower-cased here, once, on read -- the same convention
+   * {@link #namespaceFromHeader(HttpServletRequest)} and {@link DestinationServiceName} follow --
+   * so every comparison against this value elsewhere in this class is a plain, case-sensitive
+   * {@code equals} rather than each comparison site remembering to lower-case its own copy.
+   * {@code trustDomain} is lowered too, for consistency, even though this validator never
+   * compares it.
    */
   private Optional<SpiffeId> sourceSpiffeIdFromHeader(final HttpServletRequest request) {
     final String headerValue = request.getHeader(sourceSpiffeIdHeader);
     if (headerValue == null || headerValue.isEmpty()) {
       return Optional.empty();
     }
-    return SpiffeId.parse(headerValue);
+    return SpiffeId.parse(headerValue).map(id -> new SpiffeId(id.trustDomain().toLowerCase(Locale.ROOT),
+        id.namespace().toLowerCase(Locale.ROOT), id.serviceAccount().toLowerCase(Locale.ROOT)));
   }
 
   private Optional<String> pathFromHeader(final HttpServletRequest request) {
@@ -643,8 +660,9 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     }
     final String actorNamespace = actorSubject.get().namespace().toLowerCase(Locale.ROOT);
     final String actorName = actorSubject.get().name().toLowerCase(Locale.ROOT);
-    final String sourceNamespace = source.namespace().toLowerCase(Locale.ROOT);
-    final String sourceServiceAccount = source.serviceAccount().toLowerCase(Locale.ROOT);
+    // source's fields are already lower-cased by sourceSpiffeIdFromHeader.
+    final String sourceNamespace = source.namespace();
+    final String sourceServiceAccount = source.serviceAccount();
     if (actorNamespace.equals(sourceNamespace) && actorName.equals(sourceServiceAccount)) {
       return Optional.empty();
     }
@@ -659,8 +677,9 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   private record ClusterDomain(String host, int port) {
     /**
-     * Parses an admin-configured allow-list entry the same way {@link AudienceResource#parse(String,
-     * String)} parses an {@code aud} entry's authority -- by handing it to {@link URI} rather than
+     * Parses an admin-configured allow-list entry the same way
+     * {@link AudienceResource#parseCustomForm(String, String)} parses an {@code aud} entry's
+     * authority -- by handing it to {@link URI} rather than
      * hand-validating its characters -- since this value is only ever compared against a parsed
      * {@code aud} entry's host and port, never validated on its own.
      */

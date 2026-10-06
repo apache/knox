@@ -25,21 +25,32 @@ import java.util.regex.Pattern;
 import org.eclipse.jetty.util.URIUtil;
 
 /**
- * The pieces of a single "aud" claim entry that carries a k8s-style destination URL:
- * {@code https://host[:port]/[skipped-segments/]namespace/service-name[/resource-path]}.
+ * The pieces of a single "aud" claim entry, as parsed in either of the two forms this class
+ * supports: the <b>custom form</b>,
+ * {@code https://host[:port]/[skipped-segments/]namespace/service-name[/resource-path]}
+ * ({@link #parseCustomForm(String, String)}), or the <b>DNS form</b>,
+ * {@code https://<service>[.<namespace>[.svc[.<cluster-domain>]]][:port][/resource-path]}
+ * ({@link #parseDnsForm(String, String)}). Both parse methods return this same record, since
+ * {@code namespace}, {@code serviceName}, {@code resourcePathRaw} and {@code resourcePathEncoded}
+ * mean the same thing for either form; {@code host} and {@code effectivePort} are meaningful only
+ * for a custom-form result -- a DNS-form result carries no separate cluster-domain host or
+ * retained port, so it sets {@code host} to {@code null} and {@code effectivePort} to {@code -1}.
+ * See each parse method's javadoc for the form it accepts.
  *
- * <p>The optional {@code skipped-segments} prefix gives an {@code aud} entry more flexibility
- * in case it's needed for network routing. When {@link #parse(String, String)} is given a
- * non-blank {@code pathPrefix}, the path is searched, as a plain literal substring with no
- * decoding, for the first (leftmost) place {@code "/" + pathPrefix + "/"} occurs; namespace,
- * service-name and resource-path parsing then resumes right after it, at that shared "/".
- * Everything up to and including it is discarded unparsed: {@code pathPrefix} only locates
- * where the parse resumes, and is otherwise not validated or retained. {@code pathPrefix} is
- * ordinarily a single path segment, but it may itself contain "/" to require several contiguous
- * segments as one indivisible token. An entry whose path never contains it does not parse, the
- * same as any other ill-shaped entry. A {@code null} or blank {@code pathPrefix} disables the
- * search entirely: the path must begin with namespace and service-name straight after the
- * authority.
+ * <p>The optional {@code skipped-segments} prefix in the custom form gives an {@code aud} entry
+ * more flexibility in case it's needed for network routing. When
+ * {@link #parseCustomForm(String, String)} is given a non-blank {@code pathPrefix}, the path is
+ * searched, as a plain literal substring with no decoding, for the first (leftmost) place
+ * {@code "/" + pathPrefix + "/"} occurs; namespace, service-name and resource-path parsing then
+ * resumes right after it, at that shared "/". Everything up to and including it is discarded
+ * unparsed: {@code pathPrefix} only locates where the parse resumes, and is otherwise not
+ * validated or retained. {@code pathPrefix} is ordinarily a single path segment, but it may
+ * itself contain "/" to require several contiguous segments as one indivisible token. An entry
+ * whose path never contains it does not parse, the same as any other ill-shaped entry. A
+ * {@code null} or blank {@code pathPrefix} disables the search entirely: the path must begin
+ * with namespace and service-name straight after the authority. The DNS form has no leading
+ * segments to skip -- its whole path is always the resource path -- so {@code pathPrefix} plays
+ * no part in {@link #parseDnsForm(String, String)}.
  *
  * <p>Host, namespace, and service-name are lower-cased at parse time, since all three are
  * compared case-insensitively against trusted-header-derived values; this keeps that comparison
@@ -49,10 +60,10 @@ import org.eclipse.jetty.util.URIUtil;
  *
  * <p>The resource path is kept in both of its comparison forms -- exactly as it stood in the
  * entry, and percent-encoded -- since a match against either form is acceptable. Namespace and
- * service-name are read once, from the raw path, with no encoded counterpart: a real destination's
- * namespace and service name are always valid DNS labels, which never contain a character an
- * encoder would touch, so parsing does not need to validate that they are -- a value that is not
- * a valid label simply will not match a real namespace or service name.
+ * service-name are read once, from the raw path or host, with no encoded counterpart: a real
+ * destination's namespace and service name are always valid DNS labels, which never contain a
+ * character an encoder would touch, so parsing does not need to validate that they are -- a value
+ * that is not a valid label simply will not match a real namespace or service name.
  *
  * <p>An aud entry for a delegation token is requested by the service that is about to call the
  * destination it describes, so a value that escapes some characters but not others within the same
@@ -66,20 +77,22 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   static final int DEFAULT_HTTPS_PORT = 443;
 
   /**
-   * Parses a single {@code aud} claim entry as a k8s-style destination URL. Returns
-   * {@link Optional#empty()} for any entry that is not a well-formed
+   * Parses a single {@code aud} claim entry in the custom form. Returns {@link Optional#empty()}
+   * for any entry that is not a well-formed
    * {@code https://host[:port]/[skipped-segments/]namespace/service-name[/resource-path]} URL --
    * including a {@code null} or blank entry, a non-{@code https} scheme, a missing or
    * userinfo-carrying authority, a path that never contains a non-blank {@code pathPrefix},
    * fewer than two path segments once past any such prefix, or a resource path that is not
-   * already in RFC 3986 remove_dot_segments normal form -- rather than throwing.
+   * already in RFC 3986 remove_dot_segments normal form -- rather than throwing. The result's
+   * {@code host} and {@code effectivePort} are always set, unlike a {@link #parseDnsForm(String,
+   * String)} result.
    *
    * <p>See the class javadoc for exactly how {@code pathPrefix} is searched for and consumed.
    *
    * <p>A {@code ?query} or {@code #fragment} on the entry is discarded before the path is parsed,
    * so it plays no part in {@code pathPrefix} matching or in the resulting resource path.
    */
-  public static Optional<AudienceResource> parse(String audEntry, String pathPrefix) {
+  public static Optional<AudienceResource> parseCustomForm(String audEntry, String pathPrefix) {
     if (audEntry == null) {
       return Optional.empty();
     }
@@ -211,22 +224,6 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   }
 
   /**
-   * The pieces of a single "aud" claim entry that carries the alternate, DNS-shaped destination
-   * URL: {@code https://<service>[.<namespace>[.svc[.<cluster-domain>]]][:port][/resource-path]}.
-   *
-   * <p>{@code namespace} is {@code null} when the host is a single label (service name only); a
-   * namespace-less host has no destination-namespace information of its own, and it is entirely
-   * up to the caller matching this result to decide what, if anything, it is compared against.
-   *
-   * <p>The resource path here is never prefix-searched the way {@link #parse(String, String)}'s
-   * is: a DNS-form entry has nowhere else for namespace and service-name to live, so the whole
-   * path -- after tidying -- is the resource path.
-   */
-  record DnsAudienceResource(String serviceName, String namespace, String resourcePathRaw,
-      String resourcePathEncoded) {
-  }
-
-  /**
    * Parses a single {@code aud} claim entry as the alternate, DNS-shaped destination URL whose
    * host is {@code <service>.<namespace>.svc.<cluster-domain>}, truncated at a label boundary
    * from the right -- the same shortening an ordinary DNS resolver search path allows. Returns
@@ -237,14 +234,27 @@ public record AudienceResource(String host, int effectivePort, String namespace,
    * past {@code "svc"} are not a label-boundary prefix of {@code clusterDomain} taken from its
    * left, or a resource path that is not already in RFC 3986 remove_dot_segments normal form.
    *
-   * <p>The port, when present, is parsed only so that it does not break parsing of the rest of
-   * the authority; it plays no further part in the result and is not retained, since pinning it
-   * breaks behind a mesh or sidecar that rewrites the port in flight.
+   * <p>The result's {@code namespace} is {@code null} when the host is a single label (service
+   * name only); a namespace-less host has no destination-namespace information of its own, and it
+   * is entirely up to the caller matching this result to decide what, if anything, it is compared
+   * against. {@code host} and {@code effectivePort} are not meaningful for a DNS-form result and
+   * are always set to {@code null} and {@code -1} respectively -- the cluster-domain host and any
+   * port in the entry are consumed only to parse the authority and are not retained; see the next
+   * paragraph for why the port specifically is discarded.
+   *
+   * <p>The port, when present, is parsed only so that it does not break parsing of the rest of the
+   * authority. It is then discarded rather than retained in the result: a mesh or sidecar in front
+   * of the destination may rewrite the port in flight, so pinning it here would risk rejecting a
+   * correctly-routed request.
+   *
+   * <p>The resource path here is never prefix-searched the way {@link #parseCustomForm(String,
+   * String)}'s is: a DNS-form entry has nowhere else for namespace and service-name to live, so
+   * the whole path -- after tidying -- is the resource path.
    *
    * <p>A {@code ?query} or {@code #fragment} on the entry is discarded before the path is parsed,
-   * exactly as in {@link #parse(String, String)}.
+   * exactly as in {@link #parseCustomForm(String, String)}.
    */
-  static Optional<DnsAudienceResource> parseDnsForm(String audEntry, String clusterDomain) {
+  static Optional<AudienceResource> parseDnsForm(String audEntry, String clusterDomain) {
     if (audEntry == null) {
       return Optional.empty();
     }
@@ -328,6 +338,6 @@ public record AudienceResource(String host, int effectivePort, String namespace,
         ? resourcePathRaw
         : URIUtil.encodePath(resourcePathRaw);
 
-    return Optional.of(new DnsAudienceResource(serviceName, namespace, resourcePathRaw, resourcePathEncoded));
+    return Optional.of(new AudienceResource(null, -1, namespace, serviceName, resourcePathRaw, resourcePathEncoded));
   }
 }
