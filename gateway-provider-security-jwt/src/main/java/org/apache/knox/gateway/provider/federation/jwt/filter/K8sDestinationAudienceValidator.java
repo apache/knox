@@ -66,7 +66,17 @@ import org.apache.knox.gateway.util.SpiffeId;
  * this, such an entry would match the named service in any namespace.
  *
  * <p>An {@code aud} entry with no resource path, or with only {@code /}, matches any request
- * path, for either form; the path header is not consulted for it.
+ * path, for either form; the path header is not consulted for it. This is deliberate: an {@code
+ * aud} entry with an empty path is a statement about which destination service a token may
+ * be presented to, not about which operations on that service it may invoke. This holds even
+ * when {@link #PATH_HEADER_PARAM} is configured and the header is present on the request;
+ * configuring that header lets an {@code aud} entry that does specify a path be checked
+ * against it, but does not, by itself, require every entry to specify one. The one case this
+ * does not cover well is a deployment that wants an {@code aud} entry of exactly {@code /}
+ * to mean "the root path only" rather than "any path" -- that distinction is
+ * not made here, since it is rarely the intended meaning in practice. When the audience is
+ * specified with an empty path, typically the specific service operations allowed are
+ * specified in a different way, such as with scopes.
  */
 public class K8sDestinationAudienceValidator implements RequestAudienceValidator {
 
@@ -292,6 +302,11 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * <p>Setting this to {@code false} disables the actor-subject check entirely, including
    * {@link #ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_PARAM}. A token with no {@code act} claim
    * carries no actor, so the check does not apply to it.
+   *
+   * <p>A token that does carry an {@code act} claim, but whose value is not a JSON object -- so
+   * no actor subject can be read from it at all -- fails validation when this is {@code true},
+   * the same as any other actor subject this check rejects. This differs from a token with no
+   * {@code act} claim, which this check does not apply to in the first place.
    */
   public static final String ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM =
       PARAM_PREFIX + "enforce.act.sub.service-account.matches.source.spiffeid";
@@ -442,6 +457,11 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
         if (actSubFailure.isPresent()) {
           return new AudienceValidationResult(false, actSubFailure.get());
         }
+      } else if (hasActClaim) {
+        return new AudienceValidationResult(false,
+            "Token has an act claim that is not a JSON object, so the actor subject cannot be read to "
+                + "compare against the source SPIFFE id, and " + ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM
+                + " is true");
       }
     }
 
@@ -590,10 +610,13 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   /**
    * A {@code null} requestPath means the path header is not configured, so the path is not
-   * compared at all. A candidate resource path of exactly {@code "/"} is a wildcard that matches
-   * any requestPath, including a configured one -- a different condition from the path not being
-   * compared, since here the path header may be present and the aud entry still declined to
-   * constrain the path.
+   * compared at all. A candidate resource path of exactly {@code "/"} (or, by the time this is
+   * reached, no path at all -- see {@link AudienceResource}) is a wildcard that matches any
+   * requestPath, including a configured and populated one -- a different condition from the path
+   * not being compared, since here the path header may be present and the {@code aud} entry still
+   * declined to constrain the path. This is intentional, not an oversight: see the class javadoc's
+   * note on why a path-less entry means "the whole service" rather than being treated as under-
+   * specified.
    */
   private static boolean matchesPath(final String resourcePathRaw, final String resourcePathEncoded,
       final String requestPath) {
@@ -745,10 +768,16 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     return (value == null || value.isEmpty()) ? defaultValue : value;
   }
 
+  /**
+   * Splits on {@code ,} and trims each entry, but does not drop an entry that trims to empty --
+   * for example a stray {@code ,,} or a trailing {@code ,} in {@link #CLUSTER_DOMAINS_PARAM}.
+   * This is operator-supplied configuration, not request data, so it is validated strictly: an
+   * empty entry is passed through to {@link ClusterDomain#parse(String)}, which rejects it, the
+   * same as any other malformed entry, rather than being silently discarded here.
+   */
   private static List<String> parseCommaSeparated(final String commaSeparatedList) {
     return Arrays.stream(commaSeparatedList.split(","))
         .map(String::trim)
-        .filter(s -> !s.isEmpty())
         .collect(Collectors.toList());
   }
 }

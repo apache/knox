@@ -268,7 +268,7 @@ public class K8sActorSubjectBindingTest {
   // ---- malformed chain / missing-sub cases ----
 
   @Test
-  public void testActClaimNotAMapSkipsCheckEntirely() throws Exception {
+  public void testActClaimNotAMapFailsWhenMatchesCheckEnabled() throws Exception {
     final Map<String, String> params = baseParams();
     params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SOURCE_SPIFFE_HEADER);
     params.put(K8sDestinationAudienceValidator.ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM, "true");
@@ -277,6 +277,17 @@ public class K8sActorSubjectBindingTest {
     final Map<String, String> headers = baseHeaders();
     headers.put(SOURCE_SPIFFE_HEADER, SOURCE_SPIFFE_VALUE);
     final HttpServletRequest request = requestWithHeaders(headers);
+    final AudienceValidationResult result =
+        validator.validate(request, delegationTokenWithActClaim("opaque-string", AUD), null);
+    assertFalse(result.isValid());
+    assertTrue(result.message().contains("not a JSON object"));
+  }
+
+  @Test
+  public void testActClaimNotAMapPassesWhenMatchesCheckDisabled() throws Exception {
+    final Map<String, String> params = baseParams();
+    final K8sDestinationAudienceValidator validator = init(params);
+    final HttpServletRequest request = requestWithHeaders(baseHeaders());
     assertTrue(validator.validate(request, delegationTokenWithActClaim("opaque-string", AUD), null).isValid());
   }
 
