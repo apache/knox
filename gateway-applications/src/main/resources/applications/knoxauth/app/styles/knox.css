@@ -1627,13 +1627,16 @@ body.login {
 .login #signout-container .signout-error-message {
   color: white;
 }
-.login #signout-container .signout-global-logout {
-  background: none !important;
+.login #signout-container form fieldset {
   border: none;
-  padding: 0 !important;
-  color: #06A;
-  text-decoration: none;
-  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+.login #signout-container form .btn {
+  margin-top: 15px;
+}
+.login #signout-container .signout-global-form .btn {
+  margin-top: 8px;
 }
 .login .l-logo {
   text-align: center;

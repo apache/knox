@@ -278,28 +278,10 @@ body.login {
   margin: 0 0 16px;
 }
 
-.login #signout-container .signout-actions {
-  margin: 0 0 8px;
-  text-align: center;
-}
-
-.login #signout-container .signout-actions a,
-.login #signout-container .signout-global-logout {
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-blue-nova-600-base) !important;
-  text-decoration: none;
-  background: none !important;
+.login #signout-container form fieldset {
   border: none;
-  padding: 0 !important;
-  cursor: pointer;
-}
-
-.login #signout-container .signout-actions a:hover,
-.login #signout-container .signout-global-logout:hover {
-  color: var(--color-blue-nova-700) !important;
-  text-decoration: underline;
+  margin: 0;
+  padding: 0;
 }
 
 .login #signout-container .signout-global-form {
@@ -475,7 +457,9 @@ body.login {
 /*  box-shadow: 0 2px 8px rgba(59, 46, 219, 0.3);*/
 /*}*/
 
-.login form button#signIn {
+.login form button#signIn,
+.login form button#signOut,
+.login form button#signOutGlobal {
   height: 40px !important;
   align-self: stretch !important;
   flex-grow: 0 !important;
@@ -492,9 +476,17 @@ body.login {
   cursor: pointer !important;
   transition: all 0.2s ease !important;
   filter: none !important;
+  --bs-btn-bg: #3b2edb !important;
+  --bs-btn-border-color: transparent !important;
+  --bs-btn-hover-bg: #3b2edb !important;
+  --bs-btn-hover-border-color: transparent !important;
+  --bs-btn-active-bg: #3b2edb !important;
+  --bs-btn-active-border-color: transparent !important;
 }
 
-.login form button#signIn span {
+.login form button#signIn span,
+.login form button#signOut span,
+.login form button#signOutGlobal span {
   font-family: Roboto !important;
   font-size: 16px !important;
   font-weight: normal !important;
@@ -516,7 +508,25 @@ body.login {
 .login form .btn-primary#signIn.active,
 .login form button#signIn[type="button"]:hover,
 .login form button#signIn[type="button"]:focus,
-.login form button#signIn[type="button"]:active {
+.login form button#signIn[type="button"]:active,
+.login form .btn#signOut:hover,
+.login form .btn#signOut:focus,
+.login form .btn#signOut:active,
+.login form .btn-primary#signOut:hover,
+.login form .btn-primary#signOut:focus,
+.login form .btn-primary#signOut:active,
+.login form button#signOut[type="submit"]:hover,
+.login form button#signOut[type="submit"]:focus,
+.login form button#signOut[type="submit"]:active,
+.login form .btn#signOutGlobal:hover,
+.login form .btn#signOutGlobal:focus,
+.login form .btn#signOutGlobal:active,
+.login form .btn-primary#signOutGlobal:hover,
+.login form .btn-primary#signOutGlobal:focus,
+.login form .btn-primary#signOutGlobal:active,
+.login form button#signOutGlobal[type="submit"]:hover,
+.login form button#signOutGlobal[type="submit"]:focus,
+.login form button#signOutGlobal[type="submit"]:active {
   opacity: 0.9 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 12px rgba(59, 46, 219, 0.4) !important;
@@ -544,7 +554,9 @@ body.login {
 .login form button#signIn[disabled],
 .login form button#signIn[disabled]:hover,
 .login form button#signIn[disabled]:focus,
-.login form button#signIn[disabled]:active {
+.login form button#signIn[disabled]:active,
+.login form button#signOut[disabled],
+.login form button#signOutGlobal[disabled] {
   background-image: none !important;
   background-color: #a3b5c2 !important;
   opacity: 0.6 !important;
@@ -558,7 +570,9 @@ body.login {
 }
 
 .login form .btn#signIn:active,
-.login form button#signIn[type="button"]:active {
+.login form button#signIn[type="button"]:active,
+.login form button#signOut[type="submit"]:active,
+.login form button#signOutGlobal[type="submit"]:active {
   transform: translateY(0) !important;
 }
 

@@ -75,6 +75,10 @@
             originalUrl = "";
         }
         originalUrl = originalUrl.replaceAll("&", "%26");
+        String themeParam = request.getParameter("theme");
+        if (themeParam != null && !themeParam.matches("^[a-zA-Z0-9_-]{1,64}$")) {
+            themeParam = null;
+        }
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
         String cookieName = null;
@@ -192,9 +196,17 @@
                 you will likely be automatically logged into your application. Otherwise, you
                 will be required to login again.
               </p>
-              <p class="signout-actions">
-                <a href="?returnToApp=1&amp;originalUrl=<%= StringEscapeUtils.escapeHtml4(originalUrl) %>">Return to Application</a>
-              </p>
+              <form action="login.html" method="get" accept-charset="utf-8">
+                <fieldset>
+                  <input type="hidden" name="originalUrl" value="<%= StringEscapeUtils.escapeHtml4(originalUrl) %>"/>
+                  <% if (themeParam != null) { %>
+                  <input type="hidden" name="theme" value="<%= StringEscapeUtils.escapeHtml4(themeParam) %>"/>
+                  <% } %>
+                  <button type="submit" class="btn btn-primary w-100" id="signOut" style="position: relative; text-align: center;">
+                    <span>Sign in again</span>
+                  </button>
+                </fieldset>
+              </form>
         <%
             if (globalLogoutPageURL != null && !globalLogoutPageURL.isEmpty()) {
         %>
@@ -207,7 +219,9 @@
                 specific session cookies and timeouts.
                 </p>
                 <input type="hidden" name="globalLogout" value="1" id="globalLogoutUrl"/>
-                <button type="submit" class="signout-global-logout">Global Logout</button>
+                <button type="submit" class="btn btn-primary w-100" id="signOutGlobal" style="position: relative; text-align: center;">
+                  <span>Global Logout</span>
+                </button>
               </form>
         <%
             }
