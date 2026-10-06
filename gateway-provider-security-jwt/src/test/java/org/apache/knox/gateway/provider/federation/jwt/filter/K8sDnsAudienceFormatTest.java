@@ -36,8 +36,9 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudience
  * Covers the k8s service DNS name aud format at the validator level: every host shape allowed by
  * {@link K8sDestinationAudienceValidator#CLUSTER_DOMAIN_PARAM}, its independence from {@link
  * K8sDestinationAudienceValidator#CLUSTER_DOMAINS_PARAM} and from {@link
- * K8sDestinationAudienceValidator#SERVER_NAME_CLUSTER_SUFFIX_PARAM}, and the dual-format fallback
- * between it and the custom destination-URL format.
+ * K8sDestinationAudienceValidator#SERVER_NAME_CLUSTER_SUFFIX_PARAM}, the dual-format fallback
+ * between it and the custom destination-URL format, and {@link
+ * K8sDestinationAudienceValidator#DNS_FORMAT_ENABLED_PARAM} disabling this format entirely.
  */
 public class K8sDnsAudienceFormatTest {
 
@@ -414,5 +415,93 @@ public class K8sDnsAudienceFormatTest {
     headers.put(PATH_HEADER, "/a");
     final HttpServletRequest request = requestWithHeaders(headers);
     assertFalse(validator.validate(request, token, null).isValid());
+  }
+
+  // ---- dns.format.enabled ----
+
+  @Test
+  public void testDnsFormatEnabledExplicitTrueBehavesSameAsDefault() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_ENABLED_PARAM, "true");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken("https://backend.ns.svc.cluster.local/a/b");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    headers.put(PATH_HEADER, "/a/b");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertTrue(validator.validate(request, token, null).isValid());
+  }
+
+  @Test
+  public void testDnsFormatEnabledFalseRejectsDnsShapedEntryThatWouldOtherwiseMatch() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_ENABLED_PARAM, "false");
+    final K8sDestinationAudienceValidator validator = init(params);
+    // Matches via the DNS form when enabled (see
+    // testDnsShapedHostMatchesViaDnsFormEvenWhenCustomFormClusterDomainsWouldNeverMatch); with
+    // the DNS form disabled, this entry is only tried as a custom form, where its host is not in
+    // the default cluster-domains allow-list, so it is rejected.
+    final JWT token = delegationToken("https://backend.ns.svc.cluster.local/a/b");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertFalse(validator.validate(request, token, null).isValid());
+  }
+
+  @Test
+  public void testDnsFormatEnabledFalseStillMatchesViaCustomForm() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_ENABLED_PARAM, "false");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken("https://service.local/ns/backend");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    assertTrue(validator.validate(request, token, null).isValid());
+  }
+
+  @Test
+  public void testDnsFormatEnabledFalseFailureMessageIsUnwrappedAndDoesNotMentionDnsForm() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "service.local");
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_ENABLED_PARAM, "false");
+    final K8sDestinationAudienceValidator validator = init(params);
+    final JWT token = delegationToken("https://service.local/otherns/backend");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/ns/sa/sa");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    final AudienceValidationResult result = validator.validate(request, token, null);
+    assertFalse(result.isValid());
+    assertTrue(result.message().contains(
+        "aud entry https://service.local/otherns/backend does not match the destination: "
+            + "namespace otherns does not match destination namespace ns"));
+    assertFalse(result.message().contains("k8s service DNS name"));
+    assertFalse(result.message().contains("either supported format"));
+  }
+
+  @Test
+  public void testDnsFormatEnabledFalseEntryThatOnlyParsesAsDnsFormFailsToParseAtAll() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.SOURCE_SPIFFE_ID_HEADER_PARAM, SOURCE_SPIFFE_HEADER);
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_ENABLED_PARAM, "false");
+    final K8sDestinationAudienceValidator validator = init(params);
+    // "https://backend" has no path segments at all, so it never parses as a custom form, which
+    // requires at least namespace and service-name path segments; with the DNS form disabled
+    // there is no other interpretation to fall back to.
+    final JWT token = delegationToken("https://backend");
+    final Map<String, String> headers = new HashMap<>();
+    headers.put(SPIFFE_HEADER, "spiffe://trust-domain/ns/myns/sa/sa");
+    headers.put(SOURCE_SPIFFE_HEADER, "spiffe://trust-domain/ns/myns/sa/caller-sa");
+    final HttpServletRequest request = requestWithHeaders(headers);
+    final AudienceValidationResult result = validator.validate(request, token, null);
+    assertFalse(result.isValid());
+    assertTrue(result.message().contains("does not parse as a custom form destination URL"));
+    assertFalse(result.message().contains("k8s service DNS name"));
   }
 }

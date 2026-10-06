@@ -47,6 +47,8 @@ import org.apache.knox.gateway.util.SpiffeId;
  * present, and only searched for, when {@link #AUDIENCE_PATH_PREFIX_PARAM} is configured, and it
  * has no effect on the first form; see that constant and
  * {@link AudienceResource#parseCustomForm(String, String)}.
+ * <p>The first form is tried at all only when {@link #DNS_FORMAT_ENABLED_PARAM} is {@code true},
+ * its default; when it is {@code false}, every entry is evaluated only as the custom form.
  * <p>A token carrying a delegation {@code act} claim is always routed through this validator; see
  * {@link #validate(HttpServletRequest, JWT, List)}. A token with no {@code act} claim is too,
  * unless {@link #VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM} is {@code false}.
@@ -146,7 +148,6 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * since the header is expected to carry the routed request path directly.
    */
   public static final String PATH_HEADER_FROM_URL_PARAM = PARAM_PREFIX + "path.header.from.url";
-  public static final boolean PATH_HEADER_FROM_URL_DEFAULT = false;
 
   /**
    * Comma-separated allow-list of cluster domains an {@code aud} entry's authority (host and
@@ -175,7 +176,6 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * older or misconfigured issuer.
    */
   public static final String REQUIRE_ALL_AUDIENCES_MATCH_PARAM = PARAM_PREFIX + "require-all-audiences-match";
-  public static final boolean REQUIRE_ALL_AUDIENCES_MATCH_DEFAULT = false;
 
   /**
    * Optional path prefix that, when set, an {@code aud} entry's path is searched for before
@@ -191,6 +191,21 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * searched for nor removed.
    */
   public static final String AUDIENCE_PATH_PREFIX_PARAM = PARAM_PREFIX + "audience.path.prefix";
+
+  /**
+   * Whether an {@code aud} entry written as a k8s service DNS name is accepted at all. Defaults to
+   * {@code true}. When {@code false}, every {@code aud} entry is evaluated only as the custom
+   * form, and {@link #CLUSTER_DOMAIN_PARAM} is unused.
+   *
+   * <p>A deployment that fronts more than one cluster, or more than one trust domain, behind this
+   * validator may want to set this to {@code false}: a k8s service DNS name carries no cluster or
+   * trust-domain identifier of its own, so there is no way to tell, from the entry alone, which
+   * cluster or trust domain a bare {@code <service>.<namespace>} host belongs to. The custom form
+   * does not have this ambiguity, since its cluster-domain segment is checked against an explicit
+   * allow-list.
+   */
+  public static final String DNS_FORMAT_ENABLED_PARAM = PARAM_PREFIX + "dns.format.enabled";
+  public static final boolean DNS_FORMAT_ENABLED_DEFAULT = true;
 
   /**
    * The Kubernetes cluster domain used when parsing an {@code aud} entry written as a k8s
@@ -280,7 +295,6 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    */
   public static final String ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM =
       PARAM_PREFIX + "enforce.act.sub.service-account.matches.source.spiffeid";
-  public static final boolean ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_DEFAULT = false;
 
   /**
    * Whether an actor subject that cannot be read as
@@ -300,7 +314,6 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    */
   public static final String ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_PARAM =
       PARAM_PREFIX + "enforce.act.sub.is.service.account";
-  public static final boolean ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_DEFAULT = false;
 
   private String namespaceFromSpiffeIdHeader;
   private String serverNameHeader;
@@ -310,6 +323,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   private List<ClusterDomain> clusterDomains;
   private boolean requireAllAudiencesMatch;
   private String audiencePathPrefix;
+  private boolean dnsFormatEnabled;
   private String clusterDomain;
   private String sourceSpiffeIdHeader;
   private boolean validateAudiencesWithoutActClaim;
@@ -349,6 +363,12 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     requireAllAudiencesMatch = Boolean.parseBoolean(filterConfig.getInitParameter(REQUIRE_ALL_AUDIENCES_MATCH_PARAM));
 
     audiencePathPrefix = blankToNull(filterConfig.getInitParameter(AUDIENCE_PATH_PREFIX_PARAM));
+
+    // Defaults to true, so cannot use only Boolean.parseBoolean() to handle a missing definition.
+    final String dnsFormatEnabledParam = filterConfig.getInitParameter(DNS_FORMAT_ENABLED_PARAM);
+    dnsFormatEnabled = (dnsFormatEnabledParam == null || dnsFormatEnabledParam.isEmpty())
+        ? DNS_FORMAT_ENABLED_DEFAULT
+        : Boolean.parseBoolean(dnsFormatEnabledParam);
 
     // Defaults to true, so cannot use only Boolean.parseBoolean() to handle a missing definition.
     final String validateAudiencesWithoutActClaimParam =
@@ -459,10 +479,12 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   /**
    * The failure reason for a single {@code aud} entry against the request's actual destination, or
-   * {@link Optional#empty()} if either the k8s service DNS name form or the custom form accepts
-   * it. Tries the DNS form first; falls back to the custom form on either a parse failure or a
-   * match failure, so a custom-form entry whose base domain happens to also parse as a DNS-shaped
-   * host is still evaluated as a custom-form entry rather than rejected outright.
+   * {@link Optional#empty()} if the entry is accepted. When {@link #DNS_FORMAT_ENABLED_PARAM} is
+   * {@code true} (the default), tries the DNS form first and falls back to the custom form on
+   * either a parse failure or a match failure, so a custom-form entry whose base domain happens to
+   * also parse as a DNS-shaped host is still evaluated as a custom-form entry rather than rejected
+   * outright. When that parameter is {@code false}, the DNS form is never attempted and every entry
+   * is evaluated only as the custom form.
    *
    * @param audienceClaim the single {@code aud} claim entry being checked against the destination
    * @param namespace the destination namespace to compare against, or {@code null} exactly when
@@ -487,12 +509,15 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    */
   private Optional<String> matchFailureReason(final String audienceClaim, final String namespace,
       final String serviceName, final String requestPath, final Optional<SpiffeId> sourceSpiffeId) {
-    final Optional<AudienceResource> dnsParsed = AudienceResource.parseDnsForm(audienceClaim, clusterDomain);
-    final Optional<String> dnsFailure = dnsParsed.isPresent()
-        ? dnsMatchFailureReason(dnsParsed.get(), namespace, serviceName, requestPath, sourceSpiffeId)
-        : Optional.of("does not parse as a k8s service DNS name");
-    if (dnsFailure.isEmpty()) {
-      return Optional.empty();
+    Optional<String> dnsFailure = Optional.of("the k8s service DNS name form is disabled");
+    if (dnsFormatEnabled) {
+      final Optional<AudienceResource> dnsParsed = AudienceResource.parseDnsForm(audienceClaim, clusterDomain);
+      dnsFailure = dnsParsed.isPresent()
+          ? dnsMatchFailureReason(dnsParsed.get(), namespace, serviceName, requestPath, sourceSpiffeId)
+          : Optional.of("does not parse as a k8s service DNS name");
+      if (dnsFailure.isEmpty()) {
+        return Optional.empty();
+      }
     }
 
     final Optional<AudienceResource> customParsed = AudienceResource.parseCustomForm(audienceClaim, audiencePathPrefix);
@@ -501,6 +526,10 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
         : Optional.of("does not parse as a custom form destination URL");
     if (customFailure.isEmpty()) {
       return Optional.empty();
+    }
+
+    if (!dnsFormatEnabled) {
+      return Optional.of("aud entry " + audienceClaim + " does not match the destination: " + customFailure.get());
     }
 
     return Optional.of("aud entry " + audienceClaim + " does not match the destination in either supported "
