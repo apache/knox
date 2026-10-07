@@ -23,10 +23,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 
 /**
- * Regression coverage for {@link ActorIdentity#fromJwt(JWT)} across the refactor that moved the
- * {@code system:serviceaccount:} prefix constant to {@link ServiceAccountSubject}: the behavior of
- * this class is unchanged, including for subjects that carry the prefix but do not otherwise match
- * {@link ServiceAccountSubject}'s own stricter shape.
+ * Regression coverage for {@link ActorIdentity#fromJwt(JWT)}.
  */
 public class ActorIdentityTest {
   @Test
