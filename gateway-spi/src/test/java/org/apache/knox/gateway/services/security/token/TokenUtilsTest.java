@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -40,6 +41,17 @@ import com.nimbusds.jose.crypto.RSASSASigner;
  * Test class for TokenUtils, focusing on RFC 8693 actor chain functionality.
  */
 public class TokenUtilsTest {
+
+  @Test
+  public void testGetThumbprintForECPublicKey() throws Exception {
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+    kpg.initialize(256);
+    final KeyPair ecPair = kpg.generateKeyPair();
+
+    final String thumbprint = TokenUtils.getThumbprint((ECPublicKey) ecPair.getPublic(), "SHA-256");
+    assertNotNull(thumbprint);
+    assertTrue(!thumbprint.isEmpty());
+  }
 
   @Test
   public void testExtractActorChain_NoActClaim() throws Exception {
