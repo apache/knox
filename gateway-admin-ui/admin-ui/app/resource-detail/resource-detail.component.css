@@ -15,6 +15,12 @@
     padding: 0px;
 }
 
+/*
+ * The hover "edit" pencil is drawn from a locally-inlined SVG (Material Symbols
+ * Outlined, Apache-2.0, github.com/google/material-design-icons) so the UI needs
+ * no external icon font and works fully offline. It is applied as a CSS mask and
+ * tinted via background-color.
+ */
 .inline-editable:hover:after {
     content: "";
     display: inline-block;
@@ -24,8 +30,8 @@
     left: 6px;
     top: 2px;
     background-color: #4caf50;
-    -webkit-mask: url('../../assets/icons/edit.svg') no-repeat center / contain;
-    mask: url('../../assets/icons/edit.svg') no-repeat center / contain;
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'%3e%3cpath d='M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z'/%3e%3c/svg%3e") no-repeat center / contain;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'%3e%3cpath d='M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z'/%3e%3c/svg%3e") no-repeat center / contain;
 }
 
 .inline-editable.editable-empty,

@@ -30,10 +30,13 @@ upgrade (KNOX-3234).
 ## How it works
 
 - **admin-ui** (this module): `icon.data.ts` holds the SVG `path` `d` strings;
-  `icon.component.ts` (`<kx-icon name="...">`) renders them inside the shared
+  `icon.component.ts` (`<app-icon name="...">`) renders them inside the shared
   `viewBox`. The host carries the `material-icons` class so the existing
   `styles.scss` theming (color-by-action, hover, sizing) keeps matching.
-  The inline-edit hover pencil is `assets/icons/edit.svg`, applied as a CSS mask.
+  The inline-edit hover pencil lives in `resource-detail.component.css` as an
+  inlined `data:image/svg+xml` SVG, applied as a CSS mask and tinted via
+  `background-color` (a pseudo-element can't hold a DOM `<svg>`, so it is
+  referenced as a URL rather than drawn by the component).
 - **mat-icon modules** (home, token-generation, token-management): each has an
   `app/icons/icon-registry.provider.ts` that registers the inline SVGs with
   Angular Material's `MatIconRegistry` via `addSvgIconLiteral`; templates use
