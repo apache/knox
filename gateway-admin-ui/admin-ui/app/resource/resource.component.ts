@@ -28,6 +28,7 @@ import {ServiceDefinition} from '../model/servicedefinition';
 import {NewDescWizardComponent} from '../new-desc-wizard/new-desc-wizard.component';
 import {ProviderConfigWizardComponent} from '../provider-config-wizard/provider-config-wizard.component';
 import {NewServiceDefinitionComponent} from '../service-definition/new-service-definition.component';
+import {KxIconComponent} from '../shared/icon/icon.component';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -35,7 +36,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     templateUrl: './resource.component.html',
     styleUrls: ['./resource.component.css'],
     imports: [DatePipe, MatTableModule, MatPaginatorModule,
-        NewDescWizardComponent, ProviderConfigWizardComponent, NewServiceDefinitionComponent]
+        NewDescWizardComponent, ProviderConfigWizardComponent, NewServiceDefinitionComponent, KxIconComponent]
 })
 export class ResourceComponent implements OnInit, AfterViewInit {
     resourceType: string;

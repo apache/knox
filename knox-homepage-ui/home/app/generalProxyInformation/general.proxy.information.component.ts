@@ -20,12 +20,13 @@ import {HomepageService} from '../service/homepage.service';
 import {GeneralProxyInformation} from '../model/general.proxy.information';
 
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
     selector: 'app-general-proxy-information',
     templateUrl: './general.proxy.information.component.html',
     providers: [HomepageService],
-    imports: [MatIconModule]
+    imports: [MatIconModule, MatTooltipModule]
 })
 
 export class GeneralProxyInformationComponent implements OnInit {

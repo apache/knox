@@ -15,10 +15,10 @@ limitations under the License.
 <div>
   <h4 (click)="toggleBoolean('showGeneralProxyInformation')" class="d-flex align-items-center">
     @if (this['showGeneralProxyInformation']) {
-      <mat-icon>remove</mat-icon>
+      <mat-icon svgIcon="remove"></mat-icon>
     }
     @if (!this['showGeneralProxyInformation']) {
-      <mat-icon>add</mat-icon>
+      <mat-icon svgIcon="add"></mat-icon>
     }
     General Proxy Information
   </h4>
@@ -63,8 +63,7 @@ limitations under the License.
         <tr>
           <td>
             Admin API Details
-            <span class="inline-glyph glyphicon glyphicon-info-sign btn btn-xs"
-            title="{{ getAdminApiDescription() }}" data-toggle="tooltip"></span>
+            <mat-icon class="reduce-icon-size" svgIcon="info" [matTooltip]="getAdminApiDescription()"></mat-icon>
           </td>
           <td>
             <a href="{{ getAdminApiBookUrl() }}" target="_blank">{{ getAdminApiBookUrl() }}</a>

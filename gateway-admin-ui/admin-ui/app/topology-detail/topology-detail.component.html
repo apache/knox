@@ -28,18 +28,18 @@
         <div class="editor-toolbar">
             <button id="duplicateTopology" (click)="duplicateModal.open('sm')" class="btn btn-default btn-sm"
                     title="Duplicate Topology" type="submit">
-                <span class="material-icons">content_copy</span>
+                <app-icon name="content_copy"></app-icon>
             </button>
             @if (showEditOptions) {
                 <button id="deleteTopology" (click)="deleteConfirmModal.open('sm')"
                         class="btn btn-default btn-sm" title="Delete Topology" type="submit">
-                    <span class="material-icons">delete</span>
+                    <app-icon name="delete"></app-icon>
                 </button>
             }
             @if (showEditOptions) {
                 <button id="saveTopology" (click)="saveTopology()" class="btn btn-default btn-sm pull-right"
                         title="Save Topology" [disabled]="!changedTopology" type="submit">
-                    <span class="material-icons">save</span>
+                    <app-icon name="save"></app-icon>
                 </button>
             }
         </div>

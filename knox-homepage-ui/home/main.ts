@@ -24,6 +24,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { SessionInformationComponent } from './app/sessionInformation/session.information.component';
 import { GeneralProxyInformationComponent } from './app/generalProxyInformation/general.proxy.information.component';
 import { TopologyInformationsComponent } from './app/topologies/topology.information.component';
+import { provideIconRegistry } from './app/icons/icon-registry.provider';
 
 import './polyfills.ts';
 
@@ -41,6 +42,7 @@ bootstrapComponents.forEach(component => {
   bootstrapApplication(component, {
     providers: [
       provideZoneChangeDetection(),importProvidersFrom(MatGridListModule),
+      provideIconRegistry(),
       provideHttpClient(),
       provideRouter([]),
       {
