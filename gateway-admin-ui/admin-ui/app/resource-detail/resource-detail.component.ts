@@ -27,6 +27,7 @@ import {ResourceTypesService} from '../service/resourcetypes.service';
 import {TopologyDetailComponent} from '../topology-detail/topology-detail.component';
 import {ServiceDefinitionDetailComponent} from '../service-definition/servicedefinition-detail.component';
 import {ModalComponent} from '../utils/modal.component';
+import {KxIconComponent} from '../shared/icon/icon.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as yaml from 'js-yaml';
 
@@ -35,7 +36,7 @@ import * as yaml from 'js-yaml';
     templateUrl: './resource-detail.component.html',
     styleUrls: ['./resource-detail.component.css'],
     imports: [FormsModule, ProviderConfigSelectorComponent,
-        TopologyDetailComponent, ServiceDefinitionDetailComponent, ModalComponent]
+        TopologyDetailComponent, ServiceDefinitionDetailComponent, ModalComponent, KxIconComponent]
 })
 
 export class ResourceDetailComponent implements OnInit {

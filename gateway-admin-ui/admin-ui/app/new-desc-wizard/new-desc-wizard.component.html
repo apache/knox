@@ -29,10 +29,10 @@
                     <span class="col-md-sm inline-editor inlineEditForm">
                         <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
                         <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
-                          <span class="material-icons">check</span>
+                          <app-icon name="check"></app-icon>
                         </button>
                         <button class="btn btn-xs" (click)="editModePC=false">
-                          <span class="material-icons">close</span>
+                          <app-icon name="close"></app-icon>
                         </button>
                     </span>
                 }
@@ -42,7 +42,7 @@
                       [class.disabled]="editModePC"
                       data-toggle="tooltip"
                       title="Choose Provider Configuration">
-                    <span class="material-icons">edit</span>
+                    <app-icon name="edit"></app-icon>
                 </span>
                 <app-provider-config-selector #choosePC></app-provider-config-selector>
                 @if (!isMissingProviderConfig() && !isValidProviderConfig()) {
@@ -54,8 +54,8 @@
 
             <!-- Services -->
             <div>
-        <span class="clickable inline-glyph material-icons"
-              (click)="toggleBoolean('showServices')">{{this['showServices'] ? 'expand_more' : 'chevron_right'}}</span>
+        <app-icon class="clickable inline-glyph"
+              (click)="toggleBoolean('showServices')" [name]="this['showServices'] ? 'expand_more' : 'chevron_right'"></app-icon>
                 <span (click)="toggleBoolean('showServices')"><strong>Services</strong></span>
             </div>
             @if (this['showServices']) {
@@ -83,8 +83,8 @@
 
             <!-- Discovery -->
             <div>
-        <span class="clickable inline-glyph material-icons"
-              (click)="toggleBoolean('showDiscovery')">{{this['showDiscovery'] ? 'expand_more' : 'chevron_right'}}</span>
+        <app-icon class="clickable inline-glyph"
+              (click)="toggleBoolean('showDiscovery')" [name]="this['showDiscovery'] ? 'expand_more' : 'chevron_right'"></app-icon>
                 <span (click)="toggleBoolean('showDiscovery')"><strong>Discovery</strong></span>
             </div>
             @if (this['showDiscovery']) {

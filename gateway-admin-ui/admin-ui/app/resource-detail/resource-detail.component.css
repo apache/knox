@@ -16,12 +16,16 @@
 }
 
 .inline-editable:hover:after {
-    font-family: 'Material Icons';
-    content: "\e254";
-    font-size: 14px;
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
     position: relative;
     left: 6px;
-    color: #4caf50;
+    top: 2px;
+    background-color: #4caf50;
+    -webkit-mask: url('../../assets/icons/edit.svg') no-repeat center / contain;
+    mask: url('../../assets/icons/edit.svg') no-repeat center / contain;
 }
 
 .inline-editable.editable-empty,
