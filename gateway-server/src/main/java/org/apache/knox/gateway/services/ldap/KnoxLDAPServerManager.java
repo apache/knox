@@ -54,6 +54,7 @@ import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFac
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptor;
 import org.apache.knox.gateway.services.security.AliasService;
+import org.apache.knox.gateway.services.security.AliasServiceException;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -72,6 +73,7 @@ import java.util.stream.IntStream;
 public class KnoxLDAPServerManager {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
     private static final String LDAP_BIND_PASSWORD_ALIAS = "gateway_ldap_bind_password";
+    private static final List<String> BACKEND_PASSWORD_KEYS = List.of("bindPassword", "systemPassword", "trustStorePassword");
     private final AliasService aliasService;
     private final GatewayServices gatewayServices;
 
@@ -86,6 +88,7 @@ public class KnoxLDAPServerManager {
     private int port;
     private String baseDn;
     private String bindUser;
+    private boolean dnMappingEnabled;
     // Secure (LDAPS) transport configuration
     private boolean sslEnabled;
     private String sslKeystorePath;
@@ -122,6 +125,7 @@ public class KnoxLDAPServerManager {
         this.baseDn = config.getLDAPBaseDN();
         this.bindUser = config.getLDAPBindUser();
         validateBindUser();
+        this.dnMappingEnabled = config.getLDAPDnMappingEnabled();
 
         maxSizeLimit = config.getLDAPMaxSizeLimit();
         maxTimeLimit = config.getLDAPMaxTimeLimit();
@@ -173,6 +177,7 @@ public class KnoxLDAPServerManager {
 
             // Add common configuration
             interceptorConfig.put("baseDn", baseDn);
+            interceptorConfig.put("dnMappingEnabled", String.valueOf(dnMappingEnabled));
             if (!interceptorConfig.containsKey("maxResultSetSize")) {
                 // Set the backend to return more results than the proxy's size limit.
                 // This will ensure that the proxy will return "Size limit exceeded"
@@ -191,9 +196,37 @@ public class KnoxLDAPServerManager {
                 }
             }
 
+            resolveBackendPasswordAliases(interceptorName, interceptorConfig);
+
             interceptors.add(InterceptorFactory.createInterceptor(config, gatewayServices, interceptorName, interceptorConfig));
         }
         this.interceptors = interceptors;
+    }
+
+    /**
+     * Resolves gateway credential-store alias references (e.g. {@code ${ALIAS=my-ad-password}}) held in the
+     * backend password properties, replacing each with the secret fetched from the gateway credential store.
+     * Literal (non-alias) values are left untouched for backward compatibility; an unresolvable alias is
+     * left as-is and logged at ERROR, so the backend bind fails rather than silently using a different credential.
+     */
+    private void resolveBackendPasswordAliases(String interceptorName, Map<String, String> interceptorConfig) {
+        for (String key : BACKEND_PASSWORD_KEYS) {
+            final String value = interceptorConfig.get(key);
+            if (StringUtils.isNotBlank(value) && aliasService.isAlias(value)) {
+                final String alias = aliasService.extractAlias(value);
+                try {
+                    final char[] password = aliasService.getPasswordFromAliasForGateway(alias);
+                    if (password == null) {
+                        LOG.ldapBackendPasswordAliasNotFound(alias, key, interceptorName);
+                    } else {
+                        interceptorConfig.put(key, new String(password));
+                        LOG.ldapBackendPasswordAliasResolved(key, interceptorName);
+                    }
+                } catch (AliasServiceException e) {
+                    LOG.ldapBackendPasswordAliasResolutionFailed(alias, key, interceptorName, e);
+                }
+            }
+        }
     }
 
     /**

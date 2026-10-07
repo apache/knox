@@ -104,6 +104,30 @@ public class SubjectUtils {
     return subject.getPrincipals(TokenIdPrincipal.class);
   }
 
+  /**
+   * Get the caller's auth token credentials from the subject's private credentials.
+   *
+   * <p>The token is carried as a private credential rather than a principal so that it can
+   * never be mistaken for an identity by {@link #getPrimaryPrincipalName(Subject)}.</p>
+   *
+   * @param subject the subject to interrogate
+   * @return the auth token credentials, empty when the subject is null or carries none
+   */
+  public static Set<AuthTokenCredential> getAuthTokenCredentials(Subject subject) {
+    return subject == null ? Collections.emptySet() : subject.getPrivateCredentials(AuthTokenCredential.class);
+  }
+
+  /**
+   * Get the caller's serialized JWT from the subject, if one was captured at authentication time.
+   *
+   * @param subject the subject to interrogate
+   * @return the serialized token, or null when the subject is null or carries no auth token
+   */
+  public static String getAuthToken(Subject subject) {
+    final Set<AuthTokenCredential> credentials = getAuthTokenCredentials(subject);
+    return credentials.isEmpty() ? null : credentials.iterator().next().getToken();
+  }
+
   public static Set<ActorChainPrincipal> getActorChainPrincipal(Subject currentSubject, Subject subject) {
     return currentSubject.getPrincipals(ActorChainPrincipal.class);
   }

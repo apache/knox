@@ -20,6 +20,7 @@ package org.apache.knox.gateway.preauth.k8s;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.preauth.filter.PreAuthValidationException;
 import org.apache.knox.gateway.preauth.filter.PreAuthValidator;
+import org.apache.knox.gateway.util.SpiffeId;
 
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;

@@ -26,6 +26,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.RoleAssignment;
 
 import java.io.IOException;
@@ -37,6 +39,8 @@ import java.util.List;
  * REST API based implementation of LdapRolesLookup.
  */
 public class RestApiLdapRolesLookup implements LdapRolesLookup {
+    private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
     private final ObjectMapper mapper = new ObjectMapper();
     private final String endpoint;
 
@@ -50,21 +54,26 @@ public class RestApiLdapRolesLookup implements LdapRolesLookup {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             LookupRolesRequest request = new LookupRolesRequest(userId, new ArrayList<>(groups));
             String jsonRequest = mapper.writeValueAsString(request);
+            LOG.restRolesLookupRequest(endpoint, jsonRequest);
             HttpPost httpPost = new HttpPost(endpoint);
             httpPost.setEntity(new StringEntity(jsonRequest, ContentType.APPLICATION_JSON));
 
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 int statusCode = response.getStatusLine().getStatusCode();
+
+                HttpEntity entity = response.getEntity();
+                final String jsonResponse = entity == null ? null : EntityUtils.toString(entity);
+                LOG.restRolesLookupResponse(endpoint, statusCode, jsonResponse);
+
                 if (statusCode != 200) {
+                    LOG.restRolesLookupHttpError(endpoint, statusCode, jsonResponse);
                     throw new RoleLookupException("Failed to lookup roles: HTTP " + statusCode);
                 }
 
-                HttpEntity entity = response.getEntity();
-                if (entity == null) {
+                if (jsonResponse == null) {
                     throw new RoleLookupException("Empty response from role lookup API");
                 }
 
-                final String jsonResponse = EntityUtils.toString(entity);
                 final LookupRolesResponse lookupResponse = mapper.readValue(jsonResponse, LookupRolesResponse.class);
                 return parseResponse(lookupResponse);
             }

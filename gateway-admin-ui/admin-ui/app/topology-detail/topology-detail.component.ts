@@ -21,12 +21,13 @@ import {TopologyService} from '../service/topology.service';
 import {ResourceTypesService} from '../service/resourcetypes.service';
 import {ValidationUtils} from '../utils/validation-utils';
 import {ModalComponent} from '../utils/modal.component';
+import {KxIconComponent} from '../shared/icon/icon.component';
 
 @Component({
     selector: 'app-topology-detail',
     templateUrl: './topology-detail.component.html',
     styleUrls: ['./topology-detail.component.css'],
-    imports: [FormsModule, ModalComponent]
+    imports: [FormsModule, ModalComponent, KxIconComponent]
 })
 export class TopologyDetailComponent implements OnInit {
     title = 'Topology Detail';

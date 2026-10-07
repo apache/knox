@@ -24,6 +24,7 @@ import { enableProdMode, importProvidersFrom, provideZoneChangeDetection } from 
 import { provideRouter } from '@angular/router';
 import { APP_BASE_HREF } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
+import { provideIconRegistry } from './app/icons/icon-registry.provider';
 
 if (environment.production) {
     enableProdMode();
@@ -38,6 +39,7 @@ bootstrapComponents.forEach(component => {
   bootstrapApplication(component, {
     providers: [
       provideZoneChangeDetection(),importProvidersFrom(),
+      provideIconRegistry(),
       provideHttpClient(),
       provideRouter([]),
       {

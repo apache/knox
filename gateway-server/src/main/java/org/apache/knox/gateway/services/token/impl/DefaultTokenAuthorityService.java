@@ -29,6 +29,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -42,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import javax.net.ssl.SSLException;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -68,6 +71,7 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.fips.FipsUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.Service;
@@ -82,6 +86,7 @@ import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
+import org.apache.knox.gateway.util.HttpUtils;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
@@ -92,6 +97,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final Set<String> SUPPORTED_PKI_SIG_ALGS = new HashSet<>(Arrays.asList("RS256", "RS384", "RS512", "PS256", "PS384", "PS512"));
   private static final Set<String> SUPPORTED_EC_SIG_ALGS = new HashSet<>(Arrays.asList("ES256", "ES384", "ES512"));
   private static final Set<String> SUPPORTED_HMAC_SIG_ALGS = new HashSet<>(Arrays.asList("HS256", "HS384", "HS512"));
+
+  /* How far down a cause chain to walk before giving up. */
+  private static final int MAX_CAUSE_DEPTH = 20;
   private AliasService aliasService;
   private KeystoreService keystoreService;
   private GatewayConfig config;
@@ -358,9 +366,41 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
         verified = true;
       }
     } catch (BadJOSEException | JOSEException | ParseException | MalformedURLException e) {
+      if (isIpLiteralTlsFailure(jwksUrl, e)) {
+        /* BC-FIPS refuses HTTPS endpoint identification against a bare IP */
+        if (FipsUtils.isFipsEnabledWithBCProvider()) {
+          LOG.jwksIpLiteralHostUnderFips(jwksUrl);
+        } else {
+          LOG.jwksIpLiteralHost(jwksUrl);
+        }
+      }
       throw new TokenServiceException("Cannot verify token.", e);
     }
     return verified;
+  }
+
+  /**
+   * Whether a JWKS failure is a TLS/trust failure against an IP literal host, the one case where
+   * {@code certificate_unknown(46)} says nothing at all about the contents of the truststore.
+   *
+   * @param jwksUrl the JWKS endpoint that was being fetched
+   * @param failure the failure to inspect
+   * @return {@code true} when the host is an IP literal and the chain carries a TLS/trust failure
+   */
+  static boolean isIpLiteralTlsFailure(final String jwksUrl, final Throwable failure) {
+    return HttpUtils.isIpLiteralHost(jwksUrl) && isTlsTrustFailure(failure);
+  }
+
+  /* Determins if the exception was an SSLException or CertificateException */
+  private static boolean isTlsTrustFailure(final Throwable failure) {
+    Throwable cause = failure;
+    for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
+      if (cause instanceof SSLException || cause instanceof CertificateException) {
+        return true;
+      }
+      cause = cause.getCause() == cause ? null : cause.getCause();
+    }
+    return false;
   }
 
   @Override
@@ -374,8 +414,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
           return verified;
         }
       } catch (TokenServiceException e) {
-        /* failed to verify token, log and move on */
-        LOG.jwksVerificationFailed(url.toString(), e.toString(), e);
+        LOG.jwksVerificationFailed(url.toString(),
+            e.getCause() != null ? e.getCause().toString() : e.toString(), e);
       }
     }
     return verified;

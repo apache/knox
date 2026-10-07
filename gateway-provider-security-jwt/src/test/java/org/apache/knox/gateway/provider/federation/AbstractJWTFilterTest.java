@@ -207,6 +207,49 @@ public abstract class AbstractJWTFilterTest  {
   }
 
   @Test
+  public void testValidJWTCarriesAuthTokenCredential() throws Exception {
+    Properties props = getProperties();
+    handler.init(new TestFilterConfig(props));
+
+    SignedJWT jwt = getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER, "alice",
+                           new Date(new Date().getTime() + 5000), privateKey);
+
+    HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    setTokenOnRequest(request, jwt);
+
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+    EasyMock.expect(request.getPathInfo()).andReturn("resource").anyTimes();
+    EasyMock.expect(request.getQueryString()).andReturn(null);
+    HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.expect(response.encodeRedirectURL(SERVICE_URL)).andReturn(SERVICE_URL);
+    EasyMock.expect(response.getOutputStream()).andAnswer(DummyServletOutputStream::new).anyTimes();
+    EasyMock.replay(request, response);
+
+    TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+    Assert.assertTrue("doFilterCalled should not be false.", chain.doFilterCalled);
+    if (forwardsAuthToken()) {
+      Assert.assertEquals("The serialized token should be carried as a private credential of the subject",
+          jwt.serialize(), SubjectUtils.getAuthToken(chain.subject));
+    } else {
+      Assert.assertNull("Only a JWT presented by the caller may be captured for forwarding",
+          SubjectUtils.getAuthToken(chain.subject));
+    }
+  }
+
+  /**
+   * Whether the filter under test authenticates the caller by the JWT they present, and so is
+   * expected to capture that serialized token in the Subject for forwarding downstream.
+   * Subclasses whose identity is resolved from a token id or client credentials rather than from a
+   * presented JWT override this to false: there is no token to forward in those flows.
+   *
+   * @return true when a validated JWT should be captured in the Subject
+   */
+  protected boolean forwardsAuthToken() {
+    return true;
+  }
+
+  @Test
   public void testValidAudienceJWT() throws Exception {
     try {
       Properties props = getProperties();

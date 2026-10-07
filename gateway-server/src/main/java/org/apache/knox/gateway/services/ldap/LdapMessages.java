@@ -211,4 +211,22 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
     void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.DEBUG, text = "Sending role lookup request to {0}: {1}")
+    void restRolesLookupRequest(String endpoint, String requestBody);
+
+    @Message(level = MessageLevel.DEBUG, text = "Received role lookup response from {0}: HTTP {1}, body: {2}")
+    void restRolesLookupResponse(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.ERROR, text = "Role lookup request to {0} failed with HTTP {1}, body: {2}")
+    void restRolesLookupHttpError(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.DEBUG, text = "Resolved gateway credential store alias for LDAP backend property {0} (interceptor {1})")
+    void ldapBackendPasswordAliasResolved(String property, String interceptorName);
+
+    @Message(level = MessageLevel.ERROR, text = "No value found in the gateway credential store for alias {0} referenced by LDAP backend property {1} (interceptor {2}); the backend bind will fail until the alias is defined")
+    void ldapBackendPasswordAliasNotFound(String alias, String property, String interceptorName);
+
+    @Message(level = MessageLevel.ERROR, text = "Failed to resolve gateway credential store alias {0} for LDAP backend property {1} (interceptor {2}): {3}")
+    void ldapBackendPasswordAliasResolutionFailed(String alias, String property, String interceptorName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

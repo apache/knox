@@ -28,6 +28,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuer;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
+import org.apache.knox.gateway.util.HttpUtils;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import jakarta.annotation.PostConstruct;
@@ -59,6 +60,8 @@ public class TrustedOidcIssuersResource {
 
   static final String RESOURCE_PATH = "knoxidf/admin/v1/trusted-oidc-issuers";
 
+  static final String ALLOW_IP_LITERAL_ISSUER_URL = "knoxidf.allow.ip.literal.issuer.url";
+
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   // Non-final and package-private to allow test injection of a mock Auditor.
@@ -74,11 +77,18 @@ public class TrustedOidcIssuersResource {
 
   private TrustedOidcIssuerService trustedIssuers;
 
+  private boolean allowIpLiteralIssuerUrl = true;
+
   @PostConstruct
   public void init() {
     final GatewayServices services = (GatewayServices)
         servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     trustedIssuers = services.getService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE);
+
+    final String allowIpLiteralIssuerUrlConfig = servletContext.getInitParameter(ALLOW_IP_LITERAL_ISSUER_URL);
+    if (allowIpLiteralIssuerUrlConfig != null) {
+      allowIpLiteralIssuerUrl = Boolean.parseBoolean(allowIpLiteralIssuerUrlConfig);
+    }
   }
 
   @POST
@@ -106,6 +116,10 @@ public class TrustedOidcIssuersResource {
       if (!isHttpsUrl(rawUrl)) {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
             "issuerUrl must use HTTPS scheme");
+      }
+      if (!allowIpLiteralIssuerUrl && HttpUtils.isIpLiteralHost(rawUrl)) {
+        return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
+            "issuerUrl must not be an IP literal; use a DNS hostname");
       }
       if (trustedIssuers.isTrusted(rawUrl)) {
         return errorResponse(Response.Status.CONFLICT, "issuer_exists",

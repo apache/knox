@@ -26,10 +26,13 @@ import org.apache.knox.gateway.services.Service;
 
 public interface AliasService extends Service {
   String NO_CLUSTER_NAME = "__gateway";
+  /* Shiro-escaped alias prefix; ShiroConfig rewrites the standard ${ALIAS= form to this to avoid Shiro's ${...} interpolation */
   String ALIAS_PREFIX = "S{ALIAS=";
+  /* The canonical Knox alias reference prefix used everywhere outside Shiro-based filters */
+  String STANDARD_ALIAS_PREFIX = "${ALIAS=";
 
   default boolean isAlias(final String aliasToCheck) {
-    return aliasToCheck.startsWith(ALIAS_PREFIX);
+    return aliasToCheck.startsWith(ALIAS_PREFIX) || aliasToCheck.startsWith(STANDARD_ALIAS_PREFIX);
   }
 
   default String extractAlias(final String aliasToCheck) {

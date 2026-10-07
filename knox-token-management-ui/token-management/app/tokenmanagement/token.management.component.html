@@ -19,7 +19,7 @@
       [disabled]="!isTokenHashKeyPresent()" class="me-1">Generate New Token</button>
     <button mat-stroked-button type="button" title="Refresh Knox Tokens" (click)="fetchKnoxTokens();"
       [disabled]="!isTokenHashKeyPresent()">
-      <mat-icon>refresh</mat-icon>
+      <mat-icon svgIcon="refresh"></mat-icon>
     </button>
     <span style="float: right;">
       <mat-slide-toggle (change)="onChangeShowDisabledCookies($event)" [(ngModel)]="showDisabledKnoxSsoCookies"

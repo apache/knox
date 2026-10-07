@@ -52,6 +52,7 @@ public class TrustedOidcIssuersResourceTest {
 
   private static final String ISSUER_A = "https://issuer-a.example.com";
   private static final String ISSUER_B = "https://issuer-b.example.com";
+  private static final String IP_LITERAL_ISSUER = "https://203.0.113.5:6443";
   private static final String OPERATOR = "admin";
 
   // Capture the real static Auditor so @After can restore it.
@@ -134,6 +135,36 @@ public class TrustedOidcIssuersResourceTest {
 
     assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterIpLiteralIssuerRejectedWhenDisabled() throws Exception {
+    // Strict topology: allowIpLiteralIssuerUrl=false. No service call expected; the IP-literal
+    // issuerUrl is rejected before isTrusted/register, and audit fires with FAILURE outcome.
+    injectField(resource, "allowIpLiteralIssuerUrl", false);
+    expectAudit(IP_LITERAL_ISSUER, ActionOutcome.FAILURE, "issuer_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerIssuer(buildRegisterBody(IP_LITERAL_ISSUER, true, null));
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  @Test
+  public void testRegisterIpLiteralIssuerAllowedByDefault() {
+    // Default topology: allowIpLiteralIssuerUrl stays true, so an IP-literal issuer registers.
+    EasyMock.expect(mockService.isTrusted(IP_LITERAL_ISSUER)).andReturn(false).once();
+    mockService.register(EasyMock.anyObject(TrustedOidcIssuer.class));
+    EasyMock.expectLastCall().once();
+    expectAudit(IP_LITERAL_ISSUER, ActionOutcome.SUCCESS, "issuer_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerIssuer(buildRegisterBody(IP_LITERAL_ISSUER, true, null));
+
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     EasyMock.verify(mockService, mockAuditor);
   }
 
@@ -504,6 +535,31 @@ public class TrustedOidcIssuersResourceTest {
     res.init();
 
     EasyMock.verify(gws, ctx);
+    // Param absent (nice mock returns null) -> permissive default preserved.
+    assertEquals(Boolean.TRUE, getField(res, "allowIpLiteralIssuerUrl"));
+  }
+
+  @Test
+  public void testInitParsesAllowIpLiteralIssuerUrlParam() throws Exception {
+    final TrustedOidcIssuerService svc = EasyMock.createNiceMock(TrustedOidcIssuerService.class);
+    EasyMock.replay(svc);
+
+    final GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gws.getService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE)).andReturn(svc).anyTimes();
+    EasyMock.replay(gws);
+
+    final ServletContext ctx = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(ctx.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gws).anyTimes();
+    EasyMock.expect(ctx.getInitParameter(TrustedOidcIssuersResource.ALLOW_IP_LITERAL_ISSUER_URL))
+        .andReturn("false").anyTimes();
+    EasyMock.replay(ctx);
+
+    final TrustedOidcIssuersResource res = new TrustedOidcIssuersResource();
+    injectField(res, "servletContext", ctx);
+    injectField(res, "request", buildRequest(buildPrincipal(OPERATOR)));
+    res.init();
+
+    assertEquals(Boolean.FALSE, getField(res, "allowIpLiteralIssuerUrl"));
   }
 
   // ---------------------------------------------------------------------------
@@ -583,5 +639,11 @@ public class TrustedOidcIssuersResourceTest {
     final Field field = target.getClass().getDeclaredField(fieldName);
     field.setAccessible(true);
     field.set(target, value);
+  }
+
+  private static Object getField(Object target, String fieldName) throws Exception {
+    final Field field = target.getClass().getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return field.get(target);
   }
 }

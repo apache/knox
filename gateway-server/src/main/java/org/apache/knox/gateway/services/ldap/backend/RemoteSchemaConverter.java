@@ -27,6 +27,7 @@ import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
+import org.apache.knox.gateway.services.ldap.LdapUtils;
 
 import java.text.ParseException;
 import java.util.Locale;
@@ -38,13 +39,8 @@ public class RemoteSchemaConverter {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     // Credential-bearing attributes that must never be surfaced through the proxy entry.
-    private static final Set<String> SENSITIVE_ATTRIBUTES = Set.of(
+    public static final Set<String> SENSITIVE_ATTRIBUTES = Set.of(
             "userpassword", "unicodepwd", "userpkcs12");
-
-    // Attributes whose values are distinguished names and therefore need remote->proxy
-    // DN rewriting. Other attribute values (mail, description, ...) are copied verbatim.
-    private static final Set<String> DN_VALUED_ATTRIBUTES = Set.of(
-            "member", "uniquemember", "memberof", "manager", "owner", "seealso");
 
     // Proxy configuration
     private final String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
@@ -58,6 +54,7 @@ public class RemoteSchemaConverter {
     private final String remoteUserIdentifierAttribute;
     private final String remoteUserObjectClass;
     private final String remoteGroupObjectClass;
+    private final boolean dnMappingEnabled;
 
     public RemoteSchemaConverter(String proxyBaseDn,
                                  String proxyUserSearchBase,
@@ -67,7 +64,8 @@ public class RemoteSchemaConverter {
                                  String remoteGroupSearchBase,
                                  String remoteUserIdentifierAttribute,
                                  String remoteUserObjectClass,
-                                 String remoteGroupObjectClass) {
+                                 String remoteGroupObjectClass,
+                                 boolean dnMappingEnabled) {
         this.proxyBaseDn = proxyBaseDn;
         this.proxyUserSearchBase = proxyUserSearchBase;
         this.proxyGroupSearchBase = proxyGroupSearchBase;
@@ -77,6 +75,7 @@ public class RemoteSchemaConverter {
         this.remoteUserIdentifierAttribute = remoteUserIdentifierAttribute;
         this.remoteUserObjectClass = remoteUserObjectClass;
         this.remoteGroupObjectClass = remoteGroupObjectClass;
+        this.dnMappingEnabled = dnMappingEnabled;
     }
 
     /**
@@ -90,25 +89,34 @@ public class RemoteSchemaConverter {
      * @throws LdapException if entry creation or attribute copying fails
      */
     public Entry convertRemoteEntryToProxyEntry(Entry sourceEntry, SchemaManager schemaManager) throws LdapException {
-        // Standard proxy approach: return entry with backend DN unchanged
-        // This preserves DN integrity for bind operations and DN references
         Entry entry = new DefaultEntry(schemaManager);
-        entry.setDn(sourceEntry.getDn());
 
-        // Copy attributes from the backend response, skipping credential-bearing ones so
-        // they are never exposed through the proxy.
-        for (Attribute attribute : sourceEntry.getAttributes()) {
-            if (SENSITIVE_ATTRIBUTES.contains(attribute.getId().toLowerCase(Locale.ROOT))) {
-                continue;
-            }
-            copyAttribute(sourceEntry, entry, attribute.getId());
+        if (dnMappingEnabled) {
+            entry.setDn(convertRemoteDnToProxyDn(sourceEntry.getDn().getName()));
+        } else {
+            // Standard proxy approach: return entry with backend DN unchanged
+            // This preserves DN integrity for bind operations and DN references
+            entry.setDn(sourceEntry.getDn());
         }
 
-        // Map identifier attribute to uid for consistency if needed
-        if (!"uid".equals(remoteUserIdentifierAttribute)) {
-            Attribute idAttr = sourceEntry.get(remoteUserIdentifierAttribute);
-            if (idAttr != null) {
-                entry.add("uid", idAttr.getString());
+        // Copy attributes from the backend response, skipping credential-bearing ones so
+        // they are never exposed through the proxy. getId() may return the attribute's numeric
+        // OID rather than its name for schema-aware attributes, so the name must come from
+        // getUpId() (the attribute name as originally supplied) for the name-based checks below.
+        for (Attribute attribute : sourceEntry.getAttributes()) {
+            if (SENSITIVE_ATTRIBUTES.contains(attribute.getUpId().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            copyAttribute(sourceEntry, entry, attribute.getUpId(), schemaManager);
+        }
+
+        // Map user entry identifier attribute to uid for consistency if needed
+        if (LdapUtils.isUserEntry(entry)) {
+            if (!"uid".equals(remoteUserIdentifierAttribute)) {
+                Attribute idAttr = sourceEntry.get(remoteUserIdentifierAttribute);
+                if (idAttr != null) {
+                    entry.add("uid", idAttr.getString());
+                }
             }
         }
 
@@ -136,7 +144,7 @@ public class RemoteSchemaConverter {
      * @throws ParseException if the filter cannot be parsed
      */
     public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws ParseException {
-        FilterMappingVisitor filterMappingVisitor = new FilterMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager);
+        FilterMappingVisitor filterMappingVisitor = new FilterMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager, this::convertProxyDnToRemoteDn);
 
         // Filter likely has already been annotated by other interceptors.
         // Clean the filter by removing any modifications or annotations
@@ -152,16 +160,18 @@ public class RemoteSchemaConverter {
      * @param source The remote entry
      * @param target The proxy entry
      * @param attributeName The name of the attribute to copy
+     * @param schemaManager the schema manager
      */
-    public void copyAttribute(Entry source, Entry target, String attributeName) {
+    public void copyAttribute(Entry source, Entry target, String attributeName, SchemaManager schemaManager) {
         final Attribute attribute = source.get(attributeName);
         if (attribute != null) {
             // Only rewrite DNs for DN-valued attributes; other values (e.g. mail, description)
             // are copied verbatim so they are not corrupted if they happen to contain a base DN.
-            final boolean dnValued = DN_VALUED_ATTRIBUTES.contains(attributeName.toLowerCase(Locale.ROOT));
+            final boolean convertDn = dnMappingEnabled && LdapUtils.isDnValued(attributeName, schemaManager);
+
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
             for (Value value : attribute) {
-                String valueString = dnValued ? convertRemoteDnToProxyDn(value.toString()) : value.toString();
+                String valueString = convertDn ? convertRemoteDnToProxyDn(value.toString()) : value.toString();
                 if (!target.contains(attributeName, valueString)) {
                     try {
                         target.add(attributeName, valueString);

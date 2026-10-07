@@ -51,6 +51,12 @@ LDAP_BIND_PASSWORD=bind-password
 LDAP_BIND_PASSWORD_ALIAS=gateway_ldap_bind_password
 /knox-runtime/bin/knoxcli.sh create-alias "$LDAP_BIND_PASSWORD_ALIAS" --value "$LDAP_BIND_PASSWORD"
 
+# 5) Store the demo LDAP backend's system (bind) password under an alias so the LdapProxyBackend
+# resolves it from the credential store instead of reading a literal from gateway-site.xml (KNOX-3497).
+LDAP_BACKEND_SYSTEM_PASSWORD=guest-password
+LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS=gateway_ldap_demoldap_system_password
+/knox-runtime/bin/knoxcli.sh create-alias "$LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS" --value "$LDAP_BACKEND_SYSTEM_PASSWORD"
+
 # Start Knox. Endpoint (hostname) identification is disabled for the embedded LDAPS
 # connection - the dev cert is self-signed - but trust is still enforced via cacerts.
 java -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true \

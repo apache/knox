@@ -19,10 +19,14 @@ package org.apache.knox.gateway.util;
 
 import static java.util.Arrays.asList;
 
+import com.google.common.net.InetAddresses;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.NoRouteToHostException;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +44,27 @@ public class HttpUtils {
           SocketException.class,
           org.apache.http.conn.ConnectTimeoutException.class
   );
+
+  /**
+   * Whether the host component of {@code url} is an IP literal (IPv4, or an IPv6 address in its
+   * bracketed URI form) rather than a DNS name. Returns {@code false} for a null, unparseable, or
+   * host-less URL.
+   *
+   * @param url the URL to inspect
+   * @return {@code true} when the URL has a host and that host is an IP literal
+   */
+  public static boolean isIpLiteralHost(final String url) {
+    if (url == null) {
+      return false;
+    }
+    try {
+      /* getHost() returns an IPv6 literal in bracketed form; isUriInetAddress parses that form */
+      final String host = new URI(url).getHost();
+      return host != null && InetAddresses.isUriInetAddress(host);
+    } catch (URISyntaxException e) {
+      return false;
+    }
+  }
 
   public static Map<String, List<String>> splitQuery(String queryString)
       throws UnsupportedEncodingException {

@@ -27,13 +27,12 @@
         <link href="styles/bootstrap-icons.min.css" media="all" rel="stylesheet" type="text/css">
         <link href="styles/knox.css" media="all" rel="stylesheet" type="text/css" >
 
-        <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
-        <script type="text/javascript" src="js/knoxauth.js"></script>
-
         <!-- Knox Theme Configuration -->
         <script type="text/javascript" src="theme-config.js"></script>
 
-        <!-- Knox Theme Loader (Inline & Blocking to prevent FOUC) -->
+        <!-- Knox Theme Loader. Placed ahead of jquery/knoxauth.js so the theme
+             stylesheet is requested without waiting for them to download and run,
+             and after knox.css so the theme still wins the cascade. -->
         <script type="text/javascript">
            (function() {
                // Theme names are attacker-influenced (URL parameter and localStorage), so
@@ -93,50 +92,71 @@
 
                // Load theme CSS if specified and not default.
                // Built with DOM APIs rather than document.write so the theme name can
-               // never be interpreted as markup; appending to head during head parsing
-               // is still render-blocking, which is what prevents FOUC.
+               // never be interpreted as markup. A script-created stylesheet is not
+               // render-blocking, so the page is cloaked until this one resolves -
+               // otherwise the first paint uses the classic knox.css login styles and
+               // the theme then visibly replaces them. The reveal timer is armed before
+               // the page is hidden, and reveal() also runs on load and on error, so no
+               // failure path - a 404, a CSP block, a stalled request, an exception -
+               // can leave the page hidden.
                if (theme !== 'default') {
+                   var REVEAL_TIMEOUT_MS = 1500;
+                   var root = document.documentElement;
+                   var revealed = false;
+
+                   var reveal = function() {
+                       if (revealed) {
+                           return;
+                       }
+                       revealed = true;
+                       root.style.visibility = '';
+                       root.style.background = '';
+                   };
+
                    var link = document.createElement('link');
                    link.rel = 'stylesheet';
                    link.type = 'text/css';
                    link.id = 'knox-theme';
-                   // The server is the authority on which themes exist. If the theme held
-                   // in localStorage fails to load, it is not installed here, so forget it
-                   // straight away rather than replaying it on the next visit. A failure of
-                   // an admin-configured theme is left alone - that is a deployment problem
-                   // to fix, not the user's preference to discard.
-                   if (themeIsPersisted) {
-                       link.onerror = function() {
+                   link.onload = reveal;
+                   link.onerror = function() {
+                       // The server is the authority on which themes exist. If the theme
+                       // held in localStorage fails to load, it is not installed here, so
+                       // forget it straight away rather than replaying it on the next
+                       // visit. A failure of an admin-configured theme is left alone -
+                       // that is a deployment problem to fix, not the user's preference
+                       // to discard.
+                       if (themeIsPersisted) {
                            try {
                                localStorage.removeItem('knox-auth-theme');
                            } catch (e) {
                                // LocalStorage may be disabled, nothing to clean up
                            }
-                       };
-                   }
+                       }
+                       reveal();
+                   };
                    link.href = 'styles/themes/' + theme + '/theme.css';
+
+                   window.setTimeout(reveal, REVEAL_TIMEOUT_MS);
+                   // Individual CSSOM property writes rather than a style attribute or an
+                   // inline <style>, so a style-src policy without 'unsafe-inline' cannot
+                   // disable the cloak. The opaque background is needed as well as the
+                   // visibility: body.login's background otherwise propagates to the
+                   // canvas and the classic dark page shows through the hidden tree.
+                   root.style.visibility = 'hidden';
+                   root.style.background = '#fff';
                    document.head.appendChild(link);
                }
            })();
         </script>
 
-        <script type="text/javascript">
-           $(function() {
-                var updateBoxPosition = function() {
-                    $('#signin-container').css({
-                        'margin-top' : ($(window).height() - $('#signin-container').height()) / 2
-                    });
-                };
-                $(window).resize(updateBoxPosition);
-                setTimeout(updateBoxPosition, 50);
-            });
-        </script>
+        <script src="libs/bower/jquery/js/jquery-3.5.1.min.js" ></script>
+        <script type="text/javascript" src="js/knoxauth.js"></script>
 
     </head>
     <body class="login" style="" onload="loadFederatedOpLinks();">
         <!-- Page content
         ================================================== -->
-        <section id="signin-container" style="margin-top: 4.5px;">
+        <section id="signin-container">
             <div class="l-logo">
                 <img src="images/knox-logo.gif" alt="Knox logo">
             </div>
@@ -160,9 +180,7 @@
             </form>
         </section>
 
-        <div id="federated-op-container" style="margin-top:20px; text-align:center;">
-            <!-- Federated login buttons will be injected by JS -->
-        </div>
+        <div id="federated-op-container"></div>
 
     </body>
 </html>

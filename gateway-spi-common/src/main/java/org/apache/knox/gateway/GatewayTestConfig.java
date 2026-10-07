@@ -1376,6 +1376,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean getLDAPDnMappingEnabled() {
+    return true;
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return false;
   }

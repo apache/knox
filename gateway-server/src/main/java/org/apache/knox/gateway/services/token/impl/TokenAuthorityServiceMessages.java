@@ -32,4 +32,17 @@ public interface TokenAuthorityServiceMessages {
 
   @Message(level = MessageLevel.WARN, text = "Ignoring typ header verification for token")
   void ignoreTypeHeaderVerification();
+
+  @Message(level = MessageLevel.ERROR,
+      text = "JWKS endpoint {0} has an IP-literal host and FIPS mode is enabled. The BouncyCastle FIPS JSSE "
+           + "provider rejects HTTPS endpoint identification against IP literals before any certificate path is "
+           + "built. Not a truststore or CM importing problem. Please use a DNS hostname "
+           + "for the JWKS endpoint (Tip: for k8s, set kube-apiserver --service-account-jwks-uri).")
+  void jwksIpLiteralHostUnderFips(String jwksUrl);
+
+  @Message(level = MessageLevel.WARN,
+      text = "JWKS endpoint {0} has an IP-literal host, so TLS verification requires the server certificate to "
+           + "carry a matching IP subjectAltName. Some JSSE providers (notably BouncyCastle FIPS) reject IP "
+           + "literals outright.")
+  void jwksIpLiteralHost(String jwksUrl);
 }

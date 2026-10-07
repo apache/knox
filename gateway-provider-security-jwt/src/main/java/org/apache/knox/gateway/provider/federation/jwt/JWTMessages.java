@@ -28,6 +28,12 @@ public interface JWTMessages {
   @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute for token {0} ({1})" )
   void failedToValidateAudience(String tokenDisplayText, String tokenId);
 
+  @Message( level = MessageLevel.WARN, text = "Failed to validate the audience attribute for token {0} ({1}): {2}" )
+  void failedToValidateAudience(String tokenDisplayText, String tokenId, String reason);
+
+  @Message( level = MessageLevel.WARN, text = "Unable to cleanly destroy the configured audience validator: {0}" )
+  void failedToDestroyAudienceValidator(@StackTrace( level = MessageLevel.ERROR) Exception e);
+
   @Message( level = MessageLevel.WARN, text = "Failed to verify the token signature of {0} ({1})" )
   void failedToVerifyTokenSignature(String tokenDisplayText, String tokenId);
 
@@ -54,6 +60,25 @@ public interface JWTMessages {
 
   @Message( level = MessageLevel.WARN, text = "Unable to verify token expiration: {0}" )
   void unableToVerifyExpiration(@StackTrace( level = MessageLevel.DEBUG) Exception e);
+
+  /*
+   * NOTE: message text is rendered by java.text.MessageFormat, where a single quote starts a
+   * quoted literal and suppresses every placeholder that follows it. Apostrophes must be doubled.
+   */
+  @Message( level = MessageLevel.WARN, text = "No server-managed token state found for cookie token ({0}); "
+      + "falling back to the token''s own expiration. {1} is enabled." )
+  void unknownCookieTokenStateTolerated(String tokenId, String paramName);
+
+  @Message( level = MessageLevel.WARN, text = "Rejecting cookie token ({0}): it has no server-managed "
+      + "token state and no exp claim. {1} defers to the token''s own "
+      + "expiration, which requires the token to have one. Please add expiry to token or enable token state." )
+  void toleratedCookieTokenHasNoExpiry(String tokenId, String paramName);
+
+  @Message( level = MessageLevel.WARN, text = "Rejecting token ({0}): server-managed token state is enabled "
+      + "but no state record exists for it, so its validity cannot be established. This is expected for a "
+      + "token minted by an issuer that does not record state with this gateway. For a token presented in a "
+      + "cookie, enabling {1} permits falling back to the token''s own exp claim." )
+  void unknownTokenStateRejected(String tokenId, String paramName);
 
   @Message( level = MessageLevel.WARN, text = "Unable to verify passcode token ({0}) due to missing or incorrect token state service configuration.")
   void unableToVerifyPasscodeToken(String tokenId);

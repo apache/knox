@@ -74,6 +74,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class LdapProxyBackendTest {
     private static final int PAGE_SIZE = 2;
@@ -159,7 +160,8 @@ public class LdapProxyBackendTest {
                 "systemUsername", "uid=guest,ou=people,dc=hadoop,dc=apache,dc=org",
                 "systemPassword", "guest-password",
                 "userSearchBase", "ou=people,dc=hadoop,dc=apache,dc=org",
-                "groupSearchBase", "ou=groups,dc=hadoop,dc=apache,dc=org");
+                "groupSearchBase", "ou=groups,dc=hadoop,dc=apache,dc=org",
+                "dnMappingEnabled", "true");
     }
 
     private static void loadLdif(CoreSession session, String ldifResource) throws Exception {
@@ -298,11 +300,7 @@ public class LdapProxyBackendTest {
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
         assertEquals(3, userGroups.size());
-        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
-                .filter(request -> request.getBase().getName().equals("ou=groups,dc=hadoop,dc=apache,dc=org") &&
-                        request.getFilter().toString().contains("ldaptest1"))
-                .count();
-        assertEquals(2, matchingRequests);
+        assertEquals(2, findSearchRequests("ou=groups,dc=hadoop,dc=apache,dc=org", "ldaptest1").size());
     }
 
     @Test
@@ -314,11 +312,7 @@ public class LdapProxyBackendTest {
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
         assertEquals(PAGE_SIZE, userGroups.size()); // only retrieve 1 page because that will exceed the maxResultSetSize
-        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
-                .filter(request -> request.getBase().getName().equals("ou=groups,dc=hadoop,dc=apache,dc=org") &&
-                        request.getFilter().toString().contains("ldaptest1"))
-                .count();
-        assertEquals(1, matchingRequests);
+        assertEquals(1, findSearchRequests("ou=groups,dc=hadoop,dc=apache,dc=org", "ldaptest1").size());
     }
 
     @Test
@@ -407,11 +401,7 @@ public class LdapProxyBackendTest {
         config.put("pageSize", Integer.toString(PAGE_SIZE));
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateUserSearch("*", 4, Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));
-        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
-                .filter(request -> request.getBase().getName().equals("ou=people,dc=hadoop,dc=apache,dc=org") &&
-                        request.getFilter().toString().contains("uid=*"))
-                .count();
-        assertEquals(2, matchingRequests);
+        assertEquals(2, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
     }
 
     @Test
@@ -423,11 +413,7 @@ public class LdapProxyBackendTest {
 
         List<Entry> entries = ldapProxyBackend.searchUsers("*", schemaManager);
         assertEquals(PAGE_SIZE, entries.size()); // only expect 1 page of results
-        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
-                .filter(request -> request.getBase().getName().equals("ou=people,dc=hadoop,dc=apache,dc=org") &&
-                        request.getFilter().toString().contains("uid=*"))
-                .count();
-        assertEquals(1, matchingRequests);
+        assertEquals(1, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
     }
 
     @Test
@@ -576,11 +562,7 @@ public class LdapProxyBackendTest {
         config.put("pageSize", Integer.toString(PAGE_SIZE));
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(uid=*)", 4, Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));
-        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
-                .filter(request -> request.getBase().getName().equals("ou=people,dc=hadoop,dc=apache,dc=org") &&
-                        request.getFilter().toString().contains("uid=*"))
-                .count();
-        assertEquals(2, matchingRequests);
+        assertEquals(2, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
     }
 
     @Test
@@ -591,11 +573,7 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         List<Entry> entries = ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=*)", schemaManager);
         assertEquals(PAGE_SIZE, entries.size()); // only expect 1 page because that will exceed the maxResultSetSize
-        int matchingRequests = (int) capturingSearchRequestHandler.getRequests().stream()
-                .filter(request -> request.getBase().getName().equals("ou=people,dc=hadoop,dc=apache,dc=org") &&
-                        request.getFilter().toString().contains("uid=*"))
-                .count();
-        assertEquals(1, matchingRequests);
+        assertEquals(1, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
     }
 
     @Test
@@ -632,6 +610,32 @@ public class LdapProxyBackendTest {
     public void testSearchByUidOrCnWildcard() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateSearch("dc=hadoop,dc=apache,dc=org", "(|(uid=ldap*)(cn=group*))", 6, Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "group1", "group2", "group3"));
+    }
+
+    @Test
+    public void testSearchRequestsMemberOfAttributeWhenUseMemberOfEnabled() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=ldaptest1)", schemaManager);
+
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "ldaptest1");
+        assertEquals("Expect exactly 1 matching request found", 1, requests.size());
+        assertTrue("memberOf must be explicitly requested when useMemberOf is enabled",
+                requests.get(0).getAttributes().contains("memberOf"));
+    }
+
+    @Test
+    public void testSearchDoesNotRequestMemberOfAttributeWhenUseMemberOfDisabled() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE, "(uid=ldaptest1)", schemaManager);
+
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "ldaptest1");
+        assertEquals("Expect exactly 1 matching request found", 1, requests.size());
+        assertFalse("memberOf should not be explicitly requested when useMemberOf is disabled",
+                requests.get(0).getAttributes().contains("memberOf"));
     }
 
     @Test
@@ -962,6 +966,13 @@ public class LdapProxyBackendTest {
         for (String rdn : expectedRdns) {
             assertTrue("Expected RDN " + rdn + " not found", foundRdns.contains(rdn));
         }
+    }
+
+    private List<SearchRequest> findSearchRequests(String base, String filterContains) {
+        return capturingSearchRequestHandler.getRequests().stream()
+                .filter(request -> request.getBase().getName().equals(base) &&
+                        request.getFilter().toString().contains(filterContains))
+                .collect(Collectors.toList());
     }
 
     private void testSearchUsersRecursiveWithSharedGroups(Callable<List<Entry>> ldapSearch) throws Exception {
