@@ -32,7 +32,7 @@ Leaving `request.audience.validator` unset keeps the fixed-list behavior describ
 
 The Kubernetes Destination Audience Validator (`request.audience.k8s.destination.validation`) checks a token's `aud` claim against the request's actual destination rather than against a fixed list.
 
-It always validates a token carrying a delegation `act` claim, i.e. a token that was produced by [RFC 8693](https://www.rfc-editor.org/rfc/rfc8693) token exchange. A token with no `act` claim is validated the same way by default -- see `request.audience.k8s.validate.audiences.without.act.claim` below; setting that parameter to `false` sends such a token to the fixed `knox.token.audiences` check instead.
+It always validates a token carrying a delegation `act` claim, i.e. a token that was produced by [RFC 8693](https://www.rfc-editor.org/rfc/rfc8693) token exchange. A token with no `act` claim is validated the same way by default, as described in Non-delegated tokens below; setting `request.audience.k8s.validate.audiences.without.act.claim` to `false` sends such a token to the fixed `knox.token.audiences` check instead.
 
 ##### Audience format #####
 
@@ -46,25 +46,25 @@ Each entry in the `aud` claim of a token in scope is expected to be a URL in one
 
        https://cluster-domain[:port]/[skipped-segments/]namespace/service-name[/resource-path]
 
-An entry is accepted as a match candidate if either form accepts it, and is rejected only if neither does. `request.audience.k8s.dns.format.enabled` (default `true`) controls whether the DNS form is tried at all; see below for why a deployment might turn it off. When it is `false`, every entry is evaluated only as the custom form, and `request.audience.k8s.cluster.domain` is unused.
+An entry is accepted as a match candidate if either form accepts it, and is rejected only if neither does. `request.audience.k8s.dns.format.enabled` (default `true`) controls whether the DNS form is tried at all; see DNS form below for why a deployment might turn it off. When it is `false`, every entry is evaluated only as the custom form, and `request.audience.k8s.dns.format.cluster.domain` is unused.
 
 Neither form is validated on the token-minting side by Knox itself or by any RFC; it is a deployment convention that an operator's delegation policies and the callers requesting a delegated token are responsible for following. An entry that does not parse as either shape it is tried against fails validation.
 
 ###### DNS form ######
 
-The host may be shortened from the right, the same way an ordinary DNS resolver search path allows. With a service named `reporting-svc`, a namespace of `analytics`, and `request.audience.k8s.cluster.domain` left at its default `cluster.local`, all of the following hosts parse:
+The host may be shortened from the right, the same way an ordinary DNS resolver search path allows. With a service named `reporting-svc`, a namespace of `analytics`, and `request.audience.k8s.dns.format.cluster.domain` left at its default `cluster.local`, all of the following hosts parse:
 
 Host | Meaning
 ---------|-----------
-`reporting-svc` | Service name only. The entry carries no namespace of its own -- see below.
+`reporting-svc` | Service name only. The entry carries no namespace of its own; see below.
 `reporting-svc.analytics` | Service and namespace.
 `reporting-svc.analytics.svc` | Service and namespace, with the literal `svc` label.
 `reporting-svc.analytics.svc.cluster` | As above, plus the first label of the cluster domain.
 `reporting-svc.analytics.svc.cluster.local` | The full cluster domain.
 
-A host of three or more labels is rejected unless its third label is literally `svc`, and the labels after `svc`, if any, must be a label-boundary prefix of `cluster.domain`'s own labels taken from the left -- so with `cluster.domain` left at `cluster.local`, a host ending in `.svc.local` alone (skipping `cluster`) does not parse, even though `local` is itself one of `cluster.local`'s labels. A trailing dot on the host, or an empty label anywhere in it, is also rejected -- a trailing dot is deliberately not accepted, since no normal client request produces one.
+A host of three or more labels is rejected unless its third label is literally `svc`, and the labels after `svc`, if any, must be a label-boundary prefix of `dns.format.cluster.domain`'s own labels, taken from the left. For example, with `dns.format.cluster.domain` left at `cluster.local`, a host ending in `.svc.local` alone (skipping `cluster`) does not parse, even though `local` is itself one of `cluster.local`'s labels. A trailing dot on the host, or an empty label anywhere in it, is also rejected; a trailing dot is deliberately not accepted, since no normal client request produces one.
 
-A one-label host carries no namespace. For such an entry, the namespace instead comes from the SOURCE workload's SPIFFE id -- see `request.audience.k8s.source.spiffe-id.header.name` below -- and that value must equal the destination namespace. If no destination namespace is configured at all, or no source SPIFFE id is available, the entry does not match; this is the one case in this validator where a segment with no configured source is still compared against, rather than being skipped.
+A one-label host carries no namespace. For such an entry, the namespace instead comes from the SOURCE workload's SPIFFE id (see `request.audience.k8s.source.spiffe-id.header.name` below), and that value must equal the destination namespace. If no destination namespace is configured at all, or no source SPIFFE id is available, the entry does not match. This is the one case in this validator where a segment with no configured source is still compared against, rather than being skipped.
 
 A port in the DNS-form entry is parsed only so it does not break parsing of the rest of the host, then discarded: it is never compared against anything, since a mesh or sidecar in front of the destination may rewrite the port in flight.
 
@@ -74,7 +74,7 @@ A deployment that fronts more than one Kubernetes cluster, or more than one trus
 
     https://cluster-domain[:port]/namespace/service-name[/resource-path]
 
-This is the simple case, and applies whenever `request.audience.k8s.audience.path.prefix` (see below) is left unset: namespace and service-name must begin straight after the authority. The cluster-domain segment (host and effective port) is checked against the allow-list in `request.audience.k8s.cluster-domains` -- a separate configuration surface from the DNS form's single `cluster.domain` value above, and the only segment of either form with no way to disable the check.
+This is the simple case, and applies whenever `request.audience.k8s.audience.path.prefix` (see below) is left unset: namespace and service-name must begin straight after the authority. The cluster-domain segment (host and effective port) is always checked against the allow-list in `request.audience.k8s.cluster-domains`, with no way to disable the check. This is a separate check from the DNS form's `request.audience.k8s.dns.format.cluster.domain` above, not the same check applied to both forms: the custom form matches its authority segment literally against this allow-list, while the DNS form instead matches a label-boundary suffix of the whole host against a single configured domain. See How this validator matches a request below for both side by side.
 
 ###### Optional path prefix (custom form only) ######
 
@@ -82,77 +82,102 @@ This is the simple case, and applies whenever `request.audience.k8s.audience.pat
 
     https://cluster-domain[:port]/[skipped-segments/]path-prefix/namespace/service-name[/resource-path]
 
-The path is searched for the first (leftmost) occurrence of `/path-prefix/`; namespace, service-name, and resource-path are then parsed starting right after it. Everything before that point -- the `skipped-segments`, if any -- is skipped over unparsed, not validated: `audience.path.prefix` only locates where parsing resumes. It is ordinarily a single path segment, but it may itself contain `/` to require several contiguous segments to appear together, as one indivisible token, before parsing resumes. An entry whose path never contains `/path-prefix/` does not parse, the same as any other ill-shaped entry -- this parameter relocates where namespace and service-name are read from, it does not make the check more permissive.
+The path is searched for the first (leftmost) occurrence of `/path-prefix/`; namespace, service-name, and resource-path are then parsed starting right after it. Everything before that point, the `skipped-segments` if any, is skipped over unparsed, not validated: `audience.path.prefix` only locates where parsing resumes. It is ordinarily a single path segment, but it may itself contain `/` to require several contiguous segments to appear together, as one indivisible token, before parsing resumes. An entry whose path never contains `/path-prefix/` does not parse, the same as any other ill-shaped entry: this parameter relocates where namespace and service-name are read from, it does not make the check more permissive.
 
-A DNS-form entry has no leading segments to skip -- its whole path is always the resource path -- so `audience.path.prefix` plays no part in matching a DNS-form entry.
+A DNS-form entry has no leading segments to skip, since its whole path is always the resource path, so `audience.path.prefix` plays no part in matching a DNS-form entry.
 
-##### How it works #####
+##### How this validator matches a request to an audience entry #####
 
-Which of the URL's segments are actually compared against the request depends entirely on which of this validator's header parameters are configured -- a segment with no configured source is not compared at all (the DNS form's namespace-less host is the one exception, described above), so an `aud` entry that differs from the request only in an unconfigured segment is accepted:
+Which of the URL's segments are actually compared against the request depends entirely on which of this validator's header parameters are configured. A segment with no configured source is not compared at all (the DNS form's namespace-less host is the one exception, described above), so an `aud` entry that differs from the request only in an unconfigured segment is accepted. At least one of the destination SPIFFE-id header, the server-name header, or the path header must be configured, or the topology fails to start.
 
-* **cluster domain** -- always compared: against `request.audience.k8s.cluster.domain` for a DNS-form entry, or against the `request.audience.k8s.cluster-domains` allow-list for a custom-form entry. This is the only segment with no way to disable the check.
-* **namespace** -- compared when `request.audience.k8s.namespace.from.destination.spiffe-id.header.name` and/or `request.audience.k8s.server.name.header.name` is configured. Configuring both is supported and gives two independent sources for the same value; when both are configured, both are read and their namespaces must agree, or the request is rejected.
-* **service-name** -- compared only when `request.audience.k8s.server.name.header.name` is configured.
-* **resource-path** -- compared when `request.audience.k8s.path.header.name` is configured, and when the `aud` entry itself carries a path other than exactly `/` -- see Path matching below.
+Cluster domain is checked differently for each form, since the two forms carry it differently:
 
-A configuration that sets a SPIFFE-id header and a path header but no server-name header -- validating cluster-domain, namespace, and path, but not service-name -- is a supported. Under it, a delegation token minted to authorize calling one service in a namespace at a given path is also accepted when presented to a *different* service in that same namespace at that same path. The token is still bound to one cluster, one namespace, and one path, which is a large reduction from no destination binding at all, but it is not a binding to one specific service; closing that gap requires configuring the server-name header as well, which requires a trusted source for it (see Prerequisites below).
+* **Cluster domain, DNS form.** Checked against `request.audience.k8s.dns.format.cluster.domain`: the labels after the required `svc` label must be a label-boundary prefix of it, taken from the left. See DNS form above for the exact rule.
+* **Cluster domain, custom form.** Checked as a literal match of the authority against the `request.audience.k8s.cluster-domains` allow-list. See Custom form above.
 
-At least one of the three header parameters named above (the destination SPIFFE-id header, the server-name header, or the path header) must be configured, or the topology fails to start.
+Both checks are always enforced, with no way to disable either one. They are two different mechanisms, not two configurations of a single mechanism, so configuring one has no effect on the other.
 
-Namespace and service-name segments are compared case-insensitively. The resource path is compared case-sensitively, and never percent-decoded on either side -- a raw and a percent-encoded candidate are both derived from the `aud` entry's path and either is accepted, but an escaped `%2F` in either value is never treated as equal to a literal `/`. A path taken from a header is required to already be free of `.` and `..` segments and of empty segments; such a value is rejected rather than normalized, since normalizing it here could disagree with however the component that actually routes the request resolves it.
+The remaining segments are compared the same way regardless of which form an entry parsed as:
 
-###### Path matching ######
+* **Namespace.** Compared when `request.audience.k8s.namespace.from.destination.spiffe-id.header.name` and/or `request.audience.k8s.server.name.header.name` is configured. Configuring both is supported and gives two independent sources for the same value; when both are configured, both are read and their namespaces must agree, or the request is rejected.
+* **Service name.** Compared only when `request.audience.k8s.server.name.header.name` is configured.
+* **Resource path.** Compared when `request.audience.k8s.path.header.name` is configured, and when the `aud` entry itself carries a path other than exactly `/`. See Path matching below.
 
-An `aud` entry with no resource path, or with a resource path of exactly `/`, matches ANY request path, for either form -- including when `request.audience.k8s.path.header.name` is configured and the header is present on the request. This is deliberate, not an oversight: an entry with an empty path is a statement about which destination service a token may be presented to, not about which operations on that service it may invoke. An audience meant to be scoped to one endpoint must carry that endpoint's path.
+A configuration that sets a SPIFFE-id header and a path header but no server-name header (validating cluster domain, namespace, and path, but not service name) is supported. Under it, a delegation token minted to authorize calling one service in a namespace at a given path is also accepted when presented to a *different* service in that same namespace at that same path. The token is still bound to one cluster, one namespace, and one path, which is a large reduction from no destination binding at all, but it is not a binding to one specific service; closing that gap requires configuring the server-name header as well, which requires a trusted source for it (see Prerequisites below).
 
-###### Non-delegated tokens ######
+Namespace and service-name segments are compared case-insensitively. The resource path is compared case-sensitively, and never percent-decoded on either side: a raw and a percent-encoded candidate are both derived from the `aud` entry's path and either is accepted, but an escaped `%2F` in either value is never treated as equal to a literal `/`. A path taken from a header is required to already be free of `.` and `..` segments and of empty segments; such a value is rejected rather than normalized, since normalizing it here could disagree with however the component that actually routes the request resolves it.
 
-`request.audience.k8s.validate.audiences.without.act.claim` controls how a token with no `act` claim -- that is, a token that is not a delegation token -- is handled. It defaults to `true`: such a token's `aud` claim is validated against the request's actual destination in exactly the same way as a delegation token's, and the request is rejected if the token carries no `aud` claim, or an `aud` that is not a valid destination for this request. Setting it to `false` sends a non-delegated token's `aud` claim to the fixed `knox.token.audiences` check (`AbstractJWTFilter.matchesConfiguredAudiences`) instead, the same as if this validator were not selected for it. This parameter has no effect on a token that does carry an `act` claim: that token is always destination-validated by this validator.
+##### Configuration parameters #####
 
-###### Actor-subject binding ######
+All parameters are set as `<param>` entries on the `JWTProvider` provider, alongside `request.audience.validator`. They are grouped below by what they apply to.
 
-`request.audience.k8s.enforce.act.sub.service-account.matches.source.spiffeid` (default `false`) binds a delegation token's actor to the identity that is presenting it. When `true`, the most recent actor in the token's `act` chain must be a Kubernetes service-account subject, of the form `system:serviceaccount:<namespace>:<service-account-name>`, and its namespace and service-account name must match the namespace and service-account in the SPIFFE id named by `request.audience.k8s.source.spiffe-id.header.name`. Trust domain and issuer are not compared, since the two subject forms carry no comparable value for either; this check is meaningful only within a single trust domain.
+###### Trusted-header parameters ######
+
+These name the headers this validator reads; see Prerequisites below for why each one must come from a trusted source. They apply regardless of which `aud` form an entry takes.
+
+Name | Description | Default
+---------|-------------|--------
+request.audience.k8s.namespace.from.destination.spiffe-id.header.name | HTTP header carrying the destination workload's SPIFFE id, e.g. `spiffe://trust-domain/ns/namespace/sa/service-account`. When set, the namespace inside the SPIFFE id is compared against the `aud` entry's namespace segment. | n/a (unset; namespace is then not matched from this source)
+request.audience.k8s.server.name.header.name | HTTP header carrying the destination workload's FQDN, in the form `service-name.namespace<cluster-suffix>`, optionally followed by `:port`. When set, both the service-name and namespace segments are compared. | n/a (unset; this header is then not read at all)
+request.audience.k8s.server.name.cluster-suffix | Suffix that terminates the FQDN read from the header above, e.g. `.svc.cluster.local`. Only read when that header parameter is itself configured. Independent of `request.audience.k8s.dns.format.cluster.domain` below, which plays the same role for a DNS-form `aud` entry rather than for this header. | `.svc.cluster.local`
+request.audience.k8s.path.header.name | HTTP header carrying the path to match against the `aud` entry's resource-path segment. | n/a (unset; resource path is then not matched)
+request.audience.k8s.path.header.from.url | Whether the header above carries a full URL whose path component should be extracted, rather than already being the bare path to match. Only read when that header parameter is itself configured. | `false`
+request.audience.k8s.source.spiffe-id.header.name | HTTP header carrying the calling (source) workload's SPIFFE id. Supplies the namespace for a namespace-less DNS-form `aud` entry, and is the identity compared against the actor subject when actor-subject binding is enabled. | n/a (unset; a namespace-less DNS-form entry can then never match, and actor-subject binding cannot be enabled)
+
+###### DNS-form parameters ######
+
+Name | Description | Default
+---------|-------------|--------
+request.audience.k8s.dns.format.enabled | Whether an `aud` entry written as a k8s service DNS name is accepted at all. See DNS form above for why a multi-cluster or multi-trust-domain deployment may want this `false`. When `false`, `request.audience.k8s.dns.format.cluster.domain` is unused. | `true`
+request.audience.k8s.dns.format.cluster.domain | The cluster domain a DNS-form `aud` entry's host is checked against, e.g. the `cluster.local` in `https://reporting-svc.analytics.svc.cluster.local`. See DNS form above for the exact shortening and matching rule. Only read when DNS-form entries are enabled. Named apart from `cluster-domains` below specifically so the two are not mistaken for each other. | `cluster.local`
+
+###### Custom-form parameters ######
+
+Name | Description | Default
+---------|-------------|--------
+request.audience.k8s.cluster-domains | Comma-separated allow-list of cluster domains (host, with an optional `:port`, defaulting to `443`) a custom-form `aud` entry's authority may match. Always enforced for a custom-form entry; there is no way to disable this check. Does not apply to a DNS-form entry; see `dns.format.cluster.domain` above. | `service.local` (a placeholder that fails closed until set to the deployment's own cluster domain(s))
+request.audience.k8s.audience.path.prefix | Optional path prefix searched for in a custom-form `aud` entry's path before namespace and service-name are parsed out of it; see Optional path prefix above. Never applies to a DNS-form entry. | n/a (unset; a custom-form entry's path must then begin with namespace and service-name straight after the authority)
+
+###### Cross-cutting behavior parameters ######
+
+Name | Description | Default
+---------|-------------|--------
+request.audience.k8s.require-all-audiences-match | Whether at least one `aud` entry matching the destination is sufficient (`false`, the ordinary "am I an intended audience" semantic of RFC 7519 section 4.1.3), or whether the claim must be non-empty and every entry must match (`true`). See the note below on combining this with the minting-side flags. | `false`
+request.audience.k8s.validate.audiences.without.act.claim | Whether a token with no `act` claim is validated against the request destination (`true`) or against the fixed `knox.token.audiences` list (`false`). See Non-delegated tokens below. Has no effect on a token that does carry an `act` claim. | `true`
+request.audience.k8s.enforce.act.sub.service-account.matches.source.spiffeid | Whether the most recent actor in the token's `act` chain must match the source workload's SPIFFE id. See Actor-subject binding below. Requires `source.spiffe-id.header.name` to be configured; setting this `true` without it fails topology startup. | `false`
+request.audience.k8s.enforce.act.sub.is.service.account | Whether an actor subject that cannot be read as a k8s service-account subject fails validation (`true`) or passes unchecked (`false`). Only consulted when the parameter above is `true`. | `false`
+
+`request.audience.k8s.require-all-audiences-match=true` is independent of, and does not by itself prevent, a delegation token being minted with more than one audience in the first place; it only changes how this validator reacts to one once presented. `JWTFederationFilter` separately exposes `delegation.enforce.requested.audience.required` and `delegation.enforce.requested.audience.max.one`, which constrain what a delegation token may be minted with. A deployment that wants every delegation token to carry exactly one audience should set all three: the two minting-side flags stop a multi-audience token from being issued, and `require-all-audiences-match` independently rejects one at the destination even if it is minted anyway, for example by an older or misconfigured issuer.
+
+##### Path matching #####
+
+An `aud` entry with no resource path, or with a resource path of exactly `/`, matches ANY request path, for either form, including when `request.audience.k8s.path.header.name` is configured and the header is present on the request. This is deliberate, not an oversight: an entry with an empty path is a statement about which destination service a token may be presented to, not about which operations on that service it may invoke. An audience meant to be scoped to one endpoint must carry that endpoint's path.
+
+##### Non-delegated tokens #####
+
+`request.audience.k8s.validate.audiences.without.act.claim` controls how a token with no `act` claim, that is, a token that is not a delegation token, is handled. It defaults to `true`: such a token's `aud` claim is validated against the request's actual destination in exactly the same way as a delegation token's, and the request is rejected if the token carries no `aud` claim, or an `aud` that is not a valid destination for this request. Setting it to `false` sends a non-delegated token's `aud` claim to the fixed `knox.token.audiences` check (`AbstractJWTFilter.matchesConfiguredAudiences`) instead, the same as if this validator were not selected for it. This parameter has no effect on a token that does carry an `act` claim: that token is always destination-validated by this validator.
+
+##### Actor-subject binding #####
+
+Setting `request.audience.k8s.enforce.act.sub.service-account.matches.source.spiffeid` (default `false`) to `true` enables validating that the source SPIFFE id's service-account identity matches the most recent actor's service-account identity in the token's `act` chain, provided that actor's `sub` claim is of the form `system:serviceaccount:<namespace>:<service-account-name>`. This enforces that a delegated token can only be used by the service account that exchanged for it. Trust domain and issuer are not compared, since the two subject forms carry no comparable value for either, so this check is meaningful only within a single trust domain. If the actor's `sub` claim is not of the expected form, the check is skipped (the request passes), unless `request.audience.k8s.enforce.act.sub.is.service.account` is also `true`, in which case it fails. See below for that parameter.
 
 Enabling this parameter requires `request.audience.k8s.source.spiffe-id.header.name` to also be configured; leaving it unset while this is `true` fails the topology at startup, rather than leaving a check the deployment asked for silently inactive.
 
 `request.audience.k8s.enforce.act.sub.is.service.account` (default `false`) is only consulted when the parameter above is `true`. It controls what happens when the actor subject cannot be read as a Kubernetes service-account subject at all: `false` (the default) passes such an actor without comparing it, since a legitimate actor subject may take another form; `true` fails validation instead.
 
-A token whose `act` claim is present but is not a JSON object -- so no actor subject can be read from it at all -- fails validation when `enforce.act.sub.service-account.matches.source.spiffeid` is `true`, the same as any other actor subject this check rejects. A token with no `act` claim carries no actor at all, so this check does not apply to it regardless of either parameter's value.
+A token whose `act` claim is present but is not a JSON object, so no actor subject can be read from it at all, fails validation when `enforce.act.sub.service-account.matches.source.spiffeid` is `true`, the same as any other actor subject this check rejects. A token with no `act` claim carries no actor at all, so this check does not apply to it regardless of either parameter's value.
 
 ##### Prerequisites #####
 
-Each of the four header parameters below (destination SPIFFE-id, server-name, path, and source SPIFFE-id) names a header this validator trusts at face value, with no independent verification. Every one of them **must** be populated only by a component upstream of Knox that is trusted to set or overwrite it correctly with a value it independently determined -- never a header an untrusted caller could set or influence. If that guarantee does not hold for a configured header, an untrusted caller controls the corresponding side of the comparison, and the destination binding this validator provides is defeated. Establishing that guarantee is the responsibility of the deployment's network/ingress layer, not something this validator can check.
+Each of the four header parameters below (destination SPIFFE-id, server-name, path, and source SPIFFE-id) names a header this validator trusts at face value, with no independent verification. Every one of them **must** be populated only by a component upstream of Knox that is trusted to set or overwrite it correctly with a value it independently determined, never a header an untrusted caller could set or influence. If that guarantee does not hold for a configured header, an untrusted caller controls the corresponding side of the comparison, and the destination binding this validator provides is defeated. Establishing that guarantee is the responsibility of the deployment's network/ingress layer, not something this validator can check.
 
-When a header parameter is configured, that header must be present and parseable in the shape this validator requires for it on every request, or validation fails -- whether or not the `aud` entries actually presented on a given request would have needed that value. This holds for all four header parameters.
+When a header parameter is configured, that header must be present and parseable in the shape this validator requires for it on every request, or validation fails, whether or not the `aud` entries actually presented on a given request would have needed that value. This holds for all four header parameters.
 
-If the path this validator checks can be changed by the surrounding infrastructure after this validator runs (for example, a routing rule that rewrites the request path), configure the path header to carry the path as it was *before* any such rewrite -- the audience being validated describes the resource the caller requested, not the path an internal rewrite happens to route it to.
-
-##### Configuration parameters #####
-
-All parameters are set as `<param>` entries on the `JWTProvider` provider, alongside `request.audience.validator`.
-
-Name | Description                                                                                                                                                                                                                                                                                                                                                    | Default
----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------
-request.audience.k8s.namespace.from.destination.spiffe-id.header.name | HTTP header carrying the destination workload's SPIFFE id, e.g. `spiffe://trust-domain/ns/namespace/sa/service-account`. When set, the namespace inside the SPIFFE id is compared against the `aud` entry's namespace segment. Trusted-header parameter -- see Prerequisites.                                                                                  | n/a (unset; namespace is then not matched from this source)
-request.audience.k8s.server.name.header.name | HTTP header carrying the destination workload's FQDN, in the form `service-name.namespace<cluster-suffix>`, optionally followed by `:port`. When set, both the service-name and namespace segments are compared. Trusted-header parameter -- see Prerequisites.                                                                                                | n/a (unset; this header is then not read at all)
-request.audience.k8s.server.name.cluster-suffix | Suffix that terminates the FQDN read from the header above, e.g. `.svc.cluster.local`. Only read when that header parameter is itself configured. Independent of `request.audience.k8s.cluster.domain` below, which plays the same role for a DNS-form `aud` entry rather than for this header.                                                                | `.svc.cluster.local`
-request.audience.k8s.path.header.name | HTTP header carrying the path to match against the `aud` entry's resource-path segment. Trusted-header parameter -- see Prerequisites.                                                                                                                                                                                                                         | n/a (unset; resource path is then not matched)
-request.audience.k8s.path.header.from.url | Whether the header above carries a full URL whose path component should be extracted, rather than already being the bare path to match. Only read when that header parameter is itself configured.                                                                                                                                                             | `false`
-request.audience.k8s.dns.format.enabled | Whether an `aud` entry written as a k8s service DNS name is accepted at all. See DNS form above for why a multi-cluster or multi-trust-domain deployment may want this `false`. When `false`, `request.audience.k8s.cluster.domain` is unused.                                                                                                                 | `true`
-request.audience.k8s.cluster.domain | The cluster domain a DNS-form `aud` entry's host is checked against, e.g. the `cluster.local` in `https://reporting-svc.analytics.svc.cluster.local`. See DNS form above for the exact shortening and matching rule. Only read when DNS-form entries are enabled.                                                                                              | `cluster.local`
-request.audience.k8s.cluster-domains | Comma-separated allow-list of cluster domains (host, with an optional `:port`, defaulting to `443`) a custom-form `aud` entry's authority may match. Always enforced for a custom-form entry; there is no way to disable this check. Does not apply to a DNS-form entry -- see `cluster.domain` above.                                                         | `service.local` (a placeholder that fails closed until set to the deployment's own cluster domain(s))
-request.audience.k8s.require-all-audiences-match | Whether at least one `aud` entry matching the destination is sufficient (`false`, the ordinary "am I an intended audience" semantic of [RFC 7519 §4.1.3](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)), or whether the claim must be non-empty and every entry must match (`true`). See the note below on combining this with the minting-side flags. | `false`
-request.audience.k8s.audience.path.prefix | Optional path prefix searched for in a custom-form `aud` entry's path before namespace and service-name are parsed out of it -- see Optional path prefix above. Never applies to a DNS-form entry.                                                                                                                                                             | n/a (unset; a custom-form entry's path must then begin with namespace and service-name straight after the authority)
-request.audience.k8s.source.spiffe-id.header.name | HTTP header carrying the calling (source) workload's SPIFFE id. Supplies the namespace for a namespace-less DNS-form `aud` entry, and is the identity compared against the actor subject when actor-subject binding is enabled. Trusted-header parameter -- see Prerequisites.                                                                                 | n/a (unset; a namespace-less DNS-form entry can then never match, and actor-subject binding cannot be enabled)
-request.audience.k8s.validate.audiences.without.act.claim | Whether a token with no `act` claim is validated against the request destination (`true`) or against the fixed `knox.token.audiences` list (`false`). See Non-delegated tokens above. Has no effect on a token that does carry an `act` claim.                                                                                                                 | `true`
-request.audience.k8s.enforce.act.sub.service-account.matches.source.spiffeid | Whether the most recent actor in the token's `act` chain must match the source workload's SPIFFE id. See Actor-subject binding above. Requires `source.spiffe-id.header.name` to be configured; setting this `true` without it fails topology startup.                                                                                                         | `false`
-request.audience.k8s.enforce.act.sub.is.service.account | Whether an actor subject that cannot be read as a k8s service-account subject fails validation (`true`) or passes unchecked (`false`). Only consulted when the parameter above is `true`.                                                                                                                                                                      | `false`
-
-`request.audience.k8s.require-all-audiences-match=true` is independent of, and does not by itself prevent, a delegation token being minted with more than one audience in the first place -- it only changes how this validator reacts to one once presented. `JWTFederationFilter` separately exposes `delegation.enforce.requested.audience.required` and `delegation.enforce.requested.audience.max.one`, which constrain what a delegation token may be minted with. A deployment that wants every delegation token to carry exactly one audience should set all three: the two minting-side flags stop a multi-audience token from being issued, and `require-all-audiences-match` independently rejects one at the destination even if it is minted anyway, for example by an older or misconfigured issuer.
+If the path this validator checks can be changed by the surrounding infrastructure after this validator runs (for example, a routing rule that rewrites the request path), configure the path header to carry the path as it was *before* any such rewrite: the audience being validated describes the resource the caller requested, not the path an internal rewrite happens to route it to.
 
 ##### Example topology #####
 
-This example is the combination that validates the destination namespace and path for every token (including non-delegated ones), binds a delegation token's actor to the workload presenting it, and deliberately does not validate service-name or accept the custom `aud` form. Every parameter this validator reads is shown, each marked `(default)` or `(non-default)`, so the full configuration surface -- and what it does and does not bind -- is visible in one place. Header names are examples; the real ones depend on what the service mesh sets.
+This example is the combination that validates the destination namespace and path for every token (including non-delegated ones), binds a delegation token's actor to the workload presenting it, and deliberately does not validate service-name or accept the custom `aud` form. Every parameter this validator reads is shown, each marked `(default)` or `(non-default)`, so the full configuration surface, and what it does and does not bind, is visible in one place. Header names are examples; the real ones depend on what the service mesh sets.
 
     <provider>
         <role>federation</role>
@@ -168,7 +193,7 @@ This example is the combination that validates the destination namespace and pat
         <!-- (default) The k8s cluster domain, for aud entries written as a service DNS name.
              Set explicitly so the cluster domain is visible in the topology, not implied. -->
         <param>
-            <name>request.audience.k8s.cluster.domain</name>
+            <name>request.audience.k8s.dns.format.cluster.domain</name>
             <value>cluster.local</value>
         </param>
 
@@ -275,7 +300,7 @@ What this configuration enforces, derived from it item by item:
 
 aud entry form accepted | BOTH. Each entry is tried as a k8s service DNS name first and as the custom form second, and is accepted if either matches.
 ---------|-----------
-cluster domain, DNS form | ENFORCED, via `cluster.domain`. Labels after `svc` must be a label-boundary prefix of `cluster.local`. Shortened hosts are accepted; a trailing dot is not.
+cluster domain, DNS form | ENFORCED, via `dns.format.cluster.domain`. Labels after `svc` must be a label-boundary prefix of `cluster.local`. Shortened hosts are accepted; a trailing dot is not.
 cluster domain, custom form | ENFORCED, via `cluster-domains`, left at the fail-closed `service.local`.
 port | NOT enforced for a service DNS audience; parsed and ignored. Part of the authority match for a custom-form entry.
 namespace | ENFORCED, from the destination SPIFFE id header. For a service DNS audience whose host omits the namespace, the namespace comes from the SOURCE SPIFFE id header and must equal this destination namespace.
@@ -308,15 +333,17 @@ The request is accepted:
 
 Presenting the same token with `x-destination-spiffe-id` naming a different namespace, `x-destination-path` naming a different path, or `x-source-spiffe-id` naming a workload other than the one the token's actor names, is rejected.
 
+If the `aud` entry instead carried no path, or exactly `/` (e.g. `https://reporting-svc.analytics.svc.cluster.local`), the same request would still be accepted, and so would an otherwise identical request against `/v1/other` or any other path on the same destination: `x-destination-path` would not be consulted for this entry at all. Every other check above still applies unchanged; only the resource-path check is skipped. To scope an audience to one endpoint, keep its path, as in the example above.
+
 ##### Failure modes #####
 
 The validator rejects the request (a bad-request response, since audience validation runs as part of token validation) and logs a diagnostic message when:
 
-* a token in scope -- one carrying an `act` claim, or one with no `act` claim while `validate.audiences.without.act.claim` is `true` -- has no `aud` claim at all;
+* a token in scope (one carrying an `act` claim, or one with no `act` claim while `validate.audiences.without.act.claim` is `true`) has no `aud` claim at all;
 * a configured header is missing, empty, or fails to parse in the shape this validator requires for it (an unparseable SPIFFE id, a server-name header that doesn't end in the configured cluster-suffix with exactly two labels before it, and so on);
 * both namespace sources are configured and disagree;
 * `audience.path.prefix` is configured and a custom-form entry's path never contains it as its own segment (or contiguous run of segments), so namespace and service-name cannot be located;
-* `enforce.act.sub.service-account.matches.source.spiffeid` is `true` and the most recent actor in the token's `act` chain does not match the source SPIFFE id's namespace and service-account name -- including when the actor subject cannot be read as a service-account subject at all and `enforce.act.sub.is.service.account` is `true`, or when the `act` claim's value is not a JSON object at all;
+* `enforce.act.sub.service-account.matches.source.spiffeid` is `true` and the most recent actor in the token's `act` chain does not match the source SPIFFE id's namespace and service-account name, including when the `act` claim's value is not a JSON object at all, or when the actor subject cannot be read as a service-account subject and `enforce.act.sub.is.service.account` is `true`;
 * no `aud` entry both parses as a supported URL shape (DNS form, custom form, or either depending on `dns.format.enabled`) and matches every segment this validator is configured to check (or, with `require-all-audiences-match=true`, any entry fails to).
 
 A token with no `act` claim is validated against the fixed `knox.token.audiences` list instead of all of the above only when `validate.audiences.without.act.claim` is set to `false`.

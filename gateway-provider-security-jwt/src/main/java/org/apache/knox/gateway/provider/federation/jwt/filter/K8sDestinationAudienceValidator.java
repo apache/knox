@@ -130,7 +130,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * {@code .svc.cluster.local}. Only read when that header parameter is itself configured. Defaults
    * to {@code .svc.cluster.local}, the standard Kubernetes in-cluster service FQDN suffix.
    *
-   * <p>Deliberately independent of {@link #CLUSTER_DOMAIN_PARAM}, which plays the same role for
+   * <p>Deliberately independent of {@link #DNS_FORMAT_CLUSTER_DOMAIN_PARAM}, which plays the same role for
    * an {@code aud} entry rather than for this header. In a typical deployment both carry the
    * same cluster domain. They are separate because this header carries whatever an upstream
    * component chose to send, and may be absent or empty, while an {@code aud} entry is
@@ -167,7 +167,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    *
    * <p>Applies only to an {@code aud} entry in the form described above. An entry written as a
    * k8s service DNS name is not checked against this list: its authority is checked against
-   * {@link #CLUSTER_DOMAIN_PARAM} instead, and its port is not checked at all.
+   * {@link #DNS_FORMAT_CLUSTER_DOMAIN_PARAM} instead, and its port is not checked at all.
    */
   public static final String CLUSTER_DOMAINS_PARAM = PARAM_PREFIX + "cluster-domains";
   public static final String CLUSTER_DOMAINS_DEFAULT = "service.local";
@@ -205,7 +205,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   /**
    * Whether an {@code aud} entry written as a k8s service DNS name is accepted at all. Defaults to
    * {@code true}. When {@code false}, every {@code aud} entry is evaluated only as the custom
-   * form, and {@link #CLUSTER_DOMAIN_PARAM} is unused.
+   * form, and {@link #DNS_FORMAT_CLUSTER_DOMAIN_PARAM} is unused.
    *
    * <p>A deployment that fronts more than one cluster, or more than one trust domain, behind this
    * validator may want to set this to {@code false}: a k8s service DNS name carries no cluster or
@@ -234,8 +234,8 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * deployment both carry the same cluster domain. They are separate because an {@code aud}
    * entry is canonical, while a header carries whatever an upstream component chose to send.
    */
-  public static final String CLUSTER_DOMAIN_PARAM = PARAM_PREFIX + "cluster.domain";
-  public static final String CLUSTER_DOMAIN_DEFAULT = "cluster.local";
+  public static final String DNS_FORMAT_CLUSTER_DOMAIN_PARAM = PARAM_PREFIX + "dns.format.cluster.domain";
+  public static final String DNS_FORMAT_CLUSTER_DOMAIN_DEFAULT = "cluster.local";
 
   /**
    * Name of the request header carrying the source workload's SPIFFE id, e.g.
@@ -360,7 +360,7 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     }
 
     serverNameClusterSuffix = paramOrDefault(filterConfig, SERVER_NAME_CLUSTER_SUFFIX_PARAM, SERVER_NAME_CLUSTER_SUFFIX_DEFAULT);
-    clusterDomain = paramOrDefault(filterConfig, CLUSTER_DOMAIN_PARAM, CLUSTER_DOMAIN_DEFAULT);
+    clusterDomain = paramOrDefault(filterConfig, DNS_FORMAT_CLUSTER_DOMAIN_PARAM, DNS_FORMAT_CLUSTER_DOMAIN_DEFAULT);
 
     pathHeaderFromUrl = Boolean.parseBoolean(filterConfig.getInitParameter(PATH_HEADER_FROM_URL_PARAM));
 

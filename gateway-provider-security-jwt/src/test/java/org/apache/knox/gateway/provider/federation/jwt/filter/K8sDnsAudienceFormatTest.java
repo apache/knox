@@ -34,7 +34,7 @@ import static org.apache.knox.gateway.provider.federation.jwt.filter.K8sAudience
 
 /**
  * Covers the k8s service DNS name aud format at the validator level: every host shape allowed by
- * {@link K8sDestinationAudienceValidator#CLUSTER_DOMAIN_PARAM}, its independence from {@link
+ * {@link K8sDestinationAudienceValidator#DNS_FORMAT_CLUSTER_DOMAIN_PARAM}, its independence from {@link
  * K8sDestinationAudienceValidator#CLUSTER_DOMAINS_PARAM} and from {@link
  * K8sDestinationAudienceValidator#SERVER_NAME_CLUSTER_SUFFIX_PARAM}, the dual-format fallback
  * between it and the custom destination-URL format, and {@link
@@ -270,7 +270,7 @@ public class K8sDnsAudienceFormatTest {
   public void testClusterDomainParamOverrideHonoredForFullMatch() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
-    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAIN_PARAM, "mycompany.io");
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_CLUSTER_DOMAIN_PARAM, "mycompany.io");
     final K8sDestinationAudienceValidator validator = init(params);
     final JWT token = delegationToken("https://svc.myns.svc.mycompany.io");
     final Map<String, String> headers = new HashMap<>();
@@ -283,7 +283,7 @@ public class K8sDnsAudienceFormatTest {
   public void testClusterDomainParamOverridePartialPrefixAccepted() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(K8sDestinationAudienceValidator.NAMESPACE_FROM_SPIFFE_ID_HEADER_PARAM, SPIFFE_HEADER);
-    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAIN_PARAM, "mycompany.io");
+    params.put(K8sDestinationAudienceValidator.DNS_FORMAT_CLUSTER_DOMAIN_PARAM, "mycompany.io");
     final K8sDestinationAudienceValidator validator = init(params);
     final JWT token = delegationToken("https://svc.myns.svc.mycompany");
     final Map<String, String> headers = new HashMap<>();
