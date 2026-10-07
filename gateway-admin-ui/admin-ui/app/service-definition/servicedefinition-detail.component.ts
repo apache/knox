@@ -22,12 +22,13 @@ import {ServiceDefinition} from '../model/servicedefinition';
 import {ServiceDefinitionService} from '../service/servicedefinition.service';
 import {ResourceTypesService} from '../service/resourcetypes.service';
 import {ModalComponent} from '../utils/modal.component';
+import {KxIconComponent} from '../shared/icon/icon.component';
 
 @Component({
     selector: 'app-servicedefinition-detail',
     templateUrl: './servicedefinition-detail.component.html',
     styleUrls: ['./servicedefinition-detail.component.css'],
-    imports: [FormsModule, ModalComponent]
+    imports: [FormsModule, ModalComponent, KxIconComponent]
 })
 
 export class ServiceDefinitionDetailComponent implements OnInit {

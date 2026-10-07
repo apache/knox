@@ -17,7 +17,9 @@
 
 /**
  * Loads Knox authentication theme CSS on login and logout pages.
- * Include theme-config.js before this script in the document head.
+ * Include theme-config.js before this script in the document head, ahead of
+ * jquery/knoxauth.js so the theme stylesheet is requested early and after
+ * knox.css so the theme still wins the cascade.
  */
 (function() {
 	// Theme names are attacker-influenced (URL parameter and localStorage), so
@@ -61,20 +63,39 @@
 	}
 
 	if (theme !== 'default') {
+		var REVEAL_TIMEOUT_MS = 1500;
+		var root = document.documentElement;
+		var revealed = false;
+
+		var reveal = function() {
+			if (revealed) {
+				return;
+			}
+			revealed = true;
+			root.style.visibility = '';
+			root.style.background = '';
+		};
+
 		var link = document.createElement('link');
 		link.rel = 'stylesheet';
 		link.type = 'text/css';
 		link.id = 'knox-theme';
-		if (themeIsPersisted) {
-			link.onerror = function() {
+		link.onload = reveal;
+		link.onerror = function() {
+			if (themeIsPersisted) {
 				try {
 					localStorage.removeItem('knox-auth-theme');
 				} catch (e) {
 					// LocalStorage may be disabled, nothing to clean up
 				}
-			};
-		}
+			}
+			reveal();
+		};
 		link.href = 'styles/themes/' + theme + '/theme.css';
+
+		window.setTimeout(reveal, REVEAL_TIMEOUT_MS);
+		root.style.visibility = 'hidden';
+		root.style.background = '#fff';
 		document.head.appendChild(link);
 	}
 })();

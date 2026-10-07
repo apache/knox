@@ -24,13 +24,14 @@ import {Resource} from '../model/resource';
 import {ResourceTypesService} from '../service/resourcetypes.service';
 import {ValidationUtils} from '../utils/validation-utils';
 import {ModalComponent} from '../utils/modal.component';
+import {KxIconComponent} from '../shared/icon/icon.component';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'app-new-desc-wizard',
     templateUrl: './new-desc-wizard.component.html',
     styleUrls: ['./new-desc-wizard.component.css'],
-    imports: [FormsModule, ProviderConfigSelectorComponent, ModalComponent]
+    imports: [FormsModule, ProviderConfigSelectorComponent, ModalComponent, KxIconComponent]
 })
 export class NewDescWizardComponent implements OnInit {
 

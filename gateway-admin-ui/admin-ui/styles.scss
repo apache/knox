@@ -45,6 +45,7 @@ body {
     margin: 0;
     padding-bottom: 40px;
     font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 // Form input styling
@@ -246,15 +247,25 @@ select.form-control {
     transition: color 0.15s;
 }
 
+// Locally-bundled inline SVG icons (kx-icon) render inside a .material-icons
+// host; size them to the inherited font-size and inherit color via currentColor.
+.material-icons svg {
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 // Expand/collapse toggle icons
-span.clickable.material-icons,
-span.clickable.inline-glyph.material-icons {
+.clickable.material-icons,
+.clickable.inline-glyph.material-icons {
     font-size: 18px;
     color: #666;
 }
 
-span.clickable.material-icons:hover,
-span.clickable.inline-glyph.material-icons:hover {
+.clickable.material-icons:hover,
+.clickable.inline-glyph.material-icons:hover {
     color: $primary;
 }
 

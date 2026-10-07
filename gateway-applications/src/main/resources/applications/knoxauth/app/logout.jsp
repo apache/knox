@@ -180,7 +180,7 @@
   </head>
   
   <body class="login" style="">
-    <section id="signout-container" style="margin-top: 4.5px;">
+    <section id="signout-container">
       <div class="l-logo">
           <img src="images/knox-logo.gif" alt="Knox logo">
       </div>

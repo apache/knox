@@ -1584,7 +1584,14 @@ table.table.backgrid thead th.repoName {
 /* Login Page */
 body.login {
   background: #292929;
+  margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .login #signin-container {
   margin: 0 auto;
@@ -2047,6 +2054,10 @@ input[type="radio"], input[type="checkbox"] {margin-top: 0;}
   flex-direction: column;
   gap: 12px;
   width: fit-content; /* shrink to fit content */
+}
+
+#federated-op-container:empty {
+  display: none;
 }
 
 .fed-op-btn {

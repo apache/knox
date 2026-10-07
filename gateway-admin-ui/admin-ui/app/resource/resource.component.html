@@ -5,19 +5,19 @@
             <span class="clickable inline-glyph btn btn-xs"
                   (click)="newProviderConfigModal.open()"
                   title="Create New Provider Configuration"
-                  data-toggle="tooltip"><span class="material-icons">add_circle</span></span>
+                  data-toggle="tooltip"><app-icon name="add_circle"></app-icon></span>
         }
         @if (resourceType === 'Descriptors') {
             <span class="clickable inline-glyph btn btn-xs"
                   (click)="newDescriptorModal.open()"
                   title="Create New Descriptor"
-                  data-toggle="tooltip"><span class="material-icons">add_circle</span></span>
+                  data-toggle="tooltip"><app-icon name="add_circle"></app-icon></span>
         }
         @if (resourceType === 'Service Definitions') {
             <span class="clickable inline-glyph btn btn-xs"
                   (click)="newServiceDefinitionModal.open()"
                   title="Create New Service Definition"
-                  data-toggle="tooltip"><span class="material-icons">add_circle</span></span>
+                  data-toggle="tooltip"><app-icon name="add_circle"></app-icon></span>
         }
     </div>
 

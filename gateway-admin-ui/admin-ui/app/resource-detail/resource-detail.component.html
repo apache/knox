@@ -30,7 +30,7 @@
             @if (!isAddingProvider) {
                 <span class="clickable inline-glyph btn btn-xs pull-right"
                       (click)="isAddingProvider=true"
-                      data-toggle="tooltip" title="Add Provider"><span class="material-icons">add_circle</span></span>
+                      data-toggle="tooltip" title="Add Provider"><app-icon name="add_circle"></app-icon></span>
             }
             @if (isAddingProvider) {
                 <span class="inline-editor inlineEditForm pull-right">
@@ -41,10 +41,10 @@
                     <button class="btn btn-xs"
                             (click)="isAddingProvider=false;
                                      addProvider(newProviderName.value, newProviderRole.value)">
-                      <span class="material-icons">check</span>
+                      <app-icon name="check"></app-icon>
                     </button>
                     <button class="btn btn-xs" (click)="isAddingProvider=false">
-                      <span class="material-icons">close</span>
+                      <app-icon name="close"></app-icon>
                     </button>
                 </span>
             }
@@ -53,13 +53,13 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <span>&nbsp;</span>
-                    <span class="clickable inline-glyph material-icons"
-                          (click)="toggleShowProvider(provider)">{{isShowProvider(provider) ? 'expand_more' : 'chevron_right'}}</span>
+                    <app-icon class="clickable inline-glyph"
+                          (click)="toggleShowProvider(provider)" [name]="isShowProvider(provider) ? 'expand_more' : 'chevron_right'"></app-icon>
                     <span><strong>{{ provider.role }}</strong></span>
                     <span class="clickable inline-glyph pull-right btn btn-xs"
                           [title]="'Remove ' + provider.role"
                           (click)="onRemoveProvider(provider.name)"
-                          data-toggle="tooltip"><span class="material-icons">cancel</span></span>
+                          data-toggle="tooltip"><app-icon name="cancel"></app-icon></span>
                 </div>
                 @if (isShowProvider(provider)) {
                 <div class="panel-body">
@@ -68,13 +68,13 @@
                                                          [checked]="isProviderEnabled(provider)"
                                                          (click)="onProviderEnabled(provider)"><br>
                     <div>
-                        <span class="clickable inline-glyph material-icons"
-                              (click)="toggleShowProviderParams(provider)">{{isShowProviderParams(provider) ? 'expand_more' : 'chevron_right'}}</span>
+                        <app-icon class="clickable inline-glyph"
+                              (click)="toggleShowProviderParams(provider)" [name]="isShowProviderParams(provider) ? 'expand_more' : 'chevron_right'"></app-icon>
                         <span><strong>Params</strong></span>
                         @if (!isAddingProviderParam(provider)) {
                             <span class="clickable inline-glyph btn btn-xs"
                                   (click)="setAddingProviderParam(provider,true)"
-                                  data-toggle="tooltip" title="Add Param"><span class="material-icons">add_circle</span></span>
+                                  data-toggle="tooltip" title="Add Param"><app-icon name="add_circle"></app-icon></span>
                         }
                         @if (isAddingProviderParam(provider)) {
                             <span class="inline-editor inlineEditForm">
@@ -86,10 +86,10 @@
                                         (click)="setAddingProviderParam(provider,false);
                                                  addProviderParam(provider, newParamName.value, newParamValue.value);
                                                  showProviderParams(provider)">
-                                  <span class="material-icons">check</span>
+                                  <app-icon name="check"></app-icon>
                                 </button>
                                 <button class="btn btn-xs" (click)="setAddingProviderParam(provider,false)">
-                                  <span class="material-icons">close</span>
+                                  <app-icon name="close"></app-icon>
                                 </button>
                             </span>
                         }
@@ -102,7 +102,7 @@
                                                 <span class="clickable inline-glyph btn btn-xs"
                                                       title="Remove Param"
                                                       (click)="onRemoveProviderParam(provider, paramName)"
-                                                      data-toggle="tooltip"><span class="material-icons">cancel</span></span>
+                                                      data-toggle="tooltip"><app-icon name="cancel"></app-icon></span>
                                             </td>
                                             <td><strong>{{ paramName }}</strong></td>
                                             <td>
@@ -115,11 +115,11 @@
                                                         <input type="text" size="30" [(ngModel)]="provider.params[paramName]">
                                                         <button class="btn btn-xs"
                                                                 (click)="setProviderParamEditFlag(provider, paramName, false);changedProviders=providers">
-                                                          <span class="material-icons">check</span>
+                                                          <app-icon name="check"></app-icon>
                                                         </button>
                                                         <button class="btn btn-xs"
                                                                 (click)="setProviderParamEditFlag(provider, paramName, false)">
-                                                          <span class="material-icons">close</span>
+                                                          <app-icon name="close"></app-icon>
                                                         </button>
                                                     </span>
                                                 }
@@ -142,7 +142,7 @@
                         class="btn btn-default btn-sm pull-left"
                         (click)="deleteConfirmModal.open('md')"
                         data-toggle="tooltip">
-                    <span class="material-icons">delete</span>
+                    <app-icon name="delete"></app-icon>
                 </button>
                 <span class="pull-right">
                     <button type="button"
@@ -151,7 +151,7 @@
                             [disabled]="!changedProviders"
                             (click)="discardConfirmModal.open('md')"
                             data-toggle="tooltip">
-                      <span class="material-icons">refresh</span>
+                      <app-icon name="refresh"></app-icon>
                     </button>
                     <span>&nbsp;</span>
                     <button type="button"
@@ -160,7 +160,7 @@
                             [disabled]="!changedProviders"
                             (click)="persistChanges()"
                             data-toggle="tooltip">
-                      <span class="material-icons">save</span>
+                      <app-icon name="save"></app-icon>
                     </button>
                 </span>
             }
@@ -182,10 +182,10 @@
               <span class="col-md-sm inline-editor inlineEditForm">
                 <input type="text" size="40" [(ngModel)]="descriptor.providerConfig">
                 <button class="btn btn-xs" (click)="editModePC=false;descriptor.setDirty()">
-                  <span class="material-icons">check</span>
+                  <app-icon name="check"></app-icon>
                 </button>
                 <button class="btn btn-xs" (click)="editModePC=false">
-                  <span class="material-icons">close</span>
+                  <app-icon name="close"></app-icon>
                 </button>
               </span>
           }
@@ -195,7 +195,7 @@
                 [class.disabled]="editModePC"
                 data-toggle="tooltip"
                 title="Choose Provider Configuration">
-            <span class="material-icons">edit</span>
+            <app-icon name="edit"></app-icon>
           </span>
         </span>
             </div>
@@ -206,13 +206,13 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-        <span class="clickable inline-glyph material-icons"
-              (click)="toggleShowServices()">{{isShowServices() ? 'expand_more' : 'chevron_right'}}</span>
+        <app-icon class="clickable inline-glyph"
+              (click)="toggleShowServices()" [name]="isShowServices() ? 'expand_more' : 'chevron_right'"></app-icon>
                 <span><strong>Services</strong></span>
                 @if (!isAddingService) {
                     <span class="clickable inline-glyph btn btn-xs"
                           (click)="isAddingService=true"
-                          data-toggle="tooltip" title="Add Service"><span class="material-icons">add_circle</span></span>
+                          data-toggle="tooltip" title="Add Service"><app-icon name="add_circle"></app-icon></span>
                 }
                 @if (isAddingService) {
                     <span class="inline-editor inlineEditForm">
@@ -222,10 +222,10 @@
                                 (click)="isAddingService=false;
                                          descriptor.addService(newServiceName.value);
                                          showServices()">
-                          <span class="material-icons">check</span>
+                          <app-icon name="check"></app-icon>
                         </button>
                         <button class="btn btn-xs" (click)="isAddingService=false">
-                          <span class="material-icons">close</span>
+                          <app-icon name="close"></app-icon>
                         </button>
                     </span>
                 }
@@ -256,10 +256,10 @@
                                           <input type="text" size="40" [(ngModel)]="service.version">
                                           <button class="btn btn-xs"
                                                   (click)="setServiceVersionEditFlag(service, false);descriptor.onVersionChanged(service)">
-                                            <span class="material-icons">check</span>
+                                            <app-icon name="check"></app-icon>
                                           </button>
                                           <button class="btn btn-xs" (click)="setServiceVersionEditFlag(service, false)">
-                                            <span class="material-icons">close</span>
+                                            <app-icon name="close"></app-icon>
                                           </button>
                                         </span>
                                     }
@@ -267,17 +267,17 @@
                                     <span class="clickable inline-glyph btn btn-xs pull-right"
                                           [title]="'Remove ' + service.name"
                                           (click)="onRemoveDescriptorService(service.name)"
-                                          data-toggle="tooltip"><span class="material-icons">cancel</span></span>
+                                          data-toggle="tooltip"><app-icon name="cancel"></app-icon></span>
                                 </div>
                                 <div>
-                                    <span class="clickable inline-glyph material-icons"
-                                          (click)="toggleShowServiceParams(service)">{{isShowServiceParams(service) ? 'expand_more' : 'chevron_right'}}</span>
+                                    <app-icon class="clickable inline-glyph"
+                                          (click)="toggleShowServiceParams(service)" [name]="isShowServiceParams(service) ? 'expand_more' : 'chevron_right'"></app-icon>
                                     <span>Params</span><span>&nbsp;</span>
                                     @if (!isAddingServiceParam(service)) {
                                         <span class="clickable inline-glyph btn btn-xs"
                                               (click)="setAddingServiceParam(service,true)"
                                               data-toggle="tooltip"
-                                              title="Add Param"><span class="material-icons">add_circle</span></span>
+                                              title="Add Param"><app-icon name="add_circle"></app-icon></span>
                                     }
                                     @if (isAddingServiceParam(service)) {
                                         <span class="inline-editor inlineEditForm">
@@ -289,10 +289,10 @@
                                                     (click)="setAddingServiceParam(service,false);
                                                              descriptor.addServiceParam(service, newParamName.value, newParamValue.value);
                                                              showServiceParams(service)">
-                                              <span class="material-icons">check</span>
+                                              <app-icon name="check"></app-icon>
                                             </button>
                                             <button class="btn btn-xs" (click)="setAddingServiceParam(service,false)">
-                                              <span class="material-icons">close</span>
+                                              <app-icon name="close"></app-icon>
                                             </button>
                                         </span>
                                     }
@@ -307,7 +307,7 @@
                                                             <span class="clickable inline-glyph btn btn-xs"
                                                                   title="Remove Param"
                                                                   (click)="onRemoveDescriptorServiceParam(service.name, paramKey)"
-                                                                  data-toggle="tooltip"><span class="material-icons">cancel</span></span>
+                                                                  data-toggle="tooltip"><app-icon name="cancel"></app-icon></span>
                                                         </td>
                                                         <td width="30%"><strong>{{ paramKey }}</strong></td>
                                                         <td width="65%" align="left">
@@ -320,11 +320,11 @@
                                                                   <input type="text" size="40" [(ngModel)]="service.params[paramKey]">
                                                                   <button class="btn btn-xs"
                                                                           (click)="setServiceParamEditFlag(service, paramKey, false);descriptor.setDirty()">
-                                                                    <span class="material-icons">check</span>
+                                                                    <app-icon name="check"></app-icon>
                                                                   </button>
                                                                   <button class="btn btn-xs"
                                                                           (click)="setServiceParamEditFlag(service, paramKey, false)">
-                                                                    <span class="material-icons">close</span>
+                                                                    <app-icon name="close"></app-icon>
                                                                   </button>
                                                                 </span>
                                                             }
@@ -336,13 +336,13 @@
                                     </div>
                                 }
                                 <div>
-                                    <span class="clickable inline-glyph material-icons"
-                                          (click)="toggleShowServiceURLs(service)">{{isShowServiceURLs(service) ? 'expand_more' : 'chevron_right'}}</span>
+                                    <app-icon class="clickable inline-glyph"
+                                          (click)="toggleShowServiceURLs(service)" [name]="isShowServiceURLs(service) ? 'expand_more' : 'chevron_right'"></app-icon>
                                     <span>URLs</span><span>&nbsp;</span>
                                     @if (!isAddingServiceURL(service)) {
                                         <span (click)="setAddingServiceURL(service,true)"
                                               class="clickable inline-glyph btn btn-xs"
-                                              data-toggle="tooltip" title="Add URL"><span class="material-icons">add_circle</span></span>
+                                              data-toggle="tooltip" title="Add URL"><app-icon name="add_circle"></app-icon></span>
                                     }
                                     @if (isAddingServiceURL(service)) {
                                         <span class="inline-editor inlineEditForm">
@@ -352,10 +352,10 @@
                                                     (click)="setAddingServiceURL(service,false);
                                                              descriptor.addServiceURL(service, newURL.value);
                                                              showServiceURLs(service)">
-                                              <span class="material-icons">check</span>
+                                              <app-icon name="check"></app-icon>
                                             </button>
                                             <button class="btn btn-xs" (click)="setAddingServiceURL(service,false)">
-                                              <span class="material-icons">close</span>
+                                              <app-icon name="close"></app-icon>
                                             </button>
                                         </span>
                                     }
@@ -370,7 +370,7 @@
                                                             <span class="clickable inline-glyph btn btn-xs"
                                                                   title="Remove URL"
                                                                   (click)="onRemoveDescriptorServiceURL(service.name, url)"
-                                                                  data-toggle="tooltip"><span class="material-icons">cancel</span></span>
+                                                                  data-toggle="tooltip"><app-icon name="cancel"></app-icon></span>
                                                         </td>
                                                         <td width="95%">
                                                             @if (!getServiceURLEditFlag(service, i)) {
@@ -382,11 +382,11 @@
                                                                     <input type="text" size="50" [(ngModel)]="service.urls[i]">
                                                                     <button class="btn btn-xs"
                                                                             (click)="setServiceURLEditFlag(service, i, false);descriptor.setDirty()">
-                                                                      <span class="material-icons">check</span>
+                                                                      <app-icon name="check"></app-icon>
                                                                     </button>
                                                                     <button class="btn btn-xs"
                                                                             (click)="setServiceURLEditFlag(service, i, false)">
-                                                                      <span class="material-icons">close</span>
+                                                                      <app-icon name="close"></app-icon>
                                                                     </button>
                                                                 </span>
                                                             }
@@ -407,8 +407,8 @@
 
         <div class="panel panel-default"> <!-- Discovery panel -->
             <div class="panel-heading">
-        <span class="clickable inline-glyph material-icons"
-              (click)="toggleShowServiceDiscovery()">{{isShowServiceDiscovery() ? 'expand_more' : 'chevron_right'}}</span>
+        <app-icon class="clickable inline-glyph"
+              (click)="toggleShowServiceDiscovery()" [name]="isShowServiceDiscovery() ? 'expand_more' : 'chevron_right'"></app-icon>
                 <span><strong>Discovery Details</strong></span>
             </div>
             @if (isShowServiceDiscovery()) {
@@ -454,10 +454,10 @@
                                 <span class="inline-editor inlineEditForm">
                                     <input type="text" size="40" [(ngModel)]="descriptor.discoveryAddress">
                                     <button class="btn btn-xs" (click)="editModeAddress=false;descriptor.setDirty()">
-                                      <span class="material-icons">check</span>
+                                      <app-icon name="check"></app-icon>
                                     </button>
                                     <button class="btn btn-xs" (click)="editModeAddress=false">
-                                      <span class="material-icons">close</span>
+                                      <app-icon name="close"></app-icon>
                                     </button>
                                 </span>
                             }
@@ -483,10 +483,10 @@
                                 <span class="inline-editor inlineEditForm">
                                     <input type="text" size="40" [(ngModel)]="descriptor.discoveryCluster">
                                     <button class="btn btn-xs" (click)="editModeCluster=false;descriptor.setDirty()">
-                                      <span class="material-icons">check</span>
+                                      <app-icon name="check"></app-icon>
                                     </button>
                                     <button class="btn btn-xs" (click)="editModeCluster=false">
-                                      <span class="material-icons">close</span>
+                                      <app-icon name="close"></app-icon>
                                     </button>
                                 </span>
                             }
@@ -512,10 +512,10 @@
                                 <span class="inline-editor inlineEditForm">
                                     <input type="text" size="40" [(ngModel)]="descriptor.discoveryUser">
                                     <button class="btn btn-xs" (click)="editModeUser=false;descriptor.setDirty()">
-                                      <span class="material-icons">check</span>
+                                      <app-icon name="check"></app-icon>
                                     </button>
                                     <button class="btn btn-xs" (click)="editModeUser=false">
-                                      <span class="material-icons">close</span>
+                                      <app-icon name="close"></app-icon>
                                     </button>
                                 </span>
                             }
@@ -541,10 +541,10 @@
                                 <span class="inline-editor inlineEditForm">
                                     <input type="text" size="40" [(ngModel)]="descriptor.discoveryPassAlias">
                                     <button class="btn btn-xs" (click)="editModeAlias=false;descriptor.setDirty()">
-                                      <span class="material-icons">check</span>
+                                      <app-icon name="check"></app-icon>
                                     </button>
                                     <button class="btn btn-xs" (click)="editModeAlias=false">
-                                      <span class="material-icons">close</span>
+                                      <app-icon name="close"></app-icon>
                                     </button>
                                 </span>
                             }
@@ -562,7 +562,7 @@
                         class="btn btn-default btn-sm pull-left"
                         (click)="deleteConfirmModal.open('md')"
                         data-toggle="tooltip">
-                    <span class="material-icons">delete</span>
+                    <app-icon name="delete"></app-icon>
                 </button>
                 <span class="pull-right">
                     <button type="button"
@@ -571,7 +571,7 @@
                             [disabled]="!descriptor.isDirty()"
                             (click)="discardConfirmModal.open('md')"
                             data-toggle="tooltip">
-                      <span class="material-icons">refresh</span>
+                      <app-icon name="refresh"></app-icon>
                     </button>
                     <span>&nbsp;</span>
                     <button type="button"
@@ -580,7 +580,7 @@
                             [disabled]="!descriptor.isDirty()"
                             (click)="persistChanges()"
                             data-toggle="tooltip">
-                      <span class="material-icons">save</span>
+                      <app-icon name="save"></app-icon>
                     </button>
                 </span>
             }

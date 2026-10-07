@@ -642,7 +642,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     final List<Cookie> relevantCookies = CookieUtils.getCookiesForName(request, cookieName);
     for (Cookie ssoCookie : relevantCookies) {
       try {
-        final JWT token = parseAndValidateJWT(request, response, chain, ssoCookie.getValue());
+        final JWT token = parseAndValidateCookieJWT(request, response, chain, ssoCookie.getValue());
         if (token != null) {
           // A KnoxSSO cookie is the credential the caller authenticated with, so it is forwardable
           final Subject subject = createSubjectFromCallerToken(token);
@@ -685,6 +685,21 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator);
   }
 
+  /**
+   * Parse and validate a JWT presented in a cookie (e.g. {@code hadoop-jwt}).
+   *
+   * <p>Identical to {@link #parseAndValidateJWT(HttpServletRequest, HttpServletResponse,
+   * FilterChain, String)} except that the token is flagged as cookie-borne, which is what makes it
+   * eligible for {@link AbstractJWTFilter#ALLOW_UNKNOWN_COOKIE_TOKEN_STATE}. The
+   * {@code Authorization} header, HTTP Basic, passcode and token-exchange paths deliberately keep
+   * the stricter default.
+   */
+  JWT parseAndValidateCookieJWT(HttpServletRequest request, HttpServletResponse response,
+                                FilterChain chain, String tokenValue)
+          throws ParseException, IOException, ServletException {
+    return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator, true);
+  }
+
 
   /**
    * Parse and validate a JWT token.
@@ -702,8 +717,20 @@ public class JWTFederationFilter extends AbstractJWTFilter {
                                   FilterChain chain, String tokenValue,
                                   RequestAudienceValidator requestAudienceValidator)
       throws ParseException, IOException, ServletException {
+    return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator, false);
+  }
+
+  /**
+   * @param cookieAuth true when {@code tokenValue} came from a cookie; see
+   *     {@link AbstractJWTFilter#ALLOW_UNKNOWN_COOKIE_TOKEN_STATE}.
+   */
+  JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
+                                  FilterChain chain, String tokenValue,
+                                  RequestAudienceValidator requestAudienceValidator,
+                                  boolean cookieAuth)
+      throws ParseException, IOException, ServletException {
     JWT token = new JWTToken(tokenValue);
-    if (validateToken(request, response, chain, token, requestAudienceValidator)) {
+    if (validateToken(request, response, chain, token, requestAudienceValidator, cookieAuth)) {
       return token;
     }
     // Validation failed - error response already sent by validateToken
