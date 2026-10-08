@@ -24,7 +24,9 @@
 (function() {
 	// Theme names are attacker-influenced (URL parameter and localStorage), so
 	// every candidate is validated before it is stored or used to build a URL.
-	var THEME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+	var THEME_PATTERN = (typeof KNOX_THEME_NAME_PATTERN !== 'undefined')
+		? new RegExp(KNOX_THEME_NAME_PATTERN)
+		: /^[a-zA-Z0-9_-]{1,64}$/;
 
 	function sanitize(candidate) {
 		return (candidate && THEME_PATTERN.test(candidate)) ? candidate : null;

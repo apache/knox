@@ -1645,6 +1645,18 @@ body.login {
 .login #signout-container .signout-global-form .btn {
   margin-top: 8px;
 }
+.login #signout-container .signout-secondary {
+  text-align: center;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.login #signout-container .signout-secondary a {
+  color: #06A;
+  text-decoration: none;
+}
+.login #signout-container .signout-secondary a:hover {
+  text-decoration: underline;
+}
 .login .l-logo {
   text-align: center;
   width: 100%;

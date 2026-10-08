@@ -76,6 +76,7 @@
         }
         originalUrl = originalUrl.replaceAll("&", "%26");
         String themeParam = request.getParameter("theme");
+        // Keep pattern in sync with KNOX_THEME_NAME_PATTERN in theme-config.js
         if (themeParam != null && !themeParam.matches("^[a-zA-Z0-9_-]{1,64}$")) {
             themeParam = null;
         }
@@ -108,6 +109,7 @@
         }
 
         boolean validRedirect = Urls.isValidRedirect(originalUrl, whitelist);
+        // returnToApp=1: documented API (knox_sso_logout.md); UI link below when redirect is valid.
         if (("1".equals(request.getParameter("returnToApp")))) {
           if (validRedirect) {
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
@@ -190,11 +192,10 @@
           <div class="signout-content l2-logo">
               <h1 class="signout-title">Session Termination</h1>
               <p class="signout-message">
-                Your session has timed out or you have attempted to logout of an application
-                that is participating in SSO. You may establish a new session by returning to
-                the application. If your previously established SSO session is still valid then
-                you will likely be automatically logged into your application. Otherwise, you
-                will be required to login again.
+                Your session has timed out or you have logged out of an application that uses SSO.
+                Use <strong>Sign in again</strong> to open the login page and authenticate.
+                If your Knox SSO session is still valid, choose <strong>Return to application</strong>
+                to go back without entering credentials again.
               </p>
               <form action="login.html" method="get" accept-charset="utf-8">
                 <fieldset>
@@ -207,6 +208,9 @@
                   </button>
                 </fieldset>
               </form>
+              <p class="signout-secondary">
+                <a href="?returnToApp=1&amp;originalUrl=<%= StringEscapeUtils.escapeHtml4(originalUrl) %>">Return to application</a>
+              </p>
         <%
             if (globalLogoutPageURL != null && !globalLogoutPageURL.isEmpty()) {
         %>

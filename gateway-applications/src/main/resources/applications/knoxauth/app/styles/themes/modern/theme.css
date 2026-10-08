@@ -284,6 +284,24 @@ body.login {
   padding: 0;
 }
 
+.login #signout-container .signout-secondary {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.login #signout-container .signout-secondary a {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-blue-nova-600-base) !important;
+  text-decoration: none;
+}
+
+.login #signout-container .signout-secondary a:hover {
+  color: var(--color-blue-nova-700) !important;
+  text-decoration: underline;
+}
+
 .login #signout-container .signout-global-form {
   margin-top: 8px;
   padding-top: 16px;
