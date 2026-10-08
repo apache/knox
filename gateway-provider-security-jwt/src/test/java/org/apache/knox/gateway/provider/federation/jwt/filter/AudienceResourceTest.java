@@ -346,9 +346,9 @@ public class AudienceResourceTest {
 
   @Test
   public void testDnsFormOneLabelHostIsServiceOnly() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc");
+    final Optional<AudienceResource> parsed = parseDns("https://backend");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals(null, parsed.get().namespace());
     assertEquals("/", parsed.get().resourcePathRaw());
   }
@@ -357,7 +357,7 @@ public class AudienceResourceTest {
   public void testDnsFormResultHasNoHostOrPort() {
     // host and effectivePort are meaningful only for a custom-form result; a DNS-form result sets
     // the sentinel values null/-1 since its cluster-domain host and port are not retained.
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns.svc.cluster.local:8443/a");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns.svc.cluster.local:8443/a");
     assertTrue(parsed.isPresent());
     assertEquals(null, parsed.get().host());
     assertEquals(-1, parsed.get().effectivePort());
@@ -365,17 +365,17 @@ public class AudienceResourceTest {
 
   @Test
   public void testDnsFormTwoLabelHostIsServiceAndNamespace() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals("ns", parsed.get().namespace());
   }
 
   @Test
   public void testDnsFormThreeLabelHostRequiresLiteralSvc() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns.svc");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns.svc");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals("ns", parsed.get().namespace());
   }
 
@@ -388,86 +388,86 @@ public class AudienceResourceTest {
 
   @Test
   public void testDnsFormFourLabelHostAcceptsOneClusterDomainLabel() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns.svc.cluster");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns.svc.cluster");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals("ns", parsed.get().namespace());
   }
 
   @Test
   public void testDnsFormFiveLabelHostAcceptsFullClusterDomain() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns.svc.cluster.local");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns.svc.cluster.local");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals("ns", parsed.get().namespace());
   }
 
   @Test
   public void testDnsFormRejectsNonPrefixClusterDomainSuffix() {
     // "local" alone is not a label-boundary prefix of "cluster.local" taken from the left.
-    assertFalse(parseDns("https://svc.ns.svc.local").isPresent());
+    assertFalse(parseDns("https://backend.ns.svc.local").isPresent());
   }
 
   @Test
   public void testDnsFormRejectsClusterDomainLookalike() {
     // "cluster.locale" is not "cluster.local" -- not a prefix, even though it starts the same.
-    assertFalse(parseDns("https://svc.ns.svc.cluster.locale").isPresent());
+    assertFalse(parseDns("https://backend.ns.svc.cluster.locale").isPresent());
   }
 
   @Test
   public void testDnsFormRejectsMoreLabelsThanClusterDomainHas() {
-    assertFalse(parseDns("https://svc.ns.svc.cluster.local.extra").isPresent());
+    assertFalse(parseDns("https://backend.ns.svc.cluster.local.extra").isPresent());
   }
 
   @Test
   public void testDnsFormHonorsClusterDomainOverride() {
     final Optional<AudienceResource> parsed =
-        parseDns("https://svc.ns.svc.example.org", "example.org");
+        parseDns("https://backend.ns.svc.example.org", "example.org");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals("ns", parsed.get().namespace());
-    assertFalse(parseDns("https://svc.ns.svc.example.org", "cluster.local").isPresent());
+    assertFalse(parseDns("https://backend.ns.svc.example.org", "cluster.local").isPresent());
   }
 
   @Test
   public void testDnsFormRejectsTrailingDot() {
-    assertFalse(parseDns("https://svc.ns.svc.cluster.local.").isPresent());
-    assertFalse(parseDns("https://svc.").isPresent());
+    assertFalse(parseDns("https://backend.ns.svc.cluster.local.").isPresent());
+    assertFalse(parseDns("https://backend.").isPresent());
   }
 
   @Test
   public void testDnsFormRejectsEmptyLabel() {
-    assertFalse(parseDns("https://svc..ns").isPresent());
+    assertFalse(parseDns("https://backend..ns").isPresent());
   }
 
   @Test
   public void testDnsFormIsCaseInsensitiveOnHost() {
-    final Optional<AudienceResource> parsed = parseDns("https://SVC.NS.SVC.CLUSTER.LOCAL");
+    final Optional<AudienceResource> parsed = parseDns("https://BACKEND.NS.SVC.CLUSTER.LOCAL");
     assertTrue(parsed.isPresent());
-    assertEquals("svc", parsed.get().serviceName());
+    assertEquals("backend", parsed.get().serviceName());
     assertEquals("ns", parsed.get().namespace());
   }
 
   @Test
   public void testDnsFormPortIsParsedButIgnored() {
-    final Optional<AudienceResource> withPort = parseDns("https://svc.ns:8443");
+    final Optional<AudienceResource> withPort = parseDns("https://backend.ns:8443");
     assertTrue(withPort.isPresent());
-    assertEquals("svc", withPort.get().serviceName());
+    assertEquals("backend", withPort.get().serviceName());
     assertEquals("ns", withPort.get().namespace());
     // Non-numeric or otherwise malformed port still fails parsing like any invalid authority.
-    assertFalse(parseDns("https://svc.ns:notaport").isPresent());
+    assertFalse(parseDns("https://backend.ns:notaport").isPresent());
   }
 
   @Test
   public void testDnsFormWithNoPathIsWildcard() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns");
     assertTrue(parsed.isPresent());
     assertEquals("/", parsed.get().resourcePathRaw());
   }
 
   @Test
   public void testDnsFormWithRootPathIsWildcard() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns/");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns/");
     assertTrue(parsed.isPresent());
     assertEquals("/", parsed.get().resourcePathRaw());
   }
@@ -475,28 +475,28 @@ public class AudienceResourceTest {
   @Test
   public void testDnsFormWholePathIsResourcePath() {
     // No namespace/service-name to skip over in the path -- the whole thing is the resource path.
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns/a/b/c");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns/a/b/c");
     assertTrue(parsed.isPresent());
     assertEquals("/a/b/c", parsed.get().resourcePathRaw());
   }
 
   @Test
   public void testDnsFormStripsQueryAndFragment() {
-    final Optional<AudienceResource> parsed = parseDns("https://svc.ns/a?x=1#y");
+    final Optional<AudienceResource> parsed = parseDns("https://backend.ns/a?x=1#y");
     assertTrue(parsed.isPresent());
     assertEquals("/a", parsed.get().resourcePathRaw());
   }
 
   @Test
   public void testDnsFormRejectsDotSegmentsInPath() {
-    assertFalse(parseDns("https://svc.ns/a/../b").isPresent());
-    assertFalse(parseDns("https://svc.ns/a//b").isPresent());
+    assertFalse(parseDns("https://backend.ns/a/../b").isPresent());
+    assertFalse(parseDns("https://backend.ns/a//b").isPresent());
   }
 
   @Test
   public void testDnsFormRejectsWrongSchemeOrUserinfo() {
-    assertFalse(AudienceResource.parseDnsForm("spiffe://svc.ns", "cluster.local").isPresent());
-    assertFalse(AudienceResource.parseDnsForm("https://user@svc.ns", "cluster.local").isPresent());
+    assertFalse(AudienceResource.parseDnsForm("spiffe://backend.ns", "cluster.local").isPresent());
+    assertFalse(AudienceResource.parseDnsForm("https://user@backend.ns", "cluster.local").isPresent());
   }
 
   @Test
