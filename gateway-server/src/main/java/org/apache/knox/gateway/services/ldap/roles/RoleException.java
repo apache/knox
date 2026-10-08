@@ -16,13 +16,13 @@
  */
 package org.apache.knox.gateway.services.ldap.roles;
 
-public class RoleLookupException extends Exception {
+public class RoleException extends Exception {
 
-    public RoleLookupException(String message) {
+    public RoleException(String message) {
         super(message);
     }
 
-    public RoleLookupException(String message, Throwable cause) {
+    public RoleException(String message, Throwable cause) {
         super(message, cause);
     }
 }

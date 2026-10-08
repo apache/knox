@@ -22,6 +22,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
+import org.apache.knox.gateway.services.ldap.RoleAssignees;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,14 +33,20 @@ public class DefaultLDAPRolesLookupService implements LDAPRolesLookupService, Ga
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private LdapRolesLookup ldapRolesLookup;
+    private LdapRolesReverseLookup ldapRolesReverseLookup;
 
     @Override
     public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
         try {
             this.ldapRolesLookup = LdapRolesLookupFactory.create(config);
             logStatus(config);
-        } catch (RoleLookupException e) {
+        } catch (RoleException e) {
             throw new ServiceLifecycleException("Error while initializing LDAP roles lookup service", e);
+        }
+        try {
+            this.ldapRolesReverseLookup = LdapRolesReverseLookupFactory.create(config);
+        } catch (RoleException e) {
+            throw new ServiceLifecycleException("Error while initializing LDAP roles reverse lookup service", e);
         }
     }
 
@@ -53,12 +60,22 @@ public class DefaultLDAPRolesLookupService implements LDAPRolesLookupService, Ga
 
     @Override
     public boolean enabled() {
-        return ldapRolesLookup != null;
+        return ldapRolesLookup != null && ldapRolesReverseLookup != null;
     }
 
     @Override
-    public Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleLookupException {
+    public Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleException {
         return enabled() ? ldapRolesLookup.lookupRoles(userId, groups) : List.of();
+    }
+
+    @Override
+    public Collection<String> listRoles() throws Exception {
+        return enabled() ? ldapRolesReverseLookup.listRoles() :List.of();
+    }
+
+    @Override
+    public RoleAssignees lookupRoleAssignees(String roleAssignment) throws Exception {
+        return enabled() ? ldapRolesReverseLookup.lookupRoleAssignees(roleAssignment) : null;
     }
 
     @Override
@@ -67,8 +84,13 @@ public class DefaultLDAPRolesLookupService implements LDAPRolesLookupService, Ga
         try {
             this.ldapRolesLookup = LdapRolesLookupFactory.create(config);
             logStatus(config);
-        } catch (RoleLookupException e) {
+        } catch (RoleException e) {
             LOG.ldapRolesLookupReloadFailed(e);
+        }
+        try {
+            this.ldapRolesReverseLookup = LdapRolesReverseLookupFactory.create(config);
+        } catch (RoleException e) {
+            LOG.ldapRolesReverseLookupReloadFailed(e);
         }
     }
 }

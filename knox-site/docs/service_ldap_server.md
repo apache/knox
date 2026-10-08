@@ -17,13 +17,14 @@ Key features include:
 The Knox LDAP Service is integrated as a core gateway service. It consists of the following components:
 
 1.  **KnoxLDAPServerManager**: Manages the lifecycle of the ApacheDS instance.
-2.  **UserLookupInterceptor**: A custom ApacheDS interceptor that captures search requests. If an entry is not found in the local ApacheDS partitions, it delegates the lookup to the configured backend.
+2.  **UserSearchInterceptor**: A custom ApacheDS interceptor that captures search requests. If an entry is not found in the local ApacheDS partitions, it delegates the lookup to the configured backend.
 3.  **LdapBackend**: A pluggable interface for fetching user and group data. Implementations are included for reading users from a file or connecting to a remote LDAP server.
-4.  **SchemaManagerFactory**: Programmatically extends the ApacheDS schema to include AD-specific attributes like `sAMAccountName`.
+4.  **LDAPRolesLookupInterceptor**: An optional interceptor that maps groups to roles in search results, lists roles for group searches and resolves role DNs in `memberOf` filters (see [Roles Lookup Interceptor](#roles-lookup-interceptor-roleslookup)).
+5.  **SchemaManagerFactory**: Programmatically extends the ApacheDS schema to include AD-specific attributes like `sAMAccountName`.
 
 When a client performs an LDAP search:
 1.  The request hits the embedded ApacheDS server.
-2.  The `UserLookupInterceptor` intercepts the search.
+2.  The `UserSearchInterceptor` intercepts the search.
 3.  The interceptor checks the results of the local search.
 4.  If not found, it queries the configured `LdapBackend`.
 5.  Results from the backend are converted into LDAP entries and returned to the client.
@@ -41,9 +42,15 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.base.dn` | `dc=proxy,dc=com` | The base DN for the LDAP server. |
 | `gateway.ldap.bind.user` | N/A | Full bind DN (e.g. `uid=knox,dc=proxy,dc=com`) that clients must authenticate as. When set together with the `gateway_ldap_bind_password` credential store alias, anonymous access is disabled. The bind DN's parent container must already exist (`ou=system` always exists; `ou=people,{base.dn}` and `ou=groups,{base.dn}` are created automatically). |
 | `gateway.ldap.interceptor.names` | N/A | A comma separated list of interceptors to use. A separate interceptor configuration block will be used for each name. |
-| `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). |
-| `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint. |
-| `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. |
+| `gateway.ldap.roles.lookup.strategy` | N/A | The LDAP roles lookup strategy (`file` or `rest`). The strategy is used for both the user-to-roles lookup and the reverse role lookup (role-to-assignees). |
+| `gateway.ldap.roles.lookup.rest.api.endpoint` | N/A | The LDAP roles lookup REST API endpoint, used to look up the roles of a user. Required for the `rest` strategy. |
+| `gateway.ldap.roles.list.rest.api.endpoint` | N/A | The REST API endpoint used to list roles. Required for the `rest` strategy. |
+| `gateway.ldap.roles.get.rest.api.endpoint` | N/A | The REST API endpoint used to get a single role, including its members. The role id is appended to the endpoint as a path segment. Required for the `rest` strategy. |
+| `gateway.ldap.roles.lookup.file.path` | N/A | The LDAP roles lookup file path. Required for the `file` strategy. |
+| `gateway.ldap.ssl.enabled` | `false` | Enables LDAPS on the embedded LDAP server. |
+| `gateway.ldap.ssl.keystore.path` | Gateway identity keystore | Path to the keystore holding the LDAPS server certificate. Defaults to the gateway identity keystore if not set. |
+| `gateway.ldap.ssl.keystore.password.alias` | N/A | Credential store alias of the LDAPS keystore password. |
+| `gateway.ldap.ssl.enabled.cipher.suites` | N/A | Comma separated list of cipher suites enabled for LDAPS. The server defaults are used if not set. |
 | `gateway.ldap.max.size.limit` | 1000 | The maximum size limit of the result set returned by search requests. |
 | `gateway.ldap.max.time.limit` | 60000 | The maximum time limit for search requests in milliseconds. |
 | `gateway.ldap.dn.mapping.enabled` | True | Enables or disables mapping remote DNs to the LDAP server base DN. |
@@ -140,20 +147,39 @@ The disabled user filter interceptor will recognize and filter disabled users. I
 
 #### Roles Lookup Interceptor (`rolesLookup`)
 
-The rolesLookup interceptor is created if the `interceptorType` configuration is set to `rolesLookup`. This interceptor transforms the response entities based on the mappings provided by the Role Lookup Service. For each entity, a request will be made to lookup roles based on the user's name and group membership. These roles will replace the values in the `memberOf` attribute.
+The rolesLookup interceptor is created if the `interceptorType` configuration is set to `rolesLookup`. It uses the Role Lookup Service, configured with `gateway.ldap.roles.lookup.strategy`, to apply roles to search requests in three ways.
 
-The interceptor will skip role mapping for a search request if the RolesLookupBypassControl is set to true. The control is specified using it's OID, `1.3.6.1.4.1.18060.18.0.1`. The value is a 3 byte array. This value must be base64 encoded for `ldapsearch`.
+**Role mapping.** For each user entry returned, a request is made to lookup roles based on the user's name and group membership. These roles replace the values in the `memberOf` attribute. Group entries are replaced with role entries named after the roles mapped to the group.
+
+**Role listing.** A search for all groups is answered with the roles known to the Role Lookup Service instead of the backend groups. Each role is returned as a `groupOfNames` entry with the DN `cn=<scope>:<name>,ou=groups,<base dn>`. A search is an all-groups search when its scope is not `base` (object) and its filter is an all-groups filter, and it is issued either from `ou=groups,<base dn>` or from the root of the directory (a base DN of at most two RDNs). A filter is an all-groups filter if it is one of:
+
+- `(objectClass=groupOfNames)` or `(objectClass=groupOfUniqueNames)`
+- `(cn=*)` or `(objectClass=*)`
+- an AND filter where every child is an all-groups filter, for example `(&(objectClass=groupOfNames)(cn=*))`
+- an OR filter where at least one child is an all-groups filter
+
+A NOT filter is never an all-groups filter. Group searches with other filters, such as `(cn=level*)`, are sent to the backend and the groups in the result are mapped to roles.
+
+**Reverse role lookup.** A search filter that uses `memberOf` with a role DN, for example `(memberOf=cn=platform-role,ou=groups,dc=proxy,dc=com)`, is rewritten to match the users and groups the role is assigned to. The role is taken from the RDN value of the DN. Users assigned the role are matched by `uid` and groups assigned the role are matched by `memberOf`. The rewrite is applied to `memberOf` conditions anywhere in the filter, including inside AND, OR and NOT filters. If the role has no assignees the condition is left unchanged. If the backend does not support `memberOf` (`useMemberOf` is `false` for the [LDAP proxy backend](#ldap-proxy-backend-ldap)), the remaining `memberOf` conditions on groups are expanded by the backend into the members of the groups, up to `gateway.ldap.recursive.group.resolution.max.depth` levels of nested groups.
+
+The interceptor will skip all of the above for a search request if the RolesLookupBypassControl is set to true. The search is then passed to the backend unchanged, so group names, group entries and group DNs in `memberOf` filters are returned and used as is. The control is specified using it's OID, `1.3.6.1.4.1.18060.18.0.1`. The value is a 3 byte array. This value must be base64 encoded for `ldapsearch`.
 
 | Byte | Value | Description |
 | :--- | :--- | :--- |
 | Tag | 0x01 | The Boolean Tag value |
 | Length | 0x01 | The length of the value in bytes |
-| Bypass | 0x00 or 0xff | 0x00 corresponds to `false` and 0xff corresponds to `true |
+| Bypass | 0x00 or 0xff | 0x00 corresponds to `false` and 0xff corresponds to `true` |
 
 
 For example, the control can be added to the `ldapsearch` cli using the `-e` option.
 ```shell script
 ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' -e "1.3.6.1.4.1.18060.18.0.1=AQH/" '(uid=sam*)' '*'
+```
+
+For example, to find the users that have the role `platform-admin`, and to list all roles:
+```shell script
+ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' '(memberOf=cn=platform-role,ou=groups,DC=proxy,DC=com)' uid
+ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=groups,DC=proxy,DC=com' '(objectClass=groupOfNames)' cn
 ```
 
 ### Backend Types
@@ -211,6 +237,7 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.useMemberOf` | `false` | If `true`, use the `memberOf` attribute for efficient group lookups. |
 | `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
 | `gateway.ldap.interceptor.<name>.pageSize` | `1000` | Page size for search requests. |
+| `gateway.ldap.interceptor.<name>.maxFilterLength` | `4096` | Maximum length of a search filter sent to the remote server. A longer filter (for example one expanded from a `memberOf` condition on a large group) is split into several searches whose results are combined. 0 means unlimited. |
 | `gateway.ldap.interceptor.<name>.maxResultSetSize` | `0` | Maximum number of results to return from a search, regardless of paging. 0 means unlimited. |
 
 NOTE: If this value is undefined and the interceptor was created by the KnoxLDAPServerManager, the KnoxLDAPServerManager will set the `gateway.ldap.interceptor.<name>.maxResultSetSize` value to be 1 greater than the proxy's `gateway.ldap.max.size.limit` configuration. This will ensure that the proxy returns a "Size limit exceeded" result if the backend has more results than the proxy's limit.
@@ -237,7 +264,7 @@ If the alias may be created shortly after the configuration is loaded (for examp
 The Knox LDAP Service includes several optimizations for working with Active Directory (improved in [KNOX-3277](https://issues.apache.org/jira/browse/KNOX-3277)):
 
 - **sAMAccountName Support**: The service recognizes `sAMAccountName` in search filters, allowing seamless integration with Windows environments.
-- **Efficient Group Lookups**: By setting `gateway.ldap.backend.proxy.useMemberOf` to `true`, Knox can retrieve all of a user's groups in a single query by reading the `memberOf` attribute, rather than searching all group objects.
+- **Efficient Group Lookups**: By setting `gateway.ldap.interceptor.<name>.useMemberOf` to `true`, Knox can retrieve all of a user's groups in a single query by reading the `memberOf` attribute, rather than searching all group objects.
 - **Schema Extensions**: Attributes (e.g., `memberOf`, `nsAccountLock`, and AD-specific attributes `sAMAccountName` and `userAccountControl`) are programmatically added to the embedded ApacheDS schema to prevent "attribute not found" errors during proxying.
 - **Case Sensitivity**: Search filters are handled to accommodate AD's case-insensitive nature for user identifiers.
 
@@ -262,7 +289,7 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 
 <property>
     <name>gateway.ldap.interceptor.names</name>
-    <value>localfile,adexample,extrenalldap,duplicatefilter,disableduserfilter,rolesLookup</value>
+    <value>localfile,adexample,duplicatefilter,disableduserfilter,rolesLookup</value>
 </property>
 
 <property>
@@ -272,7 +299,15 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 
 <property>
     <name>gateway.ldap.roles.lookup.rest.api.endpoint</name>
+    <value>http://localhost:8080/auth/roles/lookup</value>
+</property>
+<property>
+    <name>gateway.ldap.roles.list.rest.api.endpoint</name>
     <value>http://localhost:8080/auth/roles</value>
+</property>
+<property>
+    <name>gateway.ldap.roles.get.rest.api.endpoint</name>
+    <value>http://localhost:8080/auth/roles/</value>
 </property>
 
 <!-- File-based LDAP backend -->

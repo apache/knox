@@ -25,7 +25,14 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
+import org.apache.directory.api.ldap.model.filter.AndNode;
+import org.apache.directory.api.ldap.model.filter.EqualityNode;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.ObjectClassNode;
+import org.apache.directory.api.ldap.model.filter.OrNode;
+import org.apache.directory.api.ldap.model.filter.PresenceNode;
 import org.apache.directory.api.ldap.model.message.Control;
+import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.name.Rdn;
 import org.apache.directory.api.ldap.model.schema.AttributeType;
@@ -47,6 +54,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,9 +77,11 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private static final List<String> REQUIRED_ATTRIBUTES = Arrays.asList("uid", "objectClass");
 
     private final LDAPRolesLookupService rolesLookupService;
+    private final String proxyGroupSearchBase;
 
-    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService) {
+    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, Map<String, String> config) {
         this.rolesLookupService = rolesLookupService;
+        this.proxyGroupSearchBase = "ou=groups," + config.get("baseDn");
     }
 
     @Override
@@ -84,6 +94,90 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                     return next(ctx);
                 }
             }
+        }
+
+        if (isAllGroupsSearch(ctx)) {
+            return handleAllGroupsSearch(ctx);
+        } else {
+            return handleSearch(ctx);
+        }
+    }
+
+    private boolean isAllGroupsSearch(SearchOperationContext ctx) {
+        Dn searchDn = ctx.getDn();
+        if (searchDn == null) {
+            return false;
+        }
+
+        if (ctx.getScope() == SearchScope.OBJECT || !isAllGroupsFilter(ctx.getFilter())) {
+            return false;
+        }
+        // Either the proxy groups base, or the root with an explicit group filter
+        return searchDn.toString().equalsIgnoreCase(proxyGroupSearchBase) || searchDn.size() <= 2;
+    }
+
+    private boolean isAllGroupsFilter(ExprNode filter) {
+        // Case 1: Simple objectClass evaluation (e.g., objectClass=groupOfNames)
+        if (filter instanceof EqualityNode) {
+            EqualityNode<?> eqNode = (EqualityNode<?>) filter;
+            if ("objectClass".equalsIgnoreCase(eqNode.getAttribute())) {
+                String value = eqNode.getValue().toString();
+                return "groupOfNames".equalsIgnoreCase(value) ||
+                        "groupOfUniqueNames".equalsIgnoreCase(value);
+            }
+        }
+
+        // Case 2a: Wildcard match on all common names and object classes (e.g., cn=*, objectClass=*)
+        if (filter instanceof PresenceNode) {
+            PresenceNode presNode = (PresenceNode) filter;
+            return "cn".equalsIgnoreCase(presNode.getAttribute()) ||
+                    "objectClass".equalsIgnoreCase(presNode.getAttribute());
+        }
+        // Case 2b: Wildcard match on object class (e.g., objectClass=*)
+        if (filter instanceof ObjectClassNode) {
+            return true;
+        }
+
+        // Case 3: Compound filters. An AND is an all groups filter only if every child is, an OR
+        // if any child is, e.g. (&(objectClass=groupOfNames)(cn=*)) or (|(uid=alice)(cn=*)).
+        // A NOT is never an all groups filter: negating a condition never positively selects groups.
+        if (filter instanceof AndNode) {
+            List<ExprNode> children = ((AndNode) filter).getChildren();
+            return !children.isEmpty() && children.stream().allMatch(this::isAllGroupsFilter);
+        }
+        if (filter instanceof OrNode) {
+            return ((OrNode) filter).getChildren().stream().anyMatch(this::isAllGroupsFilter);
+        }
+
+        return false;
+    }
+
+    private EntryFilteringCursor handleAllGroupsSearch(SearchOperationContext ctx) throws LdapException {
+        // short-circuit the LDAP search to return all roles
+        Collection<String> roles = null;
+        try {
+            roles = rolesLookupService.listRoles();
+        } catch (Exception e) {
+            throw new LdapException("Failed to retrieve roles from roles lookup service.", e);
+        }
+        List<Entry> entries = new ArrayList<>();
+        for (String role : roles) {
+            Dn roleDn = new Dn(schemaManager, createGroupDnFromName(role));
+            Entry entry = createRoleEntry(roleDn);
+            entries.add(entry);
+        }
+
+        return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    private EntryFilteringCursor handleSearch(SearchOperationContext ctx) throws LdapException {
+        // Replace the role dn with the member dns if the search filter contains a "memberOf" node.
+        ExprNode filter = ctx.getFilter();
+        ReverseRoleLookupMappingVisitor reverseRoleLookupMappingVisitor =
+                new ReverseRoleLookupMappingVisitor(schemaManager, rolesLookupService, this::createGroupDnFromName);
+        Object updatedFilter = filter.accept(reverseRoleLookupMappingVisitor);
+        if (updatedFilter != null && updatedFilter instanceof ExprNode) {
+            ctx.setFilter((ExprNode) updatedFilter);
         }
 
         final SchemaManager schemaManager = ctx.getSession().getDirectoryService().getSchemaManager();
@@ -142,6 +236,10 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         }
 
         return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, schemaManager);
+    }
+
+    private String createGroupDnFromName(String groupName) {
+        return String.format(Locale.ROOT, "cn=%s,%s", groupName, proxyGroupSearchBase);
     }
 
     private Collection<? extends Entry> deduplicate(List<Entry> roleEntries) throws LdapException {
@@ -228,14 +326,19 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         for (String role : roles) {
             final Dn roleDn = renameCnRdn(entry.getDn(), role);
             if (roleDn != null) {
-                final Entry roleEntry = new DefaultEntry(schemaManager, roleDn);
-                roleEntry.add("cn", role);
-                roleEntry.add("objectClass", "groupOfNames");
+                final Entry roleEntry = createRoleEntry(roleDn);
                 addMembersToGroupEntry(roleEntry, entry);
                 translatedEntries.add(roleEntry);
             }
         }
         return translatedEntries;
+    }
+
+    private Entry createRoleEntry(Dn roleDn) throws LdapException {
+        final Entry roleEntry = new DefaultEntry(schemaManager, roleDn);
+        roleEntry.add(roleDn.getRdn().getType(), roleDn.getRdn().getValue());
+        roleEntry.add("objectClass", "groupOfNames");
+        return roleEntry;
     }
 
     private Set<String> fetchGroups(final Entry entry) {

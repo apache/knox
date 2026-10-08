@@ -19,13 +19,15 @@ package org.apache.knox.gateway.services.ldap.roles;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.services.ldap.roles.file.FileBasedLdapRolesLookup;
+import org.apache.knox.gateway.services.ldap.roles.rest.RestApiLdapRolesLookup;
 
 import static org.apache.knox.gateway.config.GatewayConfig.LDAP_ROLES_LOOKUP_FILE_PATH;
 import static org.apache.knox.gateway.config.GatewayConfig.LDAP_ROLES_LOOKUP_REST_API_ENDPOINT;
 
 public class LdapRolesLookupFactory {
 
-    public static LdapRolesLookup create(GatewayConfig config) throws RoleLookupException {
+    public static LdapRolesLookup create(GatewayConfig config) throws RoleException {
         final String strategy = config.getLdapRolesLookupStrategy();
 
         if ("file".equalsIgnoreCase(strategy)) {
@@ -33,17 +35,17 @@ public class LdapRolesLookupFactory {
             if (filePath != null && !filePath.isEmpty()) {
                 return new FileBasedLdapRolesLookup(filePath);
             } else {
-                throw new RoleLookupException(LDAP_ROLES_LOOKUP_FILE_PATH + "is required for file-based role lookups");
+                throw new RoleException(LDAP_ROLES_LOOKUP_FILE_PATH + " is required for file-based role lookups");
             }
         } else if ("rest".equalsIgnoreCase(strategy)) {
             String endpoint = config.getLdapRolesLookupRestApiEndpoint();
             if (endpoint != null && !endpoint.isEmpty()) {
                 return new RestApiLdapRolesLookup(endpoint);
             } else {
-                throw new RoleLookupException(LDAP_ROLES_LOOKUP_REST_API_ENDPOINT + "is required for REST API based role lookups");
+                throw new RoleException(LDAP_ROLES_LOOKUP_REST_API_ENDPOINT + " is required for REST API based role lookups");
             }
         } else if (StringUtils.isNotBlank(strategy)) {
-            throw new RoleLookupException("Invalid role lookup strategy: " + strategy);
+            throw new RoleException("Invalid role lookup strategy: " + strategy);
         }
 
         //role lookup is not configured

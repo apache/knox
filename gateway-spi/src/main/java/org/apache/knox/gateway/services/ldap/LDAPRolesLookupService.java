@@ -27,6 +27,10 @@ public interface LDAPRolesLookupService extends Service {
 
     Collection<String> lookupRoles(String userId, Collection<String> groups) throws Exception;
 
+    Collection<String> listRoles() throws Exception;
+
+    RoleAssignees lookupRoleAssignees(String roleAssignment) throws Exception;
+
     @Override
     default void start() throws ServiceLifecycleException {};
 

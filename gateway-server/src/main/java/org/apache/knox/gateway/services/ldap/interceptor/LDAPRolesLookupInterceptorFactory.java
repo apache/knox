@@ -35,7 +35,7 @@ public class LDAPRolesLookupInterceptorFactory implements KnoxLdapInterceptorFac
         if (ldapRolesLookupService == null || !ldapRolesLookupService.enabled()) {
             throw new ServiceLifecycleException("LDAP roles lookup service not found or disabled");
         }
-        return new LDAPRolesLookupInterceptor(ldapRolesLookupService);
+        return new LDAPRolesLookupInterceptor(ldapRolesLookupService, interceptorConfig);
     }
 
     protected LDAPRolesLookupService getLDAPRolesLookupService(GatewayServices gatewayServices) {
