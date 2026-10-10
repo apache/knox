@@ -52,6 +52,23 @@ public class URLDecodingDispatch extends ConfigurableDispatch {
       str.append('?');
       str.append(query);
     }
-    return URI.create(str.toString());
+    return normalize(URI.create(str.toString()));
+  }
+
+  /**
+   * Decoding can turn encoded dot segments (e.g. %2e%2e%2f) into real ones,
+   * so resolve them and refuse any path that still climbs above its root.
+   */
+  private static URI normalize(final URI uri) {
+    final URI normalized = uri.normalize();
+    final String path = normalized.getPath();
+    if ( path != null ) {
+      for ( final String segment : path.split("/") ) {
+        if ( "..".equals(segment) ) {
+          throw new IllegalArgumentException("Path traversal is not allowed in the dispatch URL");
+        }
+      }
+    }
+    return normalized;
   }
 }
