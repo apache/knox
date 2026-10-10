@@ -50,7 +50,7 @@ That's it! Users will now see your configured theme.
 
 ### KNOX_DEFAULT_THEME
 
-Sets the theme that loads by default when users access the login page.
+Sets the theme that loads by default when users access the login page or logout page (`logout.jsp`).
 
 **Values:**
 - `'default'` - Classic Knox theme (dark gray background)

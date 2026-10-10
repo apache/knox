@@ -14,11 +14,13 @@
 -->
 # Knox Authentication Theming System
 
-This directory contains theme files for customizing the appearance of the Knox authentication login page.
+This directory contains theme files for customizing the appearance of Knox authentication pages (`login.html` and `logout.jsp`).
 
 ## Overview
 
-The Knox authentication page supports custom themes through CSS overrides. Themes allow operators to customize the login page appearance to match their organization's branding without modifying the core Knox CSS files.
+Knox authentication pages support custom themes through CSS overrides. Themes allow operators to customize the login and logout (session termination) pages to match their organization's branding without modifying the core Knox CSS files.
+
+Theme CSS is loaded by `js/knox-theme.js` (after `theme-config.js`) on both pages.
 
 ## How It Works
 
@@ -30,15 +32,16 @@ The Knox authentication page supports custom themes through CSS overrides. Theme
 
 ### Method 1: URL Parameter (Recommended for testing)
 
-Add `?theme=THEME_NAME` to the login URL:
+Add `?theme=THEME_NAME` to the login or logout URL:
 
 ```
 https://knox.example.com/gateway/knoxsso/knoxauth/login.html?theme=modern
+https://knox.example.com/gateway/knoxsso/knoxauth/logout.jsp?theme=modern
 ```
 
 This will:
 - Load the theme immediately
-- Save the theme preference to localStorage for future visits
+- Save the theme preference to localStorage (`knox-auth-theme`) for future visits on both pages
 
 ### Method 2: localStorage (Automatic persistence)
 
@@ -420,8 +423,8 @@ RewriteRule ^(.*/knoxauth/login\.html)$ $1?theme=modern [QSA,L]
 </script>
 ```
 
-**Option C**: Modify login.html directly (not recommended)
-Change the default in login.html's theme loader script.
+**Option C**: Modify `js/knox-theme.js` directly (not recommended)
+Use `theme-config.js` instead.
 
 ## Browser Compatibility
 
