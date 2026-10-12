@@ -69,6 +69,8 @@ public class GatewayServerTest {
     lastReloadTimeField.set(null, null);
 
     // Initial load
+    config.addConfigFileIfAbsent(configFile);
+    EasyMock.expectLastCall().once();
     config.reloadConfiguration();
     EasyMock.expectLastCall().once();
     EasyMock.replay(config);

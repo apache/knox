@@ -96,6 +96,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
+  private final Set<String> registeredConfigFiles = new HashSet<>();
+
   private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
 
   private static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
@@ -563,6 +565,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
         try {
           url = f.toURI().toURL();
           addResource( new Path( path ) );
+          registeredConfigFiles.add( path );
           log.loadingConfigurationFile( path );
         } catch ( MalformedURLException e ) {
           log.failedToLoadConfig( path, e );
@@ -570,6 +573,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       }
     }
     return url;
+  }
+
+  public synchronized void addConfigFileIfAbsent( File file ) {
+    String path = file.getAbsolutePath();
+    if( file.exists() && registeredConfigFiles.add( path ) ) {
+      addResource( new Path( path ) );
+      log.loadingConfigurationFile( path );
+    }
   }
 
   private URL loadConfigResource( String file ) {

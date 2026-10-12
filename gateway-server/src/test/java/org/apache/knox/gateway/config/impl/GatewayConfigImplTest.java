@@ -822,8 +822,47 @@ public class GatewayConfigImplTest {
       System.setProperty("KNOX_GATEWAY_CONF_DIR", dir.getAbsolutePath());
       GatewayConfigImpl config = new GatewayConfigImpl();
       assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
+
+      config.addConfigFileIfAbsent(reloadableFile);
+      config.reloadConfiguration();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
     } finally {
       System.clearProperty("KNOX_GATEWAY_CONF_DIR");
+    }
+  }
+
+  @Test
+  public void testReloadableConfigCreatedAfterStartupIsLoaded() throws Exception {
+    File dir = folder.newFolder("conf");
+    File reloadableFile = new File(dir, "gateway-reloadable.xml");
+
+    try {
+      System.setProperty("KNOX_GATEWAY_CONF_DIR", dir.getAbsolutePath());
+      GatewayConfigImpl config = new GatewayConfigImpl();
+      assertThat(config.get("test.reloadable.prop"), nullValue());
+
+      writeReloadableConfig(reloadableFile, "test.reloadable.val");
+      config.addConfigFileIfAbsent(reloadableFile);
+      config.reloadConfiguration();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
+
+      writeReloadableConfig(reloadableFile, "test.reloadable.val2");
+      config.addConfigFileIfAbsent(reloadableFile);
+      config.reloadConfiguration();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val2"));
+    } finally {
+      System.clearProperty("KNOX_GATEWAY_CONF_DIR");
+    }
+  }
+
+  private static void writeReloadableConfig(File file, String value) throws Exception {
+    try (PrintWriter writer = new PrintWriter(file, StandardCharsets.UTF_8)) {
+      writer.println("<configuration>");
+      writer.println("  <property>");
+      writer.println("    <name>test.reloadable.prop</name>");
+      writer.println("    <value>" + value + "</value>");
+      writer.println("  </property>");
+      writer.println("</configuration>");
     }
   }
 
