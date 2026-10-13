@@ -188,6 +188,37 @@ endpoint. This check can be relaxed for development with
 `knox.token.exchange.dynamic.jwks.allow.http=true` on the token-exchange `JWTProvider` (see the
 [Configuration Reference](configuration.md#provider-related-properties-sample-topologies)).
 
+### Trusting self-signed issuer CAs
+
+Kubernetes apiservers typically serve their discovery document and JWKS with a certificate from a
+cluster-private, self-signed CA, and every cluster has its own. Rather than importing each CA into
+the gateway truststore — which widens trust for every TLS client in Knox (LDAP, backend services)
+and needs a restart on every rotation — register the issuer with a
+[per-issuer CA bundle](endpoints.md#per-issuer-ca-bundle-jwksca) (`jwksCa`):
+
+- **Pinned trust.** The issuer's discovery and JWKS connections trust only its `jwksCa`; the
+  gateway truststore is not consulted for that issuer, and the bundle is not trusted by any other
+  connection. Hostname verification still applies, so the endpoint certificate must name the
+  issuer host.
+- **Fail closed.** If a configured bundle cannot be loaded, the issuer's tokens are rejected; Knox
+  does not fall back to the gateway truststore.
+- **Secret references.** With `secret:[<namespace>/]<name>#<key>` (namespace defaults to `knox`),
+  Knox reads the Secret through the Kubernetes API using its own ServiceAccount. Grant that
+  ServiceAccount `get` on `secrets` in each referenced namespace, and only there. The Secret is
+  read lazily, re-read after `gateway.trusted.oidc.issuer.ca.secret.max.age.secs`, after a TLS
+  certificate failure (rate-limited to once per 30 seconds per issuer) and on `refresh-jwks`, so
+  a CA rotated in the Secret applies without a restart. To roll a CA without a failed fetch,
+  publish a bundle holding both the old and the new CA first, then drop the old one.
+- **Shared roots.** If all clusters' apiserver certificates chain to one common root, the same
+  bundle (or Secret) can be used for every issuer, or that root can be kept in the gateway
+  truststore with `jwksCa` left unset.
+- **Signing-key rotation** needs no configuration change: a token with an unknown `kid` makes Knox
+  fetch the issuer's JWKS again (rate-limited), using the same CA bundle.
+- **High availability.** Registry changes (including a re-registration with a new inline bundle)
+  are applied immediately on the instance that served the admin request; other instances pick
+  them up when they restart. A CA rotated inside a referenced Secret is picked up by every
+  instance on its own, so Secret references are the better choice for multi-instance deployments.
+
 ## Delegation authorization
 
 [Token exchange with delegation](token_exchange.md) lets one identity obtain a token that acts on

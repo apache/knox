@@ -71,6 +71,20 @@ public interface TrustedOidcIssuerService extends Service {
   void refreshJwksUri(String issuerUrl);
 
   /**
+   * Returns the TLS trust to use for the given issuer's discovery and JWKS
+   * fetches when the issuer was registered with a {@code jwksCa}.
+   * <p>
+   * Returns {@link Optional#empty()} if the issuer is not registered or has no
+   * {@code jwksCa}, in which case the default truststore applies.
+   *
+   * @throws IllegalStateException if the issuer has a {@code jwksCa} that cannot
+   *     be loaded (for example, a referenced Kubernetes Secret is missing);
+   *     callers must reject the request rather than fall back to the default
+   *     truststore
+   */
+  Optional<IssuerJwksTrust> getJwksTrust(String issuerUrl);
+
+  /**
    * Registers a new trusted OIDC issuer.
    *
    * @throws IllegalStateException if the maximum registered issuer limit is

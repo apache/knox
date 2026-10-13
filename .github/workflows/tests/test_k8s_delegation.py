@@ -20,7 +20,8 @@ on the OAuth 2.0 Token Exchange path once the issuing cluster is registered as a
 trusted OIDC issuer. The compose stack turns the throwaway k3s cluster into an
 OIDC issuer at https://k3s:6443 and exports, to the shared volume mounted at
 /k3s, a freshly minted projected token for ServiceAccount test-sa in namespace
-test (see docker-compose.yml).
+test (see docker-compose.yml). The cluster's self-signed serving CA is not in the
+JVM truststore, so the issuer is registered with that CA as its jwksCa.
 
 Four topologies are exercised:
   - knoxidf-admin                    -- the KNOXIDF_ADMIN admin APIs: the
@@ -84,6 +85,8 @@ SUBJECT_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:jwt"
 
 # The k8s-bootstrap service writes a projected SA token here on the shared volume.
 SA_TOKEN_FILE = "/k3s/sa-token"
+# ... and the cluster's serving CA, the only trust Knox has for its discovery + JWKS endpoints.
+ISSUER_CA_FILE = "/k3s/k3s-ca.crt"
 
 # An issuer that is never registered, used to prove unregistered issuers are rejected.
 UNREGISTERED_ISSUER = "https://unregistered.example.com"
@@ -157,18 +160,21 @@ class TestK8sDelegation(unittest.TestCase):  # pylint: disable=too-many-instance
         try:
             with open(SA_TOKEN_FILE, encoding="utf-8") as handle:
                 self.sa_token = handle.read().strip()
-        except OSError:
-            self.skipTest(f"SA token not available at {SA_TOKEN_FILE}")
+            with open(ISSUER_CA_FILE, encoding="utf-8") as handle:
+                self.issuer_ca = handle.read()
+        except OSError as e:
+            self.skipTest(f"k3s SA token or CA not available: {e}")
 
     def _admin_auth(self):
         """HTTP Basic credentials for the knoxidf-admin API."""
         return HTTPBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
 
     def _register_issuer(self, issuer_url):
-        """Register a trusted OIDC issuer (dynamic JWKS via discovery)."""
+        """Register a trusted OIDC issuer (dynamic JWKS via discovery, trusting the k3s CA)."""
         return knox_post(
             self.admin_url,
-            json={"issuerUrl": issuer_url, "dynamicJwks": True, "clusterName": "k3s"},
+            json={"issuerUrl": issuer_url, "dynamicJwks": True, "clusterName": "k3s",
+                  "jwksCa": self.issuer_ca},
             auth=self._admin_auth(),
         )
 

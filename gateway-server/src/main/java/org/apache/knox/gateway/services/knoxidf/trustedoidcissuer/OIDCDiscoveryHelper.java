@@ -25,12 +25,18 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Fetches and caches JWKS URIs resolved from OIDC provider discovery documents
@@ -44,6 +50,11 @@ import java.util.concurrent.TimeUnit;
  * supply a mock and verify the full fetch-and-parse code path without overriding methods.
  * Production callers use {@link #buildHttpClient(int, int)} to obtain a properly
  * configured long-lived client.
+ * <p>
+ * Issuers registered with a {@code jwksCa} are fetched with a short-lived client that trusts
+ * only the issuer's CA bundle (see {@link TrustedOidcIssuerService#getJwksTrust(String)}). On a
+ * TLS trust failure the bundle is re-read, if it comes from a Kubernetes Secret, and the fetch is
+ * retried once. Discovery results are cached, so these clients are built rarely.
  */
 class OIDCDiscoveryHelper {
 
@@ -61,6 +72,8 @@ class OIDCDiscoveryHelper {
   // Entries expire after cacheTtlSeconds and are re-fetched lazily on the next access.
   private final Cache<String, String> discoveryDocumentCache;
   private final CloseableHttpClient httpClient;
+  // Builds a client trusting only the given SSL context, for issuers registered with a jwksCa.
+  private final Function<SSLContext, CloseableHttpClient> pinnedHttpClientFactory;
 
   /**
    * Creates an {@code OIDCDiscoveryHelper} with the supplied HTTP client. Use
@@ -68,11 +81,24 @@ class OIDCDiscoveryHelper {
    */
   OIDCDiscoveryHelper(TrustedOidcIssuerService trustedIssuers, long cacheTtlSeconds,
       CloseableHttpClient httpClient) {
+    this(trustedIssuers, cacheTtlSeconds, httpClient,
+        sslContext -> buildHttpClient(GatewayConfig.TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT,
+            GatewayConfig.TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT, sslContext));
+  }
+
+  /**
+   * Creates an {@code OIDCDiscoveryHelper} with the supplied HTTP client, and a factory for the
+   * clients used with issuers registered with a {@code jwksCa}. Use
+   * {@link #buildHttpClient(int, int, SSLContext)} to build the production-configured ones.
+   */
+  OIDCDiscoveryHelper(TrustedOidcIssuerService trustedIssuers, long cacheTtlSeconds,
+      CloseableHttpClient httpClient, Function<SSLContext, CloseableHttpClient> pinnedHttpClientFactory) {
     this.trustedIssuers = trustedIssuers;
     this.discoveryDocumentCache = Caffeine.newBuilder()
         .expireAfterWrite(cacheTtlSeconds, TimeUnit.SECONDS)
         .build();
     this.httpClient = httpClient;
+    this.pinnedHttpClientFactory = pinnedHttpClientFactory;
   }
 
   /**
@@ -88,16 +114,31 @@ class OIDCDiscoveryHelper {
    * {@code NoHttpResponseException} before the retry handler can save it.
    */
   static CloseableHttpClient buildHttpClient(int connectTimeoutMs, int readTimeoutMs) {
+    return httpClientBuilder(connectTimeoutMs, readTimeoutMs)
+        .evictIdleConnections(IDLE_EVICTION_SECONDS, TimeUnit.SECONDS)
+        .evictExpiredConnections()
+        .build();
+  }
+
+  /**
+   * Builds a short-lived {@link CloseableHttpClient} for one discovery fetch that trusts only the
+   * given SSL context; hostname verification stays on. It holds no idle-connection eviction
+   * thread, as the caller closes it right after the fetch.
+   */
+  static CloseableHttpClient buildHttpClient(int connectTimeoutMs, int readTimeoutMs, SSLContext sslContext) {
+    return httpClientBuilder(connectTimeoutMs, readTimeoutMs)
+        .setSSLContext(sslContext)
+        .build();
+  }
+
+  private static HttpClientBuilder httpClientBuilder(int connectTimeoutMs, int readTimeoutMs) {
     final RequestConfig requestConfig = RequestConfig.custom()
         .setConnectTimeout(connectTimeoutMs)
         .setSocketTimeout(readTimeoutMs)
         .build();
     return HttpClients.custom()
         .setDefaultRequestConfig(requestConfig)
-        .setRetryHandler(new DefaultHttpRequestRetryHandler(HTTP_RETRY_COUNT, true))
-        .evictIdleConnections(IDLE_EVICTION_SECONDS, TimeUnit.SECONDS)
-        .evictExpiredConnections()
-        .build();
+        .setRetryHandler(new DefaultHttpRequestRetryHandler(HTTP_RETRY_COUNT, true));
   }
 
   /**
@@ -123,6 +164,14 @@ class OIDCDiscoveryHelper {
    */
   void invalidate(String issuerUrl) {
     discoveryDocumentCache.invalidate(issuerUrl);
+  }
+
+  /**
+   * Closes the long-lived HTTP client.
+   */
+  void close() throws IOException {
+    discoveryDocumentCache.invalidateAll();
+    httpClient.close();
   }
 
   /**
@@ -155,22 +204,46 @@ class OIDCDiscoveryHelper {
 
   /**
    * Executes a GET request against the given URL and returns the response body as a string.
+   * Uses a client trusting only the issuer's CA bundle if the issuer has one, retrying once with
+   * the re-read bundle after a TLS trust failure.
    * Logs any failure and returns null so the caller knows not to cache the result.
    */
   private String httpGet(String issuerUrl, String url) {
-    final HttpGet request = new HttpGet(url);
-    request.setHeader("User-Agent", USER_AGENT);
-    try (CloseableHttpResponse response = httpClient.execute(request)) {
-      final int statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode != 200) {
-        LOG.errorFetchingDiscoveryDocument(issuerUrl, url, "HTTP " + statusCode,
-            new java.io.IOException("Non-200 status: " + statusCode));
-        return null;
+    try {
+      final Optional<IssuerJwksTrust> jwksTrust = trustedIssuers.getJwksTrust(issuerUrl);
+      if (jwksTrust.isEmpty()) {
+        return execute(httpClient, url);
       }
-      return EntityUtils.toString(response.getEntity());
+      try {
+        return executePinned(jwksTrust.get(), url);
+      } catch (IOException e) {
+        if (TruststoreSSLContextUtils.isTlsTrustFailure(e) && jwksTrust.get().reloadAfterTlsFailure()) {
+          LOG.retryingWithReloadedIssuerCa(issuerUrl, url);
+          return executePinned(jwksTrust.get(), url);
+        }
+        throw e;
+      }
     } catch (Exception e) {
       LOG.errorFetchingDiscoveryDocument(issuerUrl, url, e.getMessage(), e);
       return null;
+    }
+  }
+
+  private String executePinned(IssuerJwksTrust jwksTrust, String url) throws IOException {
+    try (CloseableHttpClient pinnedHttpClient = pinnedHttpClientFactory.apply(jwksTrust.getSslContext())) {
+      return execute(pinnedHttpClient, url);
+    }
+  }
+
+  private static String execute(CloseableHttpClient client, String url) throws IOException {
+    final HttpGet request = new HttpGet(url);
+    request.setHeader("User-Agent", USER_AGENT);
+    try (CloseableHttpResponse response = client.execute(request)) {
+      final int statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode != 200) {
+        throw new IOException("HTTP " + statusCode);
+      }
+      return EntityUtils.toString(response.getEntity());
     }
   }
 }

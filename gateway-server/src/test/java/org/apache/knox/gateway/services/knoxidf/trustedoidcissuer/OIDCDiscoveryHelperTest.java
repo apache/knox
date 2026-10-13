@@ -26,14 +26,23 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class OIDCDiscoveryHelperTest {
@@ -80,11 +89,17 @@ public class OIDCDiscoveryHelperTest {
   }
 
   private static TrustedOidcIssuerService stubService(boolean trusted, boolean dynamicJwks) {
+    return stubService(trusted, dynamicJwks, Optional::empty);
+  }
+
+  private static TrustedOidcIssuerService stubService(boolean trusted, boolean dynamicJwks,
+      Supplier<Optional<IssuerJwksTrust>> jwksTrust) {
     return new TrustedOidcIssuerService() {
       @Override public boolean isTrusted(String url) { return trusted; }
       @Override public boolean isDynamicJwks(String url) { return dynamicJwks; }
       @Override public Optional<String> resolveJwksUri(String url) { return Optional.empty(); }
       @Override public void refreshJwksUri(String url) { }
+      @Override public Optional<IssuerJwksTrust> getJwksTrust(String url) { return jwksTrust.get(); }
       @Override public void register(TrustedOidcIssuer issuer) { }
       @Override public void deregister(String url) { }
       @Override public List<TrustedOidcIssuer> list() { return Collections.emptyList(); }
@@ -311,5 +326,137 @@ public class OIDCDiscoveryHelperTest {
 
     assertFalse(helper(trustedDynamic(), client).discoverJwksUri(ISSUER).isPresent());
     EasyMock.verify(client);
+  }
+
+  // ------------------------------------------------------------------
+  // Issuer CA bundle (jwksCa)
+  // ------------------------------------------------------------------
+
+  /** An issuer trust whose TLS-failure reload reports the given result. */
+  private static final class StubJwksTrust implements IssuerJwksTrust {
+    private final SSLContext sslContext;
+    private final boolean reloadResult;
+    private final AtomicInteger reloads = new AtomicInteger();
+
+    StubJwksTrust(boolean reloadResult) throws Exception {
+      this.sslContext = SSLContext.getInstance("TLS");
+      this.reloadResult = reloadResult;
+    }
+
+    @Override public SSLContext getSslContext() { return sslContext; }
+    @Override public SSLSocketFactory getSslSocketFactory() { throw new UnsupportedOperationException(); }
+    @Override public boolean reloadAfterTlsFailure() {
+      reloads.incrementAndGet();
+      return reloadResult;
+    }
+  }
+
+  /** Returns a factory handing out the given pinned clients in turn, recording the SSL contexts. */
+  private static Function<SSLContext, CloseableHttpClient> pinnedFactory(List<SSLContext> seen,
+      CloseableHttpClient... clients) {
+    final AtomicInteger next = new AtomicInteger();
+    return sslContext -> {
+      seen.add(sslContext);
+      return clients[next.getAndIncrement()];
+    };
+  }
+
+  private static CloseableHttpClient pinnedClient(CloseableHttpResponse response, Exception failure) throws Exception {
+    final CloseableHttpClient client = EasyMock.createMock(CloseableHttpClient.class);
+    if (failure != null) {
+      EasyMock.expect(client.execute(EasyMock.isA(HttpUriRequest.class))).andThrow(failure);
+    } else {
+      EasyMock.expect(client.execute(EasyMock.isA(HttpUriRequest.class))).andReturn(response);
+    }
+    client.close();
+    EasyMock.expectLastCall();
+    EasyMock.replay(client);
+    return client;
+  }
+
+  @Test
+  public void testIssuerWithCaUsesPinnedClient() throws Exception {
+    final CloseableHttpClient shared = EasyMock.createMock(CloseableHttpClient.class);
+    EasyMock.replay(shared);
+    final StubJwksTrust trust = new StubJwksTrust(false);
+    final CloseableHttpClient pinned = pinnedClient(mockResponse(200, VALID_DISCOVERY_JSON), null);
+    final List<SSLContext> seen = new ArrayList<>();
+
+    final Optional<String> result = new OIDCDiscoveryHelper(stubService(true, true, () -> Optional.of(trust)),
+        CACHE_TTL, shared, pinnedFactory(seen, pinned)).discoverJwksUri(ISSUER);
+
+    assertEquals(Optional.of(JWKS_URI), result);
+    assertEquals(1, seen.size());
+    assertSame("pinned client must be built from the issuer's SSL context", trust.getSslContext(), seen.get(0));
+    EasyMock.verify(shared, pinned); // shared client unused; pinned client closed
+  }
+
+  @Test
+  public void testIssuerWithCaRetriesOnceAfterTlsFailureWithReloadedCa() throws Exception {
+    final CloseableHttpClient shared = EasyMock.createMock(CloseableHttpClient.class);
+    EasyMock.replay(shared);
+    final StubJwksTrust trust = new StubJwksTrust(true);
+    final CloseableHttpClient first = pinnedClient(null, new SSLHandshakeException("PKIX path building failed"));
+    final CloseableHttpClient second = pinnedClient(mockResponse(200, VALID_DISCOVERY_JSON), null);
+    final List<SSLContext> seen = new ArrayList<>();
+
+    final Optional<String> result = new OIDCDiscoveryHelper(stubService(true, true, () -> Optional.of(trust)),
+        CACHE_TTL, shared, pinnedFactory(seen, first, second)).discoverJwksUri(ISSUER);
+
+    assertEquals(Optional.of(JWKS_URI), result);
+    assertEquals(1, trust.reloads.get());
+    assertEquals(2, seen.size());
+    EasyMock.verify(shared, first, second);
+  }
+
+  @Test
+  public void testIssuerWithCaNoRetryWhenCaUnchanged() throws Exception {
+    final CloseableHttpClient shared = EasyMock.createMock(CloseableHttpClient.class);
+    EasyMock.replay(shared);
+    final StubJwksTrust trust = new StubJwksTrust(false);
+    final CloseableHttpClient pinned = pinnedClient(null, new SSLHandshakeException("PKIX path building failed"));
+    final List<SSLContext> seen = new ArrayList<>();
+
+    final Optional<String> result = new OIDCDiscoveryHelper(stubService(true, true, () -> Optional.of(trust)),
+        CACHE_TTL, shared, pinnedFactory(seen, pinned)).discoverJwksUri(ISSUER);
+
+    assertFalse(result.isPresent());
+    assertEquals(1, trust.reloads.get());
+    assertEquals("no retry when the CA did not change", 1, seen.size());
+    EasyMock.verify(shared, pinned);
+  }
+
+  @Test
+  public void testIssuerWithCaNonTlsFailureDoesNotReloadCa() throws Exception {
+    final CloseableHttpClient shared = EasyMock.createMock(CloseableHttpClient.class);
+    EasyMock.replay(shared);
+    final StubJwksTrust trust = new StubJwksTrust(true);
+    final CloseableHttpClient timedOut = pinnedClient(null, new SocketTimeoutException("Read timed out"));
+    final CloseableHttpClient notFound = pinnedClient(mockResponse(404, null), null);
+    final List<SSLContext> seen = new ArrayList<>();
+
+    final OIDCDiscoveryHelper h = new OIDCDiscoveryHelper(stubService(true, true, () -> Optional.of(trust)),
+        CACHE_TTL, shared, pinnedFactory(seen, timedOut, notFound));
+    assertFalse(h.discoverJwksUri(ISSUER).isPresent());
+    assertFalse(h.discoverJwksUri(ISSUER).isPresent());
+
+    assertEquals("timeouts and HTTP errors must not re-read the CA", 0, trust.reloads.get());
+    EasyMock.verify(shared, timedOut, notFound);
+  }
+
+  @Test
+  public void testIssuerWithUnavailableCaFailsClosed() throws Exception {
+    // Neither the shared client nor a pinned client may be used: no fallback to the default truststore.
+    final CloseableHttpClient shared = EasyMock.createMock(CloseableHttpClient.class);
+    EasyMock.replay(shared);
+    final List<SSLContext> seen = new ArrayList<>();
+
+    final Optional<String> result = new OIDCDiscoveryHelper(stubService(true, true, () -> {
+      throw new IllegalStateException("Secret knox/missing not found");
+    }), CACHE_TTL, shared, pinnedFactory(seen)).discoverJwksUri(ISSUER);
+
+    assertFalse(result.isPresent());
+    assertTrue(seen.isEmpty());
+    EasyMock.verify(shared);
   }
 }

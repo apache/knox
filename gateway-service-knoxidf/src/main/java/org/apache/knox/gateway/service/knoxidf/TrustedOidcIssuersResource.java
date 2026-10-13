@@ -26,6 +26,7 @@ import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.JwksCa;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuer;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.util.HttpUtils;
@@ -121,13 +122,18 @@ public class TrustedOidcIssuersResource {
         return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
             "issuerUrl must not be an IP literal; use a DNS hostname");
       }
+      final String jwksCa = StringUtils.isBlank(parsed.getJwksCa()) ? null : parsed.getJwksCa().trim();
+      final String jwksCaError = validateJwksCa(jwksCa, parsed.isDynamicJwks());
+      if (jwksCaError != null) {
+        return errorResponse(Response.Status.BAD_REQUEST, "invalid_request", jwksCaError);
+      }
       if (trustedIssuers.isTrusted(rawUrl)) {
         return errorResponse(Response.Status.CONFLICT, "issuer_exists",
             "Issuer already registered: " + rawUrl);
       }
 
       trustedIssuers.register(new TrustedOidcIssuer(rawUrl, parsed.isDynamicJwks(),
-          parsed.getClusterName(), Instant.now(), operatorId));
+          parsed.getClusterName(), Instant.now(), operatorId, jwksCa));
       outcome = ActionOutcome.SUCCESS;
       return Response.status(Response.Status.CREATED).build();
     } catch (IllegalStateException e) {
@@ -225,7 +231,38 @@ public class TrustedOidcIssuersResource {
     map.put("registeredAt",
         issuer.getRegisteredAt() != null ? issuer.getRegisteredAt().toString() : null);
     map.put("registeredBy", issuer.getRegisteredBy());
+    // CA certificates are public; the value is returned as registered so callers can detect drift.
+    map.put("jwksCa", issuer.getJwksCa());
     return map;
+  }
+
+  /**
+   * Validates an optional {@code jwksCa}. A Secret reference is checked for syntax only, since the
+   * Secret may be created after the issuer is registered.
+   *
+   * @return the error description, or null if the value is valid or absent
+   */
+  private static String validateJwksCa(String jwksCa, boolean dynamicJwks) {
+    if (jwksCa == null) {
+      return null;
+    }
+    if (!dynamicJwks) {
+      return "jwksCa requires dynamicJwks=true; it only applies to OIDC discovery and JWKS fetches";
+    }
+    if (jwksCa.length() > JwksCa.MAX_LENGTH) {
+      return "jwksCa must not exceed " + JwksCa.MAX_LENGTH + " characters";
+    }
+    try {
+      if (JwksCa.isSecretReference(jwksCa)) {
+        JwksCa.parseSecretReference(jwksCa);
+      } else {
+        JwksCa.parsePemBundle(jwksCa);
+      }
+    } catch (IllegalArgumentException e) {
+      // the secret reference errors already name the field; the PEM errors do not
+      return JwksCa.isSecretReference(jwksCa) ? e.getMessage() : "Invalid jwksCa: " + e.getMessage();
+    }
+    return null;
   }
 
   private static boolean isHttpsUrl(String url) {

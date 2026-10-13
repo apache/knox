@@ -28,19 +28,26 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -91,6 +98,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1").anyTimes();
     EasyMock.expect(gatewayConfig.getTrustedOidcIssuerMaxTrustedIssuers() ).andReturn(10).anyTimes();
+    EasyMock.expect(gatewayConfig.getTrustedOidcIssuerCaSecretMaxAgeSecs())
+        .andReturn(GatewayConfig.TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT).anyTimes();
     EasyMock.replay(gatewayConfig);
 
     aliasService = EasyMock.createNiceMock(AliasService.class);
@@ -284,6 +293,104 @@ public class JdbcTrustedOidcIssuerServiceTest {
   }
 
   // ------------------------------------------------------------------
+  // jwksCa persistence and getJwksTrust
+  // ------------------------------------------------------------------
+
+  @Test
+  public void testRegisterPersistsJwksCa() throws Exception {
+    final String pem = TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-a"), TestCaBundles.selfSigned("CN=ca-b"));
+    service.register(issuer("https://inline.example.com", true, pem));
+    service.register(issuer("https://secret.example.com", true, "secret:apiserver-ca#ca.crt"));
+    service.register(issuer("https://none.example.com", true, null));
+
+    // reload from the database, not just the in-memory snapshot
+    final JdbcTrustedOidcIssuerService freshService = new JdbcTrustedOidcIssuerService();
+    freshService.setAliasService(aliasService);
+    freshService.init(gatewayConfig, null);
+    final Map<String, String> jwksCas = new HashMap<>();
+    freshService.list().forEach(i -> jwksCas.put(i.getIssuerUrl(), i.getJwksCa()));
+
+    assertEquals(pem, jwksCas.get("https://inline.example.com"));
+    assertEquals("secret:apiserver-ca#ca.crt", jwksCas.get("https://secret.example.com"));
+    assertTrue(jwksCas.containsKey("https://none.example.com"));
+    assertNull(jwksCas.get("https://none.example.com"));
+  }
+
+  @Test
+  public void testGetJwksTrustWithoutJwksCaIsEmpty() {
+    service.register(issuer("https://issuer.example.com", true));
+    assertFalse(service.getJwksTrust("https://issuer.example.com").isPresent());
+    assertFalse(service.getJwksTrust("https://unknown.example.com").isPresent());
+  }
+
+  @Test
+  public void testGetJwksTrustInlinePem() throws Exception {
+    service.register(issuer("https://issuer.example.com", true,
+        TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-a"))));
+
+    final IssuerJwksTrust trust = service.getJwksTrust("https://issuer.example.com").orElseThrow();
+    assertNotNull(trust.getSslSocketFactory());
+    assertSame(trust, service.getJwksTrust("https://issuer.example.com").orElseThrow());
+  }
+
+  @Test
+  public void testGetJwksTrustSecretReferenceRefreshAndDeregister() throws Exception {
+    final List<String> reads = new ArrayList<>();
+    final AtomicReference<String> secretPem = new AtomicReference<>(TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-a")));
+    final JdbcTrustedOidcIssuerService secretService = serviceWithSecretReader(reference -> {
+      reads.add(reference.toString());
+      return secretPem.get();
+    });
+    final String url = "https://issuer.example.com";
+    secretService.register(issuer(url, true, "secret:awc-1/apiserver-ca#ca.crt"));
+    assertTrue("the Secret is read lazily, not on register", reads.isEmpty());
+
+    final IssuerJwksTrust trust = secretService.getJwksTrust(url).orElseThrow();
+    final SSLSocketFactory factory = trust.getSslSocketFactory();
+    assertSame(trust, secretService.getJwksTrust(url).orElseThrow());
+    assertEquals(List.of("awc-1/apiserver-ca#ca.crt"), reads);
+
+    // POST /trusted-oidc-issuers/refresh-jwks re-reads the Secret at once
+    secretPem.set(TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-b")));
+    secretService.refreshJwksUri(url);
+    final IssuerJwksTrust refreshed = secretService.getJwksTrust(url).orElseThrow();
+    assertNotSame(factory, refreshed.getSslSocketFactory());
+    assertEquals(2, reads.size());
+
+    secretService.deregister(url);
+    assertFalse(secretService.getJwksTrust(url).isPresent());
+    secretService.stop();
+  }
+
+  @Test
+  public void testGetJwksTrustUnavailableSecretThrows() throws Exception {
+    final JdbcTrustedOidcIssuerService secretService = serviceWithSecretReader(reference -> {
+      throw new IllegalStateException("Secret " + reference.namespace() + "/" + reference.name() + " not found");
+    });
+    secretService.register(issuer("https://issuer.example.com", true, "secret:apiserver-ca#ca.crt"));
+
+    final IllegalStateException e = assertThrows(IllegalStateException.class,
+        () -> secretService.getJwksTrust("https://issuer.example.com"));
+    assertTrue(e.getMessage(), e.getMessage().contains("knox/apiserver-ca not found"));
+    secretService.stop();
+  }
+
+  @Test
+  public void testReRegisterWithNewCaGetsNewTrust() throws Exception {
+    final String url = "https://issuer.example.com";
+    service.register(issuer(url, true, TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-a"))));
+    final IssuerJwksTrust trust = service.getJwksTrust(url).orElseThrow();
+    final SSLSocketFactory factory = trust.getSslSocketFactory();
+
+    // an inline CA is rotated by re-registering the issuer (delete + create)
+    service.deregister(url);
+    service.register(issuer(url, true, TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-b"))));
+    final IssuerJwksTrust rotated = service.getJwksTrust(url).orElseThrow();
+    assertNotSame(trust, rotated);
+    assertNotSame(factory, rotated.getSslSocketFactory());
+  }
+
+  // ------------------------------------------------------------------
   // SQL exception error paths
   // ------------------------------------------------------------------
 
@@ -394,6 +501,19 @@ public class JdbcTrustedOidcIssuerServiceTest {
     return new TrustedOidcIssuer(url, dynamicJwks, null, Instant.now(), null);
   }
 
+  private static TrustedOidcIssuer issuer(String url, boolean dynamicJwks, String jwksCa) {
+    return new TrustedOidcIssuer(url, dynamicJwks, null, Instant.now(), null, jwksCa);
+  }
+
+  private JdbcTrustedOidcIssuerService serviceWithSecretReader(IssuerTrustProvider.SecretReader secretReader)
+      throws ServiceLifecycleException {
+    final JdbcTrustedOidcIssuerService secretService = new JdbcTrustedOidcIssuerService();
+    secretService.setAliasService(aliasService);
+    secretService.setSecretReader(secretReader);
+    secretService.init(gatewayConfig, null);
+    return secretService;
+  }
+
   private static TrustedOidcIssuer issuer(String url, boolean dynamicJwks,
       String clusterName, String registeredBy) {
     return new TrustedOidcIssuer(url, dynamicJwks, clusterName, Instant.now(), registeredBy);
@@ -408,6 +528,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
     assertEquals("dynamicJwks", expected.isDynamicJwks(), actual.isDynamicJwks());
     assertEquals("clusterName", expected.getClusterName(), actual.getClusterName());
     assertEquals("registeredBy", expected.getRegisteredBy(), actual.getRegisteredBy());
+    assertEquals("jwksCa", expected.getJwksCa(), actual.getJwksCa());
     assertNotNull("registeredAt must be persisted", actual.getRegisteredAt());
   }
 

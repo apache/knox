@@ -17,14 +17,17 @@
 package org.apache.knox.gateway.service.knoxidf;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.JwksCa;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuer;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
+import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -35,10 +38,16 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Response;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -318,6 +327,50 @@ public class TrustedOidcIssuersResourceTest {
   }
 
   // ---------------------------------------------------------------------------
+  // POST /register — per-issuer CA bundle (jwksCa)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testRegisterWithInlineJwksCa() throws Exception {
+    final String pem = generateCaPem();
+    final TrustedOidcIssuer registered = registerExpectingCreated(registerBodyWithJwksCa(true, pem + "\n\n"));
+    assertEquals("surrounding whitespace is trimmed", pem.trim(), registered.getJwksCa());
+  }
+
+  @Test
+  public void testRegisterWithSecretJwksCa() throws Exception {
+    final TrustedOidcIssuer registered =
+        registerExpectingCreated(registerBodyWithJwksCa(true, "secret:awc-1/apiserver-ca#ca.crt"));
+    assertEquals("secret:awc-1/apiserver-ca#ca.crt", registered.getJwksCa());
+  }
+
+  @Test
+  public void testRegisterWithSecretJwksCaWithoutNamespace() throws Exception {
+    final TrustedOidcIssuer registered =
+        registerExpectingCreated(registerBodyWithJwksCa(true, "secret:apiserver-ca#ca.crt"));
+    assertEquals("stored as given; the namespace defaults to knox on use",
+        "secret:apiserver-ca#ca.crt", registered.getJwksCa());
+  }
+
+  @Test
+  public void testRegisterBlankJwksCaIsAbsent() throws Exception {
+    final TrustedOidcIssuer registered = registerExpectingCreated(registerBodyWithJwksCa(false, " \n "));
+    assertNull(registered.getJwksCa());
+  }
+
+  @Test
+  public void testRegisterInvalidJwksCaRejected() throws Exception {
+    assertJwksCaRejected(false, generateCaPem(), "jwksCa requires dynamicJwks=true");
+    assertJwksCaRejected(true, "secret:" + StringUtils.repeat('a', JwksCa.MAX_LENGTH),
+        "jwksCa must not exceed " + JwksCa.MAX_LENGTH + " characters");
+    assertJwksCaRejected(true, "secret:awc-1/apiserver-ca", "secret:[<namespace>/]<name>#<key>");
+    assertJwksCaRejected(true, "secret:awc-1/Apiserver_CA#ca.crt", "secret:[<namespace>/]<name>#<key>");
+    assertJwksCaRejected(true, "not a certificate", "Invalid jwksCa: CA bundle");
+    assertJwksCaRejected(true, "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----",
+        "Invalid jwksCa: CA bundle");
+  }
+
+  // ---------------------------------------------------------------------------
   // DELETE /
   // ---------------------------------------------------------------------------
 
@@ -472,7 +525,7 @@ public class TrustedOidcIssuersResourceTest {
   public void testListIssuers() throws Exception {
     final Instant now = Instant.now();
     final TrustedOidcIssuer issuerA = new TrustedOidcIssuer(ISSUER_A, true, "cluster-a",
-        now, OPERATOR);
+        now, OPERATOR, "secret:awc-1/apiserver-ca#ca.crt");
     final TrustedOidcIssuer issuerB = new TrustedOidcIssuer(ISSUER_B, false, null,
         now, null);
     EasyMock.expect(mockService.list()).andReturn(Arrays.asList(issuerA, issuerB)).once();
@@ -490,11 +543,13 @@ public class TrustedOidcIssuersResourceTest {
     assertEquals("cluster-a", a.get("clusterName"));
     assertNotNull(a.get("registeredAt"));
     assertEquals(OPERATOR, a.get("registeredBy"));
+    assertEquals("secret:awc-1/apiserver-ca#ca.crt", a.get("jwksCa"));
 
     final Map<String, Object> b = findByIssuerUrl(body, ISSUER_B);
     assertEquals(false, b.get("dynamicJwks"));
     assertNull(b.get("clusterName"));
     assertNull(b.get("registeredBy"));
+    assertNull(b.get("jwksCa"));
     assertNotNull(b.get("registeredAt"));
 
     EasyMock.verify(mockService, mockAuditor);
@@ -612,6 +667,54 @@ public class TrustedOidcIssuersResourceTest {
     }
     sb.append("}");
     return sb.toString();
+  }
+
+  private TrustedOidcIssuer registerExpectingCreated(String body) {
+    EasyMock.expect(mockService.isTrusted(ISSUER_A)).andReturn(false).once();
+    final Capture<TrustedOidcIssuer> capturedIssuer = EasyMock.newCapture();
+    mockService.register(EasyMock.capture(capturedIssuer));
+    EasyMock.expectLastCall().once();
+    expectAudit(ISSUER_A, ActionOutcome.SUCCESS, "issuer_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerIssuer(body);
+
+    assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+    EasyMock.verify(mockService, mockAuditor);
+    return capturedIssuer.getValue();
+  }
+
+  private void assertJwksCaRejected(boolean dynamicJwks, String jwksCa, String expectedDescription)
+      throws Exception {
+    EasyMock.reset(mockService, mockAuditor);
+    // rejected before the registry is consulted
+    expectAudit(ISSUER_A, ActionOutcome.FAILURE, "issuer_registered");
+    EasyMock.replay(mockService, mockAuditor);
+
+    final Response response = resource.registerIssuer(registerBodyWithJwksCa(dynamicJwks, jwksCa));
+
+    assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    assertErrorField(response, "invalid_request");
+    assertErrorField(response, expectedDescription);
+    EasyMock.verify(mockService, mockAuditor);
+  }
+
+  private static String registerBodyWithJwksCa(boolean dynamicJwks, String jwksCa) throws Exception {
+    final Map<String, Object> body = new HashMap<>();
+    body.put("issuerUrl", ISSUER_A);
+    body.put("dynamicJwks", dynamicJwks);
+    body.put("jwksCa", jwksCa);
+    return new ObjectMapper().writeValueAsString(body);
+  }
+
+  private static String generateCaPem() throws Exception {
+    final KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+    generator.initialize(2048);
+    final KeyPair keyPair = generator.generateKeyPair();
+    final X509Certificate ca = X509CertificateUtil.generateCertificate("CN=apiserver-ca", keyPair, 1, "SHA256withRSA");
+    return "-----BEGIN CERTIFICATE-----\n"
+        + Base64.getMimeEncoder(64, "\n".getBytes(StandardCharsets.US_ASCII)).encodeToString(ca.getEncoded())
+        + "\n-----END CERTIFICATE-----\n";
   }
 
   private static void assertErrorField(Response response, String expectedError) {

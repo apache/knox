@@ -394,13 +394,65 @@ Knox will accept during federated login.
 
 | Method | Path | Purpose | Success |
 |--------|------|---------|---------|
-| `POST` | `/trusted-oidc-issuers` | Register a trusted issuer (JSON body: `issuerUrl` (HTTPS, required), `dynamicJwks`, `clusterName`). | `201` |
-| `GET` | `/trusted-oidc-issuers` | List registered issuers (with `registeredAt` / `registeredBy`). | `200` |
+| `POST` | `/trusted-oidc-issuers` | Register a trusted issuer (JSON body: `issuerUrl` (HTTPS, required), `dynamicJwks`, `clusterName`, `jwksCa`). | `201` |
+| `GET` | `/trusted-oidc-issuers` | List registered issuers (with `registeredAt` / `registeredBy` and `jwksCa`). | `200` |
 | `DELETE` | `/trusted-oidc-issuers?issuerUrl=...` | Deregister an issuer (idempotent). | `204` |
-| `POST` | `/trusted-oidc-issuers/refresh-jwks?issuerUrl=...` | Force a JWKS cache refresh for a `dynamicJwks` issuer. | `204` |
+| `POST` | `/trusted-oidc-issuers/refresh-jwks?issuerUrl=...` | Force a JWKS cache refresh for a `dynamicJwks` issuer; a Secret-referenced `jwksCa` is re-read as well. | `204` |
 
-**Errors:** `400 invalid_request` (missing/non-HTTPS `issuerUrl`, malformed JSON),
-`409 issuer_exists`, `409 issuer_limit_reached` (issuer cap), `500 storage_error`.
+**Errors:** `400 invalid_request` (missing/non-HTTPS `issuerUrl`, malformed JSON, invalid
+`jwksCa`), `409 issuer_exists`, `409 issuer_limit_reached` (issuer cap), `500 storage_error`.
+
+### Per-issuer CA bundle (`jwksCa`)
+
+An issuer whose discovery and JWKS endpoints present a certificate from a private or self-signed
+CA (for example a Kubernetes apiserver) can be registered with an optional `jwksCa`. Knox then
+connects to that issuer's discovery document and JWKS **trusting only this bundle**; the
+gateway-wide truststore is neither used nor changed for the issuer, and the bundle is not trusted
+by any other TLS client in Knox. Without `jwksCa` the issuer is fetched with the gateway's default
+truststore, as before.
+
+`jwksCa` takes one of two forms:
+
+- **Inline PEM** — one or more `-----BEGIN CERTIFICATE-----` blocks (a CA bundle), up to 65,000
+  characters.
+- **Kubernetes Secret reference** — `secret:[<namespace>/]<name>#<key>`, for example
+  `secret:awc-1/apiserver-ca#ca.crt`. The namespace is optional and defaults to `knox`
+  (`secret:apiserver-ca#ca.crt` reads Secret `knox/apiserver-ca`). The key's value (from `data`
+  or `stringData`) must be a PEM bundle. The Secret is read through the in-cluster Kubernetes API
+  with Knox's ServiceAccount, which needs `get` on `secrets` in the referenced namespace.
+
+```json
+{
+  "issuerUrl": "https://awc-1.example.com",
+  "dynamicJwks": true,
+  "clusterName": "awc-1",
+  "jwksCa": "secret:awc-1/apiserver-ca#ca.crt"
+}
+```
+
+A registration is rejected with `400 invalid_request` when `jwksCa`:
+
+- is set without `dynamicJwks: true` (it only applies to discovery and JWKS fetches),
+- is longer than 65,000 characters,
+- starts with `secret:` but does not match `secret:[<namespace>/]<name>#<key>` (namespace and name
+  must be DNS-1123 labels/subdomains; the referenced Secret is **not** required to exist yet), or
+- is inline PEM that does not contain at least one valid X.509 certificate.
+
+A blank `jwksCa` is treated as absent. `GET` returns `jwksCa` exactly as registered (CA
+certificates are public; a Secret reference is returned as the reference, not its contents).
+
+Changes take effect without a restart:
+
+- An inline bundle is replaced by re-registering the issuer (`DELETE` then `POST`).
+- A Secret-referenced bundle is read on first use and re-read when it is older than
+  `gateway.trusted.oidc.issuer.ca.secret.max.age.secs` (default 1800), when a fetch fails TLS
+  certificate validation (then the fetch is retried once; at most once every 30 seconds per
+  issuer), and on `POST /trusted-oidc-issuers/refresh-jwks`. Updating the Secret in place is
+  therefore enough to rotate the CA.
+
+If a configured `jwksCa` cannot be loaded (Secret or key missing, no certificate in it), tokens
+from that issuer are rejected — Knox never falls back to the default truststore. See
+[Security → Trusting self-signed issuer CAs](security.md#trusting-self-signed-issuer-cas).
 
 ---
 

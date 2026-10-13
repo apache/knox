@@ -1988,6 +1988,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getTrustedOidcIssuerCaSecretMaxAgeSecs() {
+    return getInt(TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS, TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT);
+  }
+
+  @Override
   public int getKnoxIDFFederatedOpConnectTimeoutMs() {
     return getInt(KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS, KNOXIDF_FEDERATED_OP_CONNECT_TIMEOUT_MS_DEFAULT);
   }

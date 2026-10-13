@@ -20,9 +20,11 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -34,6 +36,9 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 
 public class TruststoreSSLContextUtils {
   private static final GatewaySpiMessages LOGGER = MessagesFactory.get(GatewaySpiMessages.class);
+
+  /* How far down a cause chain to walk before giving up. */
+  private static final int MAX_CAUSE_DEPTH = 20;
 
   private TruststoreSSLContextUtils() {
   }
@@ -73,4 +78,22 @@ public class TruststoreSSLContextUtils {
     return null;
   }
 
+  /**
+   * Whether a failure carries a TLS/trust failure ({@link SSLException} or
+   * {@link CertificateException}) anywhere in its cause chain. Timeouts, refused
+   * connections and HTTP errors are not TLS trust failures.
+   *
+   * @param failure the failure to inspect
+   * @return {@code true} if the cause chain carries a TLS/trust failure
+   */
+  public static boolean isTlsTrustFailure(final Throwable failure) {
+    Throwable cause = failure;
+    for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
+      if (cause instanceof SSLException || cause instanceof CertificateException) {
+        return true;
+      }
+      cause = cause.getCause() == cause ? null : cause.getCause();
+    }
+    return false;
+  }
 }

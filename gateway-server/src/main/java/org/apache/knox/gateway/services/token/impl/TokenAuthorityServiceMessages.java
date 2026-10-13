@@ -45,4 +45,7 @@ public interface TokenAuthorityServiceMessages {
            + "carry a matching IP subjectAltName. Some JSSE providers (notably BouncyCastle FIPS) reject IP "
            + "literals outright.")
   void jwksIpLiteralHost(String jwksUrl);
+
+  @Message(level = MessageLevel.INFO, text = "TLS trust failure fetching JWKS from {0}; retrying with the re-read issuer CA bundle")
+  void retryingJwksWithReloadedIssuerCa(String jwksUrl);
 }

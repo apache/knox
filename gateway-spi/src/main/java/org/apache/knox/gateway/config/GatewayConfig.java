@@ -177,6 +177,8 @@ public interface GatewayConfig {
   int TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT = 3000;
   String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX+ "read.timeout.ms";
   int TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT = 10000;
+  String TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS = TRUSTED_OIDC_ISSUER_PREFIX + "ca.secret.max.age.secs";
+  int TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT = 1800;
 
   // KnoxIDF delegation policy service configuration.
   String DELEGATION_SERVICE_PREFIX = "gateway.delegation.service.";
@@ -1319,6 +1321,12 @@ public interface GatewayConfig {
   int getTrustedOidcIssuerDiscoveryConnectTimeoutMs();
 
   int getTrustedOidcIssuerDiscoveryReadTimeoutMs();
+
+  /**
+   * @return how long, in seconds, a CA bundle read from a Kubernetes Secret referenced by a trusted
+   *     OIDC issuer's {@code jwksCa} is used before it is re-read on the next access
+   */
+  int getTrustedOidcIssuerCaSecretMaxAgeSecs();
 
   int getKnoxIDFFederatedOpConnectTimeoutMs();
 

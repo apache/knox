@@ -19,5 +19,6 @@ CREATE TABLE TRUSTED_OIDC_ISSUERS (
     registered_at TIMESTAMP(6)   NOT NULL,
     registered_by VARCHAR2(2048),
     cluster_name  VARCHAR2(256),
+    jwks_ca       CLOB,
     PRIMARY KEY (issuer_url)
 )
