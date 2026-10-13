@@ -42,11 +42,11 @@ public class JwksCaTest {
 
   @Test
   public void testParseSecretReferenceWithNamespace() {
-    final JwksCa.SecretReference ref = JwksCa.parseSecretReference("secret:awc-1/apiserver-ca.v2#ca.crt");
-    assertEquals("awc-1", ref.namespace());
+    final JwksCa.SecretReference ref = JwksCa.parseSecretReference("secret:cluster-1/apiserver-ca.v2#ca.crt");
+    assertEquals("cluster-1", ref.namespace());
     assertEquals("apiserver-ca.v2", ref.name());
     assertEquals("ca.crt", ref.key());
-    assertEquals("awc-1/apiserver-ca.v2#ca.crt", ref.toString());
+    assertEquals("cluster-1/apiserver-ca.v2#ca.crt", ref.toString());
   }
 
   @Test

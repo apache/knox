@@ -416,17 +416,17 @@ truststore, as before.
 - **Inline PEM** — one or more `-----BEGIN CERTIFICATE-----` blocks (a CA bundle), up to 65,000
   characters.
 - **Kubernetes Secret reference** — `secret:[<namespace>/]<name>#<key>`, for example
-  `secret:awc-1/apiserver-ca#ca.crt`. The namespace is optional and defaults to `knox`
+  `secret:cluster-1/apiserver-ca#ca.crt`. The namespace is optional and defaults to `knox`
   (`secret:apiserver-ca#ca.crt` reads Secret `knox/apiserver-ca`). The key's value (from `data`
   or `stringData`) must be a PEM bundle. The Secret is read through the in-cluster Kubernetes API
   with Knox's ServiceAccount, which needs `get` on `secrets` in the referenced namespace.
 
 ```json
 {
-  "issuerUrl": "https://awc-1.example.com",
+  "issuerUrl": "https://cluster-1.example.com",
   "dynamicJwks": true,
-  "clusterName": "awc-1",
-  "jwksCa": "secret:awc-1/apiserver-ca#ca.crt"
+  "clusterName": "cluster-1",
+  "jwksCa": "secret:cluster-1/apiserver-ca#ca.crt"
 }
 ```
 

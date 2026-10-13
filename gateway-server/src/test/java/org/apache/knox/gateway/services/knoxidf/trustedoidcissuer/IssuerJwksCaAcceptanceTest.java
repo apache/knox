@@ -60,9 +60,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class IssuerJwksCaAcceptanceTest {
 
-  private static final String ISSUER_A = "https://awc-1.example.com";
-  private static final String ISSUER_B = "https://awc-2.example.com";
-  private static final String SECRET_REF_A = "secret:awc-1/apiserver-ca#ca.crt";
+  private static final String ISSUER_A = "https://cluster-1.example.com";
+  private static final String ISSUER_B = "https://cluster-2.example.com";
+  private static final String SECRET_REF_A = "secret:cluster-1/apiserver-ca#ca.crt";
   private static final JOSEObjectTypeVerifier<SecurityContext> TYPE_VERIFIER =
       new DefaultJOSEObjectTypeVerifier<>(JOSEObjectType.JWT, null);
 
@@ -114,8 +114,8 @@ public class IssuerJwksCaAcceptanceTest {
   @Test
   public void testIssuersWithDifferentSelfSignedCasValidate() throws Exception {
     register(ISSUER_A, serverA.getCaPem());
-    secrets.put("awc-2/apiserver-ca#ca.crt", serverB.getCaPem());
-    register(ISSUER_B, "secret:awc-2/apiserver-ca#ca.crt");
+    secrets.put("cluster-2/apiserver-ca#ca.crt", serverB.getCaPem());
+    register(ISSUER_B, "secret:cluster-2/apiserver-ca#ca.crt");
 
     assertTrue(verify(serverA, ISSUER_A, trust(ISSUER_A)));
     assertTrue(verify(serverB, ISSUER_B, trust(ISSUER_B)));
@@ -124,7 +124,7 @@ public class IssuerJwksCaAcceptanceTest {
   /* Acceptance (b): a CA replaced in the referenced Secret applies on the next fetch, no restart */
   @Test
   public void testRotatedSecretCaAppliesWithoutRestart() throws Exception {
-    secrets.put("awc-1/apiserver-ca#ca.crt", serverA.getCaPem());
+    secrets.put("cluster-1/apiserver-ca#ca.crt", serverA.getCaPem());
     register(ISSUER_A, SECRET_REF_A);
     final IssuerJwksTrust trust = trust(ISSUER_A);
     assertTrue(verify(serverA, ISSUER_A, trust));
@@ -132,13 +132,13 @@ public class IssuerJwksCaAcceptanceTest {
     // the apiserver gets a certificate from a new CA; the Secret is updated in place
     serverA.rotateCertificate();
     serverA.rotateSigningKey("kid-2");
-    secrets.put("awc-1/apiserver-ca#ca.crt", serverA.getCaPem());
+    secrets.put("cluster-1/apiserver-ca#ca.crt", serverA.getCaPem());
     clock.advance(IssuerTrustProvider.MIN_RELOAD_INTERVAL);
 
     // the unknown kid makes the JWKS be fetched again; that fails TLS, re-reads the Secret and retries
     assertTrue(verify(serverA, ISSUER_A, trust));
     assertSame("the registration is unchanged", trust, trust(ISSUER_A));
-    assertEquals(List.of("awc-1/apiserver-ca#ca.crt", "awc-1/apiserver-ca#ca.crt"), secretReads);
+    assertEquals(List.of("cluster-1/apiserver-ca#ca.crt", "cluster-1/apiserver-ca#ca.crt"), secretReads);
   }
 
   /* Acceptance (b): an inline CA replaced by re-registration (delete + create) applies at once */
@@ -183,7 +183,7 @@ public class IssuerJwksCaAcceptanceTest {
   /* Acceptance (d): an apiserver signing key rotation needs no configuration change */
   @Test
   public void testSigningKeyRotationNeedsNoConfigChange() throws Exception {
-    secrets.put("awc-1/apiserver-ca#ca.crt", serverA.getCaPem());
+    secrets.put("cluster-1/apiserver-ca#ca.crt", serverA.getCaPem());
     register(ISSUER_A, SECRET_REF_A);
     final IssuerJwksTrust trust = trust(ISSUER_A);
     assertTrue(verify(serverA, ISSUER_A, trust));
@@ -195,7 +195,7 @@ public class IssuerJwksCaAcceptanceTest {
   }
 
   private void register(String issuerUrl, String jwksCa) {
-    registry.put(issuerUrl, new TrustedOidcIssuer(issuerUrl, true, "awc", Instant.EPOCH, "admin", jwksCa));
+    registry.put(issuerUrl, new TrustedOidcIssuer(issuerUrl, true, "cluster", Instant.EPOCH, "admin", jwksCa));
   }
 
   private IssuerJwksTrust trust(String issuerUrl) {

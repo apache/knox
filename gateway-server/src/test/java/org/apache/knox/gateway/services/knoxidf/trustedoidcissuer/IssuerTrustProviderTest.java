@@ -51,8 +51,8 @@ import static org.junit.Assert.assertTrue;
 
 public class IssuerTrustProviderTest {
 
-  private static final String ISSUER = "https://awc-1.example.com";
-  private static final String SECRET_REF = "secret:awc-1/apiserver-ca#ca.crt";
+  private static final String ISSUER = "https://cluster-1.example.com";
+  private static final String SECRET_REF = "secret:cluster-1/apiserver-ca#ca.crt";
   private static final Duration MAX_AGE = Duration.ofHours(1);
 
   private final Map<String, TrustedOidcIssuer> registry = new HashMap<>();
@@ -113,7 +113,7 @@ public class IssuerTrustProviderTest {
 
     assertEquals(1, secretReader.reads.size());
     final JwksCa.SecretReference read = secretReader.reads.get(0);
-    assertEquals("awc-1", read.namespace());
+    assertEquals("cluster-1", read.namespace());
     assertEquals("apiserver-ca", read.name());
     assertEquals("ca.crt", read.key());
   }
@@ -183,7 +183,7 @@ public class IssuerTrustProviderTest {
   @Test
   public void testMissingSecretFailsClosedAndIsRateLimited() {
     registry.put(ISSUER, issuer(SECRET_REF));
-    secretReader.failure = new IllegalStateException("Secret awc-1/apiserver-ca not found");
+    secretReader.failure = new IllegalStateException("Secret cluster-1/apiserver-ca not found");
 
     IllegalStateException e = assertThrows(IllegalStateException.class, () -> provider.get(ISSUER));
     assertTrue(e.getMessage(), e.getMessage().contains("not found"));
@@ -290,7 +290,7 @@ public class IssuerTrustProviderTest {
   @Test
   public void testKubernetesSecretReaderData() throws Exception {
     final KubernetesClient client = EasyMock.createMock(KubernetesClient.class);
-    final Object[] chain = expectSecretLookup(client, "awc-1", "apiserver-ca", new SecretBuilder()
+    final Object[] chain = expectSecretLookup(client, "cluster-1", "apiserver-ca", new SecretBuilder()
         .addToData("ca.crt", Base64.getEncoder().encodeToString(caA.getBytes(StandardCharsets.UTF_8))).build());
     client.close();
     EasyMock.expectLastCall().once();
@@ -320,17 +320,17 @@ public class IssuerTrustProviderTest {
   @Test
   public void testKubernetesSecretReaderMissingSecretOrKey() throws Exception {
     final KubernetesClient client = EasyMock.createNiceMock(KubernetesClient.class);
-    final Object[] missingSecret = expectSecretLookup(client, "awc-1", "apiserver-ca", null);
+    final Object[] missingSecret = expectSecretLookup(client, "cluster-1", "apiserver-ca", null);
     EasyMock.replay(missingSecret);
     EasyMock.replay(client);
     try (IssuerTrustProvider.KubernetesSecretReader reader = new IssuerTrustProvider.KubernetesSecretReader(() -> client)) {
       final IllegalStateException e = assertThrows(IllegalStateException.class,
           () -> reader.read(JwksCa.parseSecretReference(SECRET_REF)));
-      assertTrue(e.getMessage(), e.getMessage().contains("awc-1/apiserver-ca not found"));
+      assertTrue(e.getMessage(), e.getMessage().contains("cluster-1/apiserver-ca not found"));
     }
 
     final KubernetesClient client2 = EasyMock.createNiceMock(KubernetesClient.class);
-    final Object[] missingKey = expectSecretLookup(client2, "awc-1", "apiserver-ca",
+    final Object[] missingKey = expectSecretLookup(client2, "cluster-1", "apiserver-ca",
         new SecretBuilder().addToData("other", "eA==").build());
     EasyMock.replay(missingKey);
     EasyMock.replay(client2);
@@ -355,7 +355,7 @@ public class IssuerTrustProviderTest {
   }
 
   private static TrustedOidcIssuer issuer(String jwksCa) {
-    return new TrustedOidcIssuer(ISSUER, true, "awc-1", Instant.EPOCH, "admin", jwksCa);
+    return new TrustedOidcIssuer(ISSUER, true, "cluster-1", Instant.EPOCH, "admin", jwksCa);
   }
 
   private static final class StubSecretReader implements IssuerTrustProvider.SecretReader, AutoCloseable {

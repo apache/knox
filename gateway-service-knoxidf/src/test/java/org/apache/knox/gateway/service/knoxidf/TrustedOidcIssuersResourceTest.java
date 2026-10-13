@@ -340,8 +340,8 @@ public class TrustedOidcIssuersResourceTest {
   @Test
   public void testRegisterWithSecretJwksCa() throws Exception {
     final TrustedOidcIssuer registered =
-        registerExpectingCreated(registerBodyWithJwksCa(true, "secret:awc-1/apiserver-ca#ca.crt"));
-    assertEquals("secret:awc-1/apiserver-ca#ca.crt", registered.getJwksCa());
+        registerExpectingCreated(registerBodyWithJwksCa(true, "secret:cluster-1/apiserver-ca#ca.crt"));
+    assertEquals("secret:cluster-1/apiserver-ca#ca.crt", registered.getJwksCa());
   }
 
   @Test
@@ -363,8 +363,8 @@ public class TrustedOidcIssuersResourceTest {
     assertJwksCaRejected(false, generateCaPem(), "jwksCa requires dynamicJwks=true");
     assertJwksCaRejected(true, "secret:" + StringUtils.repeat('a', JwksCa.MAX_LENGTH),
         "jwksCa must not exceed " + JwksCa.MAX_LENGTH + " characters");
-    assertJwksCaRejected(true, "secret:awc-1/apiserver-ca", "secret:[<namespace>/]<name>#<key>");
-    assertJwksCaRejected(true, "secret:awc-1/Apiserver_CA#ca.crt", "secret:[<namespace>/]<name>#<key>");
+    assertJwksCaRejected(true, "secret:cluster-1/apiserver-ca", "secret:[<namespace>/]<name>#<key>");
+    assertJwksCaRejected(true, "secret:cluster-1/Apiserver_CA#ca.crt", "secret:[<namespace>/]<name>#<key>");
     assertJwksCaRejected(true, "not a certificate", "Invalid jwksCa: CA bundle");
     assertJwksCaRejected(true, "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----",
         "Invalid jwksCa: CA bundle");
@@ -525,7 +525,7 @@ public class TrustedOidcIssuersResourceTest {
   public void testListIssuers() throws Exception {
     final Instant now = Instant.now();
     final TrustedOidcIssuer issuerA = new TrustedOidcIssuer(ISSUER_A, true, "cluster-a",
-        now, OPERATOR, "secret:awc-1/apiserver-ca#ca.crt");
+        now, OPERATOR, "secret:cluster-1/apiserver-ca#ca.crt");
     final TrustedOidcIssuer issuerB = new TrustedOidcIssuer(ISSUER_B, false, null,
         now, null);
     EasyMock.expect(mockService.list()).andReturn(Arrays.asList(issuerA, issuerB)).once();
@@ -543,7 +543,7 @@ public class TrustedOidcIssuersResourceTest {
     assertEquals("cluster-a", a.get("clusterName"));
     assertNotNull(a.get("registeredAt"));
     assertEquals(OPERATOR, a.get("registeredBy"));
-    assertEquals("secret:awc-1/apiserver-ca#ca.crt", a.get("jwksCa"));
+    assertEquals("secret:cluster-1/apiserver-ca#ca.crt", a.get("jwksCa"));
 
     final Map<String, Object> b = findByIssuerUrl(body, ISSUER_B);
     assertEquals(false, b.get("dynamicJwks"));

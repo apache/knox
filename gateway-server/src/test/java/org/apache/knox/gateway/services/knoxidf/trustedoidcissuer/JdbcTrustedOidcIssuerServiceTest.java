@@ -342,13 +342,13 @@ public class JdbcTrustedOidcIssuerServiceTest {
       return secretPem.get();
     });
     final String url = "https://issuer.example.com";
-    secretService.register(issuer(url, true, "secret:awc-1/apiserver-ca#ca.crt"));
+    secretService.register(issuer(url, true, "secret:cluster-1/apiserver-ca#ca.crt"));
     assertTrue("the Secret is read lazily, not on register", reads.isEmpty());
 
     final IssuerJwksTrust trust = secretService.getJwksTrust(url).orElseThrow();
     final SSLSocketFactory factory = trust.getSslSocketFactory();
     assertSame(trust, secretService.getJwksTrust(url).orElseThrow());
-    assertEquals(List.of("awc-1/apiserver-ca#ca.crt"), reads);
+    assertEquals(List.of("cluster-1/apiserver-ca#ca.crt"), reads);
 
     // POST /trusted-oidc-issuers/refresh-jwks re-reads the Secret at once
     secretPem.set(TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-b")));

@@ -48,9 +48,9 @@ public class TrustedOidcIssuerTest {
   public void testJwksCa() {
     TrustedOidcIssuer issuer = new TrustedOidcIssuer(
         "https://issuer.example.com", true, "cluster-a", Instant.now(), "admin@example.com",
-        "secret:awc-1/apiserver-ca#ca.crt");
+        "secret:cluster-1/apiserver-ca#ca.crt");
 
-    assertEquals("secret:awc-1/apiserver-ca#ca.crt", issuer.getJwksCa());
+    assertEquals("secret:cluster-1/apiserver-ca#ca.crt", issuer.getJwksCa());
   }
 
   @Test
