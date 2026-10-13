@@ -135,7 +135,7 @@ request.audience.k8s.dns.format.cluster.domain | The cluster domain a DNS-form `
 
 Name | Description | Default
 ---------|-------------|--------
-request.audience.k8s.cluster-domains | Comma-separated allow-list of cluster domains (host, with an optional `:port`, defaulting to `443`) a custom-form `aud` entry's authority may match. Always enforced for a custom-form entry; there is no way to disable this check. Does not apply to a DNS-form entry; see `dns.format.cluster.domain` above. | `service.local` (a placeholder that fails closed until set to the deployment's own cluster domain(s))
+request.audience.k8s.cluster-domains | Comma-separated allow-list of cluster domains (host, with an optional `:port`, defaulting to `443`) a custom-form `aud` entry's authority may match. Always enforced for a custom-form entry; there is no way to disable this check. Does not apply to a DNS-form entry; see `dns.format.cluster.domain` above. | `service.local` (a placeholder that matches no real cluster's host, so custom-form entries for any other host are rejected until this is set to the deployment's own cluster domain(s); an entry whose host is exactly `service.local` is accepted, so the default does not disable the custom form)
 request.audience.k8s.audience.path.prefix | Optional path prefix searched for in a custom-form `aud` entry's path before namespace and service-name are parsed out of it; see Optional path prefix above. Never applies to a DNS-form entry. | n/a (unset; a custom-form entry's path must then begin with namespace and service-name straight after the authority)
 
 ###### Cross-cutting behavior parameters ######
@@ -177,7 +177,7 @@ If the path this validator checks can be changed by the surrounding infrastructu
 
 ##### Example topology #####
 
-This example is the combination that validates the destination namespace and path for every token (including non-delegated ones), binds a delegation token's actor to the workload presenting it, and deliberately does not validate service-name or accept the custom `aud` form. Every parameter this validator reads is shown, each marked `(default)` or `(non-default)`, so the full configuration surface, and what it does and does not bind, is visible in one place. Header names are examples; the real ones depend on what the service mesh sets.
+This example is the combination that validates the destination namespace and path for every token (including non-delegated ones), binds a delegation token's actor to the workload presenting it, and deliberately does not validate service-name. It is written for service DNS audiences such as `https://reporting-svc.analytics.svc.cluster.local/v1/reports`. The custom `aud` form is still enabled since it cannot be disabled. `request.audience.k8s.cluster-domains` is left at its default of `service.local`, so a custom-form entry whose host is exactly `service.local` (for example `https://service.local/analytics/reporting-svc/v1/reports`) is still accepted when it passes the namespace and path checks below, while a custom-form entry for any other host is rejected. Every parameter this validator reads is shown, each marked `(default)` or `(non-default)`, so the full configuration surface, and what it does and does not bind, is visible in one place. Header names are examples; the real ones depend on what the service mesh sets.
 
     <provider>
         <role>federation</role>
@@ -270,10 +270,13 @@ This example is the combination that validates the destination namespace and pat
         </param>
 
         <!-- (default) Allow-list of cluster domains for aud entries in the custom
-             https://cluster-domain/namespace/service-name/path form. Left at the fail-closed
-             placeholder: this deployment presents service DNS audiences, which do not consult
-             this list, so any custom-form audience is rejected. That is the intended outcome
-             here, not an omission. -->
+             https://cluster-domain/namespace/service-name/path form. Left at the placeholder
+             default: this deployment presents service DNS audiences, which do not consult this
+             list. The custom form is not disabled by this: an entry whose host is exactly
+             service.local (for example https://service.local/analytics/reporting-svc/v1/reports)
+             is still accepted if its namespace and path match, and a custom-form entry for any
+             other host is rejected. There is no setting that turns the custom form off; leaving
+             the placeholder just means no real cluster's host is on the list. -->
         <param>
             <name>request.audience.k8s.cluster-domains</name>
             <value>service.local</value>
@@ -301,7 +304,7 @@ What this configuration enforces, derived from it item by item:
 aud entry form accepted | BOTH. Each entry is tried as a k8s service DNS name first and as the custom form second, and is accepted if either matches.
 ---------|-----------
 cluster domain, DNS form | ENFORCED, via `dns.format.cluster.domain`. Labels after `svc` must be a label-boundary prefix of `cluster.local`. Shortened hosts are accepted; a trailing dot is not.
-cluster domain, custom form | ENFORCED, via `cluster-domains`, left at the fail-closed `service.local`.
+cluster domain, custom form | ENFORCED, via `cluster-domains`, left at the default `service.local`. The custom form is not disabled: an entry whose host is exactly `service.local` (port 443) is accepted if its namespace and path match, and a custom-form entry for any other host is rejected. No parameter turns the custom form off.
 port | NOT enforced for a service DNS audience; parsed and ignored. Part of the authority match for a custom-form entry.
 namespace | ENFORCED, from the destination SPIFFE id header. For a service DNS audience whose host omits the namespace, the namespace comes from the SOURCE SPIFFE id header and must equal this destination namespace.
 second namespace source | NOT present, because the server-name header is not set. With both configured the two destination namespaces would have to agree.
