@@ -55,7 +55,33 @@ LDAP_BIND_PASSWORD_ALIAS=gateway_ldap_bind_password
 # resolves it from the credential store instead of reading a literal from gateway-site.xml (KNOX-3497).
 LDAP_BACKEND_SYSTEM_PASSWORD=guest-password
 LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS=gateway_ldap_demoldap_system_password
-/knox-runtime/bin/knoxcli.sh create-alias "$LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS" --value "$LDAP_BACKEND_SYSTEM_PASSWORD"
+if grep -q "gateway.ldap.backend.password.alias.retry.attempts" /knox-runtime/conf/gateway-site.xml; then
+  # Alias lookup retry is configured (KNOX-3513): create the alias only once Knox has failed to find it
+  # and started retrying, i.e. the secret is persisted after the LDAP configuration was loaded.
+  # Only gateway.log lines written by this run count (the logs directory may be a persistent bind mount).
+  # If the retry WARN is not seen in time the alias is created anyway; a broken retry still fails the
+  # LDAP proxy tests, since Knox has then already given up on the alias.
+  GATEWAY_LOG=/knox-runtime/logs/gateway.log
+  LOG_START_LINE=$(($(cat "$GATEWAY_LOG" 2>/dev/null | wc -l) + 1))
+  RETRY_WARN="No value found yet in the gateway credential store for alias $LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS"
+  (
+    WAITED=0
+    until tail -n +"$LOG_START_LINE" "$GATEWAY_LOG" 2>/dev/null | grep -q "$RETRY_WARN"; do
+      if [ "$WAITED" -ge 40 ]; then
+        echo "Knox did not log a retry for alias $LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS within 20s; creating it anyway."
+        break
+      fi
+      sleep 0.5
+      WAITED=$((WAITED + 1))
+    done
+    if [ "$WAITED" -lt 40 ]; then
+      echo "Knox is retrying alias $LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS; creating it now."
+    fi
+    /knox-runtime/bin/knoxcli.sh create-alias "$LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS" --value "$LDAP_BACKEND_SYSTEM_PASSWORD"
+  ) &
+else
+  /knox-runtime/bin/knoxcli.sh create-alias "$LDAP_BACKEND_SYSTEM_PASSWORD_ALIAS" --value "$LDAP_BACKEND_SYSTEM_PASSWORD"
+fi
 
 # Start Knox. Endpoint (hostname) identification is disabled for the embedded LDAPS
 # connection - the dev cert is self-signed - but trust is still enforced via cacerts.

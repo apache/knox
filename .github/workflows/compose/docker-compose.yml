@@ -147,6 +147,8 @@ services:
     working_dir: /tests
     volumes:
       - ../tests:/tests
+      # Exposes the Knox gateway.log to test_knox_ldap_backend_password_alias_retry.py.
+      - ./logs:/knox-logs:ro
       # Exposes the exported SA token + issuer URL to test_k8s_delegation.py.
       - k3s-output:/k3s:ro
     environment:

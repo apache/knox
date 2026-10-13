@@ -163,6 +163,8 @@ public interface GatewayConfig {
   String LDAP_MAX_SIZE_LIMIT = "gateway.ldap.max.size.limit";
   String LDAP_MAX_TIME_LIMIT = "gateway.ldap.max.time.limit";
   String LDAP_DN_MAPPING_ENABLED = "gateway.ldap.dn.mapping.enabled";
+  String LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS = "gateway.ldap.backend.password.alias.retry.attempts";
+  String LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS = "gateway.ldap.backend.password.alias.retry.interval.ms";
 
   // TrustedOidcIssuerService gateway-level params and their default values
   String TRUSTED_OIDC_ISSUER_PREFIX = "gateway.trusted.oidc.issuer.";
@@ -1291,6 +1293,17 @@ public interface GatewayConfig {
    * @return true if DN mapping in the LDAP service is enabled
    */
   boolean getLDAPDnMappingEnabled();
+
+  /**
+   * @return the number of times an LDAP backend password alias reference that cannot be found in the
+   * gateway credential store is looked up again before it is left unresolved; 0 disables retries
+   */
+  int getLDAPBackendPasswordAliasRetryAttempts();
+
+  /**
+   * @return the delay in milliseconds between LDAP backend password alias lookup retries
+   */
+  int getLDAPBackendPasswordAliasRetryIntervalMs();
 
   /**
    * @return set of all property names in the configuration

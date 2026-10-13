@@ -63,6 +63,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.easymock.EasyMock.expect;
@@ -411,6 +412,80 @@ public class KnoxLDAPServerManagerTest {
         // naturally rather than the alias silently resolving to a different credential.
         assertEquals("An unresolvable alias should be left as-is",
                 aliasRef, backendConfig.get("systemPassword"));
+    }
+
+    @Test
+    public void testLdapBackendPasswordAliasIsNotRetriedByDefault() throws Exception {
+        final String aliasRef = AliasService.ALIAS_PREFIX + "missing}";
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        expect(aliasService.isAlias(aliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(aliasRef)).andReturn("missing").anyTimes();
+        final AtomicInteger lookups = countNullLookups(aliasService, "missing");
+        replay(aliasService);
+        serverManager = new KnoxLDAPServerManager(aliasService);
+
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        backendConfig.put("systemPassword", aliasRef);
+
+        initializeWithLdapBackendConfig(backendConfig);
+
+        assertEquals(aliasRef, backendConfig.get("systemPassword"));
+        assertEquals("With retries disabled (the default) the alias should be looked up exactly once", 1, lookups.get());
+    }
+
+    @Test
+    public void testLdapBackendPasswordAliasIsResolvedOnRetry() throws Exception {
+        final String alias = "my-ad-password";
+        final String secret = "s3cr3t-ad-pass";
+        final String aliasRef = AliasService.ALIAS_PREFIX + alias + "}";
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        expect(aliasService.isAlias(aliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(aliasRef)).andReturn(alias).anyTimes();
+        // Not persisted yet on the first two lookups, then available
+        final AtomicInteger lookups = new AtomicInteger();
+        expect(aliasService.getPasswordFromAliasForGateway(alias)).andAnswer(() ->
+                lookups.incrementAndGet() > 2 ? secret.toCharArray() : null).anyTimes();
+        replay(aliasService);
+        serverManager = new KnoxLDAPServerManager(aliasService);
+
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        backendConfig.put("systemPassword", aliasRef);
+
+        initializeWithLdapBackendConfig(backendConfig, 5, 1);
+
+        assertEquals("Alias reference should be resolved once it appears in the credential store",
+                secret, backendConfig.get("systemPassword"));
+        assertEquals("Retries should stop as soon as the alias resolves", 3, lookups.get());
+    }
+
+    @Test
+    public void testLdapBackendPasswordAliasIsLeftUnchangedAfterRetriesAreExhausted() throws Exception {
+        final String aliasRef = AliasService.ALIAS_PREFIX + "missing}";
+        final String trustStoreAliasRef = AliasService.ALIAS_PREFIX + "missing-truststore}";
+
+        AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+        expect(aliasService.isAlias(aliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(aliasRef)).andReturn("missing").anyTimes();
+        expect(aliasService.isAlias(trustStoreAliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(trustStoreAliasRef)).andReturn("missing-truststore").anyTimes();
+        final AtomicInteger lookups = countNullLookups(aliasService, "missing");
+        final AtomicInteger trustStoreLookups = countNullLookups(aliasService, "missing-truststore");
+        replay(aliasService);
+        serverManager = new KnoxLDAPServerManager(aliasService);
+
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        backendConfig.put("systemPassword", aliasRef);
+        backendConfig.put("trustStorePassword", trustStoreAliasRef);
+
+        initializeWithLdapBackendConfig(backendConfig, 2, 1);
+
+        assertEquals(aliasRef, backendConfig.get("systemPassword"));
+        assertEquals(trustStoreAliasRef, backendConfig.get("trustStorePassword"));
+        // One initial lookup plus two retries, for each pending alias
+        assertEquals(3, lookups.get());
+        assertEquals(3, trustStoreLookups.get());
     }
 
     @Test
@@ -816,9 +891,29 @@ public class KnoxLDAPServerManagerTest {
         return config;
     }
 
+    /**
+     * Makes the given (not yet replayed) alias service mock find no value for the given alias and counts the lookups.
+     * A nice mock does not fail on calls beyond {@code once()} / {@code times(n)}, so retries are verified by count.
+     */
+    private static AtomicInteger countNullLookups(AliasService aliasService, String alias) throws Exception {
+        final AtomicInteger lookups = new AtomicInteger();
+        expect(aliasService.getPasswordFromAliasForGateway(alias)).andAnswer(() -> {
+            lookups.incrementAndGet();
+            return null;
+        }).anyTimes();
+        return lookups;
+    }
+
     /** Initialize the current server manager with a single "ldapbackend" interceptor using the given config. */
     private void initializeWithLdapBackendConfig(Map<String, String> backendConfig) throws Exception {
+        initializeWithLdapBackendConfig(backendConfig, 0, 0);
+    }
+
+    /** Same as {@link #initializeWithLdapBackendConfig(Map)}, with the given backend password alias retry settings. */
+    private void initializeWithLdapBackendConfig(Map<String, String> backendConfig, int aliasRetryAttempts, int aliasRetryIntervalMs) throws Exception {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getLDAPBackendPasswordAliasRetryAttempts()).andReturn(aliasRetryAttempts).anyTimes();
+        expect(mockConfig.getLDAPBackendPasswordAliasRetryIntervalMs()).andReturn(aliasRetryIntervalMs).anyTimes();
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
         expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com").anyTimes();
