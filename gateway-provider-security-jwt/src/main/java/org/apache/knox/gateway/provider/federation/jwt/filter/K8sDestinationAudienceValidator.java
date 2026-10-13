@@ -770,13 +770,14 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
 
   /**
    * Splits on {@code ,} and trims each entry, but does not drop an entry that trims to empty --
-   * for example a stray {@code ,,} or a trailing {@code ,} in {@link #CLUSTER_DOMAINS_PARAM}.
-   * This is operator-supplied configuration, not request data, so it is validated strictly: an
-   * empty entry is passed through to {@link ClusterDomain#parse(String)}, which rejects it, the
-   * same as any other malformed entry, rather than being silently discarded here.
+   * for example a stray {@code ,,} or a leading or trailing {@code ,} in
+   * {@link #CLUSTER_DOMAINS_PARAM}. This is operator-supplied configuration, not request
+   * data, so it is validated strictly: an empty entry is passed through to
+   * {@link ClusterDomain#parse(String)}, which rejects it, the same as any other malformed
+   * entry, rather than being silently discarded here.
    */
   private static List<String> parseCommaSeparated(final String commaSeparatedList) {
-    return Arrays.stream(commaSeparatedList.split(","))
+    return Arrays.stream(commaSeparatedList.split(",", -1))
         .map(String::trim)
         .collect(Collectors.toList());
   }

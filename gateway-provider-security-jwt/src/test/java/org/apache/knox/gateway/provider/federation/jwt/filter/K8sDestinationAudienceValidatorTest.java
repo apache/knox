@@ -137,6 +137,30 @@ public class K8sDestinationAudienceValidatorTest {
     assertThrows(ServletException.class, () -> init(params));
   }
 
+  @Test
+  public void testInitThrowsOnClusterDomainsWithTrailingComma() {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "cluster.local,");
+    assertThrows(ServletException.class, () -> init(params));
+  }
+
+  @Test
+  public void testInitThrowsOnClusterDomainsWithMultipleTrailingCommas() {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, "cluster.local, ,");
+    assertThrows(ServletException.class, () -> init(params));
+  }
+
+  @Test
+  public void testInitThrowsOnClusterDomainsWithLeadingComma() {
+    final Map<String, String> params = new HashMap<>();
+    params.put(K8sDestinationAudienceValidator.PATH_HEADER_PARAM, PATH_HEADER);
+    params.put(K8sDestinationAudienceValidator.CLUSTER_DOMAINS_PARAM, ",cluster.local");
+    assertThrows(ServletException.class, () -> init(params));
+  }
+
   // ---- source SPIFFE id header does not count toward the "at least one of three" rule ----
 
   @Test
