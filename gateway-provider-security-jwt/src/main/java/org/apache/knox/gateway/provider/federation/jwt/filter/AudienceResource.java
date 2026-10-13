@@ -113,8 +113,8 @@ public record AudienceResource(String host, int effectivePort, String namespace,
       return Optional.empty();
     }
 
-    final int pathStart = entry.indexOf('/', schemeSep + 3);
-    if (pathStart < 0) {
+    final int pathStart = indexOfAuthorityEnd(entry, schemeSep + 3);
+    if (pathStart >= entry.length() || entry.charAt(pathStart) != '/') {
       return Optional.empty();
     }
     final String authorityPart = entry.substring(0, pathStart);
@@ -214,6 +214,22 @@ public record AudienceResource(String host, int effectivePort, String namespace,
   }
 
   /**
+   * The index where the authority of {@code entry}, which begins at {@code authorityStart}, ends:
+   * the first {@code '/'}, {@code '?'} or {@code '#'} at or after it, or {@code entry.length()}
+   * if there is none. The path can only begin at a {@code '/'} found here, so a {@code '/'} that
+   * appears later, inside a query or fragment, is never mistaken for the start of the path.
+   */
+  private static int indexOfAuthorityEnd(String entry, int authorityStart) {
+    for (int i = authorityStart; i < entry.length(); i++) {
+      final char c = entry.charAt(i);
+      if (c == '/' || c == '?' || c == '#') {
+        return i;
+      }
+    }
+    return entry.length();
+  }
+
+  /**
    * The first index at or after {@code fromIndex} where either {@code a} or {@code b} occurs, or
    * {@code -1} if neither does. Shared by {@link K8sDestinationAudienceValidator} for stripping a
    * query string or fragment off of a request path taken from a header.
@@ -281,16 +297,11 @@ public record AudienceResource(String host, int effectivePort, String namespace,
       return Optional.empty();
     }
 
-    final int pathStart = entry.indexOf('/', schemeSep + 3);
-    final String authorityPart;
-    String rawPath;
-    if (pathStart < 0) {
-      authorityPart = entry;
-      rawPath = "/";
-    } else {
-      authorityPart = entry.substring(0, pathStart);
-      rawPath = entry.substring(pathStart);
-    }
+    final int pathStart = indexOfAuthorityEnd(entry, schemeSep + 3);
+    final String authorityPart = entry.substring(0, pathStart);
+    String rawPath = pathStart < entry.length() && entry.charAt(pathStart) == '/'
+        ? entry.substring(pathStart)
+        : "/";
     final int queryOrFragment = indexOfFirst(rawPath, 0, '?', '#');
     if (queryOrFragment >= 0) {
       rawPath = rawPath.substring(0, queryOrFragment);

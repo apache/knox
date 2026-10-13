@@ -83,6 +83,14 @@ public class AudienceResourceTest {
   }
 
   @Test
+  public void testSlashInQueryOrFragmentIsNotMistakenForPathStart() {
+    assertFalse(parse("https://cluster.local?redirect=/ns/svc").isPresent());
+    assertFalse(parse("https://cluster.local#/ns/svc").isPresent());
+    assertFalse(parse("https://cluster.local:8443?x=/ns/svc/a").isPresent());
+    assertFalse(AudienceResource.parseCustomForm("https://cluster.local?x=/prefix/ns/svc", "prefix").isPresent());
+  }
+
+  @Test
   public void testTrailingSlashTidiedNotMismatch() {
     final Optional<AudienceResource> withSlash = parse("https://cluster.local/ns/svc/a/b/");
     final Optional<AudienceResource> withoutSlash = parse("https://cluster.local/ns/svc/a/b");
@@ -485,6 +493,29 @@ public class AudienceResourceTest {
     final Optional<AudienceResource> parsed = parseDns("https://backend.ns/a?x=1#y");
     assertTrue(parsed.isPresent());
     assertEquals("/a", parsed.get().resourcePathRaw());
+  }
+
+  @Test
+  public void testDnsFormSlashInQueryOrFragmentIsNotMistakenForPathStart() {
+    // The only slash is inside the query/fragment, so the entry has no path at all (root).
+    final Optional<AudienceResource> query = parseDns("https://backend.ns?redirect=/orders");
+    assertTrue(query.isPresent());
+    assertEquals("backend", query.get().serviceName());
+    assertEquals("ns", query.get().namespace());
+    assertEquals("/", query.get().resourcePathRaw());
+
+    final Optional<AudienceResource> fragment = parseDns("https://backend.ns#/orders");
+    assertTrue(fragment.isPresent());
+    assertEquals("/", fragment.get().resourcePathRaw());
+
+    final Optional<AudienceResource> withPort = parseDns("https://backend.ns:8443?redirect=/orders");
+    assertTrue(withPort.isPresent());
+    assertEquals("/", withPort.get().resourcePathRaw());
+
+    // A real path before the query is unaffected by slashes within the query.
+    final Optional<AudienceResource> both = parseDns("https://backend.ns/a?redirect=/orders");
+    assertTrue(both.isPresent());
+    assertEquals("/a", both.get().resourcePathRaw());
   }
 
   @Test
