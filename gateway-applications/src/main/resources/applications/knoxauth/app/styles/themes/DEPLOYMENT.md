@@ -69,6 +69,21 @@ Controls whether users can override the theme.
 
 **Default:** `false`
 
+### KNOX_THEME_BRANDING
+
+Per-theme page title and favicon, keyed by theme name. `brand` replaces `KnoxSSO` in the
+page title (e.g. `Apache Knox SSO - Sign In`); `favicon` is a path relative to the
+knoxauth app. Themes without an entry keep the Knox title and favicon.
+
+```javascript
+var KNOX_THEME_BRANDING = {
+	modern: {
+		brand: 'Apache Knox SSO',
+		favicon: 'styles/themes/modern/images/favicon.svg'
+	}
+};
+```
+
 ## Common Deployment Scenarios
 
 ### Scenario 1: Modern Theme as Default, Users Can Switch

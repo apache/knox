@@ -64,6 +64,17 @@
 		}
 	}
 
+	var branding = (typeof KNOX_THEME_BRANDING !== 'undefined' && KNOX_THEME_BRANDING.hasOwnProperty(theme))
+		? KNOX_THEME_BRANDING[theme]
+		: {};
+	var icon = document.querySelector('link[rel~="icon"]');
+	if (branding.brand) {
+		document.title = document.title.replace(/^KnoxSSO/, branding.brand);
+	}
+	if (branding.favicon && icon) {
+		icon.href = branding.favicon;
+	}
+
 	if (theme !== 'default') {
 		var REVEAL_TIMEOUT_MS = 1500;
 		var root = document.documentElement;
