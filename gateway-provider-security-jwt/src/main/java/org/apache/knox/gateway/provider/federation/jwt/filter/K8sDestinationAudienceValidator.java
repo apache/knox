@@ -177,13 +177,14 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * whether at least one entry matching is sufficient ({@code false}), which is the ordinary RFC
    * 7519 semantic: the destination is an allowed audience. Defaults to {@code false}.
    *
-   * <p>This is independent of, and does not substitute for, the minting-side controls over how
-   * many audiences a delegation token may request that JWTFederationFilter itself exposes. A
-   * deployment that wants every delegation token to carry exactly one audience should combine both
-   * of those minting-side controls with setting this parameter to {@code true}: the minting-side
-   * controls stop a multi-audience token from being issued in the first place, and this parameter
-   * independently rejects one at the destination even if it is minted anyway, for example by an
-   * older or misconfigured issuer.
+   * <p>This does not validate that the token carries exactly one audience, and it does not make a
+   * token single-use: a token with several {@code aud} entries is accepted when every entry
+   * matches the destination. It is independent of, and does not substitute for, the minting-side
+   * controls over how many audiences a delegation token may request that JWTFederationFilter
+   * itself exposes; a deployment that wants exactly one audience per delegation token must set
+   * those. Setting this as well is a destination-side backstop: a multi-audience token that is
+   * minted anyway, for example by an older or misconfigured issuer, is accepted only where every
+   * one of its audiences names the destination.
    */
   public static final String REQUIRE_ALL_AUDIENCES_MATCH_PARAM = PARAM_PREFIX + "require-all-audiences-match";
 

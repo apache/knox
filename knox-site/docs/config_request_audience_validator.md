@@ -147,7 +147,9 @@ request.audience.k8s.validate.audiences.without.act.claim | Whether a token with
 request.audience.k8s.enforce.act.sub.service-account.matches.source.spiffeid | Whether the most recent actor in the token's `act` chain must match the source workload's SPIFFE id. See Actor-subject binding below. Requires `source.spiffe-id.header.name` to be configured; setting this `true` without it fails topology startup. | `false`
 request.audience.k8s.enforce.act.sub.is.service.account | Whether an actor subject that cannot be read as a k8s service-account subject fails validation (`true`) or passes unchecked (`false`). Only consulted when the parameter above is `true`. | `false`
 
-`request.audience.k8s.require-all-audiences-match=true` is independent of, and does not by itself prevent, a delegation token being minted with more than one audience in the first place; it only changes how this validator reacts to one once presented. `JWTFederationFilter` separately exposes `delegation.enforce.requested.audience.required` and `delegation.enforce.requested.audience.max.one`, which constrain what a delegation token may be minted with. A deployment that wants every delegation token to carry exactly one audience should set all three: the two minting-side flags stop a multi-audience token from being issued, and `require-all-audiences-match` independently rejects one at the destination even if it is minted anyway, for example by an older or misconfigured issuer.
+`request.audience.k8s.require-all-audiences-match=true` rejects a token if its `aud` claim is empty or if any entry in it fails to match this request's destination. It does not validate that the token carries exactly one audience, and it does not make a token single-use. A token with several `aud` entries is accepted when every entry matches this destination, for example the same service written in both the full and the shortened DNS form, a repeated entry, or an entry with no path alongside one with a specific path. What it does do is narrow where a multi-audience token can be used: only at a destination that all of its audiences name, so an entry naming some other destination can no longer be carried along behind a matching one.
+
+Limiting how many audiences a token carries is a minting-side concern. `JWTFederationFilter` exposes `delegation.enforce.requested.audience.required` and `delegation.enforce.requested.audience.max.one`, which constrain what a delegation token may be minted with. A deployment that wants every delegation token to carry exactly one audience must set both of those; `require-all-audiences-match` is not a substitute for them. Setting it as well is still worthwhile as a destination-side backstop: a multi-audience token that is minted anyway, for example by an older or misconfigured issuer, is accepted only where every one of its audiences names that destination.
 
 ##### Path matching #####
 
@@ -282,9 +284,12 @@ This example is the combination that validates the destination namespace and pat
             <value>service.local</value>
         </param>
 
-        <!-- (non-default) Every aud claim must match the destination. This is not the ordinary
-              RFC 7519 semantic where one matching aud entry is sufficient. Use this to enforce
-              that every token be exchanged for only one use.-->
+        <!-- (non-default) Every aud entry must match the destination, rather than the ordinary
+             RFC 7519 semantic where one matching entry is sufficient. This does not limit a
+             token to one audience and does not make it single-use: a token with several aud
+             entries is accepted if all of them match this destination. Limiting the number of
+             audiences is done at minting time, with delegation.enforce.requested.audience.required
+             and delegation.enforce.requested.audience.max.one on JWTFederationFilter. -->
         <param>
             <name>request.audience.k8s.require-all-audiences-match</name>
             <value>true</value>
