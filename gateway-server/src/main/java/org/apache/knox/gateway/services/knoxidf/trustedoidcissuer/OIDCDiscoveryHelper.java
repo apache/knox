@@ -130,6 +130,15 @@ class OIDCDiscoveryHelper {
   }
 
   /**
+   * Evicts every cached JWKS URI. Used when the trusted issuer registry snapshot is rebuilt
+   * without a previous snapshot to diff against, so no entry can outlive the registry state
+   * it was resolved under.
+   */
+  void invalidateAll() {
+    discoveryDocumentCache.invalidateAll();
+  }
+
+  /**
    * Closes the long-lived HTTP client.
    */
   void close() throws IOException {

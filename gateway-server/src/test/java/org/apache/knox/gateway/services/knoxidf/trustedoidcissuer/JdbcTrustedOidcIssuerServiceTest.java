@@ -36,10 +36,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -400,7 +404,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
     mockDb.delete(EasyMock.anyString());
     EasyMock.expectLastCall().andThrow(new java.sql.SQLException("delete failed"));
     EasyMock.replay(mockDb);
-    FieldUtils.writeField(service, "database", mockDb, true);
+    useDatabase(service, mockDb);
 
     service.deregister("https://any.example.com");
   }
@@ -412,7 +416,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
     EasyMock.expectLastCall();
     EasyMock.expect(mockDb.selectAll()).andThrow(new java.sql.SQLException("selectAll failed"));
     EasyMock.replay(mockDb);
-    FieldUtils.writeField(service, "database", mockDb, true);
+    useDatabase(service, mockDb);
 
     service.register(issuer("https://any.example.com", false));
   }
@@ -424,7 +428,7 @@ public class JdbcTrustedOidcIssuerServiceTest {
     EasyMock.expectLastCall();
     EasyMock.expect(mockDb.selectAll()).andThrow(new java.sql.SQLException("selectAll failed"));
     EasyMock.replay(mockDb);
-    FieldUtils.writeField(service, "database", mockDb, true);
+    useDatabase(service, mockDb);
 
     service.deregister("https://any.example.com");
   }
@@ -494,8 +498,272 @@ public class JdbcTrustedOidcIssuerServiceTest {
   }
 
   // ------------------------------------------------------------------
+  // Registry snapshot TTL (HA eventual consistency)
+  // ------------------------------------------------------------------
+  // Direct JDBC writes stand in for another Knox node writing to the shared table. With a TTL of
+  // 10s the effective (jittered) TTL is in [9s, 10s] and the background refresh is due after at
+  // most 5s, so +6s means "refresh due, not expired" and +11s means "expired".
+
+  private static final int TTL_SECS = 10;
+
+  @Test
+  public void testRemoteRegistrationVisibleAfterBackgroundRefresh() throws Exception {
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(TTL_SECS, now);
+    insertRow("https://remote.example.com", false, Instant.now());
+
+    assertFalse("A fresh snapshot is served without hitting the DB",
+        ttlService.isTrusted("https://remote.example.com"));
+
+    advance(now, 6);
+    ttlService.isTrusted("https://remote.example.com"); // triggers the background refresh, served stale
+    assertTrue("Remote registration must be visible once the background refresh completed",
+        ttlService.isTrusted("https://remote.example.com"));
+  }
+
+  @Test
+  public void testRemoteDeregistrationNeverServedAfterTtl() throws Exception {
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(TTL_SECS, now);
+    ttlService.register(issuer("https://issuer.example.com", false));
+    deleteRow("https://issuer.example.com");
+
+    // No read in between, so no background refresh ran: the expired snapshot must not be served
+    advance(now, 11);
+    assertFalse("A revoked issuer must not be trusted once the TTL elapsed",
+        ttlService.isTrusted("https://issuer.example.com"));
+  }
+
+  @Test
+  public void testNonPositiveTtlFallsBackToDefault() throws Exception {
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(0, now);
+    insertRow("https://remote.example.com", false, Instant.now());
+
+    // Default TTL is 60s: effective TTL in [54s, 60s], refresh due after at least 27s
+    advance(now, 25);
+    ttlService.isTrusted("https://remote.example.com");
+    assertFalse(ttlService.isTrusted("https://remote.example.com"));
+
+    advance(now, 36);
+    assertTrue(ttlService.isTrusted("https://remote.example.com"));
+  }
+
+  /**
+   * DB outage: the snapshot is served stale until the TTL, a failed refresh neither extends the
+   * TTL nor is retried on every request, then the registry fails closed and recovers once the DB
+   * is readable again.
+   */
+  @Test
+  public void testDatabaseOutageServesStaleThenFailsClosedThenRecovers() throws Exception {
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(TTL_SECS, now);
+    ttlService.register(issuer("https://issuer.example.com", false));
+    final TrustedOidcIssuerDatabase realDatabase =
+        (TrustedOidcIssuerDatabase) FieldUtils.readField(ttlService, "database", true);
+
+    final TrustedOidcIssuerDatabase failingDb = EasyMock.createMock(TrustedOidcIssuerDatabase.class);
+    EasyMock.expect(failingDb.selectAll()).andThrow(new SQLException("database is down")).times(2);
+    EasyMock.replay(failingDb);
+    useDatabase(ttlService, failingDb);
+
+    advance(now, 6);
+    for (int i = 0; i < 5; i++) {
+      assertTrue("The cached snapshot must be served while it is younger than the TTL",
+          ttlService.isTrusted("https://issuer.example.com"));
+    }
+
+    advance(now, 5); // 11s after the last successful load, although the failed refresh ran at 6s
+    assertFalse("The registry must fail closed once the snapshot expired",
+        ttlService.isTrusted("https://issuer.example.com"));
+    assertTrue(ttlService.list().isEmpty());
+    assertTrue(registrySnapshotLoader(ttlService).isFailedClosed());
+    // One failed background refresh at 6s plus one failed load at 11s: no per-request DB retries
+    EasyMock.verify(failingDb);
+
+    useDatabase(ttlService, realDatabase);
+    advance(now, 6);
+    ttlService.isTrusted("https://issuer.example.com"); // triggers the background refresh
+    assertTrue("The registry must recover once the DB is readable again",
+        ttlService.isTrusted("https://issuer.example.com"));
+    assertFalse(registrySnapshotLoader(ttlService).isFailedClosed());
+  }
+
+  @Test
+  public void testBackgroundRefreshInvalidatesDiscoveryOnlyForChangedIssuers() throws Exception {
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(TTL_SECS, now);
+    ttlService.register(issuer("https://changed.example.com", true));
+    ttlService.register(issuer("https://removed.example.com", true));
+    ttlService.register(issuer("https://unchanged.example.com", true));
+    final RecordingDiscoveryHelper discovery = recordingDiscoveryHelper(ttlService);
+
+    // Another node re-registers one issuer, deregisters another and registers a new one
+    deleteRow("https://changed.example.com");
+    insertRow("https://changed.example.com", true, Instant.now().plusSeconds(1));
+    deleteRow("https://removed.example.com");
+    insertRow("https://added.example.com", true, Instant.now());
+
+    advance(now, 6);
+    ttlService.isTrusted("https://added.example.com");
+
+    assertEquals(new HashSet<>(Arrays.asList(
+            "https://changed.example.com", "https://removed.example.com", "https://added.example.com")),
+        new HashSet<>(discovery.invalidated));
+    assertFalse(discovery.invalidatedAll.get());
+  }
+
+  @Test
+  public void testLoadAfterExpiryInvalidatesAllDiscoveryEntries() throws Exception {
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(TTL_SECS, now);
+    ttlService.register(issuer("https://issuer.example.com", true));
+    final RecordingDiscoveryHelper discovery = recordingDiscoveryHelper(ttlService);
+
+    advance(now, 11);
+    assertTrue(ttlService.isTrusted("https://issuer.example.com"));
+    assertTrue("Without a previous snapshot to diff against, every discovery entry must be evicted",
+        discovery.invalidatedAll.get());
+  }
+
+  @Test
+  public void testLocalWriteInvalidatesDiscoveryForReRegisteredIssuer() throws Exception {
+    service.register(issuer("https://issuer.example.com", true));
+    final RecordingDiscoveryHelper discovery = recordingDiscoveryHelper(service);
+
+    service.deregister("https://issuer.example.com");
+    assertTrue(discovery.invalidated.contains("https://issuer.example.com"));
+
+    discovery.invalidated.clear();
+    service.register(issuer("https://issuer.example.com", true));
+    assertTrue(discovery.invalidated.contains("https://issuer.example.com"));
+  }
+
+  @Test
+  public void testRemoteReRegistrationRereadsSecretAfterBackgroundRefresh() throws Exception {
+    final List<String> reads = new ArrayList<>();
+    final String pem = TestCaBundles.toPem(TestCaBundles.selfSigned("CN=ca-a"));
+    final AtomicLong now = new AtomicLong();
+    final JdbcTrustedOidcIssuerService ttlService = ttlService(TTL_SECS, now, reference -> {
+      reads.add(reference.toString());
+      return pem;
+    });
+    final String url = "https://issuer.example.com";
+    final String jwksCa = "secret:cluster-1/apiserver-ca#ca.crt";
+    ttlService.register(issuer(url, true, jwksCa));
+    final IssuerJwksTrust trust = ttlService.getJwksTrust(url).orElseThrow();
+    assertEquals(1, reads.size());
+
+    // Another node re-registers the issuer with the same Secret reference
+    deleteRow(url);
+    insertRow(url, true, Instant.now().plusSeconds(1), jwksCa);
+
+    advance(now, 6);
+    ttlService.isTrusted(url);
+
+    assertNotSame("A re-registration on another node must discard the CA trust, as a local one does",
+        trust, ttlService.getJwksTrust(url).orElseThrow());
+    assertEquals(2, reads.size());
+    ttlService.stop();
+  }
+
+  // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
+
+  private JdbcTrustedOidcIssuerService ttlService(int ttlSecs, AtomicLong now) throws ServiceLifecycleException {
+    return ttlService(ttlSecs, now, null);
+  }
+
+  private JdbcTrustedOidcIssuerService ttlService(int ttlSecs, AtomicLong now,
+      IssuerTrustProvider.SecretReader secretReader) throws ServiceLifecycleException {
+    final GatewayConfig ttlConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(ttlConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(ttlConfig.getDatabaseName()).andReturn("mem:" + DB_NAME + ";DB_CLOSE_DELAY=-1").anyTimes();
+    EasyMock.expect(ttlConfig.getTrustedOidcIssuerMaxTrustedIssuers()).andReturn(10).anyTimes();
+    EasyMock.expect(ttlConfig.getTrustedOidcIssuerRegistryCacheTtlSecs()).andReturn(ttlSecs).anyTimes();
+    EasyMock.expect(ttlConfig.getTrustedOidcIssuerCaSecretMaxAgeSecs())
+        .andReturn(GatewayConfig.TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT).anyTimes();
+    EasyMock.replay(ttlConfig);
+
+    // Controlled time; background refreshes run on the calling thread
+    final JdbcTrustedOidcIssuerService ttlService = new JdbcTrustedOidcIssuerService(now::get, Runnable::run);
+    ttlService.setAliasService(aliasService);
+    if (secretReader != null) {
+      ttlService.setSecretReader(secretReader);
+    }
+    ttlService.init(ttlConfig, null);
+    return ttlService;
+  }
+
+  private static void advance(AtomicLong now, long seconds) {
+    now.addAndGet(TimeUnit.SECONDS.toNanos(seconds));
+  }
+
+  private static void insertRow(String url, boolean dynamicJwks, Instant registeredAt) throws SQLException {
+    insertRow(url, dynamicJwks, registeredAt, null);
+  }
+
+  private static void insertRow(String url, boolean dynamicJwks, Instant registeredAt, String jwksCa)
+      throws SQLException {
+    try (Connection conn = DriverManager.getConnection(H2_URL);
+         PreparedStatement ps = conn.prepareStatement(
+             "INSERT INTO TRUSTED_OIDC_ISSUERS (issuer_url, dynamic_jwks, registered_at, jwks_ca) VALUES (?, ?, ?, ?)")) {
+      ps.setString(1, url);
+      ps.setBoolean(2, dynamicJwks);
+      ps.setTimestamp(3, java.sql.Timestamp.from(registeredAt));
+      ps.setString(4, jwksCa);
+      ps.executeUpdate();
+    }
+  }
+
+  private static void deleteRow(String url) throws SQLException {
+    try (Connection conn = DriverManager.getConnection(H2_URL);
+         PreparedStatement ps = conn.prepareStatement("DELETE FROM TRUSTED_OIDC_ISSUERS WHERE issuer_url = ?")) {
+      ps.setString(1, url);
+      ps.executeUpdate();
+    }
+  }
+
+  private static RecordingDiscoveryHelper recordingDiscoveryHelper(JdbcTrustedOidcIssuerService target)
+      throws IllegalAccessException {
+    final RecordingDiscoveryHelper discovery = new RecordingDiscoveryHelper(target);
+    FieldUtils.writeField(target, "discoveryHelper", discovery, true);
+    FieldUtils.writeField(registrySnapshotLoader(target), "discoveryHelper", discovery, true);
+    return discovery;
+  }
+
+  /** Replaces the database both for the service's writes and for its registry snapshot reads. */
+  private static void useDatabase(JdbcTrustedOidcIssuerService target, TrustedOidcIssuerDatabase database)
+      throws IllegalAccessException {
+    FieldUtils.writeField(target, "database", database, true);
+    FieldUtils.writeField(registrySnapshotLoader(target), "database", database, true);
+  }
+
+  private static RegistrySnapshotLoader registrySnapshotLoader(JdbcTrustedOidcIssuerService target)
+      throws IllegalAccessException {
+    return (RegistrySnapshotLoader) FieldUtils.readField(target, "registrySnapshotLoader", true);
+  }
+
+  /** Records discovery cache invalidations instead of evicting anything. */
+  private static final class RecordingDiscoveryHelper extends OIDCDiscoveryHelper {
+    final List<String> invalidated = new ArrayList<>();
+    final AtomicBoolean invalidatedAll = new AtomicBoolean(false);
+
+    RecordingDiscoveryHelper(TrustedOidcIssuerService trustedIssuers) {
+      super(trustedIssuers, 600L, null);
+    }
+
+    @Override
+    void invalidate(String issuerUrl) {
+      invalidated.add(issuerUrl);
+    }
+
+    @Override
+    void invalidateAll() {
+      invalidatedAll.set(true);
+    }
+  }
 
   private static TrustedOidcIssuer issuer(String url, boolean dynamicJwks) {
     return new TrustedOidcIssuer(url, dynamicJwks, null, Instant.now(), null);

@@ -65,4 +65,31 @@ interface TrustedOidcIssuerServiceMessages {
   @Message(level = MessageLevel.INFO,
       text = "TLS trust failure fetching {1} for trusted OIDC issuer {0}; retrying with the re-read CA bundle")
   void retryingWithReloadedIssuerCa(String issuerUrl, String url);
+  @Message(level = MessageLevel.WARN,
+      text = "Background refresh of the trusted OIDC issuer registry snapshot failed; serving the cached snapshot "
+          + "(age {0,number,#}s). If the database stays unreachable, the registry fails closed (no issuer is trusted) in {1,number,#}s: {2}")
+  void errorRefreshingRegistrySnapshotServingStale(long ageSecs, long secsUntilFailClosed, String cause,
+      @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.ERROR,
+      text = "The trusted OIDC issuer registry snapshot expired and could not be reloaded from the database; "
+          + "failing closed: no issuer is trusted until the database is reachable again (next reload attempt after {0,number,#}s): {1}")
+  void registrySnapshotFailedClosed(long retrySecs, String cause,
+      @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.DEBUG,
+      text = "Trusted OIDC issuer registry is still failing closed; reload attempt failed: {0}")
+  void registrySnapshotStillFailedClosed(String cause);
+
+  @Message(level = MessageLevel.INFO,
+      text = "Trusted OIDC issuer registry snapshot reloaded from the database after a failure; {0} issuer(s) trusted")
+  void registrySnapshotRecovered(int issuerCount);
+
+  @Message(level = MessageLevel.DEBUG,
+      text = "Trusted OIDC issuer registry snapshot reloaded from the database; {0} issuer(s), {1} changed issuer(s) invalidated in the discovery and CA trust caches")
+  void registrySnapshotReloaded(int issuerCount, int invalidatedDiscoveryEntries);
+
+  @Message(level = MessageLevel.INFO,
+      text = "Trusted OIDC issuer registry snapshot TTL is {0,number,#}ms (configured {1,number,#}s, minus per-node jitter); background refresh after {2,number,#}ms")
+  void registrySnapshotTtl(long effectiveTtlMs, int configuredTtlSecs, long refreshMs);
 }

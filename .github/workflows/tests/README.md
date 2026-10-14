@@ -98,6 +98,13 @@ The tests run in a dedicated Docker container defined in `../compose/docker-comp
 
 If you want to skip the integration tests for a specific Pull Request (e.g., documentation changes), add the label **`skip-tests`** to the PR.
 
+## Opt-in Suites on Pull Requests
+
+Some suites need extra services, so they run only when the PR carries their label:
+
+- **`test-federation`**: `test_knoxidf_federation.py` against a real Keycloak (`../compose/docker-compose.knoxidf-federation.yml`).
+- **`test-ha`**: `test_knoxidf_ha.py` against two gateways, `knox` and `knox2`, sharing one PostgreSQL database (`../compose/docker-compose.knoxidf-ha.yml`). It checks that KnoxIDF registry changes made on one gateway reach the other. The override file's header shows how to run it locally.
+
 ## Running Tests Locally
 
 You can run these tests locally using Docker Compose from the Knox source directory:

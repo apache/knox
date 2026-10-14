@@ -46,9 +46,14 @@ Pin the implementation explicitly with the per-service `impl` property:
 
 | Service | `impl` property | Default (H2) implementation | JDBC implementation |
 |---------|-----------------|-----------------------------|---------------------|
-| Federated identity | `gateway.service.KnoxIDFFederatedIdentityService.impl` | `H2DBFederatedIdentityService` | `JdbcFederatedIdentityService` |
-| Trusted OIDC issuers | `gateway.service.TrustedOidcIssuerService.impl` | `H2DBTrustedOidcIssuerService` | `JdbcTrustedOidcIssuerService` |
-| Delegation policy | `gateway.service.DelegationPolicyService.impl` | `H2DBDelegationPolicyService` | `JdbcDelegationPolicyService` |
+| Federated identity | `gateway.service.knoxidffederatedidentity.impl` | `H2DBFederatedIdentityService` | `JdbcFederatedIdentityService` |
+| Trusted OIDC issuers | `gateway.service.trustedoidcissuer.impl` | `H2DBTrustedOidcIssuerService` | `JdbcTrustedOidcIssuerService` |
+| Delegation policy | `gateway.service.delegationpolicy.impl` | `H2DBDelegationPolicyService` | `JdbcDelegationPolicyService` |
+
+The value is the fully qualified class name, e.g.
+`org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.JdbcTrustedOidcIssuerService` (the
+federated identity and delegation policy implementations live in the `...services.knoxidf.federation`
+and `...services.knoxidf.delegation` packages).
 
 Leaving a property unset selects the embedded H2 implementation. There is no longer a no-op
 implementation that disables persistence; if the selected backend cannot be initialized, gateway
@@ -88,7 +93,7 @@ When [token exchange with delegation](token_exchange.md) is enabled, KnoxIDF sto
 operator-authored [delegation policies](token_exchange.md#delegation-policies) that decide which
 actor may act on behalf of which subjects. These policies live in the same persistence backend as
 the other KnoxIDF stores — embedded H2 by default, or a JDBC store when
-`gateway.service.DelegationPolicyService.impl` is pinned to `JdbcDelegationPolicyService` (see
+`gateway.service.delegationpolicy.impl` is pinned to `JdbcDelegationPolicyService` (see
 [Backend selection](#backend-selection)). Treat the backend choice as gateway-wide: for any
 multi-instance deployment, delegation policies must be in the shared external database so every
 instance authorizes exchanges identically.
@@ -182,6 +187,32 @@ KnoxIDF-specific requirements:
 Sticky sessions are recommended for the interactive Authorization Code / federation flow so that
 the browser stays on the instance holding the in-flight authorize/consent state, though the issued
 tokens themselves are verifiable on any instance.
+
+### Trusted OIDC issuer registry consistency
+
+Each instance keeps an in-memory copy of the trusted OIDC issuer registry, so token requests do not
+query the database. A registration or removal is visible on the instance that served the admin
+request immediately, and on the other instances within
+`gateway.trusted.oidc.issuer.registry.cache.ttl.secs` (default `60` seconds). Lower it if a removed
+issuer must stop being accepted cluster-wide sooner; each re-read is a single `SELECT` of the
+issuer table. Delegation policies and federated identities are read from the database on every
+request and need no such setting.
+
+If the database becomes unreachable, an instance keeps serving its in-memory registry until it is
+older than the TTL (logging a `WARN` on each failed re-read) and then **fails closed**: no issuer is
+trusted, so tokens from external issuers are rejected, until the database is reachable again. Entering this state is logged once at `ERROR` and leaving it at `INFO` (logger
+`org.apache.knox.gateway.knoxidf.trustedoidcissuer.service`).
+
+Two related behaviors remain per-instance:
+
+- The OIDC discovery cache (`gateway.trusted.oidc.issuer.discovery.cache.ttl.secs`) and the CA
+  bundles loaded for issuers registered with a `jwksCa`. An instance discards an issuer's entries
+  whenever it notices that the issuer was added, removed or re-registered, but the admin
+  `refresh-jwks` operation only discards them on the instance that served the request. The other
+  instances re-fetch the discovery document when their entry expires, and re-read a Secret-backed
+  CA bundle after `gateway.trusted.oidc.issuer.ca.secret.max.age.secs` or a TLS certificate failure.
+- The `max.issuers` limit is checked against the local registry copy, so instances registering
+  issuers concurrently can briefly exceed it.
 
 ## Rate limiting
 
