@@ -64,3 +64,10 @@ var KNOX_DEFAULT_THEME = 'default';
 
 // Lock theme to prevent user overrides (true = locked, false = allow overrides)
 var KNOX_THEME_LOCKED = false;
+
+var KNOX_THEME_BRANDING = {
+	modern: {
+		brand: 'Apache Knox SSO',
+		favicon: 'styles/themes/modern/images/favicon.svg'
+	}
+};
