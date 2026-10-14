@@ -35,14 +35,24 @@ import java.util.Map;
 public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
+    /**
+     * Service option that, when set to {@code true}, disables the backend password alias retry
+     * ({@code gateway.ldap.backend.password.alias.retry.attempts}). Set by the Knox CLI: it has no
+     * startup race to wait out, and waiting there would stall every command - including the
+     * {@code create-alias} that would provide the missing alias.
+     */
+    public static final String DISABLE_PASSWORD_ALIAS_RETRY_OPTION = "ldap.backend.password.alias.retry.disabled";
+
     KnoxLDAPServerManager ldapServerManager;
     AliasService aliasService;
     private GatewayServices gatewayServices;
     private boolean enabled;
+    private boolean passwordAliasRetryEnabled = true;
 
     @Override
     public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
         this.enabled = config.isLDAPEnabled();
+        this.passwordAliasRetryEnabled = options == null || !Boolean.parseBoolean(options.get(DISABLE_PASSWORD_ALIAS_RETRY_OPTION));
 
         if (!enabled) {
             return;
@@ -51,6 +61,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
         try {
             // Initialize the LDAP server manager with configuration
             ldapServerManager = new KnoxLDAPServerManager(aliasService, gatewayServices);
+            ldapServerManager.setPasswordAliasRetryEnabled(passwordAliasRetryEnabled);
             ldapServerManager.initialize(config);
         } catch (Exception e) {
             throw new ServiceLifecycleException("Failed to initialize LDAP service", e);
@@ -102,6 +113,7 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
 
             if (this.enabled) {
                 this.ldapServerManager = this.ldapServerManager == null ? new KnoxLDAPServerManager(aliasService, gatewayServices) : this.ldapServerManager;
+                ldapServerManager.setPasswordAliasRetryEnabled(passwordAliasRetryEnabled);
                 ldapServerManager.stop();
                 ldapServerManager.initialize(config);
                 ldapServerManager.start();

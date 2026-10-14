@@ -98,6 +98,9 @@ public class KnoxLDAPServerManager {
     private Set<String> baseDns;
     private int maxSizeLimit;
     private int maxTimeLimit;
+    private int passwordAliasRetryAttempts;
+    private int passwordAliasRetryIntervalMs;
+    private boolean passwordAliasRetryEnabled = true;
 
     KnoxLDAPServerManager(AliasService aliasService) {
         this(aliasService, null);
@@ -106,6 +109,16 @@ public class KnoxLDAPServerManager {
     KnoxLDAPServerManager(AliasService aliasService, GatewayServices gatewayServices) {
         this.aliasService = aliasService;
         this.gatewayServices = gatewayServices;
+    }
+
+    /**
+     * Enables or disables the backend password alias retry configured in gateway-site.xml. When disabled,
+     * a missing alias is reported right away regardless of the configured retry attempts.
+     *
+     * @param passwordAliasRetryEnabled whether missing backend password aliases are retried
+     */
+    void setPasswordAliasRetryEnabled(boolean passwordAliasRetryEnabled) {
+        this.passwordAliasRetryEnabled = passwordAliasRetryEnabled;
     }
 
     /**
@@ -129,6 +142,8 @@ public class KnoxLDAPServerManager {
 
         maxSizeLimit = config.getLDAPMaxSizeLimit();
         maxTimeLimit = config.getLDAPMaxTimeLimit();
+        passwordAliasRetryAttempts = passwordAliasRetryEnabled ? Math.max(0, config.getLDAPBackendPasswordAliasRetryAttempts()) : 0;
+        passwordAliasRetryIntervalMs = Math.max(0, config.getLDAPBackendPasswordAliasRetryIntervalMs());
 
         // Secure (LDAPS) transport configuration. When enabled but no dedicated keystore is
         // configured, fall back to the gateway identity keystore so the embedded server can
@@ -170,7 +185,7 @@ public class KnoxLDAPServerManager {
 
     private void createInterceptors(GatewayConfig config) throws Exception {
         List<String> interceptorNames = config.getLDAPInterceptorNames();
-        List<Interceptor> interceptors = new ArrayList<>(interceptorNames.size());
+        List<Map.Entry<String, Map<String, String>>> interceptorConfigs = new ArrayList<>(interceptorNames.size());
         for (String interceptorName : interceptorNames) {
             // Get backend-specific configuration using prefixed properties
             final Map<String, String> interceptorConfig = config.getLDAPInterceptorConfig(interceptorName);
@@ -196,9 +211,14 @@ public class KnoxLDAPServerManager {
                 }
             }
 
-            resolveBackendPasswordAliases(interceptorName, interceptorConfig);
+            interceptorConfigs.add(Map.entry(interceptorName, interceptorConfig));
+        }
 
-            interceptors.add(InterceptorFactory.createInterceptor(config, gatewayServices, interceptorName, interceptorConfig));
+        resolveBackendPasswordAliases(interceptorConfigs);
+
+        List<Interceptor> interceptors = new ArrayList<>(interceptorConfigs.size());
+        for (Map.Entry<String, Map<String, String>> interceptorConfig : interceptorConfigs) {
+            interceptors.add(InterceptorFactory.createInterceptor(config, gatewayServices, interceptorConfig.getKey(), interceptorConfig.getValue()));
         }
         this.interceptors = interceptors;
     }
@@ -206,27 +226,67 @@ public class KnoxLDAPServerManager {
     /**
      * Resolves gateway credential-store alias references (e.g. {@code ${ALIAS=my-ad-password}}) held in the
      * backend password properties, replacing each with the secret fetched from the gateway credential store.
-     * Literal (non-alias) values are left untouched for backward compatibility; an unresolvable alias is
-     * left as-is and logged at ERROR, so the backend bind fails rather than silently using a different credential.
+     * Literal (non-alias) values are left untouched for backward compatibility.
+     * <p>
+     * An alias not (yet) present in the credential store is looked up again up to
+     * {@link GatewayConfig#LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS} times, so a secret persisted shortly after the
+     * configuration was loaded is still picked up. All pending aliases are retried together, so the total wait is
+     * bounded by attempts x interval regardless of how many aliases are missing. An alias still unresolved after
+     * the last attempt is left as-is and logged at ERROR, so the backend bind fails rather than silently using a
+     * different credential.
      */
-    private void resolveBackendPasswordAliases(String interceptorName, Map<String, String> interceptorConfig) {
-        for (String key : BACKEND_PASSWORD_KEYS) {
-            final String value = interceptorConfig.get(key);
-            if (StringUtils.isNotBlank(value) && aliasService.isAlias(value)) {
-                final String alias = aliasService.extractAlias(value);
-                try {
-                    final char[] password = aliasService.getPasswordFromAliasForGateway(alias);
-                    if (password == null) {
-                        LOG.ldapBackendPasswordAliasNotFound(alias, key, interceptorName);
-                    } else {
-                        interceptorConfig.put(key, new String(password));
-                        LOG.ldapBackendPasswordAliasResolved(key, interceptorName);
-                    }
-                } catch (AliasServiceException e) {
-                    LOG.ldapBackendPasswordAliasResolutionFailed(alias, key, interceptorName, e);
+    private void resolveBackendPasswordAliases(List<Map.Entry<String, Map<String, String>>> interceptorConfigs) {
+        List<PendingAlias> pendingAliases = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> interceptorConfig : interceptorConfigs) {
+            for (String key : BACKEND_PASSWORD_KEYS) {
+                final String value = interceptorConfig.getValue().get(key);
+                if (StringUtils.isNotBlank(value) && aliasService.isAlias(value)) {
+                    pendingAliases.add(new PendingAlias(interceptorConfig.getKey(), interceptorConfig.getValue(), key, aliasService.extractAlias(value)));
                 }
             }
         }
+
+        for (int retry = 1; ; retry++) {
+            pendingAliases.removeIf(this::resolveBackendPasswordAlias);
+            if (pendingAliases.isEmpty() || retry > passwordAliasRetryAttempts) {
+                break;
+            }
+            for (PendingAlias pending : pendingAliases) {
+                LOG.ldapBackendPasswordAliasRetrying(pending.alias(), pending.key(), pending.interceptorName(),
+                        passwordAliasRetryIntervalMs, retry, passwordAliasRetryAttempts);
+            }
+            try {
+                Thread.sleep(passwordAliasRetryIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        for (PendingAlias pending : pendingAliases) {
+            LOG.ldapBackendPasswordAliasNotFound(pending.alias(), pending.key(), pending.interceptorName());
+        }
+    }
+
+    /**
+     * @return true if the alias needs no further lookups (it was resolved, or the lookup failed with an error);
+     * false if it was not found in the credential store
+     */
+    private boolean resolveBackendPasswordAlias(PendingAlias pending) {
+        try {
+            final char[] password = aliasService.getPasswordFromAliasForGateway(pending.alias());
+            if (password == null) {
+                return false;
+            }
+            pending.interceptorConfig().put(pending.key(), new String(password));
+            LOG.ldapBackendPasswordAliasResolved(pending.key(), pending.interceptorName());
+        } catch (AliasServiceException e) {
+            LOG.ldapBackendPasswordAliasResolutionFailed(pending.alias(), pending.key(), pending.interceptorName(), e);
+        }
+        return true;
+    }
+
+    private record PendingAlias(String interceptorName, Map<String, String> interceptorConfig, String key, String alias) {
     }
 
     /**

@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.deploy.DeploymentContext;
 import org.apache.knox.gateway.descriptor.FilterParamDescriptor;
 import org.apache.knox.gateway.descriptor.ResourceDescriptor;
+import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.services.security.impl.CLIMasterService;
 import org.apache.knox.gateway.topology.Provider;
 
@@ -58,7 +60,11 @@ public class CLIGatewayServices extends AbstractGatewayServices {
 
     addService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_ROLES_LOOKUP_SERVICE, config, options));
 
-    addService(ServiceType.LDAP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_SERVICE, config, options));
+    // The CLI must not wait for missing LDAP backend password aliases: e.g. 'create-alias' would stall
+    // on the very alias it is about to create.
+    final Map<String, String> ldapServiceOptions = options == null ? new HashMap<>() : new HashMap<>(options);
+    ldapServiceOptions.put(KnoxLDAPService.DISABLE_PASSWORD_ALIAS_RETRY_OPTION, Boolean.TRUE.toString());
+    addService(ServiceType.LDAP_SERVICE, gatewayServiceFactory.create(this, ServiceType.LDAP_SERVICE, config, ldapServiceOptions));
 
   }
 

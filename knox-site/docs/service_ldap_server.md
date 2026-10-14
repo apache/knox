@@ -47,6 +47,8 @@ The service is configured in `gateway-site.xml`.
 | `gateway.ldap.max.size.limit` | 1000 | The maximum size limit of the result set returned by search requests. |
 | `gateway.ldap.max.time.limit` | 60000 | The maximum time limit for search requests in milliseconds. |
 | `gateway.ldap.dn.mapping.enabled` | True | Enables or disables mapping remote DNs to the LDAP server base DN. |
+| `gateway.ldap.backend.password.alias.retry.attempts` | 0 | How many more times a backend password alias that is not yet in the credential store is looked up before it is left unresolved. `0` disables retries. See [Credential store aliases for backend passwords](#credential-store-aliases-for-backend-passwords). |
+| `gateway.ldap.backend.password.alias.retry.interval.ms` | 1000 | Delay in milliseconds between backend password alias lookup retries. |
 | `gateway.ldap.recursive.group.resolution` | False | Enables or disables retrieval of transitive group membership through recursive search queries against remote LDAP backends. |
 | `gateway.ldap.recursive.group.resolution.max.depth` | 3 | Maximum depth of recursion for transitive group membership retrieval. |
 
@@ -227,6 +229,8 @@ knoxcli.sh create-alias my_backend_bind_password --value <password>
     <value>S{ALIAS=my_backend_bind_password}</value>
 </property>
 ```
+
+If the alias may be created shortly after the configuration is loaded (for example when a Kubernetes Secret and the configuration referencing it are created together), set `gateway.ldap.backend.password.alias.retry.attempts` to have Knox look up a missing alias again every `gateway.ldap.backend.password.alias.retry.interval.ms` milliseconds before giving up ([KNOX-3513](https://issues.apache.org/jira/browse/KNOX-3513)). Each retry is logged at WARN; the ERROR is only logged once the retries are exhausted. All missing aliases are retried together, so the LDAP service waits at most attempts x interval while starting or reloading. The Knox CLI (`knoxcli.sh`) never retries, so commands such as `create-alias` are not held up by the missing alias.
 
 ## Active Directory (AD) Integration
 

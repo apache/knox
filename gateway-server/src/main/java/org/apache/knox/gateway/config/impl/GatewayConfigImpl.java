@@ -404,6 +404,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* The default max time for LDAP search in milliseconds */
   public static final int DEFAULT_LDAP_MAX_TIME_LIMIT = 60 * 1000;
   public static final boolean DEFAULT_LDAP_DN_MAPPING_ENABLED = true;
+  public static final int DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS = 0;
+  public static final int DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS = 1000;
 
   public GatewayConfigImpl() {
     init();
@@ -1948,6 +1950,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public boolean getLDAPDnMappingEnabled() {
     return getBoolean(LDAP_DN_MAPPING_ENABLED, DEFAULT_LDAP_DN_MAPPING_ENABLED);
+  }
+
+  @Override
+  public int getLDAPBackendPasswordAliasRetryAttempts() {
+    return getInt(LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS, DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS);
+  }
+
+  @Override
+  public int getLDAPBackendPasswordAliasRetryIntervalMs() {
+    return getInt(LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS, DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS);
   }
 
   @Override

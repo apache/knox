@@ -227,6 +227,9 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR, text = "No value found in the gateway credential store for alias {0} referenced by LDAP backend property {1} (interceptor {2}); the backend bind will fail until the alias is defined")
     void ldapBackendPasswordAliasNotFound(String alias, String property, String interceptorName);
 
+    @Message(level = MessageLevel.WARN, text = "No value found yet in the gateway credential store for alias {0} referenced by LDAP backend property {1} (interceptor {2}); retrying in {3,number,#} ms (retry {4} of {5})")
+    void ldapBackendPasswordAliasRetrying(String alias, String property, String interceptorName, int retryIntervalMs, int retry, int retryAttempts);
+
     @Message(level = MessageLevel.ERROR, text = "Failed to resolve gateway credential store alias {0} for LDAP backend property {1} (interceptor {2}): {3}")
     void ldapBackendPasswordAliasResolutionFailed(String alias, String property, String interceptorName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

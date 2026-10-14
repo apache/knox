@@ -211,6 +211,17 @@ limitations under the License.
         <name>gateway.ldap.interceptor.demoldap.systemPassword</name>
         <value>${ALIAS=gateway_ldap_demoldap_system_password}</value>
     </property>
+    <!-- gateway.sh creates the systemPassword alias above only after Knox has started retrying the
+         lookup, reproducing a credential store secret that is persisted after the LDAP configuration
+         was loaded (KNOX-3513). The retry window must stay longer than gateway.sh's wait for the retry. -->
+    <property>
+        <name>gateway.ldap.backend.password.alias.retry.attempts</name>
+        <value>30</value>
+    </property>
+    <property>
+        <name>gateway.ldap.backend.password.alias.retry.interval.ms</name>
+        <value>1000</value>
+    </property>
     <property>
         <name>gateway.ldap.interceptor.demoldap.userSearchBase</name>
         <value>ou=people,dc=hadoop,dc=apache,dc=org</value>
