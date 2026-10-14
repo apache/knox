@@ -27,7 +27,6 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
  */
 final class ActorIdentity {
 
-  private static final String K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX = "system:serviceaccount:";
   private static final String K8S_SA_ACTOR_AUTHORITY = "K8S_SA";
   private static final String USER_ACTOR_AUTHORITY = "USER";
 
@@ -54,8 +53,8 @@ final class ActorIdentity {
    */
   static ActorIdentity fromJwt(JWT actorJwt) {
     final String subject = actorJwt.getSubject();
-    if (subject != null && subject.startsWith(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX)) {
-      final String namespaceAndName = subject.substring(K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX.length());
+    if (subject != null && subject.startsWith(ServiceAccountSubject.K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX)) {
+      final String namespaceAndName = subject.substring(ServiceAccountSubject.K8S_SERVICE_ACCOUNT_SUBJECT_PREFIX.length());
       return new ActorIdentity(K8S_SA_ACTOR_AUTHORITY, actorJwt.getIssuer() + ":" + namespaceAndName);
     }
     return new ActorIdentity(USER_ACTOR_AUTHORITY, subject);
