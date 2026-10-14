@@ -229,6 +229,17 @@ class OIDCDiscoveryHelper {
     }
   }
 
+  /**
+   * Executes the GET with a client built for this fetch alone and closed right after it.
+   * <p>
+   * The pinned clients are deliberately not pooled or kept per issuer. Discovery documents are
+   * cached for the configured TTL, so a pinned fetch happens about once per TTL per issuer (plus
+   * at most one retry after a TLS trust failure), and a long-lived client would rarely get to
+   * reuse a connection. A per-issuer client would also have to be rebuilt whenever the issuer's
+   * CA bundle changes and closed when the issuer is deregistered. The cost of this approach, a
+   * new connection and TLS handshake per fetch, is negligible at that rate. The issuer's JWKS is
+   * fetched separately by the token authority, which caches the JWK source per issuer trust.
+   */
   private String executePinned(IssuerJwksTrust jwksTrust, String url) throws IOException {
     try (CloseableHttpClient pinnedHttpClient = pinnedHttpClientFactory.apply(jwksTrust.getSslContext())) {
       return execute(pinnedHttpClient, url);

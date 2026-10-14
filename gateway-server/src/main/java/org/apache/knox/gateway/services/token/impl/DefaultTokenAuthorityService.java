@@ -305,7 +305,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   public boolean verifyToken(JWT token, Set<URI> jwksUrls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier,
                              IssuerJwksTrust jwksTrust) throws TokenServiceException {
     boolean verified = false;
-    for(final URI url : jwksUrls) {
+    for (final URI url : jwksUrls) {
       try {
         verified = verifyToken(token, url.toString(), algorithm, typeVerifier, jwksTrust);
         /* if token is verified no need to check further return result */

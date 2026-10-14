@@ -754,7 +754,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // trusted AND configured for dynamic JWKS discovery. If the issuer is not registered, or
       // registered without dynamic JWKS, it is not actionable through this path.
       if (issuerSvc != null && issuerSvc.isDynamicJwks(issuer)) {
-        // resolveJwksUri() performs OIDC discovery
+        // resolveJwksUri() performs (cached) OIDC discovery. The discovery fetch honors the issuer's
+        // jwksCa without it being passed in: the discovery helper looks up the same trust through
+        // getJwksTrust() and fetches with a short-lived client trusting only that CA bundle.
         final Optional<String> jwksUri = issuerSvc.resolveJwksUri(issuer);
         if (jwksUri.isPresent()) {
           try {
@@ -766,8 +768,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
               LOGGER.rejectedInsecureDynamicJwksUri(jwksUri.get(), issuer);
               return RegisteredIssuerJwks.EMPTY;
             }
-            // An issuer registered with a jwksCa is fetched trusting only that CA bundle. If the
-            // bundle cannot be loaded, reject rather than fall back to the default truststore.
+            // The JWKS fetch, done later by the token authority, gets the trust passed along with the
+            // URI, so an issuer registered with a jwksCa is fetched trusting only that CA bundle. If
+            // the bundle cannot be loaded, reject rather than fall back to the default truststore.
             final IssuerJwksTrust jwksTrust;
             try {
               jwksTrust = issuerSvc.getJwksTrust(issuer).orElse(null);

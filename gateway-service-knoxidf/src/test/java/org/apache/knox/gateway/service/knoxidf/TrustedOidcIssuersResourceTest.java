@@ -365,9 +365,9 @@ public class TrustedOidcIssuersResourceTest {
         "jwksCa must not exceed " + JwksCa.MAX_LENGTH + " characters");
     assertJwksCaRejected(true, "secret:cluster-1/apiserver-ca", "secret:[<namespace>/]<name>#<key>");
     assertJwksCaRejected(true, "secret:cluster-1/Apiserver_CA#ca.crt", "secret:[<namespace>/]<name>#<key>");
-    assertJwksCaRejected(true, "not a certificate", "Invalid jwksCa: CA bundle");
+    assertJwksCaRejected(true, "not a certificate", "jwksCa CA bundle");
     assertJwksCaRejected(true, "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----",
-        "Invalid jwksCa: CA bundle");
+        "jwksCa CA bundle");
   }
 
   // ---------------------------------------------------------------------------

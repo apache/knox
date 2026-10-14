@@ -243,24 +243,22 @@ public class TrustedOidcIssuersResource {
    * @return the error description, or null if the value is valid or absent
    */
   private static String validateJwksCa(String jwksCa, boolean dynamicJwks) {
-    if (jwksCa == null) {
-      return null;
-    }
-    if (!dynamicJwks) {
-      return "jwksCa requires dynamicJwks=true; it only applies to OIDC discovery and JWKS fetches";
-    }
-    if (jwksCa.length() > JwksCa.MAX_LENGTH) {
-      return "jwksCa must not exceed " + JwksCa.MAX_LENGTH + " characters";
-    }
-    try {
-      if (JwksCa.isSecretReference(jwksCa)) {
-        JwksCa.parseSecretReference(jwksCa);
-      } else {
-        JwksCa.parsePemBundle(jwksCa);
+    if (jwksCa != null) {
+      if (!dynamicJwks) {
+        return "jwksCa requires dynamicJwks=true; it only applies to OIDC discovery and JWKS fetches";
       }
-    } catch (IllegalArgumentException e) {
-      // the secret reference errors already name the field; the PEM errors do not
-      return JwksCa.isSecretReference(jwksCa) ? e.getMessage() : "Invalid jwksCa: " + e.getMessage();
+      if (jwksCa.length() > JwksCa.MAX_LENGTH) {
+        return "jwksCa must not exceed " + JwksCa.MAX_LENGTH + " characters";
+      }
+      try {
+        if (JwksCa.isSecretReference(jwksCa)) {
+          JwksCa.parseSecretReference(jwksCa);
+        } else {
+          JwksCa.parsePemBundle(jwksCa);
+        }
+      } catch (IllegalArgumentException e) {
+        return e.getMessage();
+      }
     }
     return null;
   }

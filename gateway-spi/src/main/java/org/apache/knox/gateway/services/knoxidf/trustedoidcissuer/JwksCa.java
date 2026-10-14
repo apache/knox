@@ -87,14 +87,14 @@ public final class JwksCa {
    */
   public static List<X509Certificate> parsePemBundle(String pem) {
     if (pem == null || pem.trim().isEmpty()) {
-      throw new IllegalArgumentException("CA bundle is empty");
+      throw new IllegalArgumentException("jwksCa CA bundle is empty");
     }
     final Collection<? extends Certificate> parsed;
     try {
       parsed = CertificateFactory.getInstance("X.509")
           .generateCertificates(new ByteArrayInputStream(pem.trim().getBytes(StandardCharsets.UTF_8)));
     } catch (CertificateException e) {
-      throw new IllegalArgumentException("CA bundle is not a valid PEM certificate bundle: " + e.getMessage(), e);
+      throw new IllegalArgumentException("jwksCa CA bundle is not a valid PEM certificate bundle: " + e.getMessage(), e);
     }
     final List<X509Certificate> certificates = new ArrayList<>();
     for (Certificate certificate : parsed) {
@@ -103,7 +103,7 @@ public final class JwksCa {
       }
     }
     if (certificates.isEmpty()) {
-      throw new IllegalArgumentException("CA bundle contains no X.509 certificate");
+      throw new IllegalArgumentException("jwksCa CA bundle contains no X.509 certificate");
     }
     return certificates;
   }
