@@ -124,6 +124,14 @@ class IssuerTrustProvider implements AutoCloseable {
     }
   }
 
+  /**
+   * Discards the trust of every issuer, for when the registry is reloaded without a previous
+   * snapshot to diff against.
+   */
+  void invalidateAll() {
+    trusts.clear();
+  }
+
   @Override
   public void close() throws Exception {
     trusts.clear();

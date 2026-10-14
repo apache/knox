@@ -1,0 +1,120 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with this
+# work for additional information regarding copyright ownership. The ASF
+# licenses this file to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# KnoxIDF HA compose OVERRIDE.
+#
+# Runs two Knox gateways, `knox` and `knox2`, against one shared PostgreSQL
+# database, the way an HA deployment behind a load balancer does. It runs ONLY
+# the HA suite (test_knoxidf_ha.py), which the base docker-compose ignores: the
+# suite changes the KnoxIDF registries through one node and checks that the
+# other node picks the changes up. It is opt-in (the 'test-ha' PR label) because
+# it adds a database and a second gateway to the run.
+#
+# The override:
+#   - adds a `postgres` service holding the shared KnoxIDF and token state tables,
+#   - mounts the HA gateway-site.xml (JDBC-backed stores, a 5s trusted issuer
+#     registry TTL) over the baked one on both gateways,
+#   - adds `knox2`, a second gateway built from the same image, topologies and
+#     k3s fixtures as `knox`. It starts only once `knox` is healthy, so the two
+#     nodes do not race to create the database tables,
+#   - points the `tests` service at both gateways.
+#
+# Run it locally (from repo root):
+#
+#   docker compose \
+#     -f .github/workflows/compose/docker-compose.yml \
+#     -f .github/workflows/compose/docker-compose.knoxidf-ha.yml \
+#     up -d knox knox2 postgres
+#   docker compose \
+#     -f .github/workflows/compose/docker-compose.yml \
+#     -f .github/workflows/compose/docker-compose.knoxidf-ha.yml \
+#     run --rm tests bash -c "pip install -r requirements.txt \
+#       && pytest test_knoxidf_ha.py"
+#   docker compose \
+#     -f .github/workflows/compose/docker-compose.yml \
+#     -f .github/workflows/compose/docker-compose.knoxidf-ha.yml down --volumes
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=knox
+      - POSTGRES_PASSWORD=knox
+      - POSTGRES_DB=knox
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "knox", "-d", "knox"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  knox:
+    volumes:
+      - ./knoxidf-ha/gateway-site.xml:/knox-runtime/conf/gateway-site.xml:ro
+    depends_on:
+      # The JDBC-backed services connect to the database at gateway startup and
+      # fail the startup if they cannot.
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # The health topology is anonymous, so this passes as soon as the gateway
+      # serves requests. knox2 waits for it.
+      test: ["CMD", "curl", "-kfs", "https://localhost:8443/gateway/health/v1/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  knox2:
+    image: apache/knox-dev:${IMAGE_TAG:-master}
+    # Same command, environment and mounts as the base `knox` service, apart
+    # from the logs directory: knox2 keeps its gateway.log inside the container
+    # (fetch it with `docker compose cp`), so the two nodes never share a log.
+    command: /gateway.sh
+    environment:
+      - KUBECONFIG=/k3s/knox-kubeconfig.yaml
+    volumes:
+      - ../build/conf/topologies:/knox-runtime/conf/topologies
+      - k3s-output:/k3s:ro
+      - ./knoxidf-ha/gateway-site.xml:/knox-runtime/conf/gateway-site.xml:ro
+    depends_on:
+      ldap:
+        condition: service_started
+      k8s-bootstrap:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      # `knox` creates the shared tables during its startup; starting knox2 only
+      # after that avoids two nodes racing on CREATE TABLE.
+      knox:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-kfs", "https://localhost:8443/gateway/health/v1/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  tests:
+    environment:
+      - KNOX_GATEWAY_URL=https://knox:8443/
+      - KNOX_GATEWAY_URL_2=https://knox2:8443/
+    command: >
+      bash -c "pip install -r requirements.txt
+      && pytest test_knoxidf_ha.py --junitxml=test-results-ha.xml"
+    depends_on:
+      knox:
+        condition: service_healthy
+      knox2:
+        condition: service_healthy

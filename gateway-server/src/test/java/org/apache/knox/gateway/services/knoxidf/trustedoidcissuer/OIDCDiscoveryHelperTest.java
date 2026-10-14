@@ -250,6 +250,22 @@ public class OIDCDiscoveryHelperTest {
     EasyMock.verify(client);
   }
 
+  @Test
+  public void testInvalidateAllEvictsFromCache() throws Exception {
+    final CloseableHttpClient client = EasyMock.createMock(CloseableHttpClient.class);
+    EasyMock.expect(client.execute(EasyMock.isA(HttpUriRequest.class)))
+        .andReturn(mockResponse(200, VALID_DISCOVERY_JSON))
+        .times(2); // must be called twice after eviction
+    EasyMock.replay(client);
+
+    final OIDCDiscoveryHelper h = helper(trustedDynamic(), client);
+    h.discoverJwksUri(ISSUER); // fetch #1
+    h.invalidateAll();         // evict everything
+    h.discoverJwksUri(ISSUER); // fetch #2
+
+    EasyMock.verify(client);
+  }
+
   /**
    * When fetchJwksUri returns null (any failure), Caffeine must NOT cache the null.
    * The next call must trigger a fresh HTTP request.
