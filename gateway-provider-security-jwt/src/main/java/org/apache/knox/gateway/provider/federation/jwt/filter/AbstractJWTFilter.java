@@ -76,6 +76,7 @@ import org.apache.knox.gateway.security.TokenIdPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
@@ -681,13 +682,13 @@ public abstract class AbstractJWTFilter implements Filter {
       // Issuer in the static trusted list: full validation using the provider-configured
       // PEM/JWKS/instance-key chain. An empty set signals "use verifyTokenSignature()".
       return doFullTokenValidation(request, response, token, tokenId,
-          displayableToken, displayableTokenId, Set.of(), requestAudienceValidator, cookieAuth);
+          displayableToken, displayableTokenId, RegisteredIssuerJwks.EMPTY, requestAudienceValidator, cookieAuth);
     }
     // For issuers not in the static list, subclasses may resolve JWKS for a runtime-registered issuer.
     // An empty result means "not applicable for this request" and the token is rejected.
     // All other validation checks (expiry, audiences, nbf, token state) run identically to the static path.
-    final Set<URI> registeredIssuerJwks = resolveRegisteredIssuerJwks(token.getIssuer(), request);
-    if (!registeredIssuerJwks.isEmpty()) {
+    final RegisteredIssuerJwks registeredIssuerJwks = resolveRegisteredIssuerJwks(token.getIssuer(), request);
+    if (!registeredIssuerJwks.uris().isEmpty()) {
       return doFullTokenValidation(request, response, token, tokenId,
           displayableToken, displayableTokenId, registeredIssuerJwks, requestAudienceValidator, cookieAuth);
     }
@@ -702,26 +703,43 @@ public abstract class AbstractJWTFilter implements Filter {
    *
    * <p>Return semantics:
    * <ul>
-   *   <li>Non-empty set — caller runs full token validation using only these JWKS for signature
-   *       verification; the provider-configured PEM/JWKS/instance-key chain is not consulted.</li>
-   *   <li>Empty set — not applicable for this request; caller rejects with 401.</li>
+   *   <li>Non-empty URI set — caller runs full token validation using only these JWKS for signature
+   *       verification; the provider-configured PEM/JWKS/instance-key chain is not consulted. The
+   *       JWKS are fetched trusting only the issuer's CA bundle if one is given, or the default
+   *       truststore otherwise.</li>
+   *   <li>Empty URI set ({@link RegisteredIssuerJwks#EMPTY}) — not applicable for this request;
+   *       caller rejects with 401.</li>
    * </ul>
    *
-   * <p>The default implementation always returns an empty set. Subclasses that support a runtime
-   * issuer registry should override this method, applying any request-context checks themselves,
-   * and return a non-empty set only when the issuer is found in the registry and
-   * its JWKS URI has been successfully resolved.
+   * <p>The default implementation always returns {@link RegisteredIssuerJwks#EMPTY}. Subclasses that
+   * support a runtime issuer registry should override this method, applying any request-context
+   * checks themselves, and return a non-empty URI set only when the issuer is found in the registry
+   * and its JWKS URI has been successfully resolved.
    */
-  protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
-    return Set.of();
+  protected RegisteredIssuerJwks resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
+    return RegisteredIssuerJwks.EMPTY;
+  }
+
+  /**
+   * The JWKS URIs resolved for a runtime-registered issuer, and the TLS trust to fetch them with.
+   *
+   * @param uris the issuer's JWKS URIs
+   * @param jwksTrust the trust of the issuer's CA bundle, or null if the default truststore applies
+   */
+  protected record RegisteredIssuerJwks(Set<URI> uris, IssuerJwksTrust jwksTrust) {
+    public static final RegisteredIssuerJwks EMPTY = new RegisteredIssuerJwks(Set.of(), null);
+
+    public RegisteredIssuerJwks {
+      uris = Set.copyOf(uris);
+    }
   }
 
   /**
    * Runs the full token validation sequence (expiry, audiences, nbf, token state, signature)
    * used by both the static-issuer path and the registered-issuer path.
    *
-   * @param registeredIssuerJwks if non-empty, the signature is verified exclusively against these
-   *     JWKS URIs (resolved for the issuer from the runtime registry); if empty,
+   * @param registeredIssuerJwks if its URI set is non-empty, the signature is verified exclusively
+   *     against these JWKS URIs (resolved for the issuer from the runtime registry); if empty,
    *     {@link #verifyTokenSignature(JWT)} is used instead (provider-configured PEM / JWKS /
    *     instance-key chain).
    * @param cookieAuth true when the token was presented in a cookie; see
@@ -729,7 +747,7 @@ public abstract class AbstractJWTFilter implements Filter {
    */
   private boolean doFullTokenValidation(final HttpServletRequest request, final HttpServletResponse response,
       final JWT token, final String tokenId, final String displayableToken,
-      final String displayableTokenId, final Set<URI> registeredIssuerJwks,
+      final String displayableTokenId, final RegisteredIssuerJwks registeredIssuerJwks,
       final RequestAudienceValidator requestAudienceValidator, final boolean cookieAuth)
       throws IOException, ServletException {
     try {
@@ -761,7 +779,7 @@ public abstract class AbstractJWTFilter implements Filter {
             final TokenMetadata tokenMetadata = getTokenMetadata(tokenId, stateAbsentTolerated);
             if (isTokenEnabled(tokenMetadata)) {
               if (isIdleTimeoutLimitNotExceeded(tokenMetadata)) {
-                final boolean sigOk = registeredIssuerJwks.isEmpty()
+                final boolean sigOk = registeredIssuerJwks.uris().isEmpty()
                     ? verifyTokenSignature(token)
                     : verifyTokenSignatureWithJwks(token, registeredIssuerJwks);
                 if (sigOk) {
@@ -825,10 +843,10 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   /**
-   * Verifies the token's signature against the given JWKS URIs.
-   * Uses the filter's configured signature algorithm and JWS type verifier.
+   * Verifies the token's signature against the given registered issuer JWKS URIs, fetched with the
+   * issuer's TLS trust. Uses the filter's configured signature algorithm.
    */
-  private boolean verifyTokenSignatureWithJwks(final JWT token, final Set<URI> jwksUrls) {
+  private boolean verifyTokenSignatureWithJwks(final JWT token, final RegisteredIssuerJwks registeredIssuerJwks) {
     final String serializedJWT = token.toString();
     if (hasSignatureBeenVerified(serializedJWT)) {
       return true;
@@ -840,7 +858,8 @@ public abstract class AbstractJWTFilter implements Filter {
       // verifier is used here instead of the filter-wide this.typeVerifier field.
       final JOSEObjectTypeVerifier<SecurityContext> registeredIssuerTypeVerifier =
               new DefaultJOSEObjectTypeVerifier<>(new HashSet<>(Arrays.asList(JOSEObjectType.JWT, null)));
-      final boolean verified = authority.verifyToken(token, jwksUrls, expectedSigAlg, registeredIssuerTypeVerifier);
+      final boolean verified = authority.verifyToken(token, registeredIssuerJwks.uris(), expectedSigAlg,
+          registeredIssuerTypeVerifier, registeredIssuerJwks.jwksTrust());
       if (verified) {
         recordSignatureVerification(serializedJWT);
       }

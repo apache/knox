@@ -17,6 +17,8 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -28,10 +30,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,8 +43,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.net.ssl.SSLException;
-
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -62,6 +65,7 @@ import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -70,6 +74,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.i18n.resources.ResourcesFactory;
 import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -81,6 +86,7 @@ import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.HttpUtils;
+import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
 public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final GatewayResources RESOURCES = ResourcesFactory.get(GatewayResources.class);
@@ -91,8 +97,9 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static final Set<String> SUPPORTED_PKI_SIG_ALGS = new HashSet<>(Arrays.asList("RS256", "RS384", "RS512", "PS256", "PS384", "PS512"));
   private static final Set<String> SUPPORTED_HMAC_SIG_ALGS = new HashSet<>(Arrays.asList("HS256", "HS384", "HS512"));
 
-  /* How far down a cause chain to walk before giving up. */
-  private static final int MAX_CAUSE_DEPTH = 20;
+  /* How long an issuer CA bundle JWK source is kept without use, e.g. after its issuer was re-registered */
+  private static final Duration ISSUER_TRUST_JWK_SOURCE_IDLE_EXPIRY = Duration.ofHours(1);
+
   private AliasService aliasService;
   private KeystoreService keystoreService;
   private GatewayConfig config;
@@ -103,6 +110,12 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   /* Cache JWKS Key source which has its own cache for the jwk keys */
   private Map<String, JWKSource<SecurityContext>> cachedJwkSources = new HashMap<>();
+
+  /* JWKS Key sources fetching over TLS trusting only an issuer CA bundle; closed when evicted */
+  private final Cache<IssuerTrustJwksKey, JWKSource<SecurityContext>> cachedIssuerTrustJwkSources = Caffeine.newBuilder()
+      .expireAfterAccess(ISSUER_TRUST_JWK_SOURCE_IDLE_EXPIRY)
+      .removalListener((IssuerTrustJwksKey key, JWKSource<SecurityContext> source, RemovalCause cause) -> closeQuietly(source))
+      .build();
 
   private Optional<String> cachedSigningKeyID = Optional.empty();
 
@@ -280,26 +293,49 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public boolean verifyToken(JWT token, String jwksUrl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
+    return verifyToken(token, jwksUrl, algorithm, typeVerifier, null);
+  }
+
+  @Override
+  public boolean verifyToken(JWT token, Set<URI> jwksUrls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
+    return verifyToken(token, jwksUrls, algorithm, typeVerifier, null);
+  }
+
+  @Override
+  public boolean verifyToken(JWT token, Set<URI> jwksUrls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier,
+                             IssuerJwksTrust jwksTrust) throws TokenServiceException {
+    boolean verified = false;
+    for (final URI url : jwksUrls) {
+      try {
+        verified = verifyToken(token, url.toString(), algorithm, typeVerifier, jwksTrust);
+        /* if token is verified no need to check further return result */
+        if (verified) {
+          return true;
+        }
+      } catch (TokenServiceException e) {
+        LOG.jwksVerificationFailed(url.toString(),
+                e.getCause() != null ? e.getCause().toString() : e.toString(), e);
+      }
+    }
+    return verified;
+  }
+
+  private boolean verifyToken(JWT token, String jwksUrl, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier,
+                              IssuerJwksTrust jwksTrust) throws TokenServiceException {
     boolean verified = false;
     try {
       if (algorithm != null && jwksUrl != null) {
         JWSAlgorithm expectedJWSAlg = JWSAlgorithm.parse(algorithm);
-        /* Retry one time in case of failure and cache JWKS in case there is outage, TTL is OUTAGE_TTL */
-        long outageTTL = config.getJwksOutageCacheTTL();
-        long cacheTTL = config.getJwksCacheTimeToLive();
-        long cacheTimeOut = config.getJwksCacheRefreshTimeout();
+        final URL url = new URL(jwksUrl);
+        final ResourceRetriever resourceRetriever = jwksTrust == null ? null
+                : new IssuerTrustResourceRetriever(jwksTrust,
+                JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOUT, JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT,
+                JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT);
 
-        JWKSource<SecurityContext> jwksSource = cachedJwkSources.get(jwksUrl);
-
-        if(jwksSource == null) {
-          jwksSource = JWKSourceBuilder.create(new URL(jwksUrl))
-                  .cache(cacheTTL, cacheTimeOut)
-                  .refreshAheadCache(true)
-                  .retrying(true)
-                  .outageTolerant(outageTTL)
-                  .build();
-            cachedJwkSources.put(jwksUrl, jwksSource);
-        }
+        final JWKSource<SecurityContext> jwksSource = jwksTrust == null
+            ? cachedJwkSources.computeIfAbsent(jwksUrl, key -> buildJwkSource(url, null))
+            : cachedIssuerTrustJwkSources.get(new IssuerTrustJwksKey(jwksUrl, jwksTrust),
+                key -> buildJwkSource(url, resourceRetriever));
 
         JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwksSource);
 
@@ -333,6 +369,41 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     return verified;
   }
 
+  /*
+   * Builds a JWK source: retry one time in case of failure and cache JWKS in case there is outage,
+   * TTL is OUTAGE_TTL. A null retriever means the default one, using the default truststore.
+   */
+  private JWKSource<SecurityContext> buildJwkSource(URL jwksUrl, ResourceRetriever retriever) {
+    final long outageTTL = config.getJwksOutageCacheTTL();
+    final long cacheTTL = config.getJwksCacheTimeToLive();
+    final long cacheTimeOut = config.getJwksCacheRefreshTimeout();
+    final JWKSourceBuilder<SecurityContext> builder = retriever == null
+        ? JWKSourceBuilder.create(jwksUrl)
+        : JWKSourceBuilder.create(jwksUrl, retriever);
+    return builder
+        .cache(cacheTTL, cacheTimeOut)
+        .refreshAheadCache(true)
+        .retrying(true)
+        .outageTolerant(outageTTL)
+        .build();
+  }
+
+  /*
+   * JWK sources built for an issuer CA bundle, per JWKS URL and issuer trust. A trust is replaced
+   * when its issuer is re-registered or refreshed, so the key compares it by identity.
+   */
+  private record IssuerTrustJwksKey(String jwksUrl, IssuerJwksTrust jwksTrust) {
+    @Override
+    public boolean equals(Object o) {
+      return o instanceof IssuerTrustJwksKey other && jwksUrl.equals(other.jwksUrl) && jwksTrust == other.jwksTrust;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * jwksUrl.hashCode() + System.identityHashCode(jwksTrust);
+    }
+  }
+
   /**
    * Whether a JWKS failure is a TLS/trust failure against an IP literal host, the one case where
    * {@code certificate_unknown(46)} says nothing at all about the contents of the truststore.
@@ -342,39 +413,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
    * @return {@code true} when the host is an IP literal and the chain carries a TLS/trust failure
    */
   static boolean isIpLiteralTlsFailure(final String jwksUrl, final Throwable failure) {
-    return HttpUtils.isIpLiteralHost(jwksUrl) && isTlsTrustFailure(failure);
+    return HttpUtils.isIpLiteralHost(jwksUrl) && TruststoreSSLContextUtils.isTlsTrustFailure(failure);
   }
-
-  /* Determins if the exception was an SSLException or CertificateException */
-  private static boolean isTlsTrustFailure(final Throwable failure) {
-    Throwable cause = failure;
-    for (int depth = 0; cause != null && depth < MAX_CAUSE_DEPTH; depth++) {
-      if (cause instanceof SSLException || cause instanceof CertificateException) {
-        return true;
-      }
-      cause = cause.getCause() == cause ? null : cause.getCause();
-    }
-    return false;
-  }
-
-  @Override
-  public boolean verifyToken(JWT token, Set<URI> jwksUrls, String algorithm, JOSEObjectTypeVerifier<SecurityContext> typeVerifier) throws TokenServiceException {
-    boolean verified = false;
-    for(final URI url : jwksUrls) {
-      try {
-        verified = this.verifyToken(token, url.toString(), algorithm, typeVerifier);
-        /* if token is verified no need to check further return result */
-        if(verified) {
-          return verified;
-        }
-      } catch (TokenServiceException e) {
-        LOG.jwksVerificationFailed(url.toString(),
-            e.getCause() != null ? e.getCause().toString() : e.toString(), e);
-      }
-    }
-    return verified;
-  }
-
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options)
@@ -449,6 +489,17 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    cachedIssuerTrustJwkSources.invalidateAll();
+  }
+
+  private static void closeQuietly(JWKSource<SecurityContext> source) {
+    if (source instanceof Closeable) {
+      try {
+        ((Closeable) source).close();
+      } catch (IOException e) {
+        // nothing to recover; the source is no longer used
+      }
+    }
   }
 
   protected Optional<String> getCachedSigningKeyID() {

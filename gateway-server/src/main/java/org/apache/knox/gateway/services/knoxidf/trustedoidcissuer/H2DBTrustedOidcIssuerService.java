@@ -59,6 +59,7 @@ public class H2DBTrustedOidcIssuerService extends JdbcTrustedOidcIssuerService {
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    super.stop();
     if (embeddedH2Database != null) {
       embeddedH2Database.stop();
     }

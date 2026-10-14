@@ -41,6 +41,16 @@ public class TrustedOidcIssuerTest {
     assertEquals("cluster-a", issuer.getClusterName());
     assertEquals(now, issuer.getRegisteredAt());
     assertEquals("admin@example.com", issuer.getRegisteredBy());
+    assertNull("jwksCa defaults to null", issuer.getJwksCa());
+  }
+
+  @Test
+  public void testJwksCa() {
+    TrustedOidcIssuer issuer = new TrustedOidcIssuer(
+        "https://issuer.example.com", true, "cluster-a", Instant.now(), "admin@example.com",
+        "secret:cluster-1/apiserver-ca#ca.crt");
+
+    assertEquals("secret:cluster-1/apiserver-ca#ca.crt", issuer.getJwksCa());
   }
 
   @Test

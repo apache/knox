@@ -212,6 +212,11 @@ The external issuers whose tokens Knox will accept are administered through the
 (`gateway.trustedoidcissuer.discovery.cache.ttl.secs`, default 600s); the admin API's
 `refresh-jwks` action forces an immediate re-fetch for issuers configured with dynamic JWKS.
 
+An issuer that serves its discovery document and JWKS with a certificate from a private or
+self-signed CA can be registered with a per-issuer CA bundle (`jwksCa`, inline PEM or a Kubernetes
+Secret reference) instead of adding that CA to the gateway truststore. See
+[Per-issuer CA bundle](endpoints.md#per-issuer-ca-bundle-jwksca).
+
 ## Persistence
 
 Federated identities are persisted so the same upstream user maps to a stable Knox subject and

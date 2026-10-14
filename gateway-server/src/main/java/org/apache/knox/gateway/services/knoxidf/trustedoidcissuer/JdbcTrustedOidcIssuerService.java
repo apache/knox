@@ -23,6 +23,8 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasService;
 
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +47,10 @@ import java.util.stream.Collectors;
  * rebuilt from a fresh SELECT to guarantee the in-memory state cannot diverge from
  * persistent storage.
  * <p>
+ * The TLS trust of issuers registered with a {@code jwksCa} is built by an
+ * {@link IssuerTrustProvider} and discarded on register, deregister and
+ * {@link #refreshJwksUri}, so the next fetch re-reads it.
+ * <p>
  * HA note: each Knox node maintains its own snapshot. A registration on node A updates
  * that node's snapshot immediately; other nodes' snapshots remain stale until restart.
  */
@@ -63,7 +69,12 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
   private AliasService aliasService;
   private TrustedOidcIssuerDatabase database;
   private OIDCDiscoveryHelper discoveryHelper;
+  private IssuerTrustProvider trustProvider;
   private int maxTrustedIssuers;
+
+  // Overridable in tests; by default Secrets are read through the in-cluster Kubernetes API.
+  private IssuerTrustProvider.SecretReader secretReader;
+  private Clock clock = Clock.systemUTC();
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
@@ -82,8 +93,14 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
             this.maxTrustedIssuers = config.getTrustedOidcIssuerMaxTrustedIssuers();
             this.database = new TrustedOidcIssuerDatabase(
                 DataSourceProvider.getDataSource(config, aliasService), config.getDatabaseType());
+            final int connectTimeoutMs = config.getTrustedOidcIssuerDiscoveryConnectTimeoutMs();
+            final int readTimeoutMs = config.getTrustedOidcIssuerDiscoveryReadTimeoutMs();
             this.discoveryHelper = new OIDCDiscoveryHelper(this, config.getTrustedOidcIssuerDiscoveryCacheTtlSecs(),
-                OIDCDiscoveryHelper.buildHttpClient(config.getTrustedOidcIssuerDiscoveryConnectTimeoutMs(), config.getTrustedOidcIssuerDiscoveryReadTimeoutMs()));
+                OIDCDiscoveryHelper.buildHttpClient(connectTimeoutMs, readTimeoutMs),
+                sslContext -> OIDCDiscoveryHelper.buildHttpClient(connectTimeoutMs, readTimeoutMs, sslContext));
+            this.trustProvider = new IssuerTrustProvider(issuerUrl -> registrySnapshot.get().get(issuerUrl),
+                Duration.ofSeconds(config.getTrustedOidcIssuerCaSecretMaxAgeSecs()),
+                secretReader == null ? new IssuerTrustProvider.KubernetesSecretReader() : secretReader, clock);
             reloadRegistrySnapshot();
             initialized.set(true);
           } catch (ServiceLifecycleException e) {
@@ -104,6 +121,16 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    try {
+      if (trustProvider != null) {
+        trustProvider.close();
+      }
+      if (discoveryHelper != null) {
+        discoveryHelper.close();
+      }
+    } catch (Exception e) {
+      throw new ServiceLifecycleException("Error stopping JdbcTrustedOidcIssuerService: " + e, e);
+    }
   }
 
   public void setAliasService(AliasService aliasService) {
@@ -112,6 +139,14 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   protected AliasService getAliasService() {
     return aliasService;
+  }
+
+  void setSecretReader(IssuerTrustProvider.SecretReader secretReader) {
+    this.secretReader = secretReader;
+  }
+
+  void setClock(Clock clock) {
+    this.clock = clock;
   }
 
   @Override
@@ -143,6 +178,8 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
       throw new RuntimeException("Error registering trusted OIDC issuer: " + issuer.getIssuerUrl(), e);
     }
     reloadRegistrySnapshot();
+    trustProvider.invalidate(issuer.getIssuerUrl());
+    discoveryHelper.invalidate(issuer.getIssuerUrl());
   }
 
   @Override
@@ -154,14 +191,21 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
       throw new RuntimeException("Error deregistering trusted OIDC issuer: " + issuerUrl, e);
     }
     reloadRegistrySnapshot();
+    trustProvider.invalidate(issuerUrl);
     discoveryHelper.invalidate(issuerUrl);
   }
 
   @Override
   public void refreshJwksUri(String issuerUrl) {
     if (isDynamicJwks(issuerUrl)) {
+      trustProvider.invalidate(issuerUrl);
       discoveryHelper.invalidate(issuerUrl);
     }
+  }
+
+  @Override
+  public Optional<IssuerJwksTrust> getJwksTrust(String issuerUrl) {
+    return trustProvider.get(issuerUrl);
   }
 
   @Override

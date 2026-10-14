@@ -29,6 +29,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -148,7 +149,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedDynamicJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -156,6 +158,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -197,7 +200,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedDynamicJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG), // configured sig-alg
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))       // class match only; see Javadoc above
+        EasyMock.isA(JOSEObjectTypeVerifier.class),       // class match only; see Javadoc above
+        EasyMock.isNull()))
         .andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -205,6 +209,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -254,7 +259,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.anyObject(JWT.class),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -268,6 +274,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -304,7 +311,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.anyObject(JWT.class),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(false).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -312,6 +320,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -347,7 +356,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).times(0, 1);
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -355,6 +365,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         expiredJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -394,7 +405,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).times(0, 1);
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -402,6 +414,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         nbfJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -442,7 +455,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedJwt),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).times(0, 1);
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -450,6 +464,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -667,7 +682,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.capture(capturedDynamicJwt),
         EasyMock.eq(Set.of(new URI(INSECURE_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -675,6 +691,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(INSECURE_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -686,6 +703,87 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
 
     Assert.assertTrue("allow.http=true must permit the http JWKS URI", chain.doFilterCalled);
     Assert.assertEquals(EXTERNAL_ISSUER, capturedDynamicJwt.getValue().getIssuer());
+    EasyMock.verify(mockAuth, issuerSvc);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dynamic registry path — per-issuer CA bundle (jwksCa)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The registered issuer has a jwksCa: the trust returned by the registry is passed through to
+   * authority.verifyToken unchanged, so the JWKS are fetched trusting only that CA bundle.
+   */
+  @Test
+  public void testIssuerJwksTrustPassedToAuthority() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+    final IssuerJwksTrust jwksTrust = EasyMock.createMock(IssuerJwksTrust.class);
+
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.expect(mockAuth.verifyToken(
+        EasyMock.anyObject(JWT.class),
+        EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
+        EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.same(jwksTrust)))
+        .andReturn(true).once();
+    EasyMock.replay(mockAuth, jwksTrust);
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
+    EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.of(jwksTrust)).once();
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response, issuerSvc);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
+    EasyMock.verify(mockAuth, issuerSvc, jwksTrust);
+  }
+
+  /**
+   * The registered issuer has a jwksCa that cannot be loaded (e.g. the referenced Secret is
+   * missing): the request is rejected (401) and the JWKS are never fetched with the default
+   * truststore instead. The strict authority mock with no expectations proves verifyToken is
+   * never called.
+   */
+  @Test
+  public void testUnavailableIssuerJwksCaRejected() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+
+    final SignedJWT subjectJwt = getJWT(EXTERNAL_ISSUER, "k8s-sa",
+        new Date(System.currentTimeMillis() + 60000));
+
+    final JWTokenAuthority mockAuth = EasyMock.createMock(JWTokenAuthority.class);
+    EasyMock.replay(mockAuth); // no expectations: verifyToken must never be reached
+    ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
+
+    final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
+    EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
+    EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER))
+        .andThrow(new IllegalStateException("CA bundle is unavailable")).once();
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock, issuerSvc);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response.mock, chain);
+
+    Assert.assertFalse("An unavailable jwksCa must be rejected", chain.doFilterCalled);
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
     EasyMock.verify(mockAuth, issuerSvc);
   }
 
@@ -758,7 +856,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(mockAuth.verifyToken(
         EasyMock.anyObject(JWT.class), EasyMock.eq(dynamicJwks), // external-issuer token: dynamic JWKS only
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.isA(JOSEObjectTypeVerifier.class)))
+        EasyMock.isA(JOSEObjectTypeVerifier.class),
+        EasyMock.isNull()))
         .andReturn(true).once();
     EasyMock.expect(mockAuth.verifyToken(
         EasyMock.anyObject(JWT.class), EasyMock.eq(staticJwks),  // Knox-issuer token: static JWKS
@@ -776,6 +875,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(dynamicJwksUrl)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), actorJwt.serialize(), buildContextWithIssuerService(issuerSvc));
@@ -911,7 +1011,8 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
         EasyMock.anyObject(JWT.class),
         EasyMock.eq(Set.of(new URI(DYNAMIC_JWKS_URI))),
         EasyMock.eq(AbstractJWTFilter.JWT_DEFAULT_SIGALG),
-        EasyMock.capture(capturedTypeVerifier)))
+        EasyMock.capture(capturedTypeVerifier),
+        EasyMock.isNull()))
         .andReturn(true).once();
     EasyMock.replay(mockAuth);
     ((TestJWTFederationFilter) handler).setTokenService(mockAuth);
@@ -919,6 +1020,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     final TrustedOidcIssuerService issuerSvc = EasyMock.createMock(TrustedOidcIssuerService.class);
     EasyMock.expect(issuerSvc.isDynamicJwks(EXTERNAL_ISSUER)).andReturn(true).once();
     EasyMock.expect(issuerSvc.resolveJwksUri(EXTERNAL_ISSUER)).andReturn(Optional.of(DYNAMIC_JWKS_URI)).once();
+    EasyMock.expect(issuerSvc.getJwksTrust(EXTERNAL_ISSUER)).andReturn(Optional.empty()).once();
 
     final HttpServletRequest request = buildTokenExchangeRequest(
         subjectJwt.serialize(), buildContextWithIssuerService(issuerSvc));
