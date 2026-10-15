@@ -628,10 +628,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
     final boolean clusterRollingOrStalenessRestart = CM_SERVICE.equals(service) && CM_SERVICE_TYPE.equals(serviceType)
             && (ROLLING_RESTART_COMMAND.equals(command) || RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND.equals(command));
+    final boolean succeededActivation = START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists;
+    final boolean excludedServiceType = isExcludedServiceType(serviceType);
+    final boolean referencedByDescriptor = isReferencedServiceType(serviceType, referencedServiceTypes);
     final boolean relevant = (clusterRollingOrStalenessRestart && SUCCEEDED_STATUS.equals(status))
-            || (START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists
-                && !isExcludedServiceType(serviceType) && isReferencedServiceType(serviceType, referencedServiceTypes));
-    log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists, clusterRollingOrStalenessRestart);
+            || (succeededActivation && !excludedServiceType && referencedByDescriptor);
+    log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists,
+            clusterRollingOrStalenessRestart, excludedServiceType, referencedByDescriptor);
     return relevant;
   }
 
