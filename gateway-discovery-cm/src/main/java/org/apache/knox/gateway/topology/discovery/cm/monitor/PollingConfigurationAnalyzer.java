@@ -386,6 +386,9 @@ public class PollingConfigurationAnalyzer implements Runnable {
             log.analyzingCurrentServiceConfiguration(re.getService());
             try {
               configHasChanged = hasConfigurationChanged(serviceConfig, currentConfig);
+              if (!configHasChanged) {
+                log.serviceConfigurationUnchanged(re.getService(), re.getServiceType());
+              }
             } catch (Exception e) {
               log.errorAnalyzingCurrentServiceConfiguration(re.getService(), e);
             }

@@ -252,6 +252,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "Analyzing current {0} configuration for changes...")
   void analyzingCurrentServiceConfiguration(String serviceName);
 
+  @Message(level = MessageLevel.DEBUG, text = "The {0} ({1}) service configuration has not changed.")
+  void serviceConfigurationUnchanged(String serviceName, String serviceType);
+
   @Message(level = MessageLevel.ERROR, text = "Error analyzing current {0} configuration for changes: {1}")
   void errorAnalyzingCurrentServiceConfiguration(String serviceName,
                                                 @StackTrace(level = MessageLevel.DEBUG) Exception e);
