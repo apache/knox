@@ -43,6 +43,7 @@ public class TokenUtils {
   public static final String SIGNING_HMAC_SECRET_ALIAS = "gateway.signing.hmac.secret";
   private static final String DEFAULT_RSA_SIG_ALG = "RS256";
   private static final String DEFAULT_HMAC_SIG_ALG = "HS256";
+  public static final int MAX_ISSUER_DISPLAY_LENGTH = 256;
 
   /**
    * Extract the unique Knox token identifier from the specified JWT's claim set.
@@ -83,6 +84,30 @@ public class TokenUtils {
   private static boolean isSerializedJWT(String token) {
     final int segments = token.split("\\.", -1).length;
     return segments == 3 || segments == 5;
+  }
+
+  /**
+   * Render an issuer ({@code iss} claim) for logs and error responses. An issuer read from a token
+   * whose signature has not been verified yet is attacker-controlled, so control characters are
+   * replaced (no forged log lines) and the length is capped at {@link #MAX_ISSUER_DISPLAY_LENGTH}
+   * (no log flooding).
+   *
+   * @param issuer An issuer, or null.
+   *
+   * @return The display text; {@code "(none)"} if the issuer is null.
+   */
+  public static String getIssuerDisplayText(final String issuer) {
+    if (issuer == null) {
+      return "(none)";
+    }
+    final boolean truncated = issuer.length() > MAX_ISSUER_DISPLAY_LENGTH;
+    final StringBuilder displayText = new StringBuilder(MAX_ISSUER_DISPLAY_LENGTH + 3);
+    issuer.substring(0, Math.min(issuer.length(), MAX_ISSUER_DISPLAY_LENGTH)).codePoints()
+        .forEach(c -> displayText.appendCodePoint(Character.isISOControl(c) ? '?' : c));
+    if (truncated) {
+      displayText.append("...");
+    }
+    return displayText.toString();
   }
 
   /**

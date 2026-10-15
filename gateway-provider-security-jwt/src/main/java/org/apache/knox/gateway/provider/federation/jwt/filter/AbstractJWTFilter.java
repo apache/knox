@@ -107,6 +107,8 @@ public abstract class AbstractJWTFilter implements Filter {
   public static final String TOKEN_PREFIX = "Token ";
   public static final String DISABLED_POSTFIX = " is disabled";
   public static final String IDLE_TIMEOUT_POSTFIX = " exceeded idle timeout";
+  public static final String UNTRUSTED_ISSUER_PREFIX = "Token issuer '";
+  public static final String UNTRUSTED_ISSUER_POSTFIX = "' is not trusted";
 
   /**
    * Topology provider param (default false). When true, a JWT presented in a <em>cookie</em> whose
@@ -692,7 +694,11 @@ public abstract class AbstractJWTFilter implements Filter {
       return doFullTokenValidation(request, response, token, tokenId,
           displayableToken, displayableTokenId, registeredIssuerJwks, requestAudienceValidator, cookieAuth);
     }
-    handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+    // The issuer is read before the signature is verified, so it is attacker-controlled.
+    final String displayableIssuer = TokenUtils.getIssuerDisplayText(token.getIssuer());
+    log.rejectedTokenWithUnexpectedIssuer(displayableToken, displayableTokenId, displayableIssuer);
+    handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
+        UNTRUSTED_ISSUER_PREFIX + displayableIssuer + UNTRUSTED_ISSUER_POSTFIX);
     return false;
   }
 
