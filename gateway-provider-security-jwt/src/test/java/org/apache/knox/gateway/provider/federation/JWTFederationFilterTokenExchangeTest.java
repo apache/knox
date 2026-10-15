@@ -515,6 +515,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     Assert.assertFalse(chain.doFilterCalled);
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
     Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
+    assertUntrustedIssuerDescription(response.body());
     EasyMock.verify(issuerSvc);
   }
 
@@ -544,6 +545,7 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     Assert.assertFalse(chain.doFilterCalled);
     Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
     Assert.assertTrue(response.body(), response.body().contains("\"error\":\"invalid_request\""));
+    assertUntrustedIssuerDescription(response.body());
   }
 
   /**
@@ -569,13 +571,16 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
     EasyMock.expect(request.getServletContext())
         .andReturn(buildContextWithIssuerService(strictIssuerSvc)).anyTimes();
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    // The rejection must say why: before KNOX-3516 this was a bare sendError(401).
+    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, untrustedIssuerError(EXTERNAL_ISSUER));
+    EasyMock.expectLastCall().once();
     EasyMock.replay(request, response);
 
     final TestFilterChain chain = new TestFilterChain();
     handler.doFilter(request, response, chain);
 
     Assert.assertFalse(chain.doFilterCalled);
-    EasyMock.verify(strictIssuerSvc);
+    EasyMock.verify(strictIssuerSvc, response);
   }
 
   /**
@@ -1296,6 +1301,18 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
    * {@code TOKEN_EXCHANGE_REQUEST_ATTR}, and resolveRegisteredIssuerJwks now reads that attribute
    * (rather than the spoofable grant_type request parameter), so the mock must round-trip it.
    */
+  private static String untrustedIssuerError(final String issuer) {
+    return AbstractJWTFilter.UNTRUSTED_ISSUER_PREFIX + issuer + AbstractJWTFilter.UNTRUSTED_ISSUER_POSTFIX;
+  }
+
+  /**
+   * An unexpected issuer must not produce a bare {"error":"invalid_request"}: the client is told
+   * which issuer was rejected (KNOX-3516).
+   */
+  private static void assertUntrustedIssuerDescription(final String body) {
+    Assert.assertTrue(body, body.contains("\"error_description\":\"" + untrustedIssuerError(EXTERNAL_ISSUER) + "\""));
+  }
+
   private static void mockRequestAttributeStore(final HttpServletRequest request) {
     final Map<String, Object> attrs = new HashMap<>();
     request.setAttribute(EasyMock.anyString(), EasyMock.anyObject());
