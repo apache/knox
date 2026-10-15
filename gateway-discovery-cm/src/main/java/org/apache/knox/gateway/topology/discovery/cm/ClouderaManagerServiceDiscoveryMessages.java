@@ -240,8 +240,11 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void activationEventRelevance(String eventId, boolean relevance, String command, String status, String serviceType, boolean serviceModelGeneratorExists,
                                 boolean rollingOrStalenessRestart, boolean excludedServiceType, boolean referencedByDescriptor);
 
-  @Message(level = MessageLevel.DEBUG, text = "Scale event relevance: {0} = {1} ({2} / {3} / {4} / {5})")
-  void scaleEventRelevance(String eventId, String relevance, String eventCode, String serviceType, String roleType, boolean serviceModelGeneratorExists);
+  @Message(level = MessageLevel.DEBUG,
+           text = "Scale event {0}: relevant={1} [eventCode={2}, serviceType={3}, roleType={4}, modelGenerator={5}, "
+                  + "excludedServiceType={6}, referencedByDescriptor={7}, excludedRoleType={8}]")
+  void scaleEventRelevance(String eventId, boolean relevance, String eventCode, String serviceType, String roleType, boolean serviceModelGeneratorExists,
+                           boolean excludedServiceType, boolean referencedByDescriptor, boolean excludedRoleType);
 
   @Message(level = MessageLevel.DEBUG, text = "Activation event - {0} - has already been processed, skipping ...")
   void activationEventAlreadyProcessed(String eventId);

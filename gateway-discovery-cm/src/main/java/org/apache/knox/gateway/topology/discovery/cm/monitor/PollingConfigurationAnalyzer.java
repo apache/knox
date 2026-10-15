@@ -644,11 +644,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
     final String roleType = getAttribute(attributeMap, RelevantEvent.ATTR_ROLE);
     final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
-    final boolean relevant = serviceModelGeneratorExists && !isExcludedServiceType(serviceType)
-            && isReferencedServiceType(serviceType, referencedServiceTypes)
-            && !isExcludedRoleType(roleType)
+    final boolean excludedServiceType = isExcludedServiceType(serviceType);
+    final boolean referencedByDescriptor = isReferencedServiceType(serviceType, referencedServiceTypes);
+    final boolean excludedRoleType = isExcludedRoleType(roleType);
+    final boolean relevant = serviceModelGeneratorExists && !excludedServiceType && referencedByDescriptor && !excludedRoleType
             && (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
-    log.scaleEventRelevance(event.getId(), String.valueOf(relevant), eventCode, serviceType, roleType, serviceModelGeneratorExists);
+    log.scaleEventRelevance(event.getId(), relevant, eventCode, serviceType, roleType, serviceModelGeneratorExists,
+            excludedServiceType, referencedByDescriptor, excludedRoleType);
     return relevant;
   }
 
