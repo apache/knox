@@ -19,10 +19,12 @@
 package org.apache.knox.gateway.service.admin;
 
 import org.apache.knox.gateway.service.admin.beans.Topology;
+import org.apache.knox.gateway.util.XmlUtils;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
@@ -34,10 +36,6 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -105,25 +103,30 @@ public class TopologyMarshaller implements MessageBodyWriter<Topology>, MessageB
         JAXBContext context = JAXBContext.newInstance(new Class[]{Topology.class}, properties);
 
         Unmarshaller u = context.createUnmarshaller();
-        u.setProperty(UnmarshallerProperties.MEDIA_TYPE, mediaType.getType() + "/" + mediaType.getSubtype());
 
-        if (mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-          // Safeguard against entity injection (KNOX-1308)
-          XMLInputFactory xif = XMLInputFactory.newFactory();
-          xif.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-          xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-          xif.setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false);
-          XMLStreamReader xsr = xif.createXMLStreamReader(new StreamSource(entityStream));
-          topology = (Topology) u.unmarshal(xsr);
-        } else {
+        if (isMediaType(mediaType, MediaType.APPLICATION_XML_TYPE)) {
+          u.setProperty(UnmarshallerProperties.MEDIA_TYPE, MediaType.APPLICATION_XML);
+          topology = XmlUtils.unmarshal(u, Topology.class, null, entityStream);
+        } else if (isMediaType(mediaType, MediaType.APPLICATION_JSON_TYPE)) {
+          // MOXy parses JSON with its own reader, never with an XML parser.
+          u.setProperty(UnmarshallerProperties.MEDIA_TYPE, MediaType.APPLICATION_JSON);
           topology = (Topology) u.unmarshal(entityStream);
+        } else {
+          throw new NotSupportedException("Unsupported media type: " + mediaType);
         }
       }
-    } catch (XMLStreamException | JAXBException e) {
+    } catch (JAXBException e) {
       throw new IOException(e);
     }
 
     return topology;
+  }
+
+  /**
+   * Compares type and subtype exactly, ignoring parameters such as {@code charset}; wildcards do not match.
+   */
+  private static boolean isMediaType(MediaType actual, MediaType expected) {
+    return expected.getType().equalsIgnoreCase(actual.getType()) && expected.getSubtype().equalsIgnoreCase(actual.getSubtype());
   }
 
 }

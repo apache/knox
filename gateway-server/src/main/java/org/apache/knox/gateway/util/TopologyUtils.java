@@ -16,7 +16,9 @@
  */
 package org.apache.knox.gateway.util;
 
+import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.commons.xml.secure.SecureSAXParserFactory;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.builder.TopologyBuilder;
 import org.apache.knox.gateway.topology.xml.AmbariFormatXmlTopologyRules;
@@ -26,6 +28,7 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
@@ -38,7 +41,7 @@ public final class TopologyUtils {
   public static synchronized Topology parse(final String content) throws IOException, SAXException {
     Topology result;
 
-    TopologyBuilder builder = digesterLoader.newDigester().parse(new StringReader(content));
+    TopologyBuilder builder = newDigester().parse(new StringReader(content));
     result = builder.build();
 
     return result;
@@ -47,10 +50,22 @@ public final class TopologyUtils {
   public static synchronized Topology parse(final InputStream content) throws IOException, SAXException {
     Topology result;
 
-    TopologyBuilder builder = digesterLoader.newDigester().parse(content);
+    TopologyBuilder builder = newDigester().parse(content);
     result = builder.build();
 
     return result;
+  }
+
+  private static Digester newDigester() throws SAXException {
+    try {
+      final Digester digester = digesterLoader.newDigester(SecureSAXParserFactory.newInstance().newSAXParser().getXMLReader());
+      // Digester opens any absolute system id by itself; a resolver that returns null leaves external
+      // references to Commons Secure XML, which ignores them.
+      digester.setEntityResolver((publicId, systemId) -> null);
+      return digester;
+    } catch (ParserConfigurationException e) {
+      throw new SAXException(e);
+    }
   }
 
 }

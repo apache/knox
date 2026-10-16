@@ -29,6 +29,7 @@ import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.knox.gateway.util.XmlUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -88,14 +89,13 @@ public class ProviderConfigurationParser {
   }
 
   static ProviderConfiguration parseXML(File file) throws Exception {
-    return parseXML(Files.newInputStream(file.toPath()));
+    Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+    return XmlUtils.unmarshal(jaxbUnmarshaller, ProviderConfiguration.class, file);
   }
 
   static ProviderConfiguration parseXML(InputStream in) throws Exception {
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-    XMLProviderConfiguration providerConfig = (XMLProviderConfiguration) jaxbUnmarshaller.unmarshal(in);
-
-    return providerConfig;
+    return XmlUtils.unmarshal(jaxbUnmarshaller, XMLProviderConfiguration.class, null, in);
   }
 
   static ProviderConfiguration parseJSON(File file) throws IOException {
