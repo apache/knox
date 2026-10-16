@@ -892,4 +892,30 @@ public class GatewayConfigImplTest {
     assertEquals(config.getSigningKeyAlias(), aliases.get(0));
     assertTrue(aliases.contains("old-key-1"));
   }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testLdapRolesLookupSettings() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    assertNull( config.getLdapRolesLookupStrategy() );
+    assertNull( config.getLdapRolesLookupFilePath() );
+    assertNull( config.getLdapRolesLookupRestApiEndpoint() );
+    assertNull( config.getLdapRolesListRestApiEndpoint() );
+    assertNull( config.getLdapRolesGetRestApiEndpoint() );
+
+    config.set( GatewayConfigImpl.LDAP_ROLES_LOOKUP_STRATEGY, "rest" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_LOOKUP_FILE_PATH, "/tmp/roles.json" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_LOOKUP_REST_API_ENDPOINT, "http://roles/lookup" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_LIST_REST_API_ENDPOINT, "http://roles/list" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_GET_REST_API_ENDPOINT, "http://roles/get" );
+
+    assertEquals( "rest", config.getLdapRolesLookupStrategy() );
+    assertEquals( "/tmp/roles.json", config.getLdapRolesLookupFilePath() );
+    assertEquals( "http://roles/lookup", config.getLdapRolesLookupRestApiEndpoint() );
+    assertEquals( "http://roles/list", config.getLdapRolesListRestApiEndpoint() );
+    assertEquals( "http://roles/get", config.getLdapRolesGetRestApiEndpoint() );
+
+    assertEquals( "gateway.ldap.roles.list.rest.api.endpoint", GatewayConfigImpl.LDAP_ROLES_LIST_REST_API_ENDPOINT );
+    assertEquals( "gateway.ldap.roles.get.rest.api.endpoint", GatewayConfigImpl.LDAP_ROLES_GET_REST_API_ENDPOINT );
+  }
 }

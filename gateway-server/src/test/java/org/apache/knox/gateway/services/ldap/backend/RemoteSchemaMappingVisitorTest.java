@@ -30,7 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class FilterMappingVisitorTest {
+public class RemoteSchemaMappingVisitorTest {
     private static final Function<String, String> IDENTITY_DN_CONVERTER = dn -> dn;
 
     private SchemaManager schemaManager;
@@ -42,15 +42,15 @@ public class FilterMappingVisitorTest {
 
     @Test
     public void testVisitWithNullReturnsNull() {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("uid", "inetOrgPerson", "groupOfNames", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("uid", "inetOrgPerson", "groupOfNames", schemaManager, IDENTITY_DN_CONVERTER);
         assertNull(visitor.visit(null));
     }
 
     @Test
     public void testVisitMapsUidAttributeToConfiguredIdentifier() throws Exception {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("sAMAccountName", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("sAMAccountName", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
         final ExprNode node = FilterParser.parse(schemaManager, "(uid=alice)");
 
         final Object result = node.accept(visitor);
@@ -60,8 +60,8 @@ public class FilterMappingVisitorTest {
 
     @Test
     public void testVisitDoesNotRemapUidWhenIdentifierIsAlreadyUid() throws Exception {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
         final ExprNode node = FilterParser.parse(schemaManager, "(uid=alice)");
 
         final Object result = node.accept(visitor);
@@ -73,8 +73,8 @@ public class FilterMappingVisitorTest {
     public void testVisitRewritesDnValuedAttributeValueUsingDnConverter() throws Exception {
         final Function<String, String> dnConverter =
                 dn -> dn.replace("dc=proxy,dc=com", "dc=hadoop,dc=apache,dc=org");
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("uid", "person", "posixGroup", schemaManager, dnConverter);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("uid", "person", "posixGroup", schemaManager, dnConverter);
         final ExprNode node =
                 FilterParser.parse(schemaManager, "(member=uid=alice,ou=people,dc=proxy,dc=com)");
 
@@ -85,8 +85,8 @@ public class FilterMappingVisitorTest {
 
     @Test
     public void testVisitMapsGroupOfNamesObjectClassLiteral() throws Exception {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
         final ExprNode node = FilterParser.parse(schemaManager, "(objectClass=groupOfNames)");
 
         final Object result = node.accept(visitor);
@@ -96,8 +96,8 @@ public class FilterMappingVisitorTest {
 
     @Test
     public void testVisitMapsInetOrgPersonObjectClassLiteral() throws Exception {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
         final ExprNode node = FilterParser.parse(schemaManager, "(objectClass=inetOrgPerson)");
 
         final Object result = node.accept(visitor);
@@ -107,8 +107,8 @@ public class FilterMappingVisitorTest {
 
     @Test
     public void testVisitPassesThroughUnrelatedAttribute() throws Exception {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("sAMAccountName", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("sAMAccountName", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
         final ExprNode node = FilterParser.parse(schemaManager, "(cn=engineering)");
 
         final Object result = node.accept(visitor);
@@ -118,8 +118,8 @@ public class FilterMappingVisitorTest {
 
     @Test
     public void testVisitRecursesIntoBranchNodeChildren() throws Exception {
-        final FilterMappingVisitor visitor =
-                new FilterMappingVisitor("sAMAccountName", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("sAMAccountName", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);
         final ExprNode node = FilterParser.parse(schemaManager, "(&(uid=alice)(objectClass=inetOrgPerson))");
 
         final Object result = node.accept(visitor);

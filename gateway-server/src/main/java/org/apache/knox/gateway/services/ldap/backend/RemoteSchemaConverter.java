@@ -144,14 +144,14 @@ public class RemoteSchemaConverter {
      * @throws ParseException if the filter cannot be parsed
      */
     public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws ParseException {
-        FilterMappingVisitor filterMappingVisitor = new FilterMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager, this::convertProxyDnToRemoteDn);
+        RemoteSchemaMappingVisitor remoteSchemaMappingVisitor = new RemoteSchemaMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager, this::convertProxyDnToRemoteDn);
 
         // Filter likely has already been annotated by other interceptors.
         // Clean the filter by removing any modifications or annotations
         String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
         ExprNode cleanNode = FilterParser.parse(schemaManager, rawFilter);
 
-        return cleanNode.accept(filterMappingVisitor).toString();
+        return cleanNode.accept(remoteSchemaMappingVisitor).toString();
     }
 
     /**

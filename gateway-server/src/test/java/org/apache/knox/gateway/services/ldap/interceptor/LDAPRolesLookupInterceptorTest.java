@@ -21,6 +21,8 @@ import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.filter.FilterParser;
+import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.server.core.api.DirectoryService;
@@ -28,6 +30,7 @@ import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
 import org.apache.knox.gateway.security.ldap.SimpleDirectoryService;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
+import org.apache.knox.gateway.services.ldap.RoleAssignees;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlImpl;
@@ -40,8 +43,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.easymock.EasyMock.anyObject;
@@ -57,10 +62,12 @@ import static org.junit.Assert.assertTrue;
 
 public class LDAPRolesLookupInterceptorTest {
     private SchemaManager schemaManager;
+    private Map<String, String> interceptorConfig;
 
     @Before
     public void setUp() throws Exception {
         schemaManager = SchemaManagerFactory.createSchemaManager();
+        interceptorConfig = Map.of("baseDn", "dc=proxy,dc=com");
     }
 
     @Test
@@ -329,7 +336,7 @@ public class LDAPRolesLookupInterceptorTest {
         replay(mockRolesService);
 
         final List<Entry> translated =
-                new LDAPRolesLookupInterceptor(mockRolesService).translateGroupEntry(groupEntry);
+                new LDAPRolesLookupInterceptor(mockRolesService, interceptorConfig).translateGroupEntry(groupEntry);
 
         assertEquals(1, translated.size());
         final Entry roleEntry = translated.get(0);
@@ -347,7 +354,7 @@ public class LDAPRolesLookupInterceptorTest {
         replay(mockRolesService);
 
         final List<Entry> translated =
-                new LDAPRolesLookupInterceptor(mockRolesService).translateGroupEntry(groupEntry);
+                new LDAPRolesLookupInterceptor(mockRolesService, interceptorConfig).translateGroupEntry(groupEntry);
 
         final Set<String> resultDns = new HashSet<>();
         for (final Entry roleEntry : translated) {
@@ -368,7 +375,7 @@ public class LDAPRolesLookupInterceptorTest {
         replay(mockRolesService);
 
         final List<Entry> translated =
-                new LDAPRolesLookupInterceptor(mockRolesService).translateGroupEntry(groupEntry);
+                new LDAPRolesLookupInterceptor(mockRolesService, interceptorConfig).translateGroupEntry(groupEntry);
 
         assertTrue("Group with no role mapping should be dropped", translated.isEmpty());
     }
@@ -519,6 +526,267 @@ public class LDAPRolesLookupInterceptorTest {
         assertTrue(member.contains("uid=bob,ou=people,dc=hadoop,dc=apache,dc=org"));
     }
 
+    @Test
+    public void testAllGroupsSearchFromGroupsBaseListsAllRoles() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of("platform:admin", "viewer"));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        assertEquals(2, byDn.size());
+        final Entry admin = byDn.get("cn=platform:admin,ou=groups,dc=proxy,dc=com");
+        assertEquals("platform:admin", admin.get("cn").getString());
+        assertTrue(admin.contains("objectClass", "groupOfNames"));
+        assertTrue(byDn.containsKey("cn=viewer,ou=groups,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchFromGroupsBaseIsCaseInsensitive() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of("viewer"));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "OU=Groups,DC=Proxy,DC=Com"));
+        testContext.ctx.setScope(SearchScope.SUBTREE);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        assertEquals(1, collectByDn(testContext.interceptor.search(testContext.ctx)).size());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchFromRootWithGroupObjectClassFilter() throws Exception {
+        for (String filter : List.of(
+                "(objectClass=groupOfNames)",
+                "(objectClass=groupOfUniqueNames)",
+                "(cn=*)",
+                "(objectClass=*)",
+                "(&(objectClass=groupOfNames)(cn=*))",
+                "(|(uid=alice)(objectClass=groupOfNames))",
+                "(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))")) {
+            final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            expect(rolesService.listRoles()).andReturn(List.of("viewer"));
+            replay(rolesService);
+
+            final TestContext testContext = createTestContext(false, rolesService);
+            testContext.ctx.setDn(new Dn(schemaManager, "dc=proxy,dc=com"));
+            testContext.ctx.setScope(SearchScope.SUBTREE);
+            testContext.ctx.setFilter(FilterParser.parse(schemaManager, filter));
+
+            assertEquals("filter " + filter, 1, collectByDn(testContext.interceptor.search(testContext.ctx)).size());
+            verify(rolesService);
+        }
+    }
+
+    @Test
+    public void testRootSearchWithNonGroupFilterIsNotAllGroupsSearch() throws Exception {
+        for (String filter : List.of("(uid=alice)", "(objectClass=inetOrgPerson)", "(&(uid=alice)(sn=smith))",
+                "(&(objectClass=groupOfNames)(cn=viewer))", "(&(uid=alice)(objectClass=groupOfNames))",
+                "(|(uid=alice)(cn=viewer))", "(!(objectClass=groupOfNames))", "(!(cn=*))",
+                "(!(uid=alice))", "(&(objectClass=groupOfNames)(!(cn=viewer)))",
+                "(&(objectClass=inetOrgPerson)(!(cn=viewer)))")) {
+            // strict mock: listRoles() must not be called
+            final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            replay(rolesService);
+
+            final TestContext testContext = createTestContext(false, rolesService);
+            testContext.ctx.setDn(new Dn(schemaManager, "dc=proxy,dc=com"));
+            testContext.ctx.setScope(SearchScope.SUBTREE);
+            testContext.ctx.setFilter(FilterParser.parse(schemaManager, filter));
+            testContext.nextInterceptor.setEntries(List.of());
+
+            assertTrue("filter " + filter, collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+            verify(rolesService);
+        }
+    }
+
+    @Test
+    public void testNonGroupFilterOnGroupsBaseIsNotAllGroupsSearch() throws Exception {
+        for (String filter : List.of("(uid=alice)", "(cn=level*)", "(&(uid=alice)(sn=smith))")) {
+            // strict mock: listRoles() must not be called
+            final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            replay(rolesService);
+
+            final TestContext testContext = createTestContext(false, rolesService);
+            testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+            testContext.ctx.setScope(SearchScope.SUBTREE);
+            testContext.ctx.setFilter(FilterParser.parse(schemaManager, filter));
+            testContext.nextInterceptor.setEntries(List.of());
+
+            assertTrue("filter " + filter, collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+            verify(rolesService);
+        }
+    }
+
+    @Test
+    public void testObjectScopeSearchOnGroupsBaseIsNotAllGroupsSearch() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.OBJECT);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        assertTrue(collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testDeepSearchWithGroupFilterIsNotAllGroupsSearch() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        // more than two RDNs and not the proxy groups base: an ordinary search
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=people,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.SUBTREE);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        assertTrue(collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchWithNoRolesReturnsNoEntries() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of());
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        assertTrue(collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+    }
+
+    @Test
+    public void testAllGroupsSearchWrapsListRolesFailure() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        final RuntimeException failure = new RuntimeException("roles backend down");
+        expect(rolesService.listRoles()).andThrow(failure);
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        final LdapException exception = assertThrows(LdapException.class,
+                () -> testContext.interceptor.search(testContext.ctx));
+        assertEquals(failure, exception.getCause());
+    }
+
+    @Test
+    public void testAllGroupsSearchIsSkippedWhenRolesLookupBypassed() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(true, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+        final Entry backendGroup = createGroupEntry("cn=g1,ou=groups,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(backendGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+        assertEquals(Set.of("cn=g1,ou=groups,dc=hadoop,dc=apache,dc=org"), byDn.keySet());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testMemberOfRoleFilterIsReplacedWithAssignees() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.lookupRoleAssignees("platform:admin"))
+                .andReturn(new RoleAssignees(List.of("alice"), List.of("engineering")));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=people,dc=proxy,dc=com"));
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager,
+                "(&(objectClass=inetOrgPerson)(memberOf=cn=platform:admin,ou=groups,dc=proxy,dc=com))"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final String filter = testContext.ctx.getFilter().toString();
+        assertTrue(filter, filter.contains("(uid=alice)"));
+        assertTrue(filter, filter.contains("(memberOf=cn=engineering,ou=groups,dc=proxy,dc=com)"));
+        assertFalse(filter, filter.contains("platform:admin"));
+        assertTrue(filter, filter.contains("objectClass=inetOrgPerson"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testMemberOfFilterForRoleWithoutAssigneesIsLeftUntouched() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.lookupRoleAssignees("viewer")).andReturn(new RoleAssignees(List.of(), List.of()));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=people,dc=proxy,dc=com"));
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(memberOf=cn=viewer,ou=groups,dc=proxy,dc=com)"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        assertTrue(testContext.ctx.getFilter().toString().contains("memberOf=cn=viewer,ou=groups,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testFilterWithoutMemberOfDoesNotCallReverseLookup() throws Exception {
+        // strict mock: lookupRoleAssignees() must not be called
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=people,dc=proxy,dc=com"));
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(uid=alice)"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        assertEquals("(uid=alice)", testContext.ctx.getFilter().toString());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testMemberOfReverseLookupFailureIsReported() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.lookupRoleAssignees("viewer")).andThrow(new IllegalStateException("backend down"));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=people,dc=proxy,dc=com"));
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(memberOf=cn=viewer,ou=groups,dc=proxy,dc=com)"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        assertThrows(RuntimeException.class, () -> testContext.interceptor.search(testContext.ctx));
+    }
+
+    private Map<String, Entry> collectByDn(final EntryFilteringCursor cursor) throws Exception {
+        final Map<String, Entry> result = new HashMap<>();
+        try (EntryFilteringCursor entries = cursor) {
+            while (entries.next()) {
+                final Entry entry = entries.get();
+                result.put(entry.getDn().getName(), entry);
+            }
+        }
+        return result;
+    }
+
     private TestContext createTestContext(boolean bypass, LDAPRolesLookupService rolesService) throws Exception {
         RolesLookupBypassControl control = new RolesLookupBypassControlImpl();
         control.setBypassRolesLookup(bypass);
@@ -535,7 +803,7 @@ public class LDAPRolesLookupInterceptorTest {
         directoryService.setSchemaManager(schemaManager);
 
         LDAPRolesLookupInterceptor interceptor =
-                new LDAPRolesLookupInterceptor(rolesService);
+                new LDAPRolesLookupInterceptor(rolesService, interceptorConfig);
         interceptor.init(directoryService);
         directoryService.addLast(interceptor);
 
@@ -547,6 +815,8 @@ public class LDAPRolesLookupInterceptorTest {
         SearchOperationContext ctx =
                 new SearchOperationContext(directoryService.getSession());
         ctx.setInterceptors(List.of("NEXT"));
+        // A real search request always carries a filter; this one is neutral to the roles lookup.
+        ctx.setFilter(FilterParser.parse(schemaManager, "(uid=*)"));
 
         if (control != null) {
             ctx.addRequestControl(control);
@@ -562,7 +832,7 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     private LDAPRolesLookupInterceptor createInterceptor() throws Exception {
-        return new LDAPRolesLookupInterceptor(createMockRolesService());
+        return new LDAPRolesLookupInterceptor(createMockRolesService(), interceptorConfig);
     }
 
     private Entry createUserEntry(final String username, final String... memberOfDns) throws Exception {

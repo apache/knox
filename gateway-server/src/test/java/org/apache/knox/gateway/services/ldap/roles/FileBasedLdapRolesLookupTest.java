@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.roles;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.knox.gateway.services.ldap.roles.file.FileBasedLdapRolesLookup;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,7 +104,7 @@ public class FileBasedLdapRolesLookupTest {
         assertTrue(roles.contains("viewer"));
     }
 
-    @Test(expected=RoleLookupException.class)
+    @Test(expected= RoleException.class)
     public void testFileNotFound() throws Exception {
         new FileBasedLdapRolesLookup("non-existent-file.json").lookupRoles("alice", null);
     }

@@ -29,6 +29,8 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.LdapResult;
 import org.apache.directory.api.ldap.model.message.Response;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -79,6 +82,8 @@ public class LdapProxyBackend implements LdapBackend {
 
     private static final String[] ALL_ATTRIBUTES = new String[]{"*"};
     private static final String[] ALL_ATTRIBUTES_AND_MEMBEROF = new String[]{"*", "memberOf"};
+
+    private static final String DEFAULT_MAX_FILTER_LENGTH = "2000";
 
     static final String TYPE = "ldap";
 
@@ -113,6 +118,7 @@ public class LdapProxyBackend implements LdapBackend {
     private int recursiveGroupResolutionMaxDepth;
     private int pageSize;
     private int maxResultSetSize;
+    private int maxFilterLength;
 
     private final String proxyEntryGroupMembershipAttributeType = "memberOf";
 
@@ -208,6 +214,8 @@ public class LdapProxyBackend implements LdapBackend {
         pageSize = Integer.parseInt(config.getOrDefault("pageSize", "1000"));
         maxResultSetSize = Integer.parseInt(config.getOrDefault("maxResultSetSize", "0")); // 0 means unlimited
         LOG.ldapInterceptorConfiguring(name, "maxResultSetSize", Integer.toString(maxResultSetSize));
+        maxFilterLength = Integer.parseInt(config.getOrDefault("maxFilterLength", DEFAULT_MAX_FILTER_LENGTH)); // 0 means unlimited
+        LOG.ldapInterceptorConfiguring(name, "maxFilterLength", Integer.toString(maxFilterLength));
 
         // Configure secure transport (LDAPS) to the remote server. An ldaps:// URL enables it
         // by default; an explicit useSsl setting always wins.
@@ -555,6 +563,8 @@ public class LdapProxyBackend implements LdapBackend {
 
     @Override
     public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+        filter = mapMemberOfExpression(filter, schemaManager);
+
         LdapConnection connection = null;
         String remoteSearchBase = remoteSchemaConverter.convertProxyDnToRemoteDn(searchBase);
         String remoteFilter = remoteSchemaConverter.convertProxyFilterToRemoteFilter(filter, schemaManager);
@@ -565,7 +575,7 @@ public class LdapProxyBackend implements LdapBackend {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
             String[] attributes = useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
-            List<Entry> searchResults = performPagedSearch(connection, remoteSearchBase, remoteFilter, searchScope, attributes);
+            List<Entry> searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter), searchScope, attributes);
             for (Entry entry : searchResults) {
                 addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
                 results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
@@ -574,6 +584,54 @@ public class LdapProxyBackend implements LdapBackend {
         } finally {
             releaseConnection(connection);
         }
+    }
+
+    private String mapMemberOfExpression(String filter, SchemaManager schemaManager) throws Exception {
+        if (useMemberOf || !filter.toLowerCase(ROOT).contains("memberof")) {
+            return filter;
+        }
+        // Convert filter if it contains "memberOf" but the backend doesn't support "memberOf"
+        MemberOfMappingVisitor visitor = new MemberOfMappingVisitor(schemaManager, this::lookupGroup, this::isUser);
+        ExprNode node = FilterParser.parse(schemaManager, filter);
+        // Baseline in the same form as the visitor output so an unchanged visit exits on the first pass
+        String current = node.toString();
+        for (int i = 0; i < recursiveGroupResolutionMaxDepth; ++i) {
+            Object visitedNode = node.accept(visitor);
+            if (!(visitedNode instanceof ExprNode)) {
+                throw new Exception("Unable to transform memberOf expressions in filter: " + filter);
+            }
+            node = (ExprNode) visitedNode;
+            String updated = node.toString();
+            if (updated.equals(current)) {
+                break;
+            }
+            current = updated;
+        }
+        return current;
+    }
+
+    private Entry lookupGroup(String dn, SchemaManager schemaManager) throws Exception {
+        String remoteDn = remoteSchemaConverter.convertProxyDnToRemoteDn(dn);
+        LdapConnection connection = null;
+        try {
+            connection = getConnection();
+            Entry entry = connection.lookup(remoteDn);
+            if  (entry != null) {
+                return remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager);
+            } else {
+                return null;
+            }
+        } finally {
+            releaseConnection(connection);
+        }
+    }
+
+    private boolean isUser(String userDn) {
+        if (userDn == null) {
+            return false;
+        }
+        String lowerCaseUserDn = userDn.toLowerCase(ROOT);
+        return lowerCaseUserDn.contains(proxyUserSearchBase) || lowerCaseUserDn.contains(remoteUserObjectClass);
     }
 
     private void addGroupMemberships(Entry entry, LdapConnection connection, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws LdapException, CursorException, IOException {
@@ -745,9 +803,9 @@ public class LdapProxyBackend implements LdapBackend {
                 for (Entry group : groupsToSearch) {
                     groupDns.add(group.getDn());
                 }
-                String filter = buildMultipleGroupMemberFilter(groupDns.toArray(new Dn[0]));
+                List<String> filters = buildMultipleGroupMemberFilters(groupDns.toArray(new Dn[0]));
 
-                List<Entry> searchResults = performPagedSearch(connection, remoteGroupSearchBase, filter, SearchScope.SUBTREE, "cn", "memberUid", "member", "uniqueMember");
+                List<Entry> searchResults = performSplitSearch(connection, remoteGroupSearchBase, filters, SearchScope.SUBTREE, "cn", "memberUid", "member", "uniqueMember");
                 for (Entry parentGroup : searchResults) {
                     String parentDn = parentGroup.getDn().getNormName();
 
@@ -861,11 +919,47 @@ public class LdapProxyBackend implements LdapBackend {
             return groups;
         }
 
-        String filter = buildMultipleGroupMemberFilter(dns);
-
-        groups.addAll(performPagedSearch(connection, remoteGroupSearchBase, filter, SearchScope.SUBTREE, "cn"));
+        groups.addAll(performSplitSearch(connection, remoteGroupSearchBase, buildMultipleGroupMemberFilters(dns), SearchScope.SUBTREE, "cn"));
 
         return groups;
+    }
+
+    /**
+     * Splits a filter that exceeds maxFilterLength into several filters whose combined results are
+     * equivalent to the original filter. A filter that can't be split is returned as is.
+     */
+    private List<String> splitFilter(String filter) throws LdapException {
+        if (maxFilterLength <= 0 || filter.length() <= maxFilterLength) {
+            return List.of(filter);
+        }
+        try {
+            // Remote attributes may be unknown to the local schema so parse without a schema manager
+            List<ExprNode> pieces = FilterSplitter.split(FilterParser.parse(filter), maxFilterLength);
+            LOG.ldapFilterSplit(filter.length(), maxFilterLength, pieces.size());
+            return pieces.stream().map(ExprNode::toString).collect(Collectors.toList());
+        } catch (java.text.ParseException e) {
+            throw new LdapException("Unable to split oversized filter: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Executes each filter as a separate paged search and combines the results, removing entries
+     * returned by more than one query. Stops early once maxResultSetSize entries have been collected.
+     */
+    protected List<Entry> performSplitSearch(LdapConnection connection, String baseDn, List<String> filters, SearchScope scope, String... attributes) throws LdapException, CursorException, IOException {
+        if (filters.size() == 1) {
+            return performPagedSearch(connection, baseDn, filters.get(0), scope, attributes);
+        }
+        Map<String, Entry> combined = new LinkedHashMap<>();
+        for (String filter : filters) {
+            for (Entry entry : performPagedSearch(connection, baseDn, filter, scope, attributes)) {
+                combined.putIfAbsent(entry.getDn().getNormName(), entry);
+            }
+            if (maxResultSetSize != 0 && combined.size() >= maxResultSetSize) {
+                break;
+            }
+        }
+        return new ArrayList<>(combined.values());
     }
 
     protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, String... attributes ) throws LdapException, CursorException, IOException {
@@ -937,33 +1031,37 @@ public class LdapProxyBackend implements LdapBackend {
         return results;
     }
 
-    private String buildMultipleGroupMemberFilter(Dn... dns) {
-        StringBuilder filterBuilder = new StringBuilder();
-        filterBuilder.append("(|");
+    /**
+     * Builds the filters that find the groups the given DNs are members of. The DNs are spread over
+     * as many filters as needed to keep each filter within maxFilterLength.
+     */
+    private List<String> buildMultipleGroupMemberFilters(Dn... dns) {
+        List<String> filters = new ArrayList<>();
+        StringBuilder filterBuilder = new StringBuilder("(|");
+        boolean empty = true;
         for (Dn dn : dns) {
-            String dnString = dn.toString();
-            String rdnString = dn.getRdn().getValue();
-            // Search for groups where user is a member - build filter based on configuration
-            if ("member".equals(remoteGroupMemberAttribute)) {
-                // AD style - uses full DN
-                filterBuilder.append("(member=");
-                filterBuilder.append(dnString);
-                filterBuilder.append(")(uniqueMember=");
-                filterBuilder.append(dnString);
-                filterBuilder.append(")");
-            } else {
-                // POSIX style - uses username
-                filterBuilder.append("(memberUid=");
-                filterBuilder.append(rdnString);
-                filterBuilder.append(")(member=");
-                filterBuilder.append(dnString);
-                filterBuilder.append(")(uniqueMember=");
-                filterBuilder.append(dnString);
-                filterBuilder.append(")");
+            String clause = buildGroupMemberClause(dn);
+            // +1 for the closing parenthesis
+            if (!empty && maxFilterLength > 0 && filterBuilder.length() + clause.length() + 1 > maxFilterLength) {
+                filters.add(filterBuilder.append(")").toString());
+                filterBuilder = new StringBuilder("(|");
             }
+            filterBuilder.append(clause);
+            empty = false;
         }
-        filterBuilder.append(")");
-        return filterBuilder.toString();
+        filters.add(filterBuilder.append(")").toString());
+        return filters;
+    }
+
+    private String buildGroupMemberClause(Dn dn) {
+        String dnString = dn.toString();
+        // Search for groups where user is a member - build filter based on configuration
+        if ("member".equals(remoteGroupMemberAttribute)) {
+            // AD style - uses full DN
+            return "(member=" + dnString + ")(uniqueMember=" + dnString + ")";
+        }
+        // POSIX style - uses username
+        return "(memberUid=" + dn.getRdn().getValue() + ")(member=" + dnString + ")(uniqueMember=" + dnString + ")";
     }
 
     protected Map<String, Entry> createEntryCache() {

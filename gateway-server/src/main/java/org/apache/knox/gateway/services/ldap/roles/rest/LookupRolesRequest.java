@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.roles;
+package org.apache.knox.gateway.services.ldap.roles.rest;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

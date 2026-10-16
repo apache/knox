@@ -15,13 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.roles;
+package org.apache.knox.gateway.services.ldap.roles.file;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.knox.gateway.services.ldap.RoleAssignment;
+import org.apache.knox.gateway.services.ldap.roles.LdapRolesLookup;
+import org.apache.knox.gateway.services.ldap.roles.RoleException;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,10 +59,10 @@ public class FileBasedLdapRolesLookup implements LdapRolesLookup {
     }
 
     @Override
-    public Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleLookupException {
+    public Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleException {
         File roleMappingFile = new File(filePath);
         if (!roleMappingFile.exists()) {
-            throw new RoleLookupException("Role mapping file " + roleMappingFile + " does not exist");
+            throw new RoleException("Role mapping file " + roleMappingFile + " does not exist");
         }
 
         try {
@@ -83,7 +84,7 @@ public class FileBasedLdapRolesLookup implements LdapRolesLookup {
 
             return new ArrayList<>(roles);
         } catch (IOException e) {
-            throw new RoleLookupException("Error reading roles mapping file: " + filePath, e);
+            throw new RoleException("Error reading roles mapping file: " + filePath, e);
         }
     }
 
@@ -95,29 +96,6 @@ public class FileBasedLdapRolesLookup implements LdapRolesLookup {
                     roles.add(displayValue);
                 }
             }
-        }
-    }
-
-    private static class RoleMappingEntry {
-        @JsonProperty("id")
-        private String id;
-
-        @JsonProperty("type")
-        private String type;
-
-        @JsonProperty("roles")
-        private List<RoleAssignment> roles;
-
-        public String getId() {
-            return id;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public List<RoleAssignment> getRoles() {
-            return roles;
         }
     }
 }

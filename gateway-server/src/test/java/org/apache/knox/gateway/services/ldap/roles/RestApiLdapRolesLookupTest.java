@@ -23,6 +23,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.knox.gateway.services.ldap.roles.rest.RestApiLdapRolesLookup;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.runner.RunWith;

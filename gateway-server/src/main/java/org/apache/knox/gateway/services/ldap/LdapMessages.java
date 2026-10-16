@@ -109,6 +109,10 @@ public interface LdapMessages {
             text = "LDAP Paged Search: {0} | {1}, page size {2}, page {3}")
     void ldapPagedSearch(String baseDn, String filter, int pageSize, int pageNumber);
 
+    @Message(level = MessageLevel.INFO,
+            text = "LDAP filter of length {0} exceeds the maximum filter length {1}; splitting into {2} searches")
+    void ldapFilterSplit(int filterLength, int maxFilterLength, int numSearches);
+
     @Message(level = MessageLevel.ERROR,
             text = "LDAP Paged Search Exceeded Max Result Set Size: {0} | {1}")
     void ldapPagedSearchExceededMaxResultSetSize(int resultSetSize, int maxResultSetSize);
@@ -200,6 +204,9 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR, text = "Failed to reload LDAP roles lookup: {0}")
     void ldapRolesLookupReloadFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR, text = "Failed to reload LDAP roles reverse lookup: {0}")
+    void ldapRolesReverseLookupReloadFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
     @Message(level = MessageLevel.INFO, text = "LDAP roles lookup is enabled with strategy: {0}")
     void ldapRolesLookupEnabled(String strategy);
 
@@ -220,6 +227,27 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.ERROR, text = "Role lookup request to {0} failed with HTTP {1}, body: {2}")
     void restRolesLookupHttpError(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.DEBUG, text = "Sending role list request to {0}")
+    void restRolesListRequest(String endpoint);
+
+    @Message(level = MessageLevel.DEBUG, text = "Received role list response from {0}: HTTP {1}, body: {2}")
+    void restRolesListResponse(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.ERROR, text = "Role list request to {0} failed with HTTP {1}, body: {2}")
+    void restRolesListHttpError(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.DEBUG, text = "Sending role get request to {0}: {1}")
+    void restRolesGetRequest(String endpoint, String roleId);
+
+    @Message(level = MessageLevel.DEBUG, text = "Received role get response from {0}: HTTP {1}, body: {2}")
+    void restRolesGetResponse(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.ERROR, text = "Role get request to {0} failed with HTTP {1}, body: {2}")
+    void restRolesGetHttpError(String endpoint, int statusCode, String responseBody);
+
+    @Message(level = MessageLevel.ERROR, text = "Role assigneee member type for role {0} unknown: {1}")
+    void restRolesAssigneeTypeUnknown(String role, String memberType);
 
     @Message(level = MessageLevel.DEBUG, text = "Resolved gateway credential store alias for LDAP backend property {0} (interceptor {1})")
     void ldapBackendPasswordAliasResolved(String property, String interceptorName);

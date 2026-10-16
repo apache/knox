@@ -69,6 +69,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -577,6 +578,32 @@ public class LdapProxyBackendTest {
     }
 
     @Test
+    public void testSearchSplitsFilterExceedingMaxFilterLength() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("maxFilterLength", "40");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org",
+                "(|(uid=ldaptest1)(uid=ldaptest2)(uid=ldapmemberof)(uid=guest)(uid=ldaptest1))", 4,
+                Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));
+        // the filter was spread over several queries and no single query carried every uid
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=");
+        assertTrue("Expected more than one search request but found " + requests.size(), requests.size() > 1);
+        requests.forEach(request -> assertTrue(request.getFilter().toString(), !request.getFilter().toString().contains("uid=guest")
+                || !request.getFilter().toString().contains("uid=ldaptest2")));
+    }
+
+    @Test
+    public void testSearchDoesNotSplitFilterWhenMaxFilterLengthDisabled() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("maxFilterLength", "0");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org",
+                "(|(uid=ldaptest1)(uid=ldaptest2)(uid=ldapmemberof)(uid=guest))", 4,
+                Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));
+        assertEquals(1, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=ldaptest1").size());
+    }
+
+    @Test
     public void testSearchByUidSubstringWildcard() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(uid=ldap*)", 3, Set.of("ldaptest1", "ldaptest2", "ldapmemberof"));
@@ -636,6 +663,54 @@ public class LdapProxyBackendTest {
         assertEquals("Expect exactly 1 matching request found", 1, requests.size());
         assertFalse("memberOf should not be explicitly requested when useMemberOf is disabled",
                 requests.get(0).getAttributes().contains("memberOf"));
+    }
+
+    @Test
+    public void testSearchMemberOfFilterMappedToMembersWhenUseMemberOfDisabled() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(memberOf=cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org)",
+                1, Set.of("ldaptest1"));
+
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=ldaptest1");
+        assertEquals("Expect exactly 1 matching request found", 1, requests.size());
+        assertFalse("memberOf must not be sent to a backend that does not support it",
+                requests.get(0).getFilter().toString().toLowerCase(Locale.ROOT).contains("memberof"));
+    }
+
+    @Test
+    public void testSearchMemberOfFilterCombinedWithOtherClausesWhenUseMemberOfDisabled() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org",
+                "(|(memberOf=cn=nameddifferently,ou=groups,dc=hadoop,dc=apache,dc=org)(uid=ldaptest2))",
+                2, Set.of("guest", "ldaptest2"));
+    }
+
+    @Test
+    public void testSearchMemberOfFilterForUnknownGroupLeftUnchangedWhenUseMemberOfDisabled() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        validateSearch("ou=people,dc=hadoop,dc=apache,dc=org", "(memberOf=cn=nosuchgroup,ou=groups,dc=hadoop,dc=apache,dc=org)",
+                0, Set.of());
+
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "memberOf");
+        assertEquals("Filter should be passed to the backend unchanged", 1, requests.size());
+    }
+
+    @Test
+    public void testSearchMemberOfFilterNotMappedWhenUseMemberOfEnabled() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        ldapProxyBackend.search("ou=people,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE,
+                "(memberOf=cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org)", schemaManager);
+
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "memberOf");
+        assertEquals("memberOf filter should be passed to the backend as is", 1, requests.size());
+        assertTrue(capturingSearchRequestHandler.getRequests().stream()
+                .noneMatch(r -> r.getScope() == SearchScope.OBJECT && r.getBase().getName().startsWith("cn=group1")));
     }
 
     @Test
