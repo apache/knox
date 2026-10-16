@@ -170,6 +170,9 @@ public interface GatewayConfig {
   String TRUSTED_OIDC_ISSUER_PREFIX = "gateway.trusted.oidc.issuer.";
   String TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS = TRUSTED_OIDC_ISSUER_PREFIX + "max.issuers";
   int TRUSTED_OIDC_ISSUER_MAX_TRUSTED_ISSUERS_DEFAULT = 10_000;
+  // Upper bound (seconds) on how long a node may serve a registry snapshot before re-reading the DB (HA consistency)
+  String TRUSTED_OIDC_ISSUER_REGISTRY_CACHE_TTL_SECS = TRUSTED_OIDC_ISSUER_PREFIX + "registry.cache.ttl.secs";
+  int TRUSTED_OIDC_ISSUER_REGISTRY_CACHE_TTL_SECS_DEFAULT = 60;
   String TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX = TRUSTED_OIDC_ISSUER_PREFIX + "discovery.";
   String TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX + "cache.ttl.secs";
   int TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS_DEFAULT = 600;
@@ -1315,6 +1318,8 @@ public interface GatewayConfig {
   boolean getGroupUIServicesOnHomepage();
 
   int getTrustedOidcIssuerMaxTrustedIssuers();
+
+  int getTrustedOidcIssuerRegistryCacheTtlSecs();
 
   int getTrustedOidcIssuerDiscoveryCacheTtlSecs();
 

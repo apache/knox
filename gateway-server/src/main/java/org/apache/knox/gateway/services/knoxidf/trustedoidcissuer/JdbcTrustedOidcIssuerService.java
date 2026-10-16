@@ -16,6 +16,9 @@
  */
 package org.apache.knox.gateway.services.knoxidf.trustedoidcissuer;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Ticker;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.database.DataSourceProvider;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
@@ -30,41 +33,62 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * JDBC-backed implementation of {@link TrustedOidcIssuerService}.
  * <p>
- * Maintains an in-memory registry snapshot as an {@link AtomicReference} to an immutable
- * {@link Map}. Reads ({@link #isTrusted}, {@link #isDynamicJwks}, {@link #list}) are
- * lock-free and always see a consistent snapshot. Writes ({@link #register},
- * {@link #deregister}) are synchronized: the DB is committed first, then the snapshot is
- * rebuilt from a fresh SELECT to guarantee the in-memory state cannot diverge from
- * persistent storage.
+ * The whole {@code TRUSTED_OIDC_ISSUERS} table is held in memory as one immutable
+ * {@link RegistrySnapshot}, cached under a single key in a Caffeine {@link LoadingCache} that
+ * {@link RegistrySnapshotLoader} loads and {@link RegistrySnapshotExpiry} expires. Reads ({@link #isTrusted},
+ * {@link #isDynamicJwks}, {@link #list}) never touch the DB while the snapshot is fresh, and an
+ * unknown {@code iss} can never trigger a DB query. Writes ({@link #register},
+ * {@link #deregister}) are synchronized: the DB is committed first, then the snapshot is rebuilt
+ * from a fresh SELECT and put into the cache, so a node always reads its own writes.
  * <p>
  * The TLS trust of issuers registered with a {@code jwksCa} is built by an
  * {@link IssuerTrustProvider} and discarded on register, deregister and
  * {@link #refreshJwksUri}, so the next fetch re-reads it.
  * <p>
- * HA note: each Knox node maintains its own snapshot. A registration on node A updates
- * that node's snapshot immediately; other nodes' snapshots remain stale until restart.
+ * HA note: each Knox node maintains its own snapshot, and changes made on another node become
+ * visible within {@code gateway.trusted.oidc.issuer.registry.cache.ttl.secs} (TTL):
+ * <ul>
+ *   <li>Once a snapshot is older than half the TTL, the next read triggers a background reload;
+ *   the current snapshot is served meanwhile, so request threads never wait on the DB.</li>
+ *   <li>A snapshot is never served once it is older than the TTL (a hard bound for revocations).
+ *   A failed background reload keeps the snapshot's original load time, so it cannot extend
+ *   that bound.</li>
+ *   <li>If the snapshot has expired and the DB cannot be read, the registry fails closed: no
+ *   issuer is trusted until a reload succeeds. This is logged once at ERROR per failure period,
+ *   and the recovery is logged at INFO.</li>
+ * </ul>
+ * Each node shortens its TTL by a random amount (up to 10%) so that nodes started together do
+ * not reload in lockstep. Whenever the snapshot changes, the OIDC discovery cache and
+ * {@link IssuerTrustProvider} entries of the added, removed or re-registered issuers are
+ * invalidated as well.
  */
 public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   private static final TrustedOidcIssuerServiceMessages LOG =
       MessagesFactory.get(TrustedOidcIssuerServiceMessages.class);
 
+  // The registry is cached as one whole-table snapshot under this single key
+  private static final String SNAPSHOT_KEY = TrustedOidcIssuerDatabase.TABLE_NAME;
+  private static final double MAX_TTL_JITTER_FRACTION = 0.1;
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
   private final Lock initLock = new ReentrantLock(true);
+  private final Ticker ticker;
+  private final Executor refreshExecutor;
 
-  private final AtomicReference<Map<String, TrustedOidcIssuer>> registrySnapshot =
-      new AtomicReference<>(Collections.emptyMap());
+  private RegistrySnapshotLoader registrySnapshotLoader;
+  private LoadingCache<String, RegistrySnapshot> registrySnapshot;
 
   private AliasService aliasService;
   private TrustedOidcIssuerDatabase database;
@@ -75,6 +99,18 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
   // Overridable in tests; by default Secrets are read through the in-cluster Kubernetes API.
   private IssuerTrustProvider.SecretReader secretReader;
   private Clock clock = Clock.systemUTC();
+
+  public JdbcTrustedOidcIssuerService() {
+    this(Ticker.systemTicker(), ForkJoinPool.commonPool());
+  }
+
+  /**
+   * Allows tests to control time and to run background reloads on the calling thread.
+   */
+  JdbcTrustedOidcIssuerService(Ticker ticker, Executor refreshExecutor) {
+    this.ticker = ticker;
+    this.refreshExecutor = refreshExecutor;
+  }
 
   @Override
   public void init(GatewayConfig config, Map<String, String> options) throws ServiceLifecycleException {
@@ -98,9 +134,11 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
             this.discoveryHelper = new OIDCDiscoveryHelper(this, config.getTrustedOidcIssuerDiscoveryCacheTtlSecs(),
                 OIDCDiscoveryHelper.buildHttpClient(connectTimeoutMs, readTimeoutMs),
                 sslContext -> OIDCDiscoveryHelper.buildHttpClient(connectTimeoutMs, readTimeoutMs, sslContext));
-            this.trustProvider = new IssuerTrustProvider(issuerUrl -> registrySnapshot.get().get(issuerUrl),
+            this.trustProvider = new IssuerTrustProvider(issuerUrl -> issuers().get(issuerUrl),
                 Duration.ofSeconds(config.getTrustedOidcIssuerCaSecretMaxAgeSecs()),
                 secretReader == null ? new IssuerTrustProvider.KubernetesSecretReader() : secretReader, clock);
+            this.registrySnapshot = buildRegistrySnapshotCache(config.getTrustedOidcIssuerRegistryCacheTtlSecs());
+            // Eager first load: an unreachable DB at startup still fails init
             reloadRegistrySnapshot();
             initialized.set(true);
           } catch (ServiceLifecycleException e) {
@@ -113,6 +151,23 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
         initLock.unlock();
       }
     }
+  }
+
+  private LoadingCache<String, RegistrySnapshot> buildRegistrySnapshotCache(int configuredTtlSecs) {
+    final int ttlSecs = configuredTtlSecs > 0
+        ? configuredTtlSecs : GatewayConfig.TRUSTED_OIDC_ISSUER_REGISTRY_CACHE_TTL_SECS_DEFAULT;
+    final long ttlMs = TimeUnit.SECONDS.toMillis(ttlSecs);
+    final long jitterMs = ThreadLocalRandom.current().nextLong((long) (ttlMs * MAX_TTL_JITTER_FRACTION) + 1);
+    final long ttlNanos = TimeUnit.MILLISECONDS.toNanos(ttlMs - jitterMs);
+    final long refreshNanos = ttlNanos / 2;
+    LOG.registrySnapshotTtl(TimeUnit.NANOSECONDS.toMillis(ttlNanos), ttlSecs, TimeUnit.NANOSECONDS.toMillis(refreshNanos));
+    this.registrySnapshotLoader = new RegistrySnapshotLoader(database, discoveryHelper, trustProvider, ticker, ttlNanos, refreshNanos);
+    return Caffeine.newBuilder()
+        .ticker(ticker)
+        .executor(refreshExecutor)
+        .refreshAfterWrite(refreshNanos, TimeUnit.NANOSECONDS)
+        .expireAfter(new RegistrySnapshotExpiry(ttlNanos))
+        .build(registrySnapshotLoader);
   }
 
   @Override
@@ -151,12 +206,12 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   @Override
   public boolean isTrusted(String issuerUrl) {
-    return registrySnapshot.get().containsKey(issuerUrl);
+    return issuers().containsKey(issuerUrl);
   }
 
   @Override
   public boolean isDynamicJwks(String issuerUrl) {
-    final TrustedOidcIssuer entry = registrySnapshot.get().get(issuerUrl);
+    final TrustedOidcIssuer entry = issuers().get(issuerUrl);
     return entry != null && entry.isDynamicJwks();
   }
 
@@ -167,7 +222,7 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   @Override
   public synchronized void register(TrustedOidcIssuer issuer) {
-    if (registrySnapshot.get().size() >= maxTrustedIssuers) {
+    if (issuers().size() >= maxTrustedIssuers) {
       throw new IllegalStateException(
           "Cannot register issuer: MAX_TRUSTED_ISSUERS (" + maxTrustedIssuers + ") reached");
     }
@@ -210,22 +265,32 @@ public class JdbcTrustedOidcIssuerService implements TrustedOidcIssuerService {
 
   @Override
   public List<TrustedOidcIssuer> list() {
-    return new ArrayList<>(registrySnapshot.get().values());
+    return new ArrayList<>(issuers().values());
   }
 
   /**
-   * Rebuilds the registry snapshot from the current DB state.
-   * Called on init, after register, and after deregister.
+   * Returns the current registry snapshot, loading it synchronously if it has expired. Never
+   * throws: if the DB cannot be read once the snapshot has expired, the result is empty (fail closed).
+   */
+  private Map<String, TrustedOidcIssuer> issuers() {
+    final LoadingCache<String, RegistrySnapshot> cache = registrySnapshot;
+    return cache == null ? Collections.emptyMap() : cache.get(SNAPSHOT_KEY).getIssuers();
+  }
+
+  /**
+   * Rebuilds the registry snapshot from the current DB state and puts it into the cache.
+   * Called on init, after register, and after deregister. Unlike a TTL-driven reload, a DB
+   * failure here is propagated to the caller.
    * Synchronized on this to prevent concurrent rebuilds from interleaving with mutations.
    */
   private synchronized void reloadRegistrySnapshot() {
+    final RegistrySnapshot fresh;
     try {
-      final Map<String, TrustedOidcIssuer> fresh = database.selectAll().stream()
-          .collect(Collectors.toMap(TrustedOidcIssuer::getIssuerUrl, Function.identity()));
-      registrySnapshot.set(Collections.unmodifiableMap(fresh));
+      fresh = registrySnapshotLoader.rebuild(registrySnapshot.asMap().get(SNAPSHOT_KEY));
     } catch (Exception e) {
       LOG.errorReloadingRegistrySnapshot(e.getMessage(), e);
       throw new RuntimeException("Error reloading trusted OIDC issuer registry snapshot", e);
     }
+    registrySnapshot.put(SNAPSHOT_KEY, fresh);
   }
 }
