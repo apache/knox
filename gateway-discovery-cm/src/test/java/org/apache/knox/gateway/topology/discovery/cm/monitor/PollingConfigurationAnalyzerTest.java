@@ -482,7 +482,7 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   /**
-   * A descriptor that cannot be read/parsed must not be interpreted as "no references"; clusterReferencesExist must
+   * A descriptor that cannot be read/parsed must not be interpreted as "no references"; the descriptor reference analysis must
    * fail open (assume references remain) so a transient read/parse problem does not tear down a live cluster's cache.
    */
   @Test
@@ -812,8 +812,29 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   /**
+   * When the TopologyService is unavailable the referenced service types cannot be determined: the cluster is assumed
+   * to still be referenced (kept monitored) and no reference filtering is applied, so an event for a service type that
+   * no descriptor would reference is still relevant and triggers re-discovery.
+   */
+  @Test
+  public void testUnavailableTopologyServiceAppliesNoReferenceFiltering() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster REF5";
+
+    ApiEvent solrStart = createApiEvent(clusterName, SolrServiceModelGenerator.SERVICE_TYPE,
+        SolrServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS);
+    ServiceConfigurationModel solrModel = new ServiceConfigurationModel();
+    solrModel.addRoleProperty(SolrServiceModelGenerator.ROLE_TYPE, "solr_http_port", "8983");
+
+    boolean notified = runReferenceAwareScenario(Collections.emptyList(), address, clusterName, solrStart,
+        SolrServiceModelGenerator.SERVICE, solrModel, Collections.emptyList(), false);
+    assertTrue("Without a TopologyService references are unknown, so no filtering applies and the event is relevant",
+        notified);
+  }
+
+  /**
    * A descriptor that cannot be parsed (malformed content, {@link IOException} from Jackson) contributes no referenced
-   * services: it cannot be re-generated until fixed, so a re-discovery now could not act on it. getReferencedServiceTypes
+   * services: it cannot be re-generated until fixed, so a re-discovery now could not act on it. the descriptor reference analysis
    * skips it (logged), so an event for a service only such a descriptor would reference is not treated as relevant.
    */
   @Test
@@ -931,6 +952,14 @@ public class PollingConfigurationAnalyzerTest {
   private boolean runReferenceAwareScenario(final List<File> descriptors, final String address, final String clusterName,
       final ApiEvent event, final String currentServiceName, final ServiceConfigurationModel currentModel,
       final Collection<String> readOnlyTopologyNames) throws AliasServiceException {
+    return runReferenceAwareScenario(descriptors, address, clusterName, event, currentServiceName, currentModel,
+        readOnlyTopologyNames, true);
+  }
+
+  private boolean runReferenceAwareScenario(final List<File> descriptors, final String address, final String clusterName,
+      final ApiEvent event, final String currentServiceName, final ServiceConfigurationModel currentModel,
+      final Collection<String> readOnlyTopologyNames, final boolean topologyServiceAvailable)
+      throws AliasServiceException {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
@@ -957,7 +986,7 @@ public class PollingConfigurationAnalyzerTest {
     EasyMock.expect(gatewayStatusService.status()).andReturn(Boolean.TRUE).anyTimes();
 
     GatewayServices gws = EasyMock.createNiceMock(GatewayServices.class);
-    EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(ts).anyTimes();
+    EasyMock.expect(gws.getService(ServiceType.TOPOLOGY_SERVICE)).andReturn(topologyServiceAvailable ? ts : null).anyTimes();
     EasyMock.expect(gws.getService(ServiceType.GATEWAY_STATUS_SERVICE)).andReturn(gatewayStatusService).anyTimes();
     EasyMock.replay(ts, gatewayStatusService, gws);
 

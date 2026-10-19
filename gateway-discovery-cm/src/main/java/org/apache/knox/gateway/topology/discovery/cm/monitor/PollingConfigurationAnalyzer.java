@@ -279,7 +279,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
           // start events, and check the configuration only of the restarted service(s) to identify changes
           // that should trigger re-discovery.
           final List<RelevantEvent> relevantEvents =
-                  getRelevantEvents(address, clusterName, descriptorReferences.referencedServiceTypes());
+                  getRelevantEvents(address, clusterName, descriptorReferences);
 
           // If there are no recent start events, then nothing to do now
           if (!relevantEvents.isEmpty()) {
@@ -456,17 +456,17 @@ public class PollingConfigurationAnalyzer implements Runnable {
    *
    * @param source      A discovery source
    * @param clusterName A discovery cluster name
-   * @return references-exist plus the referenced CM service types; the latter is null when the TopologyService is
-   *         unavailable (references-exist is then true - assume references remain), meaning no relevance filtering.
+   * @return references-exist plus the referenced CM service types; when the TopologyService is unavailable the result
+   *         is {@link DescriptorReferences#unknown()} (assume references remain, apply no relevance filtering).
    */
   private DescriptorReferences analyzeDescriptorReferences(final String source, final String clusterName) {
     final TopologyService ts = getTopologyService();
     if (ts == null) {
       // TopologyService unavailable: assume references remain (keep monitoring) and apply no relevance filtering.
-      return new DescriptorReferences(true, null);
+      return DescriptorReferences.unknown();
     }
     if (source == null || clusterName == null) {
-      return new DescriptorReferences(false, Collections.emptySet());
+      return DescriptorReferences.none();
     }
 
     boolean referencesExist = false;
@@ -501,29 +501,51 @@ public class PollingConfigurationAnalyzer implements Runnable {
       // monitoring rather than evict the cache (mirroring the unavailable-TopologyService case above).
       referencesExist = true;
     }
-    return new DescriptorReferences(referencesExist, serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices));
+    return DescriptorReferences.of(referencesExist, serviceModelGeneratorsHolder.getServiceTypesForServices(referencedServices));
   }
 
   /**
    * The outcome of a single descriptor-parsing pass: whether the cluster is still referenced by a deployed descriptor,
-   * and the CM service types those descriptors reference ({@code null} when references could not be determined because
-   * the TopologyService is unavailable, in which case no relevance filtering is applied).
+   * and the CM service types those descriptors reference. The referenced service types are unknown when the
+   * TopologyService is unavailable, in which case no relevance filtering is applied (every service type counts as
+   * referenced).
    */
   private static final class DescriptorReferences {
     private final boolean referencesExist;
+    private final boolean referencedServiceTypesKnown;
     private final Set<String> referencedServiceTypes;
 
-    DescriptorReferences(final boolean referencesExist, final Set<String> referencedServiceTypes) {
+    private DescriptorReferences(final boolean referencesExist, final boolean referencedServiceTypesKnown,
+                                 final Set<String> referencedServiceTypes) {
       this.referencesExist = referencesExist;
+      this.referencedServiceTypesKnown = referencedServiceTypesKnown;
       this.referencedServiceTypes = referencedServiceTypes;
+    }
+
+    /** References remain (keep monitoring), but which service types are referenced could not be determined. */
+    static DescriptorReferences unknown() {
+      return new DescriptorReferences(true, false, Collections.emptySet());
+    }
+
+    /** No descriptor references the cluster. */
+    static DescriptorReferences none() {
+      return new DescriptorReferences(false, true, Collections.emptySet());
+    }
+
+    static DescriptorReferences of(final boolean referencesExist, final Set<String> referencedServiceTypes) {
+      return new DescriptorReferences(referencesExist, true, referencedServiceTypes);
     }
 
     boolean referencesExist() {
       return referencesExist;
     }
 
-    Set<String> referencedServiceTypes() {
-      return referencedServiceTypes;
+    /**
+     * @return true if the given CM service type is referenced by a deployed descriptor for the cluster, or if the
+     * referenced service types could not be determined (so no filtering is applied).
+     */
+    boolean isServiceTypeReferenced(final String serviceType) {
+      return !referencedServiceTypesKnown || referencedServiceTypes.contains(serviceType);
     }
   }
 
@@ -577,13 +599,13 @@ public class PollingConfigurationAnalyzer implements Runnable {
    *
    * @param address                The address of the ClouderaManager instance.
    * @param clusterName            The name of the cluster.
-   * @param referencedServiceTypes The CM service types referenced by the deployed descriptors (from
-   *                               {@link #analyzeDescriptorReferences}); null means no relevance filtering.
+   * @param descriptorReferences   The descriptor references for this cluster (from
+   *                               {@link #analyzeDescriptorReferences}), used to filter events by referenced service type.
    *
    * @return A List of StartEvent objects for service start events since the last time they were queried.
    */
   private List<RelevantEvent> getRelevantEvents(final String address, final String clusterName,
-                                                final Set<String> referencedServiceTypes) {
+                                                final DescriptorReferences descriptorReferences) {
     List<RelevantEvent> relevantEvents = new ArrayList<>();
 
     // Get the last event query timestamp
@@ -608,12 +630,12 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (events.isEmpty()) {
       log.noActivationEventFound();
     } else {
-      // referencedServiceTypes (computed once per cycle by analyzeDescriptorReferences): events for services no
+      // descriptorReferences (computed once per cycle by analyzeDescriptorReferences): events for services no
       // descriptor references are irrelevant - with per-descriptor discovery filtering they are never discovered, so
-      // they must not be treated as "new services" and trigger churn. A null value means references cannot be
-      // determined (no TopologyService), in which case no reference filtering is applied.
+      // they must not be treated as "new services" and trigger churn. If references cannot be determined (no
+      // TopologyService), no reference filtering is applied.
       for (ApiEvent event : events) {
-        if (isStartEvent(event, referencedServiceTypes) || isScaleEvent(event, referencedServiceTypes)) {
+        if (isStartEvent(event, descriptorReferences) || isScaleEvent(event, descriptorReferences)) {
           relevantEvents.add(new RelevantEvent(event));
         }
       }
@@ -622,7 +644,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     return relevantEvents;
   }
 
-  private boolean isStartEvent(ApiEvent event, Set<String> referencedServiceTypes) {
+  private boolean isStartEvent(ApiEvent event, DescriptorReferences descriptorReferences) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String command = getAttribute(attributeMap, COMMAND);
     final String status = getAttribute(attributeMap, COMMAND_STATUS);
@@ -633,7 +655,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
             && (ROLLING_RESTART_COMMAND.equals(command) || RESTART_WAITING_FOR_STALENESS_SUCCESS_COMMAND.equals(command));
     final boolean succeededActivation = START_COMMANDS.contains(command) && SUCCEEDED_STATUS.equals(status) && serviceModelGeneratorExists;
     final boolean excludedServiceType = isExcludedServiceType(serviceType);
-    final boolean referencedByDescriptor = isReferencedServiceType(serviceType, referencedServiceTypes);
+    final boolean referencedByDescriptor = descriptorReferences.isServiceTypeReferenced(serviceType);
     final boolean relevant = (clusterRollingOrStalenessRestart && SUCCEEDED_STATUS.equals(status))
             || (succeededActivation && !excludedServiceType && referencedByDescriptor);
     log.activationEventRelevance(event.getId(), relevant, command, status, serviceType, serviceModelGeneratorExists,
@@ -641,28 +663,20 @@ public class PollingConfigurationAnalyzer implements Runnable {
     return relevant;
   }
 
-  private boolean isScaleEvent(ApiEvent event, Set<String> referencedServiceTypes) {
+  private boolean isScaleEvent(ApiEvent event, DescriptorReferences descriptorReferences) {
     final Map<String, Object> attributeMap = getAttributeMap(event.getAttributes());
     final String serviceType = getAttribute(attributeMap, RelevantEvent.ATTR_SERVICE_TYPE);
     final String roleType = getAttribute(attributeMap, RelevantEvent.ATTR_ROLE);
     final String eventCode = getAttribute(attributeMap, RelevantEvent.ATTR_EVENT_CODE);
     final boolean serviceModelGeneratorExists = serviceModelGeneratorsHolder.getServiceModelGenerators(serviceType) != null;
     final boolean excludedServiceType = isExcludedServiceType(serviceType);
-    final boolean referencedByDescriptor = isReferencedServiceType(serviceType, referencedServiceTypes);
+    final boolean referencedByDescriptor = descriptorReferences.isServiceTypeReferenced(serviceType);
     final boolean excludedRoleType = isExcludedRoleType(roleType);
     final boolean relevant = serviceModelGeneratorExists && !excludedServiceType && referencedByDescriptor && !excludedRoleType
             && (CREATED_EVENT_CODES.contains(eventCode) || DELETED_EVENT_CODES.contains(eventCode));
     log.scaleEventRelevance(event.getId(), relevant, eventCode, serviceType, roleType, serviceModelGeneratorExists,
             excludedServiceType, referencedByDescriptor, excludedRoleType);
     return relevant;
-  }
-
-  /**
-   * @return true if the given CM service type is referenced by a deployed descriptor for the cluster, or if
-   * references could not be determined ({@code referencedServiceTypes} is null, so no filtering is applied).
-   */
-  private boolean isReferencedServiceType(final String serviceType, final Set<String> referencedServiceTypes) {
-    return referencedServiceTypes == null || referencedServiceTypes.contains(serviceType);
   }
 
   /**
