@@ -19,10 +19,12 @@ package org.apache.knox.gateway.topology.discovery.cm.monitor;
 import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.client.ApiResponse;
+import com.cloudera.api.swagger.model.ApiClusterRef;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
 import com.cloudera.api.swagger.model.ApiRoleList;
+import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
 import com.cloudera.api.swagger.model.ApiServiceList;
 import okhttp3.Call;
@@ -38,6 +40,7 @@ import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.services.topology.impl.GatewayStatusService;
 import org.apache.knox.gateway.topology.ClusterConfigurationMonitorService;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
+import org.apache.knox.gateway.topology.discovery.cm.ClouderaManagerServiceDiscovery;
 import org.apache.knox.gateway.topology.discovery.cm.DiscoveryApiClient;
 import org.apache.knox.gateway.topology.discovery.cm.model.hdfs.NameNodeServiceModelGenerator;
 import org.apache.knox.gateway.topology.discovery.cm.model.hive.HiveOnTezServiceModelGenerator;
@@ -278,25 +281,57 @@ public class PollingConfigurationAnalyzerTest {
    * The cluster-wide model inputs (service list + CORE_SETTINGS) are identical for every service examined in a polling
    * cycle, so they must be fetched from Cloudera Manager only once per cluster per cycle and reused. Drives the real
    * {@link PollingConfigurationAnalyzer#getCurrentServiceConfiguration} for two services in the same cluster within a
-   * cycle and asserts the cluster service list was read from CM exactly once.
+   * cycle and asserts both the cluster service list and the CORE_SETTINGS service configuration were read from CM
+   * exactly once.
    */
   @Test
   public void testClusterModelInputsFetchedOncePerClusterAcrossServices() throws AliasServiceException {
     final String address = "http://host1:1234";
     final String clusterName = "Cluster MC";
 
-    final CountingDiscoveryApiClient client = countingApiClient(address, clusterName);
+    final CountingDiscoveryApiClient client = countingApiClient(address, clusterName).withCoreSettingsService("CORE_SETTINGS-1", clusterName);
     final ApiClientInjectingPollingConfigAnalyzer pca =
             buildApiClientInjectingAnalyzer(address, clusterName, Collections.emptyMap(), new ChangeListener(), client);
 
     // Two different services in the same cluster, examined in the same cycle (the per-cycle cache is only cleared by
-    // monitorClusterConfigurationChanges, not between these direct calls). The cluster-wide service list must be read
+    // monitorClusterConfigurationChanges, not between these direct calls). The cluster-wide inputs must be read
     // from CM once for the first service and reused for the second.
     pca.getCurrentServiceConfiguration(address, clusterName, "svc-a", NameNodeServiceModelGenerator.SERVICE_TYPE);
     pca.getCurrentServiceConfiguration(address, clusterName, "svc-b", HiveOnTezServiceModelGenerator.SERVICE_TYPE);
 
     assertEquals("Cluster-wide service list must be fetched once per cluster per cycle and reused across services",
         1, client.readServicesCount());
+    assertEquals("CORE_SETTINGS configuration must be fetched once per cluster per cycle and reused across services",
+        1, client.coreSettingsConfigReadCount());
+  }
+
+  /**
+   * The cached cluster-wide model inputs are only valid for the polling cycle that fetched them: each new cycle must
+   * clear the cache and fetch them afresh, otherwise the monitor would compare against stale CM data indefinitely.
+   * Runs two real polling cycles, each with a new start event, and asserts the service list and CORE_SETTINGS
+   * configuration are each read once per cycle (twice in total).
+   */
+  @Test
+  public void testClusterModelInputsRefetchedOnEachPollingCycle() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster MC2";
+
+    final CountingDiscoveryApiClient client = countingApiClient(address, clusterName).withCoreSettingsService("CORE_SETTINGS-1", clusterName);
+    final ApiClientInjectingPollingConfigAnalyzer pca =
+            buildApiClientInjectingAnalyzer(address, clusterName, Collections.emptyMap(), new ChangeListener(), client);
+
+    pca.addRestartEvent(clusterName, createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS));
+    pca.runMonitoringCycle();
+    assertEquals("The first cycle must fetch the service list once", 1, client.readServicesCount());
+    assertEquals("The first cycle must fetch CORE_SETTINGS once", 1, client.coreSettingsConfigReadCount());
+
+    // A new event (new id) in the next cycle: the cache from the previous cycle must not be reused.
+    pca.addRestartEvent(clusterName, createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS));
+    pca.runMonitoringCycle();
+    assertEquals("The next cycle must re-fetch the service list", 2, client.readServicesCount());
+    assertEquals("The next cycle must re-fetch CORE_SETTINGS", 2, client.coreSettingsConfigReadCount());
   }
 
   /**
@@ -1490,10 +1525,14 @@ public class PollingConfigurationAnalyzerTest {
   /**
    * A DiscoveryApiClient that returns empty canned responses for the CM calls getCurrentServiceConfiguration makes
    * (readServiceConfig, readRoles, readServices) so the real method runs offline, and counts how many times the
-   * cluster service list (readServices) is read.
+   * cluster service list (readServices) is read. When a CORE_SETTINGS service is configured, the service list contains
+   * it and reads of that service's configuration are counted separately.
    */
   private static final class CountingDiscoveryApiClient extends DiscoveryApiClient {
     private int readServicesCount;
+    private int coreSettingsConfigReadCount;
+    private String coreSettingsServiceName;
+    private String coreSettingsClusterName;
 
     CountingDiscoveryApiClient(final GatewayConfig gatewayConfig, final ServiceDiscoveryConfig sdConfig, final AliasService aliasService) {
       super(gatewayConfig, sdConfig, aliasService, null);
@@ -1503,16 +1542,38 @@ public class PollingConfigurationAnalyzerTest {
       return readServicesCount;
     }
 
+    int coreSettingsConfigReadCount() {
+      return coreSettingsConfigReadCount;
+    }
+
+    /** Include a CORE_SETTINGS service with the given name, belonging to the given cluster, in the service list. */
+    CountingDiscoveryApiClient withCoreSettingsService(final String serviceName, final String clusterName) {
+      this.coreSettingsServiceName = serviceName;
+      this.coreSettingsClusterName = clusterName;
+      return this;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> ApiResponse<T> execute(Call call, Type returnType) {
       final Object data;
       if (ApiServiceList.class.equals(returnType)) {
         readServicesCount++;
-        data = new ApiServiceList();   // no items -> no CORE_SETTINGS lookup, synthetic ApiService used
+        final ApiServiceList serviceList = new ApiServiceList();   // no items -> no CORE_SETTINGS lookup unless configured
+        if (coreSettingsServiceName != null) {
+          serviceList.addItemsItem(new ApiService().name(coreSettingsServiceName)
+              .type(ClouderaManagerServiceDiscovery.CORE_SETTINGS_TYPE)
+              .clusterRef(new ApiClusterRef().clusterName(coreSettingsClusterName).displayName(coreSettingsClusterName))
+              .displayName(coreSettingsServiceName));
+        }
+        data = serviceList;
       } else if (ApiRoleList.class.equals(returnType)) {
         data = new ApiRoleList();      // no items -> no roles -> no models produced
       } else if (ApiServiceConfig.class.equals(returnType)) {
+        if (coreSettingsServiceName != null
+            && call.request().url().encodedPath().endsWith("/services/" + coreSettingsServiceName + "/config")) {
+          coreSettingsConfigReadCount++;
+        }
         data = new ApiServiceConfig();
       } else {
         data = null;
