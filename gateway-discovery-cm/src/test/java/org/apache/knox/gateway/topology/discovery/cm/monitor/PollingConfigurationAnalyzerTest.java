@@ -65,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
 import static org.easymock.EasyMock.getCurrentArguments;
@@ -707,45 +709,76 @@ public class PollingConfigurationAnalyzerTest {
   }
 
   /**
-   * An update to gateway.cloudera.manager.service.discovery.excluded.role.types on a running gateway must be honored on
-   * the next evaluation, without restarting the monitor - i.e. the config is read fresh per call rather than cached.
-   * <p>
-   * Simulated by a gatewayConfig whose excluded-role-types flips between reads: the first {@code isExcludedRoleType}
-   * evaluation sees the role type excluded, the next sees it no longer excluded. Two scale events for the same
-   * generator-backed, referenced role type are fired in order; with read-fresh config the first is filtered out and
-   * the second becomes relevant and notifies. A cached filter (the previous behavior) would apply the first, excluded
-   * value to both events, and nothing would ever notify.
+   * An update to gateway.cloudera.manager.service.discovery.excluded.role.types (e.g. via gateway-reloadable.xml) on a
+   * running gateway must be honored on the next polling cycle, without restarting the monitor - i.e. the config is read
+   * fresh rather than cached. See {@link #doTestExclusionConfigUpdateHonored}.
    */
   @Test
   public void testExcludedRoleTypesConfigUpdateHonoredWithoutRestart() throws AliasServiceException {
-    final String address = "http://host1:1234";
-    final String clusterName = "Cluster RU";
+    final AtomicReference<Collection<String>> excluded =
+        new AtomicReference<>(Collections.singleton(NameNodeServiceModelGenerator.ROLE_TYPE));
+    final GatewayConfig gatewayConfig = exclusionConfig(Collections::emptySet, excluded::get);
+    doTestExclusionConfigUpdateHonored("Cluster ExcludedRoles", gatewayConfig, () -> excluded.set(Collections.emptySet()));
+  }
 
+  /**
+   * Counterpart of {@link #testExcludedRoleTypesConfigUpdateHonoredWithoutRestart()} for
+   * gateway.cloudera.manager.service.discovery.excluded.service.types: both exclusion checks must follow the same
+   * read-fresh policy, so an update to either is honored on the next polling cycle.
+   */
+  @Test
+  public void testExcludedServiceTypesConfigUpdateHonoredWithoutRestart() throws AliasServiceException {
+    final AtomicReference<Collection<String>> excluded =
+        new AtomicReference<>(Collections.singleton(NameNodeServiceModelGenerator.SERVICE_TYPE));
+    final GatewayConfig gatewayConfig = exclusionConfig(excluded::get, Collections::emptySet);
+    doTestExclusionConfigUpdateHonored("Cluster ExcludedServices", gatewayConfig, () -> excluded.set(Collections.emptySet()));
+  }
+
+  /**
+   * A GatewayConfig mock whose excluded service types and excluded role types are read from the given suppliers on
+   * every call, so a test can change them while the analyzer runs. The suppliers, not the number or order of reads,
+   * determine what the analyzer sees.
+   */
+  private GatewayConfig exclusionConfig(final Supplier<Collection<String>> excludedServiceTypes,
+                                        final Supplier<Collection<String>> excludedRoleTypes) {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getIncludedSSLCiphers()).andReturn(Collections.emptyList()).anyTimes();
     EasyMock.expect(gatewayConfig.getIncludedSSLProtocols()).andReturn(Collections.emptySet()).anyTimes();
-    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes()).andReturn(Collections.emptySet()).anyTimes();
+    EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedServiceTypes())
+            .andAnswer(excludedServiceTypes::get).anyTimes();
     EasyMock.expect(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes())
-            .andReturn(Collections.singleton(NameNodeServiceModelGenerator.ROLE_TYPE)) // first read: role type excluded
-            .andReturn(Collections.emptySet()).anyTimes();                              // subsequent reads: no longer excluded
+            .andAnswer(excludedRoleTypes::get).anyTimes();
     EasyMock.replay(gatewayConfig);
+    return gatewayConfig;
+  }
+
+  /**
+   * Runs one polling cycle over a NAMENODE scale event that the given config excludes, then applies the config update
+   * and runs a second cycle over the same event. The event must be ignored in the first cycle (an ignored event is not
+   * marked processed, so it is seen again) and become relevant, and notify, in the second. A filter cached at first use
+   * would keep excluding it.
+   *
+   * @param updateConfig removes the exclusion from the given config, as an operator would on a running gateway
+   */
+  private void doTestExclusionConfigUpdateHonored(final String clusterName, final GatewayConfig gatewayConfig,
+                                                  final Runnable updateConfig) throws AliasServiceException {
+    final String address = "http://host1:1234";
 
     final ChangeListener listener = new ChangeListener();
     final TestablePollingConfigAnalyzer pca =
             buildPollingConfigAnalyzer(address, clusterName, Collections.emptyMap(), listener, true, gatewayConfig);
 
-    // Two scale events for the same generator-backed, referenced role type, evaluated in insertion order within one
-    // cycle: the first isExcludedRoleType read sees the role type excluded, the second sees it no longer excluded.
-    pca.addRestartEvent(clusterName, createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
-        NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
-        PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
     pca.addRestartEvent(clusterName, createScaleApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
         NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE,
         PollingConfigurationAnalyzer.EVENT_CODE_ROLE_CREATED));
 
     pca.runMonitoringCycle();
+    assertFalse("The excluded type must not trigger a change notification", listener.wasNotified(address, clusterName));
 
-    assertTrue("A live update to excluded.role.types must be honored on the next evaluation (config read fresh, not cached)",
+    updateConfig.run();
+
+    pca.runMonitoringCycle();
+    assertTrue("A live update to the exclusion config must be honored on the next cycle (config read fresh, not cached)",
         listener.wasNotified(address, clusterName));
   }
 
