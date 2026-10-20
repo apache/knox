@@ -931,11 +931,15 @@ public class LdapProxyBackendTest {
 
         // Test searching remote dn
         assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=people,dc=hadoop,dc=apache,dc=org"));
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=people,dc=hadoop,DC=Apache,DC=Org")); // mixed case
         assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=groups,dc=hadoop,dc=apache,dc=org"));
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=groups,dc=hadoop,DC=Apache,DC=Org")); // mixed case
 
         // Test searching proxy dn
         assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=people,dc=proxy,dc=com"));
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=people,DC=Proxy,DC=Com")); // mixed case
         assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=groups,dc=proxy,dc=com"));
+        assertTrue(ldapProxyBackend.isSupportedSearchBase("ou=groups,DC=Proxy,DC=Com")); // mixed case
 
         // Test searching arbitrary dn
         assertFalse(ldapProxyBackend.isSupportedSearchBase("cn=schema"));

@@ -17,20 +17,25 @@
  */
 package org.apache.knox.gateway.services.ldap.roles.rest;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.knox.gateway.services.ldap.RoleAssignment;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LookupRolesResponse {
     @JsonProperty("user_id")
     private String userId;
+
+    @JsonProperty("groups")
+    private List<String> groups;
 
     @JsonProperty("roles")
     private List<RoleAssignment> roles;
 
     public LookupRolesResponse() {}
 
-    public LookupRolesResponse(String userId, List<RoleAssignment> roles) {
+    public LookupRolesResponse(String userId, List<String> groups, List<RoleAssignment> roles) {
         this.userId = userId;
         this.roles = roles;
     }
@@ -41,6 +46,14 @@ public class LookupRolesResponse {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
     }
 
     public List<RoleAssignment> getRoles() {

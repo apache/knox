@@ -270,9 +270,9 @@ public class LdapProxyBackend implements LdapBackend {
             return false;
         }
         try {
-            Dn searchBaseDn = new Dn(searchBase);
-            return searchBaseDn.isDescendantOf(proxyBaseDn) ||
-                    searchBaseDn.isDescendantOf(remoteBaseDn);
+            Dn searchBaseDn = new Dn(searchBase.toLowerCase(ROOT));
+            return searchBaseDn.isDescendantOf(proxyBaseDn.toLowerCase(ROOT)) ||
+                    searchBaseDn.isDescendantOf(remoteBaseDn.toLowerCase(ROOT));
         } catch (LdapInvalidDnException e) {
             return false;
         }

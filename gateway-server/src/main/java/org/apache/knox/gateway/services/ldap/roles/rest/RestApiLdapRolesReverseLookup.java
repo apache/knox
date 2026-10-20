@@ -94,7 +94,6 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                         } else {
                             // unknown or empty member types
                             LOG.restRolesAssigneeTypeUnknown(role, member.getMemberType());
-                            throw new RoleException("Member (" + member + ") contains unknown member type: " + member.getMemberType());
                         }
                     }
                 }

@@ -178,30 +178,14 @@ public class RestApiLdapRolesReverseLookupTest {
                 {"id":"role-1","name":"admin","scope":"platform","members":[
                    {"id":"m1","member_type":"user","member_id":"alice"},
                    {"id":"m2","member_type":"GROUP","member_id":"engineering"},
-                   {"id":"m3","member_type":"user","member_id":"bob"}
+                   {"id":"m3","member_type":"user","member_id":"bob"},
+                   {"id":"m4","member_type":"service","member_id":"ignored"}
                  ]}""");
 
         RoleAssignees assignees = lookup().lookupRoleAssignees("platform:admin");
 
         assertEquals(List.of("alice", "bob"), assignees.getUsers());
         assertEquals(List.of("engineering"), assignees.getGroups());
-        assertEquals(List.of("/list?name=admin&scope=platform&offset=0", "/get/role-1"), new ArrayList<>(requests));
-    }
-
-    @Test
-    public void testLookupRoleAssigneesThrowsOnUnknownMemberType() throws Exception {
-        listResponsesByOffset.put("0", """
-                {"data":[
-                   {"id":"other","name":"admin","scope":"another"},
-                   {"id":"role-1","name":"admin","scope":"platform"}
-                 ],"pagination":{"total":2}}""");
-        getResponsesByPath.put("/get/role-1", """
-                {"id":"role-1","name":"admin","scope":"platform","members":[
-                   {"id":"m4","member_type":"service","member_id":"error"}
-                 ]}""");
-
-        assertThrows(RoleException.class, () -> lookup().lookupRoleAssignees("platform:admin"));
-
         assertEquals(List.of("/list?name=admin&scope=platform&offset=0", "/get/role-1"), new ArrayList<>(requests));
     }
 

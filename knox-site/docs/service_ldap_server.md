@@ -158,12 +158,18 @@ E.g.,
 ldapsearch -H ldap://<ldaphost>:<ldapport> -D <bind_dn> -w <bind_password> -b 'ou=people,dc=proxy,dc=com', -s sub '(objectClass=inetOrgPerson)' '*'
 ```
 
-**Role listing.** A search for all groups is answered with the roles known to the Role Lookup Service instead of the backend groups. Each role is returned as a `groupOfNames` entry with the DN `cn=<scope>:<name>,ou=groups,<base dn>`. Listed Role entries do not contain the `member` attribute because the role data is returned through the role strategy without further search requests to LDAP. A search is an all-groups search when its scope is not `base` (object) and its filter is an all-groups filter, and it is issued either from `ou=groups,<base dn>` or from the root of the directory (a base DN of at most two RDNs). A filter is an all-groups filter if it is one of:
+**Role listing.** A search for all groups is answered with the roles known to the Role Lookup Service instead of the backend groups. Each role is returned as a `groupOfNames` entry with the DN `cn=<scope>:<name>,ou=groups,<proxy base dn>`. Listed Role entries do not contain the `member` attribute because the role data is returned through the role strategy without further search requests to LDAP. A search is an all-groups search under the following conditions.
 
-- `(objectClass=groupOfNames)` or `(objectClass=groupOfUniqueNames)`
-- `(cn=*)` or `(objectClass=*)`
-- an AND filter where every child is an all-groups filter, for example `(&(objectClass=groupOfNames)(cn=*))`
-- an OR filter where at least one child is an all-groups filter
+If the search base is `ou=groups,<proxy search base>` and the search filter is:
+- a presence filter. e.g., `(cn=*)` or `(objectClass=*)` or
+- a group objectclass filter. e.g., `(objectClass=groupOfNames)` or `(objectClass=groupOfUniqueNames)`
+- an AND filter for which all sub-clauses include all groups. e.g., `(&(objectClass=*)(cn=*))`
+- an OR filter for which at least one sub-clause satisfies the above criteria. e.g., `(|(cn=*)(cn=alice))`
+
+If the search base is an ancestor of `ou=groups,<proxy search base>` and the search filter is:
+- a group objectclass filter. e.g., `(objectClass=groupOfNames)` or `(objectClass=groupOfUniqueNames)`
+- an AND filter for which one sub-clause specifies a group object class and all other sub-clauses include all groups. e.g., `(&(objectClass=groupOfNames)(cn=*))`
+- an OR filter where all sub-clauses are group objectclass filters. e.g., `(|(objectClass=groupOfNames)(objectClass=groupOfUniqueNames))`
 
 A NOT filter is never an all-groups filter. Group searches with other filters, such as `(cn=level*)`, are sent to the backend and the groups in the result are mapped to roles.
 
