@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RoleAssignment {
     public static RoleAssignment createFromDisplayValue(String displayValue) {
-        String[] tokens = displayValue.split(":");
+        String[] tokens = displayValue.split(":", 2);
         // expect at most 1 ':' in the display value
         if (tokens.length == 2) {
             return new RoleAssignment(tokens[0], tokens[1]);

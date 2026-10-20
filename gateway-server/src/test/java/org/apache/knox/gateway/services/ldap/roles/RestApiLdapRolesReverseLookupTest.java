@@ -109,7 +109,7 @@ public class RestApiLdapRolesReverseLookupTest {
         response.write(true, ByteBuffer.wrap(body.getBytes(StandardCharsets.UTF_8)), callback);
     }
 
-    private RestApiLdapRolesReverseLookup lookup() {
+    private RestApiLdapRolesReverseLookup lookup() throws RoleException {
         return new RestApiLdapRolesReverseLookup(listEndpoint, getEndpoint);
     }
 
@@ -117,11 +117,11 @@ public class RestApiLdapRolesReverseLookupTest {
     public void testListRolesSinglePage() throws Exception {
         listResponsesByOffset.put("0", """
                 {"data":[
-                   {"id":"1","name":"awc-admin","scope":"platform","unknown":"ignored"},
+                   {"id":"1","name":"admin","scope":"platform","unknown":"ignored"},
                    {"id":"2","name":"viewer"}
                  ],"pagination":{"limit":10,"offset":0,"total":2,"extra":true}}""");
 
-        assertEquals(Set.of("platform:awc-admin", "viewer"), new HashSet<>(lookup().listRoles()));
+        assertEquals(Set.of("platform:admin", "viewer"), new HashSet<>(lookup().listRoles()));
         assertEquals(1, requests.size());
         assertEquals("/list?offset=0", requests.get(0));
     }
@@ -171,22 +171,38 @@ public class RestApiLdapRolesReverseLookupTest {
     public void testLookupRoleAssigneesSplitsMembersByType() throws Exception {
         listResponsesByOffset.put("0", """
                 {"data":[
-                   {"id":"other","name":"awc-admin","scope":"another"},
-                   {"id":"role-1","name":"awc-admin","scope":"platform"}
+                   {"id":"other","name":"admin","scope":"another"},
+                   {"id":"role-1","name":"admin","scope":"platform"}
                  ],"pagination":{"total":2}}""");
         getResponsesByPath.put("/get/role-1", """
-                {"id":"role-1","name":"awc-admin","scope":"platform","members":[
+                {"id":"role-1","name":"admin","scope":"platform","members":[
                    {"id":"m1","member_type":"user","member_id":"alice"},
                    {"id":"m2","member_type":"GROUP","member_id":"engineering"},
-                   {"id":"m3","member_type":"user","member_id":"bob"},
-                   {"id":"m4","member_type":"service","member_id":"ignored"}
+                   {"id":"m3","member_type":"user","member_id":"bob"}
                  ]}""");
 
-        RoleAssignees assignees = lookup().lookupRoleAssignees("platform:awc-admin");
+        RoleAssignees assignees = lookup().lookupRoleAssignees("platform:admin");
 
         assertEquals(List.of("alice", "bob"), assignees.getUsers());
         assertEquals(List.of("engineering"), assignees.getGroups());
-        assertEquals(List.of("/list?name=awc-admin&scope=platform&offset=0", "/get/role-1"), new ArrayList<>(requests));
+        assertEquals(List.of("/list?name=admin&scope=platform&offset=0", "/get/role-1"), new ArrayList<>(requests));
+    }
+
+    @Test
+    public void testLookupRoleAssigneesThrowsOnUnknownMemberType() throws Exception {
+        listResponsesByOffset.put("0", """
+                {"data":[
+                   {"id":"other","name":"admin","scope":"another"},
+                   {"id":"role-1","name":"admin","scope":"platform"}
+                 ],"pagination":{"total":2}}""");
+        getResponsesByPath.put("/get/role-1", """
+                {"id":"role-1","name":"admin","scope":"platform","members":[
+                   {"id":"m4","member_type":"service","member_id":"error"}
+                 ]}""");
+
+        assertThrows(RoleException.class, () -> lookup().lookupRoleAssignees("platform:admin"));
+
+        assertEquals(List.of("/list?name=admin&scope=platform&offset=0", "/get/role-1"), new ArrayList<>(requests));
     }
 
     @Test

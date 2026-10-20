@@ -36,8 +36,6 @@ import org.apache.knox.gateway.services.ldap.roles.RoleException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -51,12 +49,20 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final String listEndpoint;
-    private final String getEndpoint;
+    private final URI listEndpoint;
+    private final URI getEndpoint;
 
-    public RestApiLdapRolesReverseLookup(String listEndpoint, String getEndpoint) {
-        this.listEndpoint = listEndpoint;
-        this.getEndpoint = getEndpoint;
+    public RestApiLdapRolesReverseLookup(String listEndpoint, String getEndpoint) throws RoleException {
+        try {
+            this.listEndpoint = new URIBuilder(listEndpoint).build();
+        } catch (URISyntaxException e) {
+            throw new RoleException("Cannot build URI for list endpoint: " + listEndpoint, e);
+        }
+        try {
+            this.getEndpoint = new URIBuilder(getEndpoint).build();
+        } catch (URISyntaxException e) {
+            throw new RoleException("Cannot build URI for get endpoint: " + getEndpoint, e);
+        }
     }
 
     @Override
@@ -81,13 +87,14 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                 List<RoleMember> members = getMembers(roleId);
                 if (members != null) {
                     for (RoleMember member : members) {
-                        if (member.getMemberType().equalsIgnoreCase("user")) {
+                        if ("user".equalsIgnoreCase(member.getMemberType())) {
                             users.add(member.getMemberId());
-                        } else if (member.getMemberType().equalsIgnoreCase("group")) {
+                        } else if ("group".equalsIgnoreCase(member.getMemberType())) {
                             groups.add(member.getMemberId());
                         } else {
-                            // ignore unknown member types
+                            // unknown or empty member types
                             LOG.restRolesAssigneeTypeUnknown(role, member.getMemberType());
+                            throw new RoleException("Member (" + member + ") contains unknown member type: " + member.getMemberType());
                         }
                     }
                 }
@@ -98,13 +105,21 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
     }
 
     private List<RoleMember> getMembers(String roleId) throws RoleException {
-        String encodedRoleId = URLEncoder.encode(roleId, StandardCharsets.UTF_8)
-                .replace("+", "%20"); // URLEncoder converts spaces to '+', path params need '%20'
-        String getUrl = getEndpoint + "/" + encodedRoleId;
-
+        URI getURI;
+        try {
+            URIBuilder getURIBuilder = new URIBuilder(getEndpoint);
+            List<String> pathSegments = new ArrayList<>();
+            pathSegments.addAll(getURIBuilder.getPathSegments());
+            pathSegments.add(roleId);
+            getURIBuilder.setPathSegments(pathSegments);
+            getURI = getURIBuilder.build();
+        } catch (URISyntaxException e) {
+            throw new RoleException("Cannot build URI for roleId: " + roleId, e);
+        }
+        String getUrl = getURI.toString();
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             LOG.restRolesGetRequest(getUrl, roleId);
-            HttpGet getRequest = new HttpGet(getUrl);
+            HttpGet getRequest = new HttpGet(getURI);
             getRequest.setHeader("Accept", "application/json");
             try (CloseableHttpResponse response = httpClient.execute(getRequest)) {
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -113,7 +128,7 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                 LOG.restRolesGetResponse(getUrl, statusCode, jsonResponse);
 
                 if (statusCode != 200) {
-                    LOG.restRolesLookupHttpError(getUrl, statusCode, jsonResponse);
+                    LOG.restRolesGetHttpError(getUrl, statusCode, jsonResponse);
                     throw new RoleException("Failed to get roles: HTTP " + statusCode);
                 }
 
@@ -150,7 +165,7 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                 listUrl = listURI.toString();
                 LOG.restRolesListRequest(listUrl);
 
-                HttpGet listRequest = new HttpGet(listUrl);
+                HttpGet listRequest = new HttpGet(listURI);
                 listRequest.setHeader("Accept", "application/json");
                 try (CloseableHttpResponse response = httpClient.execute(listRequest)) {
                     int statusCode = response.getStatusLine().getStatusCode();
@@ -159,7 +174,7 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                     LOG.restRolesListResponse(listUrl, statusCode, jsonResponse);
 
                     if (statusCode != 200) {
-                        LOG.restRolesLookupHttpError(listUrl, statusCode, jsonResponse);
+                        LOG.restRolesListHttpError(listUrl, statusCode, jsonResponse);
                         throw new RoleException("Failed to list roles: HTTP " + statusCode);
                     }
 
@@ -168,7 +183,13 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                     }
 
                     ListRolesResponse listRolesResponse = mapper.readValue(jsonResponse, ListRolesResponse.class);
+                    if (listRolesResponse.getData() == null) {
+                        throw new RoleException("Empty response data from role list API");
+                    }
                     numRolesRetrieved += listRolesResponse.getData().size();
+                    if (listRolesResponse.getPagination() == null) {
+                        throw new RoleException("Empty response pagination from role list API");
+                    }
                     totalExpectedRoles = listRolesResponse.getPagination().getTotal();
                     roles.addAll(listRolesResponse.getData());
                     if (listRolesResponse.getData().isEmpty() && numRolesRetrieved < totalExpectedRoles) {
@@ -178,9 +199,9 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
             } while (numRolesRetrieved < totalExpectedRoles);
             return roles;
         } catch (URISyntaxException e) {
-            throw new RoleException("Invalid URI for role lookup: " + listUrl, e);
+            throw new RoleException("Invalid URI for role list: " + listUrl, e);
         } catch (IOException e) {
-            throw new RoleException("Error while executing role lookup", e);
+            throw new RoleException("Error while executing role list", e);
         }
     }
 

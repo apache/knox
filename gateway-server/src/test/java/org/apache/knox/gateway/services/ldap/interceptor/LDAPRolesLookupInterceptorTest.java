@@ -528,23 +528,33 @@ public class LDAPRolesLookupInterceptorTest {
 
     @Test
     public void testAllGroupsSearchFromGroupsBaseListsAllRoles() throws Exception {
-        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(rolesService.listRoles()).andReturn(List.of("platform:admin", "viewer"));
-        replay(rolesService);
+        for (String filter : List.of(
+                "(objectClass=groupOfNames)",
+                "(objectClass=groupOfUniqueNames)",
+                "(objectClass=*)",
+                "(cn=*)",
+                "(&(objectClass=groupOfNames)(cn=*))",
+                "(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))",
+                "(|(cn=viewer)(cn=*))")) {
 
-        final TestContext testContext = createTestContext(false, rolesService);
-        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
-        testContext.ctx.setScope(SearchScope.ONELEVEL);
-        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+            final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            expect(rolesService.listRoles()).andReturn(List.of("platform:admin", "viewer"));
+            replay(rolesService);
 
-        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+            final TestContext testContext = createTestContext(false, rolesService);
+            testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+            testContext.ctx.setScope(SearchScope.ONELEVEL);
+            testContext.ctx.setFilter(FilterParser.parse(schemaManager, filter));
 
-        assertEquals(2, byDn.size());
-        final Entry admin = byDn.get("cn=platform:admin,ou=groups,dc=proxy,dc=com");
-        assertEquals("platform:admin", admin.get("cn").getString());
-        assertTrue(admin.contains("objectClass", "groupOfNames"));
-        assertTrue(byDn.containsKey("cn=viewer,ou=groups,dc=proxy,dc=com"));
-        verify(rolesService);
+            final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+            assertEquals(2, byDn.size());
+            final Entry admin = byDn.get("cn=platform:admin,ou=groups,dc=proxy,dc=com");
+            assertEquals("platform:admin", admin.get("cn").getString());
+            assertTrue(admin.contains("objectClass", "groupOfNames"));
+            assertTrue(byDn.containsKey("cn=viewer,ou=groups,dc=proxy,dc=com"));
+            verify(rolesService);
+        }
     }
 
     @Test
@@ -567,11 +577,9 @@ public class LDAPRolesLookupInterceptorTest {
         for (String filter : List.of(
                 "(objectClass=groupOfNames)",
                 "(objectClass=groupOfUniqueNames)",
-                "(cn=*)",
-                "(objectClass=*)",
                 "(&(objectClass=groupOfNames)(cn=*))",
-                "(|(uid=alice)(objectClass=groupOfNames))",
-                "(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))")) {
+                "(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))",
+                "(|(objectClass=groupOfUniqueNames)(objectClass=groupOfNames))")) {
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
             expect(rolesService.listRoles()).andReturn(List.of("viewer"));
             replay(rolesService);
@@ -588,10 +596,20 @@ public class LDAPRolesLookupInterceptorTest {
 
     @Test
     public void testRootSearchWithNonGroupFilterIsNotAllGroupsSearch() throws Exception {
-        for (String filter : List.of("(uid=alice)", "(objectClass=inetOrgPerson)", "(&(uid=alice)(sn=smith))",
-                "(&(objectClass=groupOfNames)(cn=viewer))", "(&(uid=alice)(objectClass=groupOfNames))",
-                "(|(uid=alice)(cn=viewer))", "(!(objectClass=groupOfNames))", "(!(cn=*))",
-                "(!(uid=alice))", "(&(objectClass=groupOfNames)(!(cn=viewer)))",
+        for (String filter : List.of(
+                "(cn=*)",
+                "(objectClass=*)",
+                "(uid=alice)",
+                "(objectClass=inetOrgPerson)",
+                "(&(uid=alice)(sn=smith))",
+                "(&(objectClass=groupOfNames)(cn=viewer))",
+                "(&(uid=alice)(objectClass=groupOfNames))",
+                "(|(uid=alice)(cn=viewer))",
+                "(!(objectClass=groupOfNames))",
+                "(!(cn=*))",
+                "(!(uid=alice))",
+                "(|(uid=alice)(objectClass=groupOfNames))",
+                "(&(objectClass=groupOfNames)(!(cn=viewer)))",
                 "(&(objectClass=inetOrgPerson)(!(cn=viewer)))")) {
             // strict mock: listRoles() must not be called
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
@@ -610,7 +628,12 @@ public class LDAPRolesLookupInterceptorTest {
 
     @Test
     public void testNonGroupFilterOnGroupsBaseIsNotAllGroupsSearch() throws Exception {
-        for (String filter : List.of("(uid=alice)", "(cn=level*)", "(&(uid=alice)(sn=smith))")) {
+        for (String filter : List.of(
+                "(uid=alice)",
+                "(cn=level*)",
+                "(&(objectClass=groupOfNames)(sn=smith))",
+                "(&(uid=alice)(sn=smith))",
+                "(|(uid=alice)(sn=smith))")) {
             // strict mock: listRoles() must not be called
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
             replay(rolesService);
@@ -773,7 +796,7 @@ public class LDAPRolesLookupInterceptorTest {
         testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(memberOf=cn=viewer,ou=groups,dc=proxy,dc=com)"));
         testContext.nextInterceptor.setEntries(List.of());
 
-        assertThrows(RuntimeException.class, () -> testContext.interceptor.search(testContext.ctx));
+        assertThrows(LdapException.class, () -> testContext.interceptor.search(testContext.ctx));
     }
 
     private Map<String, Entry> collectByDn(final EntryFilteringCursor cursor) throws Exception {

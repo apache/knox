@@ -23,13 +23,11 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.filter.ExprNode;
-import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.LdapUtils;
 
-import java.text.ParseException;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -141,17 +139,16 @@ public class RemoteSchemaConverter {
      * @param filter the filter
      * @param schemaManager the schema manager
      * @return the converted filter
-     * @throws ParseException if the filter cannot be parsed
+     * @throws LdapException if the filter cannot be converted
      */
-    public String convertProxyFilterToRemoteFilter(String filter, SchemaManager schemaManager) throws ParseException {
+    public ExprNode convertProxyFilterToRemoteFilter(ExprNode filter, SchemaManager schemaManager) throws LdapException {
         RemoteSchemaMappingVisitor remoteSchemaMappingVisitor = new RemoteSchemaMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager, this::convertProxyDnToRemoteDn);
 
-        // Filter likely has already been annotated by other interceptors.
-        // Clean the filter by removing any modifications or annotations
-        String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
-        ExprNode cleanNode = FilterParser.parse(schemaManager, rawFilter);
-
-        return cleanNode.accept(remoteSchemaMappingVisitor).toString();
+        Object result = filter.accept(remoteSchemaMappingVisitor);
+        if (result instanceof ExprNode) {
+            return (ExprNode) result;
+        }
+        throw new LdapException("Unable to convert filter expression to remote values: " + filter.toString());
     }
 
     /**

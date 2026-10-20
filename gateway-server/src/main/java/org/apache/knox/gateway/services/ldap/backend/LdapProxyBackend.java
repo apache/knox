@@ -28,6 +28,7 @@ import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.filter.ExprNode;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
@@ -83,29 +84,28 @@ public class LdapProxyBackend implements LdapBackend {
     private static final String[] ALL_ATTRIBUTES = new String[]{"*"};
     private static final String[] ALL_ATTRIBUTES_AND_MEMBEROF = new String[]{"*", "memberOf"};
 
-    private static final String DEFAULT_MAX_FILTER_LENGTH = "2000";
+    private static final String DEFAULT_MAX_FILTER_LENGTH = "0"; // unlimited
 
     static final String TYPE = "ldap";
 
-    private String name;
-    private String ldapUrl;
+    private final String name;
     private String bindDn;
     private String bindPassword;
     private int port;
     private String host;
 
-    private RemoteSchemaConverter remoteSchemaConverter;
+    private final RemoteSchemaConverter remoteSchemaConverter;
 
     // Proxy configuration
-    private String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
-    private String proxyUserSearchBase;
-    private String proxyGroupSearchBase;
-    private boolean dnMappingEnabled;
+    private final String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
+    private final String proxyUserSearchBase;
+    private final String proxyGroupSearchBase;
+    private final boolean dnMappingEnabled;
 
     // Backend configuration
-    private String remoteBaseDn;  // Base DN for remote server searches (e.g., dc=hadoop,dc=apache,dc=org)
-    private String remoteUserSearchBase;
-    private String remoteGroupSearchBase;
+    private final String remoteBaseDn;  // Base DN for remote server searches (e.g., dc=hadoop,dc=apache,dc=org)
+    private final String remoteUserSearchBase;
+    private final String remoteGroupSearchBase;
 
     // Configurable attributes for AD/LDAP compatibility
     private String remoteUserIdentifierAttribute = "uid"; // uid for LDAP, sAMAccountName for AD
@@ -113,24 +113,24 @@ public class LdapProxyBackend implements LdapBackend {
     private String remoteGroupMemberAttribute = "memberUid"; // member for AD, memberUid for POSIX
     private String remoteUserObjectClass = "inetOrgPerson"; // user for AD, inetOrgPerson otherwise
     private String remoteGroupObjectClass = "groupofnames"; // group for AD, groupofnames otherwise
-    private boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
-    private boolean recursiveGroupResolution;
-    private int recursiveGroupResolutionMaxDepth;
-    private int pageSize;
-    private int maxResultSetSize;
-    private int maxFilterLength;
+    private final boolean useMemberOf; // Use memberOf attribute for group lookup (efficient for AD)
+    private final boolean recursiveGroupResolution;
+    private final int recursiveGroupResolutionMaxDepth;
+    private final int pageSize;
+    private final int maxResultSetSize;
+    private final int maxFilterLength;
 
     private final String proxyEntryGroupMembershipAttributeType = "memberOf";
 
     // Secure transport configuration for the connection to the remote LDAP server
-    private boolean useSsl;                  // LDAPS (implicit TLS)
-    private boolean trustAllCertificates;    // skip certificate validation (test/dev only)
-    private String trustStorePath;
-    private String trustStoreType;
-    private String trustStorePassword;
-    private String sslProtocol;
-    private String[] enabledProtocols;
-    private String[] enabledCipherSuites;
+    private final boolean useSsl;                  // LDAPS (implicit TLS)
+    private final boolean trustAllCertificates;    // skip certificate validation (test/dev only)
+    private final String trustStorePath;
+    private final String trustStoreType;
+    private final String trustStorePassword;
+    private final String sslProtocol;
+    private final String[] enabledProtocols;
+    private final String[] enabledCipherSuites;
     // LDAP response timeout in milliseconds; negative means use the client default.
     private long connectionTimeoutMillis = -1;
 
@@ -141,7 +141,7 @@ public class LdapProxyBackend implements LdapBackend {
         this.name = name;
 
         // Support both url and host/port configuration
-        ldapUrl = config.get("url");
+        String ldapUrl = config.get("url");
         if (ldapUrl != null && !ldapUrl.isEmpty()) {
             // Parse URL to extract host and port
             parseLdapUrl(ldapUrl);
@@ -217,7 +217,7 @@ public class LdapProxyBackend implements LdapBackend {
         maxFilterLength = Integer.parseInt(config.getOrDefault("maxFilterLength", DEFAULT_MAX_FILTER_LENGTH)); // 0 means unlimited
         LOG.ldapInterceptorConfiguring(name, "maxFilterLength", Integer.toString(maxFilterLength));
 
-        // Configure secure transport (LDAPS) to the remote server. An ldaps:// URL enables it
+        // Configure secure transport (LDAPS) to the remote server. A ldaps:// URL enables it
         // by default; an explicit useSsl setting always wins.
         final boolean ldapsFromUrl = ldapUrl != null && ldapUrl.toLowerCase(Locale.ROOT).startsWith("ldaps://");
         useSsl = Boolean.parseBoolean(config.getOrDefault("useSsl", String.valueOf(ldapsFromUrl)));
@@ -269,9 +269,13 @@ public class LdapProxyBackend implements LdapBackend {
         if (searchBase == null) {
             return false;
         }
-        String searchBaseLowerCase = searchBase.toLowerCase(ROOT);
-        return searchBaseLowerCase.endsWith(proxyBaseDn.toLowerCase(ROOT)) ||
-                searchBaseLowerCase.endsWith(remoteBaseDn.toLowerCase(ROOT));
+        try {
+            Dn searchBaseDn = new Dn(searchBase);
+            return searchBaseDn.isDescendantOf(proxyBaseDn) ||
+                    searchBaseDn.isDescendantOf(remoteBaseDn);
+        } catch (LdapInvalidDnException e) {
+            return false;
+        }
     }
 
     /**
@@ -563,11 +567,17 @@ public class LdapProxyBackend implements LdapBackend {
 
     @Override
     public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
-        filter = mapMemberOfExpression(filter, schemaManager);
+        // Filter likely has already been annotated by other interceptors.
+        // Clean the filter by removing any modifications or annotations
+        String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
+        ExprNode filterNode = FilterParser.parse(schemaManager, rawFilter);
+
+        // NOTE: mapping memberOf must occur before schema conversion
+        filterNode = mapMemberOfExpression(filterNode, schemaManager);
 
         LdapConnection connection = null;
         String remoteSearchBase = remoteSchemaConverter.convertProxyDnToRemoteDn(searchBase);
-        String remoteFilter = remoteSchemaConverter.convertProxyFilterToRemoteFilter(filter, schemaManager);
+        ExprNode remoteFilter = remoteSchemaConverter.convertProxyFilterToRemoteFilter(filterNode, schemaManager);
         Map<String, Entry> entryCache = createEntryCache();
         Map<String, Set<String>> resolvedParentsCache = createResolvedParentsCache();
 
@@ -575,7 +585,7 @@ public class LdapProxyBackend implements LdapBackend {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
             String[] attributes = useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
-            List<Entry> searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter), searchScope, attributes);
+            List<Entry> searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, attributes);
             for (Entry entry : searchResults) {
                 addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
                 results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
@@ -586,28 +596,34 @@ public class LdapProxyBackend implements LdapBackend {
         }
     }
 
-    private String mapMemberOfExpression(String filter, SchemaManager schemaManager) throws Exception {
-        if (useMemberOf || !filter.toLowerCase(ROOT).contains("memberof")) {
+    private ExprNode mapMemberOfExpression(ExprNode filter, SchemaManager schemaManager) throws Exception {
+        if (useMemberOf || !filter.toString().toLowerCase(ROOT).contains("memberof")) {
             return filter;
         }
         // Convert filter if it contains "memberOf" but the backend doesn't support "memberOf"
-        MemberOfMappingVisitor visitor = new MemberOfMappingVisitor(schemaManager, this::lookupGroup, this::isUser);
-        ExprNode node = FilterParser.parse(schemaManager, filter);
+        MemberOfMappingVisitor visitor = new MemberOfMappingVisitor(schemaManager, this::lookupGroup, dn -> isUser(dn, schemaManager));
         // Baseline in the same form as the visitor output so an unchanged visit exits on the first pass
-        String current = node.toString();
-        for (int i = 0; i < recursiveGroupResolutionMaxDepth; ++i) {
-            Object visitedNode = node.accept(visitor);
-            if (!(visitedNode instanceof ExprNode)) {
-                throw new Exception("Unable to transform memberOf expressions in filter: " + filter);
+        String current = filter.toString();
+        int depth = recursiveGroupResolution ? recursiveGroupResolutionMaxDepth : 1;
+        for (int i = 0; i < depth; ++i) {
+            Object visitedNode;
+            try {
+                visitedNode = filter.accept(visitor);
+            } catch (Exception e) {
+                throw new LdapException("Failed to resolve group members of " + current, e);
             }
-            node = (ExprNode) visitedNode;
-            String updated = node.toString();
+            if (!(visitedNode instanceof ExprNode)) {
+                throw new LdapException("Unable to transform memberOf expressions in filter: " + filter);
+            }
+            filter = (ExprNode) visitedNode;
+            String updated = filter.toString();
             if (updated.equals(current)) {
                 break;
             }
             current = updated;
         }
-        return current;
+        // TODO remove any remaining memberOf clauses?
+        return filter;
     }
 
     private Entry lookupGroup(String dn, SchemaManager schemaManager) throws Exception {
@@ -626,12 +642,17 @@ public class LdapProxyBackend implements LdapBackend {
         }
     }
 
-    private boolean isUser(String userDn) {
-        if (userDn == null) {
+    private boolean isUser(String userDnString, SchemaManager schemaManager) {
+        if (userDnString == null) {
             return false;
         }
-        String lowerCaseUserDn = userDn.toLowerCase(ROOT);
-        return lowerCaseUserDn.contains(proxyUserSearchBase) || lowerCaseUserDn.contains(remoteUserObjectClass);
+        try {
+            Dn userDn = new Dn(schemaManager, userDnString);
+            return userDn.isDescendantOf(proxyUserSearchBase) ||
+                    userDn.isDescendantOf(remoteUserSearchBase);
+        } catch (LdapInvalidDnException e) {
+            return false;
+        }
     }
 
     private void addGroupMemberships(Entry entry, LdapConnection connection, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws LdapException, CursorException, IOException {
@@ -671,7 +692,7 @@ public class LdapProxyBackend implements LdapBackend {
         return groups;
     }
 
-    private List<String> getGroupsViaMemberOf(LdapConnection connection, Entry entry, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) throws LdapException, CursorException, IOException {
+    private List<String> getGroupsViaMemberOf(LdapConnection connection, Entry entry, Map<String, Entry> entryCache, Map<String, Set<String>> resolvedParentsCache) {
         final List<String> groupDns = new ArrayList<>();
         // Use the memberOf attribute of the given entry
         final Attribute memberOfAttr = entry.get("memberOf");
@@ -736,7 +757,7 @@ public class LdapProxyBackend implements LdapBackend {
                 groupEntry = null;
             }
             if (groupEntry == null) {
-                // Entry not found or lookup failed — synthesise a skeleton so cn is still known.
+                // Entry not found or lookup failed — synthesize a skeleton so cn is still known.
                 groupEntry = createSkeletonGroupEntry(groupDn);
             }
             entryCache.put(groupDn, groupEntry);
@@ -892,7 +913,7 @@ public class LdapProxyBackend implements LdapBackend {
 
     private void logRecursiveSearchProgressViaMemberOf(String entryName, List<String> groups, int depth) {
         LOG.ldapRecursiveGroupSearchProgress(entryName, groups.size(),
-                groups.stream().collect(Collectors.joining(",")),
+                String.join(",", groups),
                 depth);
     }
 

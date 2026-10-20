@@ -219,6 +219,9 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
     void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR, text = "Failed to lookup users and groups for roles: {0}")
+    void ldapRolesReverseLookupFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
     @Message(level = MessageLevel.DEBUG, text = "Sending role lookup request to {0}: {1}")
     void restRolesLookupRequest(String endpoint, String requestBody);
 

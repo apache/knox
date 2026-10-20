@@ -254,7 +254,7 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.useMemberOf` | `false` | If `true`, use the `memberOf` attribute for efficient group lookups. |
 | `gateway.ldap.interceptor.<name>.proxy.poolMaxActive` | `8` | Maximum number of active connections in the pool. |
 | `gateway.ldap.interceptor.<name>.pageSize` | `1000` | Page size for search requests. |
-| `gateway.ldap.interceptor.<name>.maxFilterLength` | `2000` | Maximum length of a search filter sent to the remote server. A longer filter (for example one expanded from a `memberOf` condition on a large group) is split into several searches whose results are combined. 0 means unlimited. |
+| `gateway.ldap.interceptor.<name>.maxFilterLength` | `0` | Maximum length of a search filter sent to the remote server. A longer filter (for example one expanded from a `memberOf` condition on a large group) is split into several searches whose results are combined. 0 means unlimited. |
 | `gateway.ldap.interceptor.<name>.maxResultSetSize` | `0` | Maximum number of results to return from a search, regardless of paging. 0 means unlimited. |
 
 NOTE: If this value is undefined and the interceptor was created by the KnoxLDAPServerManager, the KnoxLDAPServerManager will set the `gateway.ldap.interceptor.<name>.maxResultSetSize` value to be 1 greater than the proxy's `gateway.ldap.max.size.limit` configuration. This will ensure that the proxy returns a "Size limit exceeded" result if the backend has more results than the proxy's limit.

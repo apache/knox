@@ -79,7 +79,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private final LDAPRolesLookupService rolesLookupService;
     private final String proxyGroupSearchBase;
 
-    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, Map<String, String> config) {
+    public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, Map<String, String> config) throws Exception{
         this.rolesLookupService = rolesLookupService;
         this.proxyGroupSearchBase = "ou=groups," + config.get("baseDn");
     }
@@ -103,21 +103,30 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         }
     }
 
-    private boolean isAllGroupsSearch(SearchOperationContext ctx) {
+    private boolean isAllGroupsSearch(SearchOperationContext ctx) throws LdapException {
+        Dn proxyGroupSearchBaseDn = new Dn(schemaManager, proxyGroupSearchBase);
         Dn searchDn = ctx.getDn();
+        ExprNode searchFilter = ctx.getFilter();
+
         if (searchDn == null) {
             return false;
         }
 
-        if (ctx.getScope() == SearchScope.OBJECT || !isAllGroupsFilter(ctx.getFilter())) {
+        if (ctx.getScope() == SearchScope.OBJECT || !isAllGroupsFilter(searchFilter)) {
             return false;
         }
-        // Either the proxy groups base, or the root with an explicit group filter
-        return searchDn.toString().equalsIgnoreCase(proxyGroupSearchBase) || searchDn.size() <= 2;
+
+        // Search for all groups in the proxy groups base
+        if (proxyGroupSearchBaseDn.equals(searchDn) && isAllGroupsFilter(searchFilter)) {
+            return true;
+        }
+
+        // the root with an explicit group filter
+        return searchDn.isAncestorOf(proxyGroupSearchBaseDn)
+                && isAllGroupsFilterForAncestor(searchFilter);
     }
 
-    private boolean isAllGroupsFilter(ExprNode filter) {
-        // Case 1: Simple objectClass evaluation (e.g., objectClass=groupOfNames)
+    private boolean isGroupObjectClassFilter(ExprNode filter) {
         if (filter instanceof EqualityNode) {
             EqualityNode<?> eqNode = (EqualityNode<?>) filter;
             if ("objectClass".equalsIgnoreCase(eqNode.getAttribute())) {
@@ -125,6 +134,37 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 return "groupOfNames".equalsIgnoreCase(value) ||
                         "groupOfUniqueNames".equalsIgnoreCase(value);
             }
+        }
+        return false;
+    }
+
+    private boolean isAllGroupsFilterForAncestor(ExprNode filter) {
+        // Case 1: Simple objectClass evaluation (e.g., objectClass=groupOfNames)
+        if (isGroupObjectClassFilter(filter)) {
+            return true;
+        }
+
+        // Case 2: Compound filters.
+        if (filter instanceof AndNode) {
+            List<ExprNode> children = ((AndNode) filter).getChildren();
+            // An AND is an all groups filter only if one child is and the rest of the children
+            // are supersets of all groups. e.g., (&(objectClass=groupOfNames)(cn=*))
+            return !children.isEmpty() &&
+                    children.stream().anyMatch(this::isGroupObjectClassFilter) &&
+                    children.stream().allMatch(this::isAllGroupsFilter);
+        }
+        if (filter instanceof OrNode) {
+            // An OR is an all groups filter only if every child is.
+            return ((OrNode) filter).getChildren().stream().allMatch(this::isGroupObjectClassFilter);
+        }
+
+        return false;
+    }
+
+    private boolean isAllGroupsFilter(ExprNode filter) {
+        // Case 1: Simple objectClass evaluation (e.g., objectClass=groupOfNames)
+        if (isGroupObjectClassFilter(filter)) {
+            return true;
         }
 
         // Case 2a: Wildcard match on all common names and object classes (e.g., cn=*, objectClass=*)
@@ -175,11 +215,15 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         ExprNode filter = ctx.getFilter();
         ReverseRoleLookupMappingVisitor reverseRoleLookupMappingVisitor =
                 new ReverseRoleLookupMappingVisitor(schemaManager, rolesLookupService, this::createGroupDnFromName);
-        Object updatedFilter = filter.accept(reverseRoleLookupMappingVisitor);
-        if (updatedFilter != null && updatedFilter instanceof ExprNode) {
-            ctx.setFilter((ExprNode) updatedFilter);
+        try {
+            Object updatedFilter = filter.accept(reverseRoleLookupMappingVisitor);
+            if (updatedFilter != null && updatedFilter instanceof ExprNode) {
+                ctx.setFilter((ExprNode) updatedFilter);
+            }
+        } catch (Exception e) {
+            LOG.ldapRolesReverseLookupFailed(e);
+            throw new LdapException("Failed to update search filter with reverse role lookup.", e);
         }
-
         final SchemaManager schemaManager = ctx.getSession().getDirectoryService().getSchemaManager();
 
         // The role lookup must be keyed on the stable user id, which lives in the uid attribute

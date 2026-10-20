@@ -58,9 +58,11 @@ public class RoleAssignmentTest {
         assertEquals("admin", assignment.getName());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateFromDisplayValueWithMultipleSeparatorsFails() {
-        RoleAssignment.createFromDisplayValue("a:b:c");
+    @Test
+    public void testCreateFromDisplayValueWithMultipleSeparators() {
+        RoleAssignment assignment = RoleAssignment.createFromDisplayValue("a:b:c");
+        assertEquals("a", assignment.getScope());
+        assertEquals("b:c", assignment.getName());
     }
 
     @Test
