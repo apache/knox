@@ -372,10 +372,10 @@ public class PollingConfigurationAnalyzer implements Runnable {
                         getCurrentServiceConfiguration(address, clusterName, re.getService(), re.getServiceType());
 
         if (current.isError()) {
-          // CM was unreachable while computing the current configuration: the current state is unknown, so make no
-          // change decision this cycle. This preserves the pre-KNOX-2900 no-op behavior on API errors and prevents a
-          // transient outage from forcing a full re-discovery every polling cycle until CM recovers.
-          log.skippingConfigChangeForUnreachableService(re.getService(), re.getServiceType());
+          // The current configuration could not be computed (CM unreachable, or a generator failed; the cause is logged
+          // where it happened), so it is unknown: make no change decision for this service this cycle. A transient
+          // outage or a faulty generator must not force a re-discovery every polling cycle.
+          log.skippingConfigChangeForUnknownConfiguration(re.getService(), re.getServiceType());
         } else {
           final ServiceConfigurationModel currentConfig = current.getModel(); // non-null only when hasModel()
           if (serviceConfig == null && !current.hasModel()) {
@@ -774,7 +774,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
    * result distinguishes three outcomes so the caller never conflates "the service is genuinely gone" with "we could
    * not reach Cloudera Manager": a service whose configuration is invalid (no generator produces a model) yields a
    * {@link CurrentServiceConfiguration#noModel() no-model} result - mirroring its absence from the baseline - while an
-   * {@link ApiException} (CM unreachable) yields an {@link CurrentServiceConfiguration#error() error} result.
+   * {@link ApiException} (CM unreachable) or an unexpected {@link RuntimeException} (e.g. from a service model
+   * generator) yields an {@link CurrentServiceConfiguration#error() error} result.
    *
    * @param address     The address of the ClouderaManager instance.
    * @param clusterName The name of the cluster.
@@ -803,12 +804,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
 
       ApiRoleConfigList roleConfigList = roleCollector.getAllServiceRoleConfigurations(clusterName, service);
 
-      // The cluster's service list (the "summary" view carries clusterRef/displayName) and CORE_SETTINGS config are
-      // cluster-wide and identical for every service examined this cycle, so they are fetched at most once per cluster
-      // per cycle and reused here. The service list yields the real ApiService for the started service; feeding
-      // generators the real ApiService - rather than a name/type-only stub - keeps the monitor's inputs
-      // field-identical to discovery, so generators that dereference service.getClusterRef().getClusterName()
-      // (YarnUI/JobHistoryUI) do not NPE.
+      // Cluster-wide inputs (service list, CORE_SETTINGS config) are fetched once per cluster per cycle and reused.
+      // The service list provides the real ApiService, including clusterRef, as in discovery.
       final ClusterModelInputs clusterModelInputs = getClusterModelInputs(api, address, clusterName);
       final ApiService apiService = findService(clusterModelInputs.getServiceList(), service, serviceType, clusterName);
       final Set<ServiceModel> serviceModels = ServiceModelFactory.generateServiceModels(
@@ -819,10 +816,14 @@ public class PollingConfigurationAnalyzer implements Runnable {
       // state - distinct from the error case below, where we simply could not reach CM.
       return currentConfig == null ? CurrentServiceConfiguration.noModel() : CurrentServiceConfiguration.withModel(currentConfig);
     } catch (ApiException e) {
-      // CM was unreachable (network blip, auth failure, transient 5xx). The current configuration is unknown, so
-      // return an explicit error result: the caller must treat this as "unknown", never as "the service is gone" -
-      // otherwise a transient outage would force a full re-discovery every polling cycle until CM recovers.
-      log.clouderaManagerConfigurationAPIError(e);
+      // CM unreachable or the call failed: the configuration is unknown, not "service gone". Return an error result
+      // so a transient outage does not force a re-discovery every cycle.
+      log.clouderaManagerConfigurationAPIError(service, serviceType, e);
+      return CurrentServiceConfiguration.error();
+    } catch (RuntimeException e) {
+      // Generators are pluggable and may throw unexpectedly. Treat it like a CM failure and skip this service,
+      // instead of letting the exception end the whole polling cycle.
+      log.failedToComputeCurrentConfiguration(service, serviceType, e);
       return CurrentServiceConfiguration.error();
     }
   }

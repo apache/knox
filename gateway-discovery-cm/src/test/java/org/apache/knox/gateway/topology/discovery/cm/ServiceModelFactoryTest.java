@@ -119,49 +119,41 @@ public class ServiceModelFactoryTest extends AbstractCMDiscoveryTest {
   }
 
   @Test
-  public void testAllGeneratorsHandleMonitorReconstructedServiceWithoutNPE() {
-    // Regression guard for PollingConfigurationAnalyzer#getCurrentServiceConfiguration: the monitor derives the
-    // "current" configuration by running the model generators against an ApiService it builds itself (see
-    // PollingConfigurationAnalyzer#findService) rather than a fully-populated discovery object. A generator that
-    // dereferences an ApiService field the monitor leaves unset - e.g. YarnUI/JobHistoryUI read
-    // service.getClusterRef().getClusterName() - would throw an NPE inside generateService() that is not an
-    // ApiException, escaping the analyzer's try/catch and aborting the entire polling cycle for every cluster,
-    // recurring every interval. Run EVERY registered generator against a monitor-shaped ApiService and assert none
-    // throws a NullPointerException.
+  public void testAllGeneratorsHandleMonitorReconstructedServiceWithoutExceptions() {
+    // Regression guard: the monitor builds the generators' ApiService itself (see PollingConfigurationAnalyzer#findService),
+    // so a generator that reads a field it leaves unset (e.g. getClusterRef() in YarnUI/JobHistoryUI) would throw.
+    // Run every registered generator against a monitor-shaped ApiService and assert none throws an unchecked exception.
 
-    // The only nested call any generator makes during generateService() is readServiceConfig (YarnUI/JobHistoryUI,
-    // for the HDFS SSL lookup); hand back an empty ApiServiceConfig so it resolves without contacting CM.
+    // YarnUI/JobHistoryUI call readServiceConfig for the HDFS SSL lookup; answer it locally.
     final DiscoveryApiClient client = new StubDiscoveryApiClient(createApiServiceConfigMock(Collections.emptyMap()));
 
-    // A non-null hdfs_service gives those generators a real service name for the nested readServiceConfig call.
+    // Gives YarnUI/JobHistoryUI a service name for that lookup.
     final Map<String, String> serviceProps = new HashMap<>();
     serviceProps.put("hdfs_service", "hdfs");
     final ApiServiceConfig serviceConfig = createApiServiceConfigMock(serviceProps);
 
-    final List<String> generatorsThatThrewNPE = new ArrayList<>();
+    final List<String> generatorsThatThrewUncheckedException = new ArrayList<>();
     for (ServiceModelGenerator generator : ServiceLoader.load(ServiceModelGenerator.class)) {
-      // Shaped exactly as PollingConfigurationAnalyzer#findService's fallback builds it: name + type + a populated
-      // clusterRef, with every other ApiService field (displayName, serviceUrl, ...) left null.
+      // The shape of findService's fallback: name, type and clusterRef only.
       final ApiService service = new ApiService()
           .name(generator.getServiceType() + "-1")
           .type(generator.getServiceType())
           .clusterRef(new ApiClusterRef().clusterName("Cluster 1"));
 
-      // A role of the type this generator handles, so its handles() returns true and generateService() is exercised.
+      // A role of the generator's own type, so generateService() runs.
       final ApiRoleConfigList roleConfigList = roleConfigList(generator.getRoleType(), Collections.emptyMap());
 
       try {
         ServiceModelFactory.generateServiceModels(client, service, serviceConfig, roleConfigList, null);
-      } catch (NullPointerException npe) {
-        generatorsThatThrewNPE.add(generator.getClass().getSimpleName());
+      } catch (RuntimeException unchecked) {
+        generatorsThatThrewUncheckedException.add(generator.getClass().getSimpleName() + ": " + unchecked);
       } catch (Exception tolerated) {
-        // Config-/API-driven exceptions (an unhandled config shape, the stub's canned response, etc.) are unrelated
-        // to the null-field defect this guard targets; only a NullPointerException is a failure here.
+        // Checked exceptions (e.g. ApiException from the stub) are not what this test guards.
       }
     }
 
-    assertTrue("Generators threw NullPointerException on a monitor-reconstructed ApiService (missing clusterRef and "
-        + "other fields discovery would populate): " + generatorsThatThrewNPE, generatorsThatThrewNPE.isEmpty());
+    assertTrue("Generators threw an unchecked exception on a monitor-shaped ApiService: "
+        + generatorsThatThrewUncheckedException, generatorsThatThrewUncheckedException.isEmpty());
   }
 
   /**

@@ -20,9 +20,12 @@ import com.cloudera.api.swagger.client.ApiClient;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.client.ApiResponse;
 import com.cloudera.api.swagger.model.ApiClusterRef;
+import com.cloudera.api.swagger.model.ApiConfigList;
 import com.cloudera.api.swagger.model.ApiEvent;
 import com.cloudera.api.swagger.model.ApiEventAttribute;
 import com.cloudera.api.swagger.model.ApiEventCategory;
+import com.cloudera.api.swagger.model.ApiHostRef;
+import com.cloudera.api.swagger.model.ApiRole;
 import com.cloudera.api.swagger.model.ApiRoleList;
 import com.cloudera.api.swagger.model.ApiService;
 import com.cloudera.api.swagger.model.ApiServiceConfig;
@@ -67,6 +70,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.knox.gateway.topology.discovery.ClusterConfigurationMonitor.ConfigurationChangeListener;
 import static org.easymock.EasyMock.getCurrentArguments;
@@ -706,6 +711,57 @@ public class PollingConfigurationAnalyzerTest {
 
     doTestEvent(scaleEvent, address, clusterName, Collections.emptyMap(), Collections.emptyMap(), pca);
     assertFalse("Excluded role type must not trigger a change notification", listener.wasNotified(address, clusterName));
+  }
+
+  /**
+   * ServiceModelGenerators are pluggable, so one of them may throw an unchecked exception on an input nobody
+   * anticipated. Here the NameNode generator dereferences the host of a role that has none and throws a
+   * NullPointerException. That must not escape: the current configuration is unknown, so the result is an error
+   * (no change decision), just like an unreachable Cloudera Manager.
+   */
+  @Test
+  public void testServiceModelGeneratorFailureYieldsErrorResult() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster GeneratorFailure";
+
+    final CountingDiscoveryApiClient client = countingApiClient(address, clusterName)
+        .withRole(NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE, false);
+    final ApiClientInjectingPollingConfigAnalyzer pca =
+            buildApiClientInjectingAnalyzer(address, clusterName, Collections.emptyMap(), new ChangeListener(), client);
+
+    final PollingConfigurationAnalyzer.CurrentServiceConfiguration current = pca.getCurrentServiceConfiguration(
+        address, clusterName, NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.SERVICE_TYPE);
+
+    assertTrue("A generator failure must produce an error result, not an exception", current.isError());
+    assertFalse("An error result must not be mistaken for a produced model", current.hasModel());
+  }
+
+  /**
+   * A generator failing for one service must not stop the polling cycle: the next service's event is still evaluated.
+   * The first event is for a NameNode whose role has no host (its generator throws a NullPointerException); the second
+   * is for a new, valid Solr service, which must still trigger re-discovery.
+   */
+  @Test
+  public void testServiceModelGeneratorFailureDoesNotPreventEvaluatingOtherServices() throws AliasServiceException {
+    final String address = "http://host1:1234";
+    final String clusterName = "Cluster GeneratorFailureCycle";
+
+    final CountingDiscoveryApiClient client = countingApiClient(address, clusterName)
+        .withRole(NameNodeServiceModelGenerator.SERVICE, NameNodeServiceModelGenerator.ROLE_TYPE, false)
+        .withRole(SolrServiceModelGenerator.SERVICE, SolrServiceModelGenerator.ROLE_TYPE, true);
+    final ChangeListener listener = new ChangeListener();
+    final ApiClientInjectingPollingConfigAnalyzer pca =
+            buildApiClientInjectingAnalyzer(address, clusterName, Collections.emptyMap(), listener, client);
+
+    pca.addRestartEvent(clusterName, createApiEvent(clusterName, NameNodeServiceModelGenerator.SERVICE_TYPE,
+        NameNodeServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS));
+    pca.addRestartEvent(clusterName, createApiEvent(clusterName, SolrServiceModelGenerator.SERVICE_TYPE,
+        SolrServiceModelGenerator.SERVICE, PollingConfigurationAnalyzer.START_COMMAND, PollingConfigurationAnalyzer.SUCCEEDED_STATUS));
+
+    pca.runMonitoringCycle();
+
+    assertTrue("The failing generator must not prevent the next service's event from triggering re-discovery",
+        listener.wasNotified(address, clusterName));
   }
 
   /**
@@ -1566,6 +1622,7 @@ public class PollingConfigurationAnalyzerTest {
     private int coreSettingsConfigReadCount;
     private String coreSettingsServiceName;
     private String coreSettingsClusterName;
+    private final Map<String, ApiRole> roleByServiceName = new HashMap<>();
 
     CountingDiscoveryApiClient(final GatewayConfig gatewayConfig, final ServiceDiscoveryConfig sdConfig, final AliasService aliasService) {
       super(gatewayConfig, sdConfig, aliasService, null);
@@ -1586,6 +1643,24 @@ public class PollingConfigurationAnalyzerTest {
       return this;
     }
 
+    /**
+     * Give the named service a single role of the given type. The role has a host only if {@code withHost} is set, so a
+     * generator that dereferences {@code role.getHostRef()} fails on a role without one.
+     */
+    CountingDiscoveryApiClient withRole(final String serviceName, final String roleType, final boolean withHost) {
+      final ApiRole role = new ApiRole().name(serviceName + "-" + roleType).type(roleType);
+      if (withHost) {
+        role.hostRef(new ApiHostRef().hostId("hostId1").hostname("host1"));
+      }
+      roleByServiceName.put(serviceName, role);
+      return this;
+    }
+
+    private static String serviceNameOf(final Call call) {
+      final Matcher matcher = Pattern.compile("/services/([^/]+)/").matcher(call.request().url().encodedPath());
+      return matcher.find() ? matcher.group(1) : null;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> ApiResponse<T> execute(Call call, Type returnType) {
@@ -1601,13 +1676,24 @@ public class PollingConfigurationAnalyzerTest {
         }
         data = serviceList;
       } else if (ApiRoleList.class.equals(returnType)) {
-        data = new ApiRoleList();      // no items -> no roles -> no models produced
+        final ApiRoleList roles = new ApiRoleList();   // no items -> no roles -> no models produced, unless configured
+        final ApiRole role = roleByServiceName.get(serviceNameOf(call));
+        if (role != null) {
+          roles.addItemsItem(role);
+        }
+        data = roles;
+      } else if (ApiConfigList.class.equals(returnType)) {
+        final ApiConfigList roleConfig = new ApiConfigList();   // a role's (empty) configuration
+        roleConfig.setItems(new ArrayList<>());
+        data = roleConfig;
       } else if (ApiServiceConfig.class.equals(returnType)) {
         if (coreSettingsServiceName != null
             && call.request().url().encodedPath().endsWith("/services/" + coreSettingsServiceName + "/config")) {
           coreSettingsConfigReadCount++;
         }
-        data = new ApiServiceConfig();
+        final ApiServiceConfig serviceConfig = new ApiServiceConfig();
+        serviceConfig.setItems(new ArrayList<>());
+        data = serviceConfig;
       } else {
         data = null;
       }

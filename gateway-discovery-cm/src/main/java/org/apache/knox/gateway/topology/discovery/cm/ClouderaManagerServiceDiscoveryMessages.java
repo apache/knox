@@ -190,8 +190,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void clouderaManagerConfigurationChangesMonitoringError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Error getting service configuration details from ClouderaManager: {0}")
-  void clouderaManagerConfigurationAPIError(@StackTrace(level = MessageLevel.DEBUG) ApiException e);
+      text = "Error getting the configuration of the {0} ({1}) service from ClouderaManager: {2}")
+  void clouderaManagerConfigurationAPIError(String serviceName, String serviceType,
+                                            @StackTrace(level = MessageLevel.DEBUG) ApiException e);
 
   @Message(level = MessageLevel.ERROR,
       text = "Error querying restart events from ClouderaManager: {0}")
@@ -282,9 +283,14 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void skippingConfigChangeForInvalidService(String serviceName, String serviceType);
 
   @Message(level = MessageLevel.WARN,
-           text = "Could not determine the current configuration of the {0} ({1}) service because ClouderaManager was "
-                  + "unreachable; skipping change detection for this service this cycle.")
-  void skippingConfigChangeForUnreachableService(String serviceName, String serviceType);
+           text = "Could not determine the current configuration of the {0} ({1}) service; skipping change detection "
+                  + "for this service this cycle.")
+  void skippingConfigChangeForUnknownConfiguration(String serviceName, String serviceType);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Failed to compute the current configuration of the {0} ({1}) service: {2}")
+  void failedToComputeCurrentConfiguration(String serviceName, String serviceType,
+                                           @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.INFO, text = "Role type {0} has been removed.")
   void roleTypeRemoved(String roleType);
