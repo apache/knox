@@ -114,7 +114,7 @@ public interface LdapMessages {
     void ldapFilterSplit(int filterLength, int maxFilterLength, int numSearches);
 
     @Message(level = MessageLevel.ERROR,
-            text = "LDAP Paged Search Exceeded Max Result Set Size: {0} | {1}")
+            text = "LDAP Paged Search Exceeded Max Result Set Size: {0} | {1}. Truncating results.")
     void ldapPagedSearchExceededMaxResultSetSize(int resultSetSize, int maxResultSetSize);
 
     @Message(level = MessageLevel.DEBUG,

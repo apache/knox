@@ -622,7 +622,6 @@ public class LdapProxyBackend implements LdapBackend {
             }
             current = updated;
         }
-        // TODO remove any remaining memberOf clauses?
         return filter;
     }
 
@@ -980,7 +979,13 @@ public class LdapProxyBackend implements LdapBackend {
                 break;
             }
         }
-        return new ArrayList<>(combined.values());
+        if (maxResultSetSize == 0) {
+            return new ArrayList<>(combined.values());
+        } else {
+            return combined.values().stream()
+                    .limit(maxResultSetSize)
+                    .collect(Collectors.toList());
+        }
     }
 
     protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, String... attributes ) throws LdapException, CursorException, IOException {
@@ -1045,11 +1050,13 @@ public class LdapProxyBackend implements LdapBackend {
 
         if (maxResultSetSize != 0 && results.size() >= maxResultSetSize) {
             LOG.ldapPagedSearchExceededMaxResultSetSize(results.size(), maxResultSetSize);
+            return results.stream()
+                    .limit(maxResultSetSize)
+                    .collect(Collectors.toList());
         } else {
             LOG.ldapPagedSearchCompleted(baseDn, filter, results.size());
+            return results;
         }
-
-        return results;
     }
 
     /**

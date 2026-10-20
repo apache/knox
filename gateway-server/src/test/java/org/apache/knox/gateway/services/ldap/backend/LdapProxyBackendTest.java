@@ -327,7 +327,7 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<String> userGroups = ldapProxyBackend.getUserGroups("ldaptest1", schemaManager);
-        assertEquals(PAGE_SIZE, userGroups.size()); // only retrieve 1 page because that will exceed the maxResultSetSize
+        assertEquals(1, userGroups.size()); // results are truncated to maxResultSetSize
         assertEquals(1, findSearchRequests("ou=groups,dc=hadoop,dc=apache,dc=org", "ldaptest1").size());
     }
 
@@ -428,7 +428,7 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         List<Entry> entries = ldapProxyBackend.searchUsers("*", schemaManager);
-        assertEquals(PAGE_SIZE, entries.size()); // only expect 1 page of results
+        assertEquals(1, entries.size()); // only expect 1 page of results, truncated to maxResultSetSize
         assertEquals(1, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
     }
 
@@ -588,8 +588,23 @@ public class LdapProxyBackendTest {
         config.put("maxResultSetSize", "1");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager);
-        assertEquals(PAGE_SIZE, entries.size()); // only expect 1 page because that will exceed the maxResultSetSize
+        assertEquals(1, entries.size()); // only expect 1 page truncated to maxResultSetSize
         assertEquals(1, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
+    }
+
+    @Test
+    public void testSearchSplitsFilterWithPagingExceedsMaxResultSize() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("maxFilterLength", "40");
+        config.put("pageSize", Integer.toString(PAGE_SIZE));
+        config.put("maxResultSetSize", "3");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(|(uid=ldaptest1)(uid=ldaptest2)(uid=ldapmemberof)(uid=guest)(uid=ldaptest1))", schemaManager);
+        // expect results truncated to maxResultSetSize
+        assertEquals(3, entries.size());
+        // expect 2 pages
+        assertEquals(2, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "").size());
     }
 
     @Test
