@@ -155,6 +155,7 @@ Each policy carries:
 | `allowHeadlessExchange` | boolean | Whether this actor may perform a headless (`requested_subject`) exchange. Default `false`. |
 | `tokenTtlSec` | integer (nullable) | Per-policy lifetime for the minted token (see [Token lifetime](#token-lifetime)). |
 | `resourcePolicy` | map | Optional map of allowed resource/audience → allowed scopes. |
+| `subjectAudiences` | string set | Optional. The audiences that identify this actor **as a recipient**, i.e. the `aud` values other actors mint tokens for it under. Used only to accept a re-exchanged `subject_token` (see [Multi-hop delegation](#multi-hop-delegation)). Default empty: such a token is never accepted for this actor. |
 
 At least one of `canActForUsers` / `canActForGroups` must be set.
 
@@ -165,14 +166,18 @@ For a delegated exchange, KnoxIDF looks up the actor's policy and evaluates it i
 1. **No policy** for `(actorAuthority, actorId)` → denied (`actor_not_registered`).
 2. **Headless** exchange but the policy does not set `allowHeadlessExchange` → denied
    (`headless_not_allowed`).
-3. The impersonated subject is in **`canActForUsers`** → authorized.
-4. Otherwise, if **`canActForGroups`** is set, the subject's LDAP group membership is resolved and
+3. **Re-exchanged subject token** (see [Multi-hop delegation](#multi-hop-delegation)) whose `aud`
+   does not intersect the policy's `subjectAudiences` → denied (`subject_audience_not_allowed`).
+   Skipped when the subject token carries a `knox.token.audiences` value.
+4. The impersonated subject is in **`canActForUsers`** → authorized.
+5. Otherwise, if **`canActForGroups`** is set, the subject's LDAP group membership is resolved and
    intersected with it; a match authorizes, no match is denied (`subject_not_allowed`).
 
 !!! warning "Denials are deliberately generic"
     Whatever the specific reason, a policy denial always returns the single response
     **HTTP 400 `invalid_request`** ("The token exchange request is rejected by policy"). The precise
-    reason (`actor_not_registered`, `headless_not_allowed`, `subject_not_allowed`, …) is written
+    reason (`actor_not_registered`, `headless_not_allowed`, `subject_audience_not_allowed`,
+    `subject_not_allowed`, …) is written
     only to the [audit log](operations.md#auditing), never leaked to the caller.
 
 !!! danger "Group rules require the LDAP service"
@@ -201,6 +206,67 @@ exchange is rejected with HTTP 400 `invalid_request` ("The resulting actor chain
 exceed the configured maximum of M."). A non-numeric or non-positive configured value is ignored and
 the default of 3 applies (the check is never disabled). This applies only when KNOXTOKEN's delegated
 authentication (`knox.token.enable.delegated.auth`) is enabled.
+
+### Multi-hop delegation
+
+Every presented JWT is checked against the `JWTProvider`'s `knox.token.audiences`. A token minted
+by a delegated exchange carries only the requested target audience (for example the URL of the
+service it is sent to), so by default it cannot be presented again as a `subject_token`, and an
+on-behalf-of chain stops after the first hop. Removing `knox.token.audiences` is **not** a fix: it
+also lifts the check on actor tokens, so any token from a trusted issuer, minted for any audience
+(for example an automounted Kubernetes ServiceAccount token), could act as a delegation actor.
+
+Instead, list the issuers whose tokens may be re-exchanged in
+**`token.exchange.subject.token.policy.audiences.issuers`** (normally this topology's own issuer)
+and declare each intermediate actor's own audiences in its policy's **`subjectAudiences`**. The
+audience rules per token role are then:
+
+| Token | Rule |
+|-------|------|
+| `actor_token`, and the `subject_token` of a headless exchange (it is the actor) | `aud` must contain a `knox.token.audiences` value. |
+| `subject_token` of a delegated exchange that carries a `knox.token.audiences` value (first hop) | Accepted as today. |
+| `subject_token` of a delegated exchange without a `knox.token.audiences` value (later hops) | Accepted only if an `actor_token` is present, the token's `iss` is in `token.exchange.subject.token.policy.audiences.issuers`, and its `aud` intersects the actor policy's `subjectAudiences`. Otherwise rejected. |
+| `subject_token` of a same-subject exchange | `aud` must contain a `knox.token.audiences` value (no exception). |
+| `subject_token` of a headless exchange | With `delegation.headless.reject.subject.with.act=true`, must not carry an `act` claim. |
+
+Signature, issuer and expiry are always validated; only the audience check is deferred to the
+policy. The result is that a service can re-exchange only a token addressed **to itself**, and only
+while proving its identity with its own actor token: another actor, even one allowed to act for the
+same user, cannot use it.
+
+`subjectAudiences` is deliberately separate from `resourcePolicy`. `resourcePolicy` lists the
+services an actor may mint tokens **for** (its callees), while `subjectAudiences` lists the
+audience the actor **is**. Reusing `resourcePolicy` would bind a token to the callers of a service
+instead of to the service itself, and listing a service in its own `resourcePolicy` would let it
+mint tokens addressed to itself.
+
+Errors:
+
+- Subject token without a `knox.token.audiences` value and an unlisted issuer, or on a same-subject
+  or headless exchange: `400` "missing required token audience" (as today).
+- Re-exchanged subject token whose `aud` does not match `subjectAudiences`: the generic policy
+  denial `400 invalid_request`; the audit reason is `subject_audience_not_allowed`.
+- Headless `subject_token` with an `act` claim (when enabled): `400 invalid_request` ("A delegated
+  subject_token cannot be used for a headless delegation exchange"); the audit reason is
+  `headless_subject_has_act`.
+
+Example: user `alice` → `dataservice` (`ds-sa`) → `mcp-server` (`mcp-sa`) → `search-api`. Only
+the intermediate actors need `subjectAudiences`; `ds-sa` receives a first-hop token that already
+carries `knoxidf`.
+
+```json
+{ "actorAuthority": "K8S_SA",
+  "actorId": "https://kubernetes.default.svc.cluster.local:tools:mcp-sa",
+  "canActForUsers": ["alice"],
+  "subjectAudiences": ["https://svc.cluster.local/tools/mcp-server"],
+  "resourcePolicy": { "https://svc.cluster.local/search/search-api": [] } }
+```
+
+`dataservice` exchanges `alice`'s token for one with `aud=https://svc.cluster.local/tools/mcp-server`
+and calls `mcp-server` with it. `mcp-server` presents that token as `subject_token`, with its own
+`knoxidf`-audience ServiceAccount token as `actor_token`, and requests
+`resource=https://svc.cluster.local/search/search-api`. The minted token's `act` chain then names
+`mcp-sa` and, nested inside it, `ds-sa`. Each hop counts toward `delegation.max.actor.chain.depth`.
 
 ## Kubernetes ServiceAccount subjects
 
@@ -232,6 +298,8 @@ model as the rest of KnoxIDF — see [Operations → Backend selection](operatio
 | `delegation.enforce.requested.audience.required` | token-exchange `JWTProvider` | `false` |
 | `delegation.enforce.requested.audience.max.one` | token-exchange `JWTProvider` | `false` |
 | `token.exchange.same.subject.requested.audience.enabled` | token-exchange `JWTProvider` | `false` |
+| `token.exchange.subject.token.policy.audiences.issuers` | token-exchange `JWTProvider` | unset (disabled) |
+| `delegation.headless.reject.subject.with.act` | token-exchange `JWTProvider` | `false` |
 | `delegation.max.actor.chain.depth` | `KNOXTOKEN` service | `3` |
 | `knox.delegation.min.token.ttl.sec` | `KNOXIDF_ADMIN` topology (delegation-policies resource) | `60` |
 | `knox.delegation.max.token.ttl.sec` | `KNOXIDF_ADMIN` topology (delegation-policies resource) | `86400` |

@@ -25,6 +25,7 @@ import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
 import org.apache.knox.gateway.services.security.AliasService;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -242,6 +243,15 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
     // Step 2: headless exchange check
     if (request.isHeadlessExchange() && !policy.isAllowHeadlessExchange()) {
       return deny("headless_not_allowed");
+    }
+
+    // Step 2.5: subject audience check (KNOX-3520). Required only when the subject_token was
+    // accepted without a knox.token.audiences value, i.e. it is a Knox-minted token being
+    // re-exchanged on a later hop. It must be addressed to this actor: its aud must intersect the
+    // audiences the policy declares the actor serves. An empty subjectAudiences never matches.
+    if (request.isSubjectAudienceMatchRequired()
+        && Collections.disjoint(request.getSubjectTokenAudiences(), policy.getSubjectAudiences())) {
+      return deny("subject_audience_not_allowed");
     }
 
     // Step 3: user check (remember result; group check deferred to the end)

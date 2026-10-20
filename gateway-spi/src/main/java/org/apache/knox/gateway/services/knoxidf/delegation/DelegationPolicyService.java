@@ -35,8 +35,8 @@ public interface DelegationPolicyService extends Service {
 
   /**
    * Fully replaces all mutable fields (name, status, tokenTtlSec, description,
-   * allowHeadlessExchange, canActForUsers, canActForGroups, resourcePolicy) including child rows,
-   * which are deleted and re-inserted transactionally. actorAuthority, actorId, createdBy, and
+   * allowHeadlessExchange, canActForUsers, canActForGroups, resourcePolicy, subjectAudiences)
+   * including child rows, which are deleted and re-inserted transactionally. actorAuthority, actorId, createdBy, and
    * createdAt are immutable after registration: they are never written by this call regardless of
    * what {@code policy} carries for them, and updatedAt is computed by the storage layer, not the
    * caller. Returns the persisted policy, reflecting the true (unchanged) identity/creation fields.

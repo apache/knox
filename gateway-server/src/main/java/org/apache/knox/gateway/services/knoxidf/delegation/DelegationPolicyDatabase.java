@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * JDBC helper for the five DELEGATION_POLICIES tables.
+ * JDBC helper for the six DELEGATION_POLICIES tables.
  * All SQL uses {@link PreparedStatement} with {@code ?} parameters only.
  * Each public method manages its own {@link Connection} and, for multi-table writes,
  * its own transaction boundaries (setAutoCommit / commit / rollback).
@@ -102,6 +102,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   private static final String INSERT_SCOPE_SQL =
       "INSERT INTO DELEGATION_POLICY_RESOURCE_SCOPES (registration_id, resource_uri, scope) VALUES (?, ?, ?)";
 
+  private static final String INSERT_SUBJECT_AUDIENCE_SQL =
+      "INSERT INTO DELEGATION_POLICY_SUBJECT_AUDIENCES (registration_id, audience) VALUES (?, ?)";
+
   private static final String SELECT_USERS_SQL =
       "SELECT username FROM DELEGATION_POLICY_USERS WHERE registration_id = ?";
 
@@ -114,6 +117,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   private static final String SELECT_SCOPES_SQL =
       "SELECT scope FROM DELEGATION_POLICY_RESOURCE_SCOPES WHERE registration_id = ? AND resource_uri = ?";
 
+  private static final String SELECT_SUBJECT_AUDIENCES_SQL =
+      "SELECT audience FROM DELEGATION_POLICY_SUBJECT_AUDIENCES WHERE registration_id = ?";
+
   private static final String DELETE_USERS_SQL =
       "DELETE FROM DELEGATION_POLICY_USERS WHERE registration_id = ?";
 
@@ -122,6 +128,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
 
   private static final String DELETE_RESOURCES_SQL =
       "DELETE FROM DELEGATION_POLICY_RESOURCES WHERE registration_id = ?";
+
+  private static final String DELETE_SUBJECT_AUDIENCES_SQL =
+      "DELETE FROM DELEGATION_POLICY_SUBJECT_AUDIENCES WHERE registration_id = ?";
 
   DelegationPolicyDatabase(DataSource dataSource, String dbType, int listMaxTotal, int listMaxPerAuthority) throws Exception {
     super(dataSource);
@@ -279,6 +288,16 @@ class DelegationPolicyDatabase extends KnoxDatabase {
         ps.executeBatch();
       }
     }
+    try (PreparedStatement ps = connection.prepareStatement(INSERT_SUBJECT_AUDIENCE_SQL)) {
+      for (String audience : policy.getSubjectAudiences()) {
+        ps.setString(1, registrationId);
+        ps.setString(2, audience);
+        ps.addBatch();
+      }
+      if (!policy.getSubjectAudiences().isEmpty()) {
+        ps.executeBatch();
+      }
+    }
     try (PreparedStatement psResource = connection.prepareStatement(INSERT_RESOURCE_SQL);
          PreparedStatement psScope = connection.prepareStatement(INSERT_SCOPE_SQL)) {
       for (Map.Entry<String, Set<String>> entry : policy.getResourcePolicy().entrySet()) {
@@ -322,7 +341,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   }
 
   private void deleteChildRows(Connection connection, String registrationId) throws SQLException {
-    for (String sql : new String[]{DELETE_RESOURCES_SQL, DELETE_GROUPS_SQL, DELETE_USERS_SQL}) {
+    for (String sql : new String[]{DELETE_RESOURCES_SQL, DELETE_SUBJECT_AUDIENCES_SQL, DELETE_GROUPS_SQL, DELETE_USERS_SQL}) {
       try (PreparedStatement ps = connection.prepareStatement(sql)) {
         ps.setString(1, registrationId);
         ps.executeUpdate();
@@ -359,11 +378,12 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     final Set<String> users = selectStrings(connection, SELECT_USERS_SQL, registrationId, "username");
     final Set<String> groups = selectStrings(connection, SELECT_GROUPS_SQL, registrationId, "group_name");
     final Map<String, Set<String>> resourcePolicy = selectResourcePolicy(connection, registrationId);
+    final Set<String> subjectAudiences = selectStrings(connection, SELECT_SUBJECT_AUDIENCES_SQL, registrationId, "audience");
 
     return new DelegationPolicy(
         registrationId, actorAuthority, actorId, name, status, tokenTtlSec,
         description, createdBy, createdAt.toInstant(), updatedAt.toInstant(),
-        allowHeadlessExchange, users, groups, resourcePolicy);
+        allowHeadlessExchange, users, groups, resourcePolicy, subjectAudiences);
   }
 
   private Set<String> selectStrings(Connection connection, String sql, String registrationId, String columnName) throws SQLException {

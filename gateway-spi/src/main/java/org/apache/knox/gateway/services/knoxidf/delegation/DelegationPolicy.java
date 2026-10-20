@@ -44,12 +44,29 @@ public class DelegationPolicy {
   private final Set<String> canActForUsers;
   private final Set<String> canActForGroups;
   private final Map<String, Set<String>> resourcePolicy;
+  private final Set<String> subjectAudiences;
 
   public DelegationPolicy(String registrationId, String actorAuthority, String actorId,
       String name, String status, Integer tokenTtlSec, String description, String createdBy,
       Instant createdAt, Instant updatedAt, boolean allowHeadlessExchange,
       Set<String> canActForUsers, Set<String> canActForGroups,
       Map<String, Set<String>> resourcePolicy) {
+    this(registrationId, actorAuthority, actorId, name, status, tokenTtlSec, description, createdBy,
+        createdAt, updatedAt, allowHeadlessExchange, canActForUsers, canActForGroups, resourcePolicy,
+        Collections.emptySet());
+  }
+
+  /**
+   * @param subjectAudiences audiences that identify the actor as a recipient: a Knox-minted
+   *     {@code subject_token} addressed to one of them may be re-exchanged by this actor even
+   *     without a {@code knox.token.audiences} value (multi-hop delegation). Null or empty disables
+   *     that for this actor.
+   */
+  public DelegationPolicy(String registrationId, String actorAuthority, String actorId,
+      String name, String status, Integer tokenTtlSec, String description, String createdBy,
+      Instant createdAt, Instant updatedAt, boolean allowHeadlessExchange,
+      Set<String> canActForUsers, Set<String> canActForGroups,
+      Map<String, Set<String>> resourcePolicy, Set<String> subjectAudiences) {
     this.registrationId = registrationId;
     this.actorAuthority = actorAuthority;
     this.actorId = actorId;
@@ -70,6 +87,7 @@ public class DelegationPolicy {
       copy.put(entry.getKey(), Set.copyOf(scopes));
     }
     this.resourcePolicy = Collections.unmodifiableMap(copy);
+    this.subjectAudiences = Set.copyOf(subjectAudiences != null ? subjectAudiences : Collections.emptySet());
   }
 
   public String getRegistrationId() {
@@ -130,5 +148,9 @@ public class DelegationPolicy {
 
   public Map<String, Set<String>> getResourcePolicy() {
     return resourcePolicy;
+  }
+
+  public Set<String> getSubjectAudiences() {
+    return subjectAudiences;
   }
 }

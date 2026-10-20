@@ -116,6 +116,7 @@ public class DelegationPolicyResourceTest {
     assertEquals(Collections.singleton("alice"), body.getCanActForUsers());
     assertTrue(body.getCanActForGroups().isEmpty());
     assertTrue(body.getResourcePolicy().isEmpty());
+    assertTrue(body.getSubjectAudiences().isEmpty());
     assertEquals(OPERATOR, body.getCreatedBy());
     assertNotNull(body.getCreatedAt());
     assertNotNull(body.getUpdatedAt());
@@ -156,6 +157,7 @@ public class DelegationPolicyResourceTest {
     assertEquals(2, body.getResourcePolicy().size());
     assertTrue(body.getResourcePolicy().get("https://x.com").isEmpty());
     assertEquals(Collections.singleton("read"), body.getResourcePolicy().get("https://y.com"));
+    assertEquals(Collections.singleton("https://svc/tools/mcp"), body.getSubjectAudiences());
     assertNotNull(body.getCreatedAt());
     assertNotNull(body.getUpdatedAt());
     EasyMock.verify(mockService, mockAuditor);
@@ -481,6 +483,56 @@ public class DelegationPolicyResourceTest {
     assertEquals(2, result.size());
     assertTrue(result.get("https://x.com").isEmpty());
     assertEquals(Collections.singleton("read"), result.get("https://y.com"));
+  }
+
+  // ---------------------------------------------------------------------------
+  // POST - boundary values: subjectAudiences
+  // ---------------------------------------------------------------------------
+
+  @Test
+  public void testRegisterSubjectAudiencesOmittedIsEmptySet() throws Exception {
+    assertTrue(registerAndGetField(minimalFields(), DelegationPolicyResponse::getSubjectAudiences).isEmpty());
+  }
+
+  @Test
+  public void testRegisterSubjectAudiencesPersisted() throws Exception {
+    final Set<String> audiences = new LinkedHashSet<>(java.util.Arrays.asList("https://svc/a", "https://svc/b"));
+    assertEquals(audiences,
+        registerAndGetField(fieldsWith("subjectAudiences", audiences), DelegationPolicyResponse::getSubjectAudiences));
+  }
+
+  @Test
+  public void testRegisterSubjectAudiencesNullElementFiltered() throws Exception {
+    assertEquals(Collections.singleton("https://svc/a"),
+        registerAndGetField(fieldsWith("subjectAudiences", java.util.Arrays.asList("https://svc/a", null)),
+            DelegationPolicyResponse::getSubjectAudiences));
+  }
+
+  @Test
+  public void testRegisterSubjectAudiencesEmptyValueRejected() throws Exception {
+    assertRegisterRejected(fieldsWith("subjectAudiences", java.util.Arrays.asList("https://svc/a", "")));
+  }
+
+  @Test
+  public void testRegisterSubjectAudiencesWhitespaceValueRejected() throws Exception {
+    assertRegisterRejected(fieldsWith("subjectAudiences", Collections.singleton("   ")));
+  }
+
+  @Test
+  public void testUpdateSubjectAudiencesBlankValueRejected() throws Exception {
+    assertUpdateRejected(fieldsWith("subjectAudiences", Collections.singleton(" ")));
+  }
+
+  @Test
+  public void testRegisterOrUpdateSubjectAudiencesBlankValueRejected() throws Exception {
+    assertRegisterOrUpdateRejected(fieldsWith("subjectAudiences", Collections.singleton("")));
+  }
+
+  @Test
+  public void testUpdateSubjectAudiencesReplaced() throws Exception {
+    assertEquals(Collections.singleton("https://svc/new"),
+        updateAndGetField(fieldsWith("subjectAudiences", Collections.singleton("https://svc/new")),
+            DelegationPolicyResponse::getSubjectAudiences));
   }
 
   // ---------------------------------------------------------------------------
@@ -1403,6 +1455,7 @@ public class DelegationPolicyResourceTest {
     rp.put("https://x.com", Collections.emptySet());
     rp.put("https://y.com", Collections.singleton("read"));
     m.put("resourcePolicy", rp);
+    m.put("subjectAudiences", Collections.singleton("https://svc/tools/mcp"));
     return m;
   }
 
@@ -1428,7 +1481,7 @@ public class DelegationPolicyResourceTest {
     return new DelegationPolicy(registrationId, p.getActorAuthority(), p.getActorId(), p.getName(),
         p.getStatus(), p.getTokenTtlSec(), p.getDescription(), p.getCreatedBy(), p.getCreatedAt(),
         p.getUpdatedAt(), p.isAllowHeadlessExchange(), p.getCanActForUsers(), p.getCanActForGroups(),
-        p.getResourcePolicy());
+        p.getResourcePolicy(), p.getSubjectAudiences());
   }
 
   // Simulates what update() returns: the persisted row, with identity/creation fields as the
@@ -1438,7 +1491,7 @@ public class DelegationPolicyResourceTest {
     return new DelegationPolicy(p.getRegistrationId(), p.getActorAuthority(), p.getActorId(), p.getName(),
         p.getStatus(), p.getTokenTtlSec(), p.getDescription(), createdBy, createdAt,
         updatedAt, p.isAllowHeadlessExchange(), p.getCanActForUsers(), p.getCanActForGroups(),
-        p.getResourcePolicy());
+        p.getResourcePolicy(), p.getSubjectAudiences());
   }
 
   private static String toJson(Map<String, Object> fields) {
