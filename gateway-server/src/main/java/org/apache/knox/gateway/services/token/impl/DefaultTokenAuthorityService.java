@@ -43,6 +43,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
@@ -65,6 +67,7 @@ import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jose.util.DefaultResourceRetriever;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.apache.knox.gateway.GatewayResources;
@@ -377,15 +380,24 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     final long outageTTL = config.getJwksOutageCacheTTL();
     final long cacheTTL = config.getJwksCacheTimeToLive();
     final long cacheTimeOut = config.getJwksCacheRefreshTimeout();
-    final JWKSourceBuilder<SecurityContext> builder = retriever == null
-        ? JWKSourceBuilder.create(jwksUrl)
-        : JWKSourceBuilder.create(jwksUrl, retriever);
-    return builder
+    final ResourceRetriever jwksRetriever = retriever == null ? defaultResourceRetriever(jwksUrl) : retriever;
+    return JWKSourceBuilder.<SecurityContext>create(jwksUrl, jwksRetriever)
         .cache(cacheTTL, cacheTimeOut)
         .refreshAheadCache(true)
         .retrying(true)
         .outageTolerant(outageTTL)
         .build();
+  }
+
+  /*
+   * The retriever Nimbus would build for a URL, except that its sockets carry the JWKS host so
+   * HTTPS endpoint identification can run under the BouncyCastle FIPS provider. See
+   * SetHostSSLSocketFactory. Timeouts and size limit match the Nimbus defaults.
+   */
+  private static ResourceRetriever defaultResourceRetriever(URL jwksUrl) {
+    return new DefaultResourceRetriever(JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOUT,
+        JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT, JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT, true,
+        SetHostSSLSocketFactory.forUrl(jwksUrl, HttpsURLConnection.getDefaultSSLSocketFactory()));
   }
 
   /*

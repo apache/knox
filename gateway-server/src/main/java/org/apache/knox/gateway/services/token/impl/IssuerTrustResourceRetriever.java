@@ -72,7 +72,8 @@ class IssuerTrustResourceRetriever implements ResourceRetriever {
     } catch (IllegalStateException e) {
       throw new IOException(e.getMessage(), e);
     }
-    return new DefaultResourceRetriever(connectTimeoutMs, readTimeoutMs, sizeLimitBytes, true, socketFactory)
+    return new DefaultResourceRetriever(connectTimeoutMs, readTimeoutMs, sizeLimitBytes, true,
+        SetHostSSLSocketFactory.forUrl(url, socketFactory))
         .retrieveResource(url);
   }
 }
