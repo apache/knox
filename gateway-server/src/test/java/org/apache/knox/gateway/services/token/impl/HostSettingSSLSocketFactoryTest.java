@@ -38,7 +38,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-public class SetHostSSLSocketFactoryTest {
+public class HostSettingSSLSocketFactoryTest {
 
   private static final String IP_LITERAL = "10.83.6.18";
 
@@ -51,7 +51,7 @@ public class SetHostSSLSocketFactoryTest {
   @Test
   public void testSetsHostOnSocketExposingSetHost() throws Exception {
     final RecordingSocket socket = new RecordingSocket();
-    final SSLSocketFactory factory = new SetHostSSLSocketFactory(new StubSSLSocketFactory(socket), IP_LITERAL);
+    final SSLSocketFactory factory = new HostSettingSSLSocketFactory(new StubSSLSocketFactory(socket), IP_LITERAL);
 
     assertSame(socket, factory.createSocket());
 
@@ -68,7 +68,7 @@ public class SetHostSSLSocketFactoryTest {
     final RecordingSocket layered = new RecordingSocket();
     final StubSSLSocketFactory delegate = new StubSSLSocketFactory(
         unconnected, byName, byNameAndLocal, byAddress, byAddressAndLocal, layered);
-    final SSLSocketFactory factory = new SetHostSSLSocketFactory(delegate, IP_LITERAL);
+    final SSLSocketFactory factory = new HostSettingSSLSocketFactory(delegate, IP_LITERAL);
 
     final InetAddress loopback = InetAddress.getLoopbackAddress();
     factory.createSocket();
@@ -93,7 +93,7 @@ public class SetHostSSLSocketFactoryTest {
   @Test
   public void testLeavesSocketWithoutSetHostUnchanged() throws Exception {
     try (Socket plain = new Socket()) {
-      final SSLSocketFactory factory = new SetHostSSLSocketFactory(new StubSSLSocketFactory(plain), IP_LITERAL);
+      final SSLSocketFactory factory = new HostSettingSSLSocketFactory(new StubSSLSocketFactory(plain), IP_LITERAL);
 
       assertSame(plain, factory.createSocket());
     }
@@ -102,11 +102,11 @@ public class SetHostSSLSocketFactoryTest {
   @Test
   public void testSetHostReportsWhetherItWasApplied() throws Exception {
     final RecordingSocket supported = new RecordingSocket();
-    assertTrue(SetHostSSLSocketFactory.setHost(supported, IP_LITERAL));
+    assertTrue(HostSettingSSLSocketFactory.setHost(supported, IP_LITERAL));
     assertEquals(IP_LITERAL, supported.host);
 
     try (Socket plain = new Socket()) {
-      assertFalse(SetHostSSLSocketFactory.setHost(plain, IP_LITERAL));
+      assertFalse(HostSettingSSLSocketFactory.setHost(plain, IP_LITERAL));
     }
   }
 
@@ -117,7 +117,7 @@ public class SetHostSSLSocketFactoryTest {
   @Test
   public void testForUrlStampsIpLiteralHostFromTheUrl() throws Exception {
     final RecordingSocket socket = new RecordingSocket();
-    final SSLSocketFactory factory = SetHostSSLSocketFactory.forUrl(
+    final SSLSocketFactory factory = HostSettingSSLSocketFactory.forUrl(
         URI.create("https://10.83.6.18:6443/openid/v1/jwks").toURL(), new StubSSLSocketFactory(socket));
 
     factory.createSocket();
@@ -128,13 +128,35 @@ public class SetHostSSLSocketFactoryTest {
   @Test
   public void testForUrlStampsDnsHostFromTheUrl() throws Exception {
     final RecordingSocket socket = new RecordingSocket();
-    final SSLSocketFactory factory = SetHostSSLSocketFactory.forUrl(
+    final SSLSocketFactory factory = HostSettingSSLSocketFactory.forUrl(
         URI.create("https://kubernetes.default.svc.cluster.local/openid/v1/jwks").toURL(),
         new StubSSLSocketFactory(socket));
 
     factory.createSocket();
 
     assertEquals("kubernetes.default.svc.cluster.local", socket.host);
+  }
+
+  /*
+   * A socket that exposes setHost but rejects the call must not break the JWKS request: the host
+   * is left unset, which is the behaviour from before it was applied, and the socket is returned.
+   */
+  @Test
+  public void testSetHostReportsFailureWhenTheCallItselfThrows() throws Exception {
+    try (ThrowingSocket socket = new ThrowingSocket()) {
+      assertFalse(HostSettingSSLSocketFactory.setHost(socket, IP_LITERAL));
+      assertTrue(socket.called);
+    }
+  }
+
+  @Test
+  public void testCreateSocketStillSucceedsWhenSetHostThrows() throws Exception {
+    try (ThrowingSocket socket = new ThrowingSocket()) {
+      final SSLSocketFactory factory =
+          new HostSettingSSLSocketFactory(new StubSSLSocketFactory(socket), IP_LITERAL);
+
+      assertSame(socket, factory.createSocket());
+    }
   }
 
   /*
@@ -151,7 +173,7 @@ public class SetHostSSLSocketFactoryTest {
           TruststoreSSLContextUtils.getTruststoreSSLContext(truststore).getSocketFactory();
       final URL jwksUrl = URI.create(server.getJwksUrl()).toURL();
 
-      final SSLSocketFactory wrapped = SetHostSSLSocketFactory.forUrl(jwksUrl, base);
+      final SSLSocketFactory wrapped = HostSettingSSLSocketFactory.forUrl(jwksUrl, base);
       assertNotSame(base, wrapped);
 
       final Resource resource =
@@ -164,7 +186,7 @@ public class SetHostSSLSocketFactoryTest {
   @Test
   public void testDelegatesCipherSuites() {
     final StubSSLSocketFactory delegate = new StubSSLSocketFactory(new RecordingSocket());
-    final SSLSocketFactory factory = new SetHostSSLSocketFactory(delegate, IP_LITERAL);
+    final SSLSocketFactory factory = new HostSettingSSLSocketFactory(delegate, IP_LITERAL);
 
     assertArrayEquals(delegate.getDefaultCipherSuites(), factory.getDefaultCipherSuites());
     assertArrayEquals(delegate.getSupportedCipherSuites(), factory.getSupportedCipherSuites());
@@ -176,6 +198,16 @@ public class SetHostSSLSocketFactoryTest {
 
     public void setHost(String host) {
       this.host = host;
+    }
+  }
+
+  /* A socket that advertises setHost but refuses the call. */
+  private static final class ThrowingSocket extends Socket {
+    private boolean called;
+
+    public void setHost(String host) {
+      called = true;
+      throw new IllegalStateException("setHost refused for " + host);
     }
   }
 

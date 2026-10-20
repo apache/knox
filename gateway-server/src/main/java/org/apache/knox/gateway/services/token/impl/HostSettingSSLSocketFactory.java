@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -49,14 +51,16 @@ import java.util.Set;
  * deployments. On sockets that do not expose the method this decorator is a no-op, which is
  * correct for the stock JSSE: it identifies IP endpoints from the URL already.
  */
-class SetHostSSLSocketFactory extends SSLSocketFactory {
+class HostSettingSSLSocketFactory extends SSLSocketFactory {
+
+  private static final TokenAuthorityServiceMessages LOG = MessagesFactory.get(TokenAuthorityServiceMessages.class);
 
   private static final String SET_HOST = "setHost";
 
   private final SSLSocketFactory delegate;
   private final String host;
 
-  SetHostSSLSocketFactory(SSLSocketFactory delegate, String host) {
+  HostSettingSSLSocketFactory(SSLSocketFactory delegate, String host) {
     this.delegate = delegate;
     this.host = host;
   }
@@ -71,11 +75,30 @@ class SetHostSSLSocketFactory extends SSLSocketFactory {
     if (host == null || host.isEmpty()) {
       return base;
     }
-    return new SetHostSSLSocketFactory(base, host);
+    return new HostSettingSSLSocketFactory(base, host);
   }
 
   /**
    * Applies {@code host} to {@code socket} via a public {@code setHost(String)} method.
+   * <p>
+   * The method is looked up on each of the socket's declaring types in turn, because
+   * {@link Method#invoke} checks access against the type the method was <em>looked up on</em>,
+   * not against the socket's runtime class, while the call itself dispatches virtually. The same
+   * method body can therefore be reachable through one declaring type and not another. In
+   * ordinary code this is the difference between {@code ((ProvSSLSocketDirect) s).setHost(h)},
+   * which will not compile outside BouncyCastle's package, and
+   * {@code ((BCSSLSocket) s).setHost(h)}, which will - both ending up in the same implementation.
+   * <p>
+   * That is why the two failures are treated differently:
+   * <ul>
+   *   <li>{@link IllegalAccessException} describes the declaring type, not the implementation: the
+   *       method never ran, and a different declaring type - the public interface - may well be
+   *       invocable. The walk continues.</li>
+   *   <li>An exception thrown by {@code setHost} itself means the call got through and failed.
+   *       Every remaining candidate type resolves to that same implementation, so retrying would
+   *       repeat an identical call and any side effects it already had. The walk stops.</li>
+   * </ul>
+   * Either way the host is simply left unset, which is the behaviour from before it was applied.
    *
    * @return {@code true} when the host was applied, {@code false} when the socket does not
    *         support it or the call failed
@@ -95,9 +118,11 @@ class SetHostSSLSocketFactory extends SSLSocketFactory {
         method.invoke(socket, host);
         return true;
       } catch (IllegalAccessException e) {
-        /* Not reachable through this type; a public interface may still expose it. */
+        /* This declaring type is not accessible from here; a public interface still may be. */
         continue;
       } catch (InvocationTargetException | RuntimeException e) {
+        final Throwable cause = e.getCause() == null ? e : e.getCause();
+        LOG.failedToSetSocketHost(host, cause.toString(), e);
         return false;
       }
     }
@@ -105,8 +130,12 @@ class SetHostSSLSocketFactory extends SSLSocketFactory {
   }
 
   /*
-   * Interfaces first: BouncyCastle's socket implementations are package private, so the method is
-   * only invocable through the public BCSSLSocket interface that declares it.
+   * Ordered so the accessible declaration is tried first: BouncyCastle's socket implementations
+   * are package private (and their package need not be exported by the module), so setHost is only
+   * invocable through the public BCSSLSocket interface that also declares it. Looking at the
+   * concrete class first would merely raise IllegalAccessException and have to be recovered from.
+   * Interfaces are collected transitively, then the class hierarchy is appended as a fallback for
+   * sockets shaped differently from BouncyCastle's.
    */
   private static Collection<Class<?>> declaringTypes(Class<?> socketType) {
     final Set<Class<?>> interfaces = new LinkedHashSet<>();

@@ -48,4 +48,10 @@ public interface TokenAuthorityServiceMessages {
 
   @Message(level = MessageLevel.INFO, text = "TLS trust failure fetching JWKS from {0}; retrying with the re-read issuer CA bundle")
   void retryingJwksWithReloadedIssuerCa(String jwksUrl);
+
+  @Message(level = MessageLevel.WARN,
+      text = "The TLS socket for the JWKS request exposes setHost(String) but the call failed for host {0}, "
+           + "cause: {1}. Continuing without it, so the request behaves as it did before this host was applied; "
+           + "under the BouncyCastle FIPS provider HTTPS endpoint identification will then fail for this endpoint.")
+  void failedToSetSocketHost(String host, String cause, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

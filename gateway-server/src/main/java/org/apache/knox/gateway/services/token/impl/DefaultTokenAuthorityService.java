@@ -397,7 +397,7 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private static ResourceRetriever defaultResourceRetriever(URL jwksUrl) {
     return new DefaultResourceRetriever(JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOUT,
         JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT, JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT, true,
-        SetHostSSLSocketFactory.forUrl(jwksUrl, HttpsURLConnection.getDefaultSSLSocketFactory()));
+        HostSettingSSLSocketFactory.forUrl(jwksUrl, HttpsURLConnection.getDefaultSSLSocketFactory()));
   }
 
   /*

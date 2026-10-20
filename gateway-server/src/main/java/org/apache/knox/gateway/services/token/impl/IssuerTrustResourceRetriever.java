@@ -73,7 +73,7 @@ class IssuerTrustResourceRetriever implements ResourceRetriever {
       throw new IOException(e.getMessage(), e);
     }
     return new DefaultResourceRetriever(connectTimeoutMs, readTimeoutMs, sizeLimitBytes, true,
-        SetHostSSLSocketFactory.forUrl(url, socketFactory))
+        HostSettingSSLSocketFactory.forUrl(url, socketFactory))
         .retrieveResource(url);
   }
 }
