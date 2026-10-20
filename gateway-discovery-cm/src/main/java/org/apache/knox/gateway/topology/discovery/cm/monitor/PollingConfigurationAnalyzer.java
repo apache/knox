@@ -446,18 +446,15 @@ public class PollingConfigurationAnalyzer implements Runnable {
   }
 
   /**
-   * Parse the deployed descriptors once to determine, in a single pass, both whether any descriptor still references
-   * the given discovery source and cluster and which CM service types those descriptors reference. Merging the two
-   * questions avoids re-parsing every descriptor file twice per polling cycle.
+   * Parses the deployed descriptors once to determine whether any still references the given discovery source and
+   * cluster, and which CM service types they reference.
    * <p>
-   * Two deliberate asymmetries are preserved: a descriptor that cannot be read/parsed, or whose topology is a
-   * read-only override (SimpleDescriptorHandler never regenerates it), still counts as a reference - so the cluster
-   * keeps being monitored - but contributes no referenced service names, because a re-discovery could not act on it.
+   * A descriptor that cannot be parsed, or whose topology is a read-only override, still counts as a reference (keep
+   * monitoring) but contributes no service names, since a re-discovery could not act on it.
    *
    * @param source      A discovery source
    * @param clusterName A discovery cluster name
-   * @return references-exist plus the referenced CM service types; when the TopologyService is unavailable the result
-   *         is {@link DescriptorReferences#unknown()} (assume references remain, apply no relevance filtering).
+   * @return the references, or {@link DescriptorReferences#unknown()} when the TopologyService is unavailable
    */
   private DescriptorReferences analyzeDescriptorReferences(final String source, final String clusterName) {
     final TopologyService ts = getTopologyService();
@@ -488,10 +485,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
           }
         }
       } catch (Exception e) {
-        // A descriptor we cannot read/parse might reference this cluster. Concluding "no references" on incomplete
-        // information would tear down a still-referenced cluster's cache, so remember the gap and assume a reference
-        // remains. It contributes no service names (it cannot be regenerated until fixed, which itself triggers a
-        // fresh discovery).
+        // It might reference this cluster: assume a reference remains instead of tearing down its cache. No service names.
         log.errorCheckingClusterReferences(f.getName(), source, clusterName, e);
         referencesIncomplete = true;
       }
@@ -630,10 +624,8 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (events.isEmpty()) {
       log.noActivationEventFound();
     } else {
-      // descriptorReferences (computed once per cycle by analyzeDescriptorReferences): events for services no
-      // descriptor references are irrelevant - with per-descriptor discovery filtering they are never discovered, so
-      // they must not be treated as "new services" and trigger churn. If references cannot be determined (no
-      // TopologyService), no reference filtering is applied.
+      // Events for services no descriptor references are irrelevant (discovery never discovers them), unless the
+      // references are unknown.
       for (ApiEvent event : events) {
         if (isStartEvent(event, descriptorReferences) || isScaleEvent(event, descriptorReferences)) {
           relevantEvents.add(new RelevantEvent(event));
@@ -718,10 +710,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
     if (roleType == null || roleType.isEmpty()) {
       return false;
     }
-    // Read the excluded-role-types config fresh on each call (like isExcludedServiceType), so a live update to
-    // gateway.cloudera.manager.service.discovery.excluded.role.types is honored without restarting the monitor. The
-    // allow-list (getAllRoleTypes()) is an immutable, cached set, and scale events are rare, so rebuilding the filter
-    // per call is negligible.
+    // Read fresh on each call, like isExcludedServiceType, so a config update takes effect without a restart.
     final TypeNameFilter roleTypeFilter = new TypeNameFilter(gatewayConfig.getClouderaManagerServiceDiscoveryExcludedRoleTypes(),
             serviceModelGeneratorsHolder.getAllRoleTypes());
     return roleTypeFilter.isExcluded(roleType);
@@ -834,7 +823,7 @@ public class PollingConfigurationAnalyzer implements Runnable {
    * <ul>
    *   <li>{@link #withModel(ServiceConfigurationModel) with-model} - the service produced a model;</li>
    *   <li>{@link #noModel() no-model} - the CM call succeeded but no generator produced a model (invalid/removed);</li>
-   *   <li>{@link #error() error} - the CM call failed and the current configuration is unknown.</li>
+   *   <li>{@link #error() error} - the current configuration is unknown (a CM call failed or a generator threw).</li>
    * </ul>
    */
   protected static final class CurrentServiceConfiguration {
