@@ -19,14 +19,11 @@ package org.apache.knox.gateway.services.knoxidf.trustedoidcissuer;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.knox.gateway.util.OidcHttpClients;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
@@ -62,10 +59,6 @@ class OIDCDiscoveryHelper {
       MessagesFactory.get(TrustedOidcIssuerServiceMessages.class);
 
   private static final String USER_AGENT = "Apache-Knox-OIDCDiscovery/1.0";
-  private static final int HTTP_RETRY_COUNT = 2;
-  // Idle connections in the pool are closed after this duration so the next cache-miss
-  // fetch always goes through a fresh connection rather than a potentially stale one.
-  private static final long IDLE_EVICTION_SECONDS = 60L;
 
   private final TrustedOidcIssuerService trustedIssuers;
   // OIDC discovery document cache: issuerUrl → jwks_uri resolved from discovery endpoint.
@@ -101,44 +94,14 @@ class OIDCDiscoveryHelper {
     this.pinnedHttpClientFactory = pinnedHttpClientFactory;
   }
 
-  /**
-   * Builds a production-configured {@link CloseableHttpClient} for OIDC discovery fetches.
-   * <p>
-   * {@code requestSentRetryEnabled=true}: Discovery endpoints are GET-only (idempotent by RFC 7231
-   * §4.2.2), so retrying after the request was sent is safe and covers the most common
-   * failure mode — connection reset mid-response.
-   * <p>
-   * {@code evictIdleConnections} + {@code evictExpiredConnections}: the client is held for the
-   * gateway process lifetime. Without eviction, pooled connections become stale when the remote
-   * server or a network middlebox closes them silently, causing the next fetch to fail with a
-   * {@code NoHttpResponseException} before the retry handler can save it.
-   */
+  /** Builds the production-configured client for OIDC discovery fetches. */
   static CloseableHttpClient buildHttpClient(int connectTimeoutMs, int readTimeoutMs) {
-    return httpClientBuilder(connectTimeoutMs, readTimeoutMs)
-        .evictIdleConnections(IDLE_EVICTION_SECONDS, TimeUnit.SECONDS)
-        .evictExpiredConnections()
-        .build();
+    return OidcHttpClients.pooled(connectTimeoutMs, readTimeoutMs, OidcHttpClients.DEFAULT_RETRIES);
   }
 
-  /**
-   * Builds a short-lived {@link CloseableHttpClient} for one discovery fetch that trusts only the
-   * given SSL context; hostname verification stays on. It holds no idle-connection eviction
-   * thread, as the caller closes it right after the fetch.
-   */
+  /** Builds a short-lived client for one discovery fetch that trusts only the given context. */
   static CloseableHttpClient buildHttpClient(int connectTimeoutMs, int readTimeoutMs, SSLContext sslContext) {
-    return httpClientBuilder(connectTimeoutMs, readTimeoutMs)
-        .setSSLContext(sslContext)
-        .build();
-  }
-
-  private static HttpClientBuilder httpClientBuilder(int connectTimeoutMs, int readTimeoutMs) {
-    final RequestConfig requestConfig = RequestConfig.custom()
-        .setConnectTimeout(connectTimeoutMs)
-        .setSocketTimeout(readTimeoutMs)
-        .build();
-    return HttpClients.custom()
-        .setDefaultRequestConfig(requestConfig)
-        .setRetryHandler(new DefaultHttpRequestRetryHandler(HTTP_RETRY_COUNT, true));
+    return OidcHttpClients.trusting(connectTimeoutMs, readTimeoutMs, sslContext, OidcHttpClients.DEFAULT_RETRIES);
   }
 
   /**
