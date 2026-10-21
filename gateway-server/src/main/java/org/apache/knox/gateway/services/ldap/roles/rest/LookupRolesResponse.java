@@ -15,23 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.roles;
+package org.apache.knox.gateway.services.ldap.roles.rest;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.knox.gateway.services.ldap.RoleAssignment;
 import java.util.List;
 
-public class LookupRolesRequest {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LookupRolesResponse {
     @JsonProperty("user_id")
     private String userId;
 
     @JsonProperty("groups")
     private List<String> groups;
 
-    public LookupRolesRequest() {}
+    @JsonProperty("roles")
+    private List<RoleAssignment> roles;
 
-    public LookupRolesRequest(String userId, List<String> groups) {
+    public LookupRolesResponse() {}
+
+    public LookupRolesResponse(String userId, List<String> groups, List<RoleAssignment> roles) {
         this.userId = userId;
-        this.groups = groups;
+        this.roles = roles;
     }
 
     public String getUserId() {
@@ -48,5 +54,13 @@ public class LookupRolesRequest {
 
     public void setGroups(List<String> groups) {
         this.groups = groups;
+    }
+
+    public List<RoleAssignment> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<RoleAssignment> roles) {
+        this.roles = roles;
     }
 }

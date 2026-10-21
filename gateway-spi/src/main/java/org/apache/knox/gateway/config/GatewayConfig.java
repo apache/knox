@@ -156,6 +156,8 @@ public interface GatewayConfig {
   String LDAP_ROLES_LOOKUP_STRATEGY = "gateway.ldap.roles.lookup.strategy";
   String LDAP_ROLES_LOOKUP_REST_API_ENDPOINT = "gateway.ldap.roles.lookup.rest.api.endpoint";
   String LDAP_ROLES_LOOKUP_FILE_PATH = "gateway.ldap.roles.lookup.file.path";
+  String LDAP_ROLES_LIST_REST_API_ENDPOINT = "gateway.ldap.roles.list.rest.api.endpoint";
+  String LDAP_ROLES_GET_REST_API_ENDPOINT = "gateway.ldap.roles.get.rest.api.endpoint";
   String LDAP_SSL_ENABLED = "gateway.ldap.ssl.enabled";
   String LDAP_SSL_KEYSTORE_PATH = "gateway.ldap.ssl.keystore.path";
   String LDAP_SSL_KEYSTORE_PASSWORD_ALIAS = "gateway.ldap.ssl.keystore.password.alias";
@@ -1249,6 +1251,16 @@ public interface GatewayConfig {
    * @return the LDAP roles lookup REST API endpoint
    */
   String getLdapRolesLookupRestApiEndpoint();
+
+  /**
+   * @return the LDAP roles list REST API endpoint
+   */
+  String getLdapRolesListRestApiEndpoint();
+
+  /**
+   * @return the LDAP role get REST API endpoint
+   */
+  String getLdapRolesGetRestApiEndpoint();
 
   /**
    * @return the LDAP roles lookup file path

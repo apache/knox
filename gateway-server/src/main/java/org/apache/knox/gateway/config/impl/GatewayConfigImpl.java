@@ -1912,6 +1912,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLdapRolesListRestApiEndpoint() {
+    return get(LDAP_ROLES_LIST_REST_API_ENDPOINT);
+  }
+
+  @Override
+  public String getLdapRolesGetRestApiEndpoint() {
+    return get(LDAP_ROLES_GET_REST_API_ENDPOINT);
+  }
+
+  @Override
   public String getLdapRolesLookupFilePath() {
     return get(LDAP_ROLES_LOOKUP_FILE_PATH);
   }

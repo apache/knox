@@ -35,14 +35,14 @@ import java.util.function.Function;
  * FilterVisitor that maps LDAP search filters from the proxy attributes to
  * remote attributes.
  */
-public class FilterMappingVisitor implements FilterVisitor {
+public class RemoteSchemaMappingVisitor implements FilterVisitor {
     private final String userIdentifierAttribute;
     private final String userObjectClass;
     private final String groupObjectClass;
     private final SchemaManager schemaManager;
     private final Function<String, String> dnConverter;
 
-    public FilterMappingVisitor(String userIdentifierAttribute, String userObjectClass, String groupObjectClass, SchemaManager schemaManager, Function<String, String> dnConverter) {
+    public RemoteSchemaMappingVisitor(String userIdentifierAttribute, String userObjectClass, String groupObjectClass, SchemaManager schemaManager, Function<String, String> dnConverter) {
         this.userIdentifierAttribute = userIdentifierAttribute;
         this.userObjectClass = userObjectClass;
         this.groupObjectClass = groupObjectClass;
@@ -125,7 +125,7 @@ public class FilterMappingVisitor implements FilterVisitor {
 
     @Override
     public boolean isPrefix() {
-        return true;
+        return false;
     }
 
     @Override
