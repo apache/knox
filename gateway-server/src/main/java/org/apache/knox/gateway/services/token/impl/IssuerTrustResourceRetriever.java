@@ -16,11 +16,12 @@
  */
 package org.apache.knox.gateway.services.token.impl;
 
-import com.nimbusds.jose.util.DefaultResourceRetriever;
 import com.nimbusds.jose.util.Resource;
 import com.nimbusds.jose.util.ResourceRetriever;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
+import org.apache.knox.gateway.util.MetadataHttpClients;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -72,7 +73,17 @@ class IssuerTrustResourceRetriever implements ResourceRetriever {
     } catch (IllegalStateException e) {
       throw new IOException(e.getMessage(), e);
     }
-    return new DefaultResourceRetriever(connectTimeoutMs, readTimeoutMs, sizeLimitBytes, true, socketFactory)
-        .retrieveResource(url);
+    /*
+     * A client per retrieval, matching the per-retrieval socket factory above: it trusts only this
+     * issuer's CA bundle, so it cannot be shared or held across a bundle re-read. That is a whole
+     * client stack per fetch, which is accepted deliberately: retrievals happen on JWK-source
+     * cache misses and refresh-ahead timers rather than per request, and caching one per socket
+     * factory would leave nobody owning its close - the JWK source's own close cannot reach it.
+     */
+    try (CloseableHttpClient httpClient =
+             MetadataHttpClients.trusting(connectTimeoutMs, readTimeoutMs, socketFactory,
+                 MetadataHttpClients.NO_RETRIES)) {
+      return new HttpClientResourceRetriever(httpClient, sizeLimitBytes).retrieveResource(url);
+    }
   }
 }

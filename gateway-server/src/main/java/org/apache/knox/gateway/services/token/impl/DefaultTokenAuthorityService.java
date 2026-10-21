@@ -34,13 +34,15 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -67,6 +69,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.knox.gateway.GatewayResources;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.fips.FipsUtils;
@@ -77,6 +80,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
+import org.apache.knox.gateway.util.MetadataHttpClients;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
@@ -104,12 +108,24 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
   private KeystoreService keystoreService;
   private GatewayConfig config;
 
+  /*
+   * Built on first use and held for the service's lifetime; closed in stop(). Lazily, so a
+   * gateway (or a test) that never fetches a JWKS does not start a connection-eviction thread.
+   */
+  /* Both guarded by this monitor; only reached on a JWK source cache miss, so plainly locked. */
+  private CloseableHttpClient jwksHttpClient;
+  private boolean stopped;
+
   private char[] cachedSigningKeyPassphrase;
   private byte[] cachedSigningHmacSecret;
   private RSAPrivateKey signingKey;
 
   /* Cache JWKS Key source which has its own cache for the jwk keys */
-  private Map<String, JWKSource<SecurityContext>> cachedJwkSources = new HashMap<>();
+  /*
+   * Concurrent and final: verifyToken runs per inbound request from a servlet filter, so this is
+   * mutated by request threads while stop() walks it from the shutdown thread.
+   */
+  private final Map<String, JWKSource<SecurityContext>> cachedJwkSources = new ConcurrentHashMap<>();
 
   /* JWKS Key sources fetching over TLS trusting only an issuer CA bundle; closed when evicted */
   private final Cache<IssuerTrustJwksKey, JWKSource<SecurityContext>> cachedIssuerTrustJwkSources = Caffeine.newBuilder()
@@ -377,9 +393,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
     final long outageTTL = config.getJwksOutageCacheTTL();
     final long cacheTTL = config.getJwksCacheTimeToLive();
     final long cacheTimeOut = config.getJwksCacheRefreshTimeout();
-    final JWKSourceBuilder<SecurityContext> builder = retriever == null
-        ? JWKSourceBuilder.create(jwksUrl)
-        : JWKSourceBuilder.create(jwksUrl, retriever);
+    final JWKSourceBuilder<SecurityContext> builder =
+        JWKSourceBuilder.create(jwksUrl, jwksResourceRetriever(retriever));
     return builder
         .cache(cacheTTL, cacheTimeOut)
         .refreshAheadCache(true)
@@ -423,6 +438,10 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
       throw new ServiceLifecycleException("Alias or Keystore service is not set");
     }
     this.config = config;
+    synchronized (this) {
+      /* A reused instance must be able to serve again after a stop. */
+      stopped = false;
+    }
   }
 
   @Override
@@ -489,7 +508,67 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
 
   @Override
   public void stop() throws ServiceLifecycleException {
+    /*
+     * Every source owns refresh ahead executors that only its own close() shuts down, so both
+     * caches are closed explicitly. Caffeine dispatches its removal listener asynchronously on the
+     * common pool, so invalidateAll() alone may return before or without anything being closed.
+     */
+    closeAll(cachedIssuerTrustJwkSources.asMap().values());
     cachedIssuerTrustJwkSources.invalidateAll();
+    closeAll(cachedJwkSources.values());
+    cachedJwkSources.clear();
+    /*
+     * Inside the same monitor jwksHttpClient() builds under, and latching stopped so a request
+     * racing this cannot resurrect the pool after it has been closed.
+     */
+    final CloseableHttpClient client;
+    synchronized (this) {
+      stopped = true;
+      client = jwksHttpClient;
+      jwksHttpClient = null;
+    }
+    if (client != null) {
+      try {
+        client.close();
+      } catch (IOException e) {
+        /* Shutting down; the connection pool is going away regardless. */
+      }
+    }
+  }
+
+  /**
+   * The retriever used for JWKS endpoints trusted through the gateway truststore.
+   * <p>
+   * Apache HttpClient rather than Nimbus's default, which goes through
+   * {@link java.net.HttpURLConnection} and leaves the socket without a host - see
+   * {@link HttpClientResourceRetriever}. Timeouts and size limit keep the Nimbus defaults the
+   * previous retriever used.
+   */
+  ResourceRetriever jwksResourceRetriever(ResourceRetriever configured) {
+    return configured == null
+        ? new HttpClientResourceRetriever(this::jwksHttpClient, JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT)
+        : configured;
+  }
+
+  private synchronized CloseableHttpClient jwksHttpClient() {
+    if (stopped) {
+      throw new IllegalStateException("The token authority service has been stopped");
+    }
+    if (jwksHttpClient == null) {
+      /*
+       * No in-client retries: Nimbus's retrying JWK source and, on the issuer-CA path,
+       * IssuerTrustResourceRetriever already retry around this.
+       */
+      jwksHttpClient = MetadataHttpClients.pooled(JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOUT,
+          JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT, MetadataHttpClients.NO_RETRIES);
+    }
+    return jwksHttpClient;
+  }
+
+
+  /* Snapshots first: the caches stay live for in-flight requests while this walks them. */
+  private static void closeAll(Collection<JWKSource<SecurityContext>> sources) {
+    new ArrayList<>(sources).forEach(DefaultTokenAuthorityService::closeQuietly);
   }
 
   private static void closeQuietly(JWKSource<SecurityContext> source) {
