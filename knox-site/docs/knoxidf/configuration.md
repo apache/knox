@@ -135,6 +135,8 @@ the token-exchange topology.
 | `delegation.enforce.requested.audience.required` | `false` | For a delegated exchange, require at least one distinct requested `resource`/`audience`, else `invalid_request`. |
 | `delegation.enforce.requested.audience.max.one` | `false` | For a delegated exchange, allow at most one distinct combined requested `resource`/`audience`, else `invalid_request`. Combine with the previous flag for an "exactly one audience" rule. |
 | `token.exchange.same.subject.requested.audience.enabled` | `false` | For a **same-subject** exchange, whether a requested audience is honored. When `false`, requested audiences are silently dropped; when `true`, each is validated against the subject token's own `aud` (else `400 invalid_target`). |
+| `token.exchange.subject.token.policy.audiences.issuers` | unset | Comma-separated issuers whose tokens may be re-exchanged on a delegated exchange without a `knox.token.audiences` value. Such a `subject_token` is accepted only if its `aud` intersects the actor policy's `subjectAudiences`. Never applies to actor tokens, headless or same-subject exchanges. See [Multi-hop delegation](token_exchange.md#multi-hop-delegation). |
+| `delegation.headless.reject.subject.with.act` | `false` | Reject a headless (`requested_subject`) exchange whose `subject_token` carries an `act` claim, so a delegated token can never become a headless actor. |
 
 ### `KNOXTOKEN` service parameter
 

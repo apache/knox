@@ -55,7 +55,8 @@ public class KnoxDatabaseTest {
       "DELEGATION_POLICY_USERS",
       "DELEGATION_POLICY_GROUPS",
       "DELEGATION_POLICY_RESOURCES",
-      "DELEGATION_POLICY_RESOURCE_SCOPES");
+      "DELEGATION_POLICY_RESOURCE_SCOPES",
+      "DELEGATION_POLICY_SUBJECT_AUDIENCES");
 
   private static JdbcDataSource dataSource;
   private KnoxDatabase db;
@@ -149,6 +150,23 @@ public class KnoxDatabaseTest {
     for (String table : EXPECTED_TABLES) {
       assertTrue(table + " should exist after re-provisioning", JDBCUtils.tableExists(table, dataSource));
     }
+  }
+
+  @Test
+  public void shouldAddSubjectAudiencesTableToPreExistingSchema() throws Exception {
+    db.createTablesIfNotExist(DDL);
+
+    // A schema provisioned before KNOX-3520 has every table except DELEGATION_POLICY_SUBJECT_AUDIENCES.
+    final String added = "DELEGATION_POLICY_SUBJECT_AUDIENCES";
+    try (Connection connection = dataSource.getConnection(USER, PASSWORD);
+         Statement statement = connection.createStatement()) {
+      statement.execute("DROP TABLE " + added);
+    }
+    assertFalse(JDBCUtils.tableExists(added, dataSource));
+
+    db.createTablesIfNotExist(DDL);
+
+    assertTrue(added + " should be created on upgrade", JDBCUtils.tableExists(added, dataSource));
   }
 
   @Test

@@ -40,6 +40,7 @@ public class DelegationPolicyRequest {
   private Set<String> canActForUsers = Collections.emptySet();
   private Set<String> canActForGroups = Collections.emptySet();
   private Map<String, Set<String>> resourcePolicy = Collections.emptyMap();
+  private Set<String> subjectAudiences = Collections.emptySet();
 
   public String getActorAuthority() {
     return actorAuthority;
@@ -120,5 +121,13 @@ public class DelegationPolicyRequest {
 
   public void setResourcePolicy(Map<String, Set<String>> resourcePolicy) {
     this.resourcePolicy = DelegationPolicyDtoImmutabilityHelper.copyResourcePolicy(resourcePolicy);
+  }
+
+  public Set<String> getSubjectAudiences() {
+    return subjectAudiences;
+  }
+
+  public void setSubjectAudiences(Set<String> subjectAudiences) {
+    this.subjectAudiences = DelegationPolicyDtoImmutabilityHelper.copyOf(subjectAudiences);
   }
 }
