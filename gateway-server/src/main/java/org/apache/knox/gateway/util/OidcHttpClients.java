@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  * FIPS provider among them has a hostname to check. {@code HttpURLConnection} creates its socket
  * without one.
  */
-public final class MetadataHttpClients {
+public final class OidcHttpClients {
 
   /** No retries inside the client, for callers that already retry around it. */
   public static final int NO_RETRIES = 0;
@@ -64,7 +64,7 @@ public final class MetadataHttpClients {
    */
   private static final long IDLE_EVICTION_SECONDS = 60L;
 
-  private MetadataHttpClients() {
+  private OidcHttpClients() {
   }
 
   /**
@@ -122,6 +122,9 @@ public final class MetadataHttpClients {
         /*
          * Honour https.protocols / https.cipherSuites, which the HttpURLConnection path these
          * clients replace applied automatically. An explicitly supplied SSL context still wins.
+         */
+         /*
+         * OIDC discovery will pick up the JVM settings such as https.proxyHost, http.nonProxyHosts
          */
         .useSystemProperties()
         /*

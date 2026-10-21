@@ -23,7 +23,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.apache.knox.gateway.util.MetadataHttpClients;
+import org.apache.knox.gateway.util.OidcHttpClients;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
@@ -96,12 +96,12 @@ class OIDCDiscoveryHelper {
 
   /** Builds the production-configured client for OIDC discovery fetches. */
   static CloseableHttpClient buildHttpClient(int connectTimeoutMs, int readTimeoutMs) {
-    return MetadataHttpClients.pooled(connectTimeoutMs, readTimeoutMs, MetadataHttpClients.DEFAULT_RETRIES);
+    return OidcHttpClients.pooled(connectTimeoutMs, readTimeoutMs, OidcHttpClients.DEFAULT_RETRIES);
   }
 
   /** Builds a short-lived client for one discovery fetch that trusts only the given context. */
   static CloseableHttpClient buildHttpClient(int connectTimeoutMs, int readTimeoutMs, SSLContext sslContext) {
-    return MetadataHttpClients.trusting(connectTimeoutMs, readTimeoutMs, sslContext, MetadataHttpClients.DEFAULT_RETRIES);
+    return OidcHttpClients.trusting(connectTimeoutMs, readTimeoutMs, sslContext, OidcHttpClients.DEFAULT_RETRIES);
   }
 
   /**

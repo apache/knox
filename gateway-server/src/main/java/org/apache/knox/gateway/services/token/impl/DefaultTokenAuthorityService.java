@@ -80,7 +80,7 @@ import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.util.MetadataHttpClients;
+import org.apache.knox.gateway.util.OidcHttpClients;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAttributes;
@@ -559,8 +559,8 @@ public class DefaultTokenAuthorityService implements JWTokenAuthority, Service {
        * No in-client retries: Nimbus's retrying JWK source and, on the issuer-CA path,
        * IssuerTrustResourceRetriever already retry around this.
        */
-      jwksHttpClient = MetadataHttpClients.pooled(JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOUT,
-          JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT, MetadataHttpClients.NO_RETRIES);
+      jwksHttpClient = OidcHttpClients.pooled(JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOUT,
+          JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT, OidcHttpClients.NO_RETRIES);
     }
     return jwksHttpClient;
   }

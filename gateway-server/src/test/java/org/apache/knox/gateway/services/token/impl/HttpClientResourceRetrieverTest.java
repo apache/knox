@@ -20,7 +20,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.util.Resource;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TestJwksHttpsServer;
-import org.apache.knox.gateway.util.MetadataHttpClients;
+import org.apache.knox.gateway.util.OidcHttpClients;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -190,8 +190,8 @@ public class HttpClientResourceRetrieverTest {
    * configuration - redirect policy above all - or they assert nothing about what ships.
    */
   private static CloseableHttpClient clientTrusting(SSLSocketFactory socketFactory) {
-    return MetadataHttpClients.trusting(TIMEOUT_MS, TIMEOUT_MS, socketFactory,
-        MetadataHttpClients.NO_RETRIES);
+    return OidcHttpClients.trusting(TIMEOUT_MS, TIMEOUT_MS, socketFactory,
+        OidcHttpClients.NO_RETRIES);
   }
 
 

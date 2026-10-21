@@ -21,7 +21,7 @@ import com.nimbusds.jose.util.ResourceRetriever;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
-import org.apache.knox.gateway.util.MetadataHttpClients;
+import org.apache.knox.gateway.util.OidcHttpClients;
 import org.apache.knox.gateway.util.TruststoreSSLContextUtils;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -81,8 +81,8 @@ class IssuerTrustResourceRetriever implements ResourceRetriever {
      * factory would leave nobody owning its close - the JWK source's own close cannot reach it.
      */
     try (CloseableHttpClient httpClient =
-             MetadataHttpClients.trusting(connectTimeoutMs, readTimeoutMs, socketFactory,
-                 MetadataHttpClients.NO_RETRIES)) {
+             OidcHttpClients.trusting(connectTimeoutMs, readTimeoutMs, socketFactory,
+                 OidcHttpClients.NO_RETRIES)) {
       return new HttpClientResourceRetriever(httpClient, sizeLimitBytes).retrieveResource(url);
     }
   }
