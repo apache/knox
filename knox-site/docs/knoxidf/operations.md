@@ -200,8 +200,10 @@ request and need no such setting.
 
 If the database becomes unreachable, an instance keeps serving its in-memory registry until it is
 older than the TTL (logging a `WARN` on each failed re-read) and then **fails closed**: no issuer is
-trusted, so tokens from external issuers are rejected, until the database is reachable again. Entering this state is logged once at `ERROR` and leaving it at `INFO` (logger
-`org.apache.knox.gateway.knoxidf.trustedoidcissuer.service`).
+trusted, so tokens from external issuers are rejected. While failed closed, an instance retries the
+database at the same pace as a healthy re-read, not on every request, so once the database is
+reachable again it can take up to half the TTL to recover. Entering this state is logged once at
+`ERROR` and leaving it at `INFO` (logger `org.apache.knox.gateway.knoxidf.trustedoidcissuer.service`).
 
 Two related behaviors remain per-instance:
 

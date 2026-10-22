@@ -516,7 +516,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
         ttlService.isTrusted("https://remote.example.com"));
 
     advance(now, 6);
-    ttlService.isTrusted("https://remote.example.com"); // triggers the background refresh, served stale
+    assertFalse("The read that triggers the background refresh is served the stale snapshot",
+        ttlService.isTrusted("https://remote.example.com"));
     assertTrue("Remote registration must be visible once the background refresh completed",
         ttlService.isTrusted("https://remote.example.com"));
   }
@@ -542,7 +543,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
 
     // Default TTL is 60s: effective TTL in [54s, 60s], refresh due after at least 27s
     advance(now, 25);
-    ttlService.isTrusted("https://remote.example.com");
+    assertFalse("No refresh is due yet, so the initial snapshot is served",
+        ttlService.isTrusted("https://remote.example.com"));
     assertFalse(ttlService.isTrusted("https://remote.example.com"));
 
     advance(now, 36);
@@ -583,7 +585,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
 
     useDatabase(ttlService, realDatabase);
     advance(now, 6);
-    ttlService.isTrusted("https://issuer.example.com"); // triggers the background refresh
+    assertFalse("The read that triggers the background refresh still fails closed",
+        ttlService.isTrusted("https://issuer.example.com"));
     assertTrue("The registry must recover once the DB is readable again",
         ttlService.isTrusted("https://issuer.example.com"));
     assertFalse(registrySnapshotLoader(ttlService).isFailedClosed());
@@ -605,7 +608,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
     insertRow("https://added.example.com", true, Instant.now());
 
     advance(now, 6);
-    ttlService.isTrusted("https://added.example.com");
+    assertFalse("The read that triggers the background refresh is served the stale snapshot",
+        ttlService.isTrusted("https://added.example.com"));
 
     assertEquals(new HashSet<>(Arrays.asList(
             "https://changed.example.com", "https://removed.example.com", "https://added.example.com")),
@@ -659,7 +663,8 @@ public class JdbcTrustedOidcIssuerServiceTest {
     insertRow(url, true, Instant.now().plusSeconds(1), jwksCa);
 
     advance(now, 6);
-    ttlService.isTrusted(url);
+    assertTrue("The read that triggers the background refresh is served the stale snapshot",
+        ttlService.isTrusted(url));
 
     assertNotSame("A re-registration on another node must discard the CA trust, as a local one does",
         trust, ttlService.getJwksTrust(url).orElseThrow());
