@@ -51,6 +51,9 @@ public class SimpleDescriptorImpl implements SimpleDescriptor {
     @JsonProperty("provision-encrypt-query-string-credential")
     private boolean provisionEncryptQueryStringCredential = true;
 
+    @JsonProperty("reloadable-listener")
+    private boolean reloadableListener;
+
     @JsonProperty("services")
     private List<Service> services;
 
@@ -138,6 +141,15 @@ public class SimpleDescriptorImpl implements SimpleDescriptor {
 
     public void setProvisionEncryptQueryStringCredential(boolean provisionEncryptQueryStringCredential) {
       this.provisionEncryptQueryStringCredential = provisionEncryptQueryStringCredential;
+    }
+
+    @Override
+    public boolean isReloadableListener() {
+      return reloadableListener;
+    }
+
+    public void setReloadableListener(boolean reloadableListener) {
+      this.reloadableListener = reloadableListener;
     }
 
     public void addService(Service service) {

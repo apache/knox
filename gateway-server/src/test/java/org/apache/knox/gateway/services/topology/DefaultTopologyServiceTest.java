@@ -39,6 +39,7 @@ import org.apache.knox.gateway.topology.Provider;
 import org.apache.knox.gateway.topology.Topology;
 import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
+import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -828,6 +829,95 @@ public class DefaultTopologyServiceTest {
     } finally {
       FileUtils.deleteQuietly(dir);
     }
+  }
+
+  @Test
+  public void testOnlyReloadableListenerTopologiesRedeployedOnGatewayConfigChange() throws Exception {
+    final File dir = createDir();
+    try {
+      final File topologyDir = new File(dir, "topologies");
+      final long time = topologyDir.lastModified();
+      final String listening = "<topology>\n    <reloadableListener>true</reloadableListener>\n"
+          + "    <service>\n        <role>WEBHDFS</role>\n        <url>http://host-one:80/webhdfs</url>\n    </service>\n</topology>\n";
+      final String notListening = "<topology>\n"
+          + "    <service>\n        <role>WEBHDFS</role>\n        <url>http://host-two:80/webhdfs</url>\n    </service>\n</topology>\n";
+      final File listeningFile = createFile(topologyDir, "listening.xml",
+          new ByteArrayInputStream(listening.getBytes(StandardCharsets.UTF_8)), time);
+      final File notListeningFile = createFile(topologyDir, "notlistening.xml",
+          new ByteArrayInputStream(notListening.getBytes(StandardCharsets.UTF_8)), time);
+
+      final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.isTopologyValidationEnabled()).andReturn(true).anyTimes();
+      EasyMock.replay(config);
+
+      final DefaultTopologyService topologyService = new DefaultTopologyService();
+      topologyService.init(config, new HashMap<>());
+      topologyService.reloadTopologies();
+
+      final Map<String, Boolean> flags = new HashMap<>();
+      topologyService.getTopologies().forEach(t -> flags.put(t.getName(), t.isReloadableListener()));
+      assertEquals(Boolean.TRUE, flags.get("listening"));
+      assertEquals(Boolean.FALSE, flags.get("notlistening"));
+
+      topologyService.onGatewayConfigChanged(config);
+
+      assertTrue(FileUtils.readFileToString(listeningFile, StandardCharsets.UTF_8).contains("<redeployTime>"));
+      assertEquals(notListening, FileUtils.readFileToString(notListeningFile, StandardCharsets.UTF_8));
+    } finally {
+      FileUtils.deleteQuietly(dir);
+    }
+  }
+
+  @Test
+  public void testDeployTopologyPersistsReloadableListener() throws Exception {
+    final File dir = createDir();
+    try {
+      final File topologyDir = new File(dir, "topologies");
+      topologyDir.mkdirs();
+
+      final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.replay(config);
+
+      final DefaultTopologyService topologyService = new DefaultTopologyService();
+      topologyService.init(config, new HashMap<>());
+
+      topologyService.deployTopology(createTopologyForDeployment("listening", true));
+      topologyService.deployTopology(createTopologyForDeployment("notlistening", false));
+      topologyService.reloadTopologies();
+
+      final Map<String, Boolean> flags = new HashMap<>();
+      topologyService.getTopologies().forEach(t -> flags.put(t.getName(), t.isReloadableListener()));
+      assertEquals(Boolean.TRUE, flags.get("listening"));
+      assertEquals(Boolean.FALSE, flags.get("notlistening"));
+
+      final File listeningFile = new File(topologyDir, "listening.xml");
+      final File notListeningFile = new File(topologyDir, "notlistening.xml");
+      assertTrue(FileUtils.readFileToString(listeningFile, StandardCharsets.UTF_8).contains("<reloadableListener>true</reloadableListener>"));
+      assertFalse(FileUtils.readFileToString(notListeningFile, StandardCharsets.UTF_8).contains("reloadableListener"));
+
+      final TopologyValidator validator = new TopologyValidator(listeningFile.getAbsolutePath());
+      assertTrue(validator.getErrorString(), validator.validateTopology());
+    } finally {
+      FileUtils.deleteQuietly(dir);
+    }
+  }
+
+  private Topology createTopologyForDeployment(String name, boolean reloadableListener) {
+    final Topology topology = new Topology();
+    topology.setName(name);
+    topology.setReloadableListener(reloadableListener);
+    final Provider provider = new Provider();
+    provider.setRole("authentication");
+    provider.setName("Anonymous");
+    provider.setEnabled(true);
+    topology.addProvider(provider);
+    final org.apache.knox.gateway.topology.Service service = new org.apache.knox.gateway.topology.Service();
+    service.setRole("WEBHDFS");
+    service.addUrl("http://localhost:50070/webhdfs");
+    topology.addService(service);
+    return topology;
   }
 
   private class TestTopologyListener implements TopologyListener {

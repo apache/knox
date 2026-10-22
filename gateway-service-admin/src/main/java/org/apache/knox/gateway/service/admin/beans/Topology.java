@@ -45,6 +45,9 @@ public class Topology {
   @XmlElement(name="redeployTime")
   private long redeployTime;
 
+  @XmlElement(name="reloadableListener")
+  private boolean reloadableListener;
+
   @XmlElement(name="provider")
   @XmlElementWrapper(name="gateway")
   public List<Provider> providers;
@@ -104,6 +107,14 @@ public class Topology {
 
   public void setRedeployTime(long redeployTime) {
     this.redeployTime = redeployTime;
+  }
+
+  public boolean isReloadableListener() {
+    return reloadableListener;
+  }
+
+  public void setReloadableListener(boolean reloadableListener) {
+    this.reloadableListener = reloadableListener;
   }
 
   public List<Service> getServices() {

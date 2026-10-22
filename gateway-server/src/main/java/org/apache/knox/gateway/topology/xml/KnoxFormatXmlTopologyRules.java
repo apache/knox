@@ -37,6 +37,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
   private static final String DEFAULT_SERVICE_TAG = "path";
   private static final String GENERATED_TAG = "generated";
   private static final String REDEPLOY_TIME_TAG = "redeployTime";
+  private static final String RELOADABLE_LISTENER_TAG = "reloadableListener";
   private static final String APPLICATION_TAG = "application";
   private static final String SERVICE_TAG = "service";
   private static final String ROLE_TAG = "role";
@@ -66,6 +67,7 @@ public class KnoxFormatXmlTopologyRules extends AbstractRulesModule {
     forPattern( ROOT_TAG + "/" + DEFAULT_SERVICE_TAG ).callMethod("defaultService").usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + GENERATED_TAG ).callMethod("generated").usingElementBodyAsArgument();
     forPattern( ROOT_TAG + "/" + REDEPLOY_TIME_TAG ).callMethod("redeployTime").usingElementBodyAsArgument();
+    forPattern( ROOT_TAG + "/" + RELOADABLE_LISTENER_TAG ).callMethod("reloadableListener").usingElementBodyAsArgument();
 
     forPattern( ROOT_TAG + "/" + APPLICATION_TAG ).createObject().ofType( Application.class ).then().setNext( "addApplication" );
     forPattern( ROOT_TAG + "/" + APPLICATION_TAG + "/" + ROLE_TAG ).setBeanProperty();

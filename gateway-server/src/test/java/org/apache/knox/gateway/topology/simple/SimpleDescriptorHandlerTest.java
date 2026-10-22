@@ -141,6 +141,46 @@ public class SimpleDescriptorHandlerTest {
         doTestDiscoveryConfig(null, null, null, null, null);
     }
 
+    @Test
+    public void testReloadableListenerWrittenToGeneratedTopology() throws Exception {
+        assertTrue(generateTopologyContent(true).contains("<reloadableListener>true</reloadableListener>"));
+        assertFalse(generateTopologyContent(false).contains("reloadableListener"));
+    }
+
+    private String generateTopologyContent(boolean reloadableListener) throws Exception {
+        GatewayConfig gc = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.expect(gc.getReadOnlyOverrideTopologyNames()).andReturn(Collections.emptyList()).anyTimes();
+        EasyMock.replay(gc);
+
+        File providerConfig = new File(System.getProperty("java.io.tmpdir"), "test-providers.xml");
+        FileUtils.write(providerConfig, TEST_PROVIDER_CONFIG, StandardCharsets.UTF_8);
+
+        SimpleDescriptor testDescriptor = EasyMock.createNiceMock(SimpleDescriptor.class);
+        EasyMock.expect(testDescriptor.getName()).andReturn("reloadablelistenerdescriptor").anyTimes();
+        EasyMock.expect(testDescriptor.getProviderConfig()).andReturn(providerConfig.getAbsolutePath()).anyTimes();
+        EasyMock.expect(testDescriptor.isReloadableListener()).andReturn(reloadableListener).anyTimes();
+        SimpleDescriptor.Service svc = EasyMock.createNiceMock(SimpleDescriptor.Service.class);
+        EasyMock.expect(svc.getName()).andReturn("KNOXTOKEN").anyTimes();
+        EasyMock.expect(svc.getURLs()).andReturn(Collections.emptyList()).anyTimes();
+        EasyMock.expect(svc.getParams()).andReturn(Collections.emptyMap()).anyTimes();
+        EasyMock.replay(svc);
+        EasyMock.expect(testDescriptor.getServices()).andReturn(Collections.singletonList(svc)).anyTimes();
+        EasyMock.replay(testDescriptor);
+
+        File destDir = new File(System.getProperty("java.io.tmpdir")).getCanonicalFile();
+        File topologyFile = null;
+        try {
+            Map<String, File> files = SimpleDescriptorHandler.handle(gc, testDescriptor, providerConfig.getParentFile(), destDir);
+            topologyFile = files.get("topology");
+            return FileUtils.readFileToString(topologyFile, StandardCharsets.UTF_8);
+        } finally {
+            providerConfig.delete();
+            if (topologyFile != null) {
+                topologyFile.delete();
+            }
+        }
+    }
+
     private void doTestDiscoveryConfig(final String discoveryType,
                                        final String address,
                                        final String clusterName,

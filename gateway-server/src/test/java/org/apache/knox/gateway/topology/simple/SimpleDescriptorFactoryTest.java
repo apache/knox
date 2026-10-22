@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -103,6 +104,23 @@ public class SimpleDescriptorFactoryTest {
         testParseSimpleDescriptorWithServicesAndApplications(FileType.YAML);
     }
 
+    @Test
+    public void testParseReloadableListener() throws Exception {
+        assertTrue(parseDescriptorContent("json", "{\"provider-config-ref\":\"pc\",\"reloadable-listener\":true}").isReloadableListener());
+        assertFalse(parseDescriptorContent("json", "{\"provider-config-ref\":\"pc\"}").isReloadableListener());
+        assertTrue(parseDescriptorContent("yaml", "---\nprovider-config-ref: pc\nreloadable-listener: true\n").isReloadableListener());
+        assertFalse(parseDescriptorContent("yml", "---\nprovider-config-ref: pc\n").isReloadableListener());
+    }
+
+    private SimpleDescriptor parseDescriptorContent(String extension, String content) throws Exception {
+        final Path descriptor = Files.createTempFile("reloadable-listener-test", "." + extension);
+        try {
+            Files.write(descriptor, content.getBytes(StandardCharsets.UTF_8));
+            return SimpleDescriptorFactory.parse(descriptor.toString());
+        } finally {
+            Files.deleteIfExists(descriptor);
+        }
+    }
 
     private void testParseSimpleDescriptor(FileType type, boolean provisionEncryptQueryStringCredential) throws Exception {
         final String   discoveryType    = "AMBARI";
