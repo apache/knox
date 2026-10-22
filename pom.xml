@@ -222,7 +222,7 @@
         <httpclient5.version>5.6.3</httpclient5.version>
         <httpcore.version>4.4.14</httpcore.version>
         <httpcore5.version>5.4.3</httpcore5.version>
-        <jackson.version>2.18.9</jackson.version>
+        <jackson.version>2.18.12</jackson.version>
         <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
         <jakarta.activation-api.version>2.1.4</jakarta.activation-api.version>
         <com.sun.activation.version>1.2.2</com.sun.activation.version>
