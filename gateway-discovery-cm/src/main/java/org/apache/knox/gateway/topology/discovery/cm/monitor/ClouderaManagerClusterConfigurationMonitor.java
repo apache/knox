@@ -29,7 +29,6 @@ import org.apache.knox.gateway.topology.discovery.cm.ServiceModel;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -150,32 +149,15 @@ public class ClouderaManagerClusterConfigurationMonitor implements ClusterConfig
     Map<String, List<ServiceModel>> serviceModels = cluster.getServiceModels();
 
     // Process the service models
-    Map<String, ServiceConfigurationModel> scpMap = new HashMap<>();
-    for (String service : serviceModels.keySet()) {
-      for (ServiceModel model : serviceModels.get(service)) {
-        ServiceConfigurationModel scp =
-            scpMap.computeIfAbsent(model.getServiceType(), p -> new ServiceConfigurationModel());
+    final List<ServiceModel> allModels = new ArrayList<>();
+    serviceModels.values().forEach(allModels::addAll);
+    Map<String, ServiceConfigurationModel> scpMap = ServiceConfigurationModel.fromServiceModels(allModels);
 
-        Map<String, String> serviceProps = model.getServiceProperties();
-        for (Map.Entry<String, String> entry : serviceProps.entrySet()) {
-          scp.addServiceProperty(entry.getKey(), entry.getValue());
-        }
-
-        Map<String, Map<String, String>> roleProps = model.getRoleProperties();
-        for (String roleName : roleProps.keySet()) {
-          Map<String, String> rp = roleProps.get(roleName);
-          for (Map.Entry<String, String> entry : rp.entrySet()) {
-            scp.addRoleProperty(roleName, entry.getKey(), entry.getValue());
-          }
-        }
-      }
-    }
-
-    // Persist the service configurations
-    serviceConfigStore.store(address, clusterName, scpMap);
-
-    // Add the service configurations to the cache
-    configCache.addServiceConfiguration(address, clusterName, scpMap);
+    // Scope-replace the freshly discovered services into the cluster baseline (preserving services discovered for
+    // other descriptors of the same cluster), then persist the merged result so the cache and the .ver stay in sync.
+    Map<String, ServiceConfigurationModel> merged =
+        configCache.mergeServiceConfiguration(address, clusterName, scpMap, cluster.getInScopeServiceTypes());
+    serviceConfigStore.store(address, clusterName, merged);
   }
 
   /**
