@@ -156,6 +156,8 @@ public interface GatewayConfig {
   String LDAP_ROLES_LOOKUP_STRATEGY = "gateway.ldap.roles.lookup.strategy";
   String LDAP_ROLES_LOOKUP_REST_API_ENDPOINT = "gateway.ldap.roles.lookup.rest.api.endpoint";
   String LDAP_ROLES_LOOKUP_FILE_PATH = "gateway.ldap.roles.lookup.file.path";
+  String LDAP_ROLES_LIST_REST_API_ENDPOINT = "gateway.ldap.roles.list.rest.api.endpoint";
+  String LDAP_ROLES_GET_REST_API_ENDPOINT = "gateway.ldap.roles.get.rest.api.endpoint";
   String LDAP_SSL_ENABLED = "gateway.ldap.ssl.enabled";
   String LDAP_SSL_KEYSTORE_PATH = "gateway.ldap.ssl.keystore.path";
   String LDAP_SSL_KEYSTORE_PASSWORD_ALIAS = "gateway.ldap.ssl.keystore.password.alias";
@@ -163,6 +165,8 @@ public interface GatewayConfig {
   String LDAP_MAX_SIZE_LIMIT = "gateway.ldap.max.size.limit";
   String LDAP_MAX_TIME_LIMIT = "gateway.ldap.max.time.limit";
   String LDAP_DN_MAPPING_ENABLED = "gateway.ldap.dn.mapping.enabled";
+  String LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS = "gateway.ldap.backend.password.alias.retry.attempts";
+  String LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS = "gateway.ldap.backend.password.alias.retry.interval.ms";
 
   // TrustedOidcIssuerService gateway-level params and their default values
   String TRUSTED_OIDC_ISSUER_PREFIX = "gateway.trusted.oidc.issuer.";
@@ -175,6 +179,8 @@ public interface GatewayConfig {
   int TRUSTED_OIDC_ISSUER_DISCOVERY_CONNECT_TIMEOUT_MS_DEFAULT = 3000;
   String TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS = TRUSTED_OIDC_ISSUER_DISCOVERY_PREFIX+ "read.timeout.ms";
   int TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT = 10000;
+  String TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS = TRUSTED_OIDC_ISSUER_PREFIX + "ca.secret.max.age.secs";
+  int TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT = 1800;
 
   // KnoxIDF delegation policy service configuration.
   String DELEGATION_SERVICE_PREFIX = "gateway.delegation.service.";
@@ -1247,6 +1253,16 @@ public interface GatewayConfig {
   String getLdapRolesLookupRestApiEndpoint();
 
   /**
+   * @return the LDAP roles list REST API endpoint
+   */
+  String getLdapRolesListRestApiEndpoint();
+
+  /**
+   * @return the LDAP role get REST API endpoint
+   */
+  String getLdapRolesGetRestApiEndpoint();
+
+  /**
    * @return the LDAP roles lookup file path
    */
   String getLdapRolesLookupFilePath();
@@ -1293,6 +1309,17 @@ public interface GatewayConfig {
   boolean getLDAPDnMappingEnabled();
 
   /**
+   * @return the number of times an LDAP backend password alias reference that cannot be found in the
+   * gateway credential store is looked up again before it is left unresolved; 0 disables retries
+   */
+  int getLDAPBackendPasswordAliasRetryAttempts();
+
+  /**
+   * @return the delay in milliseconds between LDAP backend password alias lookup retries
+   */
+  int getLDAPBackendPasswordAliasRetryIntervalMs();
+
+  /**
    * @return set of all property names in the configuration
    */
   Set<String> getPropertyNames();
@@ -1306,6 +1333,12 @@ public interface GatewayConfig {
   int getTrustedOidcIssuerDiscoveryConnectTimeoutMs();
 
   int getTrustedOidcIssuerDiscoveryReadTimeoutMs();
+
+  /**
+   * @return how long, in seconds, a CA bundle read from a Kubernetes Secret referenced by a trusted
+   *     OIDC issuer's {@code jwksCa} is used before it is re-read on the next access
+   */
+  int getTrustedOidcIssuerCaSecretMaxAgeSecs();
 
   int getKnoxIDFFederatedOpConnectTimeoutMs();
 

@@ -25,14 +25,21 @@ public final class TrustedOidcIssuer {
   private final String clusterName;
   private final Instant registeredAt;
   private final String registeredBy;
+  private final String jwksCa;
 
   public TrustedOidcIssuer(String issuerUrl, boolean dynamicJwks, String clusterName,
       Instant registeredAt, String registeredBy) {
+    this(issuerUrl, dynamicJwks, clusterName, registeredAt, registeredBy, null);
+  }
+
+  public TrustedOidcIssuer(String issuerUrl, boolean dynamicJwks, String clusterName,
+      Instant registeredAt, String registeredBy, String jwksCa) {
     this.issuerUrl = issuerUrl;
     this.dynamicJwks = dynamicJwks;
     this.clusterName = clusterName;
     this.registeredAt = registeredAt;
     this.registeredBy = registeredBy;
+    this.jwksCa = jwksCa;
   }
 
   public String getIssuerUrl() {
@@ -59,5 +66,14 @@ public final class TrustedOidcIssuer {
    */
   public String getRegisteredBy() {
     return registeredBy;
+  }
+
+  /**
+   * @return the CA bundle trusted for this issuer's discovery and JWKS fetches: either an inline
+   *     PEM bundle or a {@code secret:[<namespace>/]<name>#<key>} reference (see {@link JwksCa}), or
+   *     null if the default truststore applies
+   */
+  public String getJwksCa() {
+    return jwksCa;
   }
 }

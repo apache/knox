@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.roles;
+package org.apache.knox.gateway.services.ldap.roles.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
@@ -29,6 +29,8 @@ import org.apache.http.util.EntityUtils;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.RoleAssignment;
+import org.apache.knox.gateway.services.ldap.roles.LdapRolesLookup;
+import org.apache.knox.gateway.services.ldap.roles.RoleException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +51,7 @@ public class RestApiLdapRolesLookup implements LdapRolesLookup {
     }
 
     @Override
-    public Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleLookupException {
+    public Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleException {
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             LookupRolesRequest request = new LookupRolesRequest(userId, new ArrayList<>(groups));
@@ -67,18 +69,18 @@ public class RestApiLdapRolesLookup implements LdapRolesLookup {
 
                 if (statusCode != 200) {
                     LOG.restRolesLookupHttpError(endpoint, statusCode, jsonResponse);
-                    throw new RoleLookupException("Failed to lookup roles: HTTP " + statusCode);
+                    throw new RoleException("Failed to lookup roles: HTTP " + statusCode);
                 }
 
                 if (jsonResponse == null) {
-                    throw new RoleLookupException("Empty response from role lookup API");
+                    throw new RoleException("Empty response from role lookup API");
                 }
 
                 final LookupRolesResponse lookupResponse = mapper.readValue(jsonResponse, LookupRolesResponse.class);
                 return parseResponse(lookupResponse);
             }
         } catch (IOException e) {
-            throw new RoleLookupException("Error while executing role lookup", e);
+            throw new RoleException("Error while executing role lookup", e);
         }
     }
 

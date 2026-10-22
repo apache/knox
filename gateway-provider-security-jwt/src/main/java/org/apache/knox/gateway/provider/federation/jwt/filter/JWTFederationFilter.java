@@ -27,6 +27,7 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.delegation.DelegationPolicyService;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyCheckRequest;
 import org.apache.knox.gateway.services.knoxidf.delegation.PolicyDecision;
+import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.IssuerJwksTrust;
 import org.apache.knox.gateway.services.knoxidf.trustedoidcissuer.TrustedOidcIssuerService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
@@ -738,12 +739,12 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   }
 
   @Override
-  protected Set<URI> resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
+  protected RegisteredIssuerJwks resolveRegisteredIssuerJwks(String issuer, HttpServletRequest request) {
     // Only a genuine token-exchange dispatch (see doFilter) may trust a runtime-registered external
     // issuer's JWKS. Reading the request attribute -- not getParameter(GRANT_TYPE) -- prevents a
     // ?grant_type=<token-exchange> query param on a plain Bearer request from unlocking this path.
     if (!Boolean.TRUE.equals(request.getAttribute(TOKEN_EXCHANGE_REQUEST_ATTR))) {
-      return Set.of();
+      return RegisteredIssuerJwks.EMPTY;
     }
     final GatewayServices gws = (GatewayServices)
         request.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -753,7 +754,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // trusted AND configured for dynamic JWKS discovery. If the issuer is not registered, or
       // registered without dynamic JWKS, it is not actionable through this path.
       if (issuerSvc != null && issuerSvc.isDynamicJwks(issuer)) {
-        // resolveJwksUri() performs OIDC discovery
+        // resolveJwksUri() performs (cached) OIDC discovery. The discovery fetch honors the issuer's
+        // jwksCa without it being passed in: the discovery helper looks up the same trust through
+        // getJwksTrust() and fetches with a short-lived client trusting only that CA bundle.
         final Optional<String> jwksUri = issuerSvc.resolveJwksUri(issuer);
         if (jwksUri.isPresent()) {
           try {
@@ -763,16 +766,26 @@ public class JWTFederationFilter extends AbstractJWTFilter {
             // subject tokens. Reject anything non-HTTPS unless the operator opted in.
             if (!allowInsecureDynamicJwks && !"https".equalsIgnoreCase(uri.getScheme())) {
               LOGGER.rejectedInsecureDynamicJwksUri(jwksUri.get(), issuer);
-              return Set.of();
+              return RegisteredIssuerJwks.EMPTY;
             }
-            return Set.of(uri);
+            // The JWKS fetch, done later by the token authority, gets the trust passed along with the
+            // URI, so an issuer registered with a jwksCa is fetched trusting only that CA bundle. If
+            // the bundle cannot be loaded, reject rather than fall back to the default truststore.
+            final IssuerJwksTrust jwksTrust;
+            try {
+              jwksTrust = issuerSvc.getJwksTrust(issuer).orElse(null);
+            } catch (IllegalStateException e) {
+              LOGGER.rejectedIssuerWithUnavailableJwksCa(issuer, e.getMessage());
+              return RegisteredIssuerJwks.EMPTY;
+            }
+            return new RegisteredIssuerJwks(Set.of(uri), jwksTrust);
           } catch (URISyntaxException e) {
             LOGGER.unableToVerifyToken(e);
           }
         }
       }
     }
-    return Set.of();
+    return RegisteredIssuerJwks.EMPTY;
   }
 
   @Override

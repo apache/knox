@@ -822,8 +822,47 @@ public class GatewayConfigImplTest {
       System.setProperty("KNOX_GATEWAY_CONF_DIR", dir.getAbsolutePath());
       GatewayConfigImpl config = new GatewayConfigImpl();
       assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
+
+      config.addConfigFileIfAbsent(reloadableFile);
+      config.reloadConfiguration();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
     } finally {
       System.clearProperty("KNOX_GATEWAY_CONF_DIR");
+    }
+  }
+
+  @Test
+  public void testReloadableConfigCreatedAfterStartupIsLoaded() throws Exception {
+    File dir = folder.newFolder("conf");
+    File reloadableFile = new File(dir, "gateway-reloadable.xml");
+
+    try {
+      System.setProperty("KNOX_GATEWAY_CONF_DIR", dir.getAbsolutePath());
+      GatewayConfigImpl config = new GatewayConfigImpl();
+      assertThat(config.get("test.reloadable.prop"), nullValue());
+
+      writeReloadableConfig(reloadableFile, "test.reloadable.val");
+      config.addConfigFileIfAbsent(reloadableFile);
+      config.reloadConfiguration();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val"));
+
+      writeReloadableConfig(reloadableFile, "test.reloadable.val2");
+      config.addConfigFileIfAbsent(reloadableFile);
+      config.reloadConfiguration();
+      assertThat(config.get("test.reloadable.prop"), is("test.reloadable.val2"));
+    } finally {
+      System.clearProperty("KNOX_GATEWAY_CONF_DIR");
+    }
+  }
+
+  private static void writeReloadableConfig(File file, String value) throws Exception {
+    try (PrintWriter writer = new PrintWriter(file, StandardCharsets.UTF_8)) {
+      writer.println("<configuration>");
+      writer.println("  <property>");
+      writer.println("    <name>test.reloadable.prop</name>");
+      writer.println("    <value>" + value + "</value>");
+      writer.println("  </property>");
+      writer.println("</configuration>");
     }
   }
 
@@ -852,5 +891,31 @@ public class GatewayConfigImplTest {
     assertEquals(2, aliases.size());
     assertEquals(config.getSigningKeyAlias(), aliases.get(0));
     assertTrue(aliases.contains("old-key-1"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testLdapRolesLookupSettings() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    assertNull( config.getLdapRolesLookupStrategy() );
+    assertNull( config.getLdapRolesLookupFilePath() );
+    assertNull( config.getLdapRolesLookupRestApiEndpoint() );
+    assertNull( config.getLdapRolesListRestApiEndpoint() );
+    assertNull( config.getLdapRolesGetRestApiEndpoint() );
+
+    config.set( GatewayConfigImpl.LDAP_ROLES_LOOKUP_STRATEGY, "rest" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_LOOKUP_FILE_PATH, "/tmp/roles.json" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_LOOKUP_REST_API_ENDPOINT, "http://roles/lookup" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_LIST_REST_API_ENDPOINT, "http://roles/list" );
+    config.set( GatewayConfigImpl.LDAP_ROLES_GET_REST_API_ENDPOINT, "http://roles/get" );
+
+    assertEquals( "rest", config.getLdapRolesLookupStrategy() );
+    assertEquals( "/tmp/roles.json", config.getLdapRolesLookupFilePath() );
+    assertEquals( "http://roles/lookup", config.getLdapRolesLookupRestApiEndpoint() );
+    assertEquals( "http://roles/list", config.getLdapRolesListRestApiEndpoint() );
+    assertEquals( "http://roles/get", config.getLdapRolesGetRestApiEndpoint() );
+
+    assertEquals( "gateway.ldap.roles.list.rest.api.endpoint", GatewayConfigImpl.LDAP_ROLES_LIST_REST_API_ENDPOINT );
+    assertEquals( "gateway.ldap.roles.get.rest.api.endpoint", GatewayConfigImpl.LDAP_ROLES_GET_REST_API_ENDPOINT );
   }
 }

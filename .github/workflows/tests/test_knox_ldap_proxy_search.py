@@ -31,6 +31,10 @@ ${ALIAS=gateway_ldap_demoldap_system_password}, seeded in gateway.sh). The proxy
 must resolve that alias to bind to the demo LDAP; if resolution regressed the
 literal alias string would be used as the password and every search below would
 fail on a bind error. This suite therefore also covers KNOX-3497.
+
+gateway.sh creates that alias only after Knox has failed to find it and started
+retrying the lookup, so the searches below also prove that the retry picked up
+the late alias (KNOX-3513; see test_knox_ldap_backend_password_alias_retry.py).
 """
 
 from __future__ import annotations

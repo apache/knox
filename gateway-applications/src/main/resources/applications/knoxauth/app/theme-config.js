@@ -18,7 +18,8 @@
 /**
  * Knox Authentication Theme Configuration
  *
- * This file configures the default theme for the Knox authentication page.
+ * This file configures the default theme for Knox authentication pages
+ * (login.html and logout.jsp).
  *
  * DEPLOYMENT CONFIGURATION:
  *
@@ -54,8 +55,19 @@
  * When locked, URL parameters and localStorage are ignored.
  */
 
+// Allowed theme directory names for ?theme= and passthrough to login.html.
+// Keep in sync with themeParam validation in logout.jsp.
+var KNOX_THEME_NAME_PATTERN = '^[a-zA-Z0-9_-]{1,64}$';
+
 // Default theme to use for this deployment
 var KNOX_DEFAULT_THEME = 'default';
 
 // Lock theme to prevent user overrides (true = locked, false = allow overrides)
 var KNOX_THEME_LOCKED = false;
+
+var KNOX_THEME_BRANDING = {
+	modern: {
+		brand: 'Apache Knox SSO',
+		favicon: 'styles/themes/modern/images/favicon.svg'
+	}
+};

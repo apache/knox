@@ -15,39 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.knox.gateway.services.ldap.roles;
+package org.apache.knox.gateway.services.ldap.roles.file;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.knox.gateway.services.ldap.RoleAssignment;
+
 import java.util.List;
 
-public class LookupRolesResponse {
-    @JsonProperty("user_id")
-    private String userId;
+public class RoleMappingEntry {
+    @JsonProperty("id")
+    private String id;
+
+    @JsonProperty("type")
+    private String type;
 
     @JsonProperty("roles")
     private List<RoleAssignment> roles;
 
-    public LookupRolesResponse() {}
-
-    public LookupRolesResponse(String userId, List<RoleAssignment> roles) {
-        this.userId = userId;
-        this.roles = roles;
+    public String getId() {
+        return id;
     }
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public String getType() {
+        return type;
     }
 
     public List<RoleAssignment> getRoles() {
         return roles;
-    }
-
-    public void setRoles(List<RoleAssignment> roles) {
-        this.roles = roles;
     }
 }

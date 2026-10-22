@@ -32,18 +32,20 @@ import java.util.List;
  * JDBC helper for the {@code TRUSTED_OIDC_ISSUERS} table.
  * All SQL uses {@link PreparedStatement} with {@code ?} parameters only.
  * Uses {@link ResultSet#getBoolean(String)} for the {@code dynamic_jwks} column,
- * which correctly maps both BOOLEAN (standard/Derby) and NUMBER(1) (Oracle) values.
+ * which correctly maps both BOOLEAN (standard/Derby) and NUMBER(1) (Oracle) values,
+ * and {@link ResultSet#getString(String)} for the {@code jwks_ca} column, which reads
+ * both TEXT and CLOB (Oracle) values.
  */
 class TrustedOidcIssuerDatabase extends KnoxDatabase {
 
   static final String TABLE_NAME = "TRUSTED_OIDC_ISSUERS";
 
   private static final String INSERT_SQL =
-      "INSERT INTO " + TABLE_NAME + " (issuer_url, dynamic_jwks, cluster_name, registered_at, registered_by) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO " + TABLE_NAME + " (issuer_url, dynamic_jwks, cluster_name, registered_at, registered_by, jwks_ca) VALUES (?, ?, ?, ?, ?, ?)";
   private static final String DELETE_SQL =
       "DELETE FROM " + TABLE_NAME + " WHERE issuer_url = ?";
   private static final String SELECT_ALL_SQL =
-      "SELECT issuer_url, dynamic_jwks, cluster_name, registered_at, registered_by FROM " + TABLE_NAME;
+      "SELECT issuer_url, dynamic_jwks, cluster_name, registered_at, registered_by, jwks_ca FROM " + TABLE_NAME;
 
   TrustedOidcIssuerDatabase(DataSource dataSource, String dbType) throws Exception {
     super(dataSource);
@@ -59,6 +61,7 @@ class TrustedOidcIssuerDatabase extends KnoxDatabase {
       ps.setString(3, issuer.getClusterName());
       ps.setTimestamp(4, Timestamp.from(issuer.getRegisteredAt()));
       ps.setString(5, issuer.getRegisteredBy());
+      ps.setString(6, issuer.getJwksCa());
       ps.executeUpdate();
     }
   }
@@ -82,7 +85,8 @@ class TrustedOidcIssuerDatabase extends KnoxDatabase {
             rs.getBoolean("dynamic_jwks"),
             rs.getString("cluster_name"),
             rs.getTimestamp("registered_at").toInstant(),
-            rs.getString("registered_by")
+            rs.getString("registered_by"),
+            rs.getString("jwks_ca")
         ));
       }
     }

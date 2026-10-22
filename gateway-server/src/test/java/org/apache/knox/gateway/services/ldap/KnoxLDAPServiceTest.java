@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.createNiceMock;
@@ -169,7 +170,35 @@ public class KnoxLDAPServiceTest {
         verify(mockConfig);
     }
 
+    @Test
+    public void testPasswordAliasRetryDisabledByOption() throws Exception {
+        final String aliasRef = AliasService.ALIAS_PREFIX + "missing}";
+        final AliasService aliasService = createNiceMock(AliasService.class);
+        expect(aliasService.isAlias(aliasRef)).andReturn(true).anyTimes();
+        expect(aliasService.extractAlias(aliasRef)).andReturn("missing").anyTimes();
+        final AtomicInteger lookups = new AtomicInteger();
+        expect(aliasService.getPasswordFromAliasForGateway("missing")).andAnswer(() -> {
+            lookups.incrementAndGet();
+            return null;
+        }).anyTimes();
+        replay(aliasService);
+        ldapService.setAliasService(aliasService);
+
+        final Map<String, String> backendConfig = buildBackendConfig("ldap");
+        backendConfig.put("systemPassword", aliasRef);
+        setupMockConfig("ldap", backendConfig, 3);
+
+        ldapService.init(mockConfig, Map.of(KnoxLDAPService.DISABLE_PASSWORD_ALIAS_RETRY_OPTION, "true"));
+
+        assertTrue("LDAP service should be enabled", ldapService.isEnabled());
+        assertEquals("The alias should be looked up exactly once, although gateway-site.xml configures retries", 1, lookups.get());
+    }
+
     private void setupMockConfig(String backendType) throws Exception {
+        setupMockConfig(backendType, buildBackendConfig(backendType), 0);
+    }
+
+    private void setupMockConfig(String backendType, Map<String, String> backendConfig, int aliasRetryAttempts) throws Exception {
         expect(mockConfig.isLDAPEnabled()).andReturn(true).atLeastOnce();
         expect(mockConfig.isLDAPSSLEnabled()).andReturn(false).atLeastOnce();
         expect(mockConfig.isLDAPRecursiveGroupResolutionEnabled()).andReturn(false).atLeastOnce();
@@ -179,10 +208,12 @@ public class KnoxLDAPServiceTest {
         expect(mockConfig.getLDAPBaseDN()).andReturn("file".equals(backendType) ? "dc=test,dc=com" : "dc=proxy,dc=com").atLeastOnce();
         expect(mockConfig.getLDAPBindUser()).andReturn(null).anyTimes();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("testbackend")).atLeastOnce();
-        expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(buildBackendConfig(backendType)).atLeastOnce();
+        expect(mockConfig.getLDAPInterceptorConfig("testbackend")).andReturn(backendConfig).atLeastOnce();
         expect(mockConfig.getLDAPMaxSizeLimit()).andReturn(1000).atLeastOnce();
         expect(mockConfig.getLDAPMaxTimeLimit()).andReturn(60000).atLeastOnce();
         expect(mockConfig.getLDAPDnMappingEnabled()).andReturn(true).atLeastOnce();
+        expect(mockConfig.getLDAPBackendPasswordAliasRetryAttempts()).andReturn(aliasRetryAttempts).anyTimes();
+        expect(mockConfig.getLDAPBackendPasswordAliasRetryIntervalMs()).andReturn(1).anyTimes();
         replay(mockConfig);
     }
 

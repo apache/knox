@@ -155,6 +155,12 @@ public interface JWTMessages {
   @Message(level = MessageLevel.WARN, text = "Rejected insecure (non-HTTPS) dynamic JWKS URI {0} resolved for issuer {1}. Set knox.token.exchange.dynamic.jwks.allow.http=true on the provider to permit it.")
   void rejectedInsecureDynamicJwksUri(String jwksUri, String issuer);
 
+  @Message(level = MessageLevel.ERROR, text = "Rejected token from trusted OIDC issuer {0}: its CA bundle (jwksCa) is unavailable: {1}")
+  void rejectedIssuerWithUnavailableJwksCa(String issuer, String cause);
+
+  @Message(level = MessageLevel.WARN, text = "Rejected token {0} ({1}) with unexpected issuer {2}: it is neither a configured expected issuer nor a registered trusted issuer")
+  void rejectedTokenWithUnexpectedIssuer(String tokenDisplayText, String tokenId, String issuer);
+
   @Message(level = MessageLevel.ERROR, text = "Original redirect URL is not in the whitelist {0}")
   void invalidOriginalUrlDomain(String originalMainDomain);
 

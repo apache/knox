@@ -1617,6 +1617,46 @@ body.login {
   font-size: 14px;
   line-height: 1.6;
 }
+.login #signout-container .signout-title {
+  color: gray;
+}
+.login #signout-container .signout-message {
+  color: white;
+  display: block;
+}
+.login #signout-container .signout-error-title {
+  color: red;
+}
+.login #signout-container .signout-error {
+  background: gray;
+  text-align: center;
+}
+.login #signout-container .signout-error-message {
+  color: white;
+}
+.login #signout-container form fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+.login #signout-container form .btn {
+  margin-top: 15px;
+}
+.login #signout-container .signout-global-form .btn {
+  margin-top: 8px;
+}
+.login #signout-container .signout-secondary {
+  text-align: center;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.login #signout-container .signout-secondary a {
+  color: #06A;
+  text-decoration: none;
+}
+.login #signout-container .signout-secondary a:hover {
+  text-decoration: underline;
+}
 .login .l-logo {
   text-align: center;
   width: 100%;

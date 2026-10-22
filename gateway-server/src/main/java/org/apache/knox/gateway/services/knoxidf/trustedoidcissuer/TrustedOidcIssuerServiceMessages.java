@@ -48,4 +48,21 @@ interface TrustedOidcIssuerServiceMessages {
       text = "Error reloading trusted OIDC issuer registry snapshot: {0}")
   void errorReloadingRegistrySnapshot(String cause,
       @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.INFO,
+      text = "Loaded CA bundle for trusted OIDC issuer {0} from {1} (SHA-256 fingerprint {2})")
+  void loadedIssuerCa(String issuerUrl, String source, String fingerprint);
+
+  @Message(level = MessageLevel.ERROR,
+      text = "Failed to load CA bundle for trusted OIDC issuer {0} from {1}: {2}")
+  void errorLoadingIssuerCa(String issuerUrl, String source, String cause,
+      @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+  @Message(level = MessageLevel.WARN,
+      text = "Failed to re-read CA bundle for trusted OIDC issuer {0} from {1}, keeping the previously loaded bundle: {2}")
+  void keepingPreviousIssuerCa(String issuerUrl, String source, String cause);
+
+  @Message(level = MessageLevel.INFO,
+      text = "TLS trust failure fetching {1} for trusted OIDC issuer {0}; retrying with the re-read CA bundle")
+  void retryingWithReloadedIssuerCa(String issuerUrl, String url);
 }

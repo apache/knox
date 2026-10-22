@@ -50,7 +50,7 @@ That's it! Users will now see your configured theme.
 
 ### KNOX_DEFAULT_THEME
 
-Sets the theme that loads by default when users access the login page.
+Sets the theme that loads by default when users access the login page or logout page (`logout.jsp`).
 
 **Values:**
 - `'default'` - Classic Knox theme (dark gray background)
@@ -68,6 +68,21 @@ Controls whether users can override the theme.
 - `true` - Theme is enforced, users cannot change it
 
 **Default:** `false`
+
+### KNOX_THEME_BRANDING
+
+Per-theme page title and favicon, keyed by theme name. `brand` replaces `KnoxSSO` in the
+page title (e.g. `Apache Knox SSO - Sign In`); `favicon` is a path relative to the
+knoxauth app. Themes without an entry keep the Knox title and favicon.
+
+```javascript
+var KNOX_THEME_BRANDING = {
+	modern: {
+		brand: 'Apache Knox SSO',
+		favicon: 'styles/themes/modern/images/favicon.svg'
+	}
+};
+```
 
 ## Common Deployment Scenarios
 

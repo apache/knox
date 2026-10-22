@@ -246,6 +246,7 @@ from `ext/` and optionally delete the stale `tokens/` folder.
 | `gateway.trusted.oidc.issuer.discovery.cache.ttl.secs` | `600` | How long a fetched issuer JWKS/discovery document is cached before re-fetch. |
 | `gateway.trusted.oidc.issuer.discovery.connect.timeout.ms` | `3000` | Connect timeout when fetching an issuer's discovery/JWKS document. |
 | `gateway.trusted.oidc.issuer.discovery.read.timeout.ms` | `10000` | Read timeout for the same fetch. |
+| `gateway.trusted.oidc.issuer.ca.secret.max.age.secs` | `1800` | How long a CA bundle read from a Kubernetes Secret (an issuer's `jwksCa` of the form `secret:[<namespace>/]<name>#<key>`) is used before the Secret is read again on the next fetch. The Secret is also re-read after a TLS certificate failure and on `refresh-jwks`; see [Per-issuer CA bundle](endpoints.md#per-issuer-ca-bundle-jwksca). |
 | `gateway.trusted.oidc.issuer.max.issuers` | `10000` | Upper bound on the number of registered trusted issuers. Registration returns `409 issuer_limit_reached` once reached. |
 
 ### Delegation policy service

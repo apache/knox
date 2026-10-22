@@ -29,7 +29,7 @@ public interface LdapRolesLookup {
      * @param userId the user ID
      * @param groups the list of groups for the user
      * @return a list of roles (in the format "scope:name" or just "name" depending on implementation)
-     * @throws RoleLookupException if an error occurs during lookup
+     * @throws RoleException if an error occurs during lookup
      */
-    Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleLookupException;
+    Collection<String> lookupRoles(String userId, Collection<String> groups) throws RoleException;
 }

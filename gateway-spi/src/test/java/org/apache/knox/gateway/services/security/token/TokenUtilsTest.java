@@ -298,4 +298,35 @@ public class TokenUtilsTest {
     // A full serialized JWT is still parsed to read its knox.id claim.
     assertEquals(knoxId, TokenUtils.getTokenId(token.toString()));
   }
+
+  @Test
+  public void testIssuerDisplayTextLeavesOrdinaryIssuerUnchanged() {
+    assertEquals("https://issuer.example.com", TokenUtils.getIssuerDisplayText("https://issuer.example.com"));
+  }
+
+  @Test
+  public void testIssuerDisplayTextForMissingIssuer() {
+    assertEquals("(none)", TokenUtils.getIssuerDisplayText(null));
+  }
+
+  @Test
+  public void testIssuerDisplayTextReplacesControlCharacters() {
+    // CR and LF would let a crafted issuer forge log lines; NEL (U+0085) is a C1 control character.
+    assertEquals("a?b?c?d", TokenUtils.getIssuerDisplayText("a\nb\rc\u0085d"));
+  }
+
+  @Test
+  public void testIssuerDisplayTextIsTruncated() {
+    final String longIssuer = "https://" + "a".repeat(TokenUtils.MAX_ISSUER_DISPLAY_LENGTH * 4);
+
+    assertEquals(longIssuer.substring(0, TokenUtils.MAX_ISSUER_DISPLAY_LENGTH) + "...",
+        TokenUtils.getIssuerDisplayText(longIssuer));
+  }
+
+  @Test
+  public void testIssuerDisplayTextAtLengthLimitIsNotTruncated() {
+    final String issuer = "a".repeat(TokenUtils.MAX_ISSUER_DISPLAY_LENGTH);
+
+    assertEquals(issuer, TokenUtils.getIssuerDisplayText(issuer));
+  }
 }

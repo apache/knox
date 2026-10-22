@@ -1341,6 +1341,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLdapRolesGetRestApiEndpoint() {
+    return "";
+  }
+
+  @Override
+  public String getLdapRolesListRestApiEndpoint() {
+    return "";
+  }
+
+  @Override
   public String getLdapRolesLookupFilePath() {
     return "";
   }
@@ -1381,6 +1391,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getLDAPBackendPasswordAliasRetryAttempts() {
+    return 0;
+  }
+
+  @Override
+  public int getLDAPBackendPasswordAliasRetryIntervalMs() {
+    return 0;
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return false;
   }
@@ -1403,6 +1423,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getTrustedOidcIssuerDiscoveryReadTimeoutMs() {
     return 0;
+  }
+
+  @Override
+  public int getTrustedOidcIssuerCaSecretMaxAgeSecs() {
+    return TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT;
   }
 
   @Override

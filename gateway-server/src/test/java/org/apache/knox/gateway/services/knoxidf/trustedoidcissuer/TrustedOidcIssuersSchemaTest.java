@@ -27,9 +27,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -94,6 +96,44 @@ public class TrustedOidcIssuersSchemaTest {
         assertEquals(0, rs.getInt(1));
       }
     }
+  }
+
+  /**
+   * The jwks_ca column must hold a CA bundle of up to {@link JwksCa#MAX_LENGTH} characters.
+   */
+  @Test
+  public void testJwksCaColumnHoldsMaxLengthBundle() throws Exception {
+    final String bundle = "x".repeat(JwksCa.MAX_LENGTH);
+    try (Statement stmt = h2Conn.createStatement()) {
+      stmt.execute(loadSql(AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL));
+    }
+    try (PreparedStatement ps = h2Conn.prepareStatement(
+        "INSERT INTO TRUSTED_OIDC_ISSUERS (issuer_url, dynamic_jwks, registered_at, jwks_ca) VALUES (?, ?, ?, ?)")) {
+      ps.setString(1, "https://big-ca.example.com");
+      ps.setBoolean(2, true);
+      ps.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
+      ps.setString(4, bundle);
+      assertEquals(1, ps.executeUpdate());
+    }
+    try (Statement stmt = h2Conn.createStatement();
+         ResultSet rs = stmt.executeQuery(
+             "SELECT jwks_ca FROM TRUSTED_OIDC_ISSUERS WHERE issuer_url = 'https://big-ca.example.com'")) {
+      assertTrue(rs.next());
+      assertEquals(bundle, rs.getString("jwks_ca"));
+    } finally {
+      try (Statement stmt = h2Conn.createStatement()) {
+        stmt.execute("DELETE FROM TRUSTED_OIDC_ISSUERS");
+      }
+    }
+  }
+
+  /**
+   * Oracle VARCHAR2 is capped at 4000 bytes, so the Oracle script must declare jwks_ca as a CLOB.
+   */
+  @Test
+  public void testOracleDdlDeclaresJwksCaClob() throws Exception {
+    final String sql = loadSql(AbstractDataSourceFactory.ORACLE_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL);
+    assertTrue(sql, sql.matches("(?s).*\\bjwks_ca\\s+CLOB\\b.*"));
   }
 
   private static String loadSql(String fileName) throws IOException {

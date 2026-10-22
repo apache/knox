@@ -20,6 +20,8 @@ package org.apache.knox.gateway.services.ldap.backend;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
 import org.junit.Before;
@@ -207,18 +209,10 @@ public class RemoteSchemaConverterTest {
     public void testConvertProxyFilterToRemoteFilterMapsUidAttribute() throws Exception {
         final RemoteSchemaConverter converter = createConverter("sAMAccountName", "person", "posixGroup", false);
 
-        final String result = converter.convertProxyFilterToRemoteFilter("(uid=alice)", schemaManager);
+        ExprNode filter = FilterParser.parse(schemaManager, "(uid=alice)");
+        final String result = converter.convertProxyFilterToRemoteFilter(filter, schemaManager).toString();
 
         assertEquals("(sAMAccountName=alice)", result);
-    }
-
-    @Test
-    public void testConvertProxyFilterToRemoteFilterStripsAnnotationsAndExtraWhitespace() throws Exception {
-        final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", false);
-
-        final String result = converter.convertProxyFilterToRemoteFilter("(uid:[1.2.3.4]=  alice)", schemaManager);
-
-        assertEquals("(uid=alice)", result);
     }
 
     private RemoteSchemaConverter createConverter(String remoteUserIdentifierAttribute,

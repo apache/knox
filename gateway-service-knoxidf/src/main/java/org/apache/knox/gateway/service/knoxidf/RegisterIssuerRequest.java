@@ -27,6 +27,7 @@ public class RegisterIssuerRequest {
   private String issuerUrl;
   private boolean dynamicJwks;
   private String clusterName;
+  private String jwksCa;
 
   public String getIssuerUrl() {
     return issuerUrl;
@@ -50,5 +51,18 @@ public class RegisterIssuerRequest {
 
   public void setClusterName(String clusterName) {
     this.clusterName = clusterName;
+  }
+
+  /**
+   * @return the CA bundle trusted for the issuer's discovery and JWKS fetches: an inline PEM bundle
+   *     or a {@code secret:[<namespace>/]<name>#<key>} Kubernetes Secret reference; null if the
+   *     default truststore applies
+   */
+  public String getJwksCa() {
+    return jwksCa;
+  }
+
+  public void setJwksCa(String jwksCa) {
+    this.jwksCa = jwksCa;
   }
 }

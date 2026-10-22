@@ -103,9 +103,10 @@ services:
           --dry-run=client -o yaml | kubectl apply -f -
 
         echo 'Exporting k3s CA cert, issuer URL and a projected SA token...'
-        # The kubeconfig CA is the API server's serving CA -- exactly what the JVM
-        # needs to trust the HTTPS discovery/JWKS endpoints. knox imports it into
-        # cacerts on startup (see gateway-k8s-delegation.sh).
+        # The kubeconfig CA is the API server's serving CA -- the trust Knox needs for
+        # the HTTPS discovery/JWKS endpoints. It is deliberately NOT imported into the
+        # JVM cacerts: the tests register it as the issuer's jwksCa, so Knox trusts k3s
+        # only through that per-issuer bundle.
         kubectl config view --raw \
           -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' \
           | base64 -d > /output/k3s-ca.crt
@@ -122,10 +123,7 @@ services:
 
   knox:
     image: apache/knox-dev:${IMAGE_TAG:-master}
-    # Custom entrypoint: import the k3s serving CA into the JVM cacerts (so the
-    # token-exchange path can fetch the k3s OIDC discovery/JWKS over HTTPS), then
-    # hand off to the standard /gateway.sh.
-    command: /gateway-k8s-delegation.sh
+    command: /gateway.sh
     environment:
       # Point the fabric8 client used by the k8s ServiceAccountValidator at k3s.
       - KUBECONFIG=/k3s/knox-kubeconfig.yaml
@@ -135,7 +133,6 @@ services:
       - ./logs:/knox-runtime/logs
 #      - ./knoxshell:/knoxshell
       - k3s-output:/k3s:ro
-      - ./k8s-delegation/gateway-k8s-delegation.sh:/gateway-k8s-delegation.sh:ro
     depends_on:
       ldap:
         condition: service_started
@@ -147,7 +144,11 @@ services:
     working_dir: /tests
     volumes:
       - ../tests:/tests
-      # Exposes the exported SA token + issuer URL to test_k8s_delegation.py.
+      # Exposes the Knox gateway.log to test_knox_ldap_backend_password_alias_retry.py.
+      - ./logs:/knox-logs:ro
+      # Exposes the exported SA token, issuer URL and k3s CA (registered as the issuer's
+      # jwksCa) to the k8s tests, and the admin kubeconfig test_k8s_jwks_ca.py uses to
+      # write Secrets.
       - k3s-output:/k3s:ro
     environment:
       - KNOX_GATEWAY_URL=https://knox:8443/

@@ -26,6 +26,7 @@ import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Collections;
+import com.nimbusds.jose.util.ResourceRetriever;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -47,6 +48,7 @@ import org.apache.knox.gateway.util.X509CertificateUtil;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -834,5 +836,45 @@ public class DefaultTokenAuthorityServiceTest {
 
     final Optional<String> kid = ta.getCachedSigningKeyID();
     assertTrue("Missing expected KID value for EC signing key", kid.isPresent());
+  }
+
+  /*
+   * The default (gateway truststore) JWKS path must use the Apache HttpClient retriever, not
+   * Nimbus's HttpURLConnection one - that transport is the entire fix, and a retriever that is
+   * built but never selected leaves the BC-FIPS failure in place.
+   */
+  @Test
+  public void testDefaultJwksPathUsesTheHttpClientRetriever() throws Exception {
+    final DefaultTokenAuthorityService ta = tokenAuthorityService();
+    try {
+      assertTrue("the default path must use HttpClientResourceRetriever, got "
+              + ta.jwksResourceRetriever(null).getClass().getName(),
+          ta.jwksResourceRetriever(null) instanceof HttpClientResourceRetriever);
+    } finally {
+      /* Releases the pooled client this builds, and exercises the shutdown path while here. */
+      ta.stop();
+    }
+  }
+
+  @Test
+  public void testAConfiguredRetrieverIsUsedUnchanged() throws Exception {
+    final DefaultTokenAuthorityService ta = tokenAuthorityService();
+    final ResourceRetriever configured = url -> null;
+    try {
+      assertSame(configured, ta.jwksResourceRetriever(configured));
+    } finally {
+      ta.stop();
+    }
+  }
+
+  private static DefaultTokenAuthorityService tokenAuthorityService() throws Exception {
+    final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.replay(config);
+
+    final DefaultTokenAuthorityService ta = new DefaultTokenAuthorityService();
+    ta.setAliasService(EasyMock.createNiceMock(AliasService.class));
+    ta.setKeystoreService(EasyMock.createNiceMock(KeystoreService.class));
+    ta.init(config, new HashMap<>());
+    return ta;
   }
 }

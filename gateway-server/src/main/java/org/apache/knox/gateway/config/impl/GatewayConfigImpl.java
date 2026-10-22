@@ -96,6 +96,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   private static final GatewayMessages log = MessagesFactory.get( GatewayMessages.class );
 
+  private final Set<String> registeredConfigFiles = new HashSet<>();
+
   private static final String GATEWAY_CONFIG_DIR_PREFIX = "conf";
 
   private static final String GATEWAY_CONFIG_FILE_PREFIX = "gateway";
@@ -402,6 +404,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   /* The default max time for LDAP search in milliseconds */
   public static final int DEFAULT_LDAP_MAX_TIME_LIMIT = 60 * 1000;
   public static final boolean DEFAULT_LDAP_DN_MAPPING_ENABLED = true;
+  public static final int DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS = 0;
+  public static final int DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS = 1000;
 
   public GatewayConfigImpl() {
     init();
@@ -563,6 +567,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
         try {
           url = f.toURI().toURL();
           addResource( new Path( path ) );
+          registeredConfigFiles.add( path );
           log.loadingConfigurationFile( path );
         } catch ( MalformedURLException e ) {
           log.failedToLoadConfig( path, e );
@@ -570,6 +575,14 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
       }
     }
     return url;
+  }
+
+  public synchronized void addConfigFileIfAbsent( File file ) {
+    String path = file.getAbsolutePath();
+    if( file.exists() && registeredConfigFiles.add( path ) ) {
+      addResource( new Path( path ) );
+      log.loadingConfigurationFile( path );
+    }
   }
 
   private URL loadConfigResource( String file ) {
@@ -1899,6 +1912,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public String getLdapRolesListRestApiEndpoint() {
+    return get(LDAP_ROLES_LIST_REST_API_ENDPOINT);
+  }
+
+  @Override
+  public String getLdapRolesGetRestApiEndpoint() {
+    return get(LDAP_ROLES_GET_REST_API_ENDPOINT);
+  }
+
+  @Override
   public String getLdapRolesLookupFilePath() {
     return get(LDAP_ROLES_LOOKUP_FILE_PATH);
   }
@@ -1940,6 +1963,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getLDAPBackendPasswordAliasRetryAttempts() {
+    return getInt(LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS, DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_ATTEMPTS);
+  }
+
+  @Override
+  public int getLDAPBackendPasswordAliasRetryIntervalMs() {
+    return getInt(LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS, DEFAULT_LDAP_BACKEND_PASSWORD_ALIAS_RETRY_INTERVAL_MS);
+  }
+
+  @Override
   public boolean getGroupUIServicesOnHomepage() {
     return getBoolean(KNOX_HOMEPAGE_GROUP_UI_SERVICES, DEFAULT_GROUP_UI_SERVICES);
   }
@@ -1962,6 +1995,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public int getTrustedOidcIssuerDiscoveryReadTimeoutMs() {
     return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS, TRUSTED_OIDC_ISSUER_DISCOVERY_READ_TIMEOUT_MS_DEFAULT);
+  }
+
+  @Override
+  public int getTrustedOidcIssuerCaSecretMaxAgeSecs() {
+    return getInt(TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS, TRUSTED_OIDC_ISSUER_CA_SECRET_MAX_AGE_SECS_DEFAULT);
   }
 
   @Override

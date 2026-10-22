@@ -273,6 +273,7 @@ public class GatewayServer {
         FileTime lastModifiedTime = Files.getLastModifiedTime(resourcePath);
         if (lastReloadTime == null || lastReloadTime.compareTo(lastModifiedTime) < 0) {
           lastReloadTime = lastModifiedTime;
+          config.addConfigFileIfAbsent(resourcePath.toFile());
           config.reloadConfiguration();
           log.refreshedGatewayConfig();
           for (GatewayConfigChangeListener listener : configChangeListeners) {
