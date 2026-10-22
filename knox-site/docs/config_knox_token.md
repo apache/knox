@@ -556,6 +556,33 @@ This behavior can be changed by setting the following `KNOXTOKEN` service-level 
 
 The default value is `RETURN_ERROR`.
 
+The limit is counted per token type, so that every API that issues server-managed tokens has its own budget per user:
+
+- `KNOXTOKEN` (including the OAuth token endpoint and KnoxIDF) counts regular JWTs, KnoxIDF authorization codes and refresh tokens
+- `CLIENTID` counts client credentials only
+- `APIKEY` counts API keys only
+
+KnoxSSO cookies never count towards the limit. With `REMOVE_OLDEST`, the oldest token of the counted types is removed. For instance, the following topology allows each user to have 100 client credentials and, independently, 150 JWTs:
+
+    <service>
+        <role>CLIENTID</role>
+        <param>
+            <name>clientid.knox.token.limit.per.user</name>
+            <value>100</value>
+        </param>
+    </service>
+    <service>
+        <role>KNOXTOKEN</role>
+        <param>
+            <name>knox.token.limit.per.user</name>
+            <value>150</value>
+        </param>
+    </service>
+
+This behavior is controlled by the `knox.token.limit.per.user.by.type.enabled` service-level parameter, which defaults to `true`. Setting it to `false` makes the limit count all tokens of the user (except KnoxSSO cookies), no matter which API issued them. Since the token state is shared by all topologies, the user's client credentials and API keys then count towards the user's `KNOXTOKEN` limit, and vice versa. Use the API-specific prefix to set it for the `CLIENTID` and `APIKEY` APIs (`clientid.knox.token.limit.per.user.by.type.enabled` and `apikey.knox.token.limit.per.user.by.type.enabled`). The counting is decided by the API issuing the new token: a `CLIENTID` service with the default setting ignores the user's JWTs, but a `KNOXTOKEN` service with `knox.token.limit.per.user.by.type.enabled=false` still counts the user's client credentials.
+
+**Upgrade note:** before Knox 3.1.0, the limit always counted all token types together. If you relied on a single limit capping all tokens of a user, either lower the per-API limits accordingly or set `knox.token.limit.per.user.by.type.enabled` (and its prefixed variants) to `false`.
+
 ##### Token Management
 
 In addition to the token generation UI, Knox comes with the Token Management UI where logged-in users can see all the active tokens that were generated before. That is, if a token got expired and was removed from the underlying token store, it won't be displayed here. Based on a configuration you can find below, users can see only their tokens or all of them.

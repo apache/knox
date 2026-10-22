@@ -57,6 +57,7 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 |-----------|---------|-------------|
 | `knoxidf.knox.token.ttl` | (token-layer default) | Access-token lifetime in **milliseconds** (passthrough to `knox.token.ttl`). |
 | `knoxidf.knox.token.limit.per.user` | (token-layer default) | Max concurrent server-managed tokens per user; `-1` = unlimited (passthrough to `knox.token.limit.per.user`). |
+| `knoxidf.knox.token.limit.per.user.by.type.enabled` | `true` | When `true`, only JWTs, authorization codes and refresh tokens count towards the per-user limit and the user's client credentials and API keys are ignored; when `false`, all of the user's tokens count (passthrough to `knox.token.limit.per.user.by.type.enabled`). |
 | `refresh.token.ttl` | `86400000` (24 h) | Refresh-token lifetime in milliseconds. Refresh tokens are issued only when the `offline_access` scope is granted, and are rotated on each use. |
 | `knoxidf.auto.consent.enabled` | `false` | When `true`, the [consent screen](security.md#consent) is skipped. This is a **server-side** decision and is never read from a client request parameter. |
 | `knoxidf.client.registration.anonymous.allowed` | `false` | When `true`, [dynamic client registration](security.md#dynamic-client-registration) accepts anonymous callers. Secure by default. |

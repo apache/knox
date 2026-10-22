@@ -61,3 +61,23 @@ Note that in both of the above response that there is a key_id as well as the ap
 as the API Key via Authorization Bearer Token in the invocations of APIs.
 
 The key_id may be used in management operations of the API Key lifecycle by those with appropriate permissions to do so.
+
+### Token limit per user
+
+Only API keys are counted towards the per-user token limit (`apikey.knox.token.limit.per.user`); other tokens of the
+same user (e.g. JWTs issued by `KNOXTOKEN`) are ignored. To count all tokens of the user instead (the behavior before
+Knox 3.1.0), set `apikey.knox.token.limit.per.user.by.type.enabled` to `false`:
+
+    <service>
+        <role>APIKEY</role>
+        <param>
+            <name>apikey.knox.token.limit.per.user</name>
+            <value>100</value>
+        </param>
+        <param>
+            <name>apikey.knox.token.limit.per.user.by.type.enabled</name>
+            <value>false</value>
+        </param>
+    </service>
+
+See the [KnoxToken documentation](config_knox_token.md) for details.

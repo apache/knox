@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.HashMap;
@@ -97,6 +98,7 @@ import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.PersistentTokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenMetadataType;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -158,6 +160,7 @@ public class TokenResource {
   private static final String LIFESPAN_INPUT_ENABLED_PARAM = TOKEN_PARAM_PREFIX + "lifespan.input.enabled";
   private static final String LIFESPAN_INPUT_ENABLED_TEXT = "lifespanInputEnabled";
   static final String KNOX_TOKEN_USER_LIMIT_PER_USER = TOKEN_PARAM_PREFIX + "limit.per.user";
+  static final String KNOX_TOKEN_USER_LIMIT_PER_USER_BY_TYPE_ENABLED = TOKEN_PARAM_PREFIX + "limit.per.user.by.type.enabled";
   static final String KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION = TOKEN_PARAM_PREFIX + "user.limit.exceeded.action";
   private static final String KNOX_TOKEN_HARDCODED_CLAIM_MAPPINGS = TOKEN_PARAM_PREFIX + "hardcoded.claim.mappings";
   private static final String METADATA_QUERY_PARAM_PREFIX = "md_";
@@ -210,6 +213,7 @@ public class TokenResource {
   private Optional<Long> maxTokenLifetime = Optional.empty();
 
   private int tokenLimitPerUser;
+  private boolean enableTokenLimitPerUserByType;
   private Map<String, Object> hardCodedClaimMappings;
   private boolean includeGroupsInTokenAllowed;
   private String tokenIssuer;
@@ -361,6 +365,14 @@ public class TokenResource {
           log.invalidConfigValue(topologyName, KNOX_TOKEN_USER_LIMIT_PER_USER, tokenLimitPerUserParam, nfe);
           log.generalInfoMessage("Using the gateway-level token limit per user configuration.");
         }
+      }
+
+      final String enableTokenLimitPerUserByTypeParam = context.getInitParameter(KNOX_TOKEN_USER_LIMIT_PER_USER_BY_TYPE_ENABLED);
+      enableTokenLimitPerUserByType = StringUtils.isBlank(enableTokenLimitPerUserByTypeParam) || Boolean.parseBoolean(enableTokenLimitPerUserByTypeParam);
+      if (enableTokenLimitPerUserByType) {
+        log.generalInfoMessage("Knox Token limit per user is enforced per token type; counted token types = " + getTokenTypesCountedTowardsLimit());
+      } else {
+        log.generalInfoMessage("Knox Token limit per user is enforced across all token types");
       }
 
       final String userLimitExceededActionParam = context.getInitParameter(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION);
@@ -1090,7 +1102,7 @@ public class TokenResource {
         final Collection<KnoxToken> allUserTokens = tokenStateService.getTokens(userName);
         final Collection<KnoxToken> userTokens = new LinkedList<>();
         allUserTokens.stream().forEach(token -> {
-          if(!token.getMetadata().isKnoxSsoCookie()) {
+          if (isCountedTowardsTokenLimit(token.getMetadata())) {
             userTokens.add(token);
           }
         });
@@ -1112,6 +1124,23 @@ public class TokenResource {
       }
     }
     return response;
+  }
+
+  /**
+   * Returns the token types counted towards the per-user token limit of this resource when
+   * {@value #KNOX_TOKEN_USER_LIMIT_PER_USER_BY_TYPE_ENABLED} is {@code true} (the default).
+   * Unless overridden, regular JWTs, as well as KnoxIDF authorization codes and refresh tokens are counted.
+   */
+  protected Set<TokenMetadataType> getTokenTypesCountedTowardsLimit() {
+    return EnumSet.of(TokenMetadataType.JWT, TokenMetadataType.AUTH_CODE, TokenMetadataType.REFRESH_TOKEN);
+  }
+
+  private boolean isCountedTowardsTokenLimit(TokenMetadata metadata) {
+    final TokenMetadataType tokenType = metadata.getTokenType();
+    if (TokenMetadataType.KNOXSSO_COOKIE == tokenType) {
+      return false; // KnoxSSO cookies never count towards the limit
+    }
+    return !enableTokenLimitPerUserByType || getTokenTypesCountedTowardsLimit().contains(tokenType);
   }
 
   protected void setupPublicCertPEM() {

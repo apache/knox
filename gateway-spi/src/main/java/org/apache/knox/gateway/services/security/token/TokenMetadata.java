@@ -167,6 +167,22 @@ public class TokenMetadata {
     return getMetadata(TYPE);
   }
 
+  /**
+   * @return the type of this token; tokens without (or with an unknown) type are treated as regular JWTs
+   */
+  @JsonIgnore
+  public TokenMetadataType getTokenType() {
+    final String type = getType();
+    if (type != null) {
+      try {
+        return TokenMetadataType.valueOf(type);
+      } catch (IllegalArgumentException e) {
+        // fall through
+      }
+    }
+    return TokenMetadataType.JWT;
+  }
+
   public String toJSON() {
     return JsonUtils.renderAsJsonString(metadataMap);
   }

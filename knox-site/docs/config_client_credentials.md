@@ -60,6 +60,26 @@ In this deployment example the TTL is set to 74000 ms which is translated to sec
 Note that in both of the above responses that there is a client_id and the client_secret.
 The key_id may be used in management operations of the API Key lifecycle by those with appropriate permissions to do so.
 
+### Token limit per user
+
+Only client credentials are counted towards the per-user token limit (`clientid.knox.token.limit.per.user`); other tokens of the
+same user (e.g. JWTs issued by `KNOXTOKEN`) are ignored. To count all tokens of the user instead (the behavior before
+Knox 3.1.0), set `clientid.knox.token.limit.per.user.by.type.enabled` to `false`:
+
+    <service>
+        <role>CLIENTID</role>
+        <param>
+            <name>clientid.knox.token.limit.per.user</name>
+            <value>100</value>
+        </param>
+        <param>
+            <name>clientid.knox.token.limit.per.user.by.type.enabled</name>
+            <value>false</value>
+        </param>
+    </service>
+
+See the [KnoxToken documentation](config_knox_token.md) for details.
+
 ### User-supplied client_id
 
 By default the `client_id` is a server-generated UUID. Well-known identity providers (Auth0, Okta,

@@ -27,7 +27,9 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Set;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
@@ -60,6 +62,11 @@ public class APIKeyResource extends PasscodeTokenResourceBase {
     protected void addArbitraryTokenMetadata(TokenMetadata tokenMetadata) {
         tokenMetadata.add(TYPE, TokenMetadataType.API_KEY.name());
         super.addArbitraryTokenMetadata(tokenMetadata);
+    }
+
+    @Override
+    protected Set<TokenMetadataType> getTokenTypesCountedTowardsLimit() {
+        return EnumSet.of(TokenMetadataType.API_KEY);
     }
 
     @Override

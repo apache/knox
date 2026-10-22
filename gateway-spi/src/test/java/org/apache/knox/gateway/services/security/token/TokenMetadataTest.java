@@ -18,6 +18,7 @@ package org.apache.knox.gateway.services.security.token;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -42,5 +43,17 @@ public class TokenMetadataTest {
     final TokenMetadata metadata = new TokenMetadata();
     metadata.add(TokenMetadata.THIRD_PARTY_APP, "not-a-boolean");
     assertFalse("Boolean.parseBoolean should return false for invalid strings", metadata.isThirdPartyApp());
+  }
+
+  @Test
+  public void testGetTokenType() {
+    final TokenMetadata metadata = new TokenMetadata();
+    assertEquals("Tokens without type should be treated as JWTs", TokenMetadataType.JWT, metadata.getTokenType());
+    for (TokenMetadataType type : TokenMetadataType.values()) {
+      metadata.setType(type);
+      assertEquals(type, metadata.getTokenType());
+    }
+    metadata.add(TokenMetadata.TYPE, "UNKNOWN_TYPE");
+    assertEquals("Tokens with unknown type should be treated as JWTs", TokenMetadataType.JWT, metadata.getTokenType());
   }
 }
