@@ -138,4 +138,38 @@ public class GatewayServerTest {
       GatewayServer.unregisterConfigChangeListener(listener);
     }
   }
+
+  @Test
+  public void testFailingConfigChangeListenerDoesNotBlockOthers() throws Exception {
+    GatewayConfigImpl config = EasyMock.createNiceMock(GatewayConfigImpl.class);
+    File configFile = folder.newFile("gateway-reloadable-failing-listener.xml");
+    try (PrintWriter writer = new PrintWriter(configFile, StandardCharsets.UTF_8)) {
+      writer.println("<configuration></configuration>");
+    }
+
+    final boolean[] notified = {false};
+    GatewayConfigChangeListener failing = (c) -> {
+      throw new IllegalStateException("listener failure");
+    };
+    GatewayConfigChangeListener listener = (c) -> notified[0] = true;
+
+    GatewayServer.registerConfigChangeListener(failing);
+    GatewayServer.registerConfigChangeListener(listener);
+
+    try {
+      Method refreshMethod = GatewayServer.class.getDeclaredMethod("refreshGatewayConfig", GatewayConfigImpl.class, Path.class);
+      refreshMethod.setAccessible(true);
+
+      Field lastReloadTimeField = GatewayServer.class.getDeclaredField("lastReloadTime");
+      lastReloadTimeField.setAccessible(true);
+      lastReloadTimeField.set(null, null);
+
+      refreshMethod.invoke(null, config, configFile.toPath());
+
+      assertTrue("Listener after the failing one should have been notified", notified[0]);
+    } finally {
+      GatewayServer.unregisterConfigChangeListener(failing);
+      GatewayServer.unregisterConfigChangeListener(listener);
+    }
+  }
 }

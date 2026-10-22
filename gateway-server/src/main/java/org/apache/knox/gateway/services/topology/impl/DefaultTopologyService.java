@@ -540,8 +540,12 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   @Override
   public void onGatewayConfigChanged(GatewayConfig config) {
     getTopologies().stream().filter(Topology::isReloadableListener).forEach(topology -> {
-      log.redeployingTopologyOnGatewayConfigChange(topology.getName());
-      redeployTopology(topology);
+      try {
+        log.redeployingTopologyOnGatewayConfigChange(topology.getName());
+        redeployTopology(topology);
+      } catch (RuntimeException e) {
+        log.failedToRedeployTopology(topology.getName(), e);
+      }
     });
   }
 

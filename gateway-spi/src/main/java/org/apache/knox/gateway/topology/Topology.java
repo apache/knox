@@ -111,6 +111,14 @@ public class Topology {
     this.reloadableListener = reloadableListener;
   }
 
+  public Boolean getReloadableListenerElement() {
+    return reloadableListener ? Boolean.TRUE : null;
+  }
+
+  public void setReloadableListenerElement(Boolean reloadableListener) {
+    this.reloadableListener = Boolean.TRUE.equals(reloadableListener);
+  }
+
   public Collection<Service> getServices() {
     return services;
   }

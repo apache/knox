@@ -702,6 +702,9 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.WARN, text = "Unable to refresh gateway config")
   void unableToReloadGatewayConfig(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.ERROR, text = "Gateway config change listener {0} failed: {1}")
+  void gatewayConfigChangeListenerFailed(String listener, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.INFO, text = "Redeploying topology {0} due to service definition change {1} / {2} / {3}")
   void redeployingTopologyOnServiceDefinitionChange(String topologyName, String serviceName, String role, String version);
 

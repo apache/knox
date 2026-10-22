@@ -277,7 +277,11 @@ public class GatewayServer {
           config.reloadConfiguration();
           log.refreshedGatewayConfig();
           for (GatewayConfigChangeListener listener : configChangeListeners) {
-            listener.onGatewayConfigChanged(config);
+            try {
+              listener.onGatewayConfigChanged(config);
+            } catch (RuntimeException e) {
+              log.gatewayConfigChangeListenerFailed(listener.getClass().getName(), e);
+            }
           }
         }
       }
