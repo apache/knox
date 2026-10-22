@@ -22,6 +22,7 @@ import static org.apache.knox.gateway.config.impl.GatewayConfigImpl.KNOX_TOKEN_U
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_ISSUER;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_PER_USER;
+import static org.apache.knox.gateway.service.knoxtoken.TokenResource.KNOX_TOKEN_USER_LIMIT_PER_USER_BY_TYPE_ENABLED;
 import static org.apache.knox.gateway.service.knoxtoken.TokenResource.TOKEN_INCLUDE_GROUPS_IN_JWT_ALLOWED;
 import static org.apache.knox.gateway.services.security.token.JWTokenAttributes.DEFAULT_ISSUER;
 import static org.apache.knox.gateway.services.security.token.impl.JWTToken.KNOX_GROUPS_CLAIM;
@@ -110,6 +111,7 @@ import org.apache.knox.gateway.services.security.token.KnoxToken;
 import org.apache.knox.gateway.services.security.token.PersistentTokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenAlreadyExistsException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenMetadataType;
 import org.apache.knox.gateway.services.security.token.TokenServiceException;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
@@ -1852,6 +1854,153 @@ public class TokenServiceResourceTest {
       testLimitingTokensPerUser(10, 11, true);
     } catch (Exception e) {
       fail("Exception should NOT have been thrown");
+    }
+  }
+
+  @Test
+  public void testTokenLimitPerUserByTypeIgnoresClientCredentialsAndApiKeysByDefault() throws Exception {
+    // knox.token.limit.per.user.by.type.enabled is not set -> tokens are counted per type
+    final TokenResource tr = initTokenResourceForTokenLimitByTypeTest(3, null, false);
+    retypeToken(getTokenId(acquireToken(tr)), TokenMetadataType.CLIENT_ID);
+    retypeToken(getTokenId(acquireToken(tr)), TokenMetadataType.API_KEY);
+
+    // the client credential and the API key are not counted -> 3 JWTs can still be acquired
+    for (int i = 0; i < 3; i++) {
+      acquireToken(tr);
+    }
+    assertTokenLimitExceeded(tr);
+  }
+
+  @Test
+  public void testTokenLimitPerUserByTypeCountsAuthCodesAndRefreshTokens() throws Exception {
+    final TokenResource tr = initTokenResourceForTokenLimitByTypeTest(3, true, false);
+    retypeToken(getTokenId(acquireToken(tr)), TokenMetadataType.AUTH_CODE);
+    retypeToken(getTokenId(acquireToken(tr)), TokenMetadataType.REFRESH_TOKEN);
+    acquireToken(tr);
+    assertTokenLimitExceeded(tr);
+  }
+
+  @Test
+  public void testTokenLimitPerUserNotByTypeCountsClientCredentialsAndApiKeys() throws Exception {
+    // the legacy behavior: all tokens but KnoxSSO cookies are counted
+    final TokenResource tr = initTokenResourceForTokenLimitByTypeTest(3, false, false);
+    retypeToken(getTokenId(acquireToken(tr)), TokenMetadataType.CLIENT_ID);
+    retypeToken(getTokenId(acquireToken(tr)), TokenMetadataType.API_KEY);
+    acquireToken(tr);
+    assertTokenLimitExceeded(tr);
+  }
+
+  @Test
+  public void testTokenLimitPerUserByTypeShouldRevokeOldestTokenOfTheSameType() throws Exception {
+    final TokenResource tr = initTokenResourceForTokenLimitByTypeTest(2, true, true);
+    final String clientId = getTokenId(acquireToken(tr));
+    retypeToken(clientId, TokenMetadataType.CLIENT_ID);
+    Thread.sleep(5);
+    final String oldestJwtId = getTokenId(acquireToken(tr));
+    Thread.sleep(5);
+    final String secondJwtId = getTokenId(acquireToken(tr));
+    Thread.sleep(5);
+    final String newestJwtId = getTokenId(acquireToken(tr));
+
+    // the oldest JWT is revoked, the even older client credential is kept
+    assertNotNull(tss.getTokenMetadata(clientId));
+    assertNull(tss.getTokenMetadata(oldestJwtId));
+    assertNotNull(tss.getTokenMetadata(secondJwtId));
+    assertNotNull(tss.getTokenMetadata(newestJwtId));
+  }
+
+  @Test
+  public void testClientCredentialsTokenLimitPerUserByTypeIgnoresJWTsByDefault() throws Exception {
+    assertEquals(2, countAcquirableClientCredentialsWithPreExistingJWTs(null));
+  }
+
+  @Test
+  public void testClientCredentialsTokenLimitPerUserByTypeIgnoresJWTs() throws Exception {
+    assertEquals(2, countAcquirableClientCredentialsWithPreExistingJWTs(true));
+  }
+
+  @Test
+  public void testClientCredentialsTokenLimitPerUserNotByTypeCountsJWTs() throws Exception {
+    assertEquals(0, countAcquirableClientCredentialsWithPreExistingJWTs(false));
+  }
+
+  /**
+   * Acquires 3 JWTs (unlimited KNOXTOKEN limit) and then as many client credentials as the
+   * {@code clientid.knox.token.limit.per.user=2} limit allows (up to 5).
+   */
+  private int countAcquirableClientCredentialsWithPreExistingJWTs(Boolean limitByType) throws Exception {
+    try {
+      tss = new PersistentTestTokenStateService();
+      final Map<String, String> contextExpectations = new HashMap<>();
+      contextExpectations.put("clientid." + KNOX_TOKEN_USER_LIMIT_PER_USER, "2");
+      if (limitByType != null) {
+        contextExpectations.put("clientid." + KNOX_TOKEN_USER_LIMIT_PER_USER_BY_TYPE_ENABLED, String.valueOf(limitByType));
+      }
+      configureCommonExpectations(contextExpectations, Boolean.TRUE);
+
+      final TokenResource tr = new TokenResource();
+      tr.request = request;
+      tr.context = context;
+      tr.init();
+      for (int i = 0; i < 3; i++) {
+        acquireToken(tr);
+      }
+
+      final ClientCredentialsResource ccr = new ClientCredentialsResource();
+      ccr.request = request;
+      ccr.context = context;
+      ccr.init();
+      int acquiredClientCredentials = 0;
+      for (int i = 0; i < 5; i++) {
+        final Response response = Subject.doAs(createTestSubject(USER_NAME), (PrivilegedAction<Response>) ccr::doPost);
+        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+          assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
+          assertTrue(response.getEntity().toString().contains("Unable to get token - token limit exceeded."));
+          break;
+        }
+        acquiredClientCredentials++;
+      }
+      return acquiredClientCredentials;
+    } finally {
+      tss = new TestTokenStateService();
+    }
+  }
+
+  private TokenResource initTokenResourceForTokenLimitByTypeTest(int limit, Boolean limitByType, boolean revokeOldestToken) throws Exception {
+    final Map<String, String> contextExpectations = new HashMap<>();
+    contextExpectations.put(KNOX_TOKEN_USER_LIMIT_PER_USER, String.valueOf(limit));
+    if (limitByType != null) {
+      contextExpectations.put(KNOX_TOKEN_USER_LIMIT_PER_USER_BY_TYPE_ENABLED, String.valueOf(limitByType));
+    }
+    if (revokeOldestToken) {
+      contextExpectations.put(KNOX_TOKEN_USER_LIMIT_EXCEEDED_ACTION, TokenResource.UserLimitExceededAction.REMOVE_OLDEST.name());
+    }
+    configureCommonExpectations(contextExpectations, Boolean.TRUE);
+    final TokenResource tr = new TokenResource();
+    tr.request = request;
+    tr.context = context;
+    tr.init();
+    return tr;
+  }
+
+  private String getTokenId(Response tokenResponse) {
+    final String tokenId = getTagValue(tokenResponse.getEntity().toString(), "token_id");
+    assertNotNull(tokenId);
+    return tokenId;
+  }
+
+  private void retypeToken(String tokenId, TokenMetadataType type) throws Exception {
+    final TokenMetadata tokenMetadata = tss.getTokenMetadata(tokenId);
+    tokenMetadata.setType(type);
+    tss.addMetadata(tokenId, tokenMetadata);
+  }
+
+  private void assertTokenLimitExceeded(TokenResource tr) {
+    try {
+      acquireToken(tr);
+      fail("Exception should have been thrown");
+    } catch (Exception e) {
+      assertTrue(e.getMessage().contains("Unable to get token - token limit exceeded."));
     }
   }
 

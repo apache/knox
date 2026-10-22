@@ -34,9 +34,11 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -88,6 +90,11 @@ public class ClientCredentialsResource extends PasscodeTokenResourceBase {
         tokenMetadata.add(TokenMetadata.TYPE, TokenMetadataType.CLIENT_ID.name());
         tokenMetadata.add(TokenMetadata.THIRD_PARTY_APP, String.valueOf(thirdPartyApp));
         super.addArbitraryTokenMetadata(tokenMetadata);
+    }
+
+    @Override
+    protected Set<TokenMetadataType> getTokenTypesCountedTowardsLimit() {
+        return EnumSet.of(TokenMetadataType.CLIENT_ID);
     }
 
     @Override

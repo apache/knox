@@ -1,0 +1,92 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+Per-user token limit counted across all token types (knox.token.limit.per.user.by.type.enabled=false):
+every token of the user (except KnoxSSO cookies) counts, including the client credentials and API keys
+minted via tokenlimitbytype.xml.
+-->
+<topology>
+	<gateway>
+		<provider>
+			<role>authentication</role>
+			<name>ShiroProvider</name>
+			<enabled>true</enabled>
+			<param>
+				<name>sessionTimeout</name>
+				<value>30</value>
+			</param>
+			<param>
+				<name>main.ldapRealm</name>
+				<value>org.apache.knox.gateway.shirorealm.KnoxLdapRealm</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.userDnTemplate</name>
+				<value>uid={0},ou=people,dc=proxy,dc=org</value>
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory.url</name>
+				<value>ldaps://localhost:33390</value>  <!-- Local Knox LDAP service (LDAPS); configured to proxy to the demo LDAP as a backend -->
+			</param>
+			<param>
+				<name>main.ldapRealm.contextFactory.authenticationMechanism</name>
+				<value>simple</value>
+			</param>
+			<param>
+				<name>urls./**</name>
+				<value>authcBasic</value>
+			</param>
+		</provider>
+		<!-- admin may mint tokens on behalf of anyone (doAs), so each test can use a fresh user with no tokens. -->
+		<provider>
+			<role>identity-assertion</role>
+			<name>Default</name>
+			<enabled>true</enabled>
+			<param>
+				<name>hadoop.proxyuser.impersonation.enabled</name>
+				<value>true</value>
+			</param>
+			<param>
+				<name>hadoop.proxyuser.admin.users</name>
+				<value>*</value>
+			</param>
+			<param>
+				<name>hadoop.proxyuser.admin.hosts</name>
+				<value>*</value>
+			</param>
+		</provider>
+	</gateway>
+	<service>
+		<role>KNOXTOKEN</role>
+		<param>
+			<name>knox.token.ttl</name>
+			<value>300000</value>
+		</param>
+		<param>
+			<name>knox.token.exp.server-managed</name>
+			<value>true</value>
+		</param>
+		<param>
+			<name>knox.token.limit.per.user</name>
+			<value>2</value>
+		</param>
+		<param>
+			<name>knox.token.limit.per.user.by.type.enabled</name>
+			<value>false</value>
+		</param>
+	</service>
+</topology>
