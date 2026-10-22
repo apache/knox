@@ -830,6 +830,44 @@ public class DefaultTopologyServiceTest {
     }
   }
 
+  @Test
+  public void testOnlyReloadableListenerTopologiesRedeployedOnGatewayConfigChange() throws Exception {
+    final File dir = createDir();
+    try {
+      final File topologyDir = new File(dir, "topologies");
+      final long time = topologyDir.lastModified();
+      final String listening = "<topology>\n    <reloadableListener>true</reloadableListener>\n"
+          + "    <service>\n        <role>WEBHDFS</role>\n        <url>http://host-one:80/webhdfs</url>\n    </service>\n</topology>\n";
+      final String notListening = "<topology>\n"
+          + "    <service>\n        <role>WEBHDFS</role>\n        <url>http://host-two:80/webhdfs</url>\n    </service>\n</topology>\n";
+      final File listeningFile = createFile(topologyDir, "listening.xml",
+          new ByteArrayInputStream(listening.getBytes(StandardCharsets.UTF_8)), time);
+      final File notListeningFile = createFile(topologyDir, "notlistening.xml",
+          new ByteArrayInputStream(notListening.getBytes(StandardCharsets.UTF_8)), time);
+
+      final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.isTopologyValidationEnabled()).andReturn(true).anyTimes();
+      EasyMock.replay(config);
+
+      final DefaultTopologyService topologyService = new DefaultTopologyService();
+      topologyService.init(config, new HashMap<>());
+      topologyService.reloadTopologies();
+
+      final Map<String, Boolean> flags = new HashMap<>();
+      topologyService.getTopologies().forEach(t -> flags.put(t.getName(), t.isReloadableListener()));
+      assertEquals(Boolean.TRUE, flags.get("listening"));
+      assertEquals(Boolean.FALSE, flags.get("notlistening"));
+
+      topologyService.onGatewayConfigChanged(config);
+
+      assertTrue(FileUtils.readFileToString(listeningFile, StandardCharsets.UTF_8).contains("<redeployTime>"));
+      assertEquals(notListening, FileUtils.readFileToString(notListeningFile, StandardCharsets.UTF_8));
+    } finally {
+      FileUtils.deleteQuietly(dir);
+    }
+  }
+
   private class TestTopologyListener implements TopologyListener {
     List<List<TopologyEvent>> events = new ArrayList<>();
 

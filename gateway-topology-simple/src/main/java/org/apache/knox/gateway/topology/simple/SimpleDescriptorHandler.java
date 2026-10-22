@@ -468,6 +468,10 @@ public class SimpleDescriptorHandler {
             // KNOX-1105 Indicate that this topology was auto-generated
             sw.write("    <generated>true</generated>\n");
 
+            if (desc.isReloadableListener()) {
+                sw.write("    <reloadableListener>true</reloadableListener>\n");
+            }
+
             // Incorporate the externalized provider configuration content into the topology descriptor
             sw.write("    <gateway>\n");
             for (ProviderConfiguration.Provider provider : providerConfiguration.getProviders()) {

@@ -218,6 +218,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals("Cluster 1", descriptor.getCluster());
     assertEquals("topology1-provider", descriptor.getProviderConfig());
     assertTrue(descriptor.isProvisionEncryptQueryStringCredential());
+    assertFalse(descriptor.isReloadableListener());
     assertEquals(2, descriptor.getApplications().size());
 
     assertApplication(descriptor, "knoxauth", Collections.singletonMap("param1.name", "param1.value"));
@@ -244,6 +245,7 @@ public class HadoopXmlResourceParserTest {
     assertEquals("Cluster 2", descriptor.getCluster());
     assertEquals("topology2-provider", descriptor.getProviderConfig());
     assertFalse(descriptor.isProvisionEncryptQueryStringCredential());
+    assertTrue(descriptor.isReloadableListener());
     assertTrue(descriptor.getApplications().isEmpty());
 
     final Map<String, String> expectedServiceParameters = Stream.of(new String[][] { { "httpclient.connectionTimeout", "5m" }, { "httpclient.socketTimeout", "100m" }, })

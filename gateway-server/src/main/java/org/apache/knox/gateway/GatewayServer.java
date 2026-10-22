@@ -725,6 +725,9 @@ public class GatewayServer {
 
     final ServiceDefinitionRegistry serviceDefinitionRegistry = services.getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
     serviceDefinitionRegistry.addServiceDefinitionChangeListener(monitor);
+    if (monitor instanceof GatewayConfigChangeListener) {
+      registerConfigChangeListener((GatewayConfigChangeListener) monitor);
+    }
 
     final Map<String, Integer> topologyPortMap = config.getGatewayPortMappings();
 
@@ -820,6 +823,9 @@ public class GatewayServer {
         log.stoppingGateway();
         services.stop();
         monitor.stopMonitor();
+        if (monitor instanceof GatewayConfigChangeListener) {
+          unregisterConfigChangeListener((GatewayConfigChangeListener) monitor);
+        }
         jetty.stop();
         jetty.join();
         log.stoppedGateway();

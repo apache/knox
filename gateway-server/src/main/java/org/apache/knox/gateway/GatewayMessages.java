@@ -705,6 +705,9 @@ public interface GatewayMessages {
   @Message(level = MessageLevel.INFO, text = "Redeploying topology {0} due to service definition change {1} / {2} / {3}")
   void redeployingTopologyOnServiceDefinitionChange(String topologyName, String serviceName, String role, String version);
 
+  @Message(level = MessageLevel.INFO, text = "Redeploying topology {0} due to gateway reloadable configuration change")
+  void redeployingTopologyOnGatewayConfigChange(String topologyName);
+
   @Message(level = MessageLevel.INFO, text = "Saved service definition {0} / {1} / {2}")
   void savedServiceDefinitionChange(String serviceName, String role, String version);
 

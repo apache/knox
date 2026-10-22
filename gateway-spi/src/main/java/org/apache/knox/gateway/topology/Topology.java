@@ -39,6 +39,7 @@ public class Topology {
   private long timestamp;
   private boolean isGenerated;
   private long redeployTime = -1L;
+  private boolean reloadableListener;
   public List<Provider> providerList = new ArrayList<>();
   private Map<String,Map<String,Provider>> providerMap = new HashMap<>();
   public List<Service> services = new ArrayList<>();
@@ -100,6 +101,14 @@ public class Topology {
 
   public void setRedeployTime(long redeployTime) {
     this.redeployTime = redeployTime;
+  }
+
+  public boolean isReloadableListener() {
+    return reloadableListener;
+  }
+
+  public void setReloadableListener(boolean reloadableListener) {
+    this.reloadableListener = reloadableListener;
   }
 
   public Collection<Service> getServices() {

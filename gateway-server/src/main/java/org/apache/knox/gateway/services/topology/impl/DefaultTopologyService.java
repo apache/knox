@@ -33,6 +33,7 @@ import org.apache.knox.gateway.audit.api.Auditor;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.audit.log4j.audit.AuditConstants;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.service.definition.ServiceDefinitionChangeListener;
@@ -86,7 +87,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultTopologyService extends FileAlterationListenerAdaptor implements TopologyService, TopologyMonitor,
-    TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener {
+    TopologyProvider, FileFilter, FileAlterationListener, ServiceDefinitionChangeListener, GatewayConfigChangeListener {
 
   private static final JAXBContext jaxbContext = getJAXBContext();
   private static final String TOPOLOGY_CLOSING_XML_ELEMENT = "</topology>";
@@ -532,6 +533,14 @@ public class DefaultTopologyService extends FileAlterationListenerAdaptor implem
   public void onServiceDefinitionChange(String name, String role, String version) {
     getTopologies().stream().filter(topology -> topology.getServices().stream().anyMatch(service -> isRelevantService(service, role, name, version))).forEach(topology -> {
       log.redeployingTopologyOnServiceDefinitionChange(topology.getName(), name, role, version);
+      redeployTopology(topology);
+    });
+  }
+
+  @Override
+  public void onGatewayConfigChanged(GatewayConfig config) {
+    getTopologies().stream().filter(Topology::isReloadableListener).forEach(topology -> {
+      log.redeployingTopologyOnGatewayConfigChange(topology.getName());
       redeployTopology(topology);
     });
   }

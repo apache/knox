@@ -42,5 +42,9 @@ public class TopologyValidatorTest {
     url = TestUtils.getResourceUrl( TopologyValidatorTest.class, "topology-valid-with-name.xml" );
     validator = new TopologyValidator( url );
     assertThat( validator.getErrorString(), validator.validateTopology(), is( true ) );
+
+    url = TestUtils.getResourceUrl( TopologyValidatorTest.class, "topology-valid-reloadable-listener.xml" );
+    validator = new TopologyValidator( url );
+    assertThat( validator.getErrorString(), validator.validateTopology(), is( true ) );
   }
 }
