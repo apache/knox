@@ -721,10 +721,11 @@ public class GatewayServer {
     log.loadingTopologiesFromDirectory(topologiesDir.getAbsolutePath());
     monitor.reloadTopologies();
     List<String> autoDeploys = config.getAutoDeployTopologyNames();
-    if (autoDeploys != null) {
+    if (autoDeploys != null && !autoDeploys.isEmpty()) {
       for (String topologyName : autoDeploys) {
         monitor.redeployTopology(topologyName);
       }
+      monitor.reloadTopologies();
     }
 
     final ServiceDefinitionRegistry serviceDefinitionRegistry = services.getService(ServiceType.SERVICE_DEFINITION_REGISTRY);
