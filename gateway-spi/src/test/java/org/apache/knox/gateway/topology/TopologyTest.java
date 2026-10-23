@@ -29,6 +29,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class TopologyTest {
@@ -106,6 +107,57 @@ public class TopologyTest {
     topology.addProvider(enabledProvider);
 
     assertEquals("enabled_prov", topology.getProvider("identity-assertion", null).getName());
+  }
+
+  @Test
+  public void testShallowCopyIsEqualAndIndependent() throws Exception {
+    Topology topology = new Topology();
+    topology.setUri(new URI("file:///topologies/test.xml"));
+    topology.setName("test");
+    topology.setDefaultServicePath("webhdfs");
+    topology.setTimestamp(1234L);
+    topology.setGenerated(true);
+    topology.setRedeployTime(5678L);
+    topology.setReloadableListener(true);
+
+    Provider provider = new Provider();
+    provider.setRole("authentication");
+    provider.setName("ShiroProvider");
+    provider.setEnabled(true);
+    topology.addProvider(provider);
+
+    Service service = new Service();
+    service.setRole("WEBHDFS");
+    service.setName("webhdfs");
+    topology.addService(service);
+
+    Application application = new Application();
+    application.setName("app");
+    topology.addApplication(application);
+
+    Topology copy = topology.shallowCopy();
+
+    assertEquals(topology, copy);
+    assertEquals(topology.getUri(), copy.getUri());
+    assertEquals(topology.getDefaultServicePath(), copy.getDefaultServicePath());
+    assertEquals(topology.getTimestamp(), copy.getTimestamp());
+    assertTrue(copy.isGenerated());
+    assertTrue(copy.isReloadableListener());
+    assertSame(provider, copy.getProvider("authentication", "ShiroProvider"));
+    assertSame(service, copy.getService("WEBHDFS", "webhdfs", null));
+    assertSame(application, copy.getApplication("app"));
+
+    Provider added = new Provider();
+    added.setRole("identity-assertion");
+    added.setName("Default");
+    copy.getProviders().add(added);
+    copy.addService(new Service());
+    copy.addApplication(new Application());
+
+    assertEquals(1, topology.getProviders().size());
+    assertEquals(1, topology.getServices().size());
+    assertEquals(1, topology.getApplications().size());
+    assertNotEquals(topology, copy);
   }
 
   @Test

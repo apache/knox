@@ -55,6 +55,21 @@ public class Topology {
     serviceMap = MultiKeyMap.decorate(new HashedMap());
   }
 
+  public Topology shallowCopy() {
+    Topology copy = new Topology();
+    copy.setUri(uri);
+    copy.setName(name);
+    copy.setDefaultServicePath(defaultServicePath);
+    copy.setTimestamp(timestamp);
+    copy.setGenerated(isGenerated);
+    copy.setRedeployTime(redeployTime);
+    copy.setReloadableListener(reloadableListener);
+    providerList.forEach(copy::addProvider);
+    services.forEach(copy::addService);
+    applications.forEach(copy::addApplication);
+    return copy;
+  }
+
   public URI getUri() {
     return uri;
   }

@@ -168,7 +168,8 @@ public abstract class DeploymentFactory {
     validateNoAppsWithDuplicateUrlsInTopology( topology );
   }
 
-  public static EnterpriseArchive createDeployment( GatewayConfig config, Topology topology ) {
+  public static EnterpriseArchive createDeployment( GatewayConfig config, Topology sourceTopology ) {
+    Topology topology = sourceTopology.shallowCopy();
     validateTopology( topology );
     loadStacksServiceContributors( config );
     Map<String,List<ProviderDeploymentContributor>> providers = selectContextProviders( topology );
