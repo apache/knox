@@ -177,6 +177,106 @@ jobs:
           echo '===== gateway.log ====='
           cat ./.github/workflows/compose/logs/gateway.log || true
 
+      # KnoxIDF HA E2E runs only when the PR carries the 'test-ha' label. The
+      # override recreates 'knox' on a shared PostgreSQL database and adds a
+      # second gateway, 'knox2', on the same database; the suite changes the
+      # KnoxIDF registries through one gateway and checks the other picks the
+      # changes up. It runs here, before the single-EKU steps, which recreate
+      # 'knox' with their own config anyway.
+      - name: Start PostgreSQL + two Knox gateways for KnoxIDF HA
+        id: knoxidf_ha_start
+        if: contains(github.event.pull_request.labels.*.name, 'test-ha')
+        run: |
+          # 'up -d' starts knox2 only once knox is service_healthy (override depends_on).
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+            up -d knox knox2 postgres
+
+      - name: Wait for KnoxIDF HA stack to become healthy
+        id: knoxidf_ha_wait
+        if: contains(github.event.pull_request.labels.*.name, 'test-ha')
+        run: |
+          for service in knox knox2; do
+            container=$(docker compose \
+              -f ./.github/workflows/compose/docker-compose.yml \
+              -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+              ps -a -q "$service")
+            if [ -z "$container" ]; then
+              echo "$service: no container"
+              exit 1
+            fi
+            # Up to 5 minutes; stop early once Docker gives up and marks it unhealthy,
+            # or the container exits (an exited container keeps its last health status).
+            for _ in $(seq 1 60); do
+              state=$(docker inspect -f '{{.State.Status}}' "$container")
+              status=$(docker inspect -f '{{.State.Health.Status}}' "$container")
+              if [ "$state" = exited ] || [ "$state" = dead ]; then
+                status="$state ($(docker inspect -f '{{.State.ExitCode}}' "$container"))"
+                break
+              fi
+              if [ "$status" = healthy ] || [ "$status" = unhealthy ]; then
+                break
+              fi
+              sleep 5
+            done
+            echo "$service: $status"
+            [ "$status" = healthy ] || exit 1
+          done
+
+      - name: Run KnoxIDF HA Tests
+        id: knoxidf_ha_tests
+        if: contains(github.event.pull_request.labels.*.name, 'test-ha')
+        run: |
+          # Emit a distinct JUnit file so it reports as its own test suite.
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test_knoxidf_ha.py --junitxml=test-results-ha.xml"
+
+      # Evidence gathering: a change that never reached the other gateway could be
+      # a gateway that is not on the shared database, a failing registry reload or
+      # a gateway that never came up. Dump container status, both gateways' logs
+      # and the database logs so these can be told apart. knox2 has no logs bind
+      # mount, so its gateway.log is copied out of the container.
+      - name: Dump KnoxIDF HA diagnostics on failure
+        if: >-
+          failure() && (steps.knoxidf_ha_start.outcome == 'failure'
+          || steps.knoxidf_ha_wait.outcome == 'failure'
+          || steps.knoxidf_ha_tests.outcome == 'failure')
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+            ps -a || true
+          for service in knox knox2 postgres; do
+            echo "===== $service container logs ====="
+            docker compose \
+              -f ./.github/workflows/compose/docker-compose.yml \
+              -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+              logs --no-color "$service" || true
+          done
+          echo '===== knox gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+          echo '===== knox2 gateway.log ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+            cp knox2:/knox-runtime/logs/gateway.log /tmp/knox2-gateway.log \
+            && cat /tmp/knox2-gateway.log || true
+
+      # The remaining steps only use 'knox'; stop the second gateway and the
+      # database so they do not hold runner memory.
+      - name: Stop KnoxIDF HA services
+        if: always() && contains(github.event.pull_request.labels.*.name, 'test-ha')
+        run: |
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.knoxidf-ha.yml \
+            stop knox2 postgres || true
+
       # Single-EKU mTLS runs as its own pass. Its override turns on
       # gateway.client.auth.needed=true, which would break the default
       # (no-client-cert) tests above, so the gateway is recreated with the
@@ -280,6 +380,7 @@ jobs:
             .github/workflows/tests/test-results-single-eku-no-mtls.xml
             .github/workflows/tests/test-results-federation.xml
             .github/workflows/tests/test-results-hashicorp-vault.xml
+            .github/workflows/tests/test-results-ha.xml
 
       - name: Archive Knox Logs
         if: always()
@@ -312,7 +413,9 @@ jobs:
       - name: Tear Down Docker Compose
         if: always()
         run: |
-          docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes
+          # --remove-orphans also removes the services only the override files define
+          # (vault, keycloak, knox2, postgres).
+          docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes --remove-orphans
           TAG=${IMAGE_TAG:-master}
           if docker image inspect "apache/knox-dev:$TAG" >/dev/null 2>&1; then
             docker rmi "apache/knox-dev:$TAG"

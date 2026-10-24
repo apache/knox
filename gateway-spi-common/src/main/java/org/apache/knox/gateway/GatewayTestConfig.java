@@ -1411,6 +1411,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getTrustedOidcIssuerRegistryCacheTtlSecs() {
+    return 0;
+  }
+
+  @Override
   public int getTrustedOidcIssuerDiscoveryCacheTtlSecs() {
     return 0;
   }

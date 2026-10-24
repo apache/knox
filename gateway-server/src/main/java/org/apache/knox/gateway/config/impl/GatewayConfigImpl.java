@@ -1983,6 +1983,11 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getTrustedOidcIssuerRegistryCacheTtlSecs() {
+    return getInt(TRUSTED_OIDC_ISSUER_REGISTRY_CACHE_TTL_SECS, TRUSTED_OIDC_ISSUER_REGISTRY_CACHE_TTL_SECS_DEFAULT);
+  }
+
+  @Override
   public int getTrustedOidcIssuerDiscoveryCacheTtlSecs() {
     return getInt(TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS, TRUSTED_OIDC_ISSUER_DISCOVERY_CACHE_TTL_SECS_DEFAULT);
   }
