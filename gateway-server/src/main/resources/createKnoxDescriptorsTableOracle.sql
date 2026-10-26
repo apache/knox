@@ -17,6 +17,6 @@ CREATE TABLE KNOX_DESCRIPTORS (
    name varchar2(256) NOT NULL,
    content CLOB NOT NULL,
    last_modified_time TIMESTAMP NOT NULL,
-   deleted NUMBER(1) DEFAULT false NOT NULL,
+   deleted NUMBER(1) DEFAULT 0 NOT NULL,
    PRIMARY KEY (name)
 )
