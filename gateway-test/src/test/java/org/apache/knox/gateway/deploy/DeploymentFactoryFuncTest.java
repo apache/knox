@@ -135,6 +135,13 @@ public class DeploymentFactoryFuncTest {
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/role", equalTo( "identity-assertion" ) ) );
     assertThat( gateway, hasXPath( "/gateway/resource[1]/filter[4]/name", equalTo( "Default" ) ) );
 
+    Document deployedTopology = XmlUtils.readXml( war.get( "/META-INF/topology.xml" ).getAsset().openStream() );
+    assertThat( deployedTopology, hasXPath( "/topology/gateway/provider[role='identity-assertion']/name", equalTo( "Default" ) ) );
+
+    assertEquals( 1, topology.getProviders().size() );
+    assertThat( topology.getProvider( "identity-assertion", null ), nullValue() );
+    assertThat( topology.getProviders().stream().noneMatch( p -> "identity-assertion".equals( p.getRole() ) ), is( true ) );
+
     LOG_EXIT();
   }
 
