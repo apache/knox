@@ -39,7 +39,7 @@
 
 
     <filter name="OZONE-RECON/filter/staticLinks">
-        <content type="application/javascript">
+        <content type="*/javascript">
             <apply path="static/media/.*\.png" rule="OZONE-RECON/rule/media"/>
             <apply path="/api/v1/[\w]+" rule="OZONE-RECON/rule/api"/>
         </content>
