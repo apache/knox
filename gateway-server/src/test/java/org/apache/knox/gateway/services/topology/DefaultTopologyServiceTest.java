@@ -870,6 +870,47 @@ public class DefaultTopologyServiceTest {
   }
 
   @Test
+  public void testReloadAfterRedeployUpdatesOnlyRedeployedTopology() throws Exception {
+    final File dir = createDir();
+    try {
+      final File topologyDir = new File(dir, "topologies");
+      final long time = topologyDir.lastModified();
+      createFile(topologyDir, "one.xml", "org/apache/knox/gateway/topology/file/topology-one.xml", time);
+      createFile(topologyDir, "two.xml", "org/apache/knox/gateway/topology/file/topology-two.xml", time);
+
+      final GatewayConfig config = EasyMock.createNiceMock(GatewayConfig.class);
+      EasyMock.expect(config.getGatewayTopologyDir()).andReturn(topologyDir.getAbsolutePath()).anyTimes();
+      EasyMock.expect(config.topologyRedeploymentRequiresChanges()).andReturn(true).anyTimes();
+      EasyMock.replay(config);
+
+      final TestTopologyListener topoListener = new TestTopologyListener();
+      final DefaultTopologyService topologyService = new DefaultTopologyService();
+      topologyService.init(config, new HashMap<>());
+      topologyService.addTopologyChangeListener(topoListener);
+      topologyService.reloadTopologies();
+      topoListener.events.clear();
+      final Map<String, Long> initialRedeployTimes = new HashMap<>();
+      topologyService.getTopologies().forEach(t -> initialRedeployTimes.put(t.getName(), t.getRedeployTime()));
+
+      topologyService.redeployTopology("one");
+      topologyService.reloadTopologies();
+
+      assertThat(topoListener.events.size(), is(1));
+      final List<TopologyEvent> events = topoListener.events.get(0);
+      assertThat(events.size(), is(1));
+      assertThat(events.get(0).getType(), is(TopologyEvent.Type.UPDATED));
+      assertThat(events.get(0).getTopology().getName(), is("one"));
+
+      final Map<String, Long> redeployTimes = new HashMap<>();
+      topologyService.getTopologies().forEach(t -> redeployTimes.put(t.getName(), t.getRedeployTime()));
+      assertTrue(redeployTimes.get("one") > initialRedeployTimes.get("one"));
+      assertEquals(initialRedeployTimes.get("two"), redeployTimes.get("two"));
+    } finally {
+      FileUtils.deleteQuietly(dir);
+    }
+  }
+
+  @Test
   public void testDeployTopologyPersistsReloadableListener() throws Exception {
     final File dir = createDir();
     try {
