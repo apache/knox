@@ -90,4 +90,10 @@ limitations under the License.
     <Class name="org.apache.knox.gateway.service.knoxidf.AuthConsentServlet" />
     <Bug pattern="UNVALIDATED_REDIRECT" />
   </Match>
+
+  <!-- Spark Connect protobuf/gRPC stubs generated at build time from the vendored
+       spark/connect/*.proto files. Generated code, not hand-maintained. -->
+  <Match>
+    <Package name="~org\.apache\.spark\.connect\.proto.*" />
+  </Match>
 </FindBugsFilter>
