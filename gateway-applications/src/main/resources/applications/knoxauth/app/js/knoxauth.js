@@ -27,6 +27,11 @@ function get(name) {
 	}
 }
 
+function getOriginalUrl() {
+	var originalUrl = get("originalUrl");
+	return originalUrl ? originalUrl.replace(/&theme=[a-zA-Z0-9_-]{1,64}$/, "") : originalUrl;
+}
+
 function getSimpleParam(name) {
 	const params = new URLSearchParams(window.location.search);
 	return params.get(name);
@@ -105,7 +110,7 @@ var login = function() {
 		$('#signIn').attr('disabled', 'disabled');
 		$('#errorBox').hide();
 
-		var originalUrl = get("originalUrl");
+		var originalUrl = getOriginalUrl();
 		var idpUrl = loginURL + originalUrl;
 		var redirectUrl = originalUrl;
 		//Instantiate HTTP Request
