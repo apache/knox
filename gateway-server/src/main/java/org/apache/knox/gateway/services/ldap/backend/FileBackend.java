@@ -199,7 +199,7 @@ public class FileBackend implements LdapBackend {
     }
 
     @Override
-    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception {
         return searchUsers(filter, schemaManager);
     }
 

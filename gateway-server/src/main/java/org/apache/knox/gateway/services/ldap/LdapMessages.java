@@ -102,8 +102,8 @@ public interface LdapMessages {
     void ldapSampleDataCreated(String path);
 
     @Message(level = MessageLevel.DEBUG,
-            text = "LDAP Search: {0} | {1}")
-    void ldapSearch(String baseDn, String filter);
+            text = "LDAP Search: {0} | {1} | {2}")
+    void ldapSearch(String baseDn, String filter, String attributes);
 
     @Message(level = MessageLevel.DEBUG,
             text = "LDAP Paged Search: {0} | {1}, page size {2}, page {3}")
@@ -191,6 +191,9 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.DEBUG, text = "Created skeleton group entry for {0} as actual group entry was not found in the backend")
     void ldapSkeletonGroupEntryCreated(String groupDn);
+
+    @Message(level = MessageLevel.DEBUG, text = "Failed to create skeleton group entry for {0}")
+    void ldapSkeletonGroupEntryError(String groupDn, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.DEBUG, text = "Found {1} parent(s) in cache for group {0}")
     void ldapRecursiveGroupSearchCacheHit(String groupDn, int count);

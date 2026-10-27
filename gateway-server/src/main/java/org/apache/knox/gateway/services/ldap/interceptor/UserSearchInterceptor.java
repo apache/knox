@@ -24,6 +24,7 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
@@ -40,6 +41,7 @@ import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -87,8 +89,9 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         String filter = ctx.getFilter() != null ? ctx.getFilter().toString() : "";
         String baseDn = ctx.getDn() != null ? ctx.getDn().toString() : "";
+        String[] returningAttributes = getReturningAttributes(ctx);
 
-        LOG.ldapSearch(baseDn, filter);
+        LOG.ldapSearch(baseDn, filter, Arrays.toString(returningAttributes));
 
         List<Entry> entries = new ArrayList<>();
 
@@ -107,7 +110,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
         // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
         if (backend.isSupportedSearchBase(baseDn)) {
             try {
-                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
+                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager, returningAttributes));
             } catch (Exception e) {
                 LOG.ldapSearchFailed(getName(), baseDn, filter, e);
                 throw new LdapOperationException(ResultCodeEnum.OTHER, "Search request to backend " + getName() + " failed.", e);
@@ -116,6 +119,29 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         // Return cursor with our results - use a simple approach
         return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    private String[] getReturningAttributes(SearchOperationContext ctx) {
+        List<String> returningAttributes = new ArrayList<>();
+        if (ctx.getReturningAttributes() != null) {
+            Arrays.stream(ctx.getReturningAttributesString()).forEach(oid -> {
+                AttributeType attributeType = schemaManager.getAttributeType(oid);
+                if (attributeType != null) {
+                    // prefer to use the attribute name when calling backend
+                    returningAttributes.add(attributeType.getName());
+                } else {
+                    // use oid if attribute name not found
+                    returningAttributes.add(oid);
+                }
+            });
+        }
+        if (ctx.isAllUserAttributes()) {
+            returningAttributes.add("*");
+        }
+        if (ctx.isAllOperationalAttributes()) {
+            returningAttributes.add("+");
+        }
+        return returningAttributes.toArray(new String[0]);
     }
 
     @Override
