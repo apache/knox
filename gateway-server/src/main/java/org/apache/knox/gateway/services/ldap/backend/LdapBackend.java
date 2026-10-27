@@ -86,11 +86,12 @@ public interface LdapBackend {
      * @param searchScope The scope of the search
      * @param filter LDAP filter string (simplified)
      * @param schemaManager Schema manager for creating entries
+     * @param attributes The attributes requested by the client; may be null or empty if none were specified
      * @return List of matching entries
      * @throws org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException if the search base
      *         does not exist in the backend
      */
-    List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception;
+    List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception;
 
     /**
      * Authenticate a user with password

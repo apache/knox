@@ -201,7 +201,7 @@ public class FileBackend implements LdapBackend {
     }
 
     @Override
-    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception {
         final Dn base = new Dn(schemaManager, searchBase);
         final Dn people = new Dn(schemaManager, userSearchBase);
         if (!base.equals(people) && base.isDescendantOf(people)) {

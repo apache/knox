@@ -36,12 +36,15 @@ import org.apache.directory.server.core.api.interceptor.context.SearchOperationC
 import org.apache.knox.gateway.security.ldap.SimpleDirectoryService;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
 import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +53,8 @@ import java.util.stream.Collectors;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.mock;
 import static org.easymock.EasyMock.replay;
@@ -335,7 +340,7 @@ public class UserSearchInterceptorTest {
         }
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager)).andReturn(backendEntries);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class))).andReturn(backendEntries);
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
@@ -356,6 +361,70 @@ public class UserSearchInterceptorTest {
         assertTrue("Next cursor must be closed", nextInterceptorCursor.isClosed());
     }
 
+    private List<String> searchAndCaptureAttributes(String... returningAttributes) throws Exception {
+        Dn baseDn = new Dn(schemaManager, "ou=people,dc=proxy,dc=com");
+        String filter = "(objectClass=*)";
+        Capture<String[]> attributesCapture = EasyMock.newCapture();
+
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), capture(attributesCapture)))
+                .andReturn(new ArrayList<>());
+        replay(mockLdapBackend);
+
+        nextSearchInterceptor = new ConfigurableSearchTestInterceptor(NEXT_INTERCEPTOR);
+        nextSearchInterceptor.init(directoryService);
+        directoryService.addLast(nextSearchInterceptor);
+        nextSearchInterceptor.setEntries(new ArrayList<>());
+        // The returning attributes must be supplied at construction; a context cannot go back to
+        // "not all user attributes" once it defaulted to "*".
+        SearchOperationContext ctx = new SearchOperationContext(directoryService.getSession(), baseDn, SearchScope.SUBTREE,
+                FilterParser.parse(filter), returningAttributes);
+        ctx.setInterceptors(List.of(NEXT_INTERCEPTOR));
+
+        interceptor.search(ctx).close();
+
+        verify(mockLdapBackend);
+        return Arrays.asList(attributesCapture.getValue());
+    }
+
+    private String nameOf(String attribute) {
+        return schemaManager.getAttributeType(attribute).getName();
+    }
+
+    @Test
+    public void testSearchPassesAllUserAttributes() throws Exception {
+        assertEquals(List.of("*"), searchAndCaptureAttributes("*"));
+    }
+
+    @Test
+    public void testSearchPassesAllOperationalAttributes() throws Exception {
+        assertEquals(List.of("+"), searchAndCaptureAttributes("+"));
+    }
+
+    @Test
+    public void testSearchPassesAllUserAndOperationalAttributes() throws Exception {
+        List<String> attributes = searchAndCaptureAttributes("*", "+");
+        assertEquals(2, attributes.size());
+        assertTrue(attributes.contains("*"));
+        assertTrue(attributes.contains("+"));
+    }
+
+    @Test
+    public void testSearchPassesAllOperationalAttributesWithExplicitAttribute() throws Exception {
+        List<String> attributes = searchAndCaptureAttributes("+", "uid");
+        assertEquals(2, attributes.size());
+        assertTrue(attributes.contains("+"));
+        assertTrue(attributes.contains(nameOf("uid")));
+    }
+
+    @Test
+    public void testSearchPassesOnlyExplicitAttributesAsNames() throws Exception {
+        List<String> attributes = searchAndCaptureAttributes("uid", "memberOf");
+        assertEquals(2, attributes.size());
+        assertTrue(attributes.contains(nameOf("uid")));
+        assertTrue(attributes.contains(nameOf("memberOf")));
+    }
+
     @Test
     public void testSearchBaseDnDoesntMatchBackend() throws Exception {
         Dn baseDn = new Dn(schemaManager, "ou=people,dc=proxy,dc=com");
@@ -368,7 +437,7 @@ public class UserSearchInterceptorTest {
         }
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(false);
-        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class)))
+        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class), anyObject(String[].class)))
                 .andThrow(new AssertionError("search should not be called if base dn does not match backend"))
                 .anyTimes();
         replay(mockLdapBackend);
@@ -403,7 +472,7 @@ public class UserSearchInterceptorTest {
         }
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager)).andReturn(backendEntries);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class))).andReturn(backendEntries);
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
@@ -564,7 +633,7 @@ public class UserSearchInterceptorTest {
         List<Entry> nextEntries = createEntryList(baseDn, 5);
         LdapException expectedException = new LdapException("Expected exception");
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager)).andThrow(expectedException);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class))).andThrow(expectedException);
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
