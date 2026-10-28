@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -54,6 +55,30 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   private static final boolean DEFAULT_WEBSHELL_AUDIT_LOGGING_ENABLED = false;
   public static final int DEFAULT_WEBSHELL_MAX_CONCURRENT_SESSIONS = 3;
   public static final int  DEFAULT_WEBSHELL_READ_BUFFER_SIZE = 1024;
+
+  /* gRPC listener defaults */
+  public static final int DEFAULT_GRPC_PORT = 15002;
+  public static final String DEFAULT_GRPC_SERVICE_ROLE = "GRPC";
+  public static final int DEFAULT_GRPC_MAX_MESSAGE_SIZE = 134217728;
+  public static final long DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME = 10000L;
+  public static final int DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION = 1000;
+  public static final long DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT = 1800000L;
+  public static final long DEFAULT_GRPC_DRAIN_TIMEOUT = 30000L;
+  public static final String DEFAULT_GRPC_TOPOLOGY_METADATA_KEY = "knox-topology";
+
+  private boolean grpcEnabled;
+  private int grpcPort = DEFAULT_GRPC_PORT;
+  private String grpcServiceRole = DEFAULT_GRPC_SERVICE_ROLE;
+  private String grpcProtoServices;
+  private String grpcIdentityRules;
+  private List<String> grpcListenerNames = new ArrayList<>();
+  private final Map<String, Map<String, String>> grpcListenerConfig = new HashMap<>();
+  private int grpcIdentityScanLimit = 131072;
+  private String grpcDefaultTopology;
+  private String grpcTopologyMetadataKey = DEFAULT_GRPC_TOPOLOGY_METADATA_KEY;
+  private String grpcMethodsDeny;
+  private String grpcMethodsAllow;
+  private String grpcBackendTokenAlias;
 
 
 
@@ -679,6 +704,154 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   @Override
   public int getWebsocketMaxWaitBufferCount() {
     return DEFAULT_WEBSOCKET_MAX_WAIT_BUFFER_COUNT;
+  }
+
+  @Override
+  public boolean isGrpcEnabled() {
+    return grpcEnabled;
+  }
+
+  public void setGrpcEnabled(boolean grpcEnabled) {
+    this.grpcEnabled = grpcEnabled;
+  }
+
+  @Override
+  public int getGrpcPort() {
+    return grpcPort;
+  }
+
+  public void setGrpcPort(int grpcPort) {
+    this.grpcPort = grpcPort;
+  }
+
+  @Override
+  public String getGrpcServiceRole() {
+    return grpcServiceRole;
+  }
+
+  public void setGrpcServiceRole(String grpcServiceRole) {
+    this.grpcServiceRole = grpcServiceRole;
+  }
+
+  @Override
+  public String getGrpcProtoServices() {
+    return grpcProtoServices;
+  }
+
+  public void setGrpcProtoServices(String grpcProtoServices) {
+    this.grpcProtoServices = grpcProtoServices;
+  }
+
+  @Override
+  public List<String> getGrpcListenerNames() {
+    return grpcListenerNames;
+  }
+
+  public void setGrpcListenerNames(List<String> grpcListenerNames) {
+    this.grpcListenerNames = grpcListenerNames;
+  }
+
+  @Override
+  public Map<String, String> getGrpcListenerConfig(String listenerName) {
+    final Map<String, String> config = grpcListenerConfig.get(listenerName);
+    return config == null ? new HashMap<>() : config;
+  }
+
+  public void setGrpcListenerConfig(String listenerName, Map<String, String> config) {
+    this.grpcListenerConfig.put(listenerName, config);
+  }
+
+  @Override
+  public String getGrpcIdentityRules() {
+    return grpcIdentityRules;
+  }
+
+  public void setGrpcIdentityRules(String grpcIdentityRules) {
+    this.grpcIdentityRules = grpcIdentityRules;
+  }
+
+  @Override
+  public int getGrpcIdentityScanLimit() {
+    return grpcIdentityScanLimit;
+  }
+
+  public void setGrpcIdentityScanLimit(int grpcIdentityScanLimit) {
+    this.grpcIdentityScanLimit = grpcIdentityScanLimit;
+  }
+
+  @Override
+  public String getGrpcDefaultTopology() {
+    return grpcDefaultTopology;
+  }
+
+  public void setGrpcDefaultTopology(String grpcDefaultTopology) {
+    this.grpcDefaultTopology = grpcDefaultTopology;
+  }
+
+  @Override
+  public String getGrpcTopologyMetadataKey() {
+    return grpcTopologyMetadataKey;
+  }
+
+  public void setGrpcTopologyMetadataKey(String grpcTopologyMetadataKey) {
+    this.grpcTopologyMetadataKey = grpcTopologyMetadataKey;
+  }
+
+  @Override
+  public String getGrpcMethodsDeny() {
+    return grpcMethodsDeny;
+  }
+
+  public void setGrpcMethodsDeny(String grpcMethodsDeny) {
+    this.grpcMethodsDeny = grpcMethodsDeny;
+  }
+
+  @Override
+  public String getGrpcMethodsAllow() {
+    return grpcMethodsAllow;
+  }
+
+  public void setGrpcMethodsAllow(String grpcMethodsAllow) {
+    this.grpcMethodsAllow = grpcMethodsAllow;
+  }
+
+  @Override
+  public int getGrpcMaxMessageSize() {
+    return DEFAULT_GRPC_MAX_MESSAGE_SIZE;
+  }
+
+  @Override
+  public long getGrpcPermitKeepAliveTime() {
+    return DEFAULT_GRPC_PERMIT_KEEPALIVE_TIME;
+  }
+
+  @Override
+  public boolean isGrpcPermitKeepAliveWithoutCalls() {
+    return true;
+  }
+
+  @Override
+  public int getGrpcMaxConcurrentCallsPerConnection() {
+    return DEFAULT_GRPC_MAX_CONCURRENT_CALLS_PER_CONNECTION;
+  }
+
+  @Override
+  public long getGrpcChannelIdleTimeout() {
+    return DEFAULT_GRPC_CHANNEL_IDLE_TIMEOUT;
+  }
+
+  @Override
+  public long getGrpcDrainTimeout() {
+    return DEFAULT_GRPC_DRAIN_TIMEOUT;
+  }
+
+  @Override
+  public String getGrpcBackendTokenAlias() {
+    return grpcBackendTokenAlias;
+  }
+
+  public void setGrpcBackendTokenAlias(String grpcBackendTokenAlias) {
+    this.grpcBackendTokenAlias = grpcBackendTokenAlias;
   }
 
   @Override
