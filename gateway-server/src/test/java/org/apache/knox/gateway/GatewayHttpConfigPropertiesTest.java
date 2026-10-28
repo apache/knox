@@ -64,6 +64,8 @@ public class GatewayHttpConfigPropertiesTest {
 
     final GatewayServer server = new GatewayServer(gatewayConfig);
 
+    final Field servicesField = server.getClass().getDeclaredField("services");
+    servicesField.setAccessible(true);
     if (sslEnabled) {
       final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
       final SSLService sslService = EasyMock.createNiceMock(SSLService.class);
@@ -71,8 +73,6 @@ public class GatewayHttpConfigPropertiesTest {
       EasyMock.expect(gatewayServices.getService(ServiceType.SSL_SERVICE)).andReturn(sslService).anyTimes();
       EasyMock.replay(gatewayServices, sslService);
 
-      final Field servicesField = server.getClass().getDeclaredField("services");
-      servicesField.setAccessible(true);
       servicesField.set(server, gatewayServices);
     }
 
@@ -96,6 +96,7 @@ public class GatewayHttpConfigPropertiesTest {
       assertNotNull(sslConnectionFactory);
       assertEquals("SSL", sslConnectionFactory.getProtocol());
     }
+    servicesField.set(server, null);
   }
 
 }

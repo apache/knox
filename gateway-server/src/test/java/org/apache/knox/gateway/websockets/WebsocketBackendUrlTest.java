@@ -68,7 +68,7 @@ public class WebsocketBackendUrlTest extends WebsocketEchoTestBase {
 
   @AfterClass
   public static void tearDownAfterClass() {
-    WebsocketEchoTestBase.cleanupFiles();
+    WebsocketEchoTestBase.tearDownAfterClass();
   }
 
   /*
