@@ -41,6 +41,8 @@ import org.apache.knox.gateway.topology.TopologyEvent;
 import org.apache.knox.gateway.topology.TopologyListener;
 import org.apache.knox.gateway.topology.validation.TopologyValidator;
 import org.easymock.EasyMock;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -104,6 +106,16 @@ public class DefaultTopologyServiceTest {
       FileUtils.touch(file);
     }
     return file;
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    setGatewayServices(null);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    setGatewayServices(null);
   }
 
   @Test

@@ -127,6 +127,7 @@ public class WebsocketEchoTestBase {
     try {
       gatewayServer.stop();
       backendServer.stop();
+      setGatewayServices(null);
     } catch (final Exception e) {
       e.printStackTrace(System.err);
     }

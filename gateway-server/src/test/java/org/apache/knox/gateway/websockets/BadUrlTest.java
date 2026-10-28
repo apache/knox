@@ -127,6 +127,7 @@ public class BadUrlTest {
   public static void tearDownAfterClass() {
     try {
       gatewayServer.stop();
+      setGatewayServices(null);
     } catch (final Exception e) {
       e.printStackTrace(System.err);
     }
