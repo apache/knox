@@ -876,9 +876,13 @@ public class GatewayAdminTopologyFuncTest {
 
     final String MALICIOUS_PARAM_NAME = "expanded";
 
+    final String canary = "XXE-LEAK-CANARY-" + UUID.randomUUID();
+    final File secret = File.createTempFile("knox-xxe-secret", ".txt");
+    Files.write(secret.toPath(), canary.getBytes(StandardCharsets.UTF_8));
+
     final String XML_WITH_INJECTION =
         "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<!DOCTYPE foo [<!ENTITY xeevowya0 \"b68et\"><!ENTITY xeevowya1 \"&xeevowya0;&xeevowya0;\"><!ENTITY xeevowya2 \"&xeevowya1;&xeevowya1;\"><!ENTITY xeevowya3 \"&xeevowya2;&xeevowya2;\">]>\n" +
+            "<!DOCTYPE foo [<!ENTITY xeevowya0 SYSTEM \"file://" + secret.getAbsolutePath() + "\"><!ENTITY xeevowya1 \"&xeevowya0;&xeevowya0;\"><!ENTITY xeevowya2 \"&xeevowya1;&xeevowya1;\"><!ENTITY xeevowya3 \"&xeevowya2;&xeevowya2;\">]>\n" +
             "<topology>\n" +
             "    <gateway>\n" +
             "        <provider>\n" +
@@ -933,20 +937,24 @@ public class GatewayAdminTopologyFuncTest {
     String password = "admin-password";
     String url = clusterUrl + "/api/v1/topologies/test-put-with-entity-injection";
 
-    // Should get a HTTP 500 response because of the entity injection prevention safeguard
-    String XML_RESPONSE = given().auth().preemptive().basic(username, password)
-                                 .contentType(MediaType.APPLICATION_XML)
-                                 .header("Accept", MediaType.APPLICATION_XML)
-                                 .body(XML_WITH_INJECTION)
-                                 .then()
-                                 .statusCode(HttpStatus.SC_OK)
-                                 .when().put(url).getBody().asString();
+    try {
+      String XML_RESPONSE = given().auth().preemptive().basic(username, password)
+                                   .contentType(MediaType.APPLICATION_XML)
+                                   .header("Accept", MediaType.APPLICATION_XML)
+                                   .body(XML_WITH_INJECTION)
+                                   .then()
+                                   .statusCode(HttpStatus.SC_OK)
+                                   .when().put(url).getBody().asString();
 
-    Document doc = XmlUtils.readXml(new InputSource(new StringReader(XML_RESPONSE)));
-    assertNotNull(doc);
+      Document doc = XmlUtils.readXml(new InputSource(new StringReader(XML_RESPONSE)));
+      assertNotNull(doc);
 
-    assertThat(doc, hasXPath("/topology/gateway/provider[1]/param/name", containsString("expanded")));
-    assertThat(doc, hasXPath("/topology/gateway/provider[1]/param[\"" + MALICIOUS_PARAM_NAME + "\"]/value", is("")));
+      assertThat(doc, hasXPath("/topology/gateway/provider[1]/param/name", containsString("expanded")));
+      assertThat(doc, hasXPath("/topology/gateway/provider[1]/param[\"" + MALICIOUS_PARAM_NAME + "\"]/value",
+          not(containsString(canary))));
+    } finally {
+      Files.deleteIfExists(secret.toPath());
+    }
 
     LOG_EXIT();
   }

@@ -98,11 +98,9 @@ public class ServiceDefinitionsLoader {
   }
 
   private static ServiceDefinitionPair loadServiceDefinition(Unmarshaller unmarshaller, File serviceFile) throws IOException, JAXBException {
-    try (InputStream inputStream = Files.newInputStream(serviceFile.toPath())) {
-      final ServiceDefinition service = (ServiceDefinition) unmarshaller.unmarshal(serviceFile);
-      final UrlRewriteRulesDescriptor rewriteRules = loadRewriteRules(serviceFile.getParentFile());
-      return new ServiceDefinitionPair(service, rewriteRules);
-    }
+    final ServiceDefinition service = XmlUtils.unmarshal(unmarshaller, ServiceDefinition.class, serviceFile);
+    final UrlRewriteRulesDescriptor rewriteRules = loadRewriteRules(serviceFile.getParentFile());
+    return new ServiceDefinitionPair(service, rewriteRules);
   }
 
   public static Set<ServiceDefinition> getServiceDefinitions(File servicesDir) {

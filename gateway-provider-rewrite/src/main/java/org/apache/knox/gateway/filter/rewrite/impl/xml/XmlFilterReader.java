@@ -18,6 +18,8 @@
 package org.apache.knox.gateway.filter.rewrite.impl.xml;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.xml.secure.SecureXMLInputFactory;
+import org.apache.commons.xml.secure.SecureXPathFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterBufferDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
@@ -34,7 +36,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
-import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
@@ -57,7 +58,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import javax.xml.xpath.XPathFactoryConfigurationException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -94,15 +94,7 @@ public abstract class XmlFilterReader extends Reader {
     document = null;
     stack = new Stack<>();
     isEmptyElement = false;
-    factory = XMLInputFactory.newFactory();
-    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_DTD, Boolean.FALSE );
-    //KNOX-620 factory.setProperty( XMLConstants.ACCESS_EXTERNAL_SCHEMA, Boolean.FALSE );
-    /* This disables DTDs entirely for that factory */
-    factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-    /* disable external entities */
-    factory.setProperty("javax.xml.stream.isSupportingExternalEntities", Boolean.FALSE);
-
-    factory.setProperty( "javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE );
+    factory = SecureXMLInputFactory.newFactory();
     factory.setProperty("http://java.sun.com/xml/stream/"
                 + "properties/report-cdata-event", Boolean.TRUE);
     parser = factory.createXMLEventReader( reader );
@@ -601,13 +593,7 @@ public abstract class XmlFilterReader extends Reader {
     private static final XPathFactory xpathFactory = getXpathFactory();
 
     private static synchronized XPathFactory getXpathFactory() {
-      XPathFactory xPathFactory = XPathFactory.newInstance();
-      try {
-        xPathFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
-      } catch (XPathFactoryConfigurationException ex) {
-        // ignore
-      }
-      return xPathFactory;
+      return SecureXPathFactory.newInstance();
     }
 
     private synchronized XPathExpression getXPathExpression(String expression) {
