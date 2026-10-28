@@ -49,6 +49,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -1237,6 +1239,150 @@ public class JWTFederationFilterTokenExchangeTest extends AbstractJWTFilterTest 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // KNOX-3520: policy-bound subject audiences, through the real validation path
+  // ---------------------------------------------------------------------------
+
+  private static final String TOKEN_SERVICE_AUDIENCE = "knoxidf";
+  private static final String MCP_AUDIENCE = "https://svc.cluster.local/tools/mcp-server";
+
+  /**
+   * A re-exchanged subject_token (Knox issuer, aud = the actor's own service, no knoxidf) is
+   * accepted on a delegated exchange when its issuer is listed, and the policy check is told to
+   * match its aud against the actor's subjectAudiences. Signature verification still runs.
+   */
+  @Test
+  public void testReExchangedSubjectTokenFromListedIssuerRequiresPolicyAudienceMatch() throws Exception {
+    final Capture<PolicyCheckRequest> policyCheck = EasyMock.newCapture();
+    handler.init(new TestFilterConfig(subjectPolicyAudienceProperties(true), null,
+        capturingDelegationPolicyService(policyCheck)));
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        getJWT(KNOX_ISSUER, "alice", MCP_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        getJWT(KNOX_ISSUER, "mcp-sa", TOKEN_SERVICE_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        buildContextWithIssuerService(EasyMock.createNiceMock(TrustedOidcIssuerService.class)));
+    final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+    EasyMock.replay(request, response);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response, chain);
+
+    Assert.assertTrue("Filter chain should proceed", chain.doFilterCalled);
+    Assert.assertTrue(policyCheck.getValue().isSubjectAudienceMatchRequired());
+    Assert.assertEquals(Set.of(MCP_AUDIENCE), policyCheck.getValue().getSubjectTokenAudiences());
+  }
+
+  @Test
+  public void testReExchangedSubjectTokenWithBadSignatureRejectedEvenFromListedIssuer() throws Exception {
+    final Capture<PolicyCheckRequest> policyCheck = EasyMock.newCapture();
+    handler.init(new TestFilterConfig(subjectPolicyAudienceProperties(true), null,
+        capturingDelegationPolicyService(policyCheck)));
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        getJWT(KNOX_ISSUER, "alice", MCP_AUDIENCE, new Date(System.currentTimeMillis() + 60000), new Date(),
+            untrustedPrivateKey(), "RS256").serialize(),
+        getJWT(KNOX_ISSUER, "mcp-sa", TOKEN_SERVICE_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        buildContextWithIssuerService(EasyMock.createNiceMock(TrustedOidcIssuerService.class)));
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response.mock, chain);
+
+    Assert.assertFalse(chain.doFilterCalled);
+    Assert.assertFalse(policyCheck.hasCaptured());
+    Assert.assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status());
+  }
+
+  @Test
+  public void testReExchangedSubjectTokenRejectedWhenIssuersNotConfigured() throws Exception {
+    final Capture<PolicyCheckRequest> policyCheck = EasyMock.newCapture();
+    handler.init(new TestFilterConfig(subjectPolicyAudienceProperties(false), null,
+        capturingDelegationPolicyService(policyCheck)));
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        getJWT(KNOX_ISSUER, "alice", MCP_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        getJWT(KNOX_ISSUER, "mcp-sa", TOKEN_SERVICE_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        buildContextWithIssuerService(EasyMock.createNiceMock(TrustedOidcIssuerService.class)));
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response.mock, chain);
+
+    Assert.assertFalse(chain.doFilterCalled);
+    Assert.assertFalse(policyCheck.hasCaptured());
+    Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status());
+    Assert.assertTrue(response.body(), response.body().contains("missing required token audience"));
+  }
+
+  @Test
+  public void testActorTokenAudienceNotRelaxedByListedIssuer() throws Exception {
+    final Capture<PolicyCheckRequest> policyCheck = EasyMock.newCapture();
+    handler.init(new TestFilterConfig(subjectPolicyAudienceProperties(true), null,
+        capturingDelegationPolicyService(policyCheck)));
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        getJWT(KNOX_ISSUER, "alice", TOKEN_SERVICE_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        getJWT(KNOX_ISSUER, "mcp-sa", MCP_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        buildContextWithIssuerService(EasyMock.createNiceMock(TrustedOidcIssuerService.class)));
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response.mock, chain);
+
+    Assert.assertFalse(chain.doFilterCalled);
+    Assert.assertFalse(policyCheck.hasCaptured());
+    Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status());
+  }
+
+  @Test
+  public void testSameSubjectExchangeAudienceNotRelaxedByListedIssuer() throws Exception {
+    handler.init(new TestFilterConfig(subjectPolicyAudienceProperties(true)));
+    ((TestJWTFederationFilter) handler).setTokenService(new TestJWTokenAuthority(publicKey));
+
+    final HttpServletRequest request = buildTokenExchangeRequest(
+        getJWT(KNOX_ISSUER, "alice", MCP_AUDIENCE, new Date(System.currentTimeMillis() + 60000)).serialize(),
+        buildContextWithIssuerService(EasyMock.createNiceMock(TrustedOidcIssuerService.class)));
+    final JsonErrorResponse response = new JsonErrorResponse();
+    EasyMock.replay(request, response.mock);
+
+    final TestFilterChain chain = new TestFilterChain();
+    handler.doFilter(request, response.mock, chain);
+
+    Assert.assertFalse(chain.doFilterCalled);
+    Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status());
+  }
+
+  private Properties subjectPolicyAudienceProperties(boolean listKnoxIssuer) {
+    final Properties props = getProperties();
+    props.setProperty(JWTFederationFilter.DELEGATION_SERVER_ENABLED, "true");
+    props.setProperty(JWTFederationFilter.KNOX_TOKEN_AUDIENCES, TOKEN_SERVICE_AUDIENCE);
+    if (listKnoxIssuer) {
+      props.setProperty(JWTFederationFilter.TOKEN_EXCHANGE_SUBJECT_TOKEN_POLICY_AUDIENCES_ISSUERS, KNOX_ISSUER);
+    }
+    return props;
+  }
+
+  private static RSAPrivateKey untrustedPrivateKey() throws Exception {
+    final KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    return (RSAPrivateKey) kpg.generateKeyPair().getPrivate();
+  }
+
+  private static DelegationPolicyService capturingDelegationPolicyService(Capture<PolicyCheckRequest> captured) {
+    final DelegationPolicyService policyService = EasyMock.createNiceMock(DelegationPolicyService.class);
+    EasyMock.expect(policyService.evaluate(EasyMock.capture(captured)))
+        .andReturn(new PolicyDecision(null, 0)).anyTimes();
+    EasyMock.replay(policyService);
+    return policyService;
+  }
 
   // The two actor_token tests in this file (dynamic JWKS resolution for the actor token)
   // also exercise the delegation policy check that TokenExchangeHandler performs whenever an

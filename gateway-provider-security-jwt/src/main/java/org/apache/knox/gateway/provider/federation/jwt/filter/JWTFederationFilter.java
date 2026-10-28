@@ -54,12 +54,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.knox.gateway.security.CommonTokenConstants.AUTH_CODE;
@@ -139,6 +142,21 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // authorized by the delegation policy regardless of this flag).
   public static final String TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED = "token.exchange.same.subject.requested.audience.enabled";
 
+  // Topology provider param (default absent). Comma-separated list of issuers whose tokens may be
+  // re-exchanged as the subject_token of a delegated exchange (one with an actor_token) even though
+  // their aud lacks a KNOX_TOKEN_AUDIENCES value. Such a token is accepted only if its aud
+  // intersects the actor's delegation policy subjectAudiences, i.e. it is addressed to the service
+  // presenting it; this is what enables multi-hop delegation. Typically lists this topology's own
+  // issuer. While absent (the fail-safe default), every subject_token must pass the configured
+  // audience check. Never applies to actor tokens, headless or same-subject exchanges.
+  public static final String TOKEN_EXCHANGE_SUBJECT_TOKEN_POLICY_AUDIENCES_ISSUERS =
+      "token.exchange.subject.token.policy.audiences.issuers";
+
+  // Topology provider param (default false/absent). When true, a headless delegation exchange is
+  // rejected if its subject_token carries an act claim: a delegated token must never become a
+  // headless actor, which could then act for any user its policy allows without a user token.
+  public static final String DELEGATION_HEADLESS_REJECT_SUBJECT_WITH_ACT = "delegation.headless.reject.subject.with.act";
+
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
   }
@@ -174,6 +192,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean delegationEnforceRequestedAudienceRequired;
   private boolean delegationEnforceRequestedAudienceMaxOne;
   private boolean tokenExchangeSameSubjectRequestedAudienceEnabled;
+  private Set<String> subjectTokenPolicyAudiencesIssuers = Collections.emptySet();
+  private boolean delegationHeadlessRejectSubjectWithAct;
 
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
@@ -249,6 +269,9 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationEnforceRequestedAudienceRequired = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_REQUIRED));
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
     tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
+    delegationHeadlessRejectSubjectWithAct = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_HEADLESS_REJECT_SUBJECT_WITH_ACT));
+    subjectTokenPolicyAudiencesIssuers = parseSubjectTokenPolicyAudiencesIssuers(
+        filterConfig.getInitParameter(TOKEN_EXCHANGE_SUBJECT_TOKEN_POLICY_AUDIENCES_ISSUERS));
 
     // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
     // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
@@ -891,6 +914,29 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
   boolean isTokenExchangeSameSubjectRequestedAudienceEnabled() {
     return tokenExchangeSameSubjectRequestedAudienceEnabled;
+  }
+
+  Set<String> getSubjectTokenPolicyAudiencesIssuers() {
+    return subjectTokenPolicyAudiencesIssuers;
+  }
+
+  boolean isDelegationHeadlessRejectSubjectWithAct() {
+    return delegationHeadlessRejectSubjectWithAct;
+  }
+
+  /** The audience validator applied to every presented JWT, including both token-exchange tokens. */
+  RequestAudienceValidator getRequestAudienceValidator() {
+    return requestAudienceValidator;
+  }
+
+  private static Set<String> parseSubjectTokenPolicyAudiencesIssuers(String value) {
+    if (StringUtils.isBlank(value)) {
+      return Collections.emptySet();
+    }
+    return Arrays.stream(value.split(","))
+        .map(String::trim)
+        .filter(StringUtils::isNotEmpty)
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   PolicyDecision evaluateDelegationPolicy(PolicyCheckRequest request) {

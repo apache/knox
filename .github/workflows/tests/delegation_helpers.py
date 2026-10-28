@@ -89,6 +89,16 @@ def assert_oauth_error(testcase, response, expected_status, expected_error, mess
     testcase.assertIn(message_substring, description, response.text)
 
 
+def assert_issued_jwt(testcase, response):
+    """Assert a 200 token-exchange response that issued a JWT; return the access_token."""
+    testcase.assertEqual(response.status_code, 200, response.text)
+    body = response.json()
+    token = body.get("access_token")
+    testcase.assertTrue(token, "token exchange did not return an access_token")
+    testcase.assertEqual(body.get("issued_token_type"), ISSUED_TOKEN_TYPE_JWT, response.text)
+    return token
+
+
 class DelegationPolicyAdmin:
     """Client for the KNOXIDF_ADMIN delegation-policy REST API, scoped to one actor.
 
@@ -129,7 +139,7 @@ class DelegationPolicyAdmin:
             knox_delete(self._admin_policy_url + "/" + registration_id, auth=self._admin_auth)
 
     def _body(self, *, status, can_act_for_users, can_act_for_groups, resource_policy,
-              allow_headless_exchange, token_ttl_sec):
+              allow_headless_exchange, token_ttl_sec, subject_audiences):
         """Build a policy request body for this actor, omitting fields left as None."""
         body = {
             "actorAuthority": self._actor_authority,
@@ -146,17 +156,21 @@ class DelegationPolicyAdmin:
             body["allowHeadlessExchange"] = allow_headless_exchange
         if token_ttl_sec is not None:
             body["tokenTtlSec"] = token_ttl_sec
+        if subject_audiences is not None:
+            body["subjectAudiences"] = subject_audiences
         return body
 
     def register(self, *, status="active", can_act_for_users=None, can_act_for_groups=None,
-                 resource_policy=None, allow_headless_exchange=None, token_ttl_sec=None):
+                 resource_policy=None, allow_headless_exchange=None, token_ttl_sec=None,
+                 subject_audiences=None):
         """POST a fresh policy for this actor; assert 201 and return its registrationId."""
         response = knox_post(
             self._admin_policy_url,
             json=self._body(
                 status=status, can_act_for_users=can_act_for_users,
                 can_act_for_groups=can_act_for_groups, resource_policy=resource_policy,
-                allow_headless_exchange=allow_headless_exchange, token_ttl_sec=token_ttl_sec),
+                allow_headless_exchange=allow_headless_exchange, token_ttl_sec=token_ttl_sec,
+                subject_audiences=subject_audiences),
             auth=self._admin_auth,
         )
         self._testcase.assertEqual(response.status_code, 201, response.text)
@@ -164,7 +178,7 @@ class DelegationPolicyAdmin:
 
     def update(self, registration_id, *, status="active", can_act_for_users=None,
                can_act_for_groups=None, resource_policy=None, allow_headless_exchange=None,
-               token_ttl_sec=None):
+               token_ttl_sec=None, subject_audiences=None):
         """PUT a full-replace update of this actor's policy; assert 200 and return the body.
 
         Identity fields (actorAuthority/actorId/createdBy/createdAt) are immutable
@@ -175,7 +189,8 @@ class DelegationPolicyAdmin:
             json=self._body(
                 status=status, can_act_for_users=can_act_for_users,
                 can_act_for_groups=can_act_for_groups, resource_policy=resource_policy,
-                allow_headless_exchange=allow_headless_exchange, token_ttl_sec=token_ttl_sec),
+                allow_headless_exchange=allow_headless_exchange, token_ttl_sec=token_ttl_sec,
+                subject_audiences=subject_audiences),
             auth=self._admin_auth,
         )
         self._testcase.assertEqual(response.status_code, 200, response.text)

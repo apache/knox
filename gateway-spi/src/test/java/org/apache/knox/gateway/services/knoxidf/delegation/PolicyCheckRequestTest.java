@@ -17,7 +17,9 @@
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -55,5 +57,36 @@ public class PolicyCheckRequestTest {
                 () -> returnedResources.add("/api/v2"));
         assertThrows("requestedResources must be immutable", UnsupportedOperationException.class,
                 () -> returnedResources.remove("/api/v1"));
+    }
+
+    @Test
+    public void testLegacyConstructorDoesNotRequireSubjectAudienceMatch() {
+        final PolicyCheckRequest request = new PolicyCheckRequest(
+                "oidc", "actor1", "subject1", Set.of("/api/v1"), Set.of("read"), false);
+
+        assertFalse(request.isSubjectAudienceMatchRequired());
+        assertTrue(request.getSubjectTokenAudiences().isEmpty());
+    }
+
+    @Test
+    public void testSubjectTokenAudiencesNullBecomesEmptySet() {
+        final PolicyCheckRequest request = new PolicyCheckRequest(
+                "oidc", "actor1", "subject1", Set.of("/api/v1"), Set.of("read"), false, null, true);
+
+        assertTrue(request.isSubjectAudienceMatchRequired());
+        assertTrue(request.getSubjectTokenAudiences().isEmpty());
+    }
+
+    @Test
+    public void testSubjectTokenAudiencesFieldIsImmutable() {
+        final Set<String> mutableAudiences = new HashSet<>(Set.of("https://svc/tools/mcp"));
+        final PolicyCheckRequest request = new PolicyCheckRequest(
+                "oidc", "actor1", "subject1", Set.of("/api/v1"), Set.of("read"), false, mutableAudiences, true);
+
+        mutableAudiences.add("https://svc/other");
+        assertEquals("subjectTokenAudiences must be defensively copied, not aliased",
+                Set.of("https://svc/tools/mcp"), request.getSubjectTokenAudiences());
+        assertThrows("subjectTokenAudiences must be immutable", UnsupportedOperationException.class,
+                () -> request.getSubjectTokenAudiences().add("https://svc/other"));
     }
 }
