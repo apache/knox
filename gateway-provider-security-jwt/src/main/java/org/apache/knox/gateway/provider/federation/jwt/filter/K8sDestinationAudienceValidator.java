@@ -49,14 +49,21 @@ import org.apache.knox.gateway.util.SpiffeId;
  * {@link AudienceResource#parseCustomForm(String, String)}.
  * <p>The first form is tried at all only when {@link #DNS_FORMAT_ENABLED_PARAM} is {@code true},
  * its default; when it is {@code false}, every entry is evaluated only as the custom form.
- * <p>A token carrying a delegation {@code act} claim is always routed through this validator; see
- * {@link #validate(HttpServletRequest, JWT, List)}. A token with no {@code act} claim is too,
- * unless {@link #VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM} is {@code false}.
+ * <p>A token carrying a delegation {@code act} claim is always destination-validated; see
+ * {@link #validate(HttpServletRequest, JWT, List)}. The one departure is ingress source routing:
+ * when {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM} is {@code true} and the request's
+ * source SPIFFE id names one of the {@link #INGRESS_SOURCE_SPIFFE_IDS_PARAM}, such a token is
+ * rejected outright, because a delegation token must not arrive through the ingress.
+ * A token with no {@code act} claim is destination-validated too, unless ingress source routing
+ * applies to it or {@link #VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM} is {@code false}.
  *
  * <p>Which segments are actually compared depends entirely on which of this validator's header
  * parameters are configured; for an entry in the second, custom form, the cluster-domain segment
  * is the only one always enforced. Segments with no configured source are not compared at all, so
  * an {@code aud} entry that differs from the request only in an unconfigured segment is accepted.
+ * Those comparisons, and the rule that every configured header must be present and parseable,
+ * apply to a request that reaches destination validation, which a token with no {@code act} claim
+ * routed by ingress source routing does not.
  *
  * <p>One case departs from the rule that a segment with no configured source is not
  * compared. An {@code aud} entry written as a k8s service DNS name whose host carries no
@@ -251,9 +258,12 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    * {@link #ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM} is enabled.
    *
    * <p>When this parameter names a header, that header must be present and parseable as a
-   * SPIFFE id on every request, or audience validation fails, whether or not the value turns
-   * out to be needed for the {@code aud} entries actually presented. Every other header this
-   * validator is configured to read behaves the same way.
+   * SPIFFE id on every request that reaches destination validation, or audience validation
+   * fails, whether or not the value turns out to be needed for the {@code aud} entries actually
+   * presented. Every other header this validator is configured to read behaves the same way. A
+   * token with no {@code act} claim routed by
+   * {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM} does not reach destination
+   * validation, so that requirement does not apply to it.
    *
    * <p>The value of this header is trusted at face value, with no independent verification by
    * this filter. It must be populated only by a component trusted to set or overwrite it
@@ -281,6 +291,10 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
    *
    * <p>When {@code false}, the {@code aud} claim of a token with no {@code act} claim is
    * validated against the fixed configured allowed-audience list.
+   *
+   * <p>Independent of this parameter, a token with no {@code act} claim whose source SPIFFE id
+   * names a configured ingress source is routed as described at
+   * {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM}.
    */
   public static final String VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM =
       PARAM_PREFIX + "validate.audiences.without.act.claim";
@@ -331,6 +345,115 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   public static final String ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_PARAM =
       PARAM_PREFIX + "enforce.act.sub.is.service.account";
 
+  /**
+   * Whether a request presented by an ingress gateway is routed to a different audience check
+   * than validation against the request destination. A request is from an ingress gateway when
+   * the SPIFFE id in the header named by {@link #SOURCE_SPIFFE_ID_HEADER_PARAM} matches an entry
+   * of {@link #INGRESS_SOURCE_SPIFFE_IDS_PARAM}. Defaults to {@code false}, the fail-closed
+   * setting: with routing off, a request from an ingress gateway is handled like a request from
+   * any other source.
+   *
+   * <p>When {@code true}, a request from an ingress gateway is routed by whether its token
+   * carries an {@code act} claim.
+   *
+   * <p>A token with no {@code act} claim is not destination-validated. What it is checked
+   * against depends on {@link #INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_VALIDATION_PARAM}: either
+   * no audience validation at all, or the fixed configured allowed-audience list. Either way the
+   * token does not reach destination validation, so the requirement that every configured header
+   * be present and parseable does not apply to it.
+   *
+   * <p>A token with an {@code act} claim is rejected, because a delegation token must not
+   * arrive through the ingress. Routing never lets such a token through, whatever the skip setting.
+   *
+   * <p>This parameter reads {@link #SOURCE_SPIFFE_ID_HEADER_PARAM} and
+   * {@link #INGRESS_SOURCE_SPIFFE_IDS_PARAM}, neither of which has a default. Setting this to
+   * {@code true} without both of them is a configuration error: initialization fails, rather than
+   * leaving routing a deployment asked for silently inactive.
+   *
+   * <p>Routing is driven by the value of the header named by
+   * {@link #SOURCE_SPIFFE_ID_HEADER_PARAM}, which is trusted at face value. A caller able to set
+   * that header can have its request routed as an ingress request, so it must be set or overwritten by a trusted
+   * component before the request reaches Knox. This matters most with
+   * {@link #INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_VALIDATION_PARAM}, which disables audience
+   * checking for the requests it routes.
+   *
+   * <p>A request whose configured source SPIFFE id header is missing or unparseable does not name
+   * an ingress source, so it is not routed; it continues to the ordinary flow. There it is
+   * rejected by the existing requirement that a configured header be present and parseable,
+   * unless {@link #VALIDATE_AUDIENCES_WITHOUT_ACT_CLAIM_PARAM} is {@code false}, in which case a
+   * token with no {@code act} claim is validated against the fixed configured allowed-audience
+   * list.
+   */
+  public static final String INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM =
+      PARAM_PREFIX + "ingress.source.spiffe-id.routing.enabled";
+
+  /**
+   * Comma-separated list of the source workload SPIFFE ids that identify a request as having
+   * arrived through an ingress gateway, each a full SPIFFE id, for example
+   * {@code spiffe://trust-domain/ns/namespace/sa/service-account}. No default. Currently consulted
+   * only by ingress source routing, so only when
+   * {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM} is {@code true}, which requires this
+   * to be set.
+   *
+   * <p>Each entry is compared against the value of the header named by
+   * {@link #SOURCE_SPIFFE_ID_HEADER_PARAM}. A request matches if any one entry matches.
+   *
+   * <p>Namespace and service account are compared exactly, ignoring case. No wildcard or partial
+   * form is supported in any portion. The trust domain is compared too, unless
+   * {@link #INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_TRUST_DOMAIN_MATCH_PARAM} is {@code true}.
+   *
+   * <p>Every entry must be a full, parseable SPIFFE id including a trust domain, even when
+   * trust-domain matching is switched off, in which case the trust domain is parsed and then
+   * ignored. An entry that does not parse, including an empty entry left by a stray, leading or
+   * trailing comma, fails initialization, the same as any other malformed operator-supplied
+   * value. Entries are validated whether or not
+   * {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM} is {@code true}.
+   */
+  public static final String INGRESS_SOURCE_SPIFFE_IDS_PARAM =
+      PARAM_PREFIX + "ingress.source.spiffe-ids";
+
+  /**
+   * Whether ingress source routing ignores the trust-domain portion of an entry in
+   * {@link #INGRESS_SOURCE_SPIFFE_IDS_PARAM} when deciding whether the request's source SPIFFE id
+   * matches it, leaving only the namespace and the service account compared. Defaults to
+   * {@code false}, the fail-closed setting: all three portions must match.
+   *
+   * <p>This relaxes security and exists for a deployment that must trust an ingress identity
+   * whose trust domain is not known in advance. Setting it to {@code true} means any trust domain
+   * is accepted for that namespace and service-account pair. If the same namespace and
+   * service-account pair is used in more than one trust domain, those identities become
+   * indistinguishable to this check, and an ingress identity in one trust domain is accepted as
+   * the ingress identity of another.
+   *
+   * <p>Only consulted when {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM} is
+   * {@code true}. Setting this to {@code true} while that parameter is {@code false} has no
+   * effect.
+   */
+  public static final String INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_TRUST_DOMAIN_MATCH_PARAM =
+      PARAM_PREFIX + "ingress.source.spiffe-ids.routing.skip.trust.domain.match";
+
+  /**
+   * Whether ingress source routing skips audience validation entirely for a token with no
+   * {@code act} claim whose source SPIFFE id names a configured ingress source. Defaults to
+   * {@code false}.
+   *
+   * <p>When {@code true}, no audience check of any kind is performed on such a token: not against
+   * the request destination, and not against the fixed configured allowed-audience list. A token
+   * with no {@code aud} claim at all is accepted, and so is one whose {@code aud} names something
+   * unrelated to this request.
+   *
+   * <p>When {@code false}, the default, such a token's {@code aud} claim is validated against the
+   * fixed configured allowed-audience list instead of against the request destination. Note that
+   * the fixed-list check accepts any audience when no list is configured.
+   *
+   * <p>This affects no other token. A token with an {@code act} claim is unaffected by it, so is a
+   * token whose source SPIFFE id does not name a configured ingress source, and so is every token
+   * when {@link #INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM} is {@code false}. Setting this
+   * to {@code true} while that parameter is {@code false} has no effect.
+   */
+  public static final String INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_VALIDATION_PARAM =
+      PARAM_PREFIX + "ingress.source.spiffe-ids.routing.skip.validation";
+
   private String namespaceFromSpiffeIdHeader;
   private String serverNameHeader;
   private String serverNameClusterSuffix;
@@ -345,6 +468,10 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   private boolean validateAudiencesWithoutActClaim;
   private boolean enforceActSubMatchesSourceSpiffeId;
   private boolean enforceActSubIsServiceAccount;
+  private boolean ingressSourceRoutingEnabled;
+  private List<SpiffeId> ingressSourceSpiffeIds;
+  private boolean ingressSourceRoutingSkipTrustDomainMatch;
+  private boolean ingressSourceRoutingSkipValidation;
 
   @Override
   public void init(final FilterConfig filterConfig) throws Exception {
@@ -399,10 +526,46 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     enforceActSubIsServiceAccount =
         Boolean.parseBoolean(filterConfig.getInitParameter(ENFORCE_ACT_SUB_IS_SERVICE_ACCOUNT_PARAM));
 
+    ingressSourceRoutingEnabled = Boolean.parseBoolean(
+        filterConfig.getInitParameter(INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM));
+    ingressSourceRoutingSkipTrustDomainMatch = Boolean.parseBoolean(
+        filterConfig.getInitParameter(INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_TRUST_DOMAIN_MATCH_PARAM));
+    ingressSourceRoutingSkipValidation = Boolean.parseBoolean(
+        filterConfig.getInitParameter(INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_VALIDATION_PARAM));
+
+    // Parsed strictly whether or not routing is enabled, so a malformed entry fails the
+    // topology at startup instead of sitting inert.
+    final String ingressSourceSpiffeIdsParam =
+        blankToNull(filterConfig.getInitParameter(INGRESS_SOURCE_SPIFFE_IDS_PARAM));
+    ingressSourceSpiffeIds = new ArrayList<>();
+    if (ingressSourceSpiffeIdsParam != null) {
+      for (final String entry : parseCommaSeparated(ingressSourceSpiffeIdsParam)) {
+        final Optional<SpiffeId> parsed = SpiffeId.parse(entry);
+        if (parsed.isEmpty()) {
+          throw new ServletException(String.format(Locale.ROOT,
+              "%s contains an invalid SPIFFE id entry: %s", INGRESS_SOURCE_SPIFFE_IDS_PARAM, entry));
+        }
+        ingressSourceSpiffeIds.add(lowerCased(parsed.get()));
+      }
+    }
+
     if (enforceActSubMatchesSourceSpiffeId && sourceSpiffeIdHeader == null) {
       throw new ServletException(String.format(Locale.ROOT,
           "%s is true but %s is not configured", ENFORCE_ACT_SUB_MATCHES_SOURCE_SPIFFE_ID_PARAM,
           SOURCE_SPIFFE_ID_HEADER_PARAM));
+    }
+
+    if (ingressSourceRoutingEnabled) {
+      if (sourceSpiffeIdHeader == null) {
+        throw new ServletException(String.format(Locale.ROOT,
+            "%s is true but %s is not configured", INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM,
+            SOURCE_SPIFFE_ID_HEADER_PARAM));
+      }
+      if (ingressSourceSpiffeIds.isEmpty()) {
+        throw new ServletException(String.format(Locale.ROOT,
+            "%s is true but %s is not configured", INGRESS_SOURCE_SPIFFE_ID_ROUTING_ENABLED_PARAM,
+            INGRESS_SOURCE_SPIFFE_IDS_PARAM));
+      }
     }
   }
 
@@ -410,8 +573,37 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   public AudienceValidationResult validate(final HttpServletRequest request, final JWT token,
       final List<String> configuredAudiences) {
     final boolean hasActClaim = token.getClaimAsObject(JWTToken.ACT_CLAIM) != null;
-    if (!hasActClaim && !validateAudiencesWithoutActClaim) {
-      return AudienceValidationResult.of(AbstractJWTFilter.matchesConfiguredAudiences(token, configuredAudiences));
+
+    // Resolved before the early returns below because the routing decision needs it. An
+    // absent value is not rejected here: that rejection happens further down, after the destination
+    // header and server-name checks, so a request whose source header is missing or unparseable
+    // is reported only once those earlier checks have passed.
+    final Optional<SpiffeId> sourceSpiffeId = sourceSpiffeIdHeader == null
+        ? Optional.empty() : sourceSpiffeIdFromHeader(request);
+    final boolean fromIngressSource = ingressSourceRoutingEnabled
+        && isConfiguredIngressSource(sourceSpiffeId);
+
+    if (!hasActClaim) {
+      if (fromIngressSource) {
+        // A token with no act claim arriving through the ingress names no in-cluster destination,
+        // so its audience is either not checked at all or checked against the fixed configured
+        // list. Both decisions are made before the aud claim is required to be present, because
+        // the fixed-list check has its own handling for a token that carries no aud claim.
+        return ingressSourceRoutingSkipValidation
+            ? AudienceValidationResult.of(true)
+            : AudienceValidationResult.of(
+                AbstractJWTFilter.matchesConfiguredAudiences(token, configuredAudiences));
+      }
+      if (!validateAudiencesWithoutActClaim) {
+        return AudienceValidationResult.of(
+            AbstractJWTFilter.matchesConfiguredAudiences(token, configuredAudiences));
+      }
+    } else if (fromIngressSource) {
+      // An act claim means the token authorizes one workload to call another inside the cluster.
+      // Arriving from an ingress identity means it was presented from outside, which no such call
+      // does.
+      return new AudienceValidationResult(false, "Token has an act claim but its source SPIFFE id in header "
+          + sourceSpiffeIdHeader + " is a configured ingress source: " + request.getHeader(sourceSpiffeIdHeader));
     }
 
     final String[] audienceClaims = token.getAudienceClaims();
@@ -436,8 +628,6 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
           + serverNameHeader + ": " + request.getHeader(serverNameHeader));
     }
 
-    final Optional<SpiffeId> sourceSpiffeId = sourceSpiffeIdHeader == null
-        ? Optional.empty() : sourceSpiffeIdFromHeader(request);
     if (sourceSpiffeIdHeader != null && sourceSpiffeId.isEmpty()) {
       return new AudienceValidationResult(false, "Missing or unparseable source SPIFFE id in header "
           + sourceSpiffeIdHeader + ": " + request.getHeader(sourceSpiffeIdHeader));
@@ -658,20 +848,19 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   }
 
   /**
-   * All three fields are lower-cased here, once, on read -- the same convention
-   * {@link #namespaceFromHeader(HttpServletRequest)} and {@link DestinationServiceName} follow --
-   * so every comparison against this value elsewhere in this class is a plain, case-sensitive
-   * {@code equals} rather than each comparison site remembering to lower-case its own copy.
-   * {@code trustDomain} is lowered too, for consistency, even though this validator never
-   * compares it.
+   * All three fields are lower-cased here, once, on read, by {@link #lowerCased(SpiffeId)} -- the
+   * same convention {@link #namespaceFromHeader(HttpServletRequest)} and
+   * {@link DestinationServiceName} follow -- so every comparison against this value elsewhere in
+   * this class is a plain, case-sensitive {@code equals} rather than each comparison site
+   * remembering to lower-case its own copy. {@code trustDomain} is lowered too because
+   * {@link #isConfiguredIngressSource(Optional)} compares it against the configured ingress ids.
    */
   private Optional<SpiffeId> sourceSpiffeIdFromHeader(final HttpServletRequest request) {
     final String headerValue = request.getHeader(sourceSpiffeIdHeader);
     if (headerValue == null || headerValue.isEmpty()) {
       return Optional.empty();
     }
-    return SpiffeId.parse(headerValue).map(id -> new SpiffeId(id.trustDomain().toLowerCase(Locale.ROOT),
-        id.namespace().toLowerCase(Locale.ROOT), id.serviceAccount().toLowerCase(Locale.ROOT)));
+    return SpiffeId.parse(headerValue).map(K8sDestinationAudienceValidator::lowerCased);
   }
 
   private Optional<String> pathFromHeader(final HttpServletRequest request) {
@@ -724,6 +913,31 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
         + " does not match source SPIFFE id service account " + sourceNamespace + ":" + sourceServiceAccount);
   }
 
+  /**
+   * Whether {@code sourceSpiffeId} names one of the configured ingress gateway identities. The
+   * namespace and service account must match an entry exactly; the trust domain must match too
+   * unless {@link #INGRESS_SOURCE_SPIFFE_IDS_ROUTING_SKIP_TRUST_DOMAIN_MATCH_PARAM} is
+   * enabled. An absent value, which is what a missing or unparseable source header produces,
+   * names no ingress identity and is reported as no match here rather than as a failure, so such
+   * a request is not routed and continues to the ordinary flow, where the rules for a missing or
+   * unparseable source header apply.
+   */
+  private boolean isConfiguredIngressSource(final Optional<SpiffeId> sourceSpiffeId) {
+    if (sourceSpiffeId.isEmpty()) {
+      return false;
+    }
+    final SpiffeId source = sourceSpiffeId.get();
+    for (final SpiffeId allowed : ingressSourceSpiffeIds) {
+      if (allowed.namespace().equals(source.namespace())
+          && allowed.serviceAccount().equals(source.serviceAccount())
+          && (ingressSourceRoutingSkipTrustDomainMatch
+              || allowed.trustDomain().equals(source.trustDomain()))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public String getName() {
     return VALIDATION_METHOD_VALUE;
@@ -758,6 +972,17 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
       final int port = explicitPort < 0 ? AudienceResource.DEFAULT_HTTPS_PORT : explicitPort;
       return Optional.of(new ClusterDomain(uri.getHost().toLowerCase(Locale.ROOT), port));
     }
+  }
+
+  /**
+   * A copy of {@code id} with all three components lower-cased, so every comparison against a
+   * value read from a request is a plain, case-sensitive {@code equals}. The same convention
+   * {@link #sourceSpiffeIdFromHeader(HttpServletRequest)} applies on read.
+   */
+  private static SpiffeId lowerCased(final SpiffeId id) {
+    return new SpiffeId(id.trustDomain().toLowerCase(Locale.ROOT),
+        id.namespace().toLowerCase(Locale.ROOT),
+        id.serviceAccount().toLowerCase(Locale.ROOT));
   }
 
   private static String blankToNull(final String value) {
