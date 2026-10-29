@@ -13,7 +13,7 @@
 --  License for the specific language governing permissions and limitations under
 --  the License.
 
-SELECT pg_advisory_lock (12345);
+SELECT pg_advisory_xact_lock(12345);
 
 CREATE TABLE IF NOT EXISTS KNOX_TOKENS (
    token_id varchar(128) NOT NULL,
@@ -22,5 +22,3 @@ CREATE TABLE IF NOT EXISTS KNOX_TOKENS (
    max_lifetime bigint NOT NULL,
    PRIMARY KEY (token_id)
 );
-
-SELECT pg_advisory_unlock (12345);
