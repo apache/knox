@@ -43,6 +43,7 @@ import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.message.controls.PagedResults;
 import org.apache.directory.api.ldap.model.message.controls.PagedResultsImpl;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
 import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
 import org.apache.directory.ldap.client.api.LdapConnection;
@@ -566,7 +567,7 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     @Override
-    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception {
         // Filter likely has already been annotated by other interceptors.
         // Clean the filter by removing any modifications or annotations
         String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
@@ -584,16 +585,42 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
-            String[] attributes = useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
-            List<Entry> searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, attributes);
+            boolean memberOfRequested = isAttributeRequested(attributes, proxyEntryGroupMembershipAttributeType, schemaManager);
+            String[] remoteAttributes = memberOfRequested && useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
+            List<Entry> searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, remoteAttributes);
             for (Entry entry : searchResults) {
-                addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
+                if (memberOfRequested) {
+                    addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
+                }
                 results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
             }
             return results;
         } finally {
             releaseConnection(connection);
         }
+    }
+
+    /**
+     * Returns true if the requested attributes include the given attribute or "*". Requested
+     * attributes may be names or OIDs, so they are compared by attribute type OID via the schema.
+     */
+    private static boolean isAttributeRequested(String[] requestedAttributes, String attribute, SchemaManager schemaManager) {
+        if (requestedAttributes == null) {
+            return false;
+        }
+        final AttributeType attributeType = schemaManager.getAttributeType(attribute);
+        for (String requested : requestedAttributes) {
+            if ("*".equals(requested) || attribute.equalsIgnoreCase(requested)) {
+                return true;
+            }
+            if (attributeType != null && requested != null) {
+                final AttributeType requestedType = schemaManager.getAttributeType(requested);
+                if (requestedType != null && attributeType.getOid().equals(requestedType.getOid())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private ExprNode mapMemberOfExpression(ExprNode filter, SchemaManager schemaManager) throws Exception {
@@ -790,7 +817,7 @@ public class LdapProxyBackend implements LdapBackend {
             LOG.ldapSkeletonGroupEntryCreated(groupDn);
             return entry;
         } catch (LdapException e) {
-            LOG.ldapSearch(groupDn, "failed to create skeleton entry");
+            LOG.ldapSkeletonGroupEntryError(groupDn, e);
             return null;
         }
     }
