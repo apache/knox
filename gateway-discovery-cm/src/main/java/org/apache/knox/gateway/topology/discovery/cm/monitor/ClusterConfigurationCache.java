@@ -19,9 +19,11 @@ package org.apache.knox.gateway.topology.discovery.cm.monitor;
 import org.apache.knox.gateway.topology.discovery.ServiceDiscoveryConfig;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -55,6 +57,47 @@ class ClusterConfigurationCache {
     serviceConfigurationsLock.writeLock().lock();
     try {
       clusterServiceConfigurations.computeIfAbsent(address, k -> new HashMap<>()).put(cluster, configs);
+    } finally {
+      serviceConfigurationsLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Merge the results of a (possibly filtered) discovery into the cluster's service configuration baseline and return
+   * a snapshot of the merged result.
+   * <p>
+   * When {@code inScopeServiceTypes} is null the discovery was unfiltered, so the whole cluster baseline is replaced
+   * (previous behavior). Otherwise only the in-scope service types are replaced: they are cleared first (so a service
+   * that is in scope but produced no model - because it became invalid or was removed - is dropped from the baseline)
+   * and then the freshly discovered configs are added back. Service types outside the scope (belonging to other
+   * descriptors of the same cluster) are preserved.
+   *
+   * @param address             the CM address
+   * @param cluster             the cluster name
+   * @param configs             the freshly discovered service configurations (keyed by service type)
+   * @param inScopeServiceTypes the service types this discovery was responsible for, or null for a full discovery
+   * @return a snapshot copy of the merged per-cluster baseline
+   */
+  Map<String, ServiceConfigurationModel> mergeServiceConfiguration(final String address,
+                                                                   final String cluster,
+                                                                   final Map<String, ServiceConfigurationModel> configs,
+                                                                   final Set<String> inScopeServiceTypes) {
+    serviceConfigurationsLock.writeLock().lock();
+    try {
+      final Map<String, Map<String, ServiceConfigurationModel>> clusterMap =
+          clusterServiceConfigurations.computeIfAbsent(address, k -> new HashMap<>());
+
+      final Map<String, ServiceConfigurationModel> merged;
+      if (inScopeServiceTypes == null) {
+        merged = new HashMap<>(configs);
+      } else {
+        merged = new HashMap<>(clusterMap.getOrDefault(cluster, Collections.emptyMap()));
+        merged.keySet().removeAll(inScopeServiceTypes);
+        merged.putAll(configs);
+      }
+
+      clusterMap.put(cluster, merged);
+      return new HashMap<>(merged);
     } finally {
       serviceConfigurationsLock.writeLock().unlock();
     }

@@ -190,8 +190,9 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   void clouderaManagerConfigurationChangesMonitoringError(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.ERROR,
-      text = "Error getting service configuration details from ClouderaManager: {0}")
-  void clouderaManagerConfigurationAPIError(@StackTrace(level = MessageLevel.DEBUG) ApiException e);
+      text = "Error getting the configuration of the {0} ({1}) service from ClouderaManager: {2}")
+  void clouderaManagerConfigurationAPIError(String serviceName, String serviceType,
+                                            @StackTrace(level = MessageLevel.DEBUG) ApiException e);
 
   @Message(level = MessageLevel.ERROR,
       text = "Error querying restart events from ClouderaManager: {0}")
@@ -234,18 +235,26 @@ public interface ClouderaManagerServiceDiscoveryMessages {
   @Message(level = MessageLevel.DEBUG, text = "There is no any activation event found within the given time period")
   void noActivationEventFound();
 
-  @Message(level = MessageLevel.DEBUG, text = "Activation event relevance: {0} = {1} ({2} / {3} / {4} / {5} / {6})")
+  @Message(level = MessageLevel.DEBUG,
+           text = "Activation event {0}: relevant={1} [command={2}, status={3}, serviceType={4}, modelGenerator={5}, "
+                  + "clusterLevelRestart={6}, excludedServiceType={7}, referencedByDescriptor={8}]")
   void activationEventRelevance(String eventId, boolean relevance, String command, String status, String serviceType, boolean serviceModelGeneratorExists,
-                                boolean rollingOrStalenessRestart);
+                                boolean rollingOrStalenessRestart, boolean excludedServiceType, boolean referencedByDescriptor);
 
-  @Message(level = MessageLevel.DEBUG, text = "Scale event relevance: {0} = {1} ({2} / {3} / {4})")
-  void scaleEventRelevance(String eventId, String relevance, String eventCode, String serviceType, boolean serviceModelGeneratorExists);
+  @Message(level = MessageLevel.DEBUG,
+           text = "Scale event {0}: relevant={1} [eventCode={2}, serviceType={3}, roleType={4}, modelGenerator={5}, "
+                  + "excludedServiceType={6}, referencedByDescriptor={7}, excludedRoleType={8}]")
+  void scaleEventRelevance(String eventId, boolean relevance, String eventCode, String serviceType, String roleType, boolean serviceModelGeneratorExists,
+                           boolean excludedServiceType, boolean referencedByDescriptor, boolean excludedRoleType);
 
   @Message(level = MessageLevel.DEBUG, text = "Activation event - {0} - has already been processed, skipping ...")
   void activationEventAlreadyProcessed(String eventId);
 
   @Message(level = MessageLevel.DEBUG, text = "Analyzing current {0} configuration for changes...")
   void analyzingCurrentServiceConfiguration(String serviceName);
+
+  @Message(level = MessageLevel.DEBUG, text = "The {0} ({1}) service configuration has not changed.")
+  void serviceConfigurationUnchanged(String serviceName, String serviceType);
 
   @Message(level = MessageLevel.ERROR, text = "Error analyzing current {0} configuration for changes: {1}")
   void errorAnalyzingCurrentServiceConfiguration(String serviceName,
@@ -265,8 +274,32 @@ public interface ClouderaManagerServiceDiscoveryMessages {
            text = "The {0} service configuration has changed, such that it has been enabled for proxying.")
   void serviceEnabled(String serviceName);
 
+  @Message(level = MessageLevel.INFO,
+           text = "The {0} service configuration has changed, such that it can no longer be proxied.")
+  void serviceDisabled(String serviceName);
+
+  @Message(level = MessageLevel.DEBUG,
+           text = "The {0} ({1}) service was and remains in an invalid configuration state; skipping discovery.")
+  void skippingConfigChangeForInvalidService(String serviceName, String serviceType);
+
+  @Message(level = MessageLevel.WARN,
+           text = "Could not determine the current configuration of the {0} ({1}) service; skipping change detection "
+                  + "for this service this cycle.")
+  void skippingConfigChangeForUnknownConfiguration(String serviceName, String serviceType);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Failed to compute the current configuration of the {0} ({1}) service: {2}")
+  void failedToComputeCurrentConfiguration(String serviceName, String serviceType,
+                                           @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
   @Message(level = MessageLevel.INFO, text = "Role type {0} has been removed.")
   void roleTypeRemoved(String roleType);
+
+  @Message(level = MessageLevel.ERROR,
+           text = "Could not read descriptor {0}; keeping cluster {1}/{2} monitored this cycle and skipping it when "
+                  + "determining referenced services: {3}")
+  void errorCheckingClusterReferences(String descriptor, String source, String clusterName,
+                                      @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
   @Message(level = MessageLevel.WARN, text = "Failed to create persistence directory {0}")
   void failedToCreatePersistenceDirectory(String path);
