@@ -172,7 +172,8 @@ public class RemoteSchemaConverter {
                 if (!target.contains(attributeName, valueString)) {
                     try {
                         target.add(attributeName, valueString);
-                    } catch (LdapException e) {
+                    } catch (LdapException | IllegalArgumentException e) {
+                        // IllegalArgumentException: the schema rejected a value, e.g. a malformed DN
                         LOG.ldapAttributeCopyError(e);
                     }
                 }
