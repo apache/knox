@@ -1683,11 +1683,15 @@ body.login {
   top: 50%;
   transform: translateY(-50%);
   margin: 0;
-  animation: spin 1s linear infinite;
+  animation: knox-sign-in-spin 1s linear infinite;
 }
-@keyframes spin {
+@keyframes knox-sign-in-spin {
   from { transform: translateY(-50%) rotate(0deg); }
   to { transform: translateY(-50%) rotate(360deg); }
+}
+@keyframes knox-sign-in-spin-inline {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 .login form .btn,
 .login input {

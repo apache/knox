@@ -644,8 +644,8 @@ body.login {
   position: relative !important;
   right: auto !important;
   top: auto !important;
-  transform: none !important;
   margin: 0 !important;
+  animation: knox-sign-in-spin-inline 1s linear infinite !important;
   font-size: 18px;
   line-height: 1;
   display: inline-block;
