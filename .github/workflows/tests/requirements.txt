@@ -1,4 +1,4 @@
 requests==2.33.0
 pytest==9.0.3
-pylint==4.0.5
+pylint==4.0.9
 ldap3==2.9.1
