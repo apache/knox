@@ -177,6 +177,60 @@ jobs:
           echo '===== gateway.log ====='
           cat ./.github/workflows/compose/logs/gateway.log || true
 
+      # LDAP proxy roles-lookup E2E with the REST strategy. Like the Vault run, this
+      # is NOT label-gated. The override adds 'roles-api', a small stdlib-only mock
+      # of the roles REST API serving the role assignments in role-lookup/roles.json,
+      # and recreates 'knox' with the REST roles lookup and
+      # gateway.ldap.interceptor.roleslookup.lowercaseIds=true. Role entries replace
+      # group entries, which would break the default suite's group expectations, so
+      # it runs as its own pass, before the single-EKU steps, which recreate 'knox'
+      # with their own config anyway.
+      - name: Start roles API mock + Knox for REST roles lookup
+        run: |
+          # 'up -d knox' blocks until roles-api is service_healthy (override depends_on).
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.role-lookup-rest.yml \
+            up -d knox roles-api
+
+      - name: Wait for REST roles-lookup gateway to stabilize
+        run: sleep 30  # Adjust as needed for services startup time
+
+      - name: Run LDAP REST Roles Lookup Tests
+        id: rest_role_lookup_tests
+        run: |
+          # Emit a distinct JUnit file so it reports as its own test suite.
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.role-lookup-rest.yml \
+            run --rm tests bash -c "pip install -r requirements.txt \
+            && pytest test*_with_rest_role_lookup.py --junitxml=test-results-rest-role-lookup.xml"
+
+      # Evidence gathering: a missing role could be a gateway that never reached
+      # the roles API (bad endpoint), an unexpected request (check the user_id the
+      # gateway sent in its roles lookup log lines) or a mock that never came up.
+      # Dump container status plus the knox and roles-api logs.
+      - name: Dump LDAP REST roles lookup diagnostics on failure
+        if: failure() && steps.rest_role_lookup_tests.outcome == 'failure'
+        run: |
+          echo '===== docker compose ps -a ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.role-lookup-rest.yml \
+            ps -a || true
+          echo '===== knox container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.role-lookup-rest.yml \
+            logs --no-color knox || true
+          echo '===== roles-api container logs ====='
+          docker compose \
+            -f ./.github/workflows/compose/docker-compose.yml \
+            -f ./.github/workflows/compose/docker-compose.role-lookup-rest.yml \
+            logs --no-color roles-api || true
+          echo '===== gateway.log ====='
+          cat ./.github/workflows/compose/logs/gateway.log || true
+
       # KnoxIDF HA E2E runs only when the PR carries the 'test-ha' label. The
       # override recreates 'knox' on a shared PostgreSQL database and adds a
       # second gateway, 'knox2', on the same database; the suite changes the
@@ -380,6 +434,7 @@ jobs:
             .github/workflows/tests/test-results-single-eku-no-mtls.xml
             .github/workflows/tests/test-results-federation.xml
             .github/workflows/tests/test-results-hashicorp-vault.xml
+            .github/workflows/tests/test-results-rest-role-lookup.xml
             .github/workflows/tests/test-results-ha.xml
 
       - name: Archive Knox Logs
@@ -414,7 +469,7 @@ jobs:
         if: always()
         run: |
           # --remove-orphans also removes the services only the override files define
-          # (vault, keycloak, knox2, postgres).
+          # (vault, roles-api, keycloak, knox2, postgres).
           docker compose -f ./.github/workflows/compose/docker-compose.yml down --volumes --remove-orphans
           TAG=${IMAGE_TAG:-master}
           if docker image inspect "apache/knox-dev:$TAG" >/dev/null 2>&1; then
