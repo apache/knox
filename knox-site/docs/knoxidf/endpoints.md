@@ -485,14 +485,16 @@ that authorize an actor to act on behalf of other subjects during a
   "canActForGroups": ["analysts"],
   "allowHeadlessExchange": true,
   "tokenTtlSec": 3600,
-  "resourcePolicy": { "https://data.example.com": ["read"] }
+  "resourcePolicy": { "https://data.example.com": ["read"] },
+  "subjectAudiences": ["https://etl.example.com"]
 }
 ```
 
 `actorAuthority` and `actorId` are required; at least one of `canActForUsers` / `canActForGroups`
 must be non-empty; `status` defaults to `active` and must be `active` or `revoked`; `tokenTtlSec`,
 when supplied, must fall within `[knox.delegation.min.token.ttl.sec, knox.delegation.max.token.ttl.sec]`
-(defaults 60–86400). The response echoes the stored policy plus the generated `registrationId` and
+(defaults 60–86400); `subjectAudiences` is optional (default empty) and must not contain blank
+values. The response echoes the stored policy plus the generated `registrationId` and
 `createdBy` / `createdAt` / `updatedAt` audit fields.
 
 !!! note "`hasMore` is a capacity flag, not a pagination cursor"
@@ -502,6 +504,6 @@ when supplied, must fall within `[knox.delegation.min.token.ttl.sec, knox.delega
     `?actorAuthority=` or raise the cap.
 
 **Errors:** `400 invalid_request` (malformed JSON, missing `actorAuthority`/`actorId`, empty
-act-for sets, out-of-range `tokenTtlSec`, bad `status`), `404 policy_not_found` (unknown
+act-for sets, out-of-range `tokenTtlSec`, bad `status`, blank `subjectAudiences` value), `404 policy_not_found` (unknown
 `registrationId`, or an id whose `actorAuthority`/`actorId` does not match on `PUT /{id}`),
 `409 actor_exists` (`POST` for an actor that already has a policy), `500 storage_error`.

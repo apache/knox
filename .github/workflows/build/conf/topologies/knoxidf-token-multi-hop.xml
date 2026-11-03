@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements. See the NOTICE file distributed with this
+work for additional information regarding copyright ownership. The ASF
+licenses this file to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<!--
+  Multi-hop RFC 8693 delegation topology (KNOX-3520). Same delegation setup as
+  knoxidf-token-delegation-policy.xml, plus the parameters that let a token minted
+  here be exchanged again by the actor it was addressed to:
+
+    - knox.token.audiences=https://recipient1          every actor token, every headless
+      subject_token and every first-hop subject_token must carry this audience. The
+      knoxidf-ldap-aud topology stamps it on every token it mints.
+    - jwt.expected.issuer                               accepts both the default KNOXSSO
+      issuer (knoxidf-ldap / knoxidf-ldap-aud tokens) and this topology's own issuer
+      (re-exchanged tokens).
+    - token.exchange.subject.token.policy.audiences.issuers
+                                                        on a delegated exchange, a
+      subject_token from this issuer that lacks knox.token.audiences is accepted only
+      if its aud intersects the actor policy's subjectAudiences.
+    - delegation.headless.reject.subject.with.act=true  a delegated token (one with an
+      act claim) can never be the acting party of a headless exchange.
+    - delegation.max.actor.chain.depth=3                set explicitly (it is also the
+      default) so the depth-limit test does not depend on the default.
+    - knoxidf.knox.token.issuer                         gives tokens minted here an
+      issuer distinct from KNOXSSO, so the issuer list above selects only them.
+-->
+<topology>
+    <gateway>
+      <provider>
+         <role>federation</role>
+         <name>JWTProvider</name>
+         <enabled>true</enabled>
+         <param>
+            <name>knox.token.exp.server-managed</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>jwt.expected.issuer</name>
+            <value>KNOXSSO,https://localhost:8443/gateway/knoxidf-token-multi-hop</value>
+         </param>
+         <param>
+            <!-- Rules 1, 2, 4: required on actor tokens, headless and first-hop subject tokens. -->
+            <name>knox.token.audiences</name>
+            <value>https://recipient1</value>
+         </param>
+         <param>
+            <!-- Rule 3: re-exchanged subject tokens are bound to the actor's subjectAudiences. -->
+            <name>token.exchange.subject.token.policy.audiences.issuers</name>
+            <value>https://localhost:8443/gateway/knoxidf-token-multi-hop</value>
+         </param>
+         <param>
+            <!-- Rule 5: a headless subject_token must not carry an act claim. -->
+            <name>delegation.headless.reject.subject.with.act</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>delegation.server.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>delegation.requested.subject.enabled</name>
+            <value>true</value>
+         </param>
+         <param>
+            <name>delegation.enforce.requested.audience.required</name>
+            <value>true</value>
+         </param>
+         <param>
+            <!-- Can stay on: a re-exchanged token needs no token-service audience. -->
+            <name>delegation.enforce.requested.audience.max.one</name>
+            <value>true</value>
+         </param>
+      </provider>
+      <provider>
+            <role>identity-assertion</role>
+            <name>Default</name>
+            <enabled>true</enabled>
+      </provider>
+    </gateway>
+
+    <service>
+        <role>KNOXIDF</role>
+        <param>
+           <name>knoxidf.knox.token.ttl</name>
+           <value>86400000</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.limit.per.user</name>
+            <value>-1</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.issuer</name>
+            <value>https://localhost:8443/gateway/knoxidf-token-multi-hop</value>
+        </param>
+        <param>
+            <name>delegation.max.actor.chain.depth</name>
+            <value>3</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.enable.delegated.auth</name>
+            <value>true</value>
+        </param>
+        <param>
+            <name>knoxidf.knox.token.audience.validator</name>
+            <value>passthrough</value>
+        </param>
+    </service>
+</topology>

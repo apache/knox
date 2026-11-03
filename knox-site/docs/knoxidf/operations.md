@@ -158,7 +158,7 @@ generic error to the caller. Each record's message carries:
 | Field | Meaning |
 |-------|---------|
 | `event_type` | `token_exchange_allowed` or `token_exchange_denied`. |
-| `deny_reason` | Present only on a denial: the specific cause (e.g. `actor_not_registered`, `headless_not_allowed`, `subject_not_allowed`). |
+| `deny_reason` | Present only on a denial: the specific cause (e.g. `actor_not_registered`, `headless_not_allowed`, `subject_audience_not_allowed`, `subject_not_allowed`). |
 | `actor_authority` | The acting party's authority — `USER` or `K8S_SA`. |
 | `actor_id` | The acting party's identity (the `sub`, or `<issuer>:<namespace>:<name>` for a ServiceAccount). |
 | `subject_token_iss` / `subject_token_sub` | Issuer and subject of the presented `subject_token`. |

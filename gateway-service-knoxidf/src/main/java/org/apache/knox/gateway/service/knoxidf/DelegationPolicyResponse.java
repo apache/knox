@@ -41,6 +41,7 @@ public class DelegationPolicyResponse {
   private Set<String> canActForUsers = Collections.emptySet();
   private Set<String> canActForGroups = Collections.emptySet();
   private Map<String, Set<String>> resourcePolicy = Collections.emptyMap();
+  private Set<String> subjectAudiences = Collections.emptySet();
   private String createdBy;
   private Instant createdAt;
   private Instant updatedAt;
@@ -131,6 +132,14 @@ public class DelegationPolicyResponse {
 
   public void setResourcePolicy(Map<String, Set<String>> resourcePolicy) {
     this.resourcePolicy = DelegationPolicyDtoImmutabilityHelper.copyResourcePolicy(resourcePolicy);
+  }
+
+  public Set<String> getSubjectAudiences() {
+    return subjectAudiences;
+  }
+
+  public void setSubjectAudiences(Set<String> subjectAudiences) {
+    this.subjectAudiences = DelegationPolicyDtoImmutabilityHelper.copyOf(subjectAudiences);
   }
 
   public String getCreatedBy() {

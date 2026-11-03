@@ -1060,6 +1060,145 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   // ------------------------------------------------------------------
+  // subjectAudiences (KNOX-3520)
+  // ------------------------------------------------------------------
+
+  @Test
+  public void testRegisterAndGetSubjectAudiences() throws Exception {
+    final DelegationPolicy registered = service.register(policyWithSubjectAudiences("oidc", "sa-persist",
+        new HashSet<>(Arrays.asList("https://svc/tools/mcp", "https://svc/tools/mcp-alt"))));
+
+    final DelegationPolicy fetched = service.get(registered.getRegistrationId()).orElseThrow(AssertionError::new);
+    assertEquals(new HashSet<>(Arrays.asList("https://svc/tools/mcp", "https://svc/tools/mcp-alt")),
+        fetched.getSubjectAudiences());
+  }
+
+  @Test
+  public void testRegisterWithoutSubjectAudiencesReturnsEmptySet() throws Exception {
+    registerPolicy("oidc", "sa-none", Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api", "read"));
+
+    final DelegationPolicy fetched = service.findByActor("oidc", "sa-none").orElseThrow(AssertionError::new);
+    assertTrue(fetched.getSubjectAudiences().isEmpty());
+  }
+
+  @Test
+  public void testUpdateReplacesSubjectAudiences() throws Exception {
+    final String id = service.register(policyWithSubjectAudiences("oidc", "sa-update",
+        new HashSet<>(Arrays.asList("https://svc/a", "https://svc/b")))).getRegistrationId();
+
+    service.update(id, policyWithSubjectAudiences("oidc", "sa-update", Collections.singleton("https://svc/c")));
+
+    assertEquals(Collections.singleton("https://svc/c"),
+        service.get(id).orElseThrow(AssertionError::new).getSubjectAudiences());
+  }
+
+  @Test
+  public void testUpdateClearsSubjectAudiences() throws Exception {
+    final String id = service.register(policyWithSubjectAudiences("oidc", "sa-clear",
+        Collections.singleton("https://svc/a"))).getRegistrationId();
+
+    service.update(id, policyWithSubjectAudiences("oidc", "sa-clear", Collections.emptySet()));
+
+    assertTrue(service.get(id).orElseThrow(AssertionError::new).getSubjectAudiences().isEmpty());
+  }
+
+  @Test
+  public void testRegisterOrUpdateReplacesSubjectAudiences() throws Exception {
+    service.registerOrUpdate(policyWithSubjectAudiences("oidc", "sa-upsert", Collections.singleton("https://svc/a")));
+    final RegisterOrUpdateResult updated = service.registerOrUpdate(
+        policyWithSubjectAudiences("oidc", "sa-upsert", Collections.singleton("https://svc/b")));
+
+    assertFalse(updated.isCreated());
+    assertEquals(Collections.singleton("https://svc/b"), updated.getPolicy().getSubjectAudiences());
+  }
+
+  @Test
+  public void testDeleteRemovesSubjectAudienceRows() throws Exception {
+    final String id = service.register(policyWithSubjectAudiences("oidc", "sa-delete",
+        Collections.singleton("https://svc/a"))).getRegistrationId();
+
+    service.delete(id);
+
+    try (Connection conn = DriverManager.getConnection(H2_URL);
+         PreparedStatement ps = conn.prepareStatement(
+             "SELECT COUNT(*) FROM DELEGATION_POLICY_SUBJECT_AUDIENCES WHERE registration_id = ?")) {
+      ps.setString(1, id);
+      try (java.sql.ResultSet rs = ps.executeQuery()) {
+        rs.next();
+        assertEquals(0, rs.getInt(1));
+      }
+    }
+  }
+
+  @Test
+  public void testEvaluateAuthorizedSubjectAudienceMatch() throws Exception {
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval1", Collections.singleton("https://svc/tools/mcp")));
+
+    final PolicyDecision decision = service.evaluate(subjectAudienceCheck("sa-eval1",
+        new HashSet<>(Arrays.asList("https://svc/other", "https://svc/tools/mcp")), true));
+    assertNull(decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateDenySubjectAudienceMismatch() throws Exception {
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval2", Collections.singleton("https://svc/tools/mcp")));
+
+    final PolicyDecision decision = service.evaluate(subjectAudienceCheck("sa-eval2",
+        Collections.singleton("https://svc/search/search-api"), true));
+    assertEquals("subject_audience_not_allowed", decision.getDenyReason());
+    assertEquals(0, decision.getEffectiveTtlSec());
+  }
+
+  @Test
+  public void testEvaluateDenySubjectAudienceRequiredButPolicyHasNone() throws Exception {
+    // Empty subjectAudiences (the default) is fail-safe: rule 3 never matches for this actor.
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval3", Collections.emptySet()));
+
+    final PolicyDecision decision = service.evaluate(subjectAudienceCheck("sa-eval3",
+        Collections.singleton("https://svc/tools/mcp"), true));
+    assertEquals("subject_audience_not_allowed", decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateDenySubjectAudienceRequiredButTokenHasNoAudience() throws Exception {
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval4", Collections.singleton("https://svc/tools/mcp")));
+
+    final PolicyDecision decision = service.evaluate(subjectAudienceCheck("sa-eval4", Collections.emptySet(), true));
+    assertEquals("subject_audience_not_allowed", decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateSubjectAudienceIgnoredWhenNotRequired() throws Exception {
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval5", Collections.emptySet()));
+
+    final PolicyDecision decision = service.evaluate(subjectAudienceCheck("sa-eval5",
+        Collections.singleton("https://svc/unrelated"), false));
+    assertNull(decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateSubjectAudienceCheckedBeforeSubject() throws Exception {
+    // Checked before the user/group lookup, so a token not addressed to the actor never triggers LDAP.
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval6", Collections.singleton("https://svc/tools/mcp")));
+
+    final PolicyDecision decision = service.evaluate(new PolicyCheckRequest("oidc", "sa-eval6", "mallory",
+        Set.of("/api"), Collections.singleton("read"), false,
+        Collections.singleton("https://svc/unrelated"), true));
+    assertEquals("subject_audience_not_allowed", decision.getDenyReason());
+  }
+
+  @Test
+  public void testEvaluateSubjectAudienceCheckedBeforeResource() throws Exception {
+    service.register(policyWithSubjectAudiences("oidc", "sa-eval7", Collections.singleton("https://svc/tools/mcp")));
+
+    final PolicyDecision decision = service.evaluate(new PolicyCheckRequest("oidc", "sa-eval7", "alice",
+        Set.of("/not-in-policy"), Collections.singleton("read"), false,
+        Collections.singleton("https://svc/unrelated"), true));
+    assertEquals("subject_audience_not_allowed", decision.getDenyReason());
+  }
+
+  // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
 
@@ -1106,6 +1245,20 @@ public class JdbcDelegationPolicyServiceTest {
         createdAt, createdAt, false, users, groups, rp);
   }
 
+  private static DelegationPolicy policyWithSubjectAudiences(String actorAuthority, String actorId,
+      Set<String> subjectAudiences) {
+    final Instant now = Instant.now();
+    return new DelegationPolicy(null, actorAuthority, actorId, null, "active", null, null, null,
+        now, now, false, Collections.singleton("alice"), Collections.emptySet(),
+        singleResourcePolicy("/api", "read"), subjectAudiences);
+  }
+
+  private static PolicyCheckRequest subjectAudienceCheck(String actorId, Set<String> subjectTokenAudiences,
+      boolean subjectAudienceMatchRequired) {
+    return new PolicyCheckRequest("oidc", actorId, "alice", Set.of("/api"), Collections.singleton("read"), false,
+        subjectTokenAudiences, subjectAudienceMatchRequired);
+  }
+
   private static Map<String, Set<String>> singleResourcePolicy(String resource, String... scopes) {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put(resource, new HashSet<>(Arrays.asList(scopes)));
@@ -1116,7 +1269,7 @@ public class JdbcDelegationPolicyServiceTest {
     try (Connection conn = DriverManager.getConnection(H2_URL)) {
       for (String table : new String[]{
           "DELEGATION_POLICY_RESOURCE_SCOPES", "DELEGATION_POLICY_RESOURCES",
-          "DELEGATION_POLICY_GROUPS", "DELEGATION_POLICY_USERS", "DELEGATION_POLICIES"}) {
+          "DELEGATION_POLICY_SUBJECT_AUDIENCES", "DELEGATION_POLICY_GROUPS", "DELEGATION_POLICY_USERS", "DELEGATION_POLICIES"}) {
         try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + table)) {
           ps.executeUpdate();
         } catch (SQLException e) {

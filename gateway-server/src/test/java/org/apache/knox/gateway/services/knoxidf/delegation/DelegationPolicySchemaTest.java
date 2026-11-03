@@ -50,7 +50,7 @@ public class DelegationPolicySchemaTest {
 
   // Child-first so the foreign keys don't block the truncation between tests.
   private static final String[] TABLES_CHILD_FIRST = {
-      "DELEGATION_POLICY_RESOURCE_SCOPES", "DELEGATION_POLICY_RESOURCES",
+      "DELEGATION_POLICY_RESOURCE_SCOPES", "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_SUBJECT_AUDIENCES",
       "DELEGATION_POLICY_GROUPS", "DELEGATION_POLICY_USERS", "DELEGATION_POLICIES"};
 
   private static Connection h2Conn;
@@ -67,7 +67,7 @@ public class DelegationPolicySchemaTest {
   @After
   public void clearTables() throws Exception {
     // Reset mutable state so each test starts clean regardless of JUnit method order (notably the
-    // "empty after DDL" assertion in testAllFiveTablesQueryable).
+    // "empty after DDL" assertion in testAllSixTablesQueryable).
     try (Statement stmt = h2Conn.createStatement()) {
       for (String table : TABLES_CHILD_FIRST) {
         stmt.execute("DELETE FROM " + table);
@@ -86,10 +86,11 @@ public class DelegationPolicySchemaTest {
   }
 
   @Test
-  public void testAllFiveTablesQueryable() throws Exception {
+  public void testAllSixTablesQueryable() throws Exception {
     for (String table : new String[]{
         "DELEGATION_POLICIES", "DELEGATION_POLICY_USERS", "DELEGATION_POLICY_GROUPS",
-        "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES"}) {
+        "DELEGATION_POLICY_RESOURCES", "DELEGATION_POLICY_RESOURCE_SCOPES",
+        "DELEGATION_POLICY_SUBJECT_AUDIENCES"}) {
       try (Statement stmt = h2Conn.createStatement();
            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + table)) {
         assertTrue("Table must be queryable: " + table, rs.next());
@@ -179,6 +180,30 @@ public class DelegationPolicySchemaTest {
     expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICY_RESOURCE_SCOPES (registration_id, resource_uri, scope) "
             + "VALUES ('" + UUID.randomUUID() + "', '/api/v1', 'read')");
+  }
+
+  @Test
+  public void testFkViolationSubjectAudiences() throws Exception {
+    expectConstraintViolation(h2Conn,
+        "INSERT INTO DELEGATION_POLICY_SUBJECT_AUDIENCES (registration_id, audience) "
+            + "VALUES ('" + UUID.randomUUID() + "', 'https://svc/tools/mcp')");
+  }
+
+  @Test
+  public void testSubjectAudiencesCascadeOnPolicyDelete() throws Exception {
+    final String id = UUID.randomUUID().toString();
+    try (Statement stmt = h2Conn.createStatement()) {
+      stmt.execute("INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
+          + "VALUES ('" + id + "', 'oidc', 'cascade-actor', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+      stmt.execute("INSERT INTO DELEGATION_POLICY_SUBJECT_AUDIENCES (registration_id, audience) "
+          + "VALUES ('" + id + "', 'https://svc/tools/mcp')");
+      stmt.execute("DELETE FROM DELEGATION_POLICIES WHERE registration_id = '" + id + "'");
+      try (ResultSet rs = stmt.executeQuery(
+          "SELECT COUNT(*) FROM DELEGATION_POLICY_SUBJECT_AUDIENCES WHERE registration_id = '" + id + "'")) {
+        assertTrue(rs.next());
+        assertEquals(0, rs.getInt(1));
+      }
+    }
   }
 
   private static void expectConstraintViolation(Connection conn, String sql) {
