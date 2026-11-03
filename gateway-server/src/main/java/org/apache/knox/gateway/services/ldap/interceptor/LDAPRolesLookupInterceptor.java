@@ -76,12 +76,21 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
      */
     private static final List<String> REQUIRED_ATTRIBUTES = Arrays.asList("uid", "objectClass");
 
+    /**
+     * If true, the user id and the group names are lowercased before they are sent to the roles lookup. This lets
+     * a case-sensitive roles backend match users and groups whose directory names (e.g. AD sAMAccountName or group
+     * cn) differ in case from the ids the roles were assigned to.
+     */
+    public static final String LOWERCASE_IDS = "lowercaseIds";
+
     private final LDAPRolesLookupService rolesLookupService;
     private final String proxyGroupSearchBase;
+    private final boolean lowercaseIds;
 
     public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, Map<String, String> config) throws Exception{
         this.rolesLookupService = rolesLookupService;
         this.proxyGroupSearchBase = "ou=groups," + config.get("baseDn");
+        this.lowercaseIds = Boolean.parseBoolean(config.get(LOWERCASE_IDS));
     }
 
     @Override
@@ -257,7 +266,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 if (LdapUtils.isGroupEntry(entry)) {
                     roleEntries.addAll(translateGroupEntry(entry));
                 } else {
-                    final String username = LdapUtils.extractUsernameFromEntry(entry, "uid", "cn");
+                    final String username = toRolesLookupId(LdapUtils.extractUsernameFromEntry(entry, "uid", "cn"));
                     final Set<String> groups = fetchGroups(entry);
                     final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
                     modifyEntry(entry, roles);
@@ -280,6 +289,10 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         }
 
         return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, schemaManager);
+    }
+
+    private String toRolesLookupId(String id) {
+        return lowercaseIds && id != null ? id.toLowerCase(Locale.ROOT) : id;
     }
 
     private String createGroupDnFromName(String groupName) {
@@ -365,7 +378,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         if (groupName == null) {
             return List.of();
         }
-        final Collection<String> roles = rolesLookupService.lookupRoles(null, Set.of(groupName));
+        final Collection<String> roles = rolesLookupService.lookupRoles(null, Set.of(toRolesLookupId(groupName)));
         final List<Entry> translatedEntries = new ArrayList<>();
         for (String role : roles) {
             final Dn roleDn = renameCnRdn(entry.getDn(), role);
@@ -394,7 +407,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                     Dn groupDn = new Dn(value.getString());
                     String groupName = LdapUtils.extractGroupName(groupDn);
                     if (groupName != null) {
-                        groups.add(groupName);
+                        groups.add(toRolesLookupId(groupName));
                     }
                 } catch (LdapInvalidDnException ignore) {
                 }

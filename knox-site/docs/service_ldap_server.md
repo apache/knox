@@ -205,6 +205,18 @@ ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=people,DC=proxy,DC=com' '(membe
 ldapsearch -v -x -H ldap://localhost:3890 -b 'ou=groups,DC=proxy,DC=com' '(objectClass=groupOfNames)' cn
 ```
 
+The rolesLookup interceptor supports the following property:
+
+| Property | Default Value | Description |
+| :--- | :--- | :--- |
+| `gateway.ldap.interceptor.<name>.lowercaseIds` | `false` | If `true`, the user id and the group names are lowercased before the roles are looked up. The returned entries themselves are not changed. See [Case of the user id and group names](#case-of-the-user-id-and-group-names). |
+
+##### Case of the user id and group names
+
+The user id sent to the roles lookup is the `uid` attribute of the user entry returned by the backend. For an Active Directory backend this is the `sAMAccountName`, in the case it is stored in AD (e.g. `Admin`), whatever case the client searched with (e.g. `admin`). Likewise, the group names are the `cn` values of the group DNs returned by the backend (e.g. `Domain Admins`). If the roles service matches ids case-sensitively and roles were assigned under a different case, for example the name the user typed at login, no roles are found.
+
+To avoid this, set `gateway.ldap.interceptor.<name>.lowercaseIds` to `true` so the interceptor sends the user id and the group names in lowercase. Make sure that roles are assigned to lowercase user ids and group names too. For example, configure `expression.principal.mapping` with the value `(lowercase username)` in the identity assertion provider of the topologies that assert the user's identity to the roles service.
+
 ### LDAP Backend Types
 
 #### Common LDAP Backend Properties
