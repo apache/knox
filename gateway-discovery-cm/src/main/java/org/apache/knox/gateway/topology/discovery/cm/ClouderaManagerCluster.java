@@ -38,6 +38,11 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
 
   private Map<String, List<ServiceModel>> serviceModels = new HashMap<>();
 
+  // The CM service types this (possibly filtered) discovery was responsible for. Used by the configuration monitor
+  // to scope-replace the persisted baseline: only these types are refreshed/removed, other descriptors' services are
+  // preserved. A null value means an unfiltered discovery (replace the whole cluster baseline).
+  private Set<String> inScopeServiceTypes;
+
   ClouderaManagerCluster(String clusterName) {
     this.name = clusterName;
   }
@@ -102,6 +107,14 @@ public class ClouderaManagerCluster implements ServiceDiscovery.Cluster {
 
   public Map<String, List<ServiceModel>> getServiceModels() {
     return serviceModels;
+  }
+
+  void setInScopeServiceTypes(Set<String> inScopeServiceTypes) {
+    this.inScopeServiceTypes = inScopeServiceTypes;
+  }
+
+  public Set<String> getInScopeServiceTypes() {
+    return inScopeServiceTypes;
   }
 
 }
