@@ -58,6 +58,9 @@ ADD .github/workflows/build/conf/topologies/knoxidf-sso.xml /knox-runtime/conf/t
 ADD .github/workflows/build/conf/topologies/knoxauthtoken.xml /knox-runtime/conf/topologies/knoxauthtoken.xml
 ADD .github/workflows/build/conf/topologies/knoxauthtokenlimit.xml /knox-runtime/conf/topologies/knoxauthtokenlimit.xml
 ADD .github/workflows/build/conf/topologies/knoxauthtokencollide.xml /knox-runtime/conf/topologies/knoxauthtokencollide.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect.xml /knox-runtime/conf/topologies/sparkconnect.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect-restricted.xml /knox-runtime/conf/topologies/sparkconnect-restricted.xml
+ADD .github/workflows/build/conf/topologies/sparkconnect-fgac.xml /knox-runtime/conf/topologies/sparkconnect-fgac.xml
 
 RUN chown -R gateway /knox-runtime/
 

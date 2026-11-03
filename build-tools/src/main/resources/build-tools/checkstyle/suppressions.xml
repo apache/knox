@@ -24,4 +24,7 @@ limitations under the License.
 
     <!-- Suppress JavadocPackage in the test packages -->
     <suppress checks="JavadocPackage" files="src[/\\]test[/\\]java[/\\]"/>
+
+    <!-- protoc/protoc-gen-grpc-java output is not ours to style -->
+    <suppress checks=".*" files="target[/\\]generated-sources[/\\]"/>
 </suppressions>

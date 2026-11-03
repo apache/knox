@@ -162,6 +162,10 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
   private void contributeResources(DeploymentContext context, Service service) {
     Map<String, String> filterParams = new HashMap<>();
     List<Route> bindings = serviceDefinition.getRoutes();
+    if ( bindings == null ) {
+      // JAXB leaves the list null when a definition declares no <routes>.
+      return;
+    }
     for ( Route binding : bindings ) {
       List<Rewrite> filters = binding.getRewrites();
       if ( filters != null && !filters.isEmpty() ) {

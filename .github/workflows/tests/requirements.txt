@@ -2,3 +2,5 @@ requests==2.33.0
 pytest==9.0.3
 pylint==4.0.5
 ldap3==2.9.1
+grpcio==1.60.0
+protobuf==4.25.8
