@@ -129,6 +129,14 @@ public interface LdapMessages {
             text = "LDAP Bind: {0}")
     void ldapBind(String dn);
 
+    @Message(level = MessageLevel.DEBUG,
+            text = "LDAP Bind: {0} is the in-memory bind user; not forwarding the bind to backend {1}")
+    void ldapLocalBindUser(String dn, String backendName);
+
+    @Message(level = MessageLevel.DEBUG,
+            text = "LDAP Search: base {0} does not exist locally; searching backend {1}")
+    void ldapSearchBaseNotFoundLocally(String baseDn, String backendName);
+
     @Message(level = MessageLevel.INFO,
             text = "Loaded user from backend: {0}")
     void ldapUserLoaded(String username);

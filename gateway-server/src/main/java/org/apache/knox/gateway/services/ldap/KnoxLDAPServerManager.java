@@ -53,6 +53,7 @@ import org.apache.knox.gateway.services.ldap.authn.InMemoryBindAuthenticator;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.InterceptorFactory;
 import org.apache.knox.gateway.services.ldap.interceptor.LDAPRolesLookupInterceptor;
+import org.apache.knox.gateway.services.ldap.interceptor.UserSearchInterceptor;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 
@@ -563,6 +564,14 @@ public class KnoxLDAPServerManager {
             authInterceptor.setAuthenticators(authenticators);
         } else {
             throw new IllegalStateException("Unable to configure AuthenticationInterceptor for bind user");
+        }
+
+        // The bind user may live in the same namespace as the proxied users (ou=people,<baseDn>), so
+        // tell the backend interceptors to leave its bind to the in-memory authenticator.
+        for (Interceptor knoxInterceptor : interceptors) {
+            if (knoxInterceptor instanceof UserSearchInterceptor userSearchInterceptor) {
+                userSearchInterceptor.setLocalBindDn(bindDn);
+            }
         }
     }
 

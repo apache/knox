@@ -22,8 +22,10 @@ import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
+import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
@@ -52,6 +54,11 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     private final LdapBackend backend;
 
+    // The in-memory bind user (gateway.ldap.bind.user) is authenticated locally by the
+    // InMemoryBindAuthenticator, so its bind must never be forwarded to the backend.
+    // Set once, before the directory service starts.
+    private Dn localBindDn;
+
     public UserSearchInterceptor(String name, Map<String, String> config) throws Exception {
         this(name, BackendFactory.createBackend(name, config));
     }
@@ -63,6 +70,14 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     public LdapBackend getBackend() {
         return backend;
+    }
+
+    public Dn getLocalBindDn() {
+        return localBindDn;
+    }
+
+    public void setLocalBindDn(Dn localBindDn) {
+        this.localBindDn = localBindDn;
     }
 
     @Override
@@ -90,6 +105,10 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         LOG.ldapSearch(baseDn, filter);
 
+        // Only forward to the backend when the search base is under the backend's namespace.
+        // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
+        final boolean backendSearchBase = backend.isSupportedSearchBase(baseDn);
+
         List<Entry> entries = new ArrayList<>();
 
         // First execute the next interceptor in the chain
@@ -97,15 +116,20 @@ public class UserSearchInterceptor extends BaseInterceptor {
             while (originalResults.next()) {
                 entries.add(originalResults.get());
             }
-        }  catch (CursorException e ) {
+        } catch (LdapNoSuchObjectException e) {
+            // Entries served by the backend (e.g. uid=alice,ou=people,<baseDn>) do not exist in the
+            // local partition, so a search rooted at one of them fails there; let the backend answer it.
+            if (!backendSearchBase) {
+                throw e;
+            }
+            LOG.ldapSearchBaseNotFoundLocally(baseDn, getName());
+        } catch (CursorException e ) {
             throw new LdapException(e.getMessage(), e);
         } catch (IOException e) {
             // swallow error closing cursor
         }
 
-        // Only forward to the backend when the search base is under the backend's namespace.
-        // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
-        if (backend.isSupportedSearchBase(baseDn)) {
+        if (backendSearchBase) {
             try {
                 entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
             } catch (Exception e) {
@@ -120,17 +144,21 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     @Override
     public void bind(BindOperationContext ctx) throws LdapException {
-        LOG.ldapBind(ctx.getDn() != null && !ctx.getDn().isEmpty() ? ctx.getDn().toString() : "anonymous");
+        final Dn bindDn = ctx.getDn();
+        LOG.ldapBind(bindDn != null && !bindDn.isEmpty() ? bindDn.toString() : "anonymous");
 
-        // Try backend first for non-system users
-        if (ctx.getDn() != null && !ctx.getDn().isEmpty() && !ctx.getDn().toString().endsWith("ou=system")) {
+        if (isLocalBindUser(bindDn)) {
+            // Skip the backend: a remote bind would fail anyway and expose the gateway bind credential to it
+            LOG.ldapLocalBindUser(bindDn.toString(), getName());
+        } else if (bindDn != null && !bindDn.isEmpty() && !bindDn.toString().endsWith("ou=system")) {
+            // Try backend first for non-system users
             byte[] credentials = ctx.getCredentials();
             if (credentials != null && credentials.length > 0) {
                 String password = new String(credentials, java.nio.charset.StandardCharsets.UTF_8);
-                if (backend.authenticate(ctx.getDn(), password)) {
+                if (backend.authenticate(bindDn, password)) {
                     // Create session for the authenticated user and set it in context
                     // This is required by LdapServer to avoid NullPointerException
-                    LdapPrincipal principal = new LdapPrincipal(directoryService.getSchemaManager(), ctx.getDn(), AuthenticationLevel.SIMPLE);
+                    LdapPrincipal principal = new LdapPrincipal(directoryService.getSchemaManager(), bindDn, AuthenticationLevel.SIMPLE);
                     CoreSession session = directoryService.getSession(principal);
                     ctx.setSession(session);
                     return; // Successfully authenticated via backend, bypass local check
@@ -140,5 +168,8 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         next(ctx);
     }
-}
 
+    private boolean isLocalBindUser(Dn bindDn) {
+        return localBindDn != null && localBindDn.equals(bindDn);
+    }
+}

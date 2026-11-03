@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.ldap.interceptor;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
@@ -178,6 +179,40 @@ public class UserSearchInterceptorTest {
         ctx.setCredentials(bindPassword.getBytes(StandardCharsets.UTF_8));
 
         interceptor.bind(ctx);
+    }
+
+    @Test
+    public void testBindLocalBindUserSkipsBackend() throws Exception {
+        Dn bindDn = new Dn(schemaManager, "uid=proxy-user,ou=people,dc=proxy,dc=com");
+        String bindPassword = "password";
+        // nothing to replay because the in-memory bind user must not be sent to the ldap backend
+        replay(mockLdapBackend);
+        interceptor.setLocalBindDn(bindDn);
+        BindOperationContext ctx = setupBindContext();
+        ctx.setDn(new Dn(schemaManager, "UID=Proxy-User,OU=People,DC=proxy,DC=com"));
+        ctx.setCredentials(bindPassword.getBytes(StandardCharsets.UTF_8));
+
+        interceptor.bind(ctx);
+
+        verify(mockLdapBackend);
+        assertEquals(1, nextBindInterceptor.getBindCount());
+    }
+
+    @Test
+    public void testBindOtherUserUsesBackendWhenLocalBindUserSet() throws Exception {
+        Dn bindDn = new Dn(schemaManager, "uid=alice,ou=people,dc=proxy,dc=com");
+        String bindPassword = "password";
+        expect(mockLdapBackend.authenticate(bindDn, bindPassword)).andReturn(true);
+        replay(mockLdapBackend);
+        interceptor.setLocalBindDn(new Dn(schemaManager, "uid=proxy-user,ou=people,dc=proxy,dc=com"));
+        BindOperationContext ctx = setupBindContext();
+        ctx.setDn(bindDn);
+        ctx.setCredentials(bindPassword.getBytes(StandardCharsets.UTF_8));
+
+        interceptor.bind(ctx);
+
+        verify(mockLdapBackend);
+        assertEquals(0, nextBindInterceptor.getBindCount());
     }
 
     private LookupOperationContext setupLookupContext() throws Exception {
@@ -400,6 +435,54 @@ public class UserSearchInterceptorTest {
         nextSearchInterceptor.setLdapException(expectedException);
 
         LdapException resultException = assertThrows(LdapException.class, () -> interceptor.search(ctx));
+        assertEquals(expectedException, resultException);
+    }
+
+    @Test
+    public void testSearchBaseNotFoundLocallyFallsBackToBackend() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "uid=alice,ou=people,dc=proxy,dc=com");
+        String filter = "(objectClass=*)";
+
+        Entry backendEntry = new DefaultEntry(baseDn);
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager)).andReturn(List.of(backendEntry));
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.OBJECT);
+        ctx.setFilter(FilterParser.parse(filter));
+        // The local partition reports ERR_648 for entries that only exist in the backend
+        nextSearchInterceptor.setLdapException(new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn));
+
+        List<String> resultDns = new ArrayList<>();
+        try (EntryFilteringCursor result = interceptor.search(ctx)) {
+            for (Entry entry : result) {
+                resultDns.add(entry.getDn().toString());
+            }
+        }
+        verify(mockLdapBackend);
+        assertEquals(List.of(baseDn.toString()), resultDns);
+    }
+
+    @Test
+    public void testSearchBaseNotFoundLocallyDoesntMatchBackend() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "cn=unknown,ou=system");
+        String filter = "(objectClass=*)";
+
+        LdapNoSuchObjectException expectedException = new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn);
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(false);
+        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class)))
+                .andThrow(new AssertionError("search should not be called if base dn does not match backend"))
+                .anyTimes();
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.OBJECT);
+        ctx.setFilter(FilterParser.parse(filter));
+        nextSearchInterceptor.setLdapException(expectedException);
+
+        LdapNoSuchObjectException resultException = assertThrows(LdapNoSuchObjectException.class, () -> interceptor.search(ctx));
+        verify(mockLdapBackend);
         assertEquals(expectedException, resultException);
     }
 

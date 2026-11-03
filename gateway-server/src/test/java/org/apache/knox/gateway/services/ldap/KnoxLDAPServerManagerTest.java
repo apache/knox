@@ -70,6 +70,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -691,6 +692,59 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
+    public void testBindUserIsAuthenticatedLocallyByBackendInterceptors() throws Exception {
+        final String bindDn = "uid=proxy-user,ou=people," + BASE_DN;
+        useBindPassword(BIND_PASSWORD);
+        serverManager.initialize(createBindEnabledConfig(bindDn));
+        serverManager.start();
+
+        UserSearchInterceptor interceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("filebackend");
+        assertEquals(new Dn(serverManager.directoryService.getSchemaManager(), bindDn), interceptor.getLocalBindDn());
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind(bindDn, BIND_PASSWORD);
+            assertTrue("Connection should be authenticated", connection.isAuthenticated());
+        }
+    }
+
+    @Test
+    public void testNoLocalBindUserWhenUnconfigured() throws Exception {
+        serverManager.initialize(createBindEnabledConfig());
+        serverManager.start();
+
+        UserSearchInterceptor interceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("filebackend");
+        assertNull(interceptor.getLocalBindDn());
+    }
+
+    @Test
+    public void testBaseObjectSearchOnBackendUserIsAnsweredByBackend() throws Exception {
+        Files.writeString(tempLdapFile.toPath(), "{\"users\":[{\"username\":\"alice\",\"password\":\"alice-password\",\"cn\":\"Alice\",\"sn\":\"Smith\"}]}");
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn(BASE_DN).anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        // Serve the backend users under the gateway base DN, like the LDAP proxy backend does
+        Map<String, String> backendConfig = createFileBackendInterceptorConfig();
+        backendConfig.put("baseDn", BASE_DN);
+        expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(backendConfig).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+        serverManager.start();
+
+        // The user only exists in the backend, so the local partition has no entry for the search base.
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+            try (EntryCursor cursor = connection.search("uid=alice,ou=people," + BASE_DN, "(uid=alice)", SearchScope.OBJECT)) {
+                assertTrue("Base-object search should return the backend user", cursor.next());
+                assertEquals("Alice", cursor.get().get("cn").getString());
+                assertFalse("Base-object search should return a single entry", cursor.next());
+            }
+        }
+    }
+
+    @Test
     public void testAnonymousStillAllowedWhenUnconfigured() throws Exception {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
@@ -824,11 +878,15 @@ public class KnoxLDAPServerManagerTest {
     }
 
     private GatewayConfig createBindEnabledConfig() {
+        return createBindEnabledConfig(BIND_DN);
+    }
+
+    private GatewayConfig createBindEnabledConfig(String bindDn) {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
         expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn(BASE_DN).anyTimes();
-        expect(mockConfig.getLDAPBindUser()).andReturn(BIND_DN).anyTimes();
+        expect(mockConfig.getLDAPBindUser()).andReturn(bindDn).anyTimes();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
         expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
         expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(createFileBackendInterceptorConfig()).anyTimes();
