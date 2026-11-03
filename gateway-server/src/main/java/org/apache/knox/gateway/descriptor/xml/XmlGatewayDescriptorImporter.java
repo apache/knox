@@ -20,12 +20,14 @@ package org.apache.knox.gateway.descriptor.xml;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.commons.xml.secure.SecureSAXParserFactory;
 import org.apache.knox.gateway.descriptor.GatewayDescriptor;
 import org.apache.knox.gateway.descriptor.GatewayDescriptorImporter;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.Reader;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
@@ -40,11 +42,14 @@ public class XmlGatewayDescriptorImporter implements GatewayDescriptorImporter {
 
   @Override
   public GatewayDescriptor load( Reader reader ) throws IOException {
-    Digester digester = loader.newDigester( new ExtendedBaseRules() );
-    digester.setValidating( false );
     try {
+      Digester digester = loader.newDigester( SecureSAXParserFactory.newInstance().newSAXParser().getXMLReader(), new ExtendedBaseRules() );
+      digester.setValidating( false );
+      // Digester opens any absolute system id by itself; a resolver that returns null leaves external
+      // references to Commons Secure XML, which ignores them.
+      digester.setEntityResolver( ( publicId, systemId ) -> null );
       return digester.parse( reader );
-    } catch( SAXException e ) {
+    } catch( ParserConfigurationException | SAXException e ) {
       throw new IOException( e );
     }
   }

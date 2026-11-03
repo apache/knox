@@ -65,24 +65,30 @@ public class ServiceDefinitionUnmarshallerTest {
 
   @Test
   public void testEntityExpansionIsNotResolved() throws Exception {
-    final String malicious = "<?xml version=\"1.0\"?>"
-        + "<!DOCTYPE serviceDefinition [ "
-        + "<!ENTITY a0 \"EXPANDED-PAYLOAD\">"
-        + "<!ENTITY a1 \"&a0;&a0;\">"
-        + "<!ENTITY a2 \"&a1;&a1;\">"
-        + "<!ENTITY a3 \"&a2;&a2;\"> ]>"
-        + "<serviceDefinition><service name=\"test\" role=\"test\" version=\"1.0.0\">"
-        + "<testURLs><testURL>&a3;</testURL></testURLs></service></serviceDefinition>";
-
+    final File secret = File.createTempFile("xxe-secret", ".txt");
     try {
-      final ServiceDefinitionPair pair = new ServiceDefinitionUnmarshaller().readFrom(
-          ServiceDefinitionPair.class, null, null, MediaType.APPLICATION_XML_TYPE, null, stream(malicious));
-      if (pair != null && pair.getService() != null) {
-        assertFalse("Internal entity was expanded - entity expansion!",
-            String.valueOf(pair.getService().getTestURLs()).contains("EXPANDED-PAYLOAD"));
+      Files.write(secret.toPath(), "EXPANDED-PAYLOAD".getBytes(StandardCharsets.UTF_8));
+      final String malicious = "<?xml version=\"1.0\"?>"
+          + "<!DOCTYPE serviceDefinition [ "
+          + "<!ENTITY a0 SYSTEM \"file://" + secret.getAbsolutePath() + "\">"
+          + "<!ENTITY a1 \"&a0;&a0;\">"
+          + "<!ENTITY a2 \"&a1;&a1;\">"
+          + "<!ENTITY a3 \"&a2;&a2;\"> ]>"
+          + "<serviceDefinition><service name=\"test\" role=\"test\" version=\"1.0.0\">"
+          + "<testURLs><testURL>&a3;</testURL></testURLs></service></serviceDefinition>";
+
+      try {
+        final ServiceDefinitionPair pair = new ServiceDefinitionUnmarshaller().readFrom(
+            ServiceDefinitionPair.class, null, null, MediaType.APPLICATION_XML_TYPE, null, stream(malicious));
+        if (pair != null && pair.getService() != null) {
+          assertFalse("External entity was expanded - XXE!",
+              String.valueOf(pair.getService().getTestURLs()).contains("EXPANDED-PAYLOAD"));
+        }
+      } catch (IOException rejected) {
+        // no-op
       }
-    } catch (IOException rejected) {
-      // no-op
+    } finally {
+      Files.deleteIfExists(secret.toPath());
     }
   }
 
