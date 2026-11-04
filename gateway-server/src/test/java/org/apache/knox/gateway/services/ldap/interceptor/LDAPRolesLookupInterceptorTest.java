@@ -327,6 +327,85 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     @Test
+    public void testRolesLookupKeepsIdsCaseByDefault() throws Exception {
+        final LDAPRolesLookupService rolesService = createUserLookupRolesService("Admin", "Engineering");
+        final TestContext testContext = createTestContext(null, rolesService, false);
+        testContext.nextInterceptor.setEntries(List.of(
+                createUserEntry("Admin", "cn=Engineering,ou=groups,dc=hadoop,dc=apache,dc=org")));
+
+        assertTrue(testContext.interceptor.search(testContext.ctx).next());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testRolesLookupLowercasesIdsWhenEnabled() throws Exception {
+        final LDAPRolesLookupService rolesService = createUserLookupRolesService("admin", "engineering");
+        final TestContext testContext = createTestContext(null, rolesService, true);
+        testContext.nextInterceptor.setEntries(List.of(
+                createUserEntry("Admin", "cn=Engineering,ou=groups,dc=hadoop,dc=apache,dc=org")));
+
+        assertTrue(testContext.interceptor.search(testContext.ctx).next());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testRolesLookupLowercaseIdsDoesNotChangeReturnedEntry() throws Exception {
+        final LDAPRolesLookupService rolesService = createUserLookupRolesService("admin", "engineering");
+        final TestContext testContext = createTestContext(null, rolesService, true);
+        testContext.ctx.setAllUserAttributes(false);
+        testContext.ctx.setReturningAttributes("uid", "memberOf");
+        testContext.nextInterceptor.setEntries(List.of(
+                createUserEntry("Admin", "cn=Engineering,ou=groups,dc=hadoop,dc=apache,dc=org")));
+
+        final EntryFilteringCursor result = testContext.interceptor.search(testContext.ctx);
+
+        assertTrue(result.next());
+        assertEquals("The returned uid must keep its original case",
+                "Admin", result.get().get("uid").getString());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testTranslateGroupEntryKeepsGroupNameCaseByDefault() throws Exception {
+        assertEquals("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org", translateGroupEntry("Engineering", false));
+    }
+
+    @Test
+    public void testTranslateGroupEntryLowercasesGroupNameWhenEnabled() throws Exception {
+        assertEquals("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org", translateGroupEntry("engineering", true));
+    }
+
+    /*
+     * A strict mock that only answers the role lookup of the given user id and group name.
+     */
+    private LDAPRolesLookupService createUserLookupRolesService(final String userId, final String groupName) throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.lookupRoles(userId, Set.of(groupName))).andReturn(List.of("roleA"));
+        replay(mockRolesService);
+        return mockRolesService;
+    }
+
+    /*
+     * Translates the group cn=Engineering and returns the DN of the single role entry; the roles service
+     * only maps the group name it is expected to be called with.
+     */
+    private String translateGroupEntry(final String expectedGroupName, final boolean lowercaseIds) throws Exception {
+        final Entry groupEntry = createGroupEntry("cn=Engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
+
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.lookupRoles(null, Set.of(expectedGroupName))).andReturn(List.of("viewer"));
+        replay(mockRolesService);
+
+        final Map<String, String> config = new HashMap<>(interceptorConfig);
+        config.put(LDAPRolesLookupInterceptor.LOWERCASE_IDS, String.valueOf(lowercaseIds));
+        final List<Entry> translated = new LDAPRolesLookupInterceptor(mockRolesService, config).translateGroupEntry(groupEntry);
+
+        verify(mockRolesService);
+        assertEquals(1, translated.size());
+        return translated.get(0).getDn().getName();
+    }
+
+    @Test
     public void testTranslateGroupEntryWithSingleRole() throws Exception {
         final Entry groupEntry = createGroupEntry("cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
 
@@ -821,12 +900,18 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     private TestContext createTestContext(RolesLookupBypassControl control, LDAPRolesLookupService rolesService) throws Exception {
+        return createTestContext(control, rolesService, false);
+    }
+
+    private TestContext createTestContext(RolesLookupBypassControl control, LDAPRolesLookupService rolesService,
+                                          boolean lowercaseIds) throws Exception {
         DirectoryService directoryService = new SimpleDirectoryService();
         directoryService.setShutdownHookEnabled(false);
         directoryService.setSchemaManager(schemaManager);
 
-        LDAPRolesLookupInterceptor interceptor =
-                new LDAPRolesLookupInterceptor(rolesService, interceptorConfig);
+        final Map<String, String> config = new HashMap<>(interceptorConfig);
+        config.put(LDAPRolesLookupInterceptor.LOWERCASE_IDS, String.valueOf(lowercaseIds));
+        LDAPRolesLookupInterceptor interceptor = new LDAPRolesLookupInterceptor(rolesService, config);
         interceptor.init(directoryService);
         directoryService.addLast(interceptor);
 

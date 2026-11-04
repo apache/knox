@@ -10,6 +10,16 @@
     ]
   },
   {
+    "id": "recursiveuser",
+    "type": "user",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "deployer"
+      }
+    ]
+  },
+  {
     "id": "admin",
     "type": "group",
     "roles": [
