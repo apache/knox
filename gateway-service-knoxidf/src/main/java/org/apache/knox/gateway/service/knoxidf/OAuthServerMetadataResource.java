@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
-import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import jakarta.annotation.PostConstruct;
@@ -30,7 +29,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_EXCHANGE_TOPOLOGY_NAME;
 
 /**
  * RFC 8414 OAuth 2.0 Authorization Server Metadata, served under the KnoxIDF API path
@@ -42,21 +40,19 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_EXCHAN
 @Path(BASE_RESOURCE_PATH + "/.well-known/oauth-authorization-server")
 @Produces(MediaType.APPLICATION_JSON)
 public class OAuthServerMetadataResource {
-    private String currentTopologyName;
-    private String tokenExchangeTopologyName;
+    private DiscoveryEndpointResolver endpointResolver = DiscoveryEndpointResolver.NONE;
 
     @Context
     private ServletContext servletContext;
 
     @PostConstruct
     public void init() {
-        tokenExchangeTopologyName = servletContext.getInitParameter(TOKEN_EXCHANGE_TOPOLOGY_NAME);
-        currentTopologyName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+        endpointResolver = DiscoveryEndpointResolver.from(servletContext);
     }
 
     @GET
     public Response getMetadata(@Context UriInfo uriInfo) {
         return Response.ok(JsonUtils.renderAsJsonString(
-            AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, currentTopologyName, tokenExchangeTopologyName))).build();
+            AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, endpointResolver))).build();
     }
 }

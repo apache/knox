@@ -51,7 +51,7 @@ public class OAuthServerMetadataTest {
   @Test
   public void testAdvertisesRequiredOAuthMetadataAndOmitsOidcOnlyClaims() {
     final Map<String, Object> metadata =
-        AuthorizationServerMetadata.buildOAuthMetadata(uriInfo(), null, null);
+        AuthorizationServerMetadata.buildOAuthMetadata(uriInfo(), DiscoveryEndpointResolver.NONE);
     final String body = JsonUtils.renderAsJsonString(metadata);
 
     // RFC 8414 REQUIRED members.
@@ -113,7 +113,7 @@ public class OAuthServerMetadataTest {
     // document is exactly the common subset the OIDC document is built on.
     final String oidcBody = String.valueOf(new DiscoveryResource().getConfig(uriInfo()).getEntity());
     final Map<String, Object> oauth =
-        AuthorizationServerMetadata.buildOAuthMetadata(uriInfo(), null, null);
+        AuthorizationServerMetadata.buildOAuthMetadata(uriInfo(), DiscoveryEndpointResolver.NONE);
 
     for (final String field : new String[]{"issuer", "authorization_endpoint", "token_endpoint",
         "jwks_uri", "registration_endpoint"}) {

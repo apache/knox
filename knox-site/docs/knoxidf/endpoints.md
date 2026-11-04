@@ -36,7 +36,9 @@ The administrative endpoints (service role `KNOXIDF_ADMIN`) live under a separat
     Do not hard-code endpoint paths in clients. Fetch the
     [discovery document](#discovery-endpoint) and use the URLs it advertises. When a
     `token.exchange.topology.name` is configured, the `token_endpoint` and `userinfo_endpoint`
-    are deliberately rewritten to point at the token-exchange topology — discovery reflects
+    are deliberately rewritten to point at the token-exchange topology; likewise
+    `authorization.topology.name` moves the `authorization_endpoint` and
+    `client.registration.topology.name` the `registration_endpoint` — discovery reflects
     that, hard-coded paths will not.
 
 ## Endpoint summary

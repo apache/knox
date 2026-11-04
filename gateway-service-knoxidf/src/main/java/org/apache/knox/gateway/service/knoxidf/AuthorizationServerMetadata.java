@@ -44,14 +44,11 @@ final class AuthorizationServerMetadata {
      * {@code id_token_signing_alg_values_supported}, {@code subject_types_supported}, ...) are
      * intentionally excluded so the RFC 8414 document stays OAuth-only.
      *
-     * @param uriInfo                   request URI info; its base URI anchors every advertised endpoint
-     * @param currentTopologyName       the topology serving this request (may be {@code null})
-     * @param tokenExchangeTopologyName when non-null, the token endpoint is advertised on this topology
-     *                                  instead of the current one (see {@link DiscoveryResource})
+     * @param uriInfo           request URI info; its base URI anchors every advertised endpoint
+     * @param endpointResolver  resolves the topology each endpoint is advertised on
+     *                          (see {@link DiscoveryEndpointResolver})
      */
-    static Map<String, Object> buildOAuthMetadata(UriInfo uriInfo,
-                                                  String currentTopologyName,
-                                                  String tokenExchangeTopologyName) {
+    static Map<String, Object> buildOAuthMetadata(UriInfo uriInfo, DiscoveryEndpointResolver endpointResolver) {
         final String baseUrl = uriInfo.getBaseUri().toString();
         final Map<String, Object> metadata = new LinkedHashMap<>();
 
@@ -60,19 +57,12 @@ final class AuthorizationServerMetadata {
         // to reject metadata whose issuer differs from the identifier it discovered; Knox reuses the one
         // value the OIDC discovery document already advertises so all documents agree.
         metadata.put("issuer", baseUrl + "knoxidf");
-        metadata.put("authorization_endpoint", baseUrl + AuthorizeResource.RESOURCE_PATH);
-
-        String tokenEndpoint = baseUrl + TokenResource.RESOURCE_PATH;
-        if (tokenExchangeTopologyName != null) {
-            // Literal substitution: the topology name is data, not a regex. replaceAll would treat
-            // any regex metacharacter in the topology name as a pattern.
-            tokenEndpoint = tokenEndpoint.replace(currentTopologyName, tokenExchangeTopologyName);
-        }
-        metadata.put("token_endpoint", tokenEndpoint);
-
-        // Dynamic client registration is served on the current topology (no token-exchange
-        // substitution); advertise it so clients can discover it per OAuth Dynamic Client Registration.
-        metadata.put("registration_endpoint", baseUrl + RegistrationResource.RESOURCE_PATH + "/register");
+        // Each endpoint is advertised on the current topology unless a topology parameter moves it,
+        // e.g. /authorize onto an SSO-fronted topology or registration onto one that accepts bearer
+        // tokens. The issuer and jwks_uri always stay on the current topology.
+        metadata.put("authorization_endpoint", endpointResolver.authorizationEndpoint(baseUrl));
+        metadata.put("token_endpoint", endpointResolver.tokenEndpoint(baseUrl));
+        metadata.put("registration_endpoint", endpointResolver.registrationEndpoint(baseUrl));
         metadata.put("jwks_uri", baseUrl + JwksResource.RESOURCE_PATH);
         metadata.put("response_types_supported", new String[]{KnoxIDFConstants.CODE});
         // The token endpoint reads client credentials only from request parameters (no HTTP Basic):

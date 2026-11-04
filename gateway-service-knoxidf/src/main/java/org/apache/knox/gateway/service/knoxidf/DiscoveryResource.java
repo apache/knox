@@ -16,7 +16,6 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
-import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.util.JsonUtils;
 
 import jakarta.annotation.PostConstruct;
@@ -31,21 +30,18 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.TOKEN_EXCHANGE_TOPOLOGY_NAME;
 
 @Path(BASE_RESOURCE_PATH + "/.well-known/openid-configuration")
 @Produces(MediaType.APPLICATION_JSON)
 public class DiscoveryResource {
-    private String currentTopologyName;
-    private String tokenExchangeTopologyName;
+    private DiscoveryEndpointResolver endpointResolver = DiscoveryEndpointResolver.NONE;
 
     @Context
     private ServletContext servletContext;
 
     @PostConstruct
     public void init() {
-        tokenExchangeTopologyName = servletContext.getInitParameter(TOKEN_EXCHANGE_TOPOLOGY_NAME);
-        currentTopologyName = (String) servletContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+        endpointResolver = DiscoveryEndpointResolver.from(servletContext);
     }
 
     @GET
@@ -53,17 +49,9 @@ public class DiscoveryResource {
         // The OAuth-common metadata (issuer, endpoints, grant types, ...) is shared with the RFC 8414
         // OAuth 2.0 Authorization Server Metadata document so the two cannot drift; this method then
         // layers on the OpenID Connect-only claims below.
-        final Map<String, Object> config =
-            AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, currentTopologyName, tokenExchangeTopologyName);
+        final Map<String, Object> config = AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, endpointResolver);
 
-        final String baseUrl = uriInfo.getBaseUri().toString();
-        String userInfoEndpoint = baseUrl + UserInfoResource.RESOURCE_PATH;
-        if (tokenExchangeTopologyName != null) {
-            // Literal substitution: the topology name is data, not a regex. replaceAll would treat
-            // any regex metacharacter in the topology name as a pattern.
-            userInfoEndpoint = userInfoEndpoint.replace(currentTopologyName, tokenExchangeTopologyName);
-        }
-        config.put("userinfo_endpoint", userInfoEndpoint);
+        config.put("userinfo_endpoint", endpointResolver.userInfoEndpoint(uriInfo.getBaseUri().toString()));
         // REQUIRED by OpenID Connect Discovery 1.0. Knox derives 'sub' as a deterministic UUIDv5 over
         // a fixed namespace and the user identity -- the same for every client -- so the subject
         // identifier type is "public" (not "pairwise").
