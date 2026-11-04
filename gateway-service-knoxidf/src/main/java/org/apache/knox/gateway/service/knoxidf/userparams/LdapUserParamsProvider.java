@@ -35,6 +35,7 @@ import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 import jakarta.servlet.ServletContext;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -153,7 +154,11 @@ public class LdapUserParamsProvider implements UserParamsProvider {
                         // Prefer the user's memberOf (e.g. the Knox embedded LDAP server, whose roles-lookup
                         // interceptor publishes roles only there); fall back to scanning the group entries.
                         Attribute memberOf = attrs.get(MEMBER_OF);
-                        List<String> roles = memberOf != null ? rolesFromMemberOf(memberOf) : fetchRoles(ctx, userDn);
+                        List<String> roles = memberOf != null ? rolesFromMemberOf(memberOf) : Collections.emptyList();
+                        if (roles.isEmpty()) {
+                            roles = fetchRoles(ctx, userDn);
+                        }
+
                         userParams.put("roles", roles);
                     }
                 }
