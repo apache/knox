@@ -29,6 +29,7 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
+import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.filter.ExprNode;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
@@ -585,7 +586,16 @@ public class LdapProxyBackend implements LdapBackend {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
             String[] attributes = useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
-            List<Entry> searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, attributes);
+            List<Entry> searchResults;
+            try {
+                searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, attributes);
+            } catch (LdapOperationException e) {
+                if (e.getResultCode() == ResultCodeEnum.NO_SUCH_OBJECT) {
+                    // Tell the caller that the search base itself does not exist in the remote directory
+                    throw new LdapNoSuchObjectException("No such entry in backend " + name + ": " + searchBase + " (" + e.getMessage() + ")");
+                }
+                throw e;
+            }
             for (Entry entry : searchResults) {
                 addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
                 results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));

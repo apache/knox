@@ -22,7 +22,13 @@ import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.exception.LdapAuthenticationException;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapProtocolErrorException;
+import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.message.Control;
+import org.apache.directory.api.ldap.model.message.Response;
+import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
+import org.apache.directory.api.ldap.model.message.SearchRequest;
+import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
+import org.apache.directory.api.ldap.model.message.SearchResultEntry;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
@@ -70,6 +76,7 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -84,6 +91,7 @@ public class KnoxLDAPServerManagerTest {
     private static final String KEYSTORE_PASSWORD = "keystore-password";
     private static final String SSL_KEYSTORE_ALIAS = "gateway_ldap_ssl_keystore_password";
     public static final String BASE_DN = "dc=test,dc=com";
+    private static final String ALICE_DN = "uid=alice,ou=people," + BASE_DN;
 
     private KnoxLDAPServerManager serverManager;
     private File tempWorkDir;
@@ -691,6 +699,138 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
+    public void testBindUserIsAuthenticatedLocallyByBackendInterceptors() throws Exception {
+        final String bindDn = "uid=proxy-user,ou=people," + BASE_DN;
+        useBindPassword(BIND_PASSWORD);
+        serverManager.initialize(createBindEnabledConfig(bindDn));
+        serverManager.start();
+
+        UserSearchInterceptor interceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("filebackend");
+        assertEquals(new Dn(serverManager.directoryService.getSchemaManager(), bindDn), interceptor.getLocalBindDn());
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind(bindDn, BIND_PASSWORD);
+            assertTrue("Connection should be authenticated", connection.isAuthenticated());
+        }
+    }
+
+    @Test
+    public void testNoLocalBindUserWhenUnconfigured() throws Exception {
+        serverManager.initialize(createBindEnabledConfig());
+        serverManager.start();
+
+        UserSearchInterceptor interceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("filebackend");
+        assertNull(interceptor.getLocalBindDn());
+    }
+
+    @Test
+    public void testBaseObjectSearchOnBackendUserIsAnsweredByBackend() throws Exception {
+        startWithBackendUsers();
+
+        // The user only exists in the backend, so the local partition has no entry for the search base.
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+            try (EntryCursor cursor = connection.search(ALICE_DN, "(uid=alice)", SearchScope.OBJECT)) {
+                assertTrue("Base-object search should return the backend user", cursor.next());
+                assertEquals("Alice", cursor.get().get("cn").getString());
+                assertFalse("Base-object search should return a single entry", cursor.next());
+            }
+        }
+    }
+
+    @Test
+    public void testBaseObjectSearchOnBackendUserMatchesAnyEntryFilter() throws Exception {
+        startWithBackendUsers();
+
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+            // The usual "read this entry" request, and filters that are not on the user id
+            for (String filter : List.of("(objectClass=*)", "(objectClass=inetOrgPerson)", "(&(objectClass=person)(cn=Al*))")) {
+                List<Entry> entries = new ArrayList<>();
+                assertEquals(filter, ResultCodeEnum.SUCCESS, search(connection, ALICE_DN, filter, SearchScope.OBJECT, entries));
+                assertEquals(filter, List.of(ALICE_DN), dns(entries));
+                assertEquals(filter, "Alice", entries.get(0).get("cn").getString());
+            }
+        }
+    }
+
+    @Test
+    public void testSearchOnBackendUserOnlyMatchesThatUser() throws Exception {
+        startWithBackendUsers();
+
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+            // bob exists in the backend but is not alice's entry nor below it
+            for (SearchScope scope : List.of(SearchScope.OBJECT, SearchScope.SUBTREE)) {
+                List<Entry> entries = new ArrayList<>();
+                assertEquals(scope.name(), ResultCodeEnum.SUCCESS, search(connection, ALICE_DN, "(uid=bob)", scope, entries));
+                assertEquals(scope.name(), List.of(), dns(entries));
+            }
+            // User entries have no children
+            List<Entry> entries = new ArrayList<>();
+            assertEquals(ResultCodeEnum.SUCCESS, search(connection, ALICE_DN, "(objectClass=*)", SearchScope.ONELEVEL, entries));
+            assertEquals(List.of(), dns(entries));
+        }
+    }
+
+    @Test
+    public void testSearchOnUnknownBackendUserReturnsNoSuchObject() throws Exception {
+        startWithBackendUsers();
+
+        try (LdapConnection connection = new LdapNetworkConnection("localhost", port)) {
+            connection.bind();
+            for (SearchScope scope : List.of(SearchScope.OBJECT, SearchScope.ONELEVEL, SearchScope.SUBTREE)) {
+                List<Entry> entries = new ArrayList<>();
+                assertEquals(scope.name(), ResultCodeEnum.NO_SUCH_OBJECT,
+                        search(connection, "uid=ghost,ou=people," + BASE_DN, "(objectClass=*)", scope, entries));
+                assertEquals(scope.name(), List.of(), dns(entries));
+            }
+        }
+    }
+
+    /** Start the server with a file backend that serves alice and bob under the gateway base DN, like the LDAP proxy backend does. */
+    private void startWithBackendUsers() throws Exception {
+        Files.writeString(tempLdapFile.toPath(), "{\"users\":["
+                + "{\"username\":\"alice\",\"password\":\"alice-password\",\"cn\":\"Alice\",\"sn\":\"Smith\"},"
+                + "{\"username\":\"bob\",\"password\":\"bob-password\",\"cn\":\"Bob\",\"sn\":\"Jones\"}]}");
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn(BASE_DN).anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
+        expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
+        Map<String, String> backendConfig = createFileBackendInterceptorConfig();
+        backendConfig.put("baseDn", BASE_DN);
+        expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(backendConfig).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+        serverManager.start();
+    }
+
+    /** Run a search, collect the returned entries and return the result code of the search. */
+    private static ResultCodeEnum search(LdapConnection connection, String base, String filter, SearchScope scope,
+                                         List<Entry> entries) throws Exception {
+        SearchRequest request = new SearchRequestImpl();
+        request.setBase(new Dn(base));
+        request.setFilter(filter);
+        request.setScope(scope);
+        request.addAttributes("*");
+        try (SearchCursor cursor = connection.search(request)) {
+            while (cursor.next()) {
+                Response response = cursor.get();
+                if (response instanceof SearchResultEntry) {
+                    entries.add(((SearchResultEntry) response).getEntry());
+                }
+            }
+            return cursor.getSearchResultDone().getLdapResult().getResultCode();
+        }
+    }
+
+    private static List<String> dns(List<Entry> entries) {
+        return entries.stream().map(entry -> entry.getDn().getName()).collect(Collectors.toList());
+    }
+
+    @Test
     public void testAnonymousStillAllowedWhenUnconfigured() throws Exception {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
@@ -824,11 +964,15 @@ public class KnoxLDAPServerManagerTest {
     }
 
     private GatewayConfig createBindEnabledConfig() {
+        return createBindEnabledConfig(BIND_DN);
+    }
+
+    private GatewayConfig createBindEnabledConfig(String bindDn) {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
         expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
         expect(mockConfig.getLDAPBaseDN()).andReturn(BASE_DN).anyTimes();
-        expect(mockConfig.getLDAPBindUser()).andReturn(BIND_DN).anyTimes();
+        expect(mockConfig.getLDAPBindUser()).andReturn(bindDn).anyTimes();
         expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("filebackend")).anyTimes();
         expect(mockConfig.getLDAPBackendDataFile()).andReturn(tempLdapFile.getAbsolutePath()).anyTimes();
         expect(mockConfig.getLDAPInterceptorConfig("filebackend")).andReturn(createFileBackendInterceptorConfig()).anyTimes();

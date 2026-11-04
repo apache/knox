@@ -87,6 +87,8 @@ public interface LdapBackend {
      * @param filter LDAP filter string (simplified)
      * @param schemaManager Schema manager for creating entries
      * @return List of matching entries
+     * @throws org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException if the search base
+     *         does not exist in the backend
      */
     List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception;
 
