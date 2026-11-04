@@ -112,10 +112,27 @@ the resolved attributes to the token (and to the UserInfo response). If it is **
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `user.params.provider.ldap.url` | (none) | LDAP(S) URL. Its presence selects the LDAP provider; absence selects the no-op provider. |
-| `user.params.provider.ldap.baseDn` | `dc=hadoop,dc=apache,dc=org` | Search base DN. |
-| `user.params.provider.ldap.userDnTemplate` | `uid=%s,ou=people,dc=hadoop,dc=apache,dc=org` | DN template; `%s` is replaced with the (escaped) username. |
+| `user.params.provider.ldap.baseDn` | `dc=hadoop,dc=apache,dc=org` | Base DN. Groups (roles) are looked up directly under `ou=groups,<baseDn>`. |
+| `user.params.provider.ldap.userSearchBase` | (none) | If set, the user is found with a subtree search under this DN using `userSearchFilter`, instead of reading the `userDnTemplate` DN directly. Required for directories that cannot read a user entry by DN, such as the Knox embedded LDAP server proxying a backend. |
+| `user.params.provider.ldap.userSearchFilter` | `(uid={0})` | Filter for the `userSearchBase` search; `{0}` is replaced with the (escaped) username. Ignored without `userSearchBase`. |
+| `user.params.provider.ldap.userDnTemplate` | `uid=%s,ou=people,dc=hadoop,dc=apache,dc=org` | DN template; `%s` is replaced with the (escaped) username. Used only when `userSearchBase` is not set. |
 | `user.params.provider.ldap.systemUser` | `uid=admin,ou=people,dc=hadoop,dc=apache,dc=org` | Bind DN for attribute lookups. |
-| `user.params.provider.ldap.systemPasswordAlias` | — | **Required** alias for the system-user password. There is no plaintext fallback — if the alias is absent or unresolvable, initialization fails with an `IllegalStateException` (fail-closed). |
+| `user.params.provider.ldap.systemPasswordAlias` | (none) | **Required** name of the gateway alias holding the system-user password. There is no default alias and no plaintext fallback — if the parameter is not set or the alias is absent or unresolvable, the lookup fails with an `IllegalStateException` (fail-closed). |
+
+The `roles` claim is taken from the user's `memberOf` attribute when the directory returns it: each
+group DN directly under `ou=groups,<baseDn>` contributes its `cn`. Otherwise KnoxIDF searches the
+`groupOfNames` entries under `ou=groups,<baseDn>` for a `member` equal to the user's DN.
+
+For example, to read users and their roles from the Knox embedded LDAP server (with the
+roles-lookup interceptor enabled), bind as its configured bind user:
+
+```xml
+<param><name>user.params.provider.ldap.url</name><value>ldap://localhost:10389</value></param>
+<param><name>user.params.provider.ldap.baseDn</name><value>dc=proxy,dc=com</value></param>
+<param><name>user.params.provider.ldap.userSearchBase</name><value>ou=people,dc=proxy,dc=com</value></param>
+<param><name>user.params.provider.ldap.systemUser</name><value>uid=proxy-user,ou=people,dc=proxy,dc=com</value></param>
+<param><name>user.params.provider.ldap.systemPasswordAlias</name><value>gateway_ldap_bind_password</value></param>
+```
 
 ## Token exchange and delegation
 
