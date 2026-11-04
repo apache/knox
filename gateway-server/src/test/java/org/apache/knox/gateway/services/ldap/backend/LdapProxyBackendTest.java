@@ -32,6 +32,7 @@ import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.message.BindRequest;
 import org.apache.directory.api.ldap.model.message.LdapResult;
@@ -579,6 +580,21 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
         validateSearch("ou=people,dc=proxy,dc=com", "(uid=*)", 4, Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));
         assertEquals(2, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
+    }
+
+    @Test
+    public void testSearchOnUserEntryReturnsThatUser() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        List<Entry> entries = ldapProxyBackend.search("uid=ldaptest1,ou=people,dc=proxy,dc=com", SearchScope.OBJECT, "(objectClass=*)", schemaManager);
+        assertEquals(1, entries.size());
+        assertEquals("ldaptest1", entries.get(0).get("uid").getString());
+    }
+
+    @Test
+    public void testSearchOnUnknownEntryThrowsNoSuchObject() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        assertThrows(LdapNoSuchObjectException.class,
+                () -> ldapProxyBackend.search("uid=ghost,ou=people,dc=proxy,dc=com", SearchScope.OBJECT, "(objectClass=*)", schemaManager));
     }
 
     @Test

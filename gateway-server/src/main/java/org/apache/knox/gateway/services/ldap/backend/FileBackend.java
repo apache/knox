@@ -22,6 +22,8 @@ import static java.util.Locale.ROOT;
 import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
+import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
@@ -200,7 +202,44 @@ public class FileBackend implements LdapBackend {
 
     @Override
     public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
-        return searchUsers(filter, schemaManager);
+        final Dn base = new Dn(schemaManager, searchBase);
+        final Dn people = new Dn(schemaManager, userSearchBase);
+        if (!base.equals(people) && base.isDescendantOf(people)) {
+            return searchUserEntry(base, people, searchScope, filter, schemaManager);
+        }
+        // The users sit below the search base, so a base-object search finds none of them
+        return searchScope == SearchScope.OBJECT ? Collections.emptyList() : searchUsers(filter, schemaManager);
+    }
+
+    /*
+     * A search rooted at an entry below ou=people: the only entries this backend has there are the
+     * users (uid=<username>,ou=people,<baseDn>), which have no children.
+     */
+    private List<Entry> searchUserEntry(Dn base, Dn people, SearchScope searchScope, String filter, SchemaManager schemaManager) throws Exception {
+        final UserData userData = base.size() == people.size() + 1 ? findUser(LdapUtils.extractUsernameFromDn(base)) : null;
+        if (userData == null) {
+            throw new LdapNoSuchObjectException("No such entry in backend " + name + ": " + base);
+        }
+        if (searchScope == SearchScope.ONELEVEL) {
+            return Collections.emptyList();
+        }
+        final Entry entry = getUser(userData.username, schemaManager);
+        // Filter likely has already been annotated by other interceptors; remove the annotations before parsing
+        final String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
+        return LdapUtils.matchesFilter(entry, FilterParser.parse(schemaManager, rawFilter))
+                ? Collections.singletonList(entry)
+                : Collections.emptyList();
+    }
+
+    private UserData findUser(String username) {
+        if (username != null) {
+            for (UserData userData : users.values()) {
+                if (username.equalsIgnoreCase(userData.username)) {
+                    return userData;
+                }
+            }
+        }
+        return null;
     }
 
     private String extractUser(String filter) {

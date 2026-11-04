@@ -137,6 +137,10 @@ public interface LdapMessages {
             text = "LDAP Search: base {0} does not exist locally; searching backend {1}")
     void ldapSearchBaseNotFoundLocally(String baseDn, String backendName);
 
+    @Message(level = MessageLevel.DEBUG,
+            text = "LDAP Search: base {0} does not exist in backend {1}; returning the local entries only")
+    void ldapSearchBaseNotFoundInBackend(String baseDn, String backendName);
+
     @Message(level = MessageLevel.INFO,
             text = "Loaded user from backend: {0}")
     void ldapUserLoaded(String username);

@@ -23,6 +23,7 @@ import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
+import org.apache.directory.api.ldap.model.filter.ObjectClassNode;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -45,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
@@ -462,6 +464,74 @@ public class UserSearchInterceptorTest {
         }
         verify(mockLdapBackend);
         assertEquals(List.of(baseDn.toString()), resultDns);
+    }
+
+    @Test
+    public void testSearchPassesObjectClassNodeAsPresenceFilter() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "uid=alice,ou=people,dc=proxy,dc=com");
+
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, "(objectClass=*)", schemaManager))
+                .andReturn(List.of(new DefaultEntry(baseDn)));
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.OBJECT);
+        // ApacheDS hands the interceptors this node for a base-object (objectClass=*) search
+        ctx.setFilter(ObjectClassNode.OBJECT_CLASS_NODE);
+        nextSearchInterceptor.setLdapException(new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn));
+
+        try (EntryFilteringCursor result = interceptor.search(ctx)) {
+            assertTrue(result.next());
+        }
+        verify(mockLdapBackend);
+    }
+
+    @Test
+    public void testSearchBaseNotFoundLocallyNorInBackendThrowsNoSuchObject() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "uid=ghost,ou=people,dc=proxy,dc=com");
+        String filter = "(objectClass=*)";
+
+        LdapNoSuchObjectException localException = new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn);
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager))
+                .andThrow(new LdapNoSuchObjectException("No such entry in backend TEST: " + baseDn));
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.OBJECT);
+        ctx.setFilter(FilterParser.parse(filter));
+        nextSearchInterceptor.setLdapException(localException);
+
+        LdapNoSuchObjectException resultException = assertThrows(LdapNoSuchObjectException.class, () -> interceptor.search(ctx));
+        verify(mockLdapBackend);
+        assertEquals(localException, resultException);
+    }
+
+    @Test
+    public void testSearchBaseNotFoundInBackendReturnsLocalEntries() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "ou=people,dc=proxy,dc=com");
+        String filter = "(objectClass=*)";
+
+        List<Entry> nextEntries = createEntryList(baseDn, 2);
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager))
+                .andThrow(new LdapNoSuchObjectException("No such entry in backend TEST: " + baseDn));
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.SUBTREE);
+        ctx.setFilter(FilterParser.parse(filter));
+        nextSearchInterceptor.setEntries(nextEntries);
+
+        List<String> resultDns = new ArrayList<>();
+        try (EntryFilteringCursor result = interceptor.search(ctx)) {
+            for (Entry entry : result) {
+                resultDns.add(entry.getDn().toString());
+            }
+        }
+        verify(mockLdapBackend);
+        assertEquals(nextEntries.stream().map(entry -> entry.getDn().toString()).collect(Collectors.toList()), resultDns);
     }
 
     @Test

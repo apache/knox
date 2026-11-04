@@ -24,6 +24,8 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.ObjectClassNode;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.server.core.api.CoreSession;
@@ -100,7 +102,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
     @Override
     public EntryFilteringCursor search(SearchOperationContext ctx) throws LdapException {
 
-        String filter = ctx.getFilter() != null ? ctx.getFilter().toString() : "";
+        String filter = filterString(ctx.getFilter());
         String baseDn = ctx.getDn() != null ? ctx.getDn().toString() : "";
 
         LOG.ldapSearch(baseDn, filter);
@@ -110,6 +112,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
         final boolean backendSearchBase = backend.isSupportedSearchBase(baseDn);
 
         List<Entry> entries = new ArrayList<>();
+        LdapNoSuchObjectException notFoundLocally = null;
 
         // First execute the next interceptor in the chain
         try (EntryFilteringCursor originalResults = next(ctx)){
@@ -123,6 +126,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
                 throw e;
             }
             LOG.ldapSearchBaseNotFoundLocally(baseDn, getName());
+            notFoundLocally = e;
         } catch (CursorException e ) {
             throw new LdapException(e.getMessage(), e);
         } catch (IOException e) {
@@ -132,6 +136,12 @@ public class UserSearchInterceptor extends BaseInterceptor {
         if (backendSearchBase) {
             try {
                 entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
+            } catch (LdapNoSuchObjectException e) {
+                // The search base does not exist in the backend; it is an error only if it does not exist locally either
+                if (notFoundLocally != null) {
+                    throw notFoundLocally;
+                }
+                LOG.ldapSearchBaseNotFoundInBackend(baseDn, getName());
             } catch (Exception e) {
                 LOG.ldapSearchFailed(getName(), baseDn, filter, e);
                 throw new LdapOperationException(ResultCodeEnum.OTHER, "Search request to backend " + getName() + " failed.", e);
@@ -167,6 +177,14 @@ public class UserSearchInterceptor extends BaseInterceptor {
         }
 
         next(ctx);
+    }
+
+    private static String filterString(ExprNode filter) {
+        if (filter == null) {
+            return "";
+        }
+        // ApacheDS replaces (objectClass=*) with an ObjectClassNode, which does not print as a filter ("All")
+        return filter instanceof ObjectClassNode ? "(objectClass=*)" : filter.toString();
     }
 
     private boolean isLocalBindUser(Dn bindDn) {
