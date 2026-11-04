@@ -135,7 +135,7 @@ public class HaProviderDeploymentContributorTest {
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_NAMESPACE, "testRoleOneOverride");
       testRoleOneParams.put(HaServiceConfigConstants.CONFIG_PARAM_ZOOKEEPER_ENSEMBLE, "http://host3:2181,http://host4:2181");
 
-      // A service with all the params overriden
+      // A service with all the params overridden
       Service testRoleOneService = EasyMock.createNiceMock(Service.class);
       EasyMock.expect(testRoleOneService.getRole()).andReturn("TestRoleOne").anyTimes();
       EasyMock.expect(testRoleOneService.getName()).andReturn("TestRoleOneService").anyTimes();
