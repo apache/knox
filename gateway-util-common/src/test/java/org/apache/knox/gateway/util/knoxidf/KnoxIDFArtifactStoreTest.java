@@ -60,4 +60,11 @@ public class KnoxIDFArtifactStoreTest {
   public void testGetUnknownKeyReturnsNull() {
     assertNull(new TestStore().get("missing"));
   }
+
+  @Test
+  public void testNullKeyIsAMissNotAnNpe() {
+    final TestStore store = new TestStore();
+    assertNull("A null key (e.g. a missing request parameter) must be a cache miss.", store.get(null));
+    store.remove(null); // must not throw
+  }
 }

@@ -38,11 +38,13 @@ public abstract class KnoxIDFArtifactStore<T> {
     }
 
     public T get(String key) {
-        return cache.getIfPresent(key);
+        return key == null ? null : cache.getIfPresent(key);
     }
 
     /** Invalidates an entry so a single-use artifact cannot be replayed within its TTL grace window. */
     public void remove(String key) {
-        cache.invalidate(key);
+        if (key != null) {
+            cache.invalidate(key);
+        }
     }
 }

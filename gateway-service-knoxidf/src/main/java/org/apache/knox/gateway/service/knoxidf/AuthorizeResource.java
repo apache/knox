@@ -67,10 +67,13 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import javax.net.ssl.SSLContext;
 import java.io.UnsupportedEncodingException;
@@ -398,10 +401,18 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     // it must not be triggerable by passive browser navigation (img/link prefetch, history re-nav) or
     // by a leaked consent-state URL. Requiring a form POST puts it under the browser's same-origin/CSRF
     // model.
+    // state is bound via @FormParam rather than request.getParameter(): the identity-assertion request
+    // wrapper drains and re-encodes form bodies in getInputStream(), after which the container no
+    // longer exposes form fields as servlet parameters; Jersey's form binding reads that re-encoded body.
     @POST
     @Path("/consentAccepted")
-    public Response consentAccepted() throws Exception {
-        final String state = request.getParameter(STATE);
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response consentAccepted(@FormParam(STATE) final String state) throws Exception {
+        if (StringUtils.isBlank(state)) {
+            KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.UNKNOWN, ResourceType.PRINCIPAL,
+                    ActionOutcome.FAILURE, "event=consent reason=missing_state");
+            return error("invalid_request", "Missing state");
+        }
         final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
         if (authorizeRequestMetadata == null) {
             KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.UNKNOWN, ResourceType.PRINCIPAL,
