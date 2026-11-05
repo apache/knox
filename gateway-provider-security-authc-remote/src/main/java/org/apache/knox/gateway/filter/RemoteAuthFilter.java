@@ -60,9 +60,9 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class RemoteAuthFilter implements Filter {
 
@@ -118,7 +118,7 @@ public class RemoteAuthFilter implements Filter {
     if (cacheTime != null) {
       int expireAfterMinutes = Integer.parseInt(cacheTime);
       authenticationCache = CacheBuilder.newBuilder()
-              .expireAfterWrite(expireAfterMinutes, TimeUnit.MINUTES)
+              .expireAfterWrite(Duration.ofMinutes(expireAfterMinutes))
               .build();
     }
 
