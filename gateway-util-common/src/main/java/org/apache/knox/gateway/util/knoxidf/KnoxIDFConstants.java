@@ -73,6 +73,10 @@ public interface KnoxIDFConstants {
     String FEDERATED_OP_CONFIG_NAMES = FEDERATED_OP_CONFIG_PREFIX + "names";
 
     String TOKEN_EXCHANGE_TOPOLOGY_NAME = "token.exchange.topology.name";
+    // Topologies on which discovery advertises the authorization_endpoint and registration_endpoint
+    // instead of the current one, the same way TOKEN_EXCHANGE_TOPOLOGY_NAME moves the token_endpoint.
+    String AUTHORIZATION_TOPOLOGY_NAME = "authorization.topology.name";
+    String CLIENT_REGISTRATION_TOPOLOGY_NAME = "client.registration.topology.name";
 
     // When false (the default), the dynamic client-registration endpoint refuses anonymous callers
     // even if the topology wires it as 'anon'. Deployments that intend open, unauthenticated

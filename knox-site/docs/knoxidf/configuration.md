@@ -64,6 +64,8 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 | `knoxidf.registration.allowed.scopes` | OIDC-standard set | Comma-separated server-side whitelist of scopes a client may put in its `allowed_scopes` at [registration](security.md#registerable-scope-whitelist). An explicit value is **authoritative** (replaces the default). `openid` is always registerable. Blank/unset ⇒ `openid,profile,email,address,phone,offline_access`. |
 | `knoxidf.custom.loopback.hosts` | (none) | Comma-separated **additional** hostnames treated as loopback when validating a registered `redirect_uri`, permitting plain `http://` for those hosts (per RFC 8252). These are added to — they do not replace — the built-in `localhost`, `127.0.0.1`, and `::1`. |
 | `token.exchange.topology.name` | (none) | Name of the token-exchange topology (fronted by `JWTProvider`) to which the `token_endpoint` and `userinfo_endpoint` are redirected in discovery. See the [two-topology model](getting_started.md#3-deploy-the-knoxidf-topologies). |
+| `authorization.topology.name` | (none) | Name of the topology on which discovery advertises the `authorization_endpoint`, e.g. an SSO-fronted topology when discovery is served from another one. Unset ⇒ the current topology. |
+| `client.registration.topology.name` | (none) | Name of the topology on which discovery advertises the `registration_endpoint`, e.g. one fronted by `JWTProvider` so clients register with a bearer token instead of an SSO login. Unset ⇒ the current topology. |
 | `federated.op.names` | (none) | Comma-separated list of federated OP logical names to enable. See [Federated OP parameters](#federated-op-parameters). |
 
 !!! warning "Secure-by-default flags"
