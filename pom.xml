@@ -267,7 +267,7 @@
         <jee-pac4j.version>8.0.3</jee-pac4j.version>
         <postgresql.version>42.7.12</postgresql.version>
         <mysql.version>8.0.28</mysql.version>
-        <mariadb.connector.version>3.3.0</mariadb.connector.version>
+        <mariadb.connector.version>3.3.7</mariadb.connector.version>
         <okio.version>3.6.0</okio.version>
         <oracle.version>23.26.0.0.0</oracle.version>
         <protobuf.version>3.25.8</protobuf.version>
@@ -2725,7 +2725,7 @@
             <dependency>
                 <groupId>org.mariadb.jdbc</groupId>
                 <artifactId>mariadb-java-client</artifactId>
-                <version>3.3.5</version>
+                <version>${mariadb.connector.version}</version>
                 <exclusions>
                     <exclusion>
                        <groupId>com.github.waffle</groupId>
