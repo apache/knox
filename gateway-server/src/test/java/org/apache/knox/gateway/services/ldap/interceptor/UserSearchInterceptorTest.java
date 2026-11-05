@@ -68,6 +68,8 @@ public class UserSearchInterceptorTest {
     private static final String TEST_INTERCEPTOR = "TEST";
     private static final String NEXT_INTERCEPTOR = "NEXT";
 
+    private static final String[] USER_ATTRIBUTES = new String[]{"*"};
+
     private UserSearchInterceptor interceptor;
     private LdapBackend mockLdapBackend;
 
@@ -516,7 +518,7 @@ public class UserSearchInterceptorTest {
 
         Entry backendEntry = new DefaultEntry(baseDn);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager)).andReturn(List.of(backendEntry));
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager, USER_ATTRIBUTES)).andReturn(List.of(backendEntry));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
@@ -540,7 +542,7 @@ public class UserSearchInterceptorTest {
         Dn baseDn = new Dn(schemaManager, "uid=alice,ou=people,dc=proxy,dc=com");
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, "(objectClass=*)", schemaManager))
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, "(objectClass=*)", schemaManager, USER_ATTRIBUTES))
                 .andReturn(List.of(new DefaultEntry(baseDn)));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
@@ -563,7 +565,7 @@ public class UserSearchInterceptorTest {
 
         LdapNoSuchObjectException localException = new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager))
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager, USER_ATTRIBUTES))
                 .andThrow(new LdapNoSuchObjectException("No such entry in backend TEST: " + baseDn));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
@@ -584,7 +586,7 @@ public class UserSearchInterceptorTest {
 
         List<Entry> nextEntries = createEntryList(baseDn, 2);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager))
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager, USER_ATTRIBUTES))
                 .andThrow(new LdapNoSuchObjectException("No such entry in backend TEST: " + baseDn));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
@@ -610,7 +612,7 @@ public class UserSearchInterceptorTest {
 
         LdapNoSuchObjectException expectedException = new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(false);
-        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class)))
+        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class), anyObject(String[].class)))
                 .andThrow(new AssertionError("search should not be called if base dn does not match backend"))
                 .anyTimes();
         replay(mockLdapBackend);

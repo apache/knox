@@ -586,7 +586,7 @@ public class LdapProxyBackendTest {
     @Test
     public void testSearchOnUserEntryReturnsThatUser() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
-        List<Entry> entries = ldapProxyBackend.search("uid=ldaptest1,ou=people,dc=proxy,dc=com", SearchScope.OBJECT, "(objectClass=*)", schemaManager);
+        List<Entry> entries = ldapProxyBackend.search("uid=ldaptest1,ou=people,dc=proxy,dc=com", SearchScope.OBJECT, "(objectClass=*)", schemaManager, null);
         assertEquals(1, entries.size());
         assertEquals("ldaptest1", entries.get(0).get("uid").getString());
     }
@@ -595,7 +595,7 @@ public class LdapProxyBackendTest {
     public void testSearchOnUnknownEntryThrowsNoSuchObject() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         assertThrows(LdapNoSuchObjectException.class,
-                () -> ldapProxyBackend.search("uid=ghost,ou=people,dc=proxy,dc=com", SearchScope.OBJECT, "(objectClass=*)", schemaManager));
+                () -> ldapProxyBackend.search("uid=ghost,ou=people,dc=proxy,dc=com", SearchScope.OBJECT, "(objectClass=*)", schemaManager, null));
     }
 
     @Test
@@ -766,10 +766,18 @@ public class LdapProxyBackendTest {
         List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=recursiveUser)", schemaManager, new String[] {"uid", "cn"});
         assertEquals(1, entries.size());
         assertNull(entries.get(0).get("memberOf"));
+    }
+
+    @Test
+    public void testSearchAddsGroupMembershipsNoAttributesSpecified() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createRecursiveConfig(2));
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=recursiveUser)", schemaManager, new String[] {});
+        assertEquals(1, entries.size());
+        assertNotNull(entries.get(0).get("memberOf"));
 
         entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=recursiveUser)", schemaManager, null);
         assertEquals(1, entries.size());
-        assertNull(entries.get(0).get("memberOf"));
+        assertNotNull(entries.get(0).get("memberOf"));
     }
 
     @Test

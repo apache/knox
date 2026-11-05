@@ -613,10 +613,11 @@ public class LdapProxyBackend implements LdapBackend {
     /**
      * Returns true if the requested attributes include the given attribute or "*". Requested
      * attributes may be names or OIDs, so they are compared by attribute type OID via the schema.
+     * Null or empty attributes indicates all attributes (i.e., "*")
      */
     private static boolean isAttributeRequested(String[] requestedAttributes, String attribute, SchemaManager schemaManager) {
-        if (requestedAttributes == null) {
-            return false;
+        if (requestedAttributes == null || requestedAttributes.length == 0) {
+            return true;
         }
         final AttributeType attributeType = schemaManager.getAttributeType(attribute);
         for (String requested : requestedAttributes) {
