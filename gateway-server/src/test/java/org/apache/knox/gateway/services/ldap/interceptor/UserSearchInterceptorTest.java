@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
+import org.apache.directory.api.ldap.model.constants.SchemaConstants;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -391,6 +392,11 @@ public class UserSearchInterceptorTest {
 
     private String nameOf(String attribute) {
         return schemaManager.getAttributeType(attribute).getName();
+    }
+
+    @Test
+    public void testSearchPassesNoAttributes() throws Exception {
+        assertEquals(List.of(SchemaConstants.NO_ATTRIBUTE), searchAndCaptureAttributes(SchemaConstants.NO_ATTRIBUTE));
     }
 
     @Test

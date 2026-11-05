@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
+import org.apache.directory.api.ldap.model.constants.SchemaConstants;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -156,6 +157,9 @@ public class UserSearchInterceptor extends BaseInterceptor {
     }
 
     private String[] getReturningAttributes(SearchOperationContext ctx) {
+        if (ctx.isNoAttributes()) {
+            return SchemaConstants.NO_ATTRIBUTE_ARRAY;
+        }
         List<String> returningAttributes = new ArrayList<>();
         if (ctx.getReturningAttributes() != null) {
             Arrays.stream(ctx.getReturningAttributesString()).forEach(oid -> {
