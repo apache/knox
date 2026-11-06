@@ -35,6 +35,7 @@ import org.apache.hadoop.security.Groups;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
+import org.apache.knox.gateway.services.ldap.UserGroupsLookupResult;
 
 /**
  * A filter that integrates the Hadoop {@link GroupMappingServiceProvider} for
@@ -133,11 +134,18 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
       return hadoopGroups == null ? List.of() : hadoopGroups.getGroups(mappedPrincipalName);
     } else {
       LOG.useKnoxLDAPService();
-      final List<String> groups = ldapService.getUserGroups(mappedPrincipalName);
-      if (request != null && ldapService.hasRolesLookupInterceptor()) {
-        request.setAttribute(ROLES_LOOKUP_EXECUTED, Boolean.TRUE.toString());
+      final UserGroupsLookupResult result = ldapService.lookupUserGroups(mappedPrincipalName);
+      // Having the roles lookup interceptor configured is not enough: it only looks up roles for a user it
+      // finds in LDAP. Otherwise, leave the lookup to the downstream consumers (e.g. KNOX-AUTH-SERVICE).
+      if (result.rolesLookupApplied()) {
+        LOG.rolesLookupApplied(mappedPrincipalName);
+        if (request != null) {
+          request.setAttribute(ROLES_LOOKUP_EXECUTED, Boolean.TRUE.toString());
+        }
+      } else {
+        LOG.rolesLookupNotApplied(mappedPrincipalName);
       }
-      return groups;
+      return result.groups();
     }
   }
 

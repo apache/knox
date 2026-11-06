@@ -639,6 +639,49 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
+    public void testLookupUserGroupsRolesLookupNotAppliedWhenUserNotFound() throws Exception {
+        serverManager.initialize(createNoInterceptorConfig());
+        serverManager.start();
+
+        // The roles lookup interceptor looks up roles per returned user entry: with no entry, no lookup
+        // happened even though the interceptor is configured.
+        setRolesLookupInterceptorFlag(true);
+
+        UserGroupsLookupResult result = serverManager.lookupUserGroups("not-in-ldap");
+
+        assertTrue(result.groups().isEmpty());
+        assertFalse("Roles lookup must not be reported as applied for a user not found", result.rolesLookupApplied());
+    }
+
+    @Test
+    public void testLookupUserGroupsRolesLookupAppliedWhenUserFound() throws Exception {
+        serverManager.initialize(createNoInterceptorConfig());
+        serverManager.start();
+
+        addUserWithMemberOf("sam", "cn=platform:admin-sam");
+        setRolesLookupInterceptorFlag(true);
+
+        UserGroupsLookupResult result = serverManager.lookupUserGroups("sam");
+
+        assertEquals(List.of("platform:admin-sam"), result.groups());
+        assertTrue(result.rolesLookupApplied());
+    }
+
+    @Test
+    public void testLookupUserGroupsRolesLookupNotAppliedWithoutInterceptor() throws Exception {
+        serverManager.initialize(createNoInterceptorConfig());
+        serverManager.start();
+
+        addUserWithMemberOf("sam", "cn=analysts,ou=groups,dc=test,dc=com");
+        setRolesLookupInterceptorFlag(false);
+
+        UserGroupsLookupResult result = serverManager.lookupUserGroups("sam");
+
+        assertEquals(List.of("analysts"), result.groups());
+        assertFalse(result.rolesLookupApplied());
+    }
+
+    @Test
     public void testStartSetsMaxSizeAndTime() throws Exception {
         final int expectedMaxSize = 3158;
         final int expectedMaxTime = 245000;

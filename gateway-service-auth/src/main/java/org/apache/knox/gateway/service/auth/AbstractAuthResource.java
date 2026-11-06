@@ -179,6 +179,9 @@ public abstract class AbstractAuthResource {
     final GatewayServices gatewayServices = (GatewayServices) getContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
     if (gatewayServices != null) {
       ldapRolesLookupService = gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE);
+      if (ldapRolesLookupService == null || !ldapRolesLookupService.enabled()) {
+        LOG.rolesLookupNotEnabled();
+      }
     }
 
   }
@@ -330,15 +333,19 @@ public abstract class AbstractAuthResource {
 
   private Collection<String> lookupRoles(String userName, Collection<String> groups) {
     Collection<String> roles = null;
-      try {
-        if (!rolesLookupExecuted() && ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
-          roles = ldapRolesLookupService.lookupRoles(userName, groups);
-        }
-      } catch (Exception e) {
-        // Couldn't lookup roles: log and return null so that the API will return the groups
-        LOG.ldapRolesLookupFailed(userName, e);
+    try {
+      if (rolesLookupExecuted()) {
+        LOG.rolesLookupAlreadyExecuted(userName);
+      } else if (ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
+        LOG.lookingUpRoles(userName, String.valueOf(groups));
+        roles = ldapRolesLookupService.lookupRoles(userName, groups);
+        LOG.rolesFound(userName, String.valueOf(roles));
       }
-      return roles == null ? Collections.emptySet() : roles;
+    } catch (Exception e) {
+      // Couldn't lookup roles: log and return null so that the API will return the groups
+      LOG.ldapRolesLookupFailed(userName, e);
+    }
+    return roles == null ? Collections.emptySet() : roles;
   }
 
   private boolean rolesLookupExecuted() {

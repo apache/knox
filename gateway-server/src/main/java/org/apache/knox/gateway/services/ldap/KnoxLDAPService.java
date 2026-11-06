@@ -157,7 +157,13 @@ public class KnoxLDAPService implements Service, GatewayConfigChangeListener {
         return ldapServerManager == null ? List.of() : ldapServerManager.getUserGroups(username);
     }
 
-    public boolean hasRolesLookupInterceptor() {
-        return ldapServerManager != null && ldapServerManager.hasRolesLookupInterceptor();
+    /**
+     * Get groups for a user from the configured backend, along with whether the roles lookup
+     * interceptor ran the roles lookup for that user
+     * @param username The username
+     * @return the group names and whether the roles lookup was applied
+     */
+    public UserGroupsLookupResult lookupUserGroups(String username) throws Exception {
+        return ldapServerManager == null ? new UserGroupsLookupResult(List.of(), false) : ldapServerManager.lookupUserGroups(username);
     }
 }
