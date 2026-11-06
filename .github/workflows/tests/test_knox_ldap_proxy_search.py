@@ -69,7 +69,7 @@ def knox_host() -> str:
     return urlparse(url).hostname or "localhost"
 
 
-class TestKnoxLdapProxySearch(unittest.TestCase):
+class TestKnoxLdapProxySearch(unittest.TestCase):  # pylint: disable=too-many-public-methods
     """Verify general search requests are proxied to the demo LDAP backend."""
 
     def setUp(self) -> None:
@@ -86,7 +86,11 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
         self.connection.unbind()
 
     def search(
-        self, base: str, ldap_filter: str, controls: list[tuple] = None
+        self,
+        base: str,
+        ldap_filter: str,
+        controls: list[tuple] = None,
+        attributes=ldap3.ALL_ATTRIBUTES,
     ) -> list[ldap3.Entry]:
         """Run a subtree search and return the entries.
            Re-running search will invalidate the entries."""
@@ -95,9 +99,21 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
             base,
             ldap_filter,
             search_scope=ldap3.SUBTREE,
-            attributes=ldap3.ALL_ATTRIBUTES,
+            attributes=attributes,
             controls=controls)
         return self.connection.entries
+
+    def search_one(
+        self, base: str, ldap_filter: str, attributes
+    ) -> ldap3.Entry:
+        """Run a subtree search expected to match exactly one entry and return it."""
+        entries = self.search(base, ldap_filter, attributes=attributes)
+        self.assertEqual(1, len(entries), f"expected one entry for {ldap_filter}")
+        return entries[0]
+
+    def attribute_names(self, entry: ldap3.Entry) -> set[str]:
+        """The (lower-cased) names of the attributes returned for an entry."""
+        return {name.lower() for name in entry.entry_attributes_as_dict}
 
     def rdn_values(self, entries: list[ldap3.Entry]) -> list[str]:
         """Extract the RDN value of each entry."""
@@ -168,6 +184,58 @@ class TestKnoxLdapProxySearch(unittest.TestCase):
         """A single user can still be looked up by uid."""
         users = self.rdn_values(self.search(PROXY_PEOPLE_BASE, "(uid=sam)"))
         self.assertIn("sam", users)
+
+    # ---- Returning attributes ----
+    #
+    # These exercise the attribute selection honored by UserSearchInterceptor's
+    # getReturningAttributes(): a client may ask for no attributes (OID "1.1"),
+    # all user attributes ("*"), or an explicit list, and only those come back.
+
+    def test_search_returns_all_user_attributes(self) -> None:
+        """Requesting all user attributes ("*") returns the user's attributes."""
+        entry = self.search_one(PEOPLE_BASE, "(uid=sam)", ldap3.ALL_ATTRIBUTES)
+        self.assertTrue(
+            {"uid", "cn", "sn", "mail", "objectclass"} <= self.attribute_names(entry),
+            self.attribute_names(entry))
+
+    def test_search_returns_only_requested_attribute(self) -> None:
+        """Requesting a single attribute returns that attribute and no other user
+        attribute (e.g. mail and sn are withheld)."""
+        entry = self.search_one(PEOPLE_BASE, "(uid=sam)", ["cn"])
+        names = self.attribute_names(entry)
+        self.assertIn("cn", names)
+        self.assertNotIn("mail", names)
+        self.assertNotIn("sn", names)
+        self.assertNotIn("uid", names)
+
+    def test_search_returns_only_requested_attributes(self) -> None:
+        """Requesting an explicit list returns exactly those attributes."""
+        entry = self.search_one(PEOPLE_BASE, "(uid=sam)", ["uid", "mail"])
+        names = self.attribute_names(entry)
+        self.assertIn("uid", names)
+        self.assertIn("mail", names)
+        self.assertNotIn("cn", names)
+        self.assertNotIn("sn", names)
+
+    def test_search_no_attributes_returns_entry_without_attributes(self) -> None:
+        """Requesting no attributes (OID "1.1") still returns the matching entry
+        but with none of its attributes."""
+        entry = self.search_one(PEOPLE_BASE, "(uid=sam)", ldap3.NO_ATTRIBUTES)
+        self.assertEqual("sam", entry.entry_dn.split(",", 1)[0].split("=", 1)[1])
+        self.assertEqual(set(), self.attribute_names(entry))
+
+    def test_search_returns_only_requested_attribute_proxy_dn(self) -> None:
+        """Attribute selection is honored when searching under the proxy base DN."""
+        entry = self.search_one(PROXY_PEOPLE_BASE, "(uid=sam)", ["cn"])
+        names = self.attribute_names(entry)
+        self.assertIn("cn", names)
+        self.assertNotIn("mail", names)
+
+    def test_search_no_attributes_returns_entry_without_attributes_proxy_dn(self) -> None:
+        """No-attribute search is honored when searching under the proxy base DN."""
+        entry = self.search_one(PROXY_PEOPLE_BASE, "(uid=sam)", ldap3.NO_ATTRIBUTES)
+        self.assertEqual("sam", entry.entry_dn.split(",", 1)[0].split("=", 1)[1])
+        self.assertEqual(set(), self.attribute_names(entry))
 
 
 if __name__ == "__main__":

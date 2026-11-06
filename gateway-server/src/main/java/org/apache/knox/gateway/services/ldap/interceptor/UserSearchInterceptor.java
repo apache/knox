@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.interceptor;
 
 import org.apache.directory.api.ldap.model.constants.AuthenticationLevel;
+import org.apache.directory.api.ldap.model.constants.SchemaConstants;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -28,6 +29,7 @@ import org.apache.directory.api.ldap.model.filter.ExprNode;
 import org.apache.directory.api.ldap.model.filter.ObjectClassNode;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.LdapPrincipal;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
@@ -44,6 +46,7 @@ import org.apache.knox.gateway.services.ldap.backend.LdapBackend;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -104,8 +107,9 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         String filter = filterString(ctx.getFilter());
         String baseDn = ctx.getDn() != null ? ctx.getDn().toString() : "";
+        String[] returningAttributes = getReturningAttributes(ctx);
 
-        LOG.ldapSearch(baseDn, filter);
+        LOG.ldapSearch(baseDn, filter, Arrays.toString(returningAttributes));
 
         // Only forward to the backend when the search base is under the backend's namespace.
         // System/operational searches (ou=schema, cn=config, root-DSE) must not be forwarded.
@@ -135,7 +139,7 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         if (backendSearchBase) {
             try {
-                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager));
+                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager, returningAttributes));
             } catch (LdapNoSuchObjectException e) {
                 // The search base does not exist in the backend; it is an error only if it does not exist locally either
                 if (notFoundLocally != null) {
@@ -150,6 +154,32 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         // Return cursor with our results - use a simple approach
         return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    private String[] getReturningAttributes(SearchOperationContext ctx) {
+        if (ctx.isNoAttributes()) {
+            return SchemaConstants.NO_ATTRIBUTE_ARRAY;
+        }
+        List<String> returningAttributes = new ArrayList<>();
+        if (ctx.getReturningAttributes() != null) {
+            Arrays.stream(ctx.getReturningAttributesString()).forEach(oid -> {
+                AttributeType attributeType = schemaManager.getAttributeType(oid);
+                if (attributeType != null) {
+                    // prefer to use the attribute name when calling backend
+                    returningAttributes.add(attributeType.getName());
+                } else {
+                    // use oid if attribute name not found
+                    returningAttributes.add(oid);
+                }
+            });
+        }
+        if (ctx.isAllUserAttributes()) {
+            returningAttributes.add("*");
+        }
+        if (ctx.isAllOperationalAttributes()) {
+            returningAttributes.add("+");
+        }
+        return returningAttributes.toArray(new String[0]);
     }
 
     @Override

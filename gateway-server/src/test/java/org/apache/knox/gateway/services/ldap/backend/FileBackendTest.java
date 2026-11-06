@@ -100,7 +100,7 @@ public class FileBackendTest {
     }
 
     private List<String> search(String base, SearchScope scope, String filter) throws Exception {
-        return backend.search(base, scope, filter, schemaManager).stream()
+        return backend.search(base, scope, filter, schemaManager, null).stream()
                 .map(entry -> entry.getDn().getName())
                 .collect(Collectors.toList());
     }
