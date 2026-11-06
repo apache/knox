@@ -31,5 +31,5 @@
         <rewrite apply="LIVYSERVER/livy/outbound/headers" to="response.headers"/>
     </route>
   </routes>
-  <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch"/>
+  <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.LivyHaDispatch" />
 </service>

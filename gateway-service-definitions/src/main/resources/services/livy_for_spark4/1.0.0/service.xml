@@ -23,7 +23,7 @@
         <description>Apache Livy is a service that enables easy interaction with a Spark cluster over a REST interface.</description>
     </metadata>
     <routes>
-        <route path="/livy_for_spark4/**"/>
+        <route path="/livy_for_spark4/**?**"/>
         <route path="/livy_for_spark4">
             <rewrite apply="LIVY_FOR_SPARK4/livy_for_spark4/outbound/headers" to="response.headers"/>
         </route>
@@ -31,5 +31,5 @@
             <rewrite apply="LIVY_FOR_SPARK4/livy_for_spark4/outbound/headers" to="response.headers"/>
         </route>
     </routes>
-    <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch"/>
+    <dispatch classname="org.apache.knox.gateway.livy.LivyDispatch" ha-classname="org.apache.knox.gateway.ha.dispatch.LivyHaDispatch" />
 </service>
