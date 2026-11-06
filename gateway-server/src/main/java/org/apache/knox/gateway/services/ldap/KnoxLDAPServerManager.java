@@ -589,6 +589,16 @@ public class KnoxLDAPServerManager {
      * @return List of group names
      */
     public List<String> getUserGroups(String username) throws Exception {
+        return lookupUserGroups(username).groups();
+    }
+
+    /**
+     * Get groups for a user from the configured backend, along with whether the roles lookup
+     * interceptor ran the roles lookup for that user
+     * @param username The username
+     * @return the group names and whether the roles lookup was applied
+     */
+    public UserGroupsLookupResult lookupUserGroups(String username) throws Exception {
         SearchRequest searchRequest = new SearchRequestImpl();
         searchRequest.setBase(new Dn(directoryService.getSchemaManager(), baseDn));
         searchRequest.setScope(SearchScope.SUBTREE);
@@ -596,8 +606,10 @@ public class KnoxLDAPServerManager {
         searchRequest.addAttributes("*");
 
         List<String> groups = new ArrayList<>();
+        boolean userFound = false;
         try (Cursor<Entry> cursor = directoryService.getAdminSession().search(searchRequest)) {
             if (cursor.next()) {
+                userFound = true;
                 Entry entry = cursor.get();
                 Attribute memberOf = entry.get("memberOf");
                 if (memberOf != null) {
@@ -619,11 +631,8 @@ public class KnoxLDAPServerManager {
                 }
             }
         }
-        return groups;
-    }
-
-    public boolean hasRolesLookupInterceptor() {
-        return hasRolesLookupInterceptor;
+        // The roles lookup interceptor looks up roles for each user entry the search returns: no entry, no lookup
+        return new UserGroupsLookupResult(groups, userFound && hasRolesLookupInterceptor);
     }
 
     /**

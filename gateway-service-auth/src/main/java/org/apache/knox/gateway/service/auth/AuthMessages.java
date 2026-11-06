@@ -34,6 +34,18 @@ public interface AuthMessages {
   @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
   void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+  @Message(level = MessageLevel.DEBUG, text = "The roles of user {0} were already looked up by the identity assertion provider; skipping the roles lookup")
+  void rolesLookupAlreadyExecuted(String user);
+
+  @Message(level = MessageLevel.DEBUG, text = "The LDAP roles lookup service is not enabled")
+  void rolesLookupNotEnabled();
+
+  @Message(level = MessageLevel.DEBUG, text = "Looking up the roles of user {0} with groups {1}")
+  void lookingUpRoles(String user, String groups);
+
+  @Message(level = MessageLevel.DEBUG, text = "Found roles for user {0}: {1}")
+  void rolesFound(String user, String roles);
+
   @Message(level = MessageLevel.WARN, text = "The authenticated user''s token ({0} bytes) exceeds the configured {1} of {2} bytes; "
       + "the {3} response header is omitted. Raise the limit, and the proxy''s response header buffer, if the token is needed downstream.")
   void authTokenTooLargeToForward(int tokenLength, String limitParamName, int limit, String headerName);

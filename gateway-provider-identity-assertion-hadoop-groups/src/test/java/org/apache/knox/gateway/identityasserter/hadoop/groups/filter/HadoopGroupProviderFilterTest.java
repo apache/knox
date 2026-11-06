@@ -49,6 +49,7 @@ import org.apache.knox.gateway.security.PrimaryPrincipal;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.ldap.KnoxLDAPService;
+import org.apache.knox.gateway.services.ldap.UserGroupsLookupResult;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
@@ -304,7 +305,15 @@ public class HadoopGroupProviderFilterTest {
     doTestLdapServiceIntegration(true, Arrays.asList("group1", "group2"), ldapService, true);
   }
 
-  private void doTestLdapServiceIntegration(boolean ldapEnabled, List<String> expectedGroups, KnoxLDAPService ldapService, boolean hasRolesLookupInterceptor) throws Exception {
+  @Test
+  public void testLdapServiceIntegrationWithRolesLookupInterceptorUserNotFound() throws Exception {
+    // The interceptor is configured, but it never ran: the user (e.g. a service account) is not in LDAP.
+    // The roles lookup must not be marked as executed so that KNOX-AUTH-SERVICE performs it.
+    KnoxLDAPService ldapService = EasyMock.createNiceMock(KnoxLDAPService.class);
+    doTestLdapServiceIntegration(true, Collections.emptyList(), ldapService, false);
+  }
+
+  private void doTestLdapServiceIntegration(boolean ldapEnabled, List<String> expectedGroups, KnoxLDAPService ldapService, boolean rolesLookupApplied) throws Exception {
     final String principalName = "test-user";
 
     FilterConfig config = EasyMock.createNiceMock(FilterConfig.class);
@@ -321,8 +330,7 @@ public class HadoopGroupProviderFilterTest {
       GatewayServices services = EasyMock.createNiceMock(GatewayServices.class);
       EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services).anyTimes();
       EasyMock.expect(services.getService(ServiceType.LDAP_SERVICE)).andReturn(ldapService).anyTimes();
-      EasyMock.expect(ldapService.getUserGroups(principalName)).andReturn(expectedGroups).anyTimes();
-      EasyMock.expect(ldapService.hasRolesLookupInterceptor()).andReturn(hasRolesLookupInterceptor).anyTimes();
+      EasyMock.expect(ldapService.lookupUserGroups(principalName)).andReturn(new UserGroupsLookupResult(expectedGroups, rolesLookupApplied)).anyTimes();
       EasyMock.replay(services, ldapService);
     } else {
       EasyMock.expect(config.getInitParameterNames()).andReturn(Collections.emptyEnumeration()).anyTimes();
@@ -341,8 +349,9 @@ public class HadoopGroupProviderFilterTest {
     Subject subject = new Subject();
     subject.getPrincipals().add(new PrimaryPrincipal(principalName));
 
-    final ServletRequest request = EasyMock.createNiceMock(ServletRequest.class);
-    if (hasRolesLookupInterceptor) {
+    // not a nice mock: an unexpected ROLES_LOOKUP_EXECUTED attribute must fail the test
+    final ServletRequest request = EasyMock.createMock(ServletRequest.class);
+    if (rolesLookupApplied) {
       request.setAttribute(AbstractIdentityAssertionFilter.ROLES_LOOKUP_EXECUTED, "true");
       EasyMock.expectLastCall().atLeastOnce();
     }
@@ -353,9 +362,7 @@ public class HadoopGroupProviderFilterTest {
     assertThat(Arrays.asList(groups), is(expectedGroups));
     if (ldapEnabled) {
       EasyMock.verify(ldapService);
-      if (hasRolesLookupInterceptor) {
-        EasyMock.verify(request);
-      }
     }
+    EasyMock.verify(request);
   }
 }
