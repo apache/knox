@@ -17,85 +17,24 @@
  */
 package org.apache.knox.gateway.livy;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.knox.gateway.dispatch.ConfigurableDispatch;
-import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRequestStream;
-import org.apache.knox.gateway.security.SubjectUtils;
 
-import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This specialized dispatch provides Livy specific features to the
  * default dispatch.
  */
-public class LivyDispatch extends ConfigurableDispatch {
+public final class LivyDispatch extends ConfigurableDispatch {
 
   @Override
-  public void doPost(URI url, HttpServletRequest request, HttpServletResponse response)
+  public void doPost(final URI url, final HttpServletRequest request,
+      final HttpServletResponse response)
       throws IOException, URISyntaxException {
     super.doPost(url, new LivyHttpServletRequest(request), response);
   }
-
-  /**
-   * HttpServletRequest that adds or sets the proxyUser parameter on the json body
-   */
-  private class LivyHttpServletRequest extends HttpServletRequestWrapper {
-    private final List<String> proxyUserEndpoints = Arrays.asList("/batches", "/sessions");
-
-    LivyHttpServletRequest(HttpServletRequest request) {
-      super(request);
-    }
-
-    @Override
-    public ServletInputStream getInputStream() throws IOException {
-      ServletInputStream inputStream = super.getInputStream();
-
-      HttpServletRequest request = (HttpServletRequest)getRequest();
-      String requestURI = request.getRequestURI();
-      if(matchProxyUserEndpoints(requestURI)) {
-        // Parse the json object from the request
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> jsonMap = objectMapper.readValue(inputStream, new TypeReference<Map<String,Object>>(){});
-
-        // Force the proxyUser to be set to the remote user
-        jsonMap.put("proxyUser", SubjectUtils.getCurrentEffectivePrincipalName());
-
-        // Create the new ServletInputStream with modified json map.
-        String s = objectMapper.writeValueAsString(jsonMap);
-        return new UrlRewriteRequestStream(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
-      }
-
-      return inputStream;
-    }
-
-    private boolean matchProxyUserEndpoints(String requestURI) {
-      for(String endpoint : proxyUserEndpoints) {
-        if(requestURI.endsWith(endpoint) || requestURI.endsWith(endpoint + '/')) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public BufferedReader getReader() throws IOException {
-      return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
-    }
-  }
 }
-
