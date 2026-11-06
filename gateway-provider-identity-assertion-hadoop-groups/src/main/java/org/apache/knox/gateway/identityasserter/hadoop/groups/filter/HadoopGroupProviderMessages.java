@@ -50,4 +50,10 @@ public interface HadoopGroupProviderMessages {
 
   @Message( level = MessageLevel.DEBUG, text = "The Knox LDAP service did not look up the roles of principal {0} (no roles lookup interceptor is configured, or the principal was not found in LDAP); leaving the roles lookup to downstream consumers" )
   void rolesLookupNotApplied(String principal);
+
+  @Message( level = MessageLevel.INFO, text = "The group lookup is skipped for principals matching {0}" )
+  void groupLookupSkipPatternConfigured(String pattern);
+
+  @Message( level = MessageLevel.DEBUG, text = "Skipping the group lookup of principal {0}: it matches {1}" )
+  void groupLookupSkipped(String principal, String pattern);
 }

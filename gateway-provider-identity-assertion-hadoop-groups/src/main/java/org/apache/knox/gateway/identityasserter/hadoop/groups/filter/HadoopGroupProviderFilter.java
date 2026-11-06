@@ -19,6 +19,8 @@ package org.apache.knox.gateway.identityasserter.hadoop.groups.filter;
 
 import java.util.Enumeration;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.security.auth.Subject;
 import jakarta.servlet.FilterConfig;
@@ -53,6 +55,11 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   static final String USE_LDAP_SERVICE = "use.ldap.service";
 
   /**
+   * A regex matching principals known not to exist in LDAP (e.g. workload identities): their groups are not looked up
+   */
+  static final String GROUP_LOOKUP_SKIP_PRINCIPAL_PATTERN = "group.lookup.skip.principal.pattern";
+
+  /**
    * Configuration object needed by for hadoop classes
    */
   private Configuration hadoopConfig;
@@ -64,6 +71,8 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
 
   private KnoxLDAPService ldapService;
 
+  private Pattern groupLookupSkipPattern;
+
   /* create an instance */
   public HadoopGroupProviderFilter() {
     super();
@@ -72,6 +81,16 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
   @Override
   public void init(final FilterConfig filterConfig) throws ServletException {
     super.init(filterConfig);
+
+    final String groupLookupSkipPatternString = filterConfig.getInitParameter(GROUP_LOOKUP_SKIP_PRINCIPAL_PATTERN);
+    if (groupLookupSkipPatternString != null && !groupLookupSkipPatternString.isBlank()) {
+      try {
+        groupLookupSkipPattern = Pattern.compile(groupLookupSkipPatternString);
+      } catch (final PatternSyntaxException e) {
+        throw new ServletException("Invalid " + GROUP_LOOKUP_SKIP_PRINCIPAL_PATTERN + ": " + groupLookupSkipPatternString, e);
+      }
+      LOG.groupLookupSkipPatternConfigured(groupLookupSkipPatternString);
+    }
 
     if (shouldUseLdapService(filterConfig)) {
       final GatewayServices services = (GatewayServices) filterConfig.getServletContext().getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
@@ -109,6 +128,12 @@ public class HadoopGroupProviderFilter extends CommonIdentityAssertionFilter {
    */
   @Override
   public String[] mapGroupPrincipals(final String mappedPrincipalName, final Subject subject, ServletRequest request) {
+    if (groupLookupSkipPattern != null && mappedPrincipalName != null && groupLookupSkipPattern.matcher(mappedPrincipalName).matches()) {
+      // Known not to be in LDAP: a lookup would only cost a round trip to find nothing
+      LOG.groupLookupSkipped(mappedPrincipalName, groupLookupSkipPattern.pattern());
+      return new String[0];
+    }
+
     /* return the groups as seen by Hadoop */
     String[] groups;
     try {
