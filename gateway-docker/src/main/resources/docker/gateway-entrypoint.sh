@@ -30,9 +30,9 @@
 # - DATABASE_CONNECTION_PASSWORD - (optional) gateway database password
 # - DATABASE_CONNECTION_TRUSTSTORE_PASSWORD - (optional) gateway database ssl truststore password
 # - CUSTOM_CERT - (optional) the location of a file containing the custom certs
-# - IMPORT_LETS_ENCRYPT_STAGING_CERTS - (optional) when 'true' (default), download Let's Encrypt staging root
-#   CAs into /home/knox/cacrts at startup and import them into the gateway truststore. Set to 'false' to
-#   skip staging CA download and import (Amazon and ISRG production roots in TRUSTSTORE_IMPORTS are unaffected).
+# - IMPORT_LETS_ENCRYPT_STAGING_CERTS - (optional) when 'true' (default), import the Let's Encrypt staging root
+#   CAs bundled in the image into the gateway truststore. Set to 'false' to skip the staging CA import
+#   (Amazon and ISRG production roots are unaffected).
 # - TRUSTSTORE_IMPORTS - (optional) - a string containing  one or more of the following: {aliasIdForImport:PEMEncodedTrustCertificateFileLocation} separated by space(s).
 #   Example:
 #   TRUSTSTORE_IMPORTS="myRootCA:/mountedpath/enterprise_root_cert.pem myBizPartnerCA:/mountedpath/mybiz_partner_cert.pem"
@@ -45,7 +45,7 @@
 set -e
 set -o pipefail
 
-# Default: false, download and import Let's Encrypt staging root CAs (see IMPORT_LETS_ENCRYPT_STAGING_CERTS above).
+# Default: true, import Let's Encrypt staging root CAs (see IMPORT_LETS_ENCRYPT_STAGING_CERTS above).
 IMPORT_LETS_ENCRYPT_STAGING_CERTS="${IMPORT_LETS_ENCRYPT_STAGING_CERTS:-true}"
 
 ## Helper function used to import certs into truststore
@@ -63,11 +63,13 @@ importMultipleCerts() {
   for N in $(/usr/bin/seq 0 $((CERTS - 1))); do
     ALIAS="${FILE%.*}-$N"
     # Make import idempotent across restarts when truststore is persisted.
-    keytool -delete \
-            -alias "$ALIAS" \
-            -keystore "${KEYSTORE_DIR}"/truststore.jks \
-            -storepass "$ALIAS_PASSPHRASE" \
-            > /dev/null 2>&1 || true
+    if [[ -f "${KEYSTORE_DIR}"/truststore.jks ]]; then
+      keytool -delete \
+              -alias "$ALIAS" \
+              -keystore "${KEYSTORE_DIR}"/truststore.jks \
+              -storepass "$ALIAS_PASSPHRASE" \
+              > /dev/null 2>&1 || true
+    fi
     if ! /bin/cat "$FILE" |
       /usr/bin/awk "n==$N { print }; /END CERTIFICATE/ { n++ }" |
       keytool -import \
@@ -84,29 +86,26 @@ importMultipleCerts() {
   return "$import_failed"
 }
 
-## Download Let's Encrypt staging root CAs (best-effort) when IMPORT_LETS_ENCRYPT_STAGING_CERTS is true.
-downloadLetEncryptStagingCerts() {
-  local cacrts_dir="/home/knox/cacrts"
-  mkdir -p "${cacrts_dir}"
-  echo "Downloading default Let's Encrypt staging root CAs into ${cacrts_dir} ..."
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-x1.pem" \
-    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem || true
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-x2.pem" \
-    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2.pem || true
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-x2-signed-by-x1.pem" \
-    https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2-signed-by-x1.pem || true
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-ye.pem" \
-    https://letsencrypt.org/certs/staging/gen-y/root-ye.pem || true
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-ye-by-x2.pem" \
-    https://letsencrypt.org/certs/staging/gen-y/root-ye-by-x2.pem || true
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-yr.pem" \
-    https://letsencrypt.org/certs/staging/gen-y/root-yr.pem || true
-  curl -sSLo "${cacrts_dir}/letsencrypt-stg-root-yr-by-x1.pem" \
-    https://letsencrypt.org/certs/staging/gen-y/root-yr-by-x1.pem || true
+importBundledTrustStore() {
+  local src=$1
+  if [[ ! -s ${src} ]]; then
+    echo "WARN: bundled truststore [${src}] not found. Not importing into truststore"
+    return 0
+  fi
+  echo "INFO: Importing bundled certificates from [${src}] into truststore"
+  keytool -importkeystore \
+          -noprompt \
+          -srckeystore "${src}" \
+          -srcstoretype PKCS12 \
+          -srcstorepass "${KNOX_DEFAULT_TRUSTSTORE_PASSWORD}" \
+          -destkeystore "${KEYSTORE_DIR}"/truststore.jks \
+          -deststorepass "${ALIAS_PASSPHRASE}" \
+    || echo "WARN: Unable to import bundled certificates from [${src}]. Continuing startup..."
 }
 
 ## Helper function to save an alias
 ## Function takes alias name, environment variable value, and optional default value
+PENDING_ALIAS_ARGS=()
 saveAlias() {
   local alias_name=$1
   local env_var_value=$2
@@ -114,10 +113,17 @@ saveAlias() {
 
   if [[ -n ${env_var_value} ]]; then
     echo "Creating alias ${alias_name} using provided value..."
-    /home/knox/knox/bin/knoxcli.sh create-alias "${alias_name}" --value "${env_var_value}"
+    PENDING_ALIAS_ARGS+=(--alias "${alias_name}" --value "${env_var_value}")
   elif [[ -n ${default_value} ]]; then
     echo "Creating alias ${alias_name} using default value..."
-    /home/knox/knox/bin/knoxcli.sh create-alias "${alias_name}" --value "${default_value}"
+    PENDING_ALIAS_ARGS+=(--alias "${alias_name}" --value "${default_value}")
+  fi
+}
+
+flushAliases() {
+  if [[ ${#PENDING_ALIAS_ARGS[@]} -gt 0 ]]; then
+    /home/knox/knox/bin/knoxcli.sh create-aliases "${PENDING_ALIAS_ARGS[@]}"
+    PENDING_ALIAS_ARGS=()
   fi
 }
 
@@ -203,6 +209,8 @@ else
   /home/knox/knox/bin/knoxcli.sh generate-jwk --saveAlias knox.token.hash.key
 fi
 
+flushAliases
+
 loadAliasesFromK8sSecrets
 
 # If keystore dir is empty use default one
@@ -245,6 +253,7 @@ then
   # Create JCEKS aliases for Knox
   saveAlias signing.keystore.password "${ALIAS_PASSPHRASE}"
   saveAlias gateway-identity-keystore-password "${ALIAS_PASSPHRASE}"
+  flushAliases
 
   /usr/bin/openssl pkcs12 -export \
     -in "${KNOX_CERT}" \
@@ -284,30 +293,14 @@ then
     fi
 fi
 
-# This default was set to emulate the existing behaviour
-# Customer should be able to override this by specifying this via Docker environment settings
 if [[ -z ${TRUSTSTORE_IMPORTS} ]]
 then
-	TRUSTSTORE_IMPORTS="
-	 amazon-ca-1:/home/knox/cacrts/AmazonRootCA1.cer
-     amazon-ca-2:/home/knox/cacrts/AmazonRootCA2.cer
-     amazon-ca-3:/home/knox/cacrts/AmazonRootCA3.cer
-	   amazon-ca-4:/home/knox/cacrts/AmazonRootCA4.cer
-     isrgrootx1:/home/knox/cacrts/isrgrootx1.pem
-     isrgrootx2:/home/knox/cacrts/isrg-root-x2.pem"
+  importBundledTrustStore /home/knox/cacrts/default-trust.p12
 fi
 
 if [[ "${IMPORT_LETS_ENCRYPT_STAGING_CERTS}" == "true" ]]
 then
-  downloadLetEncryptStagingCerts
-  TRUSTSTORE_IMPORTS="${TRUSTSTORE_IMPORTS}
-     letsencrypt-stg-root-x1:/home/knox/cacrts/letsencrypt-stg-root-x1.pem
-     letsencrypt-stg-root-x2:/home/knox/cacrts/letsencrypt-stg-root-x2.pem
-     letsencrypt-stg-root-x2-signed-by-x1:/home/knox/cacrts/letsencrypt-stg-root-x2-signed-by-x1.pem
-     letsencrypt-stg-root-ye:/home/knox/cacrts/letsencrypt-stg-root-ye.pem
-     letsencrypt-stg-root-ye-by-x2:/home/knox/cacrts/letsencrypt-stg-root-ye-by-x2.pem
-     letsencrypt-stg-root-yr:/home/knox/cacrts/letsencrypt-stg-root-yr.pem
-     letsencrypt-stg-root-yr-by-x1:/home/knox/cacrts/letsencrypt-stg-root-yr-by-x1.pem"
+  importBundledTrustStore /home/knox/cacrts/letsencrypt-staging-trust.p12
 fi
 
 for certinfo in ${TRUSTSTORE_IMPORTS}
@@ -318,11 +311,13 @@ do
     then
         echo "INFO: Importing certificate [${certPath}] into truststore"
         # Replace existing alias to keep imports idempotent.
-        keytool -delete \
-            -keystore "${KEYSTORE_DIR}"/truststore.jks \
-            -alias "${aliasId}" \
-            -storepass "${ALIAS_PASSPHRASE}" \
-            > /dev/null 2>&1 || true
+        if [[ -f "${KEYSTORE_DIR}"/truststore.jks ]]; then
+          keytool -delete \
+              -keystore "${KEYSTORE_DIR}"/truststore.jks \
+              -alias "${aliasId}" \
+              -storepass "${ALIAS_PASSPHRASE}" \
+              > /dev/null 2>&1 || true
+        fi
         keytool -importcert \
             -keystore "${KEYSTORE_DIR}"/truststore.jks \
             -alias "${aliasId}" \

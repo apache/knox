@@ -56,15 +56,34 @@ ARG ENTRYPOINT
 COPY --chown=8000:0 ${ENTRYPOINT} /home/knox/knox/entrypoint.sh
 RUN chmod +x /home/knox/knox/entrypoint.sh
 
-# Add the Amazon Root CA and Let's Encrypt production root certificates (best-effort).
-# Staging roots are downloaded at runtime when IMPORT_LETS_ENCRYPT_STAGING_CERTS=true (default).
-RUN mkdir /home/knox/cacrts && \
-    curl -sSLo /home/knox/cacrts/AmazonRootCA1.cer  https://www.amazontrust.com/repository/AmazonRootCA1.cer  || true && \
-    curl -sSLo /home/knox/cacrts/AmazonRootCA2.cer  https://www.amazontrust.com/repository/AmazonRootCA2.cer  || true && \
-    curl -sSLo /home/knox/cacrts/AmazonRootCA3.cer  https://www.amazontrust.com/repository/AmazonRootCA3.cer  || true && \
-    curl -sSLo /home/knox/cacrts/AmazonRootCA4.cer  https://www.amazontrust.com/repository/AmazonRootCA4.cer  || true && \
-    curl -sSLo /home/knox/cacrts/isrgrootx1.pem     https://letsencrypt.org/certs/isrgrootx1.pem               || true && \
-    curl -sSLo /home/knox/cacrts/isrg-root-x2.pem   https://letsencrypt.org/certs/isrg-root-x2.pem             || true && \
+# Add the Amazon Root CA and Let's Encrypt production and staging root certificates (best-effort).
+ENV KNOX_DEFAULT_TRUSTSTORE_PASSWORD=changeit
+RUN mkdir /home/knox/cacrts && cd /home/knox/cacrts && \
+    fetch() { curl -sSL --connect-timeout 10 --max-time 30 -o "$1" "$2" || rm -f "$1"; } && \
+    fetch AmazonRootCA1.cer                         https://www.amazontrust.com/repository/AmazonRootCA1.cer && \
+    fetch AmazonRootCA2.cer                         https://www.amazontrust.com/repository/AmazonRootCA2.cer && \
+    fetch AmazonRootCA3.cer                         https://www.amazontrust.com/repository/AmazonRootCA3.cer && \
+    fetch AmazonRootCA4.cer                         https://www.amazontrust.com/repository/AmazonRootCA4.cer && \
+    fetch isrgrootx1.pem                            https://letsencrypt.org/certs/isrgrootx1.pem && \
+    fetch isrg-root-x2.pem                          https://letsencrypt.org/certs/isrg-root-x2.pem && \
+    fetch letsencrypt-stg-root-x1.pem               https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x1.pem && \
+    fetch letsencrypt-stg-root-x2.pem               https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2.pem && \
+    fetch letsencrypt-stg-root-x2-signed-by-x1.pem  https://letsencrypt.org/certs/staging/letsencrypt-stg-root-x2-signed-by-x1.pem && \
+    fetch letsencrypt-stg-root-ye.pem               https://letsencrypt.org/certs/staging/gen-y/root-ye.pem && \
+    fetch letsencrypt-stg-root-ye-by-x2.pem         https://letsencrypt.org/certs/staging/gen-y/root-ye-by-x2.pem && \
+    fetch letsencrypt-stg-root-yr.pem               https://letsencrypt.org/certs/staging/gen-y/root-yr.pem && \
+    fetch letsencrypt-stg-root-yr-by-x1.pem         https://letsencrypt.org/certs/staging/gen-y/root-yr-by-x1.pem && \
+    trust() { if [ -s "$3" ]; then keytool -importcert -noprompt -keystore "$1" -storetype PKCS12 \
+        -storepass "${KNOX_DEFAULT_TRUSTSTORE_PASSWORD}" -alias "$2" -file "$3" || true; fi; } && \
+    for pair in amazon-ca-1:AmazonRootCA1.cer amazon-ca-2:AmazonRootCA2.cer \
+                amazon-ca-3:AmazonRootCA3.cer amazon-ca-4:AmazonRootCA4.cer \
+                isrgrootx1:isrgrootx1.pem isrgrootx2:isrg-root-x2.pem; do \
+      trust default-trust.p12 "${pair%%:*}" "${pair#*:}"; \
+    done && \
+    for name in letsencrypt-stg-root-x1 letsencrypt-stg-root-x2 letsencrypt-stg-root-x2-signed-by-x1 \
+                letsencrypt-stg-root-ye letsencrypt-stg-root-ye-by-x2 letsencrypt-stg-root-yr letsencrypt-stg-root-yr-by-x1; do \
+      trust letsencrypt-staging-trust.p12 "${name}" "${name}.pem"; \
+    done && \
     chown -R 8000:0 /home/knox/cacrts
 
 WORKDIR /home/knox/knox
