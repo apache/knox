@@ -5897,7 +5897,7 @@ Release 0.18.0 - 2008-08-19
     line length (mapred.linerecordreader.maxlength), thereby avoiding reading
     too far into the following split. (Zheng Shao via cdouglas)
 
-    HADOOP-3334. Move lease handling from FSNamesystem into a seperate class.
+    HADOOP-3334. Move lease handling from FSNamesystem into a separate class.
     (Tsz Wo (Nicholas), SZE via rangadi)
 
     HADOOP-3332. Reduces the amount of logging in Reducer's shuffle phase.
