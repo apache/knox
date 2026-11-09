@@ -794,6 +794,46 @@ public class UrlRewriteServletFilterTest {
   }
 
   /*
+   * The Content-Length of the backend response must not be used for the rewritten body, whatever the case of the
+   * header name is. Otherwise, a body that gets longer is cut off.
+   */
+  @Test
+  public void testResponseBodyRewriteIgnoresBackendContentLengthCaseInsensitively() throws Exception {
+    for( String headerName : new String[]{ "Content-Length", "content-length", "CONTENT-LENGTH" } ) {
+      assertResponseBodyRewriteIgnoresBackendContentLength( headerName );
+    }
+  }
+
+  private void assertResponseBodyRewriteIgnoresBackendContentLength( String headerName ) throws Exception {
+    Map<String,String> initParams = new HashMap<>();
+    initParams.put( "response.body", "test-filter-4" );
+    testSetUp( initParams );
+
+    // "pretty.css" is rewritten to a longer value
+    String responseHtml = "<html><head><link href=\"pretty.css\"/></head></html>";
+    String rewrittenResponseHtml = "<html><head><link href=\"http://someotherhost/stylesheets/pretty.css\"/></head></html>";
+
+    interaction.expect()
+        .method( "GET" )
+        .requestUrl( "http://mock-host:42/test-output-path-1" );
+    interaction.respond()
+        .contentType( "text/html" )
+        .header( headerName, String.valueOf( responseHtml.getBytes( StandardCharsets.UTF_8 ).length ) )
+        .content( responseHtml, StandardCharsets.UTF_8 )
+        .status( 200 );
+    interactions.add( interaction );
+    request.setMethod( "GET" );
+    request.setURI( "/test-input-path" );
+    request.setHeader( "Host", "mock-host:42" );
+
+    response = TestUtils.execute( server, request );
+
+    assertThat( headerName, response.getStatus(), is( 200 ) );
+    assertThat( headerName, response.getContent(), is( rewrittenResponseHtml ) );
+    server.stop();
+  }
+
+  /*
    * Test the prefix function
    * @see KNOX-994
    * @since 0.14.0
