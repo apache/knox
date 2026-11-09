@@ -37,7 +37,8 @@ Every group maps to the platform:<group> role; user and group "admin" are both a
 platform:admin. platform:deployer is assigned to the user id "recursiveuser" - the lowercase,
 login-typed form of the directory uid recursiveUser - so it only reaches recursiveUser when
 the gateway lowercases the ids it sends to the roles lookup
-(gateway.ldap.interceptor.roleslookup.lowercaseIds, off here).
+(gateway.ldap.interceptor.roleslookup.lowercaseIds, off here). platform:viewer is assigned
+to the user guest, which is in no group.
 """
 
 from __future__ import annotations
@@ -62,6 +63,7 @@ ALL_ROLES = {
     "platform:scientist",
     "platform:admin",
     "platform:deployer",
+    "platform:viewer",
     "platform:level1",
     "platform:level2",
     "platform:level3",

@@ -27,9 +27,12 @@
 #
 # Usage:
 #   cd .github/workflows/compose
-#   docker compose \
-#     -f docker-compose.yml -f docker-compose.role-lookup-rest.yml \
-#     up --build --abort-on-container-exit --exit-code-from tests
+#   docker compose -f docker-compose.yml -f docker-compose.role-lookup-rest.yml build knox-dev
+#   docker compose -f docker-compose.yml -f docker-compose.role-lookup-rest.yml \
+#     up --exit-code-from tests tests
+#
+# Name the tests service: a bare `up --abort-on-container-exit` aborts as soon as the
+# build-only knox-dev service exits.
 services:
   roles-api:
     image: python:3.10-slim

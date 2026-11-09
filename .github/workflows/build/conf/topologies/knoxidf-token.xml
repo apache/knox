@@ -34,5 +34,31 @@
             <name>knoxidf.auto.consent.enabled</name>
             <value>true</value>
         </param>
+        <param>
+            <!-- Tokens are enriched from the user entry the embedded Knox LDAP server returns. With its
+                 roles-lookup interceptor configured, the roles scope yields the user's roles
+                 (test_knoxidf_with_rest_role_lookup.py). -->
+            <name>user.params.provider.ldap.url</name>
+            <value>ldaps://localhost:33390</value>
+        </param>
+        <param>
+            <name>user.params.provider.ldap.baseDn</name>
+            <value>dc=proxy,dc=org</value>
+        </param>
+        <param>
+            <!-- The embedded LDAP server cannot read a user entry by DN, so the user is searched. -->
+            <name>user.params.provider.ldap.userSearchBase</name>
+            <value>ou=people,dc=proxy,dc=org</value>
+        </param>
+        <param>
+            <!-- The embedded LDAP server's bind user (gateway.ldap.bind.user in gateway-site.xml). -->
+            <name>user.params.provider.ldap.systemUser</name>
+            <value>uid=bind,ou=people,dc=proxy,dc=org</value>
+        </param>
+        <param>
+            <!-- Created by build/gateway.sh. -->
+            <name>user.params.provider.ldap.systemPasswordAlias</name>
+            <value>gateway_ldap_bind_password</value>
+        </param>
     </service>
 </topology>
