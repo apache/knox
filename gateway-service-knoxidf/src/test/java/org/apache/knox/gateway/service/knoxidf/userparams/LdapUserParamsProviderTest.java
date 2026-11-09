@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 
 import static org.easymock.EasyMock.aryEq;
@@ -144,22 +143,16 @@ public class LdapUserParamsProviderTest {
 
     final BasicAttributes group = new BasicAttributes(true);
     group.put("cn", "analysts");
-    final Attribute member = new BasicAttribute("member");
-    member.add("uid=bob,ou=people,dc=hadoop,dc=apache,dc=org");
-    member.add(userDn.toUpperCase(Locale.ROOT));
-    group.put(member);
-    final BasicAttributes otherGroup = new BasicAttributes(true);
-    otherGroup.put("cn", "admins");
-    otherGroup.put("member", "uid=bob,ou=people,dc=hadoop,dc=apache,dc=org");
 
     final LdapContext ctx = EasyMock.createStrictMock(LdapContext.class);
     final Capture<SearchControls> controls = Capture.newInstance();
+    final Capture<SearchControls> groupControls = Capture.newInstance();
     expect(ctx.search(eq(userDn), eq("(objectClass=*)"), capture(controls)))
         .andReturn(results(searchResult(userDn, userAttributes())));
-    expect(ctx.search(eq("ou=groups,dc=hadoop,dc=apache,dc=org"), eq("(objectClass=groupOfNames)"),
-        EasyMock.anyObject(SearchControls.class)))
-        .andReturn(results(searchResult("cn=analysts,ou=groups,dc=hadoop,dc=apache,dc=org", group),
-            searchResult("cn=admins,ou=groups,dc=hadoop,dc=apache,dc=org", otherGroup)));
+    // Only the user's groups are searched: listing every group would make the Knox embedded LDAP server list every role.
+    expect(ctx.search(eq("ou=groups,dc=hadoop,dc=apache,dc=org"), eq(LdapUserParamsProvider.DEFAULT_GROUP_SEARCH_FILTER),
+        aryEq(new Object[]{userDn}), capture(groupControls)))
+        .andReturn(results(searchResult("cn=analysts,ou=groups,dc=hadoop,dc=apache,dc=org", group)));
     ctx.close();
     EasyMock.replay(ctx);
 
@@ -167,7 +160,87 @@ public class LdapUserParamsProviderTest {
 
     EasyMock.verify(ctx);
     assertEquals(SearchControls.OBJECT_SCOPE, controls.getValue().getSearchScope());
+    assertEquals(SearchControls.ONELEVEL_SCOPE, groupControls.getValue().getSearchScope());
     assertEquals("alice@example.com", userParams.get("email"));
+    assertEquals(Collections.singletonList("analysts"), userParams.get("roles"));
+  }
+
+  @Test
+  public void testGroupSearchBaseSelectsMemberOfRoles() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put("user.params.provider.ldap.baseDn", "dc=proxy,dc=com");
+    params.put(LdapUserParamsProvider.LDAP_USER_SEARCH_BASE, "ou=people,dc=proxy,dc=com");
+    params.put(LdapUserParamsProvider.LDAP_GROUP_SEARCH_BASE, "ou=roles,dc=proxy,dc=com");
+
+    final BasicAttributes attrs = userAttributes();
+    final Attribute memberOf = new BasicAttribute("memberOf");
+    memberOf.add("cn=project1:admin,ou=roles,dc=proxy,dc=com");
+    // not under the configured groupSearchBase: ignored
+    memberOf.add("cn=global:admin,ou=groups,dc=proxy,dc=com");
+    attrs.put(memberOf);
+
+    final LdapContext ctx = EasyMock.createStrictMock(LdapContext.class);
+    expect(ctx.search(eq("ou=people,dc=proxy,dc=com"), eq(LdapUserParamsProvider.DEFAULT_USER_SEARCH_FILTER),
+        aryEq(new Object[]{"alice"}), EasyMock.anyObject(SearchControls.class)))
+        .andReturn(results(searchResult("uid=alice,ou=people,dc=proxy,dc=com", attrs)));
+    ctx.close();
+    EasyMock.replay(ctx);
+
+    final Map<String, Object> userParams = provider(params, ctx).getParamsFor("alice", ALL_SCOPES);
+
+    EasyMock.verify(ctx);
+    assertEquals(Collections.singletonList("project1:admin"), userParams.get("roles"));
+  }
+
+  @Test
+  public void testGroupSearchBaseIsSearchedWhenMemberOfHasNoRoles() throws Exception {
+    final String userDn = "uid=alice,ou=people,dc=proxy,dc=com";
+    final Map<String, String> params = new HashMap<>();
+    params.put("user.params.provider.ldap.baseDn", "dc=proxy,dc=com");
+    params.put(LdapUserParamsProvider.LDAP_USER_SEARCH_BASE, "ou=people,dc=proxy,dc=com");
+    params.put(LdapUserParamsProvider.LDAP_GROUP_SEARCH_BASE, "ou=roles,dc=proxy,dc=com");
+
+    final BasicAttributes attrs = userAttributes();
+    attrs.put("memberOf", "cn=global:admin,ou=groups,dc=proxy,dc=com");
+
+    final LdapContext ctx = EasyMock.createStrictMock(LdapContext.class);
+    expect(ctx.search(eq("ou=people,dc=proxy,dc=com"), eq(LdapUserParamsProvider.DEFAULT_USER_SEARCH_FILTER),
+        aryEq(new Object[]{"alice"}), EasyMock.anyObject(SearchControls.class)))
+        .andReturn(results(searchResult(userDn, attrs)));
+    expect(ctx.search(eq("ou=roles,dc=proxy,dc=com"), eq(LdapUserParamsProvider.DEFAULT_GROUP_SEARCH_FILTER),
+        aryEq(new Object[]{userDn}), EasyMock.anyObject(SearchControls.class)))
+        .andReturn(results());
+    ctx.close();
+    EasyMock.replay(ctx);
+
+    final Map<String, Object> userParams = provider(params, ctx).getParamsFor("alice", ALL_SCOPES);
+
+    EasyMock.verify(ctx);
+    assertEquals(Collections.emptyList(), userParams.get("roles"));
+  }
+
+  @Test
+  public void testGroupSearchFilterIsConfigurable() throws Exception {
+    final String userDn = "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org";
+    final String filter = "(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))";
+    final Map<String, String> params = new HashMap<>();
+    params.put(LdapUserParamsProvider.LDAP_GROUP_SEARCH_FILTER, filter);
+
+    final BasicAttributes group = new BasicAttributes(true);
+    group.put("cn", "analysts");
+
+    final LdapContext ctx = EasyMock.createStrictMock(LdapContext.class);
+    expect(ctx.search(eq(userDn), eq("(objectClass=*)"), EasyMock.anyObject(SearchControls.class)))
+        .andReturn(results(searchResult(userDn, userAttributes())));
+    expect(ctx.search(eq("ou=groups,dc=hadoop,dc=apache,dc=org"), eq(filter),
+        aryEq(new Object[]{userDn}), EasyMock.anyObject(SearchControls.class)))
+        .andReturn(results(searchResult("cn=analysts,ou=groups,dc=hadoop,dc=apache,dc=org", group)));
+    ctx.close();
+    EasyMock.replay(ctx);
+
+    final Map<String, Object> userParams = provider(params, ctx).getParamsFor("alice", ALL_SCOPES);
+
+    EasyMock.verify(ctx);
     assertEquals(Collections.singletonList("analysts"), userParams.get("roles"));
   }
 

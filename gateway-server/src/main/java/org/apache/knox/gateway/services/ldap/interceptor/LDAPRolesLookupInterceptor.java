@@ -417,38 +417,22 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     }
 
     Entry modifyEntry(Entry entry, Collection<String> roles) throws LdapException {
-        if (entry != null) {
-            final Attribute memberOfAttr = entry.get("memberOf");
-            final List<Dn> groupDns = new ArrayList<>();
-            if (memberOfAttr != null) {
-                for (Value value : memberOfAttr) {
-                    groupDns.add(new Dn(value.getString()));
-                }
-            }
-
-            // Only modify if there are existing attributes to wipe or new roles to add
-            if (memberOfAttr != null || (roles != null && !roles.isEmpty())) {
-                updateMemberOfAttributes(entry, roles, groupDns);
-            }
+        // Only modify if there are existing attributes to wipe or new roles to add
+        if (entry != null && (entry.get("memberOf") != null || (roles != null && !roles.isEmpty()))) {
+            updateMemberOfAttributes(entry, roles);
         }
         return entry;
     }
 
-    private void updateMemberOfAttributes(Entry entry, Collection<String> roles, List<Dn> groupDns) throws LdapException {
+    private void updateMemberOfAttributes(Entry entry, Collection<String> roles) throws LdapException {
         // Always wipe the old attributes if role lookup is active
         entry.removeAttributes("memberOf");
 
-        if (!roles.isEmpty()) {
-            Dn templateDn = groupDns.isEmpty() ? null : groupDns.get(0);
-            for (String role : roles) {
-                addRoleAttribute(entry, role, templateDn);
-            }
+        // Roles are written with the same DN the role listing and the reverse role lookup use,
+        // so a memberOf value names a role entry served by this server.
+        for (String role : roles) {
+            entry.add("memberOf", createGroupDnFromName(role));
         }
-    }
-
-    private void addRoleAttribute(Entry entry, String role, Dn templateDn) throws LdapException {
-        final Dn roleDn = templateDn == null ? null : renameCnRdn(templateDn, role);
-        entry.add("memberOf", roleDn != null ? roleDn.getName() : "cn=" + role);
     }
 
     /**
