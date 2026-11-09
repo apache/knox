@@ -179,13 +179,13 @@ public abstract class HtmlFilterReaderBase extends Reader implements
       try {
         Level tag = stack.peek();
         String name = getRuleName(inputValue);
-        if( name == null && hasFindApply ) {
-          outputValue = UrlRewriteUtil.filterFind( inputValue, config, this, REGEX_COMPILER );
-        } else {
-          outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, name );
-        }
+        outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, name );
         if( outputValue == null ) {
           outputValue = inputValue;
+        }
+        if( name == null && hasFindApply && outputValue.equals( inputValue ) ) {
+          // not rewritten as a whole, rewrite the matches of the find applies within the value
+          outputValue = UrlRewriteUtil.filterFind( inputValue, config, this, REGEX_COMPILER );
         }
       } catch ( Exception e ) {
         LOG.failedToFilterAttribute( attribute.getName(), e );
@@ -227,10 +227,10 @@ public abstract class HtmlFilterReaderBase extends Reader implements
           outputValue = UrlRewriteUtil.filterJavaScript( inputValue, config, this, REGEX_COMPILER );
         } else {
           String ruleName = getRuleName(inputValue);
-          if( ruleName == null && hasFindApply ) {
+          outputValue = filterText( stack.peek().getQName(), inputValue, ruleName );
+          if( ruleName == null && hasFindApply && ( outputValue == null || outputValue.equals( inputValue ) ) ) {
+            // not rewritten as a whole, rewrite the matches of the find applies within the text
             outputValue = UrlRewriteUtil.filterFind( inputValue, config, this, REGEX_COMPILER );
-          } else {
-            outputValue = filterText( stack.peek().getQName(), inputValue, ruleName );
           }
         }
       }

@@ -29,8 +29,12 @@ public interface UrlRewriteFilterApplyDescriptor
    * If find is set the path is a regular expression that is searched for within the value and every match is
    * rewritten on its own, the rest of the value is left untouched.
    */
-  boolean find();
+  default boolean find() {
+    return false;
+  }
 
-  UrlRewriteFilterApplyDescriptor find( boolean find );
+  default UrlRewriteFilterApplyDescriptor find( boolean find ) {
+    throw new UnsupportedOperationException( "find is not supported by " + getClass().getName() );
+  }
 
 }

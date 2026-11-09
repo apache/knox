@@ -437,6 +437,50 @@ public class HtmlFilterReaderBaseTest {
     assertThat( output, is( expected ) );
   }
 
+  /** Like PrefixXmlFilterReader, but also rewrites backend URLs if no rule name is given (like an implicit rule). */
+  public static class ImplicitRuleXmlFilterReader extends PrefixXmlFilterReader {
+    public ImplicitRuleXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+      super( reader, config );
+    }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      if( ruleName == null && value.startsWith( "http://backend:5601/" ) ) {
+        return "/gateway/topo/" + value.substring( "http://backend:5601/".length() );
+      }
+      return super.filterValueString( name, value, ruleName );
+    }
+  }
+
+  @Test
+  public void testFindDoesNotReplaceImplicitRules() throws IOException, ParserConfigurationException {
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    config.addApply( "/ctx[^&\"'\\s\\\\)]*", "prefix" ).find( true );
+    // the href is rewritten as a whole by the implicit rule, the find apply must neither prevent that nor
+    // rewrite the /ctx in the result again
+    String input =
+        "<root><a href=\"http://backend:5601/ctx/app\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\">" +
+        "http://backend:5601/ctx/text</a></root>";
+    String expected =
+        "<root><a href=\"/gateway/topo/ctx/app\" data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;}\">" +
+        "/gateway/topo/ctx/text</a></root>";
+    String output = new String( IOUtils.toCharArray( new ImplicitRuleXmlFilterReader( new StringReader( input ), config ) ) );
+    assertThat( output, is( expected ) );
+  }
+
+  @Test
+  public void testFindWithDelimiterAnchoredPathLeavesPlainTextAlone() throws IOException, ParserConfigurationException {
+    String input =
+        "<html><head><style>.x{background:url(/ctx/img/c.png)}</style></head><body>" +
+        "<osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\"></osd-injected-metadata>" +
+        "<p>see /ctx/docs and /gateway/topo/ctx/x</p></body></html>";
+    String expected =
+        "<html><head><style>.x{background:url(/gateway/topo/ctx/img/c.png)}</style></head><body>" +
+        "<osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;}\"></osd-injected-metadata>" +
+        "<p>see /ctx/docs and /gateway/topo/ctx/x</p></body></html>";
+    assertThat( filterWithFind( input, "(?<=[(\"'=]|&quot;)/ctx[^&\"'\\s\\\\)]*", null ), is( expected ) );
+  }
+
   public static class XmlRewriteRulesDescriptorDigesterTest {
 
     private static DigesterLoader loader = DigesterLoader.newLoader( new XmlRewriteRulesDigester() );

@@ -950,6 +950,43 @@ public class UrlRewriteServletFilterTest {
     assertThat(content, is(rewrittenResponseHtml));
   }
 
+  /*
+   * URLs embedded in an entity encoded JSON attribute value and in style text are rewritten one by one.
+   * @see KNOX-3556
+   */
+  @Test
+  public void testResponseHtmlBodyRewriteFind() throws Exception {
+    final Map<String, String> initParams = new HashMap<>();
+    initParams.put("response.body", "test-filter-find");
+    testSetUp(initParams);
+
+    final String responseHtml = "<html><head>"
+        + "<style>@font-face{src:url('/ctx/fonts/a.woff') format('woff'),url(/ctx/fonts/b.woff)}</style>"
+        + "<osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/ctx&quot;,&quot;serverBasePath&quot;:&quot;/ctx&quot;,"
+        + "&quot;i18n&quot;:{&quot;translationsUrl&quot;:&quot;/ctx/translations/en.json&quot;}}\"></osd-injected-metadata>"
+        + "</head><body><p>see /ctx/docs</p></body></html>";
+    final String rewrittenResponseHtml = "<html><head>"
+        + "<style>@font-face{src:url('/gateway/topo/ctx/fonts/a.woff') format('woff'),url(/gateway/topo/ctx/fonts/b.woff)}</style>"
+        + "<osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;,&quot;serverBasePath&quot;:&quot;/gateway/topo/ctx&quot;,"
+        + "&quot;i18n&quot;:{&quot;translationsUrl&quot;:&quot;/gateway/topo/ctx/translations/en.json&quot;}}\"></osd-injected-metadata>"
+        + "</head><body><p>see /ctx/docs</p></body></html>";
+
+    interaction.expect().method("GET")
+        .requestUrl("http://mock-host:42/test-output-path-1");
+    interaction.respond().contentType("application/html")
+        .content(responseHtml, StandardCharsets.UTF_8).status(200);
+    interactions.add(interaction);
+    request.setMethod("GET");
+    request.setURI("/test-input-path");
+    request.setHeader("Host", "mock-host:42");
+    request.setHeader("Content-Type", "application/html");
+
+    response = TestUtils.execute(server, request);
+
+    assertThat(response.getStatus(), is(200));
+    assertThat(response.getContent(), is(rewrittenResponseHtml));
+  }
+
   private static class SetupFilter implements Filter {
     @Override
     public void init( FilterConfig filterConfig ) {

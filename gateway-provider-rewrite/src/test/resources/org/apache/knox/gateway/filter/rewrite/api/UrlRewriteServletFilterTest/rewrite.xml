@@ -57,6 +57,16 @@
         <rewrite template="{$import[&quot;, url]}/stylesheets/pretty.css&quot;;"/>
     </rule>
 
+    <!-- HTML find tests, KNOX-3556 -->
+    <rule flow="OR" dir="OUT" name="test-rule-html-find">
+        <match pattern="/ctx">
+            <rewrite template="/gateway/topo/ctx"/>
+        </match>
+        <match pattern="/ctx/{path=**}">
+            <rewrite template="/gateway/topo/ctx/{path=**}"/>
+        </match>
+    </rule>
+
     <!-- HTML Prefix attribute tests, since 0.14.0 -->
     <rule dir="OUT" name="test-rule-html-prefix-attribute-prefix/1" pattern="'components/{**}?{**}">
         <rewrite template="{$prefix[&#39;,url]}/zeppelin/components/{**}?{**}"/>
@@ -115,6 +125,12 @@
     <filter name="test-filter-5">
         <content type="*/html">
             <apply path="(@import)+ .*css.*" rule="test-rule-html-import-attribute"/>
+        </content>
+    </filter>
+
+    <filter name="test-filter-find">
+        <content type="*/html">
+            <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="test-rule-html-find" find="true"/>
         </content>
     </filter>
 

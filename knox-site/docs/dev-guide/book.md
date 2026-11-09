@@ -1684,6 +1684,35 @@ HBaseDeploymentContributor
     addRewriteFilter( context, service, regionResource, params );
 ```
 
+##### Rewriting URLs embedded in HTML attribute values and text #####
+
+For HTML content the path of an `apply` is a regular expression that has to match a whole attribute value or text
+node. A URL that is only a part of a value, e.g. inside a JSON document in an attribute or inside the CSS of a
+`<style>` element, is not rewritten that way. With `find="true"` the path is searched for within every attribute value
+and text node instead, and every match is rewritten through the rule on its own, the rest of the value is left
+untouched. `<script>` content is handled as before, where every `apply` is already searched for.
+
+```xml
+<rules>
+  <filter name="OSD/osd/outbound/html">
+    <content type="*/html">
+      <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="OSD/osd/outbound/ctx" find="true"/>
+    </content>
+  </filter>
+</rules>
+```
+
+This rewrites e.g. `/ctx` in `<osd-injected-metadata data="{&quot;basePath&quot;:&quot;/ctx&quot;}">` and in
+`<style>@font-face{src:url('/ctx/fonts/a.woff')}</style>`.
+
+* `find` is only supported for HTML content, it is ignored for JSON and XML content.
+* Values that are rewritten as a whole (by an `apply` without `find` or by an implicit rule) are not searched again.
+* Attribute values are not decoded, so `"` appears as `&quot;`. The path should stop at `&`, and the rule must not
+produce `"` or `&`, as its output is inserted as it is.
+* The path is applied to every attribute value and text node, including visible text and the content of `<textarea>`.
+Anchor it on the characters that surround the URL (the lookbehind in the example above) so that plain text and
+values that already contain the gateway path, e.g. `/gateway/sandbox/ctx`, are not matched.
+
 #### Rewrite Functions ####
 TODO - Provide an lowercase function as an example.
 
