@@ -186,6 +186,11 @@ public class KnoxLDAPServerManager {
 
     private void createInterceptors(GatewayConfig config) throws Exception {
         List<String> interceptorNames = config.getLDAPInterceptorNames();
+        if (interceptorNames == null) {
+            this.interceptors = new ArrayList<>();
+            return;
+        }
+
         List<Map.Entry<String, Map<String, String>>> interceptorConfigs = new ArrayList<>(interceptorNames.size());
         for (String interceptorName : interceptorNames) {
             // Get backend-specific configuration using prefixed properties
@@ -378,30 +383,32 @@ public class KnoxLDAPServerManager {
         SchemaManager schemaManager = directoryService.getSchemaManager();
         DnFactory dnFactory = directoryService.getDnFactory();
         List<String> interceptorNames = gatewayConfig.getLDAPInterceptorNames();
-        Map<String, Integer> idCountMap = new HashMap<>();
-        for (String interceptorName : interceptorNames) {
-            // Get backend-specific configuration using prefixed properties
-            Map<String, String> interceptorConfig = gatewayConfig.getLDAPInterceptorConfig(interceptorName);
+        if  (interceptorNames != null) {
+            Map<String, Integer> idCountMap = new HashMap<>();
+            for (String interceptorName : interceptorNames) {
+                // Get backend-specific configuration using prefixed properties
+                Map<String, String> interceptorConfig = gatewayConfig.getLDAPInterceptorConfig(interceptorName);
 
-            String remoteBaseDn = interceptorConfig.get("remoteBaseDn");
-            if (StringUtils.isNotBlank(remoteBaseDn)) {
-                if (!baseDns.contains(remoteBaseDn)) {
-                    //create partition
-                    String id = interceptorName.replaceAll("\\s+", "");
-                    if (idCountMap.containsKey(id)) {
-                        int count = idCountMap.get(id);
-                        idCountMap.put(id, count + 1);
-                        // add suffix to ensure unique id
-                        id = id + count;
-                    } else {
-                        idCountMap.put(id, 0);
+                String remoteBaseDn = interceptorConfig.get("remoteBaseDn");
+                if (StringUtils.isNotBlank(remoteBaseDn)) {
+                    if (!baseDns.contains(remoteBaseDn)) {
+                        //create partition
+                        String id = interceptorName.replaceAll("\\s+", "");
+                        if (idCountMap.containsKey(id)) {
+                            int count = idCountMap.get(id);
+                            idCountMap.put(id, count + 1);
+                            // add suffix to ensure unique id
+                            id = id + count;
+                        } else {
+                            idCountMap.put(id, 0);
+                        }
+                        JdbmPartition remotePartition = new JdbmPartition(schemaManager, dnFactory);
+                        remotePartition.setId(id);
+                        remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
+                        remotePartition.setPartitionPath(new File(workDir, id).toURI());
+                        directoryService.addPartition(remotePartition);
+                        baseDns.add(remoteBaseDn);
                     }
-                    JdbmPartition remotePartition = new JdbmPartition(schemaManager, dnFactory);
-                    remotePartition.setId(id);
-                    remotePartition.setSuffixDn(new Dn(schemaManager, remoteBaseDn));
-                    remotePartition.setPartitionPath(new File(workDir, id).toURI());
-                    directoryService.addPartition(remotePartition);
-                    baseDns.add(remoteBaseDn);
                 }
             }
         }
