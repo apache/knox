@@ -1690,7 +1690,7 @@ For HTML content the path of an `apply` is a regular expression that has to matc
 node. A URL that is only a part of a value, e.g. inside a JSON document in an attribute or inside the CSS of a
 `<style>` element, is not rewritten that way. With `find="true"` the path is searched for within every attribute value
 and text node instead, and every match is rewritten through the rule on its own, the rest of the value is left
-untouched. `<script>` content is handled as before, where every `apply` is already searched for.
+untouched.
 
 ```xml
 <rules>
@@ -1705,7 +1705,8 @@ untouched. `<script>` content is handled as before, where every `apply` is alrea
 This rewrites e.g. `/ctx` in `<osd-injected-metadata data="{&quot;basePath&quot;:&quot;/ctx&quot;}">` and in
 `<style>@font-face{src:url('/ctx/fonts/a.woff')}</style>`.
 
-* `find` is only supported for HTML content, it is ignored for JSON and XML content.
+* The text of `<script>` elements and `*/javascript` content is always searched, with or without `find`, so `find`
+makes no difference there. For JSON and XML content `find` is ignored.
 * Values that are rewritten as a whole (by an `apply` without `find` or by an implicit rule) are not searched again.
 * Attribute values are not decoded, so `"` appears as `&quot;`. The path should stop at `&`, and the rule must not
 produce `"` or `&`, as its output is inserted as it is.
