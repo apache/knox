@@ -128,6 +128,10 @@ public class XmlUrlRewriteRulesExporter implements UrlRewriteRulesExporter, XmlR
   private Element createFilterSelector( Document document, UrlRewriteFilterPathDescriptor parent )
       throws IntrospectionException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
     Element parentElement = createElement( document, toTagName( parent ), parent );
+    if( parent instanceof UrlRewriteFilterApplyDescriptor && ((UrlRewriteFilterApplyDescriptor)parent).find() ) {
+      // only the String properties are exported by createElement, find is a boolean that is false by default
+      parentElement.setAttribute( "find", "true" );
+    }
     if( parent instanceof UrlRewriteFilterGroupDescriptor) {
       for( UrlRewriteFilterPathDescriptor child: ((UrlRewriteFilterGroupDescriptor)parent).getSelectors() ) {
         Element childElement = createFilterSelector( document, child );

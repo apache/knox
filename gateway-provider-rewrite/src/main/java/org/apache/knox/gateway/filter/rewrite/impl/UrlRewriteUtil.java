@@ -60,6 +60,36 @@ public class UrlRewriteUtil {
 
   public static String filterJavaScript( String inputValue, UrlRewriteFilterContentDescriptor config,
       UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler ) {
+    return filterMatches( inputValue, config, filterReader, regexCompiler, false );
+  }
+
+  /**
+   * Rewrites every match of the applies that are configured with find, the rest of the input is left untouched.
+   * Applies without find have to match a whole value, they are not used here.
+   */
+  public static String filterFind( String inputValue, UrlRewriteFilterContentDescriptor config,
+      UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler ) {
+    return filterMatches( inputValue, config, filterReader, regexCompiler, true );
+  }
+
+  public static boolean hasFindApply( UrlRewriteFilterContentDescriptor config ) {
+    if( config != null ) {
+      for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
+        if( selector instanceof UrlRewriteFilterApplyDescriptor && ((UrlRewriteFilterApplyDescriptor)selector).find() ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /*
+   * The applies are processed one after the other and every apply searches the output of the previous one, so an
+   * apply can match something that was produced by the rewrite of an earlier apply.
+   */
+  private static String filterMatches( String inputValue, UrlRewriteFilterContentDescriptor config,
+      UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler,
+      boolean findOnly ) {
     StringBuilder tbuff = new StringBuilder();
     StringBuffer sbuff = new StringBuffer();
     sbuff.append( inputValue );
@@ -67,6 +97,9 @@ public class UrlRewriteUtil {
       for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
         if ( selector instanceof UrlRewriteFilterApplyDescriptor ) {
           UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+          if( findOnly && !apply.find() ) {
+            continue;
+          }
           Matcher matcher = apply.compiledPath( regexCompiler ).matcher( sbuff );
           int index = 0;
           while ( matcher.find() ) {
@@ -89,4 +122,5 @@ public class UrlRewriteUtil {
     }
     return sbuff.toString();
   }
+
 }

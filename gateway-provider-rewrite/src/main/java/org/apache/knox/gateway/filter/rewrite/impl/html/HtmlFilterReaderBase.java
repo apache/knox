@@ -63,6 +63,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   private StringWriter writer;
   private StringBuffer buffer;
   private UrlRewriteFilterContentDescriptor config;
+  private boolean hasFindApply;
 
   protected HtmlFilterReaderBase( Reader reader ) throws IOException {
     this.reader = reader;
@@ -77,6 +78,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   protected HtmlFilterReaderBase( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
     this(reader);
     this.config = config;
+    this.hasFindApply = UrlRewriteUtil.hasFindApply( config );
   }
 
   protected abstract String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName );
@@ -177,7 +179,11 @@ public abstract class HtmlFilterReaderBase extends Reader implements
       try {
         Level tag = stack.peek();
         String name = getRuleName(inputValue);
-        outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, name );
+        if( name == null && hasFindApply ) {
+          outputValue = UrlRewriteUtil.filterFind( inputValue, config, this, REGEX_COMPILER );
+        } else {
+          outputValue = filterAttribute( tag.getQName(), tag.getQName( attribute.getName() ), inputValue, name );
+        }
         if( outputValue == null ) {
           outputValue = inputValue;
         }
@@ -196,6 +202,10 @@ public abstract class HtmlFilterReaderBase extends Reader implements
       for( UrlRewriteFilterPathDescriptor<?> selector : config.getSelectors() ) {
         if ( selector instanceof UrlRewriteFilterApplyDescriptor) {
           UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+          if( apply.find() ) {
+            // searched for within the value, see processAttribute and processText
+            continue;
+          }
           Matcher matcher = apply.compiledPath( REGEX_COMPILER ).matcher( inputValue );
             if (matcher.matches()) {
               return apply.rule();
@@ -216,7 +226,12 @@ public abstract class HtmlFilterReaderBase extends Reader implements
           // embedded javascript content
           outputValue = UrlRewriteUtil.filterJavaScript( inputValue, config, this, REGEX_COMPILER );
         } else {
-          outputValue = filterText( stack.peek().getQName(), inputValue, getRuleName(inputValue) );
+          String ruleName = getRuleName(inputValue);
+          if( ruleName == null && hasFindApply ) {
+            outputValue = UrlRewriteUtil.filterFind( inputValue, config, this, REGEX_COMPILER );
+          } else {
+            outputValue = filterText( stack.peek().getQName(), inputValue, ruleName );
+          }
         }
       }
       if( outputValue == null ) {

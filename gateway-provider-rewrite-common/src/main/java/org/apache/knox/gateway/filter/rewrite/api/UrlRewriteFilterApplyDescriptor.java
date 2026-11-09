@@ -24,4 +24,13 @@ public interface UrlRewriteFilterApplyDescriptor
 
   UrlRewriteFilterApplyDescriptor rule( String rule );
 
+  /**
+   * By default the path of an apply has to match the whole value it is applied to (attribute value, text node).
+   * If find is set the path is a regular expression that is searched for within the value and every match is
+   * rewritten on its own, the rest of the value is left untouched.
+   */
+  boolean find();
+
+  UrlRewriteFilterApplyDescriptor find( boolean find );
+
 }

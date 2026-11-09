@@ -363,6 +363,80 @@ public class HtmlFilterReaderBaseTest {
     assertThat( outputXml, is( expectedOutput ) );
   }
 
+  /** Prefixes the value of the rule "prefix" with a gateway path, other rules and values are left alone. */
+  public static class PrefixXmlFilterReader extends HtmlFilterReaderBase {
+    public PrefixXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+      super( reader, config );
+    }
+
+    @Override
+    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
+      return filterValueString( attributeName.getLocalPart(), attributeValue, ruleName );
+    }
+
+    @Override
+    protected String filterText( QName elementName, String text, String ruleName ) {
+      return filterValueString( elementName.getLocalPart(), text, ruleName );
+    }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      return "prefix".equals( ruleName ) ? "/gateway/topo" + value : value;
+    }
+  }
+
+  private static String filterWithFind( String input, String findPath, String wholePath ) throws IOException, ParserConfigurationException {
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    if ( wholePath != null ) {
+      config.addApply( wholePath, "prefix" );
+    }
+    config.addApply( findPath, "prefix" ).find( true );
+    return new String( IOUtils.toCharArray( new PrefixXmlFilterReader( new StringReader( input ), config ) ) );
+  }
+
+  @Test
+  public void testFindInEntityEncodedAttributeValue() throws IOException, ParserConfigurationException {
+    String input =
+        "<root><osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/ctx&quot;,&quot;serverBasePath&quot;:&quot;/ctx&quot;," +
+        "&quot;i18n&quot;:{&quot;translationsUrl&quot;:&quot;/ctx/translations/en.json&quot;}," +
+        "&quot;text&quot;:&quot;&amp;lt;a href=\\&quot;/other/ctx\\&quot;&amp;gt;&quot;,&quot;n&quot;:3000000}\"></osd-injected-metadata></root>";
+    String expected =
+        "<root><osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;,&quot;serverBasePath&quot;:&quot;/gateway/topo/ctx&quot;," +
+        "&quot;i18n&quot;:{&quot;translationsUrl&quot;:&quot;/gateway/topo/ctx/translations/en.json&quot;}," +
+        "&quot;text&quot;:&quot;&amp;lt;a href=\\&quot;/other/ctx\\&quot;&amp;gt;&quot;,&quot;n&quot;:3000000}\"></osd-injected-metadata></root>";
+    // the value has to start with /ctx, "/other/ctx" has to stay as it is
+    assertThat( filterWithFind( input, "(?<![\\w/])/ctx[^&\"'\\s\\\\)]*", null ), is( expected ) );
+  }
+
+  @Test
+  public void testFindInStyleText() throws IOException, ParserConfigurationException {
+    String input =
+        "<root><style type=\"text/css\">@font-face{src:url('/ctx/fonts/a.woff') format('woff'),url('/ctx/fonts/b.woff') format('woff')}" +
+        ".x{background:url(/ctx/img/c.png)}</style></root>";
+    String expected =
+        "<root><style type=\"text/css\">@font-face{src:url('/gateway/topo/ctx/fonts/a.woff') format('woff'),url('/gateway/topo/ctx/fonts/b.woff') format('woff')}" +
+        ".x{background:url(/gateway/topo/ctx/img/c.png)}</style></root>";
+    assertThat( filterWithFind( input, "/ctx[^&\"'\\s\\\\)]*", null ), is( expected ) );
+  }
+
+  @Test
+  public void testFindCombinedWithAnApplyForWholeValues() throws IOException, ParserConfigurationException {
+    // href matches the apply without find as a whole, it must be rewritten once only (not again by the find apply)
+    String input = "<root><a href=\"/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\">/ctx/text</a></root>";
+    String expected = "<root><a href=\"/gateway/topo/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;}\">/gateway/topo/ctx/text</a></root>";
+    assertThat( filterWithFind( input, "/ctx[^&\"'\\s\\\\)]*", "/ctx/page" ), is( expected ) );
+  }
+
+  @Test
+  public void testWithoutFindAValueIsOnlyRewrittenIfItMatchesAsAWhole() throws IOException, ParserConfigurationException {
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    config.addApply( "/ctx[^&\"'\\s\\\\)]*", "prefix" );
+    String input = "<root><a href=\"/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\"><style>url(/ctx/a)</style></a></root>";
+    String expected = "<root><a href=\"/gateway/topo/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\"><style>url(/ctx/a)</style></a></root>";
+    String output = new String( IOUtils.toCharArray( new PrefixXmlFilterReader( new StringReader( input ), config ) ) );
+    assertThat( output, is( expected ) );
+  }
+
   public static class XmlRewriteRulesDescriptorDigesterTest {
 
     private static DigesterLoader loader = DigesterLoader.newLoader( new XmlRewriteRulesDigester() );

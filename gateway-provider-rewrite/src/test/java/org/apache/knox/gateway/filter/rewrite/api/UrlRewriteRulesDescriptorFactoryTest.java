@@ -258,4 +258,32 @@ public class UrlRewriteRulesDescriptorFactoryTest {
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@path", equalTo( "test-apply-path-4" ) ) );
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@rule", equalTo( "test-apply-rule-4" ) ) );
   }
+
+  @Test
+  public void testLoadStoreApplyFind() throws IOException {
+    String rules =
+        "<rules><filter name=\"test-filter\"><content type=\"*/html\">" +
+        "<apply path=\"test-path-1\" rule=\"test-rule-1\"/>" +
+        "<apply path=\"test-path-2\" rule=\"test-rule-2\" find=\"true\"/>" +
+        "<apply path=\"test-path-3\" rule=\"test-rule-3\" find=\"false\"/>" +
+        "</content></filter></rules>";
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load( "xml", new java.io.StringReader( rules ) );
+    List<UrlRewriteFilterPathDescriptor> selectors = config.getFilter( "test-filter" ).getContent( "*/html" ).getSelectors();
+    assertThat( selectors.size(), is( 3 ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 0 )).find(), is( false ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 1 )).find(), is( true ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 2 )).find(), is( false ) );
+
+    StringWriter writer = new StringWriter();
+    UrlRewriteRulesDescriptorFactory.store( config, "xml", writer );
+    Source xml = XmlConverters.the( writer.toString() );
+    assertThat( xml, hasXPath( "count(/rules/filter/content/apply[@find])", equalTo( "1" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply[@path='test-path-2']/@find", equalTo( "true" ) ) );
+
+    UrlRewriteRulesDescriptor reloaded = UrlRewriteRulesDescriptorFactory.load( "xml", new java.io.StringReader( writer.toString() ) );
+    selectors = reloaded.getFilter( "test-filter" ).getContent( "*/html" ).getSelectors();
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 0 )).find(), is( false ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 1 )).find(), is( true ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 2 )).find(), is( false ) );
+  }
 }

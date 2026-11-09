@@ -24,6 +24,7 @@ public class UrlRewriteFilterApplyDescriptorImpl
     implements UrlRewriteFilterApplyDescriptor {
 
   private String rule;
+  private boolean find;
 
   @Override
   public String rule() {
@@ -42,6 +43,25 @@ public class UrlRewriteFilterApplyDescriptorImpl
 
   public String getRule() {
     return rule;
+  }
+
+  @Override
+  public boolean find() {
+    return find;
+  }
+
+  @Override
+  public UrlRewriteFilterApplyDescriptor find( boolean find ) {
+    this.find = find;
+    return this;
+  }
+
+  public void setFind( boolean find ) {
+    this.find = find;
+  }
+
+  public boolean isFind() {
+    return find;
   }
 
 }
