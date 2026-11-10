@@ -52,9 +52,9 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -71,7 +71,7 @@ public class UrlRewriteResponse extends GatewayResponseWrapper implements Params
   // Testing with 16K made no appreciable difference.
   private static final int STREAM_BUFFER_SIZE = 8 * 1024;
 
-  private static final Set<String> IGNORE_HEADER_NAMES = new HashSet<>();
+  private static final Set<String> IGNORE_HEADER_NAMES = new TreeSet<>( String.CASE_INSENSITIVE_ORDER );
   static {
     IGNORE_HEADER_NAMES.add( "Content-Length" );
   }
