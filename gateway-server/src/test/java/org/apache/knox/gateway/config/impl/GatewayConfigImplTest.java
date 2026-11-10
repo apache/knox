@@ -918,4 +918,20 @@ public class GatewayConfigImplTest {
     assertEquals( "gateway.ldap.roles.list.rest.api.endpoint", GatewayConfigImpl.LDAP_ROLES_LIST_REST_API_ENDPOINT );
     assertEquals( "gateway.ldap.roles.get.rest.api.endpoint", GatewayConfigImpl.LDAP_ROLES_GET_REST_API_ENDPOINT );
   }
+
+  @Test
+  public void testGetLDAPInterceptorNames() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+
+    // unconfigured returns empty list
+    config.unset(GatewayConfigImpl.LDAP_INTERCEPTOR_NAMES);
+    assertEquals(Collections.emptyList(), config.getLDAPInterceptorNames());
+
+    // empty string returns empty list
+    config.set(GatewayConfigImpl.LDAP_INTERCEPTOR_NAMES, "");
+    assertEquals(Collections.emptyList(), config.getLDAPInterceptorNames());
+
+    config.set(GatewayConfigImpl.LDAP_INTERCEPTOR_NAMES, "interceptor1, interceptor2");
+    assertEquals(Arrays.asList("interceptor1", "interceptor2"), config.getLDAPInterceptorNames());
+  }
 }

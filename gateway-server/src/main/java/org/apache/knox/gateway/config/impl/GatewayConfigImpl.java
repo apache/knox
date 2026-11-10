@@ -1848,7 +1848,8 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public List<String> getLDAPInterceptorNames() {
-    return splitConfigValueToList(LDAP_INTERCEPTOR_NAMES);
+    List<String> interceptorNames = splitConfigValueToList(LDAP_INTERCEPTOR_NAMES);
+    return interceptorNames == null ? Collections.emptyList() : interceptorNames;
   }
 
   @Override

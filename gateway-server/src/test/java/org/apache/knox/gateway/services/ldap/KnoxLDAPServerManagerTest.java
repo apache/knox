@@ -139,6 +139,22 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
+    public void testInitializeWithNoInterceptors() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn(BASE_DN).anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(null).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+
+        assertEquals("Port should be set correctly", port, serverManager.getPort());
+        assertEquals("Base DN should be set correctly", BASE_DN, serverManager.getBaseDn());
+        assertFalse("Should not be running after initialize", serverManager.isRunning());
+    }
+
+    @Test
     public void testInitializeWithFileBackend() throws Exception {
         GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
         expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
@@ -313,6 +329,23 @@ public class KnoxLDAPServerManagerTest {
     public void testStartWithoutInitialize() throws Exception {
         // Should throw exception when starting without initialization
         serverManager.start();
+    }
+
+    @Test
+    public void testStartWithNoInterceptors() throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn(BASE_DN).anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(null).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+
+        serverManager.start();
+
+        List<Interceptor> interceptors = serverManager.directoryService.getInterceptors();
+        assertFalse(interceptors.stream().anyMatch(interceptor -> interceptor instanceof UserSearchInterceptor));
     }
 
     @Test
