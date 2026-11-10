@@ -147,6 +147,17 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         return false;
     }
 
+    private boolean isReferralObjectClassFilter(ExprNode filter) {
+        if (filter instanceof EqualityNode) {
+            EqualityNode<?> eqNode = (EqualityNode<?>) filter;
+            if ("objectClass".equalsIgnoreCase(eqNode.getAttribute())) {
+                String value = eqNode.getValue().toString();
+                return "referral".equalsIgnoreCase(value);
+            }
+        }
+        return false;
+    }
+
     private boolean isAllGroupsFilterForAncestor(ExprNode filter) {
         // Case 1: Simple objectClass evaluation (e.g., objectClass=groupOfNames)
         if (isGroupObjectClassFilter(filter)) {
@@ -163,8 +174,10 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                     children.stream().allMatch(this::isAllGroupsFilter);
         }
         if (filter instanceof OrNode) {
-            // An OR is an all groups filter only if every child is.
-            return ((OrNode) filter).getChildren().stream().allMatch(this::isGroupObjectClassFilter);
+            // Remove any (objectClass=referral) nodes. An OR is an all groups filter only if every child is.
+            return ((OrNode) filter).getChildren().stream()
+                    .filter(node -> !isReferralObjectClassFilter(node))
+                    .allMatch(this::isGroupObjectClassFilter);
         }
 
         return false;
