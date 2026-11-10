@@ -77,9 +77,10 @@ public class LDAPRolesLookupInterceptorTest {
 
         final Entry modifiedEntry = createInterceptor().modifyEntry(userEntry, roles);
 
+        // Roles are placed under the proxy groups base, not modeled on the backend group DN.
         assertMemberOf(modifiedEntry,
-                "cn=roleA,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "cn=roleG,ou=groups,dc=hadoop,dc=apache,dc=org");
+                "cn=roleA,ou=groups,dc=proxy,dc=com",
+                "cn=roleG,ou=groups,dc=proxy,dc=com");
     }
 
     @Test
@@ -90,6 +91,15 @@ public class LDAPRolesLookupInterceptorTest {
         final Entry modifiedEntry = createInterceptor().modifyEntry(userEntry, roles);
 
         assertNull("memberOf attribute should be removed when no roles are found", modifiedEntry.get("memberOf"));
+    }
+
+    @Test
+    public void testModifyEntryWithNullRoles() throws Exception {
+        final Entry userEntry = createUserEntry("erin", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
+
+        final Entry modifiedEntry = createInterceptor().modifyEntry(userEntry, null);
+
+        assertNull("memberOf attribute should be removed when the lookup returns no roles", modifiedEntry.get("memberOf"));
     }
 
     @Test
@@ -110,9 +120,8 @@ public class LDAPRolesLookupInterceptorTest {
 
         final Entry modifiedEntry = createInterceptor().modifyEntry(userEntry, roles);
 
-        // With no existing memberOf DN to model the new value on, the role is added as a
-        // literal "cn=<role>" rather than a full DN.
-        assertMemberOf(modifiedEntry, "cn=roleA");
+        // A user without backend groups still gets the full role DN, not a bare "cn=<role>".
+        assertMemberOf(modifiedEntry, "cn=roleA,ou=groups,dc=proxy,dc=com");
     }
 
     @Test
@@ -132,7 +141,7 @@ public class LDAPRolesLookupInterceptorTest {
         final EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx);
 
         assertTrue(entries.next());
-        assertMemberOf(entries.get(), "cn=roleA,ou=groups,dc=hadoop,dc=apache,dc=org");
+        assertMemberOf(entries.get(), "cn=roleA,ou=groups,dc=proxy,dc=com");
         assertFalse(entries.next());
     }
 
@@ -186,7 +195,7 @@ public class LDAPRolesLookupInterceptorTest {
 
         try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
             assertTrue(entries.next());
-            assertMemberOf(entries.get(), "cn=roleA,ou=groups,dc=hadoop,dc=apache,dc=org");
+            assertMemberOf(entries.get(), "cn=roleA,ou=groups,dc=proxy,dc=com");
             assertFalse(entries.next());
         }
         verify(mockRolesService);
@@ -212,8 +221,8 @@ public class LDAPRolesLookupInterceptorTest {
             assertTrue(entries.next());
             Entry modifiedEntry = entries.get();
             assertMemberOf(modifiedEntry,
-                    "cn=roleA,ou=groups,dc=hadoop,dc=apache,dc=org",
-                    "cn=roleG,ou=groups,dc=hadoop,dc=apache,dc=org");
+                    "cn=roleA,ou=groups,dc=proxy,dc=com",
+                    "cn=roleG,ou=groups,dc=proxy,dc=com");
             assertFalse(entries.next());
         }
     }
@@ -497,7 +506,7 @@ public class LDAPRolesLookupInterceptorTest {
             }
         }
 
-        assertMemberOf(resultUserEntry, "cn=roleA,ou=groups,dc=hadoop,dc=apache,dc=org");
+        assertMemberOf(resultUserEntry, "cn=roleA,ou=groups,dc=proxy,dc=com");
         assertEquals("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org", resultRoleEntry.getDn().getName());
         assertEquals("viewer", resultRoleEntry.get("cn").getString());
     }

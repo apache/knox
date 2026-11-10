@@ -20,9 +20,12 @@
 #
 # Usage:
 #   cd .github/workflows/compose
-#   IMAGE_TAG=knoxidf docker compose \
-#     -f docker-compose.yml -f docker-compose.knoxidf-federation.yml \
-#     up --build --abort-on-container-exit --exit-code-from tests
+#   IMAGE_TAG=knoxidf docker compose -f docker-compose.yml -f docker-compose.knoxidf-federation.yml build knox-dev
+#   IMAGE_TAG=knoxidf docker compose -f docker-compose.yml -f docker-compose.knoxidf-federation.yml \
+#     up --exit-code-from tests tests
+#
+# Name the tests service: a bare `up --abort-on-container-exit` aborts as soon as the
+# build-only knox-dev service exits.
 
 services:
   keycloak:

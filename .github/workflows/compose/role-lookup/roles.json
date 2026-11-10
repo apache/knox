@@ -20,6 +20,16 @@
     ]
   },
   {
+    "id": "guest",
+    "type": "user",
+    "roles": [
+      {
+        "scope": "platform",
+        "name": "viewer"
+      }
+    ]
+  },
+  {
     "id": "admin",
     "type": "group",
     "roles": [

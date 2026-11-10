@@ -151,7 +151,7 @@ The disabled user filter interceptor will recognize and filter disabled users. I
 
 The rolesLookup interceptor is created if the `interceptorType` configuration is set to `rolesLookup`. It uses the Role Lookup Service, configured with `gateway.ldap.roles.lookup.strategy`, to apply roles to search requests in three ways.
 
-**Role mapping.** For each user entry returned, a request is made to lookup roles based on the user's name and group membership. These roles replace the values in the `memberOf` attribute. Group entries are replaced with role entries named after the roles mapped to the group.
+**Role mapping.** For each user entry returned, a request is made to lookup roles based on the user's name and group membership. These roles replace the values in the `memberOf` attribute, each written as `cn=<scope>:<name>,ou=groups,<proxy base dn>`, the DN the role is listed with. Group entries are replaced with role entries named after the roles mapped to the group.
 
 E.g.,
 ```shell

@@ -52,6 +52,8 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     static final String LDAP_SYSTEM_PASSWORD_ALIAS = PREFIX + "systemPasswordAlias";
     static final String LDAP_USER_SEARCH_BASE = PREFIX + "userSearchBase";
     static final String LDAP_USER_SEARCH_FILTER = PREFIX + "userSearchFilter";
+    static final String LDAP_GROUP_SEARCH_BASE = PREFIX + "groupSearchBase";
+    static final String LDAP_GROUP_SEARCH_FILTER = PREFIX + "groupSearchFilter";
 
     // === Defaults point to Knox's demo LDAP ===
     private static final String DEFAULT_BASE_DN = "dc=hadoop,dc=apache,dc=org";
@@ -59,7 +61,11 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     private static final String DEFAULT_SYSTEM_USER = "uid=admin,ou=people," + DEFAULT_BASE_DN;
     // {0} is replaced with the username; JNDI escapes filter arguments, so no manual escaping is needed.
     static final String DEFAULT_USER_SEARCH_FILTER = "(uid={0})";
+    // {0} is replaced with the user DN.
+    static final String DEFAULT_GROUP_SEARCH_FILTER = "(&(objectClass=groupOfNames)(member={0}))";
 
+    // The search filter argument JNDI replaces with the username (user search) or the user DN (group search).
+    private static final String FILTER_ARGUMENT = "{0}";
     private static final String MEMBER_OF = "memberOf";
     private static final String[] ATTRIBUTES = {"cn", "sn", "givenName", "mail", MEMBER_OF};
 
@@ -68,6 +74,8 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     private final String ldapUserDnTemplate;
     private final String ldapUserSearchBase;
     private final String ldapUserSearchFilter;
+    private final String ldapGroupSearchBase;
+    private final String ldapGroupSearchFilter;
     private final String ldapSystemUser;
     private final String ldapSystemPasswordAlias;
     private final String ldapSystemPassword;
@@ -78,6 +86,9 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         this.ldapUserDnTemplate = getInitParamOrDefault(servletContext, LDAP_USER_DN_TEMPLATE, DEFAULT_USER_DN_TEMPLATE);
         this.ldapUserSearchBase = servletContext.getInitParameter(LDAP_USER_SEARCH_BASE);
         this.ldapUserSearchFilter = getInitParamOrDefault(servletContext, LDAP_USER_SEARCH_FILTER, DEFAULT_USER_SEARCH_FILTER);
+        // Defaults to the groups base of the Knox embedded LDAP server, where its roles-lookup interceptor publishes roles.
+        this.ldapGroupSearchBase = getInitParamOrDefault(servletContext, LDAP_GROUP_SEARCH_BASE, "ou=groups," + ldapBaseDn);
+        this.ldapGroupSearchFilter = getInitParamOrDefault(servletContext, LDAP_GROUP_SEARCH_FILTER, DEFAULT_GROUP_SEARCH_FILTER);
         this.ldapSystemUser = getInitParamOrDefault(servletContext, LDAP_SYSTEM_USER, DEFAULT_SYSTEM_USER);
         // Required: there is no default alias (and no default password).
         this.ldapSystemPasswordAlias = servletContext.getInitParameter(LDAP_SYSTEM_PASSWORD_ALIAS);
@@ -116,6 +127,7 @@ public class LdapUserParamsProvider implements UserParamsProvider {
 
         LdapContext ctx = null;
         try {
+            checkSearchFilters();
             ctx = createSystemContext();
 
             // Always close the enumeration: LdapContext.close() alone does not release the
@@ -152,7 +164,7 @@ public class LdapUserParamsProvider implements UserParamsProvider {
                     // --- Custom: roles ---
                     if (requestedClaims.contains("roles")) {
                         // Prefer the user's memberOf (e.g. the Knox embedded LDAP server, whose roles-lookup
-                        // interceptor publishes roles only there); fall back to scanning the group entries.
+                        // interceptor publishes roles only there); fall back to searching the user's groups.
                         Attribute memberOf = attrs.get(MEMBER_OF);
                         List<String> roles = memberOf != null ? rolesFromMemberOf(memberOf) : Collections.emptyList();
                         if (roles.isEmpty()) {
@@ -197,12 +209,12 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     }
 
     /**
-     * Role names are the cn of the memberOf groups that sit directly under the groups base,
+     * Role names are the cn of the memberOf groups that sit directly under {@code groupSearchBase},
      * i.e. the same groups {@link #fetchRoles} would consider.
      */
     private List<String> rolesFromMemberOf(Attribute memberOf) throws Exception {
         List<String> roles = new ArrayList<>();
-        LdapName groupsBase = new LdapName("ou=groups," + ldapBaseDn);
+        LdapName groupsBase = new LdapName(ldapGroupSearchBase);
         NamingEnumeration<?> e = memberOf.getAll();
         try {
             while (e.hasMore()) {
@@ -225,41 +237,47 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         return roles;
     }
 
+    /**
+     * Role names are the cn of the groups directly under {@code groupSearchBase} that match {@code groupSearchFilter},
+     * by default the groups that have the user as a member. The filter should name the user rather than list every
+     * group: the Knox embedded LDAP server answers a search for all groups by listing every role in the roles service.
+     */
     private List<String> fetchRoles(LdapContext ctx, String userDn) throws Exception {
         List<String> roles = new ArrayList<>();
 
         SearchControls groupControls = new SearchControls();
         groupControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-        groupControls.setReturningAttributes(new String[]{"cn", "member"});
+        groupControls.setReturningAttributes(new String[]{"cn"});
 
-        String groupsBase = "ou=groups," + ldapBaseDn;
-        // Close both the group search cursor and each member enumeration; see getParamsFor.
+        // Close the group search cursor; see getParamsFor.
         NamingEnumeration<SearchResult> groupResults =
-                ctx.search(groupsBase, "(objectClass=groupOfNames)", groupControls);
+                ctx.search(ldapGroupSearchBase, ldapGroupSearchFilter, new Object[]{userDn}, groupControls);
         try {
             while (groupResults.hasMore()) {
-                SearchResult group = groupResults.next();
-                Attributes groupAttrs = group.getAttributes();
-                Attribute members = groupAttrs.get("member");
-                if (members != null) {
-                    NamingEnumeration<?> e = members.getAll();
-                    try {
-                        while (e.hasMore()) {
-                            String memberDn = (String) e.next();
-                            if (memberDn.equalsIgnoreCase(userDn)) {
-                                roles.add(getAttr(groupAttrs, "cn"));
-                                break;
-                            }
-                        }
-                    } finally {
-                        closeEnumeration(e);
-                    }
+                String role = getAttr(groupResults.next().getAttributes(), "cn");
+                if (role != null) {
+                    roles.add(role);
                 }
             }
         } finally {
             closeEnumeration(groupResults);
         }
         return roles;
+    }
+
+    /**
+     * Fail closed on filters that do not name the user: a user search would match whichever user the directory returns
+     * first, giving the user another user's claims, and a group search would match every group, giving every role.
+     */
+    private void checkSearchFilters() {
+        if (ldapUserSearchBase != null && !ldapUserSearchFilter.contains(FILTER_ARGUMENT)) {
+            throw new IllegalStateException("LDAP user search filter '" + ldapUserSearchFilter + "' (set via '"
+                    + LDAP_USER_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the username");
+        }
+        if (!ldapGroupSearchFilter.contains(FILTER_ARGUMENT)) {
+            throw new IllegalStateException("LDAP group search filter '" + ldapGroupSearchFilter + "' (set via '"
+                    + LDAP_GROUP_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the user DN");
+        }
     }
 
     // Package-private so tests can supply a mock context.

@@ -34,6 +34,10 @@ class TestKnoxIDF(unittest.TestCase):
 
     EXPECTED_TOKEN_TTL_SECONDS = 86400
 
+    # Roles the access tokens of the authorization code flows must carry. None: the embedded LDAP
+    # server has no roles-lookup interceptor in this stack, so the flows do not request roles.
+    EXPECTED_ROLES = None
+
     def setUp(self):
         # Get the Knox Gateway URL from environment variables
         self.base_url = gateway_base_url()
@@ -176,7 +180,7 @@ class TestKnoxIDF(unittest.TestCase):
             "response_type": "code",
             "client_id": client_id,
             "redirect_uri": "http://localhost/callback",
-            "scope": "openid offline_access",
+            "scope": self._scope("openid offline_access"),
             "state": "test_state",
         }
         code = self._authorize_get_code(params, expect_state="test_state")
@@ -201,6 +205,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertIn("refresh_token", tokens)
         self.assertEqual(tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
         self._assert_expires_in_relative_seconds(tokens)
+        self._assert_roles(tokens)
 
         refresh_token = tokens["refresh_token"]
         print(f"Refresh token: {refresh_token}")
@@ -221,6 +226,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertIn("refresh_token", new_tokens)
         self.assertEqual(new_tokens["issued_token_type"], "urn:ietf:params:oauth:token-type:jwt")
         self._assert_expires_in_relative_seconds(new_tokens)
+        self._assert_roles(new_tokens)
 
         # Verify rotation: new refresh token should be different
         self.assertNotEqual(refresh_token, new_tokens["refresh_token"])
@@ -263,7 +269,7 @@ class TestKnoxIDF(unittest.TestCase):
             "response_type": "code",
             "client_id": client_id,
             "redirect_uri": "http://localhost/callback",
-            "scope": "openid",
+            "scope": self._scope("openid"),
             "state": "pkce_state",
             "code_challenge": code_challenge,
             "code_challenge_method": "S256"
@@ -284,6 +290,7 @@ class TestKnoxIDF(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         tokens = response.json()
         self.assertIn("access_token", tokens)
+        self._assert_roles(tokens)
 
     def test_authorization_code_flow_pkce_plain_rejected(self):
         """
@@ -375,12 +382,23 @@ class TestKnoxIDF(unittest.TestCase):
         data = {
             "redirect_uris": "http://localhost/callback",
             "allowed_scopes": "openid,profile,email,offline_access"
+                              + ("" if self.EXPECTED_ROLES is None else ",roles")
         }
         response = knox_post(reg_url, data=data, auth=HTTPBasicAuth(self.username, self.password))
         self.assertEqual(response.status_code, 200)
         reg_info = response.json()
         print(f"Registration response: {reg_info}")
         return reg_info["client_id"], reg_info["client_secret"]
+
+    def _scope(self, scope):
+        """The scope an authorization code flow requests, plus roles if roles are expected."""
+        return scope if self.EXPECTED_ROLES is None else f"{scope} roles"
+
+    def _assert_roles(self, tokens):
+        """The access token carries exactly the expected roles, if any are expected."""
+        if self.EXPECTED_ROLES is not None:
+            roles = get_token_claim(tokens["access_token"], "roles")
+            self.assertEqual(sorted(self.EXPECTED_ROLES), sorted(roles or []))
 
     def _authorize_get_code(self, params, expect_state=None):
         """Hit the authorize endpoint and return the code from the redirect Location."""

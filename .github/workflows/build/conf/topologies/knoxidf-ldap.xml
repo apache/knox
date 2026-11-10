@@ -88,5 +88,11 @@
             <name>token.exchange.topology.name</name>
             <value>knoxidf-token</value>
         </param>
+        <param>
+            <!-- The standard registerable scopes plus roles, which test_knoxidf_with_rest_role_lookup.py
+                 requests in the authorization code flows. -->
+            <name>knoxidf.registration.allowed.scopes</name>
+            <value>openid,profile,email,address,phone,offline_access,roles</value>
+        </param>
     </service>
 </topology>
