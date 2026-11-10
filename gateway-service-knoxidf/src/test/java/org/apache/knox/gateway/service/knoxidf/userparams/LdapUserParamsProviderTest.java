@@ -245,6 +245,35 @@ public class LdapUserParamsProviderTest {
   }
 
   @Test
+  public void testUserSearchFilterWithoutUsernameFailsLookup() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(LdapUserParamsProvider.LDAP_USER_SEARCH_BASE, "ou=people,dc=proxy,dc=com");
+    params.put(LdapUserParamsProvider.LDAP_USER_SEARCH_FILTER, "(objectClass=person)");
+    // No expectations: the lookup must fail before searching.
+    final LdapContext ctx = EasyMock.createStrictMock(LdapContext.class);
+    EasyMock.replay(ctx);
+
+    final IllegalStateException e = assertLookupFails(provider(params, ctx));
+
+    assertTrue(e.getMessage().contains(LdapUserParamsProvider.LDAP_USER_SEARCH_FILTER));
+    EasyMock.verify(ctx);
+  }
+
+  @Test
+  public void testGroupSearchFilterWithoutUserDnFailsLookup() throws Exception {
+    final Map<String, String> params = new HashMap<>();
+    params.put(LdapUserParamsProvider.LDAP_GROUP_SEARCH_FILTER, "(objectClass=groupOfNames)");
+    // No expectations: the lookup must fail before searching, rather than give the user every group as a role.
+    final LdapContext ctx = EasyMock.createStrictMock(LdapContext.class);
+    EasyMock.replay(ctx);
+
+    final IllegalStateException e = assertLookupFails(provider(params, ctx));
+
+    assertTrue(e.getMessage().contains(LdapUserParamsProvider.LDAP_GROUP_SEARCH_FILTER));
+    EasyMock.verify(ctx);
+  }
+
+  @Test
   public void testUserNotFoundYieldsNoParams() throws Exception {
     final Map<String, String> params = new HashMap<>();
     params.put(LdapUserParamsProvider.LDAP_USER_SEARCH_BASE, "ou=people,dc=proxy,dc=com");

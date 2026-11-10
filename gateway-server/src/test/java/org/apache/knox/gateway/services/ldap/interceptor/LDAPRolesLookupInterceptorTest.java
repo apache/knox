@@ -94,6 +94,15 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     @Test
+    public void testModifyEntryWithNullRoles() throws Exception {
+        final Entry userEntry = createUserEntry("erin", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
+
+        final Entry modifiedEntry = createInterceptor().modifyEntry(userEntry, null);
+
+        assertNull("memberOf attribute should be removed when the lookup returns no roles", modifiedEntry.get("memberOf"));
+    }
+
+    @Test
     public void testModifyEntryNoMemberOfNoRoles() throws Exception {
         final Entry userEntry = createUserEntry("charlie");
         final Collection<String> roles = Collections.emptyList();

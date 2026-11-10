@@ -429,9 +429,11 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         entry.removeAttributes("memberOf");
 
         // Roles are written with the same DN the role listing and the reverse role lookup use,
-        // so a memberOf value names a role entry served by this server.
-        for (String role : roles) {
-            entry.add("memberOf", createGroupDnFromName(role));
+        // so a memberOf value names a role entry served by this server. No roles (null) leaves memberOf wiped.
+        if (roles != null) {
+            for (String role : roles) {
+                entry.add("memberOf", createGroupDnFromName(role));
+            }
         }
     }
 

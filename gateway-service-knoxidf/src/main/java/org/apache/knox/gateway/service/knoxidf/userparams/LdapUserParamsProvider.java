@@ -64,6 +64,8 @@ public class LdapUserParamsProvider implements UserParamsProvider {
     // {0} is replaced with the user DN.
     static final String DEFAULT_GROUP_SEARCH_FILTER = "(&(objectClass=groupOfNames)(member={0}))";
 
+    // The search filter argument JNDI replaces with the username (user search) or the user DN (group search).
+    private static final String FILTER_ARGUMENT = "{0}";
     private static final String MEMBER_OF = "memberOf";
     private static final String[] ATTRIBUTES = {"cn", "sn", "givenName", "mail", MEMBER_OF};
 
@@ -125,6 +127,7 @@ public class LdapUserParamsProvider implements UserParamsProvider {
 
         LdapContext ctx = null;
         try {
+            checkSearchFilters();
             ctx = createSystemContext();
 
             // Always close the enumeration: LdapContext.close() alone does not release the
@@ -260,6 +263,21 @@ public class LdapUserParamsProvider implements UserParamsProvider {
             closeEnumeration(groupResults);
         }
         return roles;
+    }
+
+    /**
+     * Fail closed on filters that do not name the user: a user search would match whichever user the directory returns
+     * first, giving the user another user's claims, and a group search would match every group, giving every role.
+     */
+    private void checkSearchFilters() {
+        if (ldapUserSearchBase != null && !ldapUserSearchFilter.contains(FILTER_ARGUMENT)) {
+            throw new IllegalStateException("LDAP user search filter '" + ldapUserSearchFilter + "' (set via '"
+                    + LDAP_USER_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the username");
+        }
+        if (!ldapGroupSearchFilter.contains(FILTER_ARGUMENT)) {
+            throw new IllegalStateException("LDAP group search filter '" + ldapGroupSearchFilter + "' (set via '"
+                    + LDAP_GROUP_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the user DN");
+        }
     }
 
     // Package-private so tests can supply a mock context.
