@@ -527,10 +527,10 @@ public class KnoxLDAPServerManager {
         if (!directoryService.getAdminSession().exists(baseDnName)) {
             Entry baseDnEntry = new DefaultEntry(schemaManager);
             baseDnEntry.setDn(baseDnName);
-            baseDnEntry.add("objectClass", "top", "domain");
-            // Extract dc value from baseDn (e.g., "dc=proxy,dc=com" -> "proxy")
-            String dcValue = dn.split(",")[0].split("=")[1];
-            baseDnEntry.add("dc", dcValue);
+            // An entry must have at least one STRUCTURAL class, which 'top'/'extensibleObject' alone are not.
+            // 'locality' is a STRUCTURAL objectClass with no MUST attributes; 'extensibleObject'
+            // (AUXILIARY) then permits whatever attribute the base DN's RDN uses (dc, cn, ou, o, ...).
+            baseDnEntry.add("objectClass", "top", "locality", "extensibleObject");
             directoryService.getAdminSession().add(baseDnEntry);
         }
 
