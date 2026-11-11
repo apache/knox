@@ -31,7 +31,7 @@ CREATE TABLE DELEGATION_POLICIES (
 
 CREATE TABLE DELEGATION_POLICY_USERS (
     registration_id VARCHAR2(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id) ON DELETE CASCADE,
-    username        VARCHAR2(1023) NOT NULL,
+    username        VARCHAR2(2048) NOT NULL,
     PRIMARY KEY (registration_id, username)
 );
 

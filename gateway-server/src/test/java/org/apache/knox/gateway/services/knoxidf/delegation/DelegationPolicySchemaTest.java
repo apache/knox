@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.services.knoxidf.delegation;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.database.AbstractDataSourceFactory;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -160,6 +161,26 @@ public class DelegationPolicySchemaTest {
   public void testFkViolationUsers() throws Exception {
     expectConstraintViolation(h2Conn,
         "INSERT INTO DELEGATION_POLICY_USERS (registration_id, username) VALUES ('" + UUID.randomUUID() + "', 'alice')");
+  }
+
+  @Test
+  public void testUsernameAcceptsMaxLengthSpiffeId() throws Exception {
+    // SPIFFE IDs may be up to 2048 bytes long, so the username column must accept that length
+    final String id = UUID.randomUUID().toString();
+    final String prefix = "spiffe://example.org/";
+    final String spiffeId = prefix + StringUtils.repeat('a', 2048 - prefix.length());
+    try (Statement stmt = h2Conn.createStatement()) {
+      stmt.execute("INSERT INTO DELEGATION_POLICIES (registration_id, actor_authority, actor_id, created_at, updated_at) "
+          + "VALUES ('" + id + "', 'oidc', 'actor-id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+      stmt.execute("INSERT INTO DELEGATION_POLICY_USERS (registration_id, username) VALUES ('" + id + "', '" + spiffeId + "')");
+      try (ResultSet rs = stmt.executeQuery(
+          "SELECT username FROM DELEGATION_POLICY_USERS WHERE registration_id = '" + id + "'")) {
+        assertTrue(rs.next());
+        assertEquals(spiffeId, rs.getString("username"));
+      }
+      expectConstraintViolation(h2Conn,
+          "INSERT INTO DELEGATION_POLICY_USERS (registration_id, username) VALUES ('" + id + "', '" + spiffeId + "a')");
+    }
   }
 
   @Test
