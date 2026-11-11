@@ -21,6 +21,7 @@ import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.ExtendedBaseRules;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.commons.io.IOUtils;
+import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyMatch;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRuleDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
@@ -361,6 +362,124 @@ public class HtmlFilterReaderBaseTest {
         "  </script>\n" +
         "</root>\n";
     assertThat( outputXml, is( expectedOutput ) );
+  }
+
+  /** Prefixes the value of the rule "prefix" with a gateway path, other rules and values are left alone. */
+  public static class PrefixXmlFilterReader extends HtmlFilterReaderBase {
+    public PrefixXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+      super( reader, config );
+    }
+
+    @Override
+    protected String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName ) {
+      return filterValueString( attributeName.getLocalPart(), attributeValue, ruleName );
+    }
+
+    @Override
+    protected String filterText( QName elementName, String text, String ruleName ) {
+      return filterValueString( elementName.getLocalPart(), text, ruleName );
+    }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      return "prefix".equals( ruleName ) ? "/gateway/topo" + value : value;
+    }
+  }
+
+  private static String filterWithPartialMatch( String input, String partialPath, String wholePath ) throws IOException, ParserConfigurationException {
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    if ( wholePath != null ) {
+      config.addApply( wholePath, "prefix" );
+    }
+    config.addApply( partialPath, "prefix" ).match( UrlRewriteFilterApplyMatch.PARTIAL );
+    return new String( IOUtils.toCharArray( new PrefixXmlFilterReader( new StringReader( input ), config ) ) );
+  }
+
+  @Test
+  public void testPartialMatchInEntityEncodedAttributeValue() throws IOException, ParserConfigurationException {
+    String input =
+        "<root><osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/ctx&quot;,&quot;serverBasePath&quot;:&quot;/ctx&quot;," +
+        "&quot;i18n&quot;:{&quot;translationsUrl&quot;:&quot;/ctx/translations/en.json&quot;}," +
+        "&quot;text&quot;:&quot;&amp;lt;a href=\\&quot;/other/ctx\\&quot;&amp;gt;&quot;,&quot;n&quot;:3000000}\"></osd-injected-metadata></root>";
+    String expected =
+        "<root><osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;,&quot;serverBasePath&quot;:&quot;/gateway/topo/ctx&quot;," +
+        "&quot;i18n&quot;:{&quot;translationsUrl&quot;:&quot;/gateway/topo/ctx/translations/en.json&quot;}," +
+        "&quot;text&quot;:&quot;&amp;lt;a href=\\&quot;/other/ctx\\&quot;&amp;gt;&quot;,&quot;n&quot;:3000000}\"></osd-injected-metadata></root>";
+    // the value has to start with /ctx, "/other/ctx" has to stay as it is
+    assertThat( filterWithPartialMatch( input, "(?<![\\w/])/ctx[^&\"'\\s\\\\)]*", null ), is( expected ) );
+  }
+
+  @Test
+  public void testPartialMatchInStyleText() throws IOException, ParserConfigurationException {
+    String input =
+        "<root><style type=\"text/css\">@font-face{src:url('/ctx/fonts/a.woff') format('woff'),url('/ctx/fonts/b.woff') format('woff')}" +
+        ".x{background:url(/ctx/img/c.png)}</style></root>";
+    String expected =
+        "<root><style type=\"text/css\">@font-face{src:url('/gateway/topo/ctx/fonts/a.woff') format('woff'),url('/gateway/topo/ctx/fonts/b.woff') format('woff')}" +
+        ".x{background:url(/gateway/topo/ctx/img/c.png)}</style></root>";
+    assertThat( filterWithPartialMatch( input, "/ctx[^&\"'\\s\\\\)]*", null ), is( expected ) );
+  }
+
+  @Test
+  public void testPartialMatchCombinedWithAnApplyForWholeValues() throws IOException, ParserConfigurationException {
+    // href matches the whole match apply, it must be rewritten once only (not again by the partial match apply)
+    String input = "<root><a href=\"/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\">/ctx/text</a></root>";
+    String expected = "<root><a href=\"/gateway/topo/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;}\">/gateway/topo/ctx/text</a></root>";
+    assertThat( filterWithPartialMatch( input, "/ctx[^&\"'\\s\\\\)]*", "/ctx/page" ), is( expected ) );
+  }
+
+  @Test
+  public void testWithWholeMatchAValueIsOnlyRewrittenIfItMatchesAsAWhole() throws IOException, ParserConfigurationException {
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    config.addApply( "/ctx[^&\"'\\s\\\\)]*", "prefix" );
+    String input = "<root><a href=\"/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\"><style>url(/ctx/a)</style></a></root>";
+    String expected = "<root><a href=\"/gateway/topo/ctx/page\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\"><style>url(/ctx/a)</style></a></root>";
+    String output = new String( IOUtils.toCharArray( new PrefixXmlFilterReader( new StringReader( input ), config ) ) );
+    assertThat( output, is( expected ) );
+  }
+
+  /** Like PrefixXmlFilterReader, but also rewrites backend URLs if no rule name is given (like an implicit rule). */
+  public static class ImplicitRuleXmlFilterReader extends PrefixXmlFilterReader {
+    public ImplicitRuleXmlFilterReader( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
+      super( reader, config );
+    }
+
+    @Override
+    public String filterValueString( String name, String value, String ruleName ) {
+      if( ruleName == null && value.startsWith( "http://backend:5601/" ) ) {
+        return "/gateway/topo/" + value.substring( "http://backend:5601/".length() );
+      }
+      return super.filterValueString( name, value, ruleName );
+    }
+  }
+
+  @Test
+  public void testPartialMatchDoesNotReplaceImplicitRules() throws IOException, ParserConfigurationException {
+    UrlRewriteFilterContentDescriptor config = new UrlRewriteFilterContentDescriptorImpl();
+    config.addApply( "/ctx[^&\"'\\s\\\\)]*", "prefix" ).match( UrlRewriteFilterApplyMatch.PARTIAL );
+    // the href is rewritten as a whole by the implicit rule, the partial match apply must neither prevent that nor
+    // rewrite the /ctx in the result again
+    String input =
+        "<root><a href=\"http://backend:5601/ctx/app\" data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\">" +
+        "http://backend:5601/ctx/text</a></root>";
+    String expected =
+        "<root><a href=\"/gateway/topo/ctx/app\" data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;}\">" +
+        "/gateway/topo/ctx/text</a></root>";
+    String output = new String( IOUtils.toCharArray( new ImplicitRuleXmlFilterReader( new StringReader( input ), config ) ) );
+    assertThat( output, is( expected ) );
+  }
+
+  @Test
+  public void testPartialMatchWithDelimiterAnchoredPathLeavesPlainTextAlone() throws IOException, ParserConfigurationException {
+    String input =
+        "<html><head><style>.x{background:url(/ctx/img/c.png)}</style></head><body>" +
+        "<osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/ctx&quot;}\"></osd-injected-metadata>" +
+        "<p>see /ctx/docs and /gateway/topo/ctx/x</p></body></html>";
+    String expected =
+        "<html><head><style>.x{background:url(/gateway/topo/ctx/img/c.png)}</style></head><body>" +
+        "<osd-injected-metadata data=\"{&quot;basePath&quot;:&quot;/gateway/topo/ctx&quot;}\"></osd-injected-metadata>" +
+        "<p>see /ctx/docs and /gateway/topo/ctx/x</p></body></html>";
+    assertThat( filterWithPartialMatch( input, "(?<=[(\"'=]|&quot;)/ctx[^&\"'\\s\\\\)]*", null ), is( expected ) );
   }
 
   public static class XmlRewriteRulesDescriptorDigesterTest {

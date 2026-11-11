@@ -17,11 +17,15 @@
  */
 package org.apache.knox.gateway.filter.rewrite.api;
 
+import org.apache.commons.digester3.ExtendedBaseRules;
+import org.apache.commons.digester3.binder.DigesterLoader;
+import org.apache.knox.gateway.filter.rewrite.impl.xml.XmlRewriteRulesDigester;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
 import org.hamcrest.Matchers;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 import org.xmlmatchers.transform.XmlConverters;
 
 import javax.xml.transform.Source;
@@ -257,5 +261,57 @@ public class UrlRewriteRulesDescriptorFactoryTest {
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply" ) );
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@path", equalTo( "test-apply-path-4" ) ) );
     assertThat( xml, hasXPath( "/rules/filter/content/buffer/detect/apply/@rule", equalTo( "test-apply-rule-4" ) ) );
+  }
+
+  @Test
+  public void testLoadStoreApplyMatch() throws IOException {
+    String rules =
+        "<rules><filter name=\"test-filter\"><content type=\"*/html\">" +
+        "<apply path=\"test-path-1\" rule=\"test-rule-1\"/>" +
+        "<apply path=\"test-path-2\" rule=\"test-rule-2\" match=\"partial\"/>" +
+        "<apply path=\"test-path-3\" rule=\"test-rule-3\" match=\"whole\"/>" +
+        "<apply path=\"test-path-4\" rule=\"test-rule-4\" match=\" PARTIAL \"/>" +
+        "</content></filter></rules>";
+    UrlRewriteRulesDescriptor config = UrlRewriteRulesDescriptorFactory.load( "xml", new java.io.StringReader( rules ) );
+    List<UrlRewriteFilterPathDescriptor> selectors = config.getFilter( "test-filter" ).getContent( "*/html" ).getSelectors();
+    assertThat( selectors.size(), is( 4 ) );
+    assertApplyMatches( selectors );
+
+    StringWriter writer = new StringWriter();
+    UrlRewriteRulesDescriptorFactory.store( config, "xml", writer );
+    Source xml = XmlConverters.the( writer.toString() );
+    assertThat( xml, hasXPath( "count(/rules/filter/content/apply[@match])", equalTo( "3" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply[@path='test-path-2']/@match", equalTo( "partial" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply[@path='test-path-3']/@match", equalTo( "whole" ) ) );
+    assertThat( xml, hasXPath( "/rules/filter/content/apply[@path='test-path-4']/@match", equalTo( "partial" ) ) );
+
+    UrlRewriteRulesDescriptor reloaded = UrlRewriteRulesDescriptorFactory.load( "xml", new java.io.StringReader( writer.toString() ) );
+    assertApplyMatches( reloaded.getFilter( "test-filter" ).getContent( "*/html" ).getSelectors() );
+  }
+
+  private static void assertApplyMatches( List<UrlRewriteFilterPathDescriptor> selectors ) {
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 0 )).match(), is( UrlRewriteFilterApplyMatch.WHOLE ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 1 )).match(), is( UrlRewriteFilterApplyMatch.PARTIAL ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 2 )).match(), is( UrlRewriteFilterApplyMatch.WHOLE ) );
+    assertThat( ((UrlRewriteFilterApplyDescriptor)selectors.get( 3 )).match(), is( UrlRewriteFilterApplyMatch.PARTIAL ) );
+  }
+
+  @Test( expected = SAXException.class )
+  public void testLoadApplyInvalidMatch() throws IOException, SAXException {
+    String rules =
+        "<rules><filter name=\"test-filter\"><content type=\"*/html\">" +
+        "<apply path=\"test-path-1\" rule=\"test-rule-1\" match=\"bogus\"/>" +
+        "</content></filter></rules>";
+    Logger logger = (Logger)LogManager.getLogger( "org.apache.commons.digester3.Digester" );
+    Level level = logger.getLevel();
+    try {
+      logger.setLevel( Level.OFF );
+      // a failed parse leaves the stack of the digester behind, use an own one instead of the shared one of
+      // UrlRewriteRulesDescriptorFactory so that the other tests are not affected
+      DigesterLoader.newLoader( new XmlRewriteRulesDigester() ).newDigester( new ExtendedBaseRules() )
+          .parse( new java.io.StringReader( rules ) );
+    } finally {
+      logger.setLevel( level );
+    }
   }
 }

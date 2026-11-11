@@ -1684,6 +1684,73 @@ HBaseDeploymentContributor
     addRewriteFilter( context, service, regionResource, params );
 ```
 
+##### Rewriting URLs embedded in HTML attribute values and text #####
+
+For HTML content the path of an `apply` is a regular expression that, by default (`match="whole"`), has to match a
+whole attribute value or text node. A URL that is only a part of a value, e.g. inside a JSON document in an attribute or inside the CSS of a
+`<style>` element, is not rewritten that way. With `match="partial"` the path is searched for within every attribute value
+and text node instead, and every match is rewritten through the rule on its own, the rest of the value is left
+untouched.
+
+```xml
+<rules>
+  <filter name="OSD/osd/outbound/html">
+    <content type="*/html">
+      <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="OSD/osd/outbound/ctx" match="partial"/>
+    </content>
+  </filter>
+</rules>
+```
+
+This rewrites e.g. `/ctx` in `<osd-injected-metadata data="{&quot;basePath&quot;:&quot;/ctx&quot;}">` and in
+`<style>@font-face{src:url('/ctx/fonts/a.woff')}</style>`.
+
+* The text of `<script>` elements and `*/javascript` content is always searched, whatever `match` is set to, so
+`match` makes no difference there. For JSON and XML content `match` is ignored.
+* Values that are rewritten as a whole (by an `apply` with `match="whole"` or by an implicit rule) are not searched again.
+* Attribute values are not decoded, so `"` appears as `&quot;`. The path should stop at `&`, and the rule must not
+produce `"` or `&`, as its output is inserted as it is.
+* The path is applied to every attribute value and text node, including visible text and the content of `<textarea>`.
+Anchor it on the characters that surround the URL (the lookbehind in the example above) so that plain text and
+values that already contain the gateway path, e.g. `/gateway/sandbox/ctx`, are not matched.
+* Several `match="partial"` applies are applied one after the other, and each one searches the output of the
+previous one. A path must not match what the rule of an earlier apply produces, otherwise that part of the value
+is rewritten twice. Keep the paths disjoint, e.g. by anchoring them on the surrounding characters.
+
+###### Example ######
+
+A backend serves its UI under `/app-ui` and embeds that path in attribute values, inline styles and JSON. The rule
+replaces the matched context path with the one of the gateway, the rest of the URL is kept as it is:
+
+```xml
+<rules>
+  <rule dir="OUT" name="APP/app/outbound/context">
+    <rewrite template="{$frontend[path]}/app"/>
+  </rule>
+  <filter name="APP/app/outbound/html">
+    <content type="*/html">
+      <apply path="(?&lt;![\w/.:-])/app-ui(?![\w-])" match="partial" rule="APP/app/outbound/context"/>
+    </content>
+  </filter>
+</rules>
+```
+
+The path is anchored on both sides: `(?<![\w/.:-])` refuses a match after a host, port or another path segment,
+`(?![\w-])` refuses a longer name. As the rule ignores its input, the path must match exactly the part that is
+replaced. With the topology `sandbox`:
+
+| Backend HTML                                        | Sent to the client                                                |
+|-----------------------------------------------------|-------------------------------------------------------------------|
+| `<a href="/app-ui/home">`                           | `<a href="/gateway/sandbox/app/home">`                            |
+| `data="{&quot;basePath&quot;:&quot;/app-ui&quot;}"` | `data="{&quot;basePath&quot;:&quot;/gateway/sandbox/app&quot;}"`  |
+| `<style>url('/app-ui/fonts/a.woff')</style>`        | `<style>url('/gateway/sandbox/app/fonts/a.woff')</style>`         |
+| `https://backend:5601/app-ui/home`                  | unchanged, the path follows a port                                |
+| `/other/app-ui`, `/app-ui-v2`                       | unchanged                                                         |
+
+The `href` is only rewritten this way if no `apply` with `match="whole"` or implicit rule rewrites it as a whole
+first. The output of the rule, `/gateway/sandbox/app`, does not match the path again, keep it that way when several
+partial applies are configured.
+
 #### Rewrite Functions ####
 TODO - Provide an lowercase function as an example.
 

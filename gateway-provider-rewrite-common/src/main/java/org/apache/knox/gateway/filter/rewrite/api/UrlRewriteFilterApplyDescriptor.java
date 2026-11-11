@@ -24,4 +24,12 @@ public interface UrlRewriteFilterApplyDescriptor
 
   UrlRewriteFilterApplyDescriptor rule( String rule );
 
+  default UrlRewriteFilterApplyMatch match() {
+    return UrlRewriteFilterApplyMatch.WHOLE;
+  }
+
+  default UrlRewriteFilterApplyDescriptor match( UrlRewriteFilterApplyMatch match ) {
+    throw new UnsupportedOperationException( "match is not supported by " + getClass().getName() );
+  }
+
 }

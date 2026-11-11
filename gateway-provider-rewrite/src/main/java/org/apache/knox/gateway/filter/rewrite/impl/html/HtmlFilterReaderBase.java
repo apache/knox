@@ -25,6 +25,7 @@ import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StreamedSource;
 import net.htmlparser.jericho.Tag;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
+import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyMatch;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
 import org.apache.knox.gateway.filter.rewrite.i18n.UrlRewriteMessages;
@@ -63,6 +64,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   private StringWriter writer;
   private StringBuffer buffer;
   private UrlRewriteFilterContentDescriptor config;
+  private boolean hasPartialMatchApply;
 
   protected HtmlFilterReaderBase( Reader reader ) throws IOException {
     this.reader = reader;
@@ -77,6 +79,7 @@ public abstract class HtmlFilterReaderBase extends Reader implements
   protected HtmlFilterReaderBase( Reader reader, UrlRewriteFilterContentDescriptor config ) throws IOException, ParserConfigurationException {
     this(reader);
     this.config = config;
+    this.hasPartialMatchApply = UrlRewriteUtil.hasPartialMatchApply( config );
   }
 
   protected abstract String filterAttribute( QName elementName, QName attributeName, String attributeValue, String ruleName );
@@ -181,6 +184,10 @@ public abstract class HtmlFilterReaderBase extends Reader implements
         if( outputValue == null ) {
           outputValue = inputValue;
         }
+        if( name == null && hasPartialMatchApply && outputValue.equals( inputValue ) ) {
+          // not rewritten as a whole, rewrite the matches of the partial match applies within the value
+          outputValue = UrlRewriteUtil.filterPartialMatches( inputValue, config, this, REGEX_COMPILER );
+        }
       } catch ( Exception e ) {
         LOG.failedToFilterAttribute( attribute.getName(), e );
       }
@@ -196,6 +203,10 @@ public abstract class HtmlFilterReaderBase extends Reader implements
       for( UrlRewriteFilterPathDescriptor<?> selector : config.getSelectors() ) {
         if ( selector instanceof UrlRewriteFilterApplyDescriptor) {
           UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+          if( apply.match() == UrlRewriteFilterApplyMatch.PARTIAL ) {
+            // searched for within the value, see processAttribute and processText
+            continue;
+          }
           Matcher matcher = apply.compiledPath( REGEX_COMPILER ).matcher( inputValue );
             if (matcher.matches()) {
               return apply.rule();
@@ -216,7 +227,12 @@ public abstract class HtmlFilterReaderBase extends Reader implements
           // embedded javascript content
           outputValue = UrlRewriteUtil.filterJavaScript( inputValue, config, this, REGEX_COMPILER );
         } else {
-          outputValue = filterText( stack.peek().getQName(), inputValue, getRuleName(inputValue) );
+          String ruleName = getRuleName(inputValue);
+          outputValue = filterText( stack.peek().getQName(), inputValue, ruleName );
+          if( ruleName == null && hasPartialMatchApply && ( outputValue == null || outputValue.equals( inputValue ) ) ) {
+            // not rewritten as a whole, rewrite the matches of the partial match applies within the text
+            outputValue = UrlRewriteUtil.filterPartialMatches( inputValue, config, this, REGEX_COMPILER );
+          }
         }
       }
       if( outputValue == null ) {

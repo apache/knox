@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
+import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyMatch;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterContentDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterPathDescriptor;
@@ -60,6 +61,36 @@ public class UrlRewriteUtil {
 
   public static String filterJavaScript( String inputValue, UrlRewriteFilterContentDescriptor config,
       UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler ) {
+    return filterMatches( inputValue, config, filterReader, regexCompiler, false );
+  }
+
+  /**
+   * Rewrites every match of the applies that are configured with match="partial", the rest of the input is left
+   * untouched. Applies with match="whole" have to match a whole value, they are not used here.
+   */
+  public static String filterPartialMatches( String inputValue, UrlRewriteFilterContentDescriptor config,
+      UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler ) {
+    return filterMatches( inputValue, config, filterReader, regexCompiler, true );
+  }
+
+  public static boolean hasPartialMatchApply( UrlRewriteFilterContentDescriptor config ) {
+    if( config != null ) {
+      for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
+        if( selector instanceof UrlRewriteFilterApplyDescriptor && ((UrlRewriteFilterApplyDescriptor)selector).match() == UrlRewriteFilterApplyMatch.PARTIAL ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /*
+   * The applies are processed one after the other and every apply searches the output of the previous one, so an
+   * apply can match something that was produced by the rewrite of an earlier apply.
+   */
+  private static String filterMatches( String inputValue, UrlRewriteFilterContentDescriptor config,
+      UrlRewriteFilterReader filterReader, UrlRewriteFilterPathDescriptor.Compiler<Pattern> regexCompiler,
+      boolean partialOnly ) {
     StringBuilder tbuff = new StringBuilder();
     StringBuffer sbuff = new StringBuffer();
     sbuff.append( inputValue );
@@ -67,6 +98,9 @@ public class UrlRewriteUtil {
       for( UrlRewriteFilterPathDescriptor selector : config.getSelectors() ) {
         if ( selector instanceof UrlRewriteFilterApplyDescriptor ) {
           UrlRewriteFilterApplyDescriptor apply = (UrlRewriteFilterApplyDescriptor)selector;
+          if( partialOnly && apply.match() != UrlRewriteFilterApplyMatch.PARTIAL ) {
+            continue;
+          }
           Matcher matcher = apply.compiledPath( regexCompiler ).matcher( sbuff );
           int index = 0;
           while ( matcher.find() ) {
@@ -89,4 +123,5 @@ public class UrlRewriteUtil {
     }
     return sbuff.toString();
   }
+
 }
