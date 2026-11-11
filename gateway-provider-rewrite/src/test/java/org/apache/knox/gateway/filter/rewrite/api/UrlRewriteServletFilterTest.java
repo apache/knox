@@ -955,9 +955,9 @@ public class UrlRewriteServletFilterTest {
    * @see KNOX-3556
    */
   @Test
-  public void testResponseHtmlBodyRewriteFind() throws Exception {
+  public void testResponseHtmlBodyRewritePartialMatch() throws Exception {
     final Map<String, String> initParams = new HashMap<>();
-    initParams.put("response.body", "test-filter-find");
+    initParams.put("response.body", "test-filter-partial-match");
     testSetUp(initParams);
 
     final String responseHtml = "<html><head>"

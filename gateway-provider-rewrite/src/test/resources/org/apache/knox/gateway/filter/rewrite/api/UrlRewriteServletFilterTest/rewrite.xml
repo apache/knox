@@ -57,8 +57,8 @@
         <rewrite template="{$import[&quot;, url]}/stylesheets/pretty.css&quot;;"/>
     </rule>
 
-    <!-- HTML find tests, KNOX-3556 -->
-    <rule flow="OR" dir="OUT" name="test-rule-html-find">
+    <!-- HTML partial match tests, KNOX-3556 -->
+    <rule flow="OR" dir="OUT" name="test-rule-html-partial-match">
         <match pattern="/ctx">
             <rewrite template="/gateway/topo/ctx"/>
         </match>
@@ -128,9 +128,9 @@
         </content>
     </filter>
 
-    <filter name="test-filter-find">
+    <filter name="test-filter-partial-match">
         <content type="*/html">
-            <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="test-rule-html-find" find="true"/>
+            <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="test-rule-html-partial-match" match="partial"/>
         </content>
     </filter>
 

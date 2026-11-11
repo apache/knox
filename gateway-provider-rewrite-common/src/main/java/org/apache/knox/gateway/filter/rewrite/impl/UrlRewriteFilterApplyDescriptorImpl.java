@@ -18,13 +18,16 @@
 package org.apache.knox.gateway.filter.rewrite.impl;
 
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyDescriptor;
+import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteFilterApplyMatch;
+
+import java.util.Locale;
 
 public class UrlRewriteFilterApplyDescriptorImpl
     extends UrlRewriteFilterSelectorDescriptorBase<UrlRewriteFilterApplyDescriptor>
     implements UrlRewriteFilterApplyDescriptor {
 
   private String rule;
-  private boolean find;
+  private UrlRewriteFilterApplyMatch match;
 
   @Override
   public String rule() {
@@ -46,22 +49,26 @@ public class UrlRewriteFilterApplyDescriptorImpl
   }
 
   @Override
-  public boolean find() {
-    return find;
+  public UrlRewriteFilterApplyMatch match() {
+    return match == null ? UrlRewriteFilterApplyMatch.WHOLE : match;
   }
 
   @Override
-  public UrlRewriteFilterApplyDescriptor find( boolean find ) {
-    this.find = find;
+  public UrlRewriteFilterApplyDescriptor match( UrlRewriteFilterApplyMatch match ) {
+    setMatch( match );
     return this;
   }
 
-  public void setFind( boolean find ) {
-    this.find = find;
+  public void setMatch( UrlRewriteFilterApplyMatch match ) {
+    this.match = match;
   }
 
-  public boolean isFind() {
-    return find;
+  public void setMatch( String match ) {
+    this.match = Enum.valueOf( UrlRewriteFilterApplyMatch.class, match.trim().toUpperCase( Locale.ROOT ) );
+  }
+
+  public String getMatch() {
+    return match == null ? null : match.name().toLowerCase( Locale.ROOT );
   }
 
 }

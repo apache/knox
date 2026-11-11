@@ -24,17 +24,12 @@ public interface UrlRewriteFilterApplyDescriptor
 
   UrlRewriteFilterApplyDescriptor rule( String rule );
 
-  /**
-   * By default the path of an apply has to match the whole value it is applied to (attribute value, text node).
-   * If find is set the path is a regular expression that is searched for within the value and every match is
-   * rewritten on its own, the rest of the value is left untouched.
-   */
-  default boolean find() {
-    return false;
+  default UrlRewriteFilterApplyMatch match() {
+    return UrlRewriteFilterApplyMatch.WHOLE;
   }
 
-  default UrlRewriteFilterApplyDescriptor find( boolean find ) {
-    throw new UnsupportedOperationException( "find is not supported by " + getClass().getName() );
+  default UrlRewriteFilterApplyDescriptor match( UrlRewriteFilterApplyMatch match ) {
+    throw new UnsupportedOperationException( "match is not supported by " + getClass().getName() );
   }
 
 }

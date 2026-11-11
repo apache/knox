@@ -1686,9 +1686,9 @@ HBaseDeploymentContributor
 
 ##### Rewriting URLs embedded in HTML attribute values and text #####
 
-For HTML content the path of an `apply` is a regular expression that has to match a whole attribute value or text
-node. A URL that is only a part of a value, e.g. inside a JSON document in an attribute or inside the CSS of a
-`<style>` element, is not rewritten that way. With `find="true"` the path is searched for within every attribute value
+For HTML content the path of an `apply` is a regular expression that, by default (`match="whole"`), has to match a
+whole attribute value or text node. A URL that is only a part of a value, e.g. inside a JSON document in an attribute or inside the CSS of a
+`<style>` element, is not rewritten that way. With `match="partial"` the path is searched for within every attribute value
 and text node instead, and every match is rewritten through the rule on its own, the rest of the value is left
 untouched.
 
@@ -1696,7 +1696,7 @@ untouched.
 <rules>
   <filter name="OSD/osd/outbound/html">
     <content type="*/html">
-      <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="OSD/osd/outbound/ctx" find="true"/>
+      <apply path="(?&lt;=[(&quot;'=]|&amp;quot;)/ctx[^&amp;&quot;'\s\\)]*" rule="OSD/osd/outbound/ctx" match="partial"/>
     </content>
   </filter>
 </rules>
@@ -1705,9 +1705,9 @@ untouched.
 This rewrites e.g. `/ctx` in `<osd-injected-metadata data="{&quot;basePath&quot;:&quot;/ctx&quot;}">` and in
 `<style>@font-face{src:url('/ctx/fonts/a.woff')}</style>`.
 
-* The text of `<script>` elements and `*/javascript` content is always searched, with or without `find`, so `find`
-makes no difference there. For JSON and XML content `find` is ignored.
-* Values that are rewritten as a whole (by an `apply` without `find` or by an implicit rule) are not searched again.
+* The text of `<script>` elements and `*/javascript` content is always searched, whatever `match` is set to, so
+`match` makes no difference there. For JSON and XML content `match` is ignored.
+* Values that are rewritten as a whole (by an `apply` with `match="whole"` or by an implicit rule) are not searched again.
 * Attribute values are not decoded, so `"` appears as `&quot;`. The path should stop at `&`, and the rule must not
 produce `"` or `&`, as its output is inserted as it is.
 * The path is applied to every attribute value and text node, including visible text and the content of `<textarea>`.
