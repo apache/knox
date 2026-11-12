@@ -55,3 +55,11 @@ CREATE TABLE IF NOT EXISTS DELEGATION_POLICY_RESOURCE_SCOPES (
     FOREIGN KEY (registration_id, resource_uri)
         REFERENCES DELEGATION_POLICY_RESOURCES(registration_id, resource_uri) ON DELETE CASCADE
 );
+
+-- Audiences that identify the actor as a recipient (KNOX-3520). A delegated exchange may present a
+-- Knox-minted subject_token without a knox.token.audiences value only if its aud intersects these.
+CREATE TABLE IF NOT EXISTS DELEGATION_POLICY_SUBJECT_AUDIENCES (
+    registration_id VARCHAR(36)   NOT NULL REFERENCES DELEGATION_POLICIES(registration_id) ON DELETE CASCADE,
+    audience        VARCHAR(1023) NOT NULL,
+    PRIMARY KEY (registration_id, audience)
+);

@@ -235,7 +235,8 @@ behalf of another, so it is governed by a chain of fail-safe controls. The full 
   LDAP-group allow-list. Headless (`requested_subject`) exchange additionally requires the policy's
   `allowHeadlessExchange`.
 - **Denials leak nothing.** Whatever the reason a policy rejects an exchange
-  (`actor_not_registered`, `headless_not_allowed`, `subject_not_allowed`, …), the caller receives
+  (`actor_not_registered`, `headless_not_allowed`, `subject_audience_not_allowed`,
+  `subject_not_allowed`, …), the caller receives
   the single generic response `400 invalid_request` "The token exchange request is rejected by
   policy". The specific reason is recorded only in the [audit log](operations.md#auditing), so the
   endpoint cannot be used to probe who may act for whom.
@@ -247,6 +248,16 @@ behalf of another, so it is governed by a chain of fail-safe controls. The full 
   LDAP service to resolve the subject's membership. If LDAP is disabled or unreachable, the exchange
   fails with `500 server_error` — it is never treated as an implicit allow. Deploy LDAP wherever
   group-based policies are used.
+- **Actor tokens must be minted for the token service.** An `actor_token` (and the `subject_token`
+  of a headless exchange, which is the actor) must carry a `knox.token.audiences` value. A
+  ServiceAccount token minted for another audience (the Kubernetes API server, Vault, …) cannot act
+  as a delegation actor, so keep `knox.token.audiences` set on the token-exchange topology.
+- **Re-exchanged tokens are bound to their recipient.** With
+  `token.exchange.subject.token.policy.audiences.issuers` set, a delegated token can be presented
+  again as a `subject_token` only by the actor whose policy lists its `aud` in `subjectAudiences`,
+  and only with that actor's own actor token. Grant `subjectAudiences` only for the audiences the
+  actor itself serves. Set `delegation.headless.reject.subject.with.act=true` so a delegated token
+  can never act as a headless actor. See [Multi-hop delegation](token_exchange.md#multi-hop-delegation).
 - **The actor chain is bounded.** `delegation.max.actor.chain.depth` (default `3`) caps how deeply
   on-behalf-of exchanges may be nested; the cap cannot be disabled by misconfiguration.
 

@@ -30,9 +30,24 @@ public class PolicyCheckRequest {
   private final Set<String> requestedResources;
   private final Set<String> requestedScopes;
   private final boolean headlessExchange;
+  private final Set<String> subjectTokenAudiences;
+  private final boolean subjectAudienceMatchRequired;
 
   public PolicyCheckRequest(String actorAuthority, String actorId, String subjectName,
       Set<String> requestedResources, Set<String> requestedScopes, boolean headlessExchange) {
+    this(actorAuthority, actorId, subjectName, requestedResources, requestedScopes, headlessExchange,
+        Collections.emptySet(), false);
+  }
+
+  /**
+   * @param subjectTokenAudiences the {@code aud} values of the presented {@code subject_token}
+   * @param subjectAudienceMatchRequired true when the {@code subject_token} was accepted without a
+   *     {@code knox.token.audiences} value; the policy then authorizes only if
+   *     {@code subjectTokenAudiences} intersects {@link DelegationPolicy#getSubjectAudiences()}
+   */
+  public PolicyCheckRequest(String actorAuthority, String actorId, String subjectName,
+      Set<String> requestedResources, Set<String> requestedScopes, boolean headlessExchange,
+      Set<String> subjectTokenAudiences, boolean subjectAudienceMatchRequired) {
     this.actorAuthority = actorAuthority;
     this.actorId = actorId;
     this.subjectName = subjectName;
@@ -41,6 +56,9 @@ public class PolicyCheckRequest {
     this.requestedScopes = Set.copyOf(requestedScopes != null ?
             requestedScopes : Collections.emptySet());
     this.headlessExchange = headlessExchange;
+    this.subjectTokenAudiences = Set.copyOf(subjectTokenAudiences != null ?
+            subjectTokenAudiences : Collections.emptySet());
+    this.subjectAudienceMatchRequired = subjectAudienceMatchRequired;
   }
 
   public String getActorAuthority() {
@@ -65,5 +83,13 @@ public class PolicyCheckRequest {
 
   public boolean isHeadlessExchange() {
     return headlessExchange;
+  }
+
+  public Set<String> getSubjectTokenAudiences() {
+    return subjectTokenAudiences;
+  }
+
+  public boolean isSubjectAudienceMatchRequired() {
+    return subjectAudienceMatchRequired;
   }
 }

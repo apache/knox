@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -29,7 +30,9 @@ import org.junit.Test;
 
 import jakarta.servlet.ServletException;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Properties;
 
 public class JWTFederationFilterDelegationConfigTest {
@@ -129,6 +132,48 @@ public class JWTFederationFilterDelegationConfigTest {
     assertTrue(filter.isDelegationEnforceRequestedAudienceRequired());
     assertTrue(filter.isDelegationEnforceRequestedAudienceMaxOne());
     assertTrue(filter.isTokenExchangeSameSubjectRequestedAudienceEnabled());
+  }
+
+  @Test
+  public void testSubjectTokenPolicyAudiencesDefaults() throws ServletException {
+    final JWTFederationFilter filter = new JWTFederationFilter();
+    filter.init(new TestFilterConfig(new Properties()));
+
+    assertTrue(filter.getSubjectTokenPolicyAudiencesIssuers().isEmpty());
+    assertFalse(filter.isDelegationHeadlessRejectSubjectWithAct());
+  }
+
+  @Test
+  public void testSubjectTokenPolicyAudiencesIssuersParsedAndTrimmed() throws ServletException {
+    final Properties props = new Properties();
+    props.setProperty(JWTFederationFilter.TOKEN_EXCHANGE_SUBJECT_TOKEN_POLICY_AUDIENCES_ISSUERS,
+        " https://knox/a , ,https://knox/b,");
+    final JWTFederationFilter filter = new JWTFederationFilter();
+    filter.init(new TestFilterConfig(props));
+
+    assertEquals(new HashSet<>(Arrays.asList("https://knox/a", "https://knox/b")),
+        filter.getSubjectTokenPolicyAudiencesIssuers());
+  }
+
+  @Test
+  public void testSubjectTokenPolicyAudiencesIssuersBlankIsEmpty() throws ServletException {
+    final Properties props = new Properties();
+    props.setProperty(JWTFederationFilter.TOKEN_EXCHANGE_SUBJECT_TOKEN_POLICY_AUDIENCES_ISSUERS, "  ");
+    final JWTFederationFilter filter = new JWTFederationFilter();
+    filter.init(new TestFilterConfig(props));
+
+    assertTrue(filter.getSubjectTokenPolicyAudiencesIssuers().isEmpty());
+  }
+
+  @Test
+  public void testDelegationHeadlessRejectSubjectWithActConfigurable() throws ServletException {
+    final Properties props = new Properties();
+    props.setProperty(JWTFederationFilter.DELEGATION_HEADLESS_REJECT_SUBJECT_WITH_ACT, "true");
+    final JWTFederationFilter filter = new JWTFederationFilter();
+    filter.init(new TestFilterConfig(props));
+
+    assertTrue(filter.isDelegationHeadlessRejectSubjectWithAct());
+    assertFalse(filter.isDelegationServerEnabled());
   }
 
   @Test

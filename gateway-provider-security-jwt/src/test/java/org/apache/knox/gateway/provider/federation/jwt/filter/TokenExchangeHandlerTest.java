@@ -50,6 +50,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -1353,6 +1354,188 @@ public class TokenExchangeHandlerTest {
     assertEquals(Arrays.asList("aud1", "aud2"), requestedAudiencesAttr.getValue());
   }
 
+  // ---------------------------------------------------------------------------
+  // KNOX-3520: policy-bound subject audiences (rule 3) and headless act rejection (rule 5)
+  // ---------------------------------------------------------------------------
+
+  private static final String KNOXIDF_ISSUER = "https://knox/gateway/knoxidf-tokenexchange";
+  private static final String MCP_AUDIENCE = "https://svc/tools/mcp-server";
+
+  @Test
+  public void testRule3SubjectWithoutConfiguredAudienceFromListedIssuerRequiresPolicyMatch() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    final JWT subject = jwtWithAudiences("alice", KNOXIDF_ISSUER, MCP_AUDIENCE);
+    filter.valid.put("subtok", subject);
+    filter.failsConfiguredAudience.add(subject);
+    filter.valid.put("acttok", jwt("mcp-sa", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+    assertTrue(filter.usedCustomAudienceValidator);
+    assertNotNull(filter.capturedPolicyCheckRequest);
+    assertTrue(filter.capturedPolicyCheckRequest.isSubjectAudienceMatchRequired());
+    assertEquals(Collections.singleton(MCP_AUDIENCE), filter.capturedPolicyCheckRequest.getSubjectTokenAudiences());
+  }
+
+  @Test
+  public void testRule3SubjectAudienceNotAllowedRejectsWithInvalidRequestAndAuditsDenial() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    filter.policyDecision = new PolicyDecision("subject_audience_not_allowed", 0);
+    final JWT subject = jwtWithAudiences("alice", KNOXIDF_ISSUER, MCP_AUDIENCE);
+    filter.valid.put("subtok", subject);
+    filter.failsConfiguredAudience.add(subject);
+    filter.valid.put("acttok", jwt("other-sa", "https://k8s"));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/other-sa",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertTrue(filter.errorDescription.contains("rejected by policy"));
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("deny_reason=subject_audience_not_allowed"));
+  }
+
+  @Test
+  public void testRule3NotRequiredWhenSubjectPassesConfiguredAudience() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    filter.valid.put("subtok", jwtWithAudiences("alice", KNOXIDF_ISSUER, "knoxidf"));
+    filter.valid.put("acttok", jwt("mcp-sa", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+    assertTrue(filter.usedCustomAudienceValidator);
+    assertFalse(filter.capturedPolicyCheckRequest.isSubjectAudienceMatchRequired());
+  }
+
+  @Test
+  public void testRule3UnlistedIssuerStillRejectedOnMissingAudience() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    final JWT subject = jwtWithAudiences("alice", "https://k8s", MCP_AUDIENCE);
+    filter.valid.put("subtok", subject);
+    filter.failsConfiguredAudience.add(subject);
+    filter.valid.put("acttok", jwt("mcp-sa", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testRule3NeverAppliesWithoutActorToken() throws Exception {
+    // Same-subject exchange: the configured audience check applies unchanged (rule 4).
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    final JWT subject = jwtWithAudiences("alice", KNOXIDF_ISSUER, MCP_AUDIENCE);
+    filter.valid.put("subtok", subject);
+    filter.failsConfiguredAudience.add(subject);
+    handler.handle(request("subtok", JWT_TYPE, null, null), response, chain);
+
+    assertFalse(filter.continued);
+    assertFalse(filter.usedCustomAudienceValidator);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+  }
+
+  @Test
+  public void testRule3NeverAppliesToHeadlessExchange() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    final JWT subject = jwtWithAudiences("alice", KNOXIDF_ISSUER, MCP_AUDIENCE);
+    filter.valid.put("subtok", subject);
+    filter.failsConfiguredAudience.add(subject);
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertFalse(filter.continued);
+    assertFalse(filter.usedCustomAudienceValidator);
+    assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testRule3DisabledWhenNoIssuersConfigured() throws Exception {
+    filter.delegationServerEnabled = true;
+    final JWT subject = jwtWithAudiences("alice", KNOXIDF_ISSUER, MCP_AUDIENCE);
+    filter.valid.put("subtok", subject);
+    filter.failsConfiguredAudience.add(subject);
+    filter.valid.put("acttok", jwt("mcp-sa", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertFalse(filter.usedCustomAudienceValidator);
+    assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testRule3DoesNotRelaxActorTokenAudience() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.subjectTokenPolicyAudiencesIssuers.add(KNOXIDF_ISSUER);
+    filter.valid.put("subtok", jwtWithAudiences("alice", KNOXIDF_ISSUER, "knoxidf"));
+    final JWT actor = jwt("mcp-sa", KNOXIDF_ISSUER);
+    filter.valid.put("acttok", actor);
+    filter.failsConfiguredAudience.add(actor);
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testRule5HeadlessSubjectWithActRejectedWhenEnabled() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationHeadlessRejectSubjectWithAct = true;
+    filter.valid.put("subtok", jwtWithActClaim("alice", KNOXIDF_ISSUER, Collections.singletonMap("sub", "ds-sa")));
+    final Capture<String> auditMessage = expectAudit(Action.TOKEN_EXCHANGE, "USER/alice",
+        ResourceType.PRINCIPAL, ActionOutcome.FAILURE);
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertFalse(filter.continued);
+    assertEquals(HttpServletResponse.SC_BAD_REQUEST, filter.errorStatus);
+    assertEquals("invalid_request", filter.error);
+    assertNull(filter.capturedPolicyCheckRequest);
+    EasyMock.verify(auditor);
+    assertTrue(auditMessage.getValue().contains("event_type=token_exchange_rejected"));
+    assertTrue(auditMessage.getValue().contains("reason=headless_subject_has_act"));
+  }
+
+  @Test
+  public void testRule5HeadlessSubjectWithoutActAllowedWhenEnabled() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.delegationHeadlessRejectSubjectWithAct = true;
+    filter.valid.put("subtok", jwt("alice", "KNOXSSO"));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertTrue(filter.continued);
+  }
+
+  @Test
+  public void testRule5HeadlessSubjectWithActNotRejectedWhenDisabled() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationRequestedSubjectEnabled = true;
+    filter.valid.put("subtok", jwtWithActClaim("alice", KNOXIDF_ISSUER, Collections.singletonMap("sub", "ds-sa")));
+    handler.handle(delegationRequest("subtok", null, null, "bob", null, null), response, chain);
+
+    assertNotNull(filter.capturedPolicyCheckRequest);
+  }
+
+  @Test
+  public void testRule5DoesNotApplyToDelegatedExchange() throws Exception {
+    filter.delegationServerEnabled = true;
+    filter.delegationHeadlessRejectSubjectWithAct = true;
+    filter.valid.put("subtok", jwtWithActClaim("alice", KNOXIDF_ISSUER, Collections.singletonMap("sub", "ds-sa")));
+    filter.valid.put("acttok", jwt("mcp-sa", "https://k8s"));
+    handler.handle(request("subtok", JWT_TYPE, "acttok", JWT_TYPE), response, chain);
+
+    assertTrue(filter.continued);
+  }
+
   private static String primaryName(Subject subject) {
     return subject.getPrincipals(PrimaryPrincipal.class).iterator().next().getName();
   }
@@ -1487,6 +1670,11 @@ public class TokenExchangeHandlerTest {
     private PolicyDecision policyDecision = new PolicyDecision(null, 0);
     private RuntimeException policyEvaluationException;
     private PolicyCheckRequest capturedPolicyCheckRequest;
+    private Set<String> subjectTokenPolicyAudiencesIssuers = new HashSet<>();
+    private boolean delegationHeadlessRejectSubjectWithAct;
+    // Tokens that fail the configured (knox.token.audiences) audience check.
+    private final Set<JWT> failsConfiguredAudience = new HashSet<>();
+    private boolean usedCustomAudienceValidator;
 
     @Override
     boolean isDelegationServerEnabled() {
@@ -1514,6 +1702,22 @@ public class TokenExchangeHandlerTest {
     }
 
     @Override
+    Set<String> getSubjectTokenPolicyAudiencesIssuers() {
+      return subjectTokenPolicyAudiencesIssuers;
+    }
+
+    @Override
+    boolean isDelegationHeadlessRejectSubjectWithAct() {
+      return delegationHeadlessRejectSubjectWithAct;
+    }
+
+    @Override
+    RequestAudienceValidator getRequestAudienceValidator() {
+      return (request, token, configuredAudiences) ->
+          AudienceValidationResult.of(!failsConfiguredAudience.contains(token));
+    }
+
+    @Override
     PolicyDecision evaluateDelegationPolicy(PolicyCheckRequest request) {
       this.capturedPolicyCheckRequest = request;
       if (policyEvaluationException != null) {
@@ -1526,10 +1730,34 @@ public class TokenExchangeHandlerTest {
     JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
                             FilterChain chain, String tokenValue)
         throws ParseException, IOException, ServletException {
+      return parseAndValidateJWT(request, response, chain, tokenValue, getRequestAudienceValidator(), false);
+    }
+
+    @Override
+    JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
+                            FilterChain chain, String tokenValue,
+                            RequestAudienceValidator requestAudienceValidator)
+        throws ParseException, IOException, ServletException {
+      usedCustomAudienceValidator = true;
+      return parseAndValidateJWT(request, response, chain, tokenValue, requestAudienceValidator, false);
+    }
+
+    @Override
+    JWT parseAndValidateJWT(HttpServletRequest request, HttpServletResponse response,
+                            FilterChain chain, String tokenValue,
+                            RequestAudienceValidator requestAudienceValidator, boolean cookieAuth)
+        throws ParseException, IOException, ServletException {
       if (throwOnParse.contains(tokenValue)) {
         throw new ParseException("cannot parse " + tokenValue, 0);
       }
-      return valid.get(tokenValue);
+      final JWT token = valid.get(tokenValue);
+      if (token != null && !requestAudienceValidator.validate(request, token, null).isValid()) {
+        // Mirrors AbstractJWTFilter#doFullTokenValidation's audience failure.
+        handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST, null,
+            "Bad request: missing required token audience");
+        return null;
+      }
+      return token;
     }
 
     @Override

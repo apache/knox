@@ -140,6 +140,16 @@ public class DelegationPolicyDtoImmutabilityTest {
         () -> request.getResourcePolicy().get(RESOURCE).add("write"));
   }
 
+  @Test
+  public void requestSubjectAudiencesNotAffectedByMutatingSourceAfterSet() {
+    final Set<String> source = new LinkedHashSet<>(Collections.singletonList(RESOURCE));
+    final DelegationPolicyRequest request = new DelegationPolicyRequest();
+    request.setSubjectAudiences(source);
+    source.add("hdfs://ns2");
+    assertEquals(Collections.singleton(RESOURCE), request.getSubjectAudiences());
+    assertThrows(UnsupportedOperationException.class, () -> request.getSubjectAudiences().add("hdfs://ns2"));
+  }
+
   // ---- DelegationPolicyResponse ----
 
   @Test
@@ -206,6 +216,16 @@ public class DelegationPolicyDtoImmutabilityTest {
   }
 
   // ---- DelegationPolicyListResponse ----
+
+  @Test
+  public void responseSubjectAudiencesNotAffectedByMutatingSourceAfterSet() {
+    final Set<String> source = new LinkedHashSet<>(Collections.singletonList(RESOURCE));
+    final DelegationPolicyResponse response = new DelegationPolicyResponse();
+    response.setSubjectAudiences(source);
+    source.add("hdfs://ns2");
+    assertEquals(Collections.singleton(RESOURCE), response.getSubjectAudiences());
+    assertThrows(UnsupportedOperationException.class, () -> response.getSubjectAudiences().add("hdfs://ns2"));
+  }
 
   @Test
   public void listResponsePoliciesNotAffectedByMutatingSourceAfterSet() {

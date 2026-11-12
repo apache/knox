@@ -341,6 +341,12 @@ public class DelegationPolicyResource {
       return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
           "At least one of canActForUsers or canActForGroups must be non-empty");
     }
+    // subjectAudiences is matched exactly against a subject_token's aud values; a blank entry can
+    // never match a real audience and almost certainly signals a templating mistake.
+    if (req.getSubjectAudiences().stream().anyMatch(StringUtils::isBlank)) {
+      return errorResponse(Response.Status.BAD_REQUEST, "invalid_request",
+          "subjectAudiences must not contain blank values");
+    }
     return null;
   }
 
@@ -350,7 +356,7 @@ public class DelegationPolicyResource {
         normalize(req.getName()), effectiveStatus(req.getStatus()), req.getTokenTtlSec(),
         normalize(req.getDescription()), createdBy, createdAt, updatedAt,
         req.isAllowHeadlessExchange(), req.getCanActForUsers(), req.getCanActForGroups(),
-        req.getResourcePolicy());
+        req.getResourcePolicy(), req.getSubjectAudiences());
   }
 
   /** Null/empty status is accepted and defaults to {@link DelegationPolicy#STATUS_ACTIVE}. */
@@ -371,6 +377,7 @@ public class DelegationPolicyResource {
     resp.setCanActForUsers(policy.getCanActForUsers());
     resp.setCanActForGroups(policy.getCanActForGroups());
     resp.setResourcePolicy(policy.getResourcePolicy());
+    resp.setSubjectAudiences(policy.getSubjectAudiences());
     resp.setCreatedBy(policy.getCreatedBy());
     resp.setCreatedAt(policy.getCreatedAt());
     resp.setUpdatedAt(policy.getUpdatedAt());

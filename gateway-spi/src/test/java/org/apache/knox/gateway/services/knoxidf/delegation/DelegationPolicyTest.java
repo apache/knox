@@ -164,11 +164,43 @@ public class DelegationPolicyTest {
   }
 
   @Test
+  public void subjectAudiencesDefaultToEmptyForLegacyConstructor() {
+    final DelegationPolicy policy = policy(Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+
+    assertTrue("subjectAudiences must default to an empty set", policy.getSubjectAudiences().isEmpty());
+  }
+
+  @Test
+  public void nullSubjectAudiencesBecomesEmptySet() {
+    assertTrue("Null subjectAudiences should become empty set",
+        policyWithSubjectAudiences(null).getSubjectAudiences().isEmpty());
+  }
+
+  @Test
+  public void defensiveCopyOfSubjectAudiences() {
+    final Set<String> audiences = new HashSet<>(Collections.singleton("https://svc/tools/mcp"));
+    final DelegationPolicy policy = policyWithSubjectAudiences(audiences);
+
+    audiences.add("https://svc/other");
+
+    assertEquals(Collections.singleton("https://svc/tools/mcp"), policy.getSubjectAudiences());
+    assertThrows(UnsupportedOperationException.class, () -> policy.getSubjectAudiences().add("https://svc/other"));
+  }
+
+  @Test
   public void isActiveOnlyForExactlyActiveStatus() {
     assertTrue("\"active\" must be active", policyWithStatus(DelegationPolicy.STATUS_ACTIVE).isActive());
     assertFalse("\"revoked\" must not be active", policyWithStatus(DelegationPolicy.STATUS_REVOKED).isActive());
     assertFalse("null status must not be active", policyWithStatus(null).isActive());
     assertFalse("unknown status must not be active", policyWithStatus("suspended").isActive());
+  }
+
+  private static DelegationPolicy policyWithSubjectAudiences(Set<String> subjectAudiences) {
+    return new DelegationPolicy(
+        "reg-id", "oidc", "actorId",
+        "test-policy", "active", 3600, "desc", "admin",
+        Instant.now(), Instant.now(), false,
+        Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), subjectAudiences);
   }
 
   private static DelegationPolicy policyWithStatus(String status) {
