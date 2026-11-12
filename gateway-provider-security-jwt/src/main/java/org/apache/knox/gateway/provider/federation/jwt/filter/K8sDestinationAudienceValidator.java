@@ -704,12 +704,39 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
     return AudienceResource.normalizeAndTidy(rawPath);
   }
 
-  // Raw header values, so that even a value that fails to parse is recorded.
+  /**
+   * The destination to record in the audit trail of a delegated token's audience check. The server
+   * name and SPIFFE id are the raw values of their configured headers, so that a value which fails to
+   * parse, and so failed the check, is still recorded as the caller sent it.
+   */
   private DelegatedRequestAuditing.Destination auditedDestination(final HttpServletRequest request) {
-    final String path = pathHeader == null ? request.getRequestURI()
-        : pathFromHeader(request).orElseGet(() -> DelegatedRequestAuditing.withoutQuery(request.getHeader(pathHeader)));
     return new DelegatedRequestAuditing.Destination(configuredHeaderValue(request, serverNameHeader),
-        configuredHeaderValue(request, namespaceFromSpiffeIdHeader), path);
+        configuredHeaderValue(request, namespaceFromSpiffeIdHeader), auditedPath(request));
+  }
+
+  /**
+   * The destination path to record in the audit trail, which depends on whether
+   * {@link #PATH_HEADER_PARAM} is configured:
+   * <ul>
+   *   <li>Not configured: the path is not part of the audience check at all (see
+   *   {@link #matchesPath}), so the request URI is recorded instead, as the path the request reached
+   *   Knox on. It is context only, not something the token was checked against.</li>
+   *   <li>Configured, and the header holds a parseable path: that path, normalized exactly as it was
+   *   when compared with the {@code aud} entries.</li>
+   *   <li>Configured, but the header is missing or unparseable: the check failed for that reason, so
+   *   the raw header value is recorded to show what was sent, minus any query string, which may carry
+   *   credentials; {@code null} (recorded as an empty value) if the header is missing.</li>
+   * </ul>
+   */
+  private String auditedPath(final HttpServletRequest request) {
+    if (pathHeader == null) {
+      return request.getRequestURI();
+    }
+    final Optional<String> checkedPath = pathFromHeader(request);
+    if (checkedPath.isPresent()) {
+      return checkedPath.get();
+    }
+    return DelegatedRequestAuditing.withoutQuery(request.getHeader(pathHeader));
   }
 
   private static String configuredHeaderValue(final HttpServletRequest request, final String headerName) {
