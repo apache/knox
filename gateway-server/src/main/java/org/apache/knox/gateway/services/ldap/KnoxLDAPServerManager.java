@@ -64,6 +64,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -527,10 +528,11 @@ public class KnoxLDAPServerManager {
         if (!directoryService.getAdminSession().exists(baseDnName)) {
             Entry baseDnEntry = new DefaultEntry(schemaManager);
             baseDnEntry.setDn(baseDnName);
-            // An entry must have at least one STRUCTURAL class, which 'top'/'extensibleObject' alone are not.
-            // 'locality' is a STRUCTURAL objectClass with no MUST attributes; 'extensibleObject'
-            // (AUXILIARY) then permits whatever attribute the base DN's RDN uses (dc, cn, ou, o, ...).
-            baseDnEntry.add("objectClass", "top", "locality", "extensibleObject");
+            String type = baseDnName.getRdn().getType();
+            String name = baseDnName.getRdn().getName();
+            String objectClass = getConventionalObjectClassFromType(type);
+            baseDnEntry.add("objectClass", "top", objectClass, "extensibleObject");
+            baseDnEntry.add(type, name);
             directoryService.getAdminSession().add(baseDnEntry);
         }
 
@@ -550,6 +552,26 @@ public class KnoxLDAPServerManager {
             groupsOu.add("objectClass", "top", "organizationalUnit");
             groupsOu.add("ou", "groups");
             directoryService.getAdminSession().add(groupsOu);
+        }
+    }
+
+    private String getConventionalObjectClassFromType(String type) {
+        switch (type.toLowerCase(Locale.ROOT)) {
+            case "dc":
+                return "domain";
+            case "o":
+                return "organization";
+            case "ou":
+                return "organizationalUnit";
+            case "c":
+                return "country";
+            case "cn":
+            case "l":
+            default:
+                // An entry must have at least one STRUCTURAL class, which 'top'/'extensibleObject' alone are not.
+                // 'locality' is a STRUCTURAL objectClass with no MUST attributes; 'extensibleObject'
+                // (AUXILIARY) then permits whatever attribute the base DN's RDN uses (dc, cn, ou, o, ...).
+                return "locality";
         }
     }
 
