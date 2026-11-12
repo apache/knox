@@ -96,6 +96,30 @@ public class PassAllHeadersDispatchTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testCopyRequestHeaderFieldsStripsContentLengthAndTransferEncodingCaseInsensitive() {
+    PassAllHeadersDispatch dispatch = new PassAllHeadersDispatch();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-length", "1234");
+    headers.put("TRANSFER-ENCODING", "chunked");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+        .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(1));
+    assertThat(outboundRequest.getFirstHeader("TEST").getValue(), is("test"));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testCopyResponseHeaderFieldsPassesThroughWwwAuthenticateAndOtherHeaders() {
     PassAllHeadersDispatch dispatch = new PassAllHeadersDispatch();
 

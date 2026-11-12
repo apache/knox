@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 public abstract class AbstractGatewayDispatch implements Dispatch {
   private static final Set<String> REQUEST_EXCLUDE_HEADERS = new HashSet<>(Arrays.asList(
@@ -128,6 +129,8 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
   public void copyRequestHeaderFields(HttpUriRequest outboundRequest,
       HttpServletRequest inboundRequest) {
     Enumeration<String> headerNames = inboundRequest.getHeaderNames();
+    final Set<String> excludeHeaders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    excludeHeaders.addAll(getOutboundRequestExcludeHeaders());
     /**
      Add X-Request-Id headers to outgoing requests.
      Only do this when
@@ -136,7 +139,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
       3. This header is present in the MDC context
      **/
     if(StringUtils.isBlank(inboundRequest.getHeader(REQUEST_ID_HEADER_NAME)) &&
-        !getOutboundRequestExcludeHeaders().contains( REQUEST_ID_HEADER_NAME ) &&
+        !excludeHeaders.contains( REQUEST_ID_HEADER_NAME ) &&
         ThreadContext.containsKey(TRACE_ID)) {
       outboundRequest.addHeader( REQUEST_ID_HEADER_NAME,  ThreadContext.get(TRACE_ID));
     }
@@ -144,7 +147,7 @@ public abstract class AbstractGatewayDispatch implements Dispatch {
     while( headerNames.hasMoreElements() ) {
       String name = headerNames.nextElement();
       if ( !outboundRequest.containsHeader( name )
-          && !getOutboundRequestExcludeHeaders().contains( name ) ) {
+          && !excludeHeaders.contains( name ) ) {
         String value = inboundRequest.getHeader( name );
         outboundRequest.addHeader( name, value );
       }

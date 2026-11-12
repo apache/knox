@@ -247,6 +247,55 @@ public class ConfigurableDispatchTest {
     assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.AUTHORIZATION));
   }
 
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeHeadersDefaultCaseInsensitive() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put("content-length", "1234");
+    headers.put("HOST", "localhost");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+        .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(1));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.ACCEPT));
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testRequestExcludeHeadersConfigCaseInsensitive() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList("accept", "TEST")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.CONTENT_TYPE, "application/json");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("test", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+        .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(1));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.CONTENT_TYPE));
+  }
+
   @Test
   public void testResponseExcludeHeadersDefault() {
     ConfigurableDispatch dispatch = new ConfigurableDispatch();
@@ -669,6 +718,37 @@ public class ConfigurableDispatchTest {
     Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
     assertThat(outboundRequestHeaders.length, is(3));
     assertThat(outboundRequest.getHeaders(REQUEST_ID_HEADER_NAME)[0].getValue(), is(headerReqID));
+  }
+
+  /**
+   * Make sure X-Request-Id header is not added to outgoing requests when
+   * it is configured in the request exclude header list with a different case.
+   */
+  @Test
+  public void testRequestExcludeHeadersXRequestIDCaseInsensitive() {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setRequestExcludeHeaders(String.join(",", Arrays.asList("test", "x-request-id")));
+
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.ACCEPT, "abc");
+    headers.put("TEST", "test");
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+        .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    try(CloseableThreadContext.Instance ctc = CloseableThreadContext.put(TRACE_ID, UUID.randomUUID().toString())) {
+      dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+    }
+
+    Header[] outboundRequestHeaders = outboundRequest.getAllHeaders();
+    assertThat(outboundRequestHeaders.length, is(1));
+    assertThat(outboundRequestHeaders[0].getName(), is(HttpHeaders.ACCEPT));
+    assertThat(outboundRequest.getFirstHeader(REQUEST_ID_HEADER_NAME), nullValue());
   }
 
   /**
