@@ -409,6 +409,15 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   @Override
   public AudienceValidationResult validate(final HttpServletRequest request, final JWT token,
       final List<String> configuredAudiences) {
+    final AudienceValidationResult result = evaluate(request, token, configuredAudiences);
+    if (DelegatedRequestAuditing.isDelegated(token)) {
+      DelegatedRequestAuditing.audienceChecked(request, token, auditedDestination(request), result);
+    }
+    return result;
+  }
+
+  private AudienceValidationResult evaluate(final HttpServletRequest request, final JWT token,
+      final List<String> configuredAudiences) {
     final boolean hasActClaim = token.getClaimAsObject(JWTToken.ACT_CLAIM) != null;
     if (!hasActClaim && !validateAudiencesWithoutActClaim) {
       return AudienceValidationResult.of(AbstractJWTFilter.matchesConfiguredAudiences(token, configuredAudiences));
@@ -693,6 +702,22 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
       rawPath = queryOrFragment < 0 ? headerValue : headerValue.substring(0, queryOrFragment);
     }
     return AudienceResource.normalizeAndTidy(rawPath);
+  }
+
+  // Raw header values, so that even a value that fails to parse is recorded.
+  private DelegatedRequestAuditing.Destination auditedDestination(final HttpServletRequest request) {
+    final String path = pathHeader == null ? request.getRequestURI()
+        : pathFromHeader(request).orElseGet(() -> DelegatedRequestAuditing.withoutQuery(request.getHeader(pathHeader)));
+    return new DelegatedRequestAuditing.Destination(configuredHeaderValue(request, serverNameHeader),
+        configuredHeaderValue(request, namespaceFromSpiffeIdHeader), path);
+  }
+
+  private static String configuredHeaderValue(final HttpServletRequest request, final String headerName) {
+    if (headerName == null) {
+      return null;
+    }
+    final String value = request.getHeader(headerName);
+    return value == null ? "" : value;
   }
 
   /**

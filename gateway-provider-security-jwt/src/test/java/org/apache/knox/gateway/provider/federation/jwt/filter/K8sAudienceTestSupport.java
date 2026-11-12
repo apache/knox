@@ -17,11 +17,13 @@
  */
 package org.apache.knox.gateway.provider.federation.jwt.filter;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jakarta.servlet.FilterConfig;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
@@ -51,6 +53,30 @@ final class K8sAudienceTestSupport {
     }
     EasyMock.replay(request);
     return request;
+  }
+
+  /**
+   * Wraps {@code request} so that request attributes set on it can be read back, which a mock
+   * does not do.
+   */
+  static HttpServletRequest withAttributes(final HttpServletRequest request) {
+    final Map<String, Object> attributes = new HashMap<>();
+    return new HttpServletRequestWrapper(request) {
+      @Override
+      public Object getAttribute(final String name) {
+        return attributes.get(name);
+      }
+
+      @Override
+      public void setAttribute(final String name, final Object value) {
+        attributes.put(name, value);
+      }
+
+      @Override
+      public void removeAttribute(final String name) {
+        attributes.remove(name);
+      }
+    };
   }
 
   static JWT delegationToken(final String... audiences) {

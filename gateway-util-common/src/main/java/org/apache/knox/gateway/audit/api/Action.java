@@ -33,5 +33,6 @@ public abstract class Action {
   public static final String WEBSHELL = "webshell";
   public static final String DELEGATION_LIFECYCLE = "delegation-lifecycle";
   public static final String TOKEN_EXCHANGE = "token-exchange";
+  public static final String AUDIENCE_VALIDATION = "audience-validation";
 
 }
