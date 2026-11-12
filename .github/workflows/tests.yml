@@ -58,6 +58,13 @@ jobs:
           # Build only knox-dev which is the runtime image using artifacts
           docker compose -f ./.github/workflows/compose/docker-compose.yml build knox-dev
 
+      # The image carries the gateway and knoxshell exactly as released. Its
+      # BouncyCastle jars must all be jdk18on artifacts on <bouncycastle.version>,
+      # each shipped once: mixed BouncyCastle versions, or a legacy jdk15on jar next
+      # to the jdk18on ones, only fail at runtime on the code paths that hit them.
+      - name: Check shipped BouncyCastle jars
+        run: ./.github/workflows/compose/check-bc-jars.sh
+
       - name: Start Knox and LDAP Services
         run: docker compose -f ./.github/workflows/compose/docker-compose.yml up -d
 
@@ -414,6 +421,15 @@ jobs:
             logs --no-color knox || true
           echo '===== gateway.log ====='
           cat ./.github/workflows/compose/logs/gateway.log || true
+
+      # The gateway generates its TLS identity with BouncyCastle on first start. If
+      # that fails it has no TLS and every suite reports "Connection refused", so
+      # surface the underlying error.
+      - name: Dump certificate generation errors on failure
+        if: failure()
+        run: |
+          grep -n -A20 'Error in generating certificate' ./.github/workflows/compose/logs/gateway.log \
+            || echo 'No certificate generation errors in gateway.log'
 
       - name: Collect Knox Logs and Conf
         if: always()
