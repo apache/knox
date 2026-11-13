@@ -64,7 +64,7 @@
 		}
 	}
 
-	if (typeof KNOX_THEME_ROUNDED_CORNERS !== 'undefined' && KNOX_THEME_ROUNDED_CORNERS === true) {
+	if (typeof KNOX_THEME_PILL_SHAPED_CORNERS !== 'undefined' && KNOX_THEME_PILL_SHAPED_CORNERS === true) {
 		document.documentElement.style.setProperty('--knox-control-radius', '9999px');
 	}
 

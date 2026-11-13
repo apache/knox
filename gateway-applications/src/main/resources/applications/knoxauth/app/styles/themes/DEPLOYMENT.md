@@ -69,7 +69,7 @@ Controls whether users can override the theme.
 
 **Default:** `false`
 
-### KNOX_THEME_ROUNDED_CORNERS
+### KNOX_THEME_PILL_SHAPED_CORNERS
 
 Controls the corner shape of inputs and buttons in the modern theme.
 

@@ -21,7 +21,7 @@
  * This theme provides a modern, clean login page design with:
  * - Grey background
  * - White container with rounded corners
- * - Rounded input fields and buttons (see KNOX_THEME_ROUNDED_CORNERS)
+ * - Rounded input fields and buttons (see KNOX_THEME_PILL_SHAPED_CORNERS)
  * - Gradient button styling
  * - Roboto font family
  *
@@ -30,7 +30,7 @@
  * Logout page: https://knox.example.com/gateway/knoxsso/knoxauth/logout.jsp?theme=modern
  */
 :root {
-  /* Corner radius of inputs and buttons; knox-theme.js sets 9999px when KNOX_THEME_ROUNDED_CORNERS is true */
+  /* Corner radius of inputs and buttons; knox-theme.js sets 9999px when KNOX_THEME_PILL_SHAPED_CORNERS is true */
   --knox-control-radius: 6px;
 
   --border-disabled: var(--color-pewter-100-base);

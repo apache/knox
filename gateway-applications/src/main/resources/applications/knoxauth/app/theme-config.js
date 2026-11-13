@@ -67,7 +67,7 @@ var KNOX_THEME_LOCKED = false;
 
 // Pill-shaped (fully rounded) inputs and buttons in the modern theme
 // (true = pill-shaped, false = 6px corners)
-var KNOX_THEME_ROUNDED_CORNERS = false;
+var KNOX_THEME_PILL_SHAPED_CORNERS = false;
 
 var KNOX_THEME_BRANDING = {
 	modern: {
