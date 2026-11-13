@@ -115,7 +115,8 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private boolean isAllGroupsSearch(SearchOperationContext ctx) throws LdapException {
         Dn proxyGroupSearchBaseDn = new Dn(schemaManager, proxyGroupSearchBase);
         Dn searchDn = ctx.getDn();
-        ExprNode searchFilter = ctx.getFilter();
+        ExprNode rawSearchFilter = ctx.getFilter();
+        ExprNode searchFilter = removeReferral(rawSearchFilter);
 
         if (searchDn == null) {
             return false;
@@ -133,6 +134,22 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         // the root with an explicit group filter
         return searchDn.isAncestorOf(proxyGroupSearchBaseDn)
                 && isAllGroupsFilterForAncestor(searchFilter);
+    }
+
+    private ExprNode removeReferral(ExprNode rawSearchFilter) {
+        if (rawSearchFilter instanceof OrNode) {
+            OrNode orNode = (OrNode) rawSearchFilter;
+            if (orNode.getChildren().size() == 2) {
+                List<ExprNode> children = orNode.getChildren();
+                if (isReferralObjectClassFilter(children.get(0))) {
+                    return children.get(1);
+                }
+                if (isReferralObjectClassFilter(children.get(1))) {
+                    return children.get(0);
+                }
+            }
+        }
+        return rawSearchFilter;
     }
 
     private boolean isGroupObjectClassFilter(ExprNode filter) {
@@ -174,10 +191,8 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                     children.stream().allMatch(this::isAllGroupsFilter);
         }
         if (filter instanceof OrNode) {
-            // Remove any (objectClass=referral) nodes. An OR is an all groups filter only if every child is.
-            return ((OrNode) filter).getChildren().stream()
-                    .filter(node -> !isReferralObjectClassFilter(node))
-                    .allMatch(this::isGroupObjectClassFilter);
+            // An OR is an all groups filter only if every child is.
+            return ((OrNode) filter).getChildren().stream().allMatch(this::isGroupObjectClassFilter);
         }
 
         return false;
