@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.service.auth;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 import java.security.PrivilegedActionException;
@@ -229,6 +230,80 @@ public class PreAuthResourceTest {
     Response preAuthResponse = executeResourceWithSubject(preAuthResource);
     assertEquals(HttpServletResponse.SC_OK, preAuthResponse.getStatus());
     EasyMock.verify(response);
+  }
+
+  @Test
+  public void testRolesAreLookedUpWhenPrincipalPatternIsNotConfigured() throws Exception {
+    final Map<String, String> addedHeaders = executeRolesLookupPatternTest(null, true);
+    assertEquals("platform:admin,ml-workspace:viewer", addedHeaders.get(GROUPS_HEADER));
+    assertFalse(addedHeaders.containsKey(GROUPS_HEADER + "-1"));
+  }
+
+  @Test
+  public void testRolesAreLookedUpWhenPrincipalPatternIsBlank() throws Exception {
+    final Map<String, String> addedHeaders = executeRolesLookupPatternTest("  ", true);
+    assertEquals("platform:admin,ml-workspace:viewer", addedHeaders.get(GROUPS_HEADER));
+  }
+
+  @Test
+  public void testRolesAreLookedUpWhenPrincipalMatchesPattern() throws Exception {
+    final Map<String, String> addedHeaders = executeRolesLookupPatternTest("test-.*", true);
+    assertEquals("platform:admin,ml-workspace:viewer", addedHeaders.get(GROUPS_HEADER));
+  }
+
+  @Test
+  public void testRolesAreLookedUpWhenPrincipalMatchesAnyAlternativeOfPattern() throws Exception {
+    final Map<String, String> addedHeaders = executeRolesLookupPatternTest("system:serviceaccount:.*|test-.*", true);
+    assertEquals("platform:admin,ml-workspace:viewer", addedHeaders.get(GROUPS_HEADER));
+  }
+
+  @Test
+  public void testRolesAreNotLookedUpWhenPrincipalDoesNotMatchPattern() throws Exception {
+    final Map<String, String> addedHeaders = executeRolesLookupPatternTest("system:serviceaccount:.*", false);
+    assertEquals("engineering", addedHeaders.get(GROUPS_HEADER + "-1"));
+    assertFalse(addedHeaders.containsKey(GROUPS_HEADER));
+  }
+
+  @Test
+  public void testRolesAreNotLookedUpWhenPrincipalOnlyPartiallyMatchesPattern() throws Exception {
+    final Map<String, String> addedHeaders = executeRolesLookupPatternTest("test", false);
+    assertEquals("engineering", addedHeaders.get(GROUPS_HEADER + "-1"));
+    assertFalse(addedHeaders.containsKey(GROUPS_HEADER));
+  }
+
+  private Map<String, String> executeRolesLookupPatternTest(String principalPattern, boolean expectLookup) throws Exception {
+    subject.getPrincipals().add(new GroupPrincipal("engineering"));
+
+    final LDAPRolesLookupService rolesLookupService = EasyMock.createMock(LDAPRolesLookupService.class);
+    EasyMock.expect(rolesLookupService.enabled()).andReturn(true).anyTimes();
+    if (expectLookup) {
+      EasyMock.expect(rolesLookupService.lookupRoles(EasyMock.eq(USER_NAME), EasyMock.eq(Collections.singleton("engineering"))))
+          .andReturn(Arrays.asList("platform:admin", "ml-workspace:viewer")).once();
+    }
+    final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gatewayServices.getService(ServiceType.LDAP_ROLES_LOOKUP_SERVICE)).andReturn(rolesLookupService).anyTimes();
+    EasyMock.replay(rolesLookupService, gatewayServices);
+
+    final Map<String, String> initParams = new LinkedHashMap<>();
+    if (principalPattern != null) {
+      initParams.put(AbstractAuthResource.ROLES_LOOKUP_PRINCIPAL_PATTERN, principalPattern);
+    }
+    final Map<String, String> addedHeaders = new LinkedHashMap<>();
+    configureAuthTokenExpectations(null, initParams, addedHeaders);
+    EasyMock.reset(context);
+    EasyMock.expect(context.getInitParameter(EasyMock.anyString()))
+        .andAnswer(() -> initParams.get(EasyMock.getCurrentArguments()[0])).anyTimes();
+    EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices).anyTimes();
+    EasyMock.replay(context);
+
+    final PreAuthResource preAuthResource = new PreAuthResource();
+    preAuthResource.context = context;
+    preAuthResource.response = response;
+    preAuthResource.request = request;
+    final Response preAuthResponse = executeResourceWithSubject(preAuthResource);
+    assertEquals(HttpServletResponse.SC_OK, preAuthResponse.getStatus());
+    EasyMock.verify(rolesLookupService);
+    return addedHeaders;
   }
 
   private GatewayServices configureLdapRolesLookupExpectations(boolean roleLookupExecuted) throws Exception {
