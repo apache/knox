@@ -37,6 +37,9 @@ public interface AuthMessages {
   @Message(level = MessageLevel.DEBUG, text = "The roles of user {0} were already looked up by the identity assertion provider; skipping the roles lookup")
   void rolesLookupAlreadyExecuted(String user);
 
+  @Message(level = MessageLevel.DEBUG, text = "User {0} does not match the roles lookup principal pattern {1}; skipping the roles lookup")
+  void rolesLookupSkippedPrincipalNotMatching(String user, String pattern);
+
   @Message(level = MessageLevel.DEBUG, text = "The LDAP roles lookup service is not enabled")
   void rolesLookupNotEnabled();
 

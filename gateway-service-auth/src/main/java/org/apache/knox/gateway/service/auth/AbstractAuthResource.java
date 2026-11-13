@@ -54,6 +54,7 @@ public abstract class AbstractAuthResource {
   public static final String GROUP_HEADER_LENGTH_LIMIT = "preauth.auth.header.groups.length.limit";
   public static final String GROUP_HEADER_SIZE_LIMIT = "preauth.auth.header.groups.size.limit";
   private static final String GROUP_FILTER_PATTERN = "preauth.group.filter.pattern";
+  public static final String ROLES_LOOKUP_PRINCIPAL_PATTERN = "preauth.roles.lookup.principal.pattern";
 
   static final AuthMessages LOG = MessagesFactory.get(AuthMessages.class);
 
@@ -124,6 +125,7 @@ public abstract class AbstractAuthResource {
   private int groupHeaderLengthLimit;
   private int groupHeaderSizeLimit;
   protected Pattern groupFilterPattern;
+  private Pattern rolesLookupPrincipalPattern;
   protected String authHeaderActorRolesName;
   private LDAPRolesLookupService ldapRolesLookupService;
 
@@ -138,6 +140,9 @@ public abstract class AbstractAuthResource {
     groupHeaderSizeLimit = parseLimit(GROUP_HEADER_SIZE_LIMIT, DEFAULT_GROUP_HEADER_SIZE_LIMIT);
     final String groupFilterPatternString = getInitParameter(GROUP_FILTER_PATTERN, null);
     groupFilterPattern = groupFilterPatternString == null ? DEFAULT_GROUP_FILTER_PATTERN : Pattern.compile(groupFilterPatternString);
+    final String rolesLookupPrincipalPatternString = getInitParameter(ROLES_LOOKUP_PRINCIPAL_PATTERN, null);
+    rolesLookupPrincipalPattern = rolesLookupPrincipalPatternString == null || rolesLookupPrincipalPatternString.isBlank()
+        ? null : Pattern.compile(rolesLookupPrincipalPatternString);
 
     // Every configurable header name goes through the same gate. Defending only the token
     // header would leave the worse outcome undefended: an actor id header configured as
@@ -336,6 +341,8 @@ public abstract class AbstractAuthResource {
     try {
       if (rolesLookupExecuted()) {
         LOG.rolesLookupAlreadyExecuted(userName);
+      } else if (rolesLookupPrincipalPattern != null && (userName == null || !rolesLookupPrincipalPattern.matcher(userName).matches())) {
+        LOG.rolesLookupSkippedPrincipalNotMatching(userName, rolesLookupPrincipalPattern.pattern());
       } else if (ldapRolesLookupService != null && ldapRolesLookupService.enabled()) {
         LOG.lookingUpRoles(userName, String.valueOf(groups));
         roles = ldapRolesLookupService.lookupRoles(userName, groups);
