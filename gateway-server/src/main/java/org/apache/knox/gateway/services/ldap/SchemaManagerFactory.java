@@ -75,6 +75,7 @@ public class SchemaManagerFactory {
         memberOfAttrType.setNames("memberOf");
         memberOfAttrType.setSchemaName("other");
         memberOfAttrType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.12");
+        memberOfAttrType.setEqualityOid("2.5.13.1"); // distinguishedNameMatch
         memberOfAttrType.setDescription("attribute specifies the distinguished names of the groups to which this object belongs");
         memberOfAttrType.setSingleValued(false);
         userAttributes.add(memberOfAttrType);

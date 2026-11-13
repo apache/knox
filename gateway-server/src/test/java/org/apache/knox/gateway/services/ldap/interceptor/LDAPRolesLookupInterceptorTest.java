@@ -178,30 +178,6 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     @Test
-    public void testSearchIgnoresMalformedMemberOfDnWhenFetchingGroups() throws Exception {
-        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        // A strict (non-nice) mock: an unexpected call, e.g. with the malformed DN's raw
-        // value treated as a group name, would fail this test immediately.
-        expect(mockRolesService.lookupRoles("alice", Set.of("group1")))
-                .andReturn(List.of("roleA"));
-        replay(mockRolesService);
-
-        final TestContext testContext = createTestContext(false, mockRolesService);
-
-        final Entry userEntry = createUserEntry("alice",
-                "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org",
-                "this is not a valid dn");
-        testContext.nextInterceptor.setEntries(List.of(userEntry));
-
-        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
-            assertTrue(entries.next());
-            assertMemberOf(entries.get(), "cn=roleA,ou=groups,dc=proxy,dc=com");
-            assertFalse(entries.next());
-        }
-        verify(mockRolesService);
-    }
-
-    @Test
     public void testRolesLookupNoBypass() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 

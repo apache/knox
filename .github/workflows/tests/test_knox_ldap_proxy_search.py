@@ -72,6 +72,17 @@ def knox_host() -> str:
 class TestKnoxLdapProxySearch(unittest.TestCase):  # pylint: disable=too-many-public-methods
     """Verify general search requests are proxied to the demo LDAP backend."""
 
+    # The proxy can also be configured to run the attribute normalization interceptor
+    # (gateway.ldap.interceptor.normalizer.interceptorType=attributenormalizer), which
+    # lowercases the values of case-insensitive attributes in the entries it returns.
+    # The demo LDAP stores mixed-case values (e.g. cn "Sam Peterson", uid "recursiveUser"),
+    # so the searches below also verify the normalized values (including DN-valued
+    # attributes, objectClass and the entry DN), and that requested-attribute
+    # selection still applies to normalized entries. Test classes set the
+    # is_attribute_normalization_interceptor_configured field if knox is configured with
+    # the attribute normalization interceptor
+    is_attribute_normalization_interceptor_configured = True
+
     def setUp(self) -> None:
         # Self-signed dev certificate in CI: connect over TLS but skip validation.
         tls = ldap3.Tls(validate=ssl.CERT_NONE)
@@ -144,7 +155,10 @@ class TestKnoxLdapProxySearch(unittest.TestCase):  # pylint: disable=too-many-pu
     def test_search_all_users_by_objectclass(self) -> None:
         """All inetOrgPerson entries under ou=people are returned."""
         users = self.rdn_values(self.search(PEOPLE_BASE, "(objectClass=inetOrgPerson)"))
-        for expected in ("guest", "admin", "sam", "tom", "recursiveUser"):
+        expected_users = ["guest", "admin", "sam", "tom", "recursiveUser"]
+        if self.is_attribute_normalization_interceptor_configured:
+            expected_users = [string.lower() for string in expected_users]
+        for expected in expected_users:
             self.assertIn(expected, users)
 
     def test_search_all_groups_by_objectclass(self) -> None:
@@ -166,7 +180,10 @@ class TestKnoxLdapProxySearch(unittest.TestCase):  # pylint: disable=too-many-pu
     def test_search_all_users_by_objectclass_proxy_dn(self) -> None:
         """All inetOrgPerson entries under ou=people are returned."""
         users = self.rdn_values(self.search(PROXY_PEOPLE_BASE, "(objectClass=inetOrgPerson)"))
-        for expected in ("guest", "admin", "sam", "tom", "recursiveUser"):
+        expected_users = ["guest", "admin", "sam", "tom", "recursiveUser"]
+        if self.is_attribute_normalization_interceptor_configured:
+            expected_users = [string.lower() for string in expected_users]
+        for expected in expected_users:
             self.assertIn(expected, users)
 
     def test_search_all_groups_by_objectclass_proxy_dn(self) -> None:
@@ -236,6 +253,70 @@ class TestKnoxLdapProxySearch(unittest.TestCase):  # pylint: disable=too-many-pu
         entry = self.search_one(PROXY_PEOPLE_BASE, "(uid=sam)", ldap3.NO_ATTRIBUTES)
         self.assertEqual("sam", entry.entry_dn.split(",", 1)[0].split("=", 1)[1])
         self.assertEqual(set(), self.attribute_names(entry))
+
+    # ---- Attribute Normalization: interceptor lowercases attributes and dn ----
+
+    def test_case_insensitive_attribute_values_are_lowercased(self) -> None:
+        """Mixed-case values of case-insensitive attributes are returned lowercased."""
+        if not self.is_attribute_normalization_interceptor_configured:
+            self.skipTest("AttributeNormalizationInterceptor not configured")
+        entries = self.search(PROXY_PEOPLE_BASE, "(uid=sam)")
+        self.assertEqual(1, len(entries))
+        entry = entries[0]
+        self.assertEqual(["sam peterson"], entry["cn"].values)
+        self.assertEqual(["peterson"], entry["sn"].values)
+        self.assertEqual(["sam"], entry["uid"].values)
+
+        entries = self.search(PROXY_PEOPLE_BASE, "(uid=recursiveUser)")
+        self.assertEqual(1, len(entries))
+        entry = entries[0]
+        self.assertEqual(["recursiveuser"], entry["uid"].values)
+        self.assertEqual(["recursive"], entry["cn"].values)
+        self.assertEqual(["user"], entry["sn"].values)
+
+    def test_entry_dn_is_lowercased(self) -> None:
+        """The entry DN is lowercased along with the attribute values."""
+        if not self.is_attribute_normalization_interceptor_configured:
+            self.skipTest("AttributeNormalizationInterceptor not configured")
+        entries = self.search(PROXY_PEOPLE_BASE, "(uid=recursiveUser)")
+        self.assertEqual(1, len(entries))
+        self.assertEqual(f"uid=recursiveUser,{PROXY_PEOPLE_BASE}".lower(), entries[0].entry_dn)
+
+    def test_object_class_is_lowercased(self) -> None:
+        """objectClass values are lowercased."""
+        if not self.is_attribute_normalization_interceptor_configured:
+            self.skipTest("AttributeNormalizationInterceptor not configured")
+        entries = self.search(PROXY_PEOPLE_BASE, "(uid=sam)")
+        self.assertEqual(1, len(entries))
+        values = entries[0]["objectClass"].values
+        self.assertIn("inetorgperson", values)
+        self.assertNotIn("inetOrgPerson", values)
+
+    def test_dn_valued_attributes_are_lowercased(self) -> None:
+        """DN-valued attributes such as member are lowercased."""
+        if not self.is_attribute_normalization_interceptor_configured:
+            self.skipTest("AttributeNormalizationInterceptor not configured")
+        entries = self.search(PROXY_GROUPS_BASE, "(cn=level1)")
+        self.assertEqual(1, len(entries))
+        members = entries[0]["member"].values
+        self.assertEqual(1, len(members))
+        self.assertEqual(members[0].lower(), members[0])
+        self.assertTrue(
+            members[0].startswith("uid=recursiveuser,ou=people,"),
+            f"unexpected member value: {members[0]}",
+        )
+
+    def test_requested_attributes_are_still_honored(self) -> None:
+        """Only the requested attributes are returned for a normalized entry."""
+        if not self.is_attribute_normalization_interceptor_configured:
+            self.skipTest("AttributeNormalizationInterceptor not configured")
+        entries = self.search(PROXY_PEOPLE_BASE, "(uid=sam)", attributes=["uid", "mail"])
+        self.assertEqual(1, len(entries))
+        entry = entries[0]
+        self.assertEqual(["sam"], entry["uid"].values)
+        self.assertEqual(["sam@example.org"], entry["mail"].values)
+        returned = {name.lower() for name in entry.entry_attributes}
+        self.assertEqual({"uid", "mail"}, returned)
 
 
 if __name__ == "__main__":
