@@ -21,6 +21,7 @@ import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.ObjectClass;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.api.ldap.model.schema.UsageEnum;
 import org.apache.directory.api.ldap.schema.loader.JarLdifSchemaLoader;
 import org.apache.directory.api.ldap.schema.manager.impl.DefaultSchemaManager;
 
@@ -44,7 +45,7 @@ public class SchemaManagerFactory {
         List<AttributeType> userAttributeTypes = new ArrayList<>();
         List<AttributeType> groupAttributeTypes = new ArrayList<>();
         getCustomAttributeTypes(userAttributeTypes, groupAttributeTypes);
-        getActiveDirectoryAttributeTypes(userAttributeTypes);
+        getActiveDirectoryAttributeTypes(userAttributeTypes, groupAttributeTypes);
 
         Set<AttributeType> allAttributeTypes = new HashSet<>();
         allAttributeTypes.addAll(userAttributeTypes);
@@ -90,7 +91,7 @@ public class SchemaManagerFactory {
         userAttributes.add(nsAccountLockAttrType);
     }
 
-    private static void getActiveDirectoryAttributeTypes(List<AttributeType> userAttributes) {
+    private static void getActiveDirectoryAttributeTypes(List<AttributeType> userAttributes, List<AttributeType> groupAttributes) {
         AttributeType sAMAccountNameAttrType = new AttributeType("1.2.840.113556.1.4.221");
         sAMAccountNameAttrType.setNames("sAMAccountName");
         sAMAccountNameAttrType.setSchemaName("other");
@@ -110,5 +111,35 @@ public class SchemaManagerFactory {
         userAccountControlAttrType.setOrderingOid("2.5.13.15"); // integerorderingmatch
         userAccountControlAttrType.setSingleValued(true);
         userAttributes.add(userAccountControlAttrType);
+
+        // whenChanged and objectGUID exist on every Active Directory object (users and groups) and
+        // are read-only. whenChanged is operational (returned only when explicitly requested), which
+        // is the main reason KNOX-3574 passes requested attributes through to the backend.
+        AttributeType whenChangedAttrType = new AttributeType("1.2.840.113556.1.2.3");
+        whenChangedAttrType.setNames("whenChanged");
+        whenChangedAttrType.setSchemaName("other");
+        whenChangedAttrType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.24"); // generalized time
+        whenChangedAttrType.setEqualityOid("2.5.13.27"); // generalizedtimematch
+        whenChangedAttrType.setOrderingOid("2.5.13.28"); // generalizedtimeorderingmatch
+        whenChangedAttrType.setDescription("Microsoft Active Directory whenChanged modification timestamp (operational)");
+        whenChangedAttrType.setSingleValued(true);
+        whenChangedAttrType.setUserModifiable(false);
+        whenChangedAttrType.setUsage(UsageEnum.DIRECTORY_OPERATION);
+        userAttributes.add(whenChangedAttrType);
+        groupAttributes.add(whenChangedAttrType);
+
+        AttributeType objectGuidAttrType = new AttributeType("1.2.840.113556.1.4.2");
+        objectGuidAttrType.setNames("objectGUID");
+        objectGuidAttrType.setSchemaName("other");
+        objectGuidAttrType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.40"); // octet string
+        objectGuidAttrType.setEqualityOid("2.5.13.17"); // octetstringmatch
+        objectGuidAttrType.setDescription("Microsoft Active Directory objectGUID unique identifier");
+        objectGuidAttrType.setSingleValued(true);
+        objectGuidAttrType.setUserModifiable(false);
+        // objectGUID is server-generated and immutable. A non-user-modifiable attribute must be
+        // operational in a strict schema (RFC 4512), otherwise registration fails.
+        objectGuidAttrType.setUsage(UsageEnum.DIRECTORY_OPERATION);
+        userAttributes.add(objectGuidAttrType);
+        groupAttributes.add(objectGuidAttrType);
     }
 }

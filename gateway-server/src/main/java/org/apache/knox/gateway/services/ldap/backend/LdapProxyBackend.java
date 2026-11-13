@@ -45,8 +45,13 @@ import org.apache.directory.api.ldap.model.message.controls.PagedResults;
 import org.apache.directory.api.ldap.model.message.controls.PagedResultsImpl;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.AttributeType;
+import org.apache.directory.api.ldap.model.schema.LdapSyntax;
+import org.apache.directory.api.ldap.model.schema.MatchingRule;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.api.ldap.model.schema.UsageEnum;
+import org.apache.directory.api.ldap.schema.manager.impl.DefaultSchemaManager;
 import org.apache.directory.ldap.client.api.DefaultLdapConnectionFactory;
+import org.apache.directory.ldap.client.api.DefaultSchemaLoader;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import org.apache.directory.ldap.client.api.LdapConnectionPool;
@@ -84,7 +89,11 @@ public class LdapProxyBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private static final String[] ALL_ATTRIBUTES = new String[]{"*"};
-    private static final String[] ALL_ATTRIBUTES_AND_MEMBEROF = new String[]{"*", "memberOf"};
+    private static final String MEMBER_OF = "memberOf";
+
+    // Generic syntax used when importing a remote attribute whose declared syntax is not in the
+    // bundled schema. Octet string accepts any value, so the attribute's values still pass through.
+    private static final String OCTET_STRING_SYNTAX_OID = "1.3.6.1.4.1.1466.115.121.1.40";
 
     private static final String DEFAULT_MAX_FILTER_LENGTH = "0"; // unlimited
 
@@ -122,8 +131,6 @@ public class LdapProxyBackend implements LdapBackend {
     private final int maxResultSetSize;
     private final int maxFilterLength;
 
-    private final String proxyEntryGroupMembershipAttributeType = "memberOf";
-
     // Secure transport configuration for the connection to the remote LDAP server
     private final boolean useSsl;                  // LDAPS (implicit TLS)
     private final boolean trustAllCertificates;    // skip certificate validation (test/dev only)
@@ -133,6 +140,10 @@ public class LdapProxyBackend implements LdapBackend {
     private final String sslProtocol;
     private final String[] enabledProtocols;
     private final String[] enabledCipherSuites;
+    // Operator-declared attributes to import from the remote server's schema so the proxy can
+    // recognise and request them (e.g. operational attributes like whenChanged). Only these are
+    // imported; the remote schema is never trusted wholesale. May be null when none are configured.
+    private final String[] extraAttributes;
     // LDAP response timeout in milliseconds; negative means use the client default.
     private long connectionTimeoutMillis = -1;
 
@@ -230,6 +241,7 @@ public class LdapProxyBackend implements LdapBackend {
         sslProtocol = config.get("sslProtocol");
         enabledProtocols = splitToArray(config.get("enabledProtocols"));
         enabledCipherSuites = splitToArray(config.get("enabledCipherSuites"));
+        extraAttributes = splitToArray(config.get("extraAttributes"));
         final String timeout = config.get("connectionTimeout");
         if (timeout != null && !timeout.trim().isEmpty()) {
             connectionTimeoutMillis = Long.parseLong(timeout.trim());
@@ -463,6 +475,170 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     /**
+     * Imports the operator-declared {@code extraAttributes} from the remote LDAP server's schema
+     * into the shared schema manager, so the proxy can recognise and request them (e.g. operational
+     * attributes like whenChanged). Only the configured attributes are imported — the remote schema
+     * is never trusted wholesale — and each imported definition comes from the remote server, so its
+     * syntax and usage are authoritative. Attribute types already registered (by OID) are left
+     * untouched, so the hardcoded definitions in {@code SchemaManagerFactory} always win. A configured
+     * attribute that the remote server does not publish is logged as an error and skipped.
+     * <p>
+     * Any failure (the remote server being unreachable, not publishing a schema, or a single
+     * attribute type that cannot be resolved against the bundled syntaxes/matching rules) is
+     * logged and skipped rather than propagated, so a backend's schema being unavailable never
+     * prevents the embedded LDAP service from starting.
+     */
+    @Override
+    public void loadRemoteSchema(SchemaManager schemaManager) {
+        if (extraAttributes == null || extraAttributes.length == 0) {
+            // Nothing declared to import; do not even contact the remote server.
+            return;
+        }
+        LdapConnection connection = null;
+        try {
+            connection = getConnection();
+            // Quirks mode (the second argument) relaxes the schema parser so non-RFC-4512 schemas
+            // load instead of failing. Active Directory in particular publishes attribute type and
+            // object class descriptions with non-numeric OIDs and missing elements that the strict
+            // parser rejects with ERR_13787_OID_EXPECTED.
+            final DefaultSchemaLoader remoteLoader = new DefaultSchemaLoader(connection, true);
+            final SchemaManager remoteSchemaManager = new DefaultSchemaManager(remoteLoader);
+            // Relaxed loading so an incomplete or non-standard remote schema yields what it can
+            // instead of failing wholesale.
+            remoteSchemaManager.loadAllEnabledRelaxed();
+            importConfiguredAttributeTypes(schemaManager, remoteSchemaManager);
+        } catch (Exception e) {
+            LOG.ldapRemoteSchemaLoadFailed(getName(), e);
+        } finally {
+            releaseConnection(connection);
+        }
+    }
+
+    /**
+     * Imports each configured {@code extraAttributes} entry from {@code remoteSchemaManager} into
+     * {@code schemaManager}, using the remote server's own definition. Attributes the remote server
+     * does not publish are logged and skipped. Separated from the connection handling in
+     * {@link #loadRemoteSchema(SchemaManager)} so the import can be exercised without a live server.
+     */
+    void importConfiguredAttributeTypes(SchemaManager schemaManager, SchemaManager remoteSchemaManager) {
+        if (extraAttributes == null) {
+            return;
+        }
+        int imported = 0;
+        for (String attributeName : extraAttributes) {
+            final AttributeType remoteType = remoteSchemaManager.getAttributeType(attributeName);
+            if (remoteType == null || remoteType.getOid() == null) {
+                // Configured but not published by the remote server: almost always a typo or an
+                // attribute that does not exist on this directory. Surface it rather than ignore it.
+                LOG.ldapConfiguredAttributeNotInRemoteSchema(getName(), attributeName);
+                continue;
+            }
+            if (registerRemoteAttributeType(schemaManager, remoteType)) {
+                imported++;
+            }
+        }
+        LOG.ldapRemoteSchemaLoaded(getName(), imported);
+    }
+
+    /**
+     * Registers a single remote attribute type into the target schema manager, unless an attribute
+     * type with the same OID is already present. The definition is rebuilt as a standalone attribute
+     * type whose syntax and matching rules are expressed by OID so that the target manager resolves
+     * them against its own (bundled) registries; its superior chain is flattened for the same reason.
+     *
+     * @return true if a new attribute type was added, false if it already existed or could not be added
+     */
+    boolean registerRemoteAttributeType(SchemaManager schemaManager, AttributeType remoteType) {
+        final String oid = remoteType.getOid();
+        if (oid == null || schemaManager.getAttributeTypeRegistry().contains(oid)) {
+            return false;
+        }
+        try {
+            final AttributeType attributeType = toStandaloneAttributeType(schemaManager, remoteType);
+            final boolean addedToManager = schemaManager.add(attributeType);
+            if (!addedToManager) {
+                // add() records the reason (e.g. an unresolved syntax) in the manager's error list
+                // rather than throwing; surface it and move on so one bad definition is skipped.
+                LOG.ldapRemoteAttributeTypeSkipped(getName(), oid, String.valueOf(schemaManager.getErrors()));
+                return false;
+            }
+            return true;
+        } catch (LdapException e) {
+            LOG.ldapRemoteAttributeTypeError(getName(), oid, e);
+            return false;
+        }
+    }
+
+    /**
+     * Builds a standalone copy of a remote attribute type that the strict, bundled schema manager
+     * can register. Remote servers — Active Directory in particular — define attributes with syntaxes,
+     * matching rules and usage/modifiability combinations the bundled schema does not accept, so the
+     * copy is normalised:
+     * <ul>
+     *   <li>A syntax not present in the bundled schema (e.g. the AD LargeInteger syntax
+     *       {@code 1.2.840.113556.1.4.906}) falls back to octet string, which accepts any value, so the
+     *       attribute's values still pass through unchanged — this proxy does not evaluate them.</li>
+     *   <li>Matching rules the bundled schema cannot resolve are dropped rather than failing the add.</li>
+     *   <li>A non-user-modifiable attribute is forced to operational usage, because a strict schema
+     *       rejects a non-modifiable USER-APPLICATIONS attribute (RFC 4512, ERR_13763).</li>
+     * </ul>
+     * The schema name is set to "other" to match the convention used for the hardcoded attribute types.
+     */
+    private AttributeType toStandaloneAttributeType(SchemaManager schemaManager, AttributeType remoteType) {
+        final AttributeType attributeType = new AttributeType(remoteType.getOid());
+        final List<String> names = remoteType.getNames();
+        if (names != null && !names.isEmpty()) {
+            attributeType.setNames(names.toArray(new String[0]));
+        }
+        attributeType.setSchemaName("other");
+        attributeType.setDescription(remoteType.getDescription());
+        attributeType.setSingleValued(remoteType.isSingleValued());
+        attributeType.setCollective(remoteType.isCollective());
+        attributeType.setUserModifiable(remoteType.isUserModifiable());
+        attributeType.setUsage(normalizedUsage(remoteType));
+        attributeType.setSyntaxOid(resolvedSyntaxOid(schemaManager, remoteType));
+        attributeType.setEqualityOid(resolvedMatchingRuleOid(schemaManager, remoteType.getEquality(), remoteType.getEqualityOid()));
+        attributeType.setOrderingOid(resolvedMatchingRuleOid(schemaManager, remoteType.getOrdering(), remoteType.getOrderingOid()));
+        attributeType.setSubstringOid(resolvedMatchingRuleOid(schemaManager, remoteType.getSubstring(), remoteType.getSubstringOid()));
+        return attributeType;
+    }
+
+    /**
+     * A non-user-modifiable attribute must be operational in a strict schema; some servers (notably
+     * Active Directory) publish such attributes as USER-APPLICATIONS, which would be rejected.
+     */
+    private static UsageEnum normalizedUsage(AttributeType remoteType) {
+        final UsageEnum usage = remoteType.getUsage();
+        if (!remoteType.isUserModifiable() && usage == UsageEnum.USER_APPLICATIONS) {
+            return UsageEnum.DIRECTORY_OPERATION;
+        }
+        return usage;
+    }
+
+    /**
+     * Returns the remote attribute's syntax OID when the bundled schema knows it, otherwise octet
+     * string so the attribute still registers and its values pass through untouched.
+     */
+    private String resolvedSyntaxOid(SchemaManager schemaManager, AttributeType remoteType) {
+        final LdapSyntax syntax = remoteType.getSyntax();
+        final String syntaxOid = syntax != null ? syntax.getOid() : remoteType.getSyntaxOid();
+        if (syntaxOid != null && schemaManager.getLdapSyntaxRegistry().contains(syntaxOid)) {
+            return syntaxOid;
+        }
+        LOG.ldapRemoteAttributeSyntaxFallback(getName(), remoteType.getName(), String.valueOf(syntaxOid));
+        return OCTET_STRING_SYNTAX_OID;
+    }
+
+    /**
+     * Returns the matching rule OID only when the bundled schema can resolve it; an unknown matching
+     * rule is dropped (returns null) rather than failing the whole attribute registration.
+     */
+    private static String resolvedMatchingRuleOid(SchemaManager schemaManager, MatchingRule matchingRule, String declaredOid) {
+        final String oid = matchingRule != null ? matchingRule.getOid() : declaredOid;
+        return oid != null && schemaManager.getMatchingRuleRegistry().contains(oid) ? oid : null;
+    }
+
+    /**
      * Closes the connection pool and releases all resources.
      * Should be called when the backend is being shut down.
      */
@@ -537,7 +713,7 @@ public class LdapProxyBackend implements LdapBackend {
         }
 
         List<String> groups = new ArrayList<>();
-        Attribute groupsAttribute = user.get(proxyEntryGroupMembershipAttributeType);
+        Attribute groupsAttribute = user.get(MEMBER_OF);
         if (groupsAttribute != null) {
             for (Value value : groupsAttribute) {
                 groups.add(new Dn(value.getString()).getRdn().getValue());
@@ -568,7 +744,14 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     @Override
-    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes, long sizeLimit, int timeLimit) throws Exception {
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager,
+                              String[] attributes, long sizeLimit, int timeLimit) throws Exception {
+        // Null or empty requested attributes mean "all user attributes"; normalize to "*" so the
+        // remote search always has an explicit attribute list and the memberOf handling below sees a consistent value.
+        if (attributes == null || attributes.length == 0) {
+            attributes = ALL_ATTRIBUTES;
+        }
+
         // Filter likely has already been annotated by other interceptors.
         // Clean the filter by removing any modifications or annotations
         String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
@@ -586,8 +769,8 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
-            boolean memberOfRequested = isAttributeRequested(attributes, proxyEntryGroupMembershipAttributeType, schemaManager);
-            String[] remoteAttributes = memberOfRequested && useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
+            boolean memberOfRequested = isAttributeRequested(attributes, MEMBER_OF, schemaManager);
+            String[] remoteAttributes = memberOfRequested && useMemberOf ? addMemberOfAttribute(attributes) : attributes;
             List<Entry> searchResults;
             try {
                 searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, sizeLimit, timeLimit, remoteAttributes);
@@ -611,11 +794,27 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     /**
+     * The LDAP proxy treats memberOf as a user attribute. MemberOf is an operational attribute on some LDAP servers.
+     * Explicitly add memberOf to the attribute list for remote searches if it is a requested attribute.
+     * @param attributes the requested attributes
+     * @return the requested attributes with memberOf added
+     */
+    private String[] addMemberOfAttribute(String[] attributes) {
+
+        List<String> remoteAttributes  = new ArrayList<>(Arrays.asList(attributes));
+        if (!remoteAttributes.contains(MEMBER_OF)) {
+            remoteAttributes.add(MEMBER_OF);
+            return remoteAttributes.toArray(new String[0]);
+        }
+        return attributes;
+    }
+
+    /**
      * Returns true if the requested attributes include the given attribute or "*". Requested
      * attributes may be names or OIDs, so they are compared by attribute type OID via the schema.
      * Null or empty attributes indicates all attributes (i.e., "*")
      */
-    private static boolean isAttributeRequested(String[] requestedAttributes, String attribute, SchemaManager schemaManager) {
+    private boolean isAttributeRequested(String[] requestedAttributes, String attribute, SchemaManager schemaManager) {
         if (requestedAttributes == null || requestedAttributes.length == 0) {
             return true;
         }
@@ -698,7 +897,7 @@ public class LdapProxyBackend implements LdapBackend {
         if (recursiveGroupResolution || !useMemberOf) {
             List<Entry> groups = getUserGroupsEntries(connection, entry, entryCache, resolvedParentsCache);
             for (Entry groupEntry : groups) {
-                entry.add(proxyEntryGroupMembershipAttributeType, groupEntry.getDn().getName());
+                entry.add(MEMBER_OF, groupEntry.getDn().getName());
             }
         }
     }

@@ -274,8 +274,30 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.pageSize` | `1000` | Page size for search requests. |
 | `gateway.ldap.interceptor.<name>.maxFilterLength` | `0` | Maximum length of a search filter sent to the remote server. A longer filter (for example one expanded from a `memberOf` condition on a large group) is split into several searches whose results are combined. 0 means unlimited. |
 | `gateway.ldap.interceptor.<name>.maxResultSetSize` | `0` | Maximum number of results to return from a search, regardless of paging. 0 means unlimited. |
+| `gateway.ldap.interceptor.<name>.extraAttributes` | N/A | Comma-separated list of additional attribute names (or OIDs) to import from the remote server's schema at start-up, so the proxy can recognise and request them (e.g. operational attributes). Only the listed attributes are imported — the remote schema is never trusted wholesale. See [Importing remote attributes](#importing-remote-attributes-extraattributes). |
 
 NOTE: If this value is undefined and the interceptor was created by the KnoxLDAPServerManager, the KnoxLDAPServerManager will set the `gateway.ldap.interceptor.<name>.maxResultSetSize` value to be 1 greater than the proxy's `gateway.ldap.max.size.limit` configuration. This will ensure that the proxy returns a "Size limit exceeded" result if the backend has more results than the proxy's limit.
+
+##### Importing remote attributes (`extraAttributes`)
+
+The embedded ApacheDS server only surfaces attributes it has in its schema; an attribute the schema does not know is dropped when a remote entry is converted into a proxy entry. Knox's bundled schema already includes the common and AD-specific attributes it needs out of the box (`memberOf`, `nsAccountLock`, `sAMAccountName`, `userAccountControl`, `whenChanged`, and `objectGUID`), so these are always available and do **not** need to be listed.
+
+To expose additional attributes defined on the remote server — for example other operational attributes — list their names in `gateway.ldap.interceptor.<name>.extraAttributes`. At start-up Knox reads the remote server's schema and imports the definition of each listed attribute (using the remote server's own syntax, so the attribute is parsed and matched correctly). This is a deliberately **narrow, operator-controlled** import: only the attributes you name are imported, and the remote schema is never trusted wholesale.
+
+```xml
+<property>
+    <name>gateway.ldap.interceptor.adexample.extraAttributes</name>
+    <value>whenCreated,uSNCreated,uSNChanged</value>
+</property>
+```
+
+Behaviour and safeguards:
+
+- **Validation.** Each listed attribute is looked up in the remote server's schema. A name the remote server does not publish (typically a typo, or an attribute that does not exist on that directory) is logged at ERROR (`Configured attribute '<name>' ... does not exist in the remote server's schema`) and skipped; it does not stop the service from starting.
+- **Built-in definitions win.** If a listed attribute is one Knox already defines (by OID), the built-in definition is kept and the remote one is ignored.
+- **Operational attributes are requested explicitly.** Operational attributes (such as `whenChanged`) are returned by the directory only when the client requests them **by name**; they are not included in a bare `*` (all user attributes) request.
+- **Secrets are never surfaced.** Credential-bearing attributes (for example `userPassword`, `unicodePwd`) are always stripped from proxy entries regardless of what is imported or requested, so importing an attribute never exposes password or key material.
+- **No configuration, no schema read.** If `extraAttributes` is empty, Knox does not read the remote schema at all.
 
 ##### Credential store aliases for backend passwords
 
@@ -453,7 +475,7 @@ The Knox LDAP Service includes several optimizations for working with Active Dir
 
 - **sAMAccountName Support**: The service recognizes `sAMAccountName` in search filters, allowing seamless integration with Windows environments.
 - **Efficient Group Lookups**: By setting `gateway.ldap.interceptor.<name>.useMemberOf` to `true`, Knox can retrieve all of a user's groups in a single query by reading the `memberOf` attribute, rather than searching all group objects.
-- **Schema Extensions**: Attributes (e.g., `memberOf`, `nsAccountLock`, and AD-specific attributes `sAMAccountName` and `userAccountControl`) are programmatically added to the embedded ApacheDS schema to prevent "attribute not found" errors during proxying.
+- **Schema Extensions**: Attributes (e.g., `memberOf`, `nsAccountLock`, and AD-specific attributes `sAMAccountName`, `userAccountControl`, `whenChanged`, and `objectGUID`) are programmatically added to the embedded ApacheDS schema to prevent "attribute not found" errors during proxying. Additional remote attributes can be imported on demand with `gateway.ldap.interceptor.<name>.extraAttributes` (see [Importing remote attributes](#importing-remote-attributes-extraattributes)).
 - **Case Sensitivity**: Search filters are handled to accommodate AD's case-insensitive nature for user identifiers.
 
 ## Usage Example
@@ -556,6 +578,10 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 <property>
     <name>gateway.ldap.interceptor.adexample.groupObjectClass</name>
     <value>group</value>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.adexample.extraAttributes</name>
+    <value>whenCreated,uSNCreated,uSNChanged</value>
 </property>
 
 <!--

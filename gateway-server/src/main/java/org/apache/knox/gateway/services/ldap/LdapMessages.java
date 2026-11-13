@@ -278,4 +278,22 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.ERROR, text = "Failed to resolve gateway credential store alias {0} for LDAP backend property {1} (interceptor {2}): {3}")
     void ldapBackendPasswordAliasResolutionFailed(String alias, String property, String interceptorName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.INFO, text = "Imported {1} configured attribute type(s) from the schema of backend {0} into the schema manager")
+    void ldapRemoteSchemaLoaded(String backendName, int count);
+
+    @Message(level = MessageLevel.ERROR, text = "Configured attribute ''{1}'' for backend {0} does not exist in the remote server''s schema; it will not be imported")
+    void ldapConfiguredAttributeNotInRemoteSchema(String backendName, String attributeName);
+
+    @Message(level = MessageLevel.WARN, text = "Failed to read the remote schema for backend {0}; continuing with the bundled schema only: {1}")
+    void ldapRemoteSchemaLoadFailed(String backendName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.DEBUG, text = "Skipped remote attribute type {1} from backend {0}; it could not be resolved against the bundled schema: {2}")
+    void ldapRemoteAttributeTypeSkipped(String backendName, String oid, String errors);
+
+    @Message(level = MessageLevel.DEBUG, text = "Remote attribute {1} from backend {0} uses syntax {2}, which is not in the bundled schema; importing it with an octet string syntax")
+    void ldapRemoteAttributeSyntaxFallback(String backendName, String attributeName, String syntaxOid);
+
+    @Message(level = MessageLevel.DEBUG, text = "Failed to register remote attribute type {1} from backend {0}")
+    void ldapRemoteAttributeTypeError(String backendName, String oid, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }
