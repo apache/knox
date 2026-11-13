@@ -167,10 +167,9 @@
         <asm.version>9.9.1</asm.version>
         <aspectj.version>1.9.25.1</aspectj.version>
         <asynchttpclient.version>4.1.5</asynchttpclient.version>
-        <bcprov-jdk18on.version>1.85</bcprov-jdk18on.version>
-        <bcpkix-jdk18on.version>1.85</bcpkix-jdk18on.version>
-        <bcutil-jdk18on.version>1.85</bcutil-jdk18on.version>
         <ben-manes.caffeine.version>2.8.8</ben-manes.caffeine.version>
+        <!-- One version for all BouncyCastle artifacts: mixing bcprov/bcpkix/bcutil versions breaks at runtime -->
+        <bouncycastle.version>1.86</bouncycastle.version>
         <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
         <cglib.version>3.3.0</cglib.version>
         <checkstyle.version>8.38</checkstyle.version>
@@ -669,6 +668,10 @@
                                         <!-- Only needed by embedded ZooKeeper servers in tests (curator-test) -->
                                         <exclude>org.xerial.snappy:snappy-java:*:*:compile</exclude>
                                         <exclude>org.xerial.snappy:snappy-java:*:*:runtime</exclude>
+                                        <!-- Knox standardizes on the BouncyCastle jdk18on artifacts; the legacy ones
+                                             ship the same packages and would put a second copy on the classpath -->
+                                        <exclude>org.bouncycastle:*-jdk15on</exclude>
+                                        <exclude>org.bouncycastle:*-jdk15to18</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>
@@ -2611,17 +2614,17 @@
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
-                <version>${bcprov-jdk18on.version}</version>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk18on</artifactId>
-                <version>${bcpkix-jdk18on.version}</version>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcutil-jdk18on</artifactId>
-                <version>${bcutil-jdk18on.version}</version>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.ow2.asm</groupId>

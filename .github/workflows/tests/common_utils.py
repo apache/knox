@@ -20,11 +20,14 @@ from __future__ import annotations
 import base64
 import json
 import os
+import ssl
 import unittest
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 import urllib3
+from cryptography import x509
 from requests.auth import HTTPBasicAuth
 
 # Default timeout for HTTP calls to the gateway (self-signed TLS, CI).
@@ -40,6 +43,22 @@ def gateway_base_url() -> str:
     """Return KNOX_GATEWAY_URL with a trailing slash."""
     url = os.environ.get("KNOX_GATEWAY_URL", "https://localhost:8443/")
     return url if url.endswith("/") else (url + "/")
+
+
+def gateway_host_port() -> tuple[str, int]:
+    """Return the (host, port) of the gateway's TLS endpoint from KNOX_GATEWAY_URL."""
+    parsed = urlparse(gateway_base_url())
+    return parsed.hostname, parsed.port or 443
+
+
+def gateway_certificate_pem() -> str:
+    """Return the PEM of the certificate the gateway presents, fetched without trusting it."""
+    return ssl.get_server_certificate(gateway_host_port(), timeout=KNOX_REQUEST_TIMEOUT)
+
+
+def gateway_certificate() -> x509.Certificate:
+    """Return the certificate the gateway presents on its TLS endpoint, parsed."""
+    return x509.load_pem_x509_certificate(gateway_certificate_pem().encode("ascii"))
 
 
 def knox_get(url: str, **kwargs: Any) -> requests.Response:

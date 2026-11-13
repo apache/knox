@@ -28,6 +28,10 @@ import unittest
 
 import requests
 import urllib3
+from cryptography import x509
+from cryptography.x509.oid import ExtendedKeyUsageOID
+
+from common_utils import gateway_certificate
 
 KNOX_URL = os.environ.get("KNOX_GATEWAY_URL", "https://knox:8443/").rstrip("/")
 HEALTH_PATH = "/gateway/health/v1/ping"
@@ -56,6 +60,16 @@ class SingleEkuNoMtlsTest(unittest.TestCase):
                 requests.exceptions.ConnectionError) as exc:
             self.fail(f"Knox rejected a no-client-cert request in single-EKU/no-mTLS mode: {exc}")
         self.assertIsNotNone(resp.status_code)
+
+    def test_generated_identity_is_server_auth_only(self):
+        """The identity the gateway generated with BouncyCastle carries exactly serverAuth.
+
+        No keystore is mounted in this scenario, so the gateway self-signs a single-EKU
+        identity on startup (KNOX-3566).
+        """
+        eku = gateway_certificate().extensions.get_extension_for_class(x509.ExtendedKeyUsage)
+        self.assertFalse(eku.critical)
+        self.assertEqual(list(eku.value), [ExtendedKeyUsageOID.SERVER_AUTH])
 
 
 if __name__ == "__main__":
