@@ -667,7 +667,12 @@ public class LDAPRolesLookupInterceptorTest {
                 "(objectClass=groupOfUniqueNames)",
                 "(&(objectClass=groupOfNames)(cn=*))",
                 "(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))",
-                "(|(objectClass=groupOfUniqueNames)(objectClass=groupOfNames))")) {
+                "(|(objectClass=groupOfUniqueNames)(objectClass=groupOfNames))",
+                "(|(objectClass=groupOfNames)(objectClass=referral))",
+                "(|(objectClass=groupOfUniqueNames)(objectClass=referral))",
+                "(|(&(objectClass=groupOfNames)(cn=*))(objectClass=referral))",
+                "(|(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))(objectClass=referral))",
+                "(|(|(objectClass=groupOfUniqueNames)(objectClass=groupOfNames))(objectClass=referral))")) {
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
             expect(rolesService.listRoles()).andReturn(List.of("viewer"));
             replay(rolesService);

@@ -171,11 +171,6 @@ class TestKnoxLdapProxySearchWithRoleLookup(  # pylint: disable=too-many-public-
         groups = self.rdn_values(self.search(PROXY_GROUPS_BASE, "(objectClass=*)"))
         self.assertEqual(ALL_ROLES, set(groups))
 
-    # ApacheDS hands the interceptors (|(objectClass=groupOfNames)(objectClass=referral)), which
-    # the roles lookup does not take for a list search from an ancestor of ou=groups. So the
-    # backend groups are translated instead and roles assigned only to users (platform:deployer)
-    # are missing.
-    @unittest.skip("root-level role listing misses roles assigned only to users")
     def test_list_all_roles_from_proxy_root_with_group_filter(self) -> None:
         """Searching from the proxy root with a group objectClass filter lists all roles."""
         entries = self.search(PROXY_BASE_DN, "(objectClass=groupOfNames)")
