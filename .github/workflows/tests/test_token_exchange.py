@@ -48,6 +48,8 @@ The topologies exercised, all fronting the KNOXIDF token endpoint:
   - knoxidf-token-passthrough       -- fail-safe control: same passthrough validator but
                                        the flag left off (default), so a requested audience
                                        is dropped rather than minted.
+  - knoxauthtoken                   -- KNOX-AUTH-SERVICE with the k8s destination audience
+                                       validator (KNOX-3568).
 
 Covered acceptance criteria (parent KNOX-3455, split across sub-tasks that all land on
 master):
@@ -75,6 +77,8 @@ gateway code. These fail until KNOX-3461 is in the image:
     topology (which does not enable delegation) is still rejected outright.
 
 KNOX-3467 -- requested-scope cases; deferred until scope support lands.
+
+KNOX-3568 -- a token without an act claim leaves no delegated-token audit records.
 """
 
 import unittest
@@ -82,6 +86,7 @@ import unittest
 from requests.auth import HTTPBasicAuth
 
 from common_utils import gateway_base_url, get_token_claim, knox_get
+from delegated_audit_helpers import audit_records_for, call_destination, records_with_action
 from delegation_helpers import (
     ISSUED_TOKEN_TYPE_JWT,
     DelegationPolicyAdmin,
@@ -114,6 +119,8 @@ ADMIN_PASSWORD = "admin-password"
 DELEGATION_POLICY_ACTOR_AUTHORITY = "USER"
 DELEGATION_POLICY_ACTOR_ID = GUEST_USER
 DELEGATION_POLICY_RESOURCE = "https://delegated-resource"
+
+DESTINATION_SERVICE = "secret-service.platform.svc.cluster.local"
 
 
 class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
@@ -314,6 +321,15 @@ class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance
         self.assertTrue(exchanged, "exchange did not return an access_token")
         self.assertIsNone(get_token_claim(exchanged, "act"),
                           "same-subject exchange must not add an act claim")
+
+        # KNOX-3568
+        response, uri = call_destination(exchanged, DESTINATION_SERVICE)
+        self.assertEqual(response.status_code, 200, response.text)
+        records = audit_records_for(self, uri)
+        self.assertEqual(records_with_action(records, "audience-validation"), [], records)
+        authentications = records_with_action(records, "authentication")
+        self.assertEqual([(record.outcome, record.message) for record in authentications],
+                         [("success", "")], records)
 
     def test_delegation_exchange_rejected_when_delegation_disabled(self):
         """An actor_token exchange against a delegation-disabled topology is rejected."""

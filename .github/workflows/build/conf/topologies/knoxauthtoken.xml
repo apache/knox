@@ -38,6 +38,19 @@ limitations under the License.
 				<name>knox.token.exp.server-managed</name>
 				<value>true</value>
 			</param>
+			<!-- KNOX-3568: audits delegated tokens; tokens without an act claim are not affected. -->
+			<param>
+				<name>request.audience.validator</name>
+				<value>request.audience.k8s.destination.validation</value>
+			</param>
+			<param>
+				<name>request.audience.k8s.server.name.header.name</name>
+				<value>x-dest-server-name</value>
+			</param>
+			<param>
+				<name>request.audience.k8s.validate.audiences.without.act.claim</name>
+				<value>false</value>
+			</param>
 		</provider>
 		<!--
 		  group.principal.mapping makes CommonIdentityAssertionFilter map groups, which

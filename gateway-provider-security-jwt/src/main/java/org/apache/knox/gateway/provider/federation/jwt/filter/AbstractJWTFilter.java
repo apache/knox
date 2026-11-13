@@ -455,7 +455,8 @@ public abstract class AbstractJWTFilter implements Filter {
         if (actorChain.isEmpty()) {
           auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS );
         } else {
-          auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS, "act_chain=" + actorChain );
+          auditor.audit( Action.AUTHENTICATION , sourceUri, ResourceType.URI, ActionOutcome.SUCCESS,
+              DelegatedRequestAuditing.field("act_chain", actorChain) + DelegatedRequestAuditing.destinationFields(request) );
         }
       }
     }
@@ -697,8 +698,8 @@ public abstract class AbstractJWTFilter implements Filter {
     // The issuer is read before the signature is verified, so it is attacker-controlled.
     final String displayableIssuer = TokenUtils.getIssuerDisplayText(token.getIssuer());
     log.rejectedTokenWithUnexpectedIssuer(displayableToken, displayableTokenId, displayableIssuer);
-    handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
-        UNTRUSTED_ISSUER_PREFIX + displayableIssuer + UNTRUSTED_ISSUER_POSTFIX);
+    rejectToken(request, response, token, HttpServletResponse.SC_UNAUTHORIZED,
+        UNTRUSTED_ISSUER_PREFIX + displayableIssuer + UNTRUSTED_ISSUER_POSTFIX, "untrusted_issuer", token.getIssuer());
     return false;
   }
 
@@ -793,31 +794,34 @@ public abstract class AbstractJWTFilter implements Filter {
                   return true;
                 } else {
                   log.failedToVerifyTokenSignature(displayableToken, displayableTokenId);
-                  handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, null);
+                  rejectToken(request, response, token, HttpServletResponse.SC_UNAUTHORIZED, null,
+                      "signature_invalid", null);
                 }
               } else {
                 log.idleTimoutExceeded(token.getSubject(), displayableTokenId, idleTimeoutSeconds);
-                handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
-                    TOKEN_PREFIX + displayableTokenId + IDLE_TIMEOUT_POSTFIX);
+                rejectToken(request, response, token, HttpServletResponse.SC_UNAUTHORIZED,
+                    TOKEN_PREFIX + displayableTokenId + IDLE_TIMEOUT_POSTFIX, "idle_timeout_exceeded", null);
               }
             } else {
               log.disabledToken(displayableTokenId);
-              handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED,
-                  TOKEN_PREFIX + displayableTokenId + DISABLED_POSTFIX);
+              rejectToken(request, response, token, HttpServletResponse.SC_UNAUTHORIZED,
+                  TOKEN_PREFIX + displayableTokenId + DISABLED_POSTFIX, "token_disabled", null);
             }
           } else {
             log.notBeforeCheckFailed();
-            handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-                "Bad request: the NotBefore check failed");
+            rejectToken(request, response, token, HttpServletResponse.SC_BAD_REQUEST,
+                "Bad request: the NotBefore check failed", "not_before", null);
           }
         } else {
+          // The reason can carry request header values and unverified claims, so it is sanitized.
           if (audienceValidationResult.message() != null) {
-            log.failedToValidateAudience(displayableToken, displayableTokenId, audienceValidationResult.message());
+            log.failedToValidateAudience(displayableToken, displayableTokenId,
+                DelegatedRequestAuditing.displayText(audienceValidationResult.message()));
           } else {
             log.failedToValidateAudience(displayableToken, displayableTokenId);
           }
-          handleValidationError(request, response, HttpServletResponse.SC_BAD_REQUEST,
-              "Bad request: missing required token audience");
+          rejectToken(request, response, token, HttpServletResponse.SC_BAD_REQUEST,
+              "Bad request: missing required token audience", "audience_invalid", audienceValidationResult.message());
         }
       } else {
         log.tokenHasExpired(displayableToken, displayableTokenId);
@@ -825,13 +829,21 @@ public abstract class AbstractJWTFilter implements Filter {
         // There is no value in keeping this record for expired tokens, and explicitly removing them
         // may prevent records for other valid tokens from being prematurely evicted from the cache.
         removeSignatureVerificationRecord(token.toString());
-        handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired");
+        rejectToken(request, response, token, HttpServletResponse.SC_UNAUTHORIZED, "Token has expired",
+            "token_expired", null);
       }
     } catch (UnknownTokenException e) {
       log.unableToVerifyExpiration(e);
-      handleValidationError(request, response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+      rejectToken(request, response, token, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage(),
+          "token_state_unknown", e.getMessage());
     }
     return false;
+  }
+
+  private void rejectToken(final HttpServletRequest request, final HttpServletResponse response, final JWT token,
+      final int status, final String error, final String auditReason, final String auditDetail) throws IOException {
+    DelegatedRequestAuditing.rejected(request, token, auditReason, auditDetail);
+    handleValidationError(request, response, status, error);
   }
 
   /**

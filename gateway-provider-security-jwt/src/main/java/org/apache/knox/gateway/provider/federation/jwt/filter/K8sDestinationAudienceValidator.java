@@ -409,6 +409,15 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
   @Override
   public AudienceValidationResult validate(final HttpServletRequest request, final JWT token,
       final List<String> configuredAudiences) {
+    final AudienceValidationResult result = evaluate(request, token, configuredAudiences);
+    if (DelegatedRequestAuditing.isDelegated(token)) {
+      DelegatedRequestAuditing.audienceChecked(request, token, auditedDestination(request), result);
+    }
+    return result;
+  }
+
+  private AudienceValidationResult evaluate(final HttpServletRequest request, final JWT token,
+      final List<String> configuredAudiences) {
     final boolean hasActClaim = token.getClaimAsObject(JWTToken.ACT_CLAIM) != null;
     if (!hasActClaim && !validateAudiencesWithoutActClaim) {
       return AudienceValidationResult.of(AbstractJWTFilter.matchesConfiguredAudiences(token, configuredAudiences));
@@ -693,6 +702,49 @@ public class K8sDestinationAudienceValidator implements RequestAudienceValidator
       rawPath = queryOrFragment < 0 ? headerValue : headerValue.substring(0, queryOrFragment);
     }
     return AudienceResource.normalizeAndTidy(rawPath);
+  }
+
+  /**
+   * The destination to record in the audit trail of a delegated token's audience check. The server
+   * name and SPIFFE id are the raw values of their configured headers, so that a value which fails to
+   * parse, and so failed the check, is still recorded as the caller sent it.
+   */
+  private DelegatedRequestAuditing.Destination auditedDestination(final HttpServletRequest request) {
+    return new DelegatedRequestAuditing.Destination(configuredHeaderValue(request, serverNameHeader),
+        configuredHeaderValue(request, namespaceFromSpiffeIdHeader), auditedPath(request));
+  }
+
+  /**
+   * The destination path to record in the audit trail, which depends on whether
+   * {@link #PATH_HEADER_PARAM} is configured:
+   * <ul>
+   *   <li>Not configured: the path is not part of the audience check at all (see
+   *   {@link #matchesPath}), so the request URI is recorded instead, as the path the request reached
+   *   Knox on. It is context only, not something the token was checked against.</li>
+   *   <li>Configured, and the header holds a parseable path: that path, normalized exactly as it was
+   *   when compared with the {@code aud} entries.</li>
+   *   <li>Configured, but the header is missing or unparseable: the check failed for that reason, so
+   *   the raw header value is recorded to show what was sent, minus any query string, which may carry
+   *   credentials; {@code null} (recorded as an empty value) if the header is missing.</li>
+   * </ul>
+   */
+  private String auditedPath(final HttpServletRequest request) {
+    if (pathHeader == null) {
+      return request.getRequestURI();
+    }
+    final Optional<String> checkedPath = pathFromHeader(request);
+    if (checkedPath.isPresent()) {
+      return checkedPath.get();
+    }
+    return DelegatedRequestAuditing.withoutQuery(request.getHeader(pathHeader));
+  }
+
+  private static String configuredHeaderValue(final HttpServletRequest request, final String headerName) {
+    if (headerName == null) {
+      return null;
+    }
+    final String value = request.getHeader(headerName);
+    return value == null ? "" : value;
   }
 
   /**

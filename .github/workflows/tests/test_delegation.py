@@ -37,6 +37,8 @@ Topologies exercised:
                                            minted token's lifetime.
   - knoxidf-admin                       -- KNOXIDF_ADMIN delegation-policy REST API; writes to the
                                            gateway-wide embedded H2 policy store the exchange reads.
+  - knoxauthtoken                       -- KNOX-AUTH-SERVICE with the k8s destination audience
+                                           validator (KNOX-3568).
 
 Actors and impersonated subjects are distinct so the act claim is meaningful. From the demo
 LDAP: recursiveUser (the acting party; its nested level1-3 groups are irrelevant, as the
@@ -63,13 +65,22 @@ is deferred until scope support lands:
   AC7 -- requesting a resource not in the policy -> invalid_request.
   AC8 -- a policy max TTL shorter than the service TTL caps the minted token's lifetime.
   AC9 -- headless delegation succeeds when the policy allows it, fails (invalid_request) when not.
+
+KNOX-3568 -- audit of delegated token use: accepted, rejected and two-hop delegated tokens.
 """
 
 import unittest
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, get_token_claim, knox_get
+from common_utils import gateway_base_url, get_token_claim, get_token_id_display_text, knox_get
+from delegated_audit_helpers import (
+    DESTINATION_PATH,
+    assert_token_not_in_audit_log,
+    audit_records_for,
+    call_destination,
+    records_with_action,
+)
 from delegation_helpers import (
     ISSUED_TOKEN_TYPE_JWT,
     DelegationPolicyAdmin,
@@ -104,6 +115,10 @@ SCIENTIST_GROUP = "scientist"  # sam only (tom is deliberately NOT a member)
 # Distinct delegated resources; each request carries exactly one (the topology enforces max-one).
 RESOURCE_A = "https://delegated-resource-a"
 RESOURCE_B = "https://delegated-resource-b"
+
+DESTINATION_SERVICE = "secret-service.platform.svc.cluster.local"
+DESTINATION_RESOURCE = "https://" + DESTINATION_SERVICE
+OTHER_DESTINATION_SERVICE = "other-service.platform.svc.cluster.local"
 
 # knoxidf.knox.token.ttl on the topology is 86400000 ms (86400 s). AC8 sets a much shorter
 # per-policy TTL so the difference proves the policy value, not the service default, applied.
@@ -176,6 +191,51 @@ class TestDelegation(unittest.TestCase):  # pylint: disable=too-many-instance-at
         # The gateway signs and stamps its issuer on the minted token.
         self.assertTrue(get_token_claim(token, "iss"), "minted token has no iss claim")
         return token
+
+    def _delegate_tom_to_destination(self, subject_token, actor_token, actor):
+        """Exchange for a token delegated to ``actor`` acting for tom on DESTINATION_RESOURCE."""
+        response = token_exchange(self.delegation_url, subject_token,
+                                  resources=[DESTINATION_RESOURCE], actor_token=actor_token)
+        return self._assert_delegated_token(response, TOM_USER, actor, DESTINATION_RESOURCE)
+
+    def _assert_audience_check(self, records, token, act_chain, destination_service):
+        """Assert the fields of the request's single audience-validation record and return it."""
+        checks = records_with_action(records, "audience-validation")
+        self.assertEqual(len(checks), 1, f"expected one audience-validation record: {records}")
+        check = checks[0]
+        fields = check.fields
+        self.assertEqual(fields.get("event_type"), "delegated_audience_check", check.line)
+        self.assertEqual(fields.get("claims_verified"), "false", check.line)
+        self.assertEqual(fields.get("token_id"),
+                         get_token_id_display_text(get_token_claim(token, "knox.id")), check.line)
+        self.assertEqual(fields.get("sub"), TOM_USER, check.line)
+        self.assertEqual(fields.get("act_chain"), act_chain, check.line)
+        self.assertEqual(fields.get("dest_service"), destination_service, check.line)
+        self.assertEqual(fields.get("path"), DESTINATION_PATH, check.line)
+        self.assertEqual(check.resource, DESTINATION_PATH, check.line)
+        return check
+
+    def _assert_accepted_at_destination(self, token, act_chain):
+        """Present ``token`` for DESTINATION_SERVICE and assert the request's success records."""
+        response, uri = call_destination(token, DESTINATION_SERVICE)
+        self.assertEqual(response.status_code, 200, response.text)
+
+        records = audit_records_for(self, uri)
+        check = self._assert_audience_check(records, token, act_chain, DESTINATION_SERVICE)
+        self.assertEqual(check.outcome, "success", check.line)
+        self.assertNotIn("reason", check.fields, check.line)
+
+        authentications = records_with_action(records, "authentication")
+        self.assertEqual(len(authentications), 1, f"expected one authentication record: {records}")
+        authentication = authentications[0]
+        self.assertEqual(authentication.outcome, "success", authentication.line)
+        self.assertEqual(authentication.user, TOM_USER, authentication.line)
+        self.assertEqual(authentication.request_id, check.request_id, authentication.line)
+        self.assertEqual(
+            authentication.fields,
+            {"act_chain": act_chain, "dest_service": DESTINATION_SERVICE, "path": DESTINATION_PATH},
+            authentication.line)
+        assert_token_not_in_audit_log(self, token)
 
     def test_ac2_user_policy_delegation_succeeds(self):
         """AC2: a user-based policy authorizes delegation; token carries sub, act, aud, iss."""
@@ -323,6 +383,67 @@ class TestDelegation(unittest.TestCase):  # pylint: disable=too-many-instance-at
         response = token_exchange(
             self.delegation_url, actor_token, resources=[RESOURCE_A], requested_subject=TOM_USER)
         assert_oauth_error(self, response, 400, "invalid_request", "rejected by policy")
+
+    def test_delegated_token_accepted_at_destination_is_audited(self):
+        """KNOX-3568: accepting a delegated token at its destination is audited."""
+        self._actor_policy.register(
+            can_act_for_users=[TOM_USER], resource_policy={DESTINATION_RESOURCE: []})
+        token = self._delegate_tom_to_destination(
+            self._mint(self.tom_auth), self._mint(self.actor_auth), ACTOR_USER)
+
+        self._assert_accepted_at_destination(token, ACTOR_USER)
+
+    def test_delegated_token_rejected_at_destination_is_audited(self):
+        """KNOX-3568: rejecting a delegated token meant for another destination is audited."""
+        self._actor_policy.register(
+            can_act_for_users=[TOM_USER], resource_policy={DESTINATION_RESOURCE: []})
+        token = self._delegate_tom_to_destination(
+            self._mint(self.tom_auth), self._mint(self.actor_auth), ACTOR_USER)
+
+        # The token's aud names DESTINATION_SERVICE, not the destination the request is for.
+        response, uri = call_destination(token, OTHER_DESTINATION_SERVICE)
+        self.assertEqual(response.status_code, 400, response.text)
+
+        records = audit_records_for(self, uri)
+        check = self._assert_audience_check(records, token, ACTOR_USER, OTHER_DESTINATION_SERVICE)
+        self.assertEqual(check.outcome, "failure", check.line)
+        self.assertEqual(check.fields.get("reason"), "audience_invalid", check.line)
+        self.assertTrue(check.fields.get("detail"), f"expected a failure detail: {check.line}")
+
+        authentications = records_with_action(records, "authentication")
+        self.assertEqual(len(authentications), 1, f"expected one authentication record: {records}")
+        rejection = authentications[0]
+        self.assertEqual(rejection.outcome, "failure", rejection.line)
+        self.assertEqual(rejection.request_id, check.request_id, rejection.line)
+        self.assertEqual(rejection.fields, {
+            "event_type": "delegated_request_rejected",
+            "claims_verified": "false",
+            "token_id": check.fields.get("token_id"),
+            "sub": TOM_USER,
+            "act_chain": ACTOR_USER,
+            "dest_service": OTHER_DESTINATION_SERVICE,
+            "path": DESTINATION_PATH,
+            "reason": "audience_invalid",
+            "detail": check.fields.get("detail"),
+        }, rejection.line)
+        assert_token_not_in_audit_log(self, token)
+
+    def test_nested_act_chain_is_audited_most_recent_actor_first(self):
+        """KNOX-3568: a token delegated twice is audited with its whole act chain."""
+        self._actor_policy.register(
+            can_act_for_users=[TOM_USER], resource_policy={DESTINATION_RESOURCE: []})
+        self._sam_policy.register(
+            can_act_for_users=[TOM_USER], resource_policy={DESTINATION_RESOURCE: []})
+
+        # recursiveUser acts for tom; sam then acts for tom using recursiveUser's delegated token.
+        first_hop = self._delegate_tom_to_destination(
+            self._mint(self.tom_auth), self._mint(self.actor_auth), ACTOR_USER)
+        second_hop = self._delegate_tom_to_destination(
+            first_hop, self._mint(self.sam_auth), SAM_USER)
+        self.assertEqual(get_token_claim(second_hop, "act"),
+                         {"sub": SAM_USER, "act": {"sub": ACTOR_USER}})
+
+        self._assert_accepted_at_destination(second_hop, f"{SAM_USER}<-{ACTOR_USER}")
 
 
 if __name__ == "__main__":
