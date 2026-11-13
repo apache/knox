@@ -65,6 +65,10 @@ var KNOX_DEFAULT_THEME = 'default';
 // Lock theme to prevent user overrides (true = locked, false = allow overrides)
 var KNOX_THEME_LOCKED = false;
 
+// Pill-shaped (fully rounded) inputs and buttons in the modern theme
+// (true = pill-shaped, false = 6px corners)
+var KNOX_THEME_ROUNDED_CORNERS = false;
+
 var KNOX_THEME_BRANDING = {
 	modern: {
 		brand: 'Apache Knox SSO',

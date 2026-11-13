@@ -54,7 +54,7 @@ Sets the theme that loads by default when users access the login page or logout 
 
 **Values:**
 - `'default'` - Classic Knox theme (dark gray background)
-- `'modern'` - Modern theme (purple background, white container, pill-shaped inputs)
+- `'modern'` - Modern theme (purple background, white container, rounded inputs)
 - `'custom'` - Any custom theme name (must exist in `styles/themes/custom/`)
 
 **Default:** `'default'`
@@ -68,6 +68,19 @@ Controls whether users can override the theme.
 - `true` - Theme is enforced, users cannot change it
 
 **Default:** `false`
+
+### KNOX_THEME_ROUNDED_CORNERS
+
+Controls the corner shape of inputs and buttons in the modern theme.
+
+**Values:**
+- `false` - Slightly rounded corners (6px)
+- `true` - Pill-shaped (fully rounded) corners
+
+**Default:** `false`
+
+The value is applied through the `--knox-control-radius` CSS variable defined in
+`styles/themes/modern/theme.css`; custom themes can use the same variable.
 
 ### KNOX_THEME_BRANDING
 
