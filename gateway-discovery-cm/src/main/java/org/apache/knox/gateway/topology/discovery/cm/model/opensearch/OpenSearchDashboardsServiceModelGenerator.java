@@ -51,14 +51,20 @@ public class OpenSearchDashboardsServiceModelGenerator extends AbstractOpenSearc
                                                      ApiRole role, ApiConfigList roleConfig) {
     final ServiceModelGeneratorHandleResponse response = super.handles(service, serviceConfig, role, roleConfig);
     if (response.handled()) {
-      final String ssoEnabled = getRoleConfigValue(roleConfig, ENABLE_SSO_CONFIG);
-      if (ssoEnabled == null) {
-        response.addConfigurationIssue("Missing configuration: " + ENABLE_SSO_CONFIG);
-      } else if (!Boolean.parseBoolean(ssoEnabled)) {
-        response.addConfigurationIssue("Invalid configuration: " + ENABLE_SSO_CONFIG + ". Expected=true; Found=" + ssoEnabled);
-      }
+      requireEnabled(response, roleConfig, ENABLE_SSO_CONFIG);
+      requireEnabled(response, roleConfig, getSSLEnabledConfigName());
     }
     return response;
+  }
+
+  private void requireEnabled(ServiceModelGeneratorHandleResponse response, ApiConfigList roleConfig,
+                              String configName) {
+    final String value = getRoleConfigValue(roleConfig, configName);
+    if (value == null) {
+      response.addConfigurationIssue("Missing configuration: " + configName);
+    } else if (!Boolean.parseBoolean(value)) {
+      response.addConfigurationIssue("Invalid configuration: " + configName + ". Expected=true; Found=" + value);
+    }
   }
 
   @Override

@@ -37,6 +37,7 @@ public class OpenSearchDashboardsServiceModelGeneratorTest extends AbstractServi
   public void testHandles() {
     final Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(OpenSearchDashboardsServiceModelGenerator.ENABLE_SSO_CONFIG, "true");
+    roleConfig.put("ssl_enabled", "true");
     assertTrue(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
   }
 
@@ -44,12 +45,30 @@ public class OpenSearchDashboardsServiceModelGeneratorTest extends AbstractServi
   public void testHandlesSsoDisabled() {
     final Map<String, String> roleConfig = new HashMap<>();
     roleConfig.put(OpenSearchDashboardsServiceModelGenerator.ENABLE_SSO_CONFIG, "false");
+    roleConfig.put("ssl_enabled", "true");
     assertFalse(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
   }
 
   @Test
   public void testHandlesSsoConfigMissing() {
-    assertFalse(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), Collections.emptyMap()));
+    final Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put("ssl_enabled", "true");
+    assertFalse(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
+  }
+
+  @Test
+  public void testHandlesSslDisabled() {
+    final Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(OpenSearchDashboardsServiceModelGenerator.ENABLE_SSO_CONFIG, "true");
+    roleConfig.put("ssl_enabled", "false");
+    assertFalse(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
+  }
+
+  @Test
+  public void testHandlesSslConfigMissing() {
+    final Map<String, String> roleConfig = new HashMap<>();
+    roleConfig.put(OpenSearchDashboardsServiceModelGenerator.ENABLE_SSO_CONFIG, "true");
+    assertFalse(doTestHandles(newGenerator(), getServiceType(), Collections.emptyMap(), getRoleType(), roleConfig));
   }
 
   @Test
