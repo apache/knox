@@ -87,11 +87,21 @@ public interface LdapBackend {
      * @param filter LDAP filter string (simplified)
      * @param schemaManager Schema manager for creating entries
      * @param attributes The attributes requested by the client; null or empty indicates that all attributes are requested (i.e., "*")
+     * @param sizeLimit The maximum number of entries to return; {@code 0} means no limit
+     * @param timeLimit The maximum time, in seconds, the search is allowed to run; {@code 0} means no limit
      * @return List of matching entries
      * @throws org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException if the search base
      *         does not exist in the backend
      */
-    List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception;
+    List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes, long sizeLimit, int timeLimit) throws Exception;
+
+    /**
+     * Search for entries matching a filter with no size or time limit.
+     * @see #search(String, SearchScope, String, SchemaManager, String[], long, int)
+     */
+    default List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception {
+        return search(searchBase, searchScope, filter, schemaManager, attributes, 0L, 0);
+    }
 
     /**
      * Authenticate a user with password

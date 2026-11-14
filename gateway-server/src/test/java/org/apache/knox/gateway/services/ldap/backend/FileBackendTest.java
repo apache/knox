@@ -99,8 +99,54 @@ public class FileBackendTest {
         }
     }
 
+    @Test
+    public void testSearchRespectsSizeLimit() throws Exception {
+        // A presence filter matches every user (both alice and bob)
+        final String filter = "(uid=*)";
+        assertEquals(2, search(PEOPLE, SearchScope.SUBTREE, filter, 0L).size());
+        assertEquals(1, search(PEOPLE, SearchScope.SUBTREE, filter, 1L).size());
+        // A size limit larger than the result set leaves the results untouched
+        assertEquals(2, search(PEOPLE, SearchScope.SUBTREE, filter, 5L).size());
+    }
+
+    @Test
+    public void testSearchUsesStandardWildcardSemantics() throws Exception {
+        // Presence matches all users
+        assertEquals(List.of(ALICE, "uid=bob," + PEOPLE), sorted(search(PEOPLE, SearchScope.SUBTREE, "(uid=*)")));
+        // Prefix, suffix and contains wildcards
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(uid=al*)"));
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(uid=*ice)"));
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(uid=*lic*)"));
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(uid=a*e)"));
+        // A wildcard that fits neither username matches nothing
+        assertEquals(List.of(), search(PEOPLE, SearchScope.SUBTREE, "(uid=*alice*bob*)"));
+        // Non-uid attributes and boolean filters are honored too
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(cn=Alice)"));
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(&(uid=alice)(sn=Smith))"));
+        assertEquals(List.of(), search(PEOPLE, SearchScope.SUBTREE, "(&(uid=alice)(sn=Jones))"));
+    }
+
+    @Test
+    public void testSearchBySamAccountNameResolvesUser() throws Exception {
+        // AD-style deployments search the user store by sAMAccountName (the login name). The backend
+        // exposes the username under sAMAccountName so these searches resolve the same user as uid.
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(sAMAccountName=alice)"));
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(sAMAccountName=ALICE)")); // caseIgnoreMatch
+        assertEquals(List.of(ALICE), search(PEOPLE, SearchScope.SUBTREE, "(sAMAccountName=al*)"));
+        assertEquals(List.of(ALICE, "uid=bob," + PEOPLE), sorted(search(PEOPLE, SearchScope.SUBTREE, "(sAMAccountName=*)")));
+        assertEquals(List.of(), search(PEOPLE, SearchScope.SUBTREE, "(sAMAccountName=nobody)"));
+    }
+
+    private static List<String> sorted(List<String> values) {
+        return values.stream().sorted().collect(Collectors.toList());
+    }
+
     private List<String> search(String base, SearchScope scope, String filter) throws Exception {
-        return backend.search(base, scope, filter, schemaManager, null).stream()
+        return search(base, scope, filter, 0L);
+    }
+
+    private List<String> search(String base, SearchScope scope, String filter, long sizeLimit) throws Exception {
+        return backend.search(base, scope, filter, schemaManager, null, sizeLimit, 0).stream()
                 .map(entry -> entry.getDn().getName())
                 .collect(Collectors.toList());
     }

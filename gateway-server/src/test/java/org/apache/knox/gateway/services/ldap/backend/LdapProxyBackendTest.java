@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
@@ -64,6 +65,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -607,6 +609,94 @@ public class LdapProxyBackendTest {
         List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager, ALL_ATTRIBUTES);
         assertEquals(1, entries.size()); // only expect 1 page truncated to maxResultSetSize
         assertEquals(1, findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=*").size());
+    }
+
+    @Test
+    public void testSearchRespectsPerRequestSizeLimit() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        // Without a limit the search returns every user under ou=people
+        int total = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager, ALL_ATTRIBUTES, 0L, 0).size();
+        assertTrue("Expected more than one user for this test", total > 1);
+        // A per-request size limit truncates the result set
+        List<Entry> limited = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager, ALL_ATTRIBUTES, 1L, 0);
+        assertEquals(1, limited.size());
+    }
+
+    @Test
+    public void testSearchSizeLimitCombinedWithMaxResultSetSize() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("maxResultSetSize", "2");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        // The smaller of the configured maxResultSetSize and the per-request size limit wins.
+        assertEquals(1, ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager, ALL_ATTRIBUTES, 1L, 0).size());
+        assertEquals(2, ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager, ALL_ATTRIBUTES, 10L, 0).size());
+        // A request limit of 0 (unlimited) leaves the configured maxResultSetSize in force.
+        assertEquals(2, ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=*)", schemaManager, ALL_ATTRIBUTES, 0L, 0).size());
+    }
+
+    @Test
+    public void testSearchPropagatesTimeLimitToBackend() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=ldaptest1)", schemaManager, ALL_ATTRIBUTES, 0L, 42);
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=ldaptest1");
+        assertFalse("Expected a search request to reach the backend", requests.isEmpty());
+        assertTrue("Time limit must be forwarded to the backend", requests.stream().allMatch(request -> request.getTimeLimit() == 42));
+    }
+
+    @Test
+    public void testSearchDoesNotSetTimeLimitWhenZero() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+        ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=ldaptest1)", schemaManager, ALL_ATTRIBUTES, 0L, 0);
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "uid=ldaptest1");
+        assertFalse("Expected a search request to reach the backend", requests.isEmpty());
+        assertTrue("A zero time limit means no limit", requests.stream().allMatch(request -> request.getTimeLimit() == 0));
+    }
+
+    @Test
+    public void testSplitSearchReducesSizeLimitPerRequest() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("maxFilterLength", "40"); // force the filter to be split into several requests
+        final List<Long> requestSizeLimits = new ArrayList<>();
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config) {
+            @Override
+            protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, long sizeLimit, int timeLimit, String... attributes)
+                    throws LdapException, CursorException, IOException {
+                requestSizeLimits.add(sizeLimit);
+                return super.performPagedSearch(connection, baseDn, filter, scope, sizeLimit, timeLimit, attributes);
+            }
+        };
+        // Request only uid/cn so no group-membership lookups are issued (keeping only the user searches)
+        ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(|(uid=ldaptest1)(uid=ldaptest2)(uid=ldapmemberof)(uid=guest))", schemaManager, new String[] {"uid", "cn"}, 10L, 0);
+
+        assertTrue("Expected the filter to be split into multiple requests", requestSizeLimits.size() > 1);
+        // The first request uses the full size limit
+        assertEquals(Long.valueOf(10L), requestSizeLimits.get(0));
+        // The size limit never grows and is reduced once entries have been collected
+        for (int i = 1; i < requestSizeLimits.size(); i++) {
+            assertTrue("Size limit must not increase across requests", requestSizeLimits.get(i) <= requestSizeLimits.get(i - 1));
+        }
+        assertTrue("Expected the size limit to be reduced for a later request", requestSizeLimits.stream().anyMatch(limit -> limit < 10L));
+    }
+
+    @Test
+    public void testSplitSearchStopsIssuingRequestsOnceSizeLimitReached() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("maxFilterLength", "40"); // force the filter to be split into several requests
+        final AtomicInteger requestCount = new AtomicInteger(0);
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config) {
+            @Override
+            protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, long sizeLimit, int timeLimit, String... attributes)
+                    throws LdapException, CursorException, IOException {
+                requestCount.incrementAndGet();
+                return super.performPagedSearch(connection, baseDn, filter, scope, sizeLimit, timeLimit, attributes);
+            }
+        };
+        // A size limit of 1: the first split request already fills it, so no further requests are issued
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(|(uid=ldaptest1)(uid=ldaptest2)(uid=ldapmemberof)(uid=guest))", schemaManager, new String[] {"uid", "cn"}, 1L, 0);
+        assertEquals(1, entries.size());
+        assertEquals("Only the first split request should be issued once the size limit is reached", 1, requestCount.get());
     }
 
     @Test

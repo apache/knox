@@ -104,7 +104,6 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
     @Override
     public EntryFilteringCursor search(SearchOperationContext ctx) throws LdapException {
-
         String filter = filterString(ctx.getFilter());
         String baseDn = ctx.getDn() != null ? ctx.getDn().toString() : "";
         String[] returningAttributes = getReturningAttributes(ctx);
@@ -137,9 +136,14 @@ public class UserSearchInterceptor extends BaseInterceptor {
             // swallow error closing cursor
         }
 
-        if (backendSearchBase) {
+        // The local partition has already contributed some entries, so only ask the backend for the
+        // remaining allowance. A context size limit of 0 means unlimited. When the local results have
+        // already reached a positive limit there is nothing left to fetch, so the backend is skipped.
+        final long contextSizeLimit = ctx.getSizeLimit();
+        if (backendSearchBase && !sizeLimitReached(contextSizeLimit, entries.size())) {
+            final long backendSizeLimit = contextSizeLimit <= 0 ? 0 : contextSizeLimit - entries.size();
             try {
-                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager, returningAttributes));
+                entries.addAll(backend.search(baseDn, ctx.getScope(), filter, schemaManager, returningAttributes, backendSizeLimit, ctx.getTimeLimit()));
             } catch (LdapNoSuchObjectException e) {
                 // The search base does not exist in the backend; it is an error only if it does not exist locally either
                 if (notFoundLocally != null) {
@@ -154,6 +158,14 @@ public class UserSearchInterceptor extends BaseInterceptor {
 
         // Return cursor with our results - use a simple approach
         return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    /**
+     * Whether a positive size limit has already been reached by the entries gathered so far. A size
+     * limit of {@code 0} (or negative) means unlimited and is therefore never reached.
+     */
+    private static boolean sizeLimitReached(long sizeLimit, int alreadyReturned) {
+        return sizeLimit > 0 && alreadyReturned >= sizeLimit;
     }
 
     private String[] getReturningAttributes(SearchOperationContext ctx) {

@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -34,24 +35,18 @@ import org.apache.knox.gateway.services.ldap.LdapUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * File-based backend that reads user/group data from JSON
  */
 public class FileBackend implements LdapBackend {
     private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
-
-    private static final Pattern UID_PATTERN = Pattern.compile(".*\\(uid=([^)]+)\\).*");
-    private static final Pattern CN_PATTERN = Pattern.compile(".*\\(cn=([^)]+)\\).*");
-    private static final Pattern SAMAACCOUNTNAME_PATTERN = Pattern.compile(".*\\(sAMAccountName=([^)]+)\\).*");
 
     static final String TYPE = "file";
 
@@ -136,6 +131,9 @@ public class FileBackend implements LdapBackend {
         entry.add("objectClass", "organizationalPerson");
         entry.add("objectClass", "inetOrgPerson");
         entry.add("uid", userData.username);
+        // Expose the login name under sAMAccountName as well so AD-style user searches
+        // (userSearchAttributeName=sAMAccountName) resolve the same user as uid searches.
+        entry.add("sAMAccountName", userData.username);
         entry.add("cn", userData.cn);
         entry.add("sn", userData.sn);
 
@@ -162,28 +160,16 @@ public class FileBackend implements LdapBackend {
 
     @Override
     public List<Entry> searchUsers(String filter, SchemaManager schemaManager) throws Exception {
+        final ExprNode parsedFilter = parseFilter(filter, schemaManager);
         List<Entry> results = new ArrayList<>();
-
-        final String extractedUser = extractUser(filter);
-        if (extractedUser == null) {
-            // The filter does not target a recognized user identifier (uid/cn/sAMAccountName),
-            // so there is nothing for this user-only backend to match.
-            return results;
-        }
-        String userFilter = extractedUser.toLowerCase(Locale.ROOT);
-
-        // Simple filter matching - just check if username matches
+        // Evaluate the real LDAP filter against each user entry so that wildcards, presence,
+        // substring and boolean (AND/OR/NOT) assertions all follow standard LDAP semantics.
         for (String username : users.keySet()) {
-            String usernameLowerCase = username.toLowerCase(Locale.ROOT);
-            if (userFilter.equalsIgnoreCase(usernameLowerCase) ||
-                    (userFilter.contains("*") && userFilter.contains(usernameLowerCase))) {
-                Entry entry = getUser(username, schemaManager);
-                if (entry != null) {
-                    results.add(entry);
-                }
+            Entry entry = getUser(username, schemaManager);
+            if (entry != null && LdapUtils.matchesFilter(entry, parsedFilter)) {
+                results.add(entry);
             }
         }
-
         return results;
     }
 
@@ -201,14 +187,27 @@ public class FileBackend implements LdapBackend {
     }
 
     @Override
-    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception {
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes, long sizeLimit, int timeLimit) throws Exception {
+        // timeLimit is not enforced: this backend serves from an in-memory map, so a search always
+        // completes effectively instantaneously and cannot exceed a time limit.
         final Dn base = new Dn(schemaManager, searchBase);
         final Dn people = new Dn(schemaManager, userSearchBase);
         if (!base.equals(people) && base.isDescendantOf(people)) {
-            return searchUserEntry(base, people, searchScope, filter, schemaManager);
+            return applySizeLimit(searchUserEntry(base, people, searchScope, filter, schemaManager), sizeLimit);
         }
         // The users sit below the search base, so a base-object search finds none of them
-        return searchScope == SearchScope.OBJECT ? Collections.emptyList() : searchUsers(filter, schemaManager);
+        return searchScope == SearchScope.OBJECT ? Collections.emptyList() : applySizeLimit(searchUsers(filter, schemaManager), sizeLimit);
+    }
+
+    /**
+     * Truncates the result list to at most {@code sizeLimit} entries. A {@code sizeLimit} of
+     * {@code 0} (or negative) means no limit, so the list is returned unchanged.
+     */
+    private static List<Entry> applySizeLimit(List<Entry> entries, long sizeLimit) {
+        if (sizeLimit <= 0 || entries.size() <= sizeLimit) {
+            return entries;
+        }
+        return new ArrayList<>(entries.subList(0, (int) sizeLimit));
     }
 
     /*
@@ -224,9 +223,7 @@ public class FileBackend implements LdapBackend {
             return Collections.emptyList();
         }
         final Entry entry = getUser(userData.username, schemaManager);
-        // Filter likely has already been annotated by other interceptors; remove the annotations before parsing
-        final String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
-        return LdapUtils.matchesFilter(entry, FilterParser.parse(schemaManager, rawFilter))
+        return LdapUtils.matchesFilter(entry, parseFilter(filter, schemaManager))
                 ? Collections.singletonList(entry)
                 : Collections.emptyList();
     }
@@ -242,22 +239,16 @@ public class FileBackend implements LdapBackend {
         return null;
     }
 
-    private String extractUser(String filter) {
-        Matcher uidMatcher = UID_PATTERN.matcher(filter);
-        if (uidMatcher.matches()) {
-            return uidMatcher.group(1);
+    /**
+     * Parses a search filter into an expression tree. The filter has likely already been annotated by
+     * other interceptors, so the annotations are stripped before parsing. A blank filter is treated as
+     * the LDAP default presence filter {@code (objectClass=*)}, which matches every entry.
+     */
+    private static ExprNode parseFilter(String filter, SchemaManager schemaManager) throws ParseException {
+        if (filter == null || filter.trim().isEmpty()) {
+            return FilterParser.parse(schemaManager, "(objectClass=*)");
         }
-
-        Matcher cnMatcher = CN_PATTERN.matcher(filter);
-        if (cnMatcher.matches()) {
-            return cnMatcher.group(1);
-        }
-
-        Matcher samaaccountnameMatcher = SAMAACCOUNTNAME_PATTERN.matcher(filter);
-        if (samaaccountnameMatcher.matches()) {
-            return samaaccountnameMatcher.group(1);
-        }
-
-        return null;
+        final String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
+        return FilterParser.parse(schemaManager, rawFilter);
     }
 }
