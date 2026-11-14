@@ -64,6 +64,10 @@
 		}
 	}
 
+	if (typeof KNOX_THEME_PILL_SHAPED_CORNERS !== 'undefined' && KNOX_THEME_PILL_SHAPED_CORNERS === true) {
+		document.documentElement.style.setProperty('--knox-control-radius', '9999px');
+	}
+
 	var branding = (typeof KNOX_THEME_BRANDING !== 'undefined' && KNOX_THEME_BRANDING.hasOwnProperty(theme))
 		? KNOX_THEME_BRANDING[theme]
 		: {};
