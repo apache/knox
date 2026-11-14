@@ -52,6 +52,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.anyLong;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.capture;
@@ -328,6 +330,59 @@ public class UserSearchInterceptorTest {
     }
 
     @Test
+    public void testSearchReducesBackendSizeLimitByLocalEntries() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "ou=people,dc=proxy,dc=com");
+        String filter = "(objectClass=*)";
+        List<Entry> nextEntries = createEntryList(baseDn, 5);
+        List<Entry> backendEntries = createEntryList(baseDn, 3);
+
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        // The 5 entries already returned locally must be subtracted from the size limit of 8
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class), eq(3L), anyInt()))
+                .andReturn(backendEntries);
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.SUBTREE);
+        ctx.setFilter(FilterParser.parse(filter));
+        ctx.setSizeLimit(8);
+        nextSearchInterceptor.setEntries(nextEntries);
+
+        try (EntryFilteringCursor result = interceptor.search(ctx)) {
+            for (Entry ignored : result) {
+                // drain the cursor
+            }
+        }
+        verify(mockLdapBackend);
+    }
+
+    @Test
+    public void testSearchSkipsBackendWhenSizeLimitReachedLocally() throws Exception {
+        Dn baseDn = new Dn(schemaManager, "ou=people,dc=proxy,dc=com");
+        String filter = "(objectClass=*)";
+        List<Entry> nextEntries = createEntryList(baseDn, 5);
+
+        expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
+        // backend.search must not be invoked: the local results already satisfy the size limit
+        replay(mockLdapBackend);
+        SearchOperationContext ctx = setupSearchContext();
+        ctx.setDn(baseDn);
+        ctx.setScope(SearchScope.SUBTREE);
+        ctx.setFilter(FilterParser.parse(filter));
+        ctx.setSizeLimit(5);
+        nextSearchInterceptor.setEntries(nextEntries);
+
+        Set<String> resultDns = new HashSet<>();
+        try (EntryFilteringCursor result = interceptor.search(ctx)) {
+            for (Entry entry : result) {
+                resultDns.add(entry.getDn().toString());
+            }
+        }
+        verify(mockLdapBackend);
+        assertEquals(5, resultDns.size());
+    }
+
+    @Test
     public void testSearch() throws Exception {
         Dn baseDn = new Dn(schemaManager, "ou=people,dc=proxy,dc=com");
         String filter = "(objectClass=*)";
@@ -343,7 +398,7 @@ public class UserSearchInterceptorTest {
         }
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class))).andReturn(backendEntries);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class), anyLong(), anyInt())).andReturn(backendEntries);
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
@@ -370,7 +425,7 @@ public class UserSearchInterceptorTest {
         Capture<String[]> attributesCapture = EasyMock.newCapture();
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), capture(attributesCapture)))
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), capture(attributesCapture), anyLong(), anyInt()))
                 .andReturn(new ArrayList<>());
         replay(mockLdapBackend);
 
@@ -445,7 +500,7 @@ public class UserSearchInterceptorTest {
         }
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(false);
-        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class), anyObject(String[].class)))
+        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class), anyObject(String[].class), anyLong(), anyInt()))
                 .andThrow(new AssertionError("search should not be called if base dn does not match backend"))
                 .anyTimes();
         replay(mockLdapBackend);
@@ -480,7 +535,7 @@ public class UserSearchInterceptorTest {
         }
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class))).andReturn(backendEntries);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class), anyLong(), anyInt())).andReturn(backendEntries);
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
@@ -524,7 +579,7 @@ public class UserSearchInterceptorTest {
 
         Entry backendEntry = new DefaultEntry(baseDn);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager, USER_ATTRIBUTES)).andReturn(List.of(backendEntry));
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager, USER_ATTRIBUTES, 0L, 0)).andReturn(List.of(backendEntry));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);
@@ -548,7 +603,7 @@ public class UserSearchInterceptorTest {
         Dn baseDn = new Dn(schemaManager, "uid=alice,ou=people,dc=proxy,dc=com");
 
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, "(objectClass=*)", schemaManager, USER_ATTRIBUTES))
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, "(objectClass=*)", schemaManager, USER_ATTRIBUTES, 0L, 0))
                 .andReturn(List.of(new DefaultEntry(baseDn)));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
@@ -571,7 +626,7 @@ public class UserSearchInterceptorTest {
 
         LdapNoSuchObjectException localException = new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager, USER_ATTRIBUTES))
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.OBJECT, filter, schemaManager, USER_ATTRIBUTES, 0L, 0))
                 .andThrow(new LdapNoSuchObjectException("No such entry in backend TEST: " + baseDn));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
@@ -592,7 +647,7 @@ public class UserSearchInterceptorTest {
 
         List<Entry> nextEntries = createEntryList(baseDn, 2);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager, USER_ATTRIBUTES))
+        expect(mockLdapBackend.search(baseDn.toString(), SearchScope.SUBTREE, filter, schemaManager, USER_ATTRIBUTES, 0L, 0))
                 .andThrow(new LdapNoSuchObjectException("No such entry in backend TEST: " + baseDn));
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
@@ -618,7 +673,7 @@ public class UserSearchInterceptorTest {
 
         LdapNoSuchObjectException expectedException = new LdapNoSuchObjectException("ERR_648 Invalid search base " + baseDn);
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(false);
-        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class), anyObject(String[].class)))
+        expect(mockLdapBackend.search(anyString(), anyObject(SearchScope.class), anyString(), anyObject(SchemaManager.class), anyObject(String[].class), anyLong(), anyInt()))
                 .andThrow(new AssertionError("search should not be called if base dn does not match backend"))
                 .anyTimes();
         replay(mockLdapBackend);
@@ -641,7 +696,7 @@ public class UserSearchInterceptorTest {
         List<Entry> nextEntries = createEntryList(baseDn, 5);
         LdapException expectedException = new LdapException("Expected exception");
         expect(mockLdapBackend.isSupportedSearchBase(baseDn.toString())).andReturn(true);
-        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class))).andThrow(expectedException);
+        expect(mockLdapBackend.search(eq(baseDn.toString()), eq(SearchScope.SUBTREE), eq(filter), eq(schemaManager), anyObject(String[].class), anyLong(), anyInt())).andThrow(expectedException);
         replay(mockLdapBackend);
         SearchOperationContext ctx = setupSearchContext();
         ctx.setDn(baseDn);

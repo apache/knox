@@ -568,7 +568,7 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     @Override
-    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes) throws Exception {
+    public List<Entry> search(String searchBase, SearchScope searchScope, String filter, SchemaManager schemaManager, String[] attributes, long sizeLimit, int timeLimit) throws Exception {
         // Filter likely has already been annotated by other interceptors.
         // Clean the filter by removing any modifications or annotations
         String rawFilter = filter.replaceAll(":\\[.*?\\]", "").replaceAll("=\\s+", "=");
@@ -590,7 +590,7 @@ public class LdapProxyBackend implements LdapBackend {
             String[] remoteAttributes = memberOfRequested && useMemberOf ? ALL_ATTRIBUTES_AND_MEMBEROF : ALL_ATTRIBUTES;
             List<Entry> searchResults;
             try {
-                searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, remoteAttributes);
+                searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, sizeLimit, timeLimit, remoteAttributes);
             } catch (LdapOperationException e) {
                 if (e.getResultCode() == ResultCodeEnum.NO_SUCH_OBJECT) {
                     // Tell the caller that the search base itself does not exist in the remote directory
@@ -1005,28 +1005,56 @@ public class LdapProxyBackend implements LdapBackend {
      * returned by more than one query. Stops early once maxResultSetSize entries have been collected.
      */
     protected List<Entry> performSplitSearch(LdapConnection connection, String baseDn, List<String> filters, SearchScope scope, String... attributes) throws LdapException, CursorException, IOException {
+        return performSplitSearch(connection, baseDn, filters, scope, 0L, 0, attributes);
+    }
+
+    /**
+     * {@link #performSplitSearch(LdapConnection, String, List, SearchScope, String...)} that also honors a
+     * per-request size and time limit. The effective number of entries returned is capped by the smaller of
+     * the configured {@code maxResultSetSize} and {@code sizeLimit} (either {@code 0} meaning unlimited), and
+     * {@code timeLimit} (seconds, {@code 0} meaning unlimited) bounds each underlying search.
+     */
+    protected List<Entry> performSplitSearch(LdapConnection connection, String baseDn, List<String> filters, SearchScope scope, long sizeLimit, int timeLimit, String... attributes) throws LdapException, CursorException, IOException {
+        final long effectiveMax = effectiveSizeLimit(sizeLimit);
         if (filters.size() == 1) {
-            return performPagedSearch(connection, baseDn, filters.get(0), scope, attributes);
+            return performPagedSearch(connection, baseDn, filters.get(0), scope, sizeLimit, timeLimit, attributes);
         }
         Map<String, Entry> combined = new LinkedHashMap<>();
         for (String filter : filters) {
-            for (Entry entry : performPagedSearch(connection, baseDn, filter, scope, attributes)) {
+            // Only ask each successive request for the entries still needed: reduce the size limit by
+            // the number of (deduplicated) entries already collected. A size limit of 0 stays unlimited.
+            final long requestSizeLimit = sizeLimit <= 0 ? 0 : sizeLimit - combined.size();
+            if (sizeLimit > 0 && requestSizeLimit <= 0) {
+                break;
+            }
+            for (Entry entry : performPagedSearch(connection, baseDn, filter, scope, requestSizeLimit, timeLimit, attributes)) {
                 combined.putIfAbsent(entry.getDn().getNormName(), entry);
             }
-            if (maxResultSetSize != 0 && combined.size() >= maxResultSetSize) {
+            if (effectiveMax != 0 && combined.size() >= effectiveMax) {
                 break;
             }
         }
-        if (maxResultSetSize == 0) {
+        if (effectiveMax == 0) {
             return new ArrayList<>(combined.values());
         } else {
             return combined.values().stream()
-                    .limit(maxResultSetSize)
+                    .limit(effectiveMax)
                     .collect(Collectors.toList());
         }
     }
 
     protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, String... attributes ) throws LdapException, CursorException, IOException {
+        return performPagedSearch(connection, baseDn, filter, scope, 0L, 0, attributes);
+    }
+
+    /**
+     * {@link #performPagedSearch(LdapConnection, String, String, SearchScope, String...)} that also honors a
+     * per-request size and time limit. The number of entries returned is capped by the smaller of the
+     * configured {@code maxResultSetSize} and {@code sizeLimit} (either {@code 0} meaning unlimited), and the
+     * {@code timeLimit} (seconds, {@code 0} meaning unlimited) is passed to the remote server on each page.
+     */
+    protected List<Entry> performPagedSearch(LdapConnection connection, String baseDn, String filter, SearchScope scope, long sizeLimit, int timeLimit, String... attributes ) throws LdapException, CursorException, IOException {
+        final long effectiveMax = effectiveSizeLimit(sizeLimit);
         List<Entry> results = new ArrayList<>();
 
         // 1. Setup basic search parameters
@@ -1035,6 +1063,11 @@ public class LdapProxyBackend implements LdapBackend {
         searchRequest.setFilter(filter);
         searchRequest.setScope(scope);
         searchRequest.addAttributes(attributes);
+        // Bound the search on the remote server by time. The size limit is enforced client-side (below)
+        // so paging is not interrupted by a server-side sizeLimitExceeded while results are still arriving.
+        if (timeLimit > 0) {
+            searchRequest.setTimeLimit(timeLimit);
+        }
 
         // 2. Initialize the PagedResults control
         PagedResults pagedControl = new PagedResultsImpl();
@@ -1084,17 +1117,34 @@ public class LdapProxyBackend implements LdapBackend {
                 pageNumber++;
             }
         } while (cookie != null && cookie.length > 0 &&
-                (maxResultSetSize == 0 || results.size() < maxResultSetSize));
+                (effectiveMax == 0 || results.size() < effectiveMax));
 
-        if (maxResultSetSize != 0 && results.size() >= maxResultSetSize) {
-            LOG.ldapPagedSearchExceededMaxResultSetSize(results.size(), maxResultSetSize);
+        if (effectiveMax != 0 && results.size() >= effectiveMax) {
+            LOG.ldapPagedSearchExceededMaxResultSetSize(results.size(), (int) Math.min(effectiveMax, Integer.MAX_VALUE));
             return results.stream()
-                    .limit(maxResultSetSize)
+                    .limit(effectiveMax)
                     .collect(Collectors.toList());
         } else {
             LOG.ldapPagedSearchCompleted(baseDn, filter, results.size());
             return results;
         }
+    }
+
+    /**
+     * Combines the configured {@code maxResultSetSize} with a per-request {@code sizeLimit} into a single
+     * cap on the number of entries returned. Either value being {@code 0} (or negative) means "no limit" for
+     * that source; when both impose a limit the smaller one wins. Returns {@code 0} when neither limits.
+     */
+    private long effectiveSizeLimit(long sizeLimit) {
+        final long request = sizeLimit > 0 ? sizeLimit : 0;
+        final long configured = maxResultSetSize > 0 ? maxResultSetSize : 0;
+        if (request == 0) {
+            return configured;
+        }
+        if (configured == 0) {
+            return request;
+        }
+        return Math.min(request, configured);
     }
 
     /**
