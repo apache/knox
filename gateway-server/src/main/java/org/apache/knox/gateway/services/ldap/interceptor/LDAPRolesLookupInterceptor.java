@@ -115,7 +115,8 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private boolean isAllGroupsSearch(SearchOperationContext ctx) throws LdapException {
         Dn proxyGroupSearchBaseDn = new Dn(schemaManager, proxyGroupSearchBase);
         Dn searchDn = ctx.getDn();
-        ExprNode searchFilter = ctx.getFilter();
+        ExprNode rawSearchFilter = ctx.getFilter();
+        ExprNode searchFilter = removeReferral(rawSearchFilter);
 
         if (searchDn == null) {
             return false;
@@ -135,6 +136,22 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 && isAllGroupsFilterForAncestor(searchFilter);
     }
 
+    private ExprNode removeReferral(ExprNode rawSearchFilter) {
+        if (rawSearchFilter instanceof OrNode) {
+            OrNode orNode = (OrNode) rawSearchFilter;
+            if (orNode.getChildren().size() == 2) {
+                List<ExprNode> children = orNode.getChildren();
+                if (isReferralObjectClassFilter(children.get(0))) {
+                    return children.get(1);
+                }
+                if (isReferralObjectClassFilter(children.get(1))) {
+                    return children.get(0);
+                }
+            }
+        }
+        return rawSearchFilter;
+    }
+
     private boolean isGroupObjectClassFilter(ExprNode filter) {
         if (filter instanceof EqualityNode) {
             EqualityNode<?> eqNode = (EqualityNode<?>) filter;
@@ -142,6 +159,17 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 String value = eqNode.getValue().toString();
                 return "groupOfNames".equalsIgnoreCase(value) ||
                         "groupOfUniqueNames".equalsIgnoreCase(value);
+            }
+        }
+        return false;
+    }
+
+    private boolean isReferralObjectClassFilter(ExprNode filter) {
+        if (filter instanceof EqualityNode) {
+            EqualityNode<?> eqNode = (EqualityNode<?>) filter;
+            if ("objectClass".equalsIgnoreCase(eqNode.getAttribute())) {
+                String value = eqNode.getValue().toString();
+                return "referral".equalsIgnoreCase(value);
             }
         }
         return false;
