@@ -90,9 +90,7 @@ public class OpenSearchDashboardsServiceModelGeneratorTest extends AbstractServi
 
     final ServiceModel model = createServiceModel(serviceConfig, roleConfig);
     assertNotNull(model);
-    // When SSL is enabled the URL scheme must be https
-    assertTrue("Expected https URL when ssl_enabled=true, got: " + model.getServiceUrl(),
-               model.getServiceUrl().startsWith("https://"));
+    assertEquals("https://localhost:5601", model.getServiceUrl());
   }
 
   @Test
