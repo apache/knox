@@ -57,10 +57,10 @@
     </rule>
     <filter name="OPENSEARCH-DASHBOARDS/opensearch-dashboards/outbound/body">
         <content type="*/html">
-            <apply path="/opensearch-dashboards-ui(?![\w-])" match="partial" rule="OPENSEARCH-DASHBOARDS/opensearch-dashboards/outbound/context"/>
+            <apply path="(?&lt;![\w/.:-])/opensearch-dashboards-ui(?![\w-])" match="partial" rule="OPENSEARCH-DASHBOARDS/opensearch-dashboards/outbound/context"/>
         </content>
         <content type="*/javascript">
-            <apply path="/opensearch-dashboards-ui(?![\w-])" rule="OPENSEARCH-DASHBOARDS/opensearch-dashboards/outbound/context"/>
+            <apply path="(?&lt;![\w/.:-])/opensearch-dashboards-ui(?![\w-])" rule="OPENSEARCH-DASHBOARDS/opensearch-dashboards/outbound/context"/>
         </content>
     </filter>
 </rules>
