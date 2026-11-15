@@ -24,6 +24,7 @@ import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptor;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteRulesDescriptorFactory;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletContextListener;
 import org.apache.knox.gateway.filter.rewrite.api.UrlRewriteServletFilter;
+import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteRequest;
 import org.apache.knox.gateway.filter.rewrite.impl.UrlRewriteResponse;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -122,6 +123,22 @@ public class OpenSearchDashboardsServiceDefinitionTest {
   }
 
   @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
+  public void testInboundRewrite() throws Exception {
+    LOG_ENTER();
+    assertEquals( "https://backend:5601/", rewriteRequestUrl( "/gateway/sandbox/opensearch-dashboards", null ) );
+    assertEquals( "https://backend:5601/", rewriteRequestUrl( "/gateway/sandbox/opensearch-dashboards/", null ) );
+    assertEquals( "https://backend:5601/app/home", rewriteRequestUrl( "/gateway/sandbox/opensearch-dashboards/app/home", null ) );
+    assertEquals( "https://backend:5601/app/home?x=1", rewriteRequestUrl( "/gateway/sandbox/opensearch-dashboards/app/home", "x=1" ) );
+    // The service context name also appears in OSD's own API paths. The rules anchor the context after the
+    // gateway path and topology segments, a /**/ prefix would bind to the last occurrence instead.
+    assertEquals( "https://backend:5601/api/opensearch-dashboards/management/saved_objects/_allowed_types",
+        rewriteRequestUrl( "/gateway/sandbox/opensearch-dashboards/api/opensearch-dashboards/management/saved_objects/_allowed_types", null ) );
+    assertEquals( "https://backend:5601/api/opensearch-dashboards/settings?x=1",
+        rewriteRequestUrl( "/gateway/sandbox/opensearch-dashboards/api/opensearch-dashboards/settings", "x=1" ) );
+    LOG_EXIT();
+  }
+
+  @Test( timeout = TestUtils.MEDIUM_TIMEOUT )
   public void testLocationRewrite() throws Exception {
     LOG_ENTER();
     assertEquals( FRONTEND_PATH + "/app/home", rewriteLocation( "/opensearch-dashboards-ui/app/home" ) );
@@ -161,6 +178,20 @@ public class OpenSearchDashboardsServiceDefinitionTest {
         "var other = '/other/opensearch-dashboards-ui', v2 = '/opensearch-dashboards-ui-v2';\n";
     assertEquals( expected, new String( rewriteBody( "application/javascript", input.getBytes( StandardCharsets.UTF_8 ) ), StandardCharsets.UTF_8 ) );
     LOG_EXIT();
+  }
+
+  private String rewriteRequestUrl( String path, String query ) {
+    HttpServletRequest request = EasyMock.createNiceMock( HttpServletRequest.class );
+    EasyMock.expect( request.getScheme() ).andReturn( "https" ).anyTimes();
+    EasyMock.expect( request.getServerName() ).andReturn( "knox-host" ).anyTimes();
+    EasyMock.expect( request.getServerPort() ).andReturn( 8443 ).anyTimes();
+    EasyMock.expect( request.getRequestURI() ).andReturn( path ).anyTimes();
+    EasyMock.expect( request.getQueryString() ).andReturn( query ).anyTimes();
+    EasyMock.replay( request );
+
+    UrlRewriteRequest rewriteRequest = new UrlRewriteRequest( filterConfig, request );
+    String targetQuery = rewriteRequest.getQueryString();
+    return rewriteRequest.getRequestURI() + ( targetQuery == null ? "" : "?" + targetQuery );
   }
 
   private String rewriteLocation( String location ) {
