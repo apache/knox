@@ -58,6 +58,8 @@
             <name>actorIdHeaderName</name>
             <value>x-proxy-user</value>
         </param>
+        <!-- The response body rewrite can only decode gzip and deflate, so the client's Accept-Encoding
+             (e.g. br) is replaced with gzip. -->
         <param>
             <name>requestExcludeHeaders</name>
             <value>Host,Authorization,Content-Length,Transfer-Encoding,x-proxy-user,x-proxy-roles,Accept-Encoding</value>
