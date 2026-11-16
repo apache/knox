@@ -54,9 +54,10 @@ import static org.apache.knox.test.TestUtils.LOG_EXIT;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Applies the outbound rules of the opensearch-dashboards service definition, which map the backend base path
- * (server.basePath=/opensearch-dashboards-ui, rewriteBasePath=false) to the gateway context. The response is
- * rewritten through {@link UrlRewriteResponse} with the filters the service.xml routes apply.
+ * Applies the inbound and outbound rules of the opensearch-dashboards service definition, which map the gateway
+ * context to the backend base path (server.basePath=/opensearch-dashboards-ui, rewriteBasePath=false) and back.
+ * Requests and responses are rewritten through {@link UrlRewriteRequest} and {@link UrlRewriteResponse} with the
+ * filters the service.xml routes apply.
  */
 public class OpenSearchDashboardsServiceDefinitionTest {
 
