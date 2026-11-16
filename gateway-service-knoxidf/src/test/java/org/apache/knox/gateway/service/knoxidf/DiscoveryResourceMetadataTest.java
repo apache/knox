@@ -19,11 +19,14 @@ package org.apache.knox.gateway.service.knoxidf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -75,5 +78,33 @@ public class DiscoveryResourceMetadataTest {
         body.contains("\"" + KnoxIDFConstants.CLIENT_CREDENTIALS + "\""));
     assertTrue("grant_types_supported must advertise the RFC 8693 token-exchange grant type.",
         body.contains("\"" + KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE + "\""));
+    assertTrue("userinfo_endpoint must be advertised when authorization_code is allowed.",
+        body.contains("userinfo_endpoint"));
+  }
+
+  @Test
+  public void testTokenExchangeOnlyOmitsAuthorizationCodeEndpoints() throws Exception {
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(KnoxIDFConstants.ALLOWED_GRANT_TYPES_ATTRIBUTE))
+        .andReturn(AllowedGrantTypes.parse(KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE)).anyTimes();
+    EasyMock.replay(request);
+
+    final DiscoveryResource resource = new DiscoveryResource();
+    final Field field = DiscoveryResource.class.getDeclaredField("request");
+    field.setAccessible(true);
+    field.set(resource, request);
+
+    final UriInfo uriInfo = EasyMock.createNiceMock(UriInfo.class);
+    EasyMock.expect(uriInfo.getBaseUri()).andReturn(URI.create("https://knox:8443/gateway/knoxidf/")).anyTimes();
+    EasyMock.replay(uriInfo);
+    final String body = String.valueOf(resource.getConfig(uriInfo).getEntity());
+
+    assertTrue("grant_types_supported must list only token exchange: " + body,
+        body.contains("\"grant_types_supported\":[\"" + KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE + "\"]"));
+    assertFalse(body.contains("authorization_endpoint"));
+    assertFalse(body.contains("registration_endpoint"));
+    assertFalse(body.contains("userinfo_endpoint"));
+    assertTrue(body.contains("token_endpoint"));
+    assertTrue(body.contains("jwks_uri"));
   }
 }

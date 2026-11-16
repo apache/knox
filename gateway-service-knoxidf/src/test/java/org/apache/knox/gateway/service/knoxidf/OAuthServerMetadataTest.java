@@ -20,12 +20,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.UriInfo;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -120,5 +127,43 @@ public class OAuthServerMetadataTest {
       assertTrue("OIDC discovery must advertise the same " + field + " value.",
           oidcBody.contains("\"" + field + "\":\"" + oauth.get(field) + "\""));
     }
+  }
+
+  @Test
+  public void testTokenExchangeOnlyAdvertisesOnlyTokenExchange() throws Exception {
+    final Map<String, Object> metadata = metadataFor(KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE);
+
+    assertEquals(List.of(KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE), metadata.get("grant_types_supported"));
+    assertFalse("authorization_endpoint must be omitted.", metadata.containsKey("authorization_endpoint"));
+    assertFalse("registration_endpoint must be omitted.", metadata.containsKey("registration_endpoint"));
+    assertEquals(BASE_URI + TokenResource.RESOURCE_PATH, metadata.get("token_endpoint"));
+    assertEquals(BASE_URI + JwksResource.RESOURCE_PATH, metadata.get("jwks_uri"));
+    assertTrue("response_types_supported is REQUIRED by RFC 8414.", metadata.containsKey("response_types_supported"));
+  }
+
+  @Test
+  public void testAuthorizationCodeAllowedKeepsItsEndpoints() throws Exception {
+    final Map<String, Object> metadata =
+        metadataFor(KnoxIDFConstants.REFRESH_TOKEN + "," + KnoxIDFConstants.AUTH_CODE);
+
+    assertEquals(List.of(KnoxIDFConstants.REFRESH_TOKEN, KnoxIDFConstants.AUTH_CODE),
+        metadata.get("grant_types_supported"));
+    assertEquals(BASE_URI + AuthorizeResource.RESOURCE_PATH, metadata.get("authorization_endpoint"));
+    assertEquals(BASE_URI + RegistrationResource.RESOURCE_PATH + "/register", metadata.get("registration_endpoint"));
+  }
+
+  private static Map<String, Object> metadataFor(final String allowedGrantTypes) throws Exception {
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getAttribute(KnoxIDFConstants.ALLOWED_GRANT_TYPES_ATTRIBUTE))
+        .andReturn(AllowedGrantTypes.parse(allowedGrantTypes)).anyTimes();
+    EasyMock.replay(request);
+
+    final OAuthServerMetadataResource resource = new OAuthServerMetadataResource();
+    final Field field = OAuthServerMetadataResource.class.getDeclaredField("request");
+    field.setAccessible(true);
+    field.set(resource, request);
+
+    return new ObjectMapper().readValue(String.valueOf(resource.getMetadata(uriInfo()).getEntity()),
+        new TypeReference<Map<String, Object>>() { });
   }
 }

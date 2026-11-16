@@ -42,11 +42,13 @@ import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -145,16 +147,36 @@ public class TokenResource extends PasscodeTokenResourceBase {
         }
     }
 
+    // The JWTProvider already rejected a disallowed grant_type; this also rejects a missing one.
+    @Override
+    @GET
+    public Response doGet() {
+        final String grantType = getRequestParam(GRANT_TYPE);
+        if (AllowedGrantTypes.from(request).isAllowed(grantType)) {
+            return super.doGet();
+        }
+        return rejectGrantType(grantType);
+    }
+
     @Override
     @POST
     public Response doPost() {
         final String grantType = getRequestParam(GRANT_TYPE);
-        if (REFRESH_TOKEN.equals(grantType)) {
-            return handleRefreshToken();
-        } else if (AUTH_CODE.equals(grantType)) {
-            return handleAuthorizationCodeFlow();
+        if (AllowedGrantTypes.from(request).isAllowed(grantType)) {
+            if (REFRESH_TOKEN.equals(grantType)) {
+                return handleRefreshToken();
+            } else if (AUTH_CODE.equals(grantType)) {
+                return handleAuthorizationCodeFlow();
+            }
+            return super.doPost(); // with this, we don't need an additional KNOXTOKEN service in any KnoxIDF topology
         }
-        return super.doPost(); // with this, we don't need an additional KNOXTOKEN service in any KnoxIDF topology
+        return rejectGrantType(grantType);
+    }
+
+    private Response rejectGrantType(String grantType) {
+        final String message = "event=token_grant grant_type=" + AllowedGrantTypes.auditName(grantType) + " reason=grant_type_not_allowed";
+        KnoxIDFAudit.audit(Action.AUTHENTICATION, KnoxIDFAudit.mask(getRequestParam(CLIENT_ID)), ResourceType.PRINCIPAL, ActionOutcome.FAILURE, message);
+        return error("unsupported_grant_type", StringUtils.isBlank(grantType) ? "Missing grant_type" : "grant_type is not allowed on this endpoint");
     }
 
     private boolean isAuthCodeFlow() {

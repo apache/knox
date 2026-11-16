@@ -67,6 +67,8 @@ public interface KnoxIDFConstants {
     String TOKEN_ID_ATTRIBUTE = "X-Token-Id";
     String TOKEN_ISS_ATTRIBUTE = "X-Token-Iss";
     String SCOPE_ATTRIBUTE = "X-Token-Scope";
+    // Set by the JWTProvider when jwt.allowed.grant.types is set.
+    String ALLOWED_GRANT_TYPES_ATTRIBUTE = "X-Allowed-Grant-Types";
 
     String FEDERATED_IDENTITY_ID = "federated_identity_id";
     String FEDERATED_OP_CONFIG_PREFIX = "federated.op.";

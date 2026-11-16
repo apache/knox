@@ -17,9 +17,11 @@
 package org.apache.knox.gateway.service.knoxidf;
 
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -45,6 +47,9 @@ public class OAuthServerMetadataResource {
     @Context
     private ServletContext servletContext;
 
+    @Context
+    private HttpServletRequest request;
+
     @PostConstruct
     public void init() {
         endpointResolver = DiscoveryEndpointResolver.from(servletContext);
@@ -53,6 +58,6 @@ public class OAuthServerMetadataResource {
     @GET
     public Response getMetadata(@Context UriInfo uriInfo) {
         return Response.ok(JsonUtils.renderAsJsonString(
-            AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, endpointResolver))).build();
+            AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, endpointResolver, AllowedGrantTypes.from(request)))).build();
     }
 }
