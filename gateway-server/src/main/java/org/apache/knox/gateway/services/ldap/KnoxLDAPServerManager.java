@@ -529,10 +529,8 @@ public class KnoxLDAPServerManager {
             Entry baseDnEntry = new DefaultEntry(schemaManager);
             baseDnEntry.setDn(baseDnName);
             String type = baseDnName.getRdn().getType();
-            String name = baseDnName.getRdn().getName();
             String objectClass = getConventionalObjectClassFromType(type);
             baseDnEntry.add("objectClass", "top", objectClass, "extensibleObject");
-            baseDnEntry.add(type, name);
             directoryService.getAdminSession().add(baseDnEntry);
         }
 
