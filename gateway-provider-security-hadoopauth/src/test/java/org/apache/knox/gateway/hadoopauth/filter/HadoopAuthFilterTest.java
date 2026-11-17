@@ -44,7 +44,6 @@ import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.Topology;
-import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
