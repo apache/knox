@@ -44,6 +44,7 @@ import org.apache.knox.gateway.security.SubjectUtils;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.topology.Topology;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -603,6 +604,7 @@ public class HadoopAuthFilterTest {
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_USE_COOKIE)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(JWTFederationFilter.KNOX_TOKEN_COOKIE_NAME)).andReturn(null).anyTimes();
       expect(filterConfig.getInitParameter(RequestAudienceValidatorService.REQUEST_AUDIENCE_VALIDATOR_PARAM)).andReturn(null).anyTimes();
+      expect(filterConfig.getInitParameter(JWTFederationFilter.ALLOWED_GRANT_TYPES)).andReturn(null).anyTimes();
     }
 
     final ServletContext servletContext = createMock(ServletContext.class);
