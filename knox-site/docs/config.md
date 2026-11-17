@@ -121,7 +121,7 @@ Property    | Description | Default
 `gateway.truststore.path`|Location of the truststore for client certificates to be trusted|`null`
 `gateway.truststore.type`|Indicates the type of truststore at the path declared in `gateway.truststore.path`|`JKS`
 `gateway.jdk.tls.ephemeralDHKeySize`|`jdk.tls.ephemeralDHKeySize`, is defined to customize the ephemeral DH key sizes. The minimum acceptable DH key size is 1024 bits, except for exportable cipher suites or legacy mode (`jdk.tls.ephemeralDHKeySize=legacy`)|`2048`
-`gateway.threadpool.max`|The maximum concurrent requests the server will process. The default is 254. Connections beyond this will be queued.|`254`
+`gateway.threadpool.max`|The maximum concurrent requests the server will process. The default is 1024. Connections beyond this will be queued.|`1024`
 `gateway.httpclient.connectionTimeout`|The amount of time to wait when attempting a connection. The natural unit is milliseconds, but a 's' or 'm' suffix may be used for seconds or minutes respectively.| `20s`
 `gateway.httpclient.maxConnections`|The maximum number of connections that a single HttpClient will maintain to a single host:port.|`32`
 `gateway.httpclient.socketTimeout`|The amount of time to wait for data on a socket before aborting the connection. The natural unit is milliseconds, but a 's' or 'm' suffix may be used for seconds or minutes respectively.| `20s`

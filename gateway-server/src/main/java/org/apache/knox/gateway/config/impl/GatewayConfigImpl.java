@@ -140,6 +140,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String HTTP_CLIENT_SOCKET_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.socketTimeout";
   private static final String HTTP_CLIENT_COOKIE_SPEC = GATEWAY_CONFIG_FILE_PREFIX + ".httpclient.cookieSpec";
   private static final String THREAD_POOL_MAX = GATEWAY_CONFIG_FILE_PREFIX + ".threadpool.max";
+  static final int DEFAULT_THREAD_POOL_MAX = 1024;
   public static final String HTTP_SERVER_REQUEST_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.requestBuffer";
   public static final String HTTP_SERVER_REQUEST_HEADER_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.requestHeaderBuffer";
   public static final String HTTP_SERVER_RESPONSE_BUFFER = GATEWAY_CONFIG_FILE_PREFIX + ".httpserver.responseBuffer";
@@ -898,7 +899,7 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
 
   @Override
   public int getThreadPoolMax() {
-    int i = getInt( THREAD_POOL_MAX, 254 );
+    int i = getInt( THREAD_POOL_MAX, DEFAULT_THREAD_POOL_MAX );
     // Testing has shown that a value lower than 5 prevents Jetty from servicing request.
     if( i < 5 ) {
       i = 5;

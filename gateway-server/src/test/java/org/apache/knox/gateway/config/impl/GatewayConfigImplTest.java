@@ -93,6 +93,20 @@ public class GatewayConfigImplTest {
   }
 
   @Test( timeout = TestUtils.SHORT_TIMEOUT )
+  public void testThreadPoolMax() {
+    GatewayConfigImpl config = new GatewayConfigImpl();
+    assertThat( config.getThreadPoolMax(), is( GatewayConfigImpl.DEFAULT_THREAD_POOL_MAX ) );
+    assertThat( GatewayConfigImpl.DEFAULT_THREAD_POOL_MAX, is( 1024 ) );
+
+    config.setInt( "gateway.threadpool.max", 300 );
+    assertThat( config.getThreadPoolMax(), is( 300 ) );
+
+    // Values below the floor are raised to it; Jetty cannot service requests with fewer than 5 threads
+    config.setInt( "gateway.threadpool.max", 2 );
+    assertThat( config.getThreadPoolMax(), is( 5 ) );
+  }
+
+  @Test( timeout = TestUtils.SHORT_TIMEOUT )
   public void testGetGatewayDeploymentsBackupVersionLimit() {
     GatewayConfigImpl config = new GatewayConfigImpl();
     assertThat( config.getGatewayDeploymentsBackupVersionLimit(), is(5) );

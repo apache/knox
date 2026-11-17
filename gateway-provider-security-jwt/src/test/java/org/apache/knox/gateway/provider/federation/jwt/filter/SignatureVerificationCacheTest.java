@@ -151,6 +151,34 @@ public class SignatureVerificationCacheTest {
         }
     }
 
+    /**
+     * Verify that, absent explicit configuration, the cache holds up to the default number of entries
+     * and evicts beyond it.
+     */
+    @Test
+    public void testDefaultMaximumSize() {
+        assertEquals(4096, SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX_DEFAULT);
+
+        final String topologyName = "test-topology-default-max-size";
+        final Properties filterProps = new Properties();
+        filterProps.setProperty(TestFilterConfig.TOPOLOGY_NAME_PROP, topologyName);
+        final SignatureVerificationCache cache =
+            SignatureVerificationCache.getInstance(topologyName, new TestFilterConfig(filterProps));
+
+        final int max = SignatureVerificationCache.TOKENS_VERIFIED_CACHE_MAX_DEFAULT;
+        for (int i = 0; i < max; i++) {
+            cache.recordSignatureVerification("token-" + i);
+        }
+        cache.performMaintenance();
+        assertEquals("All entries up to the default maximum should be retained.", max, cache.getSize());
+
+        for (int i = max; i < max + 100; i++) {
+            cache.recordSignatureVerification("token-" + i);
+        }
+        cache.performMaintenance();
+        assertEquals("Entries beyond the default maximum should be evicted.", max, cache.getSize());
+    }
+
     private SignedJWT createTestJWT() throws Exception {
         return JWTTestUtils.getJWT(AbstractJWTFilter.JWT_DEFAULT_ISSUER,
                                    "alice",

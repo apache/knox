@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SignatureVerificationCache {
 
     public static final String TOKENS_VERIFIED_CACHE_MAX = "tokens.verified.cache.max";
-    private static final int   TOKENS_VERIFIED_CACHE_MAX_DEFAULT = 250;
+    static final int TOKENS_VERIFIED_CACHE_MAX_DEFAULT = 4096;
 
     static final String DEFAULT_CACHE_ID = "default-cache";
 
