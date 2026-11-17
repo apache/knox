@@ -59,6 +59,9 @@ public interface TokenServiceMessages {
   @Message( level = MessageLevel.INFO, text = "Server management of token state is enabled for the \"{0}\" topology.")
   void serverManagedTokenStateEnabled(String topologyName);
 
+  @Message( level = MessageLevel.INFO, text = "Server management of token state is disabled for the \"{0}\" topology.")
+  void serverManagedTokenStateDisabled(String topologyName);
+
   @Message( level = MessageLevel.ERROR, text = "Knox Token service ({0}) could not parse token {1}: {2}")
   void invalidToken(String topologyName,
                     String tokenDisplayText,

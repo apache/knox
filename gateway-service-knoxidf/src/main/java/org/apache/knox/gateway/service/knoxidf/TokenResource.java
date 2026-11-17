@@ -128,13 +128,12 @@ public class TokenResource extends PasscodeTokenResourceBase {
         this.userParamsProvider = UserParamsProviderFactory.getUserParamsProvider(servletContext);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
-        // Build the same passcode MAC the JWTFederationFilter uses so the token endpoint can
-        // independently authenticate a client_secret (see validateAuthCode). The HMAC key alias is
-        // guaranteed to exist by this point (PasscodeTokenResourceBase#setupTokenStateService
-        // generates it if absent).
-        final GatewayConfig gatewayConfig = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-        final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
-        this.tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
+        // The passcode MAC checks client_secret against stored token state, so it is only needed with token state.
+        if (tokenStateService != null) {
+            final GatewayConfig gatewayConfig = (GatewayConfig) servletContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+            final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
+            this.tokenMAC = new TokenMAC(gatewayConfig.getKnoxTokenHashAlgorithm(), aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME));
+        }
         setRefreshTokenTTL();
     }
 
