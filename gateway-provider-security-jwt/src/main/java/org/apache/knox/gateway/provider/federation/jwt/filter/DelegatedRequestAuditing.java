@@ -165,7 +165,7 @@ final class DelegatedRequestAuditing {
   }
 
   // The query string is dropped as it may carry credentials.
-  private static String resourceName(final HttpServletRequest request) {
+  static String resourceName(final HttpServletRequest request) {
     final Object sourceUri = request.getAttribute(AbstractGatewayFilter.SOURCE_REQUEST_CONTEXT_URL_ATTRIBUTE_NAME);
     return displayText(withoutQuery(sourceUri instanceof String uri ? uri : request.getRequestURI()));
   }

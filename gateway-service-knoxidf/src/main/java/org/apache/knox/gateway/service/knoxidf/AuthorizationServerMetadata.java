@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 
 import jakarta.ws.rs.core.UriInfo;
@@ -49,6 +50,15 @@ final class AuthorizationServerMetadata {
      *                          (see {@link DiscoveryEndpointResolver})
      */
     static Map<String, Object> buildOAuthMetadata(UriInfo uriInfo, DiscoveryEndpointResolver endpointResolver) {
+        return buildOAuthMetadata(uriInfo, endpointResolver, AllowedGrantTypes.ALL);
+    }
+
+    /**
+     * Advertises only {@code allowedGrantTypes}; without {@code authorization_code}, the authorization
+     * and registration endpoints are omitted too.
+     */
+    static Map<String, Object> buildOAuthMetadata(UriInfo uriInfo, DiscoveryEndpointResolver endpointResolver,
+                                                  AllowedGrantTypes allowedGrantTypes) {
         final String baseUrl = uriInfo.getBaseUri().toString();
         final Map<String, Object> metadata = new LinkedHashMap<>();
 
@@ -60,9 +70,13 @@ final class AuthorizationServerMetadata {
         // Each endpoint is advertised on the current topology unless a topology parameter moves it,
         // e.g. /authorize onto an SSO-fronted topology or registration onto one that accepts bearer
         // tokens. The issuer and jwks_uri always stay on the current topology.
-        metadata.put("authorization_endpoint", endpointResolver.authorizationEndpoint(baseUrl));
+        if (allowedGrantTypes.isAuthCodeAllowed()) {
+            metadata.put("authorization_endpoint", endpointResolver.authorizationEndpoint(baseUrl));
+        }
         metadata.put("token_endpoint", endpointResolver.tokenEndpoint(baseUrl));
-        metadata.put("registration_endpoint", endpointResolver.registrationEndpoint(baseUrl));
+        if (allowedGrantTypes.isAuthCodeAllowed()) {
+            metadata.put("registration_endpoint", endpointResolver.registrationEndpoint(baseUrl));
+        }
         metadata.put("jwks_uri", baseUrl + JwksResource.RESOURCE_PATH);
         metadata.put("response_types_supported", new String[]{KnoxIDFConstants.CODE});
         // The token endpoint reads client credentials only from request parameters (no HTTP Basic):
@@ -70,7 +84,7 @@ final class AuthorizationServerMetadata {
         // authenticate with PKCE and no secret ("none"). client_secret_basic is intentionally absent
         // because it is not honored.
         metadata.put("token_endpoint_auth_methods_supported", new String[]{"client_secret_post", "none"});
-        metadata.put("grant_types_supported", new String[]{KnoxIDFConstants.AUTH_CODE, KnoxIDFConstants.REFRESH_TOKEN, KnoxIDFConstants.CLIENT_CREDENTIALS, KnoxIDFConstants.TOKEN_EXCHANGE_GRANT_TYPE});
+        metadata.put("grant_types_supported", allowedGrantTypes.grantTypesSupported());
         metadata.put("scopes_supported", KnoxIDFConstants.DEFAULT_SCOPES);
         // Advertise only S256: AuthorizeResource rejects any other code_challenge_method (including
         // "plain"), so discovery must not claim "plain" support it does not honor.

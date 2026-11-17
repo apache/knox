@@ -17,9 +17,11 @@
 package org.apache.knox.gateway.service.knoxidf;
 
 import org.apache.knox.gateway.util.JsonUtils;
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -39,6 +41,9 @@ public class DiscoveryResource {
     @Context
     private ServletContext servletContext;
 
+    @Context
+    private HttpServletRequest request;
+
     @PostConstruct
     public void init() {
         endpointResolver = DiscoveryEndpointResolver.from(servletContext);
@@ -49,9 +54,13 @@ public class DiscoveryResource {
         // The OAuth-common metadata (issuer, endpoints, grant types, ...) is shared with the RFC 8414
         // OAuth 2.0 Authorization Server Metadata document so the two cannot drift; this method then
         // layers on the OpenID Connect-only claims below.
-        final Map<String, Object> config = AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, endpointResolver);
+        final AllowedGrantTypes allowedGrantTypes = AllowedGrantTypes.from(request);
+        final Map<String, Object> config = AuthorizationServerMetadata.buildOAuthMetadata(uriInfo, endpointResolver, allowedGrantTypes);
 
-        config.put("userinfo_endpoint", endpointResolver.userInfoEndpoint(uriInfo.getBaseUri().toString()));
+        // Only the authorization code flow uses userinfo.
+        if (allowedGrantTypes.isAuthCodeAllowed()) {
+            config.put("userinfo_endpoint", endpointResolver.userInfoEndpoint(uriInfo.getBaseUri().toString()));
+        }
         // REQUIRED by OpenID Connect Discovery 1.0. Knox derives 'sub' as a deterministic UUIDv5 over
         // a fixed namespace and the user identity -- the same for every client -- so the subject
         // identifier type is "public" (not "pairwise").

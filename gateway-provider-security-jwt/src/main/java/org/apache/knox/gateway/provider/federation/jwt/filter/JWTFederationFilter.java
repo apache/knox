@@ -37,6 +37,7 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 
@@ -139,6 +140,11 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // authorized by the delegation policy regardless of this flag).
   public static final String TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED = "token.exchange.same.subject.requested.audience.enabled";
 
+  // Topology provider param (default unset): comma-separated grant_type values the token endpoint
+  // accepts; any other is rejected before its credentials are validated. When set, every request's
+  // form body is parsed, so do not set it on a topology that proxies form posts.
+  public static final String ALLOWED_GRANT_TYPES = "jwt.allowed.grant.types";
+
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
   }
@@ -174,6 +180,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean delegationEnforceRequestedAudienceRequired;
   private boolean delegationEnforceRequestedAudienceMaxOne;
   private boolean tokenExchangeSameSubjectRequestedAudienceEnabled;
+  private AllowedGrantTypes allowedGrantTypes = AllowedGrantTypes.ALL;
 
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
@@ -250,6 +257,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     delegationEnforceRequestedAudienceMaxOne = Boolean.parseBoolean(filterConfig.getInitParameter(DELEGATION_ENFORCE_REQUESTED_AUDIENCE_MAX_ONE));
     tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
 
+    allowedGrantTypes = AllowedGrantTypes.parse(filterConfig.getInitParameter(ALLOWED_GRANT_TYPES));
+
     // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
     // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
     final RequestAudienceValidatorService requestAudienceValidatorService = new RequestAudienceValidatorService();
@@ -285,11 +294,27 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
+    // Before the unauthenticated-path bypass, so KnoxIDF discovery sees it too.
+    if (allowedGrantTypes.isRestricted()) {
+      request.setAttribute(KnoxIDFConstants.ALLOWED_GRANT_TYPES_ATTRIBUTE, allowedGrantTypes);
+    }
+
     /* check for unauthenticated paths to bypass */
     if(AuthFilterUtils
         .doesRequestContainUnauthPath(unAuthenticatedPaths, request)) {
       continueWithAnonymousSubject(request, response, chain);
       return;
+    }
+
+    // Before any credential is validated.
+    if (allowedGrantTypes.isRestricted()) {
+      final String grantType = ServletRequestUtils.unwrapHttpServletRequest(request).getParameter(GRANT_TYPE);
+      if (StringUtils.isNotBlank(grantType) && !allowedGrantTypes.isAllowed(grantType)) {
+        GrantTypeAuditing.rejected((HttpServletRequest) request, grantType);
+        handleValidationError((HttpServletRequest) request, (HttpServletResponse) response,
+            HttpServletResponse.SC_BAD_REQUEST, "unsupported_grant_type", "grant_type is not allowed on this endpoint");
+        return;
+      }
     }
 
     if (useCookie) {
@@ -318,7 +343,8 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     // RFC 8693 token exchange: getWireToken flags this via TokenType.TokenExchange when the
     // grant_type is in the request body. The subject_token/actor_token are read from the unwrapped
     // request by the handler. Reading the body only happens on this (header-less) grant-flow path,
-    // so a proxied backend's body is never consumed by the header-authenticated path.
+    // so a proxied backend's body is never consumed by the header-authenticated path (unless
+    // ALLOWED_GRANT_TYPES is set).
     if (wireToken != null && TokenType.TokenExchange.equals(wireToken.getType())) {
       // Bind the "this is token exchange" decision to the dispatched path so that only the
       // subject_token/actor_token validated inside the handler can unlock registered-issuer JWKS.
@@ -871,6 +897,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // Test seam: allows a mock/recording handler to be injected.
   void setTokenExchangeHandler(TokenExchangeHandler tokenExchangeHandler) {
     this.tokenExchangeHandler = tokenExchangeHandler;
+  }
+
+  AllowedGrantTypes getAllowedGrantTypes() {
+    return allowedGrantTypes;
   }
 
   boolean isDelegationServerEnabled() {

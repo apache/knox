@@ -48,6 +48,7 @@ The topologies exercised, all fronting the KNOXIDF token endpoint:
   - knoxidf-token-passthrough       -- fail-safe control: same passthrough validator but
                                        the flag left off (default), so a requested audience
                                        is dropped rather than minted.
+  - knoxidf-token-exchange-only     -- jwt.allowed.grant.types=token exchange only (KNOX-3578).
   - knoxauthtoken                   -- KNOX-AUTH-SERVICE with the k8s destination audience
                                        validator (KNOX-3568).
 
@@ -79,16 +80,24 @@ gateway code. These fail until KNOX-3461 is in the image:
 KNOX-3467 -- requested-scope cases; deferred until scope support lands.
 
 KNOX-3568 -- a token without an act claim leaves no delegated-token audit records.
+
+KNOX-3578 -- a token endpoint restricted to token exchange:
+  - a same-subject exchange still succeeds;
+  - other grants are rejected before their credentials are checked, and audited;
+  - a Bearer request with no grant_type is rejected instead of re-minting;
+  - discovery advertises only token exchange.
 """
 
 import unittest
+import uuid
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, get_token_claim, knox_get
+from common_utils import gateway_base_url, get_token_claim, knox_get, knox_post
 from delegated_audit_helpers import audit_records_for, call_destination, records_with_action
 from delegation_helpers import (
     ISSUED_TOKEN_TYPE_JWT,
+    TOKEN_EXCHANGE_GRANT,
     DelegationPolicyAdmin,
     assert_oauth_error,
     aud_values,
@@ -122,11 +131,14 @@ DELEGATION_POLICY_RESOURCE = "https://delegated-resource"
 
 DESTINATION_SERVICE = "secret-service.platform.svc.cluster.local"
 
+EXCHANGE_ONLY_TOPOLOGY = "knoxidf-token-exchange-only"
+GRANT_NOT_ALLOWED = "grant_type is not allowed on this endpoint"
+
 
 class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
     """RFC 8693 same-subject and delegation-gating behavior through Knox.
 
-    The fixture fronts every KNOXIDF endpoint the suite touches -- six mint/exchange
+    The fixture fronts every KNOXIDF endpoint the suite touches -- seven mint/exchange
     topologies plus the delegation-policy admin API -- so it legitimately carries more
     than the default instance-attribute budget.
     """
@@ -154,6 +166,14 @@ class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance
         )
         self.passthrough_exchange_url = (
             base_url + "gateway/knoxidf-token-passthrough/knoxidf/api/v1/token"
+        )
+        # KNOX-3578 token-exchange-only topology.
+        self.exchange_only_url = (
+            base_url + f"gateway/{EXCHANGE_ONLY_TOPOLOGY}/knoxidf/api/v1/token"
+        )
+        self.exchange_only_discovery_url = (
+            base_url + f"gateway/{EXCHANGE_ONLY_TOPOLOGY}"
+            "/knoxidf/api/v1/.well-known/openid-configuration"
         )
         # Delegation-policy admin REST API (KNOXIDF_ADMIN role on the knoxidf-admin topology).
         # The policy store it writes to is a gateway-wide singleton, so a policy registered here
@@ -463,6 +483,75 @@ class TestTokenExchange(unittest.TestCase):  # pylint: disable=too-many-instance
         )
         self._assert_oauth_error(response, 400, "invalid_request",
                                  "Delegation is not enabled for this topology")
+
+    # ---- KNOX-3578: token endpoint restricted to the token-exchange grant ----
+
+    def test_same_subject_exchange_succeeds_on_exchange_only_topology(self):
+        """The allowed grant still works."""
+        subject_token = self._mint_subject_token()
+        response = self._exchange(self.exchange_only_url, subject_token)
+        self.assertEqual(response.status_code, 200, response.text)
+        exchanged = response.json().get("access_token")
+        self.assertTrue(exchanged, "exchange did not return an access_token")
+        self.assertEqual(get_token_claim(exchanged, "sub"), GUEST_USER)
+
+    def test_disallowed_grants_rejected_on_exchange_only_topology(self):
+        """Other grants get 400, not the 401 their bogus credentials would get on knoxidf-token."""
+        requests_by_grant = {
+            "refresh_token": {"refresh_token": "not-a-refresh-token"},
+            "client_credentials": {"client_id": "not-a-client", "client_secret": "not-a-passcode"},
+            "authorization_code": {
+                "code": "not-a-code",
+                "client_id": "not-a-client",
+                "redirect_uri": "https://localhost/callback",
+            },
+        }
+        for grant_type, params in requests_by_grant.items():
+            with self.subTest(grant_type=grant_type):
+                response = knox_post(self.exchange_only_url,
+                                     data={"grant_type": grant_type, **params})
+                self._assert_oauth_error(response, 400, "unsupported_grant_type",
+                                         GRANT_NOT_ALLOWED)
+
+    def test_disallowed_grant_rejection_is_audited(self):
+        """The rejected grant is audited."""
+        uri = (f"/gateway/{EXCHANGE_ONLY_TOPOLOGY}/knoxidf/api/v1/token"
+               f"?audit_marker={uuid.uuid4()}")
+        response = knox_post(gateway_base_url() + uri.lstrip("/"),
+                             data={"grant_type": "refresh_token",
+                                   "refresh_token": "not-a-refresh-token"})
+        self._assert_oauth_error(response, 400, "unsupported_grant_type", GRANT_NOT_ALLOWED)
+
+        records = audit_records_for(self, uri)
+        rejections = [(record.outcome, record.fields)
+                      for record in records_with_action(records, "authentication")]
+        self.assertIn(("failure", {"event": "token_grant", "grant_type": "refresh_token",
+                                   "reason": "grant_type_not_allowed"}),
+                      rejections, records)
+
+    def test_bearer_without_grant_type_rejected_on_exchange_only_topology(self):
+        """A Bearer request with no grant_type re-mints on knoxidf-token but is rejected here."""
+        subject_token = self._mint_subject_token()
+        headers = {"Authorization": f"Bearer {subject_token}"}
+
+        unrestricted = knox_get(self.exchange_url, headers=headers)
+        self.assertEqual(unrestricted.status_code, 200,
+                         msg=f"{unrestricted.status_code} {unrestricted.text}")
+
+        response = knox_get(self.exchange_only_url, headers=headers)
+        self._assert_oauth_error(response, 400, "unsupported_grant_type", "Missing grant_type")
+
+    def test_discovery_advertises_only_token_exchange(self):
+        """Discovery lists only token exchange and no auth-code endpoints."""
+        response = knox_get(self.exchange_only_discovery_url)
+        self.assertEqual(response.status_code, 200, response.text)
+        config = response.json()
+
+        self.assertEqual(config.get("grant_types_supported"), [TOKEN_EXCHANGE_GRANT], config)
+        self.assertTrue(config.get("token_endpoint"), config)
+        self.assertTrue(config.get("jwks_uri"), config)
+        for endpoint in ("authorization_endpoint", "registration_endpoint", "userinfo_endpoint"):
+            self.assertNotIn(endpoint, config)
 
 
 if __name__ == "__main__":
