@@ -63,8 +63,16 @@ public interface KeystoreService extends Service {
    */
   default KeyStore getKeystoreForHttpClient() throws KeystoreServiceException { return null; }
 
+  /**
+   * Gets the signing keystore; the identity keystore if none is configured. The returned instance
+   * may be shared (see {@code gateway.keystore.file.cache.enabled}) and must not be modified.
+   */
   KeyStore getSigningKeystore() throws KeystoreServiceException;
 
+  /**
+   * Gets the JKS keystore <code>keystoreName</code>.jks from the keystore directory; the signing keystore
+   * if <code>keystoreName</code> is <code>null</code>. The returned instance may be shared and must not be modified.
+   */
   KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException;
 
   Key getKeyForGateway(String alias, char[] passphrase) throws KeystoreServiceException;
@@ -83,6 +91,10 @@ public interface KeystoreService extends Service {
 
   boolean isKeystoreForGatewayAvailable() throws KeystoreServiceException;
 
+  /**
+   * Gets the credential store of a topology; an empty one if it has no credential store file.
+   * The returned instance may be shared and must not be modified.
+   */
   KeyStore getCredentialStoreForCluster(String clusterName) throws KeystoreServiceException;
 
   void addCredentialForCluster(String clusterName, String alias, String key) throws KeystoreServiceException;

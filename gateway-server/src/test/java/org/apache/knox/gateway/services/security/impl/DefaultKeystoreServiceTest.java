@@ -37,6 +37,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -57,12 +58,14 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -73,16 +76,22 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultKeystoreServiceTest {
   @Rule
@@ -805,6 +814,162 @@ public class DefaultKeystoreServiceTest {
     verify(masterService);
   }
 
+  @Test
+  public void testSigningKeystoreIsLoadedAgainOnlyWhenItsFileChanges() throws Exception {
+    char[] masterPassword = "master_password".toCharArray();
+
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn(masterPassword).anyTimes();
+    replay(masterService);
+
+    Path baseDir = testFolder.newFolder().toPath();
+    GatewayConfigImpl config = createGatewayConfig(baseDir);
+
+    CountingDefaultKeystoreService keystoreService = new CountingDefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+    createKeystore(keystoreService, masterPassword, config);
+
+    // Old enough to rule out a check for a change within the file system's timestamp granularity
+    Path signingKeystorePath = Paths.get(config.getSigningKeystorePath());
+    FileTime lastModifiedTime = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+    Files.setLastModifiedTime(signingKeystorePath, lastModifiedTime);
+    keystoreService.clearCounts();
+
+    KeyStore signingKeystore = keystoreService.getSigningKeystore();
+    assertSame(signingKeystore, keystoreService.getSigningKeystore());
+    // The signing keystore and the gateway credential store, which does not hold the
+    // signing keystore password alias
+    assertEquals(2, keystoreService.loadCount);
+
+    // Changed by another process, e.g. the Knox CLI
+    KeyStore changedKeystore = KeyStore.getInstance("JKS");
+    try (InputStream input = Files.newInputStream(signingKeystorePath)) {
+      changedKeystore.load(input, masterPassword);
+    }
+    changedKeystore.setCertificateEntry("external", changedKeystore.getCertificate(config.getIdentityKeyAlias()));
+    try (OutputStream output = Files.newOutputStream(signingKeystorePath)) {
+      changedKeystore.store(output, masterPassword);
+    }
+    Files.setLastModifiedTime(signingKeystorePath, FileTime.fromMillis(lastModifiedTime.toMillis() + 1000L));
+    keystoreService.clearCounts();
+
+    KeyStore reloadedKeystore = keystoreService.getSigningKeystore();
+    assertNotSame(signingKeystore, reloadedKeystore);
+    assertTrue(reloadedKeystore.containsAlias("external"));
+    assertFalse(signingKeystore.containsAlias("external"));
+    assertEquals(1, keystoreService.loadCount);
+
+    // Changed by the service itself
+    keystoreService.addSelfSignedCertForGateway("internal", masterPassword);
+    KeyStore rewrittenKeystore = keystoreService.getSigningKeystore();
+    assertNotSame(reloadedKeystore, rewrittenKeystore);
+    assertTrue(rewrittenKeystore.containsAlias("internal"));
+
+    verify(masterService);
+  }
+
+  @Test
+  public void testKeystoreFileCacheDisabled() throws Exception {
+    char[] masterPassword = "master_password".toCharArray();
+
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn(masterPassword).anyTimes();
+    replay(masterService);
+
+    Path baseDir = testFolder.newFolder().toPath();
+    GatewayConfigImpl config = createGatewayConfig(baseDir);
+    config.set("gateway.keystore.file.cache.enabled", "false");
+
+    CountingDefaultKeystoreService keystoreService = new CountingDefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+    createKeystore(keystoreService, masterPassword, config);
+    keystoreService.clearCounts();
+
+    assertNotSame(keystoreService.getSigningKeystore(), keystoreService.getSigningKeystore());
+    assertNotSame(keystoreService.getCredentialStoreForCluster("cluster"), keystoreService.getCredentialStoreForCluster("cluster"));
+    // Each signing keystore lookup also loads the gateway credential store for the password alias
+    assertEquals(6, keystoreService.loadCount);
+
+    verify(masterService);
+  }
+
+  @Test(expected = KeystoreServiceException.class)
+  public void testCachedCredentialStoreIsNotUsedWithAnotherPassword() throws Exception {
+    AtomicReference<char[]> masterPassword = new AtomicReference<>("master_password".toCharArray());
+
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andAnswer(masterPassword::get).anyTimes();
+    replay(masterService);
+
+    Path baseDir = testFolder.newFolder().toPath();
+    GatewayConfigImpl config = createGatewayConfig(baseDir);
+
+    DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+
+    keystoreService.createCredentialStoreForCluster("cluster");
+    keystoreService.addCredentialForCluster("cluster", "alias", "value");
+    assertTrue(keystoreService.getCredentialStoreForCluster("cluster").containsAlias("alias"));
+
+    masterPassword.set("wrong_password".toCharArray());
+    keystoreService.getCredentialStoreForCluster("cluster");
+  }
+
+  @Test
+  public void testConcurrentKeystoreLoads() throws Exception {
+    testConcurrentKeystoreLoads(true);
+    testConcurrentKeystoreLoads(false);
+  }
+
+  private void testConcurrentKeystoreLoads(boolean fileCacheEnabled) throws Exception {
+    char[] masterPassword = "master_password".toCharArray();
+
+    MasterService masterService = createMock(MasterService.class);
+    expect(masterService.getMasterSecret()).andReturn(masterPassword).anyTimes();
+    replay(masterService);
+
+    Path baseDir = testFolder.newFolder().toPath();
+    GatewayConfigImpl config = createGatewayConfig(baseDir);
+    config.set("gateway.keystore.file.cache.enabled", String.valueOf(fileCacheEnabled));
+
+    DefaultKeystoreService keystoreService = new DefaultKeystoreService();
+    keystoreService.setMasterService(masterService);
+    keystoreService.init(config, Collections.emptyMap());
+    createKeystore(keystoreService, masterPassword, config);
+    // Old enough to rule out a check for a change within the file system's timestamp granularity
+    Files.setLastModifiedTime(Paths.get(config.getSigningKeystorePath()),
+        FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)));
+
+    int threadCount = 16;
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    try {
+      CountDownLatch start = new CountDownLatch(1);
+      List<Future<KeyStore>> futures = new ArrayList<>();
+      for (int i = 0; i < threadCount; i++) {
+        futures.add(executor.submit(() -> {
+          start.await();
+          // Loads the file the signing keystore is loaded from, without the cache
+          assertNotNull(keystoreService.getKeystoreForGateway());
+          return keystoreService.getSigningKeystore();
+        }));
+      }
+      start.countDown();
+
+      Set<KeyStore> signingKeystores = Collections.newSetFromMap(new IdentityHashMap<>());
+      for (Future<KeyStore> future : futures) {
+        signingKeystores.add(future.get(30, TimeUnit.SECONDS));
+      }
+      assertEquals(fileCacheEnabled ? 1 : threadCount, signingKeystores.size());
+    } finally {
+      executor.shutdownNow();
+    }
+
+    verify(masterService);
+  }
+
   private void testAddSelfSignedCertForGateway(String hostname) throws Exception {
     char[] masterPassword = "master_password".toCharArray();
 
@@ -919,6 +1084,7 @@ public class DefaultKeystoreServiceTest {
   private void expectInitConfig(GatewayConfig config) {
     expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(1L).anyTimes();
     expect(config.getKeystoreCacheSizeLimit()).andReturn(1L).anyTimes();
+    expect(config.isKeystoreFileCacheEnabled()).andReturn(true).anyTimes();
     expect(config.getCredentialStoreAlgorithm()).andReturn("AES").anyTimes();
     expect(config.getCredentialStoreType()).andReturn(KeyStore.getDefaultType()).anyTimes();
     expect(config.getSelfSigningCertificateAlgorithm()).andReturn("SHA256withRSA").anyTimes();
