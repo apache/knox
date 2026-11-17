@@ -1014,6 +1014,12 @@ public interface GatewayConfig {
   long getKeystoreCacheEntryTimeToLiveInMinutes();
 
   /**
+   * @return <code>true</code> if loaded signing keystores and credential stores are kept in memory and
+   * only loaded again when their file changes; <code>false</code> to load them from disk on every access
+   */
+  boolean isKeystoreFileCacheEnabled();
+
+  /**
    * Indicates whether the embedded Jetty Server support for X-Forwarded Headers should
    * be enabled.
    * @return true if incoming X-Forwarded headers are enabled

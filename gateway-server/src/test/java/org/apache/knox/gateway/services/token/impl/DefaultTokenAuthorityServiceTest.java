@@ -385,6 +385,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.isKeystoreFileCacheEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.expect(config.getSelfSigningCertificateAlgorithm()).andReturn(GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG).anyTimes();
@@ -429,6 +430,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeystorePasswordAlias()).andReturn(GatewayConfig.DEFAULT_SIGNING_KEYSTORE_PASSWORD_ALIAS).anyTimes();
     EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.isKeystoreFileCacheEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.expect(config.getSelfSigningCertificateAlgorithm()).andReturn(GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG).anyTimes();
@@ -478,6 +480,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.isKeystoreFileCacheEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.expect(config.getSelfSigningCertificateAlgorithm()).andReturn(GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG).anyTimes();
@@ -527,6 +530,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("invalid_key").anyTimes();
     EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.isKeystoreFileCacheEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.expect(config.getSelfSigningCertificateAlgorithm()).andReturn(GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG).anyTimes();
@@ -576,6 +580,7 @@ public class DefaultTokenAuthorityServiceTest {
     EasyMock.expect(config.getSigningKeyAlias()).andReturn("server").anyTimes();
     EasyMock.expect(config.getKeystoreCacheEntryTimeToLiveInMinutes()).andReturn(0L).anyTimes();
     EasyMock.expect(config.getKeystoreCacheSizeLimit()).andReturn(0L).anyTimes();
+    EasyMock.expect(config.isKeystoreFileCacheEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(config.getCredentialStoreType()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_TYPE).anyTimes();
     EasyMock.expect(config.getCredentialStoreAlgorithm()).andReturn(GatewayConfig.DEFAULT_CREDENTIAL_STORE_ALG).anyTimes();
     EasyMock.expect(config.getSelfSigningCertificateAlgorithm()).andReturn(GatewayConfig.DEFAULT_SELF_SIGNING_CERT_ALG).anyTimes();

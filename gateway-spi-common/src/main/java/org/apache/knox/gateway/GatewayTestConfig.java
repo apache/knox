@@ -1047,6 +1047,11 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isKeystoreFileCacheEnabled() {
+    return true;
+  }
+
+  @Override
   public boolean isGatewayServerIncomingXForwardedSupportEnabled() {
     return true;
   }

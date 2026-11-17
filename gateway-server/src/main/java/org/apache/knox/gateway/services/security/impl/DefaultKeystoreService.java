@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -57,18 +59,23 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -82,6 +89,18 @@ public class DefaultKeystoreService implements KeystoreService {
   private static GatewayResources RES = ResourcesFactory.get(GatewayResources.class);
 
   Cache<CacheKey, String> cache;
+
+  /*
+   * Writers hold the write lock; readers share the read lock, so loads of different files run in
+   * parallel. Loads of the same file are serialized on its entry in keyStoreLoadLocks, because two
+   * file locks on one file within a JVM fail with an OverlappingFileLockException.
+   */
+  private ReadWriteLock keyStoreLock;
+  private Map<Path, Object> keyStoreLoadLocks;
+
+  /* Signing keystores and credential stores as loaded from disk, keyed by their normalized file path */
+  private Map<Path, CachedKeyStore> keyStoreCache;
+  private boolean keyStoreFileCacheEnabled;
 
   private GatewayConfig config;
 
@@ -117,6 +136,15 @@ public class DefaultKeystoreService implements KeystoreService {
       this.cache = Caffeine.newBuilder().expireAfterAccess(config.getKeystoreCacheEntryTimeToLiveInMinutes(), TimeUnit.MINUTES).maximumSize(config.getKeystoreCacheSizeLimit()).build();
     }
 
+    // Not initialized with the fields: partial mocks are created without running the constructor
+    if (this.keyStoreLock == null) {
+      this.keyStoreLock = new ReentrantReadWriteLock();
+      this.keyStoreLoadLocks = new ConcurrentHashMap<>();
+      this.keyStoreCache = new ConcurrentHashMap<>();
+    }
+    this.keyStoreCache.clear();
+    this.keyStoreFileCacheEnabled = config.isKeystoreFileCacheEnabled();
+
     this.credentialStoreAlgorithm = config.getCredentialStoreAlgorithm();
     this.credentialStoreType = config.getCredentialStoreType();
     this.credentialsSuffix = CREDENTIALS_SUFFIX + this.credentialStoreType.toLowerCase(Locale.ROOT);
@@ -139,7 +167,7 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public KeyStore getKeystoreForGateway() throws KeystoreServiceException {
-    return getKeystore(Paths.get(config.getIdentityKeystorePath()), config.getIdentityKeystoreType(), config.getIdentityKeystorePasswordAlias(), true);
+    return getKeystore(Paths.get(config.getIdentityKeystorePath()), config.getIdentityKeystoreType(), config.getIdentityKeystorePasswordAlias(), true, false);
   }
 
   @Override
@@ -148,7 +176,7 @@ public class DefaultKeystoreService implements KeystoreService {
     if (trustStorePath == null) {
       return null;
     } else {
-      return getKeystore(Paths.get(trustStorePath), config.getHttpClientTruststoreType(), config.getHttpClientTruststorePasswordAlias(), true);
+      return getKeystore(Paths.get(trustStorePath), config.getHttpClientTruststoreType(), config.getHttpClientTruststorePasswordAlias(), true, false);
     }
   }
 
@@ -164,7 +192,7 @@ public class DefaultKeystoreService implements KeystoreService {
       return null;
     }
     return getKeystore(Paths.get(keystorePath), config.getHttpClientKeystoreType(),
-        config.getHttpClientKeystorePasswordAlias(), true);
+        config.getHttpClientKeystorePasswordAlias(), true, false);
   }
 
   @Override
@@ -174,6 +202,10 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public KeyStore getSigningKeystore(String keystoreName) throws KeystoreServiceException {
+    return getSigningKeystore(keystoreName, true);
+  }
+
+  private KeyStore getSigningKeystore(String keystoreName, boolean cacheable) throws KeystoreServiceException {
     Path keyStoreFile;
     String keyStoreType;
     String passwordAlias;
@@ -186,7 +218,7 @@ public class DefaultKeystoreService implements KeystoreService {
       keyStoreType = config.getSigningKeystoreType();
       passwordAlias = config.getSigningKeystorePasswordAlias();
     }
-    return getKeystore(keyStoreFile, keyStoreType, passwordAlias, true);
+    return getKeystore(keyStoreFile, keyStoreType, passwordAlias, true, cacheable);
   }
 
   @Override
@@ -206,9 +238,10 @@ public class DefaultKeystoreService implements KeystoreService {
     addCertForGateway(alias, passphrase, hostname, ekuOids);
   }
 
-  private synchronized void addCertForGateway(String alias, char[] passphrase, String hostname, String... ekuOids)
+  private void addCertForGateway(String alias, char[] passphrase, String hostname, String... ekuOids)
       throws KeystoreServiceException {
     KeyPairGenerator keyPairGenerator;
+    keyStoreLock.writeLock().lock();
     try {
       keyPairGenerator = KeyPairGenerator.getInstance("RSA");
       keyPairGenerator.initialize(2048);
@@ -236,6 +269,8 @@ public class DefaultKeystoreService implements KeystoreService {
     } catch (GeneralSecurityException | IOException e) {
       LOG.failedToAddSeflSignedCertForGateway( alias, e );
       throw new KeystoreServiceException(e);
+    } finally {
+      keyStoreLock.writeLock().unlock();
     }
   }
 
@@ -249,7 +284,7 @@ public class DefaultKeystoreService implements KeystoreService {
   @Override
   public void createCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
     checkExistingCredentialStore(clusterName);
-    createKeyStore(keyStoreDirPath.resolve(clusterName + this.credentialsSuffix), this.credentialStoreType, masterService.getMasterSecret());
+    createKeyStore(credentialStorePath(clusterName), this.credentialStoreType, masterService.getMasterSecret());
   }
 
   private void checkExistingCredentialStore(String clusterName) {
@@ -266,7 +301,7 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public boolean isCredentialStoreForClusterAvailable(String clusterName) throws KeystoreServiceException {
-    final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
+    final Path keyStoreFilePath = credentialStorePath(clusterName);
     try {
       return isKeyStoreAvailable(keyStoreFilePath, this.credentialStoreType, masterService.getMasterSecret());
     } catch (KeyStoreException | IOException e) {
@@ -308,7 +343,9 @@ public class DefaultKeystoreService implements KeystoreService {
 
   @Override
   public Key getSigningKey(String keystoreName, String alias, char[] passphrase) throws KeystoreServiceException {
-    return getKeyFromKeystore(getSigningKeystore(keystoreName), alias, passphrase);
+    // Read the key from a private copy: once a BCFKS store has handed out a private key, it returns
+    // that key for any passphrase, so a shared instance would skip the passphrase check
+    return getKeyFromKeystore(getSigningKeystore(keystoreName, false), alias, passphrase);
   }
 
   private Key getKeyFromKeystore(KeyStore ks, String alias, char[] passphrase) {
@@ -331,7 +368,11 @@ public class DefaultKeystoreService implements KeystoreService {
   public KeyStore getCredentialStoreForCluster(String clusterName) throws KeystoreServiceException {
     // Do not fail getting the credential store if the keystore file does not exist.  The returned
     // KeyStore will be empty.  This seems like a potential bug, but is the behavior before KNOX-1812
-    return getKeystore(keyStoreDirPath.resolve(clusterName + this.credentialsSuffix), this.credentialStoreType, null, false);
+    return getKeystore(credentialStorePath(clusterName), this.credentialStoreType, null, false, true);
+  }
+
+  private Path credentialStorePath(String clusterName) {
+    return keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
   }
 
   @Override
@@ -344,34 +385,42 @@ public class DefaultKeystoreService implements KeystoreService {
   public void addCredentialsForCluster(String clusterName, Map<String, String> credentials)
       throws KeystoreServiceException {
     // Needed to prevent read then write synchronization issue where alias is not added
-    synchronized (this) {
+    keyStoreLock.writeLock().lock();
+    try {
       removeFromCache(clusterName, credentials.keySet());
-      KeyStore ks = getCredentialStoreForCluster(clusterName);
-      if (ks != null) {
-        try {
-          // Add all the credential keys to the keystore
-          for (Map.Entry<String, String> credential : credentials.entrySet()) {
-            final Key key = new SecretKeySpec(credential.getValue().getBytes(StandardCharsets.UTF_8), this.credentialStoreAlgorithm);
-            ks.setKeyEntry(credential.getKey(), key, masterService.getMasterSecret(), null);
-          }
-
-          // Write all the changes once
-          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
-          writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
-          addToCache(clusterName, credentials);
-        } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
-          LOG.failedToAddCredentialForCluster(clusterName, e);
+      // Change a private copy; the cached instance is shared with readers
+      final Path keyStoreFilePath = credentialStorePath(clusterName);
+      KeyStore ks = loadKeyStore(keyStoreFilePath, this.credentialStoreType, masterService.getMasterSecret());
+      try {
+        // Add all the credential keys to the keystore
+        for (Map.Entry<String, String> credential : credentials.entrySet()) {
+          final Key key = new SecretKeySpec(credential.getValue().getBytes(StandardCharsets.UTF_8), this.credentialStoreAlgorithm);
+          ks.setKeyEntry(credential.getKey(), key, masterService.getMasterSecret(), null);
         }
+
+        // Write all the changes once
+        writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
+        addToCache(clusterName, credentials);
+      } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
+        LOG.failedToAddCredentialForCluster(clusterName, e);
       }
+    } finally {
+      keyStoreLock.writeLock().unlock();
     }
   }
 
   @Override
   public char[] getCredentialForCluster(String clusterName, String alias)
       throws KeystoreServiceException {
-    char[] credential;
+    char[] credential = checkCache(clusterName, alias);
+    if (credential != null) {
+      return credential;
+    }
 
-    synchronized (this) {
+    // Holding the read lock keeps writers from changing the alias between reading it from the store
+    // and putting it into the cache
+    keyStoreLock.readLock().lock();
+    try {
       credential = checkCache(clusterName, alias);
       if (credential == null) {
         KeyStore ks = getCredentialStoreForCluster(clusterName);
@@ -383,6 +432,8 @@ public class DefaultKeystoreService implements KeystoreService {
           }
         }
       }
+    } finally {
+      keyStoreLock.readLock().unlock();
     }
 
     return credential;
@@ -415,30 +466,32 @@ public class DefaultKeystoreService implements KeystoreService {
   @Override
   public void removeCredentialsForCluster(String clusterName, Set<String> aliases) throws KeystoreServiceException {
     // Needed to prevent read then write synchronization issue where alias is not removed
-    synchronized (this) {
-      KeyStore ks = getCredentialStoreForCluster(clusterName);
-      if (ks != null) {
-        try {
-          // Delete all the entries
-          for (String alias : aliases) {
-            if (ks.containsAlias(alias)) {
-              ks.deleteEntry(alias);
-            }
+    keyStoreLock.writeLock().lock();
+    try {
+      // Change a private copy; the cached instance is shared with readers
+      final Path keyStoreFilePath = credentialStorePath(clusterName);
+      KeyStore ks = loadKeyStore(keyStoreFilePath, this.credentialStoreType, masterService.getMasterSecret());
+      try {
+        // Delete all the entries
+        for (String alias : aliases) {
+          if (ks.containsAlias(alias)) {
+            ks.deleteEntry(alias);
           }
-          removeFromCache(clusterName, aliases);
-
-          // Update the keystore file once to reflect all the alias deletions
-          final Path keyStoreFilePath = keyStoreDirPath.resolve(clusterName + this.credentialsSuffix);
-          writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
-        } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
-          LOG.failedToRemoveCredentialForCluster(clusterName, e);
         }
+        removeFromCache(clusterName, aliases);
+
+        // Update the keystore file once to reflect all the alias deletions
+        writeKeyStoreToFile(ks, keyStoreFilePath, masterService.getMasterSecret());
+      } catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
+        LOG.failedToRemoveCredentialForCluster(clusterName, e);
       }
+    } finally {
+      keyStoreLock.writeLock().unlock();
     }
   }
 
   /**
-   * Called only from within critical sections of other methods above.
+   * Safe to call without holding the keystore lock.
    */
   private char[] checkCache(String clusterName, String alias) {
     final String cachedCredential = cache.getIfPresent(CacheKey.of(clusterName, alias));
@@ -485,19 +538,34 @@ public class DefaultKeystoreService implements KeystoreService {
    * any of these checks fail, a {@link KeystoreServiceException} is thrown in dictating the exact
    * reason.
    * <p>
-   * Before the keystore file is loaded, the service's read lock is locked to prevent concurrent
-   * reads on the file.
+   * The keystore file is loaded under the service's read lock, so it is not loaded while a writer
+   * changes a keystore file.
+   * <p>
+   * If <code>cacheable</code> is <code>true</code> and the keystore file cache is enabled, the
+   * returned {@link KeyStore} is shared with other callers and must not be changed. It is loaded again
+   * only when the file changes (see {@link #getCachedKeyStore(Path, String, char[])}).
    *
    * @param keystorePath        the path to the keystore file
    * @param keystoreType        the type of keystore file
    * @param alias               the alias for the password to the keystore file (see {@link #getKeyStorePassword(String)})
    * @param failIfNotAccessible <code>true</code> to ensure the keystore file exists and is readable; <code>false</code> to not check
+   * @param cacheable           <code>true</code> if the caller only reads entries other than private keys from the keystore
    * @return a {@link KeyStore}, or <code>null</code> if the requested keystore cannot be created
    * @throws KeystoreServiceException if an error occurs loading the keystore file
    */
-  private synchronized KeyStore getKeystore(Path keystorePath, String keystoreType, String alias,
-                                            boolean failIfNotAccessible)
+  private KeyStore getKeystore(Path keystorePath, String keystoreType, String alias,
+                               boolean failIfNotAccessible, boolean cacheable)
       throws KeystoreServiceException {
+    final boolean useCache = cacheable && keyStoreFileCacheEnabled;
+    if (useCache) {
+      // An unchanged file passed the checks below when it was loaded, so a single stat is enough
+      final CachedKeyStore cached = keyStoreCache.get(keyStoreCacheKey(keystorePath));
+      if (cached != null
+          && cached.isCurrent(keystoreType, digest(getKeyStorePassword(alias)), KeyStoreFileStamp.read(keystorePath))) {
+        return cached.getKeyStore();
+      }
+    }
+
     if (failIfNotAccessible) {
       if (Files.notExists(keystorePath)) {
         LOG.keystoreFileDoesNotExist(keystorePath.toString());
@@ -511,32 +579,123 @@ public class DefaultKeystoreService implements KeystoreService {
       }
     }
 
-    return loadKeyStore(keystorePath, keystoreType, getKeyStorePassword(alias));
+    final char[] password = getKeyStorePassword(alias);
+    keyStoreLock.readLock().lock();
+    try {
+      return useCache
+          ? getCachedKeyStore(keystorePath, keystoreType, password)
+          : loadKeyStoreExclusively(keystorePath, keystoreType, password);
+    } finally {
+      keyStoreLock.readLock().unlock();
+    }
   }
 
-  private synchronized boolean isKeyStoreAvailable(final Path keyStoreFilePath, String storeType,
-                                                   char[] password)
-      throws KeyStoreException, IOException {
-    if (Files.exists(keyStoreFilePath) &&
-            Files.isRegularFile(keyStoreFilePath) &&
-            Files.isReadable(keyStoreFilePath)) {
-      try (InputStream input = Files.newInputStream(keyStoreFilePath)) {
-        final KeyStore keyStore = KeyStore.getInstance(storeType);
-        keyStore.load(input, password);
-        return true;
-      } catch (NoSuchAlgorithmException | CertificateException e) {
-        LOG.failedToLoadKeystore(keyStoreFilePath.toString(), storeType, e);
-      } catch (IOException | KeyStoreException e) {
-        LOG.failedToLoadKeystore(keyStoreFilePath.toString(), storeType, e);
-        throw e;
+  /**
+   * Returns the cached {@link KeyStore} for the file, loading it first if it is not cached yet, its file
+   * has changed since it was loaded, or it was loaded with a different type or password.
+   * <p>
+   * A file is considered unchanged as long as its modification time, size and file key stay the same.
+   * Lookups of a current entry do not get here (see {@link #getKeystore(Path, String, String, boolean, boolean)}),
+   * so they never lock and never wait for an unrelated load.
+   * <p>
+   * Called with the read lock held.
+   */
+  private KeyStore getCachedKeyStore(Path keyStoreFilePath, String storeType, char[] password)
+      throws KeystoreServiceException {
+    final Path cacheKey = keyStoreCacheKey(keyStoreFilePath);
+    final byte[] passwordDigest = digest(password);
+
+    synchronized (keyStoreLoadLock(keyStoreFilePath)) {
+      // Taken before loading, so a change made during the load leaves a stamp that does not match the file
+      final long loadStartedAt = System.currentTimeMillis();
+      final KeyStoreFileStamp stamp = KeyStoreFileStamp.read(keyStoreFilePath);
+
+      // Another thread may have loaded the file while this one waited
+      final CachedKeyStore cached = keyStoreCache.get(cacheKey);
+      if (cached != null && cached.isCurrent(storeType, passwordDigest, stamp)) {
+        return cached.getKeyStore();
+      }
+
+      final KeyStore keyStore = loadKeyStore(keyStoreFilePath, storeType, password);
+      keyStoreCache.put(cacheKey, new CachedKeyStore(storeType, passwordDigest, stamp, keyStore, loadStartedAt));
+      return keyStore;
+    }
+  }
+
+  /**
+   * Loads a private copy of the keystore file, which the caller is free to change.
+   * <p>
+   * Called with the read lock held.
+   */
+  private KeyStore loadKeyStoreExclusively(Path keyStoreFilePath, String storeType, char[] password)
+      throws KeystoreServiceException {
+    synchronized (keyStoreLoadLock(keyStoreFilePath)) {
+      return loadKeyStore(keyStoreFilePath, storeType, password);
+    }
+  }
+
+  private Object keyStoreLoadLock(Path keyStoreFilePath) {
+    return keyStoreLoadLocks.computeIfAbsent(keyStoreCacheKey(keyStoreFilePath), path -> new Object());
+  }
+
+  private static Path keyStoreCacheKey(Path keyStoreFilePath) {
+    return keyStoreFilePath.toAbsolutePath().normalize();
+  }
+
+  private static byte[] digest(char[] password) {
+    if (password == null) {
+      return new byte[0];
+    }
+    final ByteBuffer encoded = StandardCharsets.UTF_8.encode(CharBuffer.wrap(password));
+    try {
+      final MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+      messageDigest.update(encoded.duplicate());
+      return messageDigest.digest();
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    } finally {
+      if (encoded.hasArray()) {
+        Arrays.fill(encoded.array(), (byte) 0);
       }
     }
-    return false;
+  }
+
+  private boolean isKeyStoreAvailable(final Path keyStoreFilePath, String storeType,
+                                      char[] password)
+      throws KeyStoreException, IOException {
+    keyStoreLock.readLock().lock();
+    try {
+      if (Files.exists(keyStoreFilePath) &&
+              Files.isRegularFile(keyStoreFilePath) &&
+              Files.isReadable(keyStoreFilePath)) {
+        try (InputStream input = Files.newInputStream(keyStoreFilePath)) {
+          final KeyStore keyStore = KeyStore.getInstance(storeType);
+          keyStore.load(input, password);
+          return true;
+        } catch (NoSuchAlgorithmException | CertificateException e) {
+          LOG.failedToLoadKeystore(keyStoreFilePath.toString(), storeType, e);
+        } catch (IOException | KeyStoreException e) {
+          LOG.failedToLoadKeystore(keyStoreFilePath.toString(), storeType, e);
+          throw e;
+        }
+      }
+      return false;
+    } finally {
+      keyStoreLock.readLock().unlock();
+    }
   }
 
   // Package private for unit test access
-  // We need this to be synchronized to prevent multiple threads from using at once
-  synchronized KeyStore createKeyStore(Path keystoreFilePath, String keystoreType, char[] password) throws KeystoreServiceException {
+  KeyStore createKeyStore(Path keystoreFilePath, String keystoreType, char[] password) throws KeystoreServiceException {
+    keyStoreLock.writeLock().lock();
+    try {
+      return createKeyStoreLocked(keystoreFilePath, keystoreType, password);
+    } finally {
+      keyStoreLock.writeLock().unlock();
+    }
+  }
+
+  private KeyStore createKeyStoreLocked(Path keystoreFilePath, String keystoreType, char[] password) throws KeystoreServiceException {
     // Ensure the parent directory exists...
     // This is symlink safe.
     Path parentPath = keystoreFilePath.getParent();
@@ -563,8 +722,9 @@ public class DefaultKeystoreService implements KeystoreService {
   }
 
   // Package private for unit test access
-  synchronized KeyStore loadKeyStore(final Path keyStoreFilePath, final String storeType,
-                                     final char[] password) throws KeystoreServiceException {
+  // Callers hold either the write lock, or the read lock and the file's load lock
+  KeyStore loadKeyStore(final Path keyStoreFilePath, final String storeType,
+                        final char[] password) throws KeystoreServiceException {
     try {
       final KeyStore keyStore = KeyStore.getInstance(storeType);
 
@@ -587,7 +747,7 @@ public class DefaultKeystoreService implements KeystoreService {
   }
 
   @Override
-  public synchronized KeyStore loadKeyStore(String path, String keystoreType, String password)
+  public KeyStore loadKeyStore(String path, String keystoreType, String password)
           throws KeystoreServiceException {
       try {
           return createKeyStore(FileSystems.getDefault().getPath(path), keystoreType, password.toCharArray());
@@ -597,25 +757,36 @@ public class DefaultKeystoreService implements KeystoreService {
   }
 
   @Override
-  public synchronized KeyStore loadTruststore(String path,  String keystoreType, String password)
+  public KeyStore loadTruststore(String path,  String keystoreType, String password)
           throws KeystoreServiceException {
+      keyStoreLock.readLock().lock();
       try {
-          return loadKeyStore(FileSystems.getDefault().getPath(path), keystoreType, password.toCharArray());
+          return loadKeyStoreExclusively(FileSystems.getDefault().getPath(path), keystoreType, password.toCharArray());
       } catch (Exception e) {
           throw new KeystoreServiceException(e);
+      } finally {
+          keyStoreLock.readLock().unlock();
       }
   }
 
   // Package private for unit test access
-  synchronized void writeKeyStoreToFile(final KeyStore keyStore, final Path path, char[] password)
+  void writeKeyStoreToFile(final KeyStore keyStore, final Path path, char[] password)
       throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
-    // TODO: backup the keystore on disk before attempting a write and restore on failure
-    try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.WRITE,
-        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-      fileChannel.lock();
-      try (OutputStream out = Channels.newOutputStream(fileChannel)) {
-        keyStore.store(out, password);
+    keyStoreLock.writeLock().lock();
+    try {
+      // TODO: backup the keystore on disk before attempting a write and restore on failure
+      try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.WRITE,
+          StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        fileChannel.lock();
+        try (OutputStream out = Channels.newOutputStream(fileChannel)) {
+          keyStore.store(out, password);
+        }
+      } finally {
+        // Also when the write failed, as the file may be partially written
+        keyStoreCache.remove(keyStoreCacheKey(path));
       }
+    } finally {
+      keyStoreLock.writeLock().unlock();
     }
   }
 
