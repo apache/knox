@@ -399,6 +399,56 @@ public class KnoxLDAPServerManagerTest {
     }
 
     @Test
+    public void testStartWithLdapProxyBackendWithOtherObjectClasses() throws Exception {
+        // test against conventional
+        Map<String, String> dnObjectClasses = new HashMap<>();
+        dnObjectClasses.put("dc=company,dc=test,dc=case,dc=org", "domain");
+        dnObjectClasses.put("o=company,dc=test,dc=case,dc=org", "organization");
+        dnObjectClasses.put("ou=engineering,dc=test,dc=case,dc=org", "organizationalUnit");
+        dnObjectClasses.put("c=us,dc=test,dc=case,dc=org", "country");
+        dnObjectClasses.put("cn=other,dc=test,dc=case,dc=org", "locality");
+        dnObjectClasses.put("l=austin,dc=test,dc=case,dc=org", "locality");
+        // unexpected DNs for backend base dn
+        dnObjectClasses.put("uid=accounts,dc=test,dc=case,dc=org", "locality");
+
+        for (Map.Entry<String, String> testcase : dnObjectClasses.entrySet()) {
+            // reset the server manager for the next test
+            tearDown();
+            setUp();
+
+            verifyRemoteBaseDnHandling(testcase.getKey(), testcase.getValue());
+        }
+    }
+
+    private void verifyRemoteBaseDnHandling(String baseDn, String expectedObjectClass) throws Exception {
+        GatewayConfig mockConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        expect(mockConfig.getGatewayDataDir()).andReturn(tempWorkDir.getParent()).anyTimes();
+        expect(mockConfig.getLDAPPort()).andReturn(port).anyTimes();
+        expect(mockConfig.getLDAPBaseDN()).andReturn("dc=proxy,dc=com").anyTimes();
+        expect(mockConfig.getLDAPInterceptorNames()).andReturn(List.of("ldapbackend")).anyTimes();
+        Map<String, String> backendConfig = createLdapBackendInterceptorConfig();
+        backendConfig.put("remoteBaseDn", baseDn);
+        expect(mockConfig.getLDAPInterceptorConfig("ldapbackend")).andReturn(backendConfig).anyTimes();
+        replay(mockConfig);
+
+        serverManager.initialize(mockConfig);
+
+        serverManager.start();
+
+        // Ensure that the partitions are created and backends registered with the UserSearchInterceptor
+        UserSearchInterceptor interceptor = (UserSearchInterceptor) serverManager.directoryService.getInterceptor("ldapbackend");
+        assertNotNull("Interceptor should not be null", interceptor);
+        assertEquals("LDAP backend dn should match configuration",
+                backendConfig.get("remoteBaseDn"), interceptor.getBackend().getBaseDn());
+        // LdapNoSuchObjectException will be thrown if expected partition does not exist
+        serverManager.directoryService.getPartitionNexus().getPartition(
+                new Dn(serverManager.directoryService.getSchemaManager(), interceptor.getBackend().getBaseDn()));
+        Entry entry = serverManager.directoryService.getAdminSession().lookup(new Dn(baseDn));
+        assertTrue("Entry objectclass for " + baseDn + " should match " + expectedObjectClass,
+                entry.hasObjectClass(expectedObjectClass));
+    }
+
+    @Test
     public void testLdapBackendPasswordAliasIsResolved() throws Exception {
         final String alias = "my-ad-password";
         final String secret = "s3cr3t-ad-pass";
