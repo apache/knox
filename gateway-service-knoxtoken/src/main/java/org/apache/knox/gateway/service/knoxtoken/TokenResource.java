@@ -556,7 +556,7 @@ public class TokenResource {
             .contains(JWSAlgorithm.parse(algName));
   }
 
-  private boolean isServerManagedTokenStateEnabled(ServletContext context) {
+  protected boolean isServerManagedTokenStateEnabled(ServletContext context) {
     boolean isServerManaged;
 
     // First, check for explicit service-level configuration

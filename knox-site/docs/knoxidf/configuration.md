@@ -47,9 +47,10 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 `knoxidf.`.
 
 !!! note "Access-token TTL is managed by Knox"
-    KnoxIDF issues **server-managed** tokens: the access-token lifetime is governed by the token
+    By default KnoxIDF issues **server-managed** tokens: the access-token lifetime is governed by the token
     layer (`knoxidf.knox.token.ttl`) and, on the token-exchange topology, by the `JWTProvider`'s
-    `knox.token.exp.server-managed=true`. Clients cannot request an arbitrary lifetime.
+    `knox.token.exp.server-managed=true`. Clients cannot request an arbitrary lifetime. See
+    [Unmanaged tokens](#unmanaged-tokens) to turn server management off.
 
 ## Core `KNOXIDF` service parameters
 
@@ -58,6 +59,7 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 | `knoxidf.knox.token.ttl` | (token-layer default) | Access-token lifetime in **milliseconds** (passthrough to `knox.token.ttl`). |
 | `knoxidf.knox.token.limit.per.user` | (token-layer default) | Max concurrent server-managed tokens per user; `-1` = unlimited (passthrough to `knox.token.limit.per.user`). |
 | `knoxidf.knox.token.limit.per.user.by.type.enabled` | `true` | When `true`, only JWTs, authorization codes and refresh tokens count towards the per-user limit and the user's client credentials and API keys are ignored; when `false`, all of the user's tokens count (passthrough to `knox.token.limit.per.user.by.type.enabled`). |
+| `knoxidf.knox.token.exp.server-managed` | `true` | When `false`, the token endpoint issues [unmanaged tokens](#unmanaged-tokens): they are not stored in token state and cannot be revoked. Do not use it with the `authorization_code` or `refresh_token` grants, or the authorize and registration endpoints, which need stored state (passthrough to `knox.token.exp.server-managed`). |
 | `refresh.token.ttl` | `86400000` (24 h) | Refresh-token lifetime in milliseconds. Refresh tokens are issued only when the `offline_access` scope is granted, and are rotated on each use. |
 | `knoxidf.auto.consent.enabled` | `false` | When `true`, the [consent screen](security.md#consent) is skipped. This is a **server-side** decision and is never read from a client request parameter. |
 | `knoxidf.client.registration.anonymous.allowed` | `false` | When `true`, [dynamic client registration](security.md#dynamic-client-registration) accepts anonymous callers. Secure by default. |
@@ -72,6 +74,41 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
     Both `knoxidf.auto.consent.enabled` and `knoxidf.client.registration.anonymous.allowed`
     default to **`false`**. The sample topologies set them to `true` only to keep experimentation
     frictionless — review them before any non-development deployment.
+
+### Unmanaged tokens
+
+Every token the token endpoint issues is stored in token state by default, so it can be listed,
+disabled and revoked, at the cost of database writes on each request. For grants whose tokens are
+never revoked or looked up, such as short-lived [token exchange](token_exchange.md) tokens, set:
+
+```xml
+<param>
+    <name>knoxidf.knox.token.exp.server-managed</name>
+    <value>false</value>
+</param>
+```
+
+The token endpoint then issues tokens with `managed.token=false` and does not store them, so they
+are checked by signature and expiry only and cannot be revoked. The gateway logs that server
+management of token state is disabled for the topology.
+
+Do not use anything that reads stored state on that topology: the `authorization_code` and
+`refresh_token` grants, and the authorize and registration endpoints, which keep client
+registrations, consent and authorization codes in token state. They are not supported with token
+state disabled, and requests to them fail with a server error rather than an OAuth error. Set it
+only on a topology that serves token exchange alone, such as the
+[token-exchange topology](getting_started.md#3-deploy-the-knoxidf-topologies). Discovery advertises
+that topology's `token_endpoint` (see `token.exchange.topology.name`), so codes issued elsewhere
+cannot be redeemed either: the setting turns off the authorization code flow for every client that
+uses this discovery document.
+
+!!! warning "Verifiers must not require token state"
+    A `JWTProvider` with `knox.token.exp.server-managed=true` rejects a token it has no state record
+    for with `401`. Topologies that accept unmanaged tokens must leave it unset or `false`.
+
+Combine the setting with [`jwt.allowed.grant.types`](../config_jwt_allowed_grant_types.md) limited to
+`urn:ietf:params:oauth:grant-type:token-exchange`, so the other grants are rejected with
+`400 unsupported_grant_type` and the discovery documents stop advertising them.
 
 ## Federated OP parameters
 

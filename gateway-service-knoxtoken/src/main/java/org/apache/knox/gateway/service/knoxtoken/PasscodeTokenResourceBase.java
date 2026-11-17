@@ -21,7 +21,6 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.gen.OctetSequenceKeyGenerator;
-import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -86,34 +85,38 @@ public class PasscodeTokenResourceBase extends TokenResourceV2 {
         return null;
     }
 
+    // Server-managed token state is the default here, but an explicit knox.token.exp.server-managed (plain or
+    // extension-prefixed) is honored. The decision matches the parent's, which builds the token MAC only when
+    // server management is enabled.
     protected void setupTokenStateService(ServletContext wrapperContext) throws ServletException {
         wrapperContext.setInitParameter(TokenStateService.CONFIG_SERVER_MANAGED, "true");
+        final String topologyName = (String) wrapperContext.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
+        final boolean tokenStateManagementEnabled = isServerManagedTokenStateEnabled(wrapperContext);
         services = (GatewayServices) wrapperContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
-        tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
-        final GatewayConfig gatewayConfig = (GatewayConfig) wrapperContext.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
-        gatewayConfig.getKnoxTokenHashAlgorithm();
-        final AliasService aliasService = services.getService(ServiceType.ALIAS_SERVICE);
-        char[] hashkey;
-        try {
-            hashkey = aliasService.getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME);
-        } catch (AliasServiceException e) {
-            throw new ServletException(e);
-        }
-        if (hashkey == null) {
-            generateAndStoreHMACKeyAlias();
+        if  (tokenStateManagementEnabled) {
+            tokenStateService = services.getService(ServiceType.TOKEN_STATE_SERVICE);
+            try {
+                generateAndStoreHMACKeyAliasIfNeeded();
+            } catch (AliasServiceException e) {
+                throw new ServletException(e);
+            }
+        } else {
+            log.serverManagedTokenStateDisabled(topologyName);
         }
     }
 
-    protected void generateAndStoreHMACKeyAlias() {
-        final int keyLength = Integer.parseInt(JWSAlgorithm.HS256.getName().substring(2));
-        String jwkAsText = null;
-        try {
-            final OctetSequenceKey jwk = new OctetSequenceKeyGenerator(keyLength).keyID(UUID.randomUUID().toString())
-                    .algorithm(JWSAlgorithm.HS256).generate();
-            jwkAsText = jwk.getKeyValue().toJSONString().replace("\"", "");
-            getAliasService().addAliasForCluster("__gateway", TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME, jwkAsText);
-        } catch (JOSEException | AliasServiceException e) {
-            throw new RuntimeException("Error while generating " + keyLength + " bits JWK secret", e);
+    protected void generateAndStoreHMACKeyAliasIfNeeded() throws AliasServiceException {
+        final char[] hashkey = getAliasService().getPasswordFromAliasForGateway(TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME);
+        if  (hashkey == null) {
+            final int keyLength = Integer.parseInt(JWSAlgorithm.HS256.getName().substring(2));
+            try {
+                final OctetSequenceKey jwk = new OctetSequenceKeyGenerator(keyLength).keyID(UUID.randomUUID().toString())
+                        .algorithm(JWSAlgorithm.HS256).generate();
+                final String jwkAsText = jwk.getKeyValue().toJSONString().replace("\"", "");
+                getAliasService().addAliasForCluster("__gateway", TokenMAC.KNOX_TOKEN_HASH_KEY_ALIAS_NAME, jwkAsText);
+            } catch (JOSEException | AliasServiceException e) {
+                throw new RuntimeException("Error while generating " + keyLength + " bits JWK secret", e);
+            }
         }
     }
 

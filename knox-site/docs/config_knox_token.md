@@ -58,6 +58,8 @@ knox.token.issuer  | This is an optional configuration parameter to specify the 
 
 Note that server-managed token state can be configured for all KnoxToken service deployments in gateway-site (see [gateway.knox.token.exp.server-managed](#gateway-server-configuration)). If it is configured at the gateway level, then the associated service parameter, if configured, will override the gateway configuration.
 
+The `CLIENTID` and `APIKEY` APIs, and the KnoxIDF endpoints, default `knox.token.exp.server-managed` to `true` instead, whatever the gateway-level setting is. An explicit service-level value, plain or with the API-specific prefix (for example `apikey.knox.token.exp.server-managed`), is honored. Client credentials and API keys are passcodes that are only valid while stored, so do not set it to `false` for those APIs. The KnoxIDF token endpoint can issue unmanaged tokens; see [KnoxIDF unmanaged tokens](knoxidf/configuration.md#unmanaged-tokens).
+
 Adding the KnoxToken configuration shown above to a topology that is protected with the ShrioProvider is a very simple and effective way to expose an endpoint from which a Knox token can be requested. Once it is acquired it may be used to access resources at intended endpoints until it expires.
 
 The following curl command can be used to acquire a token from the Knox Token service as configured in the sandbox topology:
