@@ -1060,6 +1060,240 @@ public class JdbcDelegationPolicyServiceTest {
   }
 
   // ------------------------------------------------------------------
+  // findByActor: whole-policy single-statement read
+  // ------------------------------------------------------------------
+
+  @Test
+  public void testFindByActorReturnsEveryFieldAndAllChildCollections() throws Exception {
+    final Instant createdAt = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/api/v1", new HashSet<>(Arrays.asList("read", "write")));
+    rp.put("/api/v2", Collections.singleton("read"));
+    final DelegationPolicy registered = service.register(new DelegationPolicy(
+        null, "oidc", "sq-all", "the-name", "active", 1200, "the-description", "admin1",
+        createdAt, createdAt, true,
+        new HashSet<>(Arrays.asList("alice", "bob")),
+        new HashSet<>(Arrays.asList("grp1", "grp2")), rp));
+
+    final DelegationPolicy found = service.findByActor("oidc", "sq-all").orElseThrow(AssertionError::new);
+
+    assertEquals(registered.getRegistrationId(), found.getRegistrationId());
+    assertEquals("oidc", found.getActorAuthority());
+    assertEquals("sq-all", found.getActorId());
+    assertEquals("the-name", found.getName());
+    assertEquals("active", found.getStatus());
+    assertEquals(Integer.valueOf(1200), found.getTokenTtlSec());
+    assertEquals("the-description", found.getDescription());
+    assertEquals("admin1", found.getCreatedBy());
+    assertEquals(createdAt, found.getCreatedAt());
+    assertEquals(createdAt, found.getUpdatedAt());
+    assertTrue(found.isAllowHeadlessExchange());
+    assertEquals(new HashSet<>(Arrays.asList("alice", "bob")), found.getCanActForUsers());
+    assertEquals(new HashSet<>(Arrays.asList("grp1", "grp2")), found.getCanActForGroups());
+    assertEquals(new HashSet<>(Arrays.asList("read", "write")), found.getResourcePolicy().get("/api/v1"));
+    assertEquals(Collections.singleton("read"), found.getResourcePolicy().get("/api/v2"));
+  }
+
+  @Test
+  public void testFindByActorKeepsNullableFieldsNull() throws Exception {
+    service.register(policy("oidc", "sq-nulls", null, "active", null, null, null,
+        Instant.now(), Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap()));
+
+    final DelegationPolicy found = service.findByActor("oidc", "sq-nulls").orElseThrow(AssertionError::new);
+
+    assertNull(found.getName());
+    assertNull(found.getDescription());
+    assertNull(found.getCreatedBy());
+    assertNull("a NULL token_ttl_sec must not be read back as 0", found.getTokenTtlSec());
+  }
+
+  @Test
+  public void testFindByActorPolicyWithNoChildRowsAtAllIsStillFound() throws Exception {
+    // The storage layer accepts a policy with no users, groups or resources even though the REST
+    // layer rejects one. Such a policy contributes only its core row, and must still be found.
+    service.register(policy("oidc", "sq-bare", null, "active", null, null, null,
+        Instant.now(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+
+    final DelegationPolicy found = service.findByActor("oidc", "sq-bare").orElseThrow(AssertionError::new);
+
+    assertTrue(found.getCanActForUsers().isEmpty());
+    assertTrue(found.getCanActForGroups().isEmpty());
+    assertTrue(found.getResourcePolicy().isEmpty());
+  }
+
+  @Test
+  public void testFindByActorResourceWithNoScopesRoundTripsAsEmptySet() throws Exception {
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/api/v1", Collections.emptySet());
+    service.register(policy("oidc", "sq-noscope", null, "active", null, null, null,
+        Instant.now(), Collections.emptySet(), Collections.emptySet(), rp));
+
+    final DelegationPolicy found = service.findByActor("oidc", "sq-noscope").orElseThrow(AssertionError::new);
+
+    assertTrue(found.getResourcePolicy().containsKey("/api/v1"));
+    assertTrue("an empty scope set is the all-scopes sentinel and must not become absent",
+        found.getResourcePolicy().get("/api/v1").isEmpty());
+  }
+
+  @Test
+  public void testFindByActorMixedResourcesWithAndWithoutScopes() throws Exception {
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/with", new HashSet<>(Arrays.asList("read", "write")));
+    rp.put("/without", Collections.emptySet());
+    service.register(policy("oidc", "sq-mixed", null, "active", null, null, null,
+        Instant.now(), Collections.emptySet(), Collections.emptySet(), rp));
+
+    final DelegationPolicy found = service.findByActor("oidc", "sq-mixed").orElseThrow(AssertionError::new);
+
+    assertEquals(2, found.getResourcePolicy().size());
+    assertEquals(new HashSet<>(Arrays.asList("read", "write")), found.getResourcePolicy().get("/with"));
+    assertTrue(found.getResourcePolicy().get("/without").isEmpty());
+  }
+
+  @Test
+  public void testFindByActorUnknownActorReturnsEmpty() throws Exception {
+    service.register(policy("oidc", "sq-present", null, "active", null, null, null,
+        Instant.now(), Collections.singleton("alice"), Collections.emptySet(), Collections.emptyMap()));
+
+    assertFalse(service.findByActor("oidc", "sq-absent").isPresent());
+    assertFalse(service.findByActor("saml", "sq-present").isPresent());
+  }
+
+  @Test
+  public void testFindByActorAndGetReturnIdenticalPolicies() throws Exception {
+    final Map<String, Set<String>> rp = new HashMap<>();
+    rp.put("/api/v1", new HashSet<>(Arrays.asList("read", "write")));
+    rp.put("/api/v2", Collections.emptySet());
+    final DelegationPolicy registered = service.register(new DelegationPolicy(
+        null, "oidc", "sq-same", "n", "active", 900, "d", "adm",
+        Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS),
+        Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS), true,
+        new HashSet<>(Arrays.asList("alice", "bob")), Collections.singleton("grp1"), rp));
+
+    final DelegationPolicy byActor = service.findByActor("oidc", "sq-same").orElseThrow(AssertionError::new);
+    final DelegationPolicy byId = service.get(registered.getRegistrationId()).orElseThrow(AssertionError::new);
+
+    assertPolicyEquals(byId, byActor);
+  }
+
+  // ------------------------------------------------------------------
+  // list(): batched child reads
+  // ------------------------------------------------------------------
+
+  @Test
+  public void testListAssignsEachPolicyOnlyItsOwnChildRows() throws Exception {
+    service.register(new DelegationPolicy(null, "oidc", "x-a", "n-a", "active", 1, "d-a", "adm",
+        Instant.now(), Instant.now(), false,
+        Collections.singleton("user-a"), Collections.singleton("grp-a"),
+        singleResourcePolicy("/a", "read-a")));
+    service.register(new DelegationPolicy(null, "oidc", "x-b", "n-b", "active", 2, "d-b", "adm",
+        Instant.now(), Instant.now(), false,
+        Collections.singleton("user-b"), Collections.singleton("grp-b"),
+        singleResourcePolicy("/b", "read-b")));
+    service.register(new DelegationPolicy(null, "saml", "x-c", "n-c", "active", 3, "d-c", "adm",
+        Instant.now(), Instant.now(), false,
+        Collections.singleton("user-c"), Collections.singleton("grp-c"),
+        singleResourcePolicy("/c", "read-c")));
+
+    final Map<String, DelegationPolicy> byActorId = new HashMap<>();
+    for (DelegationPolicy p : service.list(null).getPolicies()) {
+      byActorId.put(p.getActorId(), p);
+    }
+
+    assertEquals(3, byActorId.size());
+    for (String suffix : new String[]{"a", "b", "c"}) {
+      final DelegationPolicy p = byActorId.get("x-" + suffix);
+      assertNotNull("policy x-" + suffix + " must be listed", p);
+      assertEquals(Collections.singleton("user-" + suffix), p.getCanActForUsers());
+      assertEquals(Collections.singleton("grp-" + suffix), p.getCanActForGroups());
+      assertEquals(Collections.singleton("/" + suffix), p.getResourcePolicy().keySet());
+      assertEquals(Collections.singleton("read-" + suffix), p.getResourcePolicy().get("/" + suffix));
+    }
+  }
+
+  @Test
+  public void testListMixesPolicyWithNoChildRowsAndPolicyWithChildRows() throws Exception {
+    service.register(policy("oidc", "mix-bare", null, "active", null, null, null,
+        Instant.now(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
+    service.register(policy("oidc", "mix-rich", null, "active", null, null, null,
+        Instant.now(), new HashSet<>(Arrays.asList("alice", "bob")),
+        Collections.singleton("grp1"), singleResourcePolicy("/r", "read")));
+
+    final Map<String, DelegationPolicy> byActorId = new HashMap<>();
+    for (DelegationPolicy p : service.list(null).getPolicies()) {
+      byActorId.put(p.getActorId(), p);
+    }
+
+    final DelegationPolicy bare = byActorId.get("mix-bare");
+    assertNotNull(bare);
+    assertTrue(bare.getCanActForUsers().isEmpty());
+    assertTrue(bare.getCanActForGroups().isEmpty());
+    assertTrue(bare.getResourcePolicy().isEmpty());
+
+    final DelegationPolicy rich = byActorId.get("mix-rich");
+    assertNotNull(rich);
+    assertEquals(2, rich.getCanActForUsers().size());
+    assertEquals(Collections.singleton("grp1"), rich.getCanActForGroups());
+    assertEquals(Collections.singleton("read"), rich.getResourcePolicy().get("/r"));
+  }
+
+  @Test
+  public void testListReadsChildRowsAcrossIdBatchBoundaries() throws Exception {
+    // Exercises the batching loop with a batch size small enough to need several passes, rather
+    // than registering a production-sized batch of policies.
+    for (int i = 0; i < 5; i++) {
+      service.register(new DelegationPolicy(null, "oidc", "batch-" + i, null, "active", null, null, null,
+          Instant.now(), Instant.now(), false,
+          Collections.singleton("user-" + i), Collections.singleton("group-" + i),
+          singleResourcePolicy("/res-" + i, "scope-" + i)));
+    }
+
+    final org.h2.jdbcx.JdbcDataSource dataSource = new org.h2.jdbcx.JdbcDataSource();
+    dataSource.setUrl(H2_URL);
+    final DelegationPolicyDatabase database = new DelegationPolicyDatabase(
+        dataSource, DatabaseType.H2.type(), 10_000, 10_000, 2);
+
+    final DelegationPolicyList listed = database.selectAll(null);
+
+    assertEquals(5, listed.getPolicies().size());
+    assertFalse(listed.hasMore());
+    final Map<String, DelegationPolicy> byActorId = new HashMap<>();
+    for (DelegationPolicy p : listed.getPolicies()) {
+      byActorId.put(p.getActorId(), p);
+    }
+    for (int i = 0; i < 5; i++) {
+      final DelegationPolicy p = byActorId.get("batch-" + i);
+      assertNotNull("policy batch-" + i + " must survive batching", p);
+      assertEquals(Collections.singleton("user-" + i), p.getCanActForUsers());
+      assertEquals(Collections.singleton("group-" + i), p.getCanActForGroups());
+      assertEquals(Collections.singleton("scope-" + i), p.getResourcePolicy().get("/res-" + i));
+    }
+  }
+
+  @Test
+  public void testListTruncatedPageStillCarriesItsOwnChildRows() throws Exception {
+    for (int i = 0; i < 5; i++) {
+      service.register(new DelegationPolicy(null, "oidc", "trunc-" + i, null, "active", null, null, null,
+          Instant.now(), Instant.now(), false,
+          Collections.singleton("user-" + i), Collections.emptySet(),
+          singleResourcePolicy("/res-" + i, "scope-" + i)));
+    }
+
+    final JdbcDelegationPolicyService limitedService = createServiceWithLimits(3, 10_000);
+    final DelegationPolicyList result = limitedService.list(null);
+
+    assertEquals(3, result.getPolicies().size());
+    assertTrue(result.hasMore());
+    for (DelegationPolicy p : result.getPolicies()) {
+      final String suffix = p.getActorId().substring("trunc-".length());
+      assertEquals("children must follow the policy they belong to, not the page position",
+          Collections.singleton("user-" + suffix), p.getCanActForUsers());
+      assertEquals(Collections.singleton("scope-" + suffix),
+          p.getResourcePolicy().get("/res-" + suffix));
+    }
+  }
+
+  // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
 
@@ -1110,6 +1344,22 @@ public class JdbcDelegationPolicyServiceTest {
     final Map<String, Set<String>> rp = new HashMap<>();
     rp.put(resource, new HashSet<>(Arrays.asList(scopes)));
     return rp;
+  }
+
+  private static void assertPolicyEquals(DelegationPolicy expected, DelegationPolicy actual) {
+    assertEquals("actorAuthority", expected.getActorAuthority(), actual.getActorAuthority());
+    assertEquals("actorId", expected.getActorId(), actual.getActorId());
+    assertEquals("name", expected.getName(), actual.getName());
+    assertEquals("status", expected.getStatus(), actual.getStatus());
+    assertEquals("tokenTtlSec", expected.getTokenTtlSec(), actual.getTokenTtlSec());
+    assertEquals("description", expected.getDescription(), actual.getDescription());
+    assertEquals("createdBy", expected.getCreatedBy(), actual.getCreatedBy());
+    assertEquals("createdAt", expected.getCreatedAt(), actual.getCreatedAt());
+    assertEquals("updatedAt", expected.getUpdatedAt(), actual.getUpdatedAt());
+    assertEquals("allowHeadlessExchange", expected.isAllowHeadlessExchange(), actual.isAllowHeadlessExchange());
+    assertEquals("canActForUsers", expected.getCanActForUsers(), actual.getCanActForUsers());
+    assertEquals("canActForGroups", expected.getCanActForGroups(), actual.getCanActForGroups());
+    assertEquals("resourcePolicy", expected.getResourcePolicy(), actual.getResourcePolicy());
   }
 
   private static void clearTables() {
