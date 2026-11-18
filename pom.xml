@@ -267,6 +267,7 @@
         <pac4j.version>6.5.3</pac4j.version>
         <jee-pac4j.version>8.0.3</jee-pac4j.version>
         <postgresql.version>42.7.12</postgresql.version>
+        <hikaricp.version>7.0.2</hikaricp.version>
         <mysql.version>8.0.28</mysql.version>
         <mariadb.connector.version>3.3.7</mariadb.connector.version>
         <okio.version>3.6.0</okio.version>
@@ -2715,6 +2716,11 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikaricp.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>

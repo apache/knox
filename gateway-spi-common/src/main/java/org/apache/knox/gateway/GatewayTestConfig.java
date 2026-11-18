@@ -1114,6 +1114,36 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public boolean isDatabaseConnectionPoolEnabled() {
+    return true;
+  }
+
+  @Override
+  public int getDatabaseConnectionPoolMaxSize() {
+    return 10;
+  }
+
+  @Override
+  public int getDatabaseConnectionPoolMinIdle() {
+    return -1;
+  }
+
+  @Override
+  public long getDatabaseConnectionPoolConnectionTimeout() {
+    return 30000L;
+  }
+
+  @Override
+  public long getDatabaseConnectionPoolIdleTimeout() {
+    return 600000L;
+  }
+
+  @Override
+  public long getDatabaseConnectionPoolMaxLifetime() {
+    return 1800000L;
+  }
+
+  @Override
   public int getJettyMaxFormContentSize() {
     return 0;
   }
