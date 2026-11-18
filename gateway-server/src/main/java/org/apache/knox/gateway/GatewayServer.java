@@ -31,6 +31,7 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.config.GatewayConfigChangeListener;
 import org.apache.knox.gateway.config.GatewayConfigurationException;
 import org.apache.knox.gateway.config.impl.GatewayConfigImpl;
+import org.apache.knox.gateway.database.DataSourceProvider;
 import org.apache.knox.gateway.deploy.DeploymentException;
 import org.apache.knox.gateway.deploy.DeploymentFactory;
 import org.apache.knox.gateway.filter.CorrelationHandler;
@@ -827,6 +828,7 @@ public class GatewayServer {
       try {
         log.stoppingGateway();
         services.stop();
+        DataSourceProvider.closeConnectionPools();
         monitor.stopMonitor();
         if (monitor instanceof GatewayConfigChangeListener) {
           unregisterConfigChangeListener((GatewayConfigChangeListener) monitor);

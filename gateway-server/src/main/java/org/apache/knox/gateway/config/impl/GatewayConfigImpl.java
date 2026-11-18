@@ -361,6 +361,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   private static final String GATEWAY_DATABASE_H2_ENCRYPTION_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".database.h2.encryption.enabled";
   private static final String GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS = GATEWAY_CONFIG_FILE_PREFIX + ".database.h2.encryption.passphrase.alias";
   private static final String DEFAULT_GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS = "h2_encryption_passphrase";
+  private static final String GATEWAY_DATABASE_POOL_ENABLED = GATEWAY_CONFIG_FILE_PREFIX + ".database.pool.enabled";
+  private static final String GATEWAY_DATABASE_POOL_MAX_SIZE = GATEWAY_CONFIG_FILE_PREFIX + ".database.pool.max.size";
+  private static final String GATEWAY_DATABASE_POOL_MIN_IDLE = GATEWAY_CONFIG_FILE_PREFIX + ".database.pool.min.idle";
+  private static final String GATEWAY_DATABASE_POOL_CONNECTION_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".database.pool.connection.timeout.ms";
+  private static final String GATEWAY_DATABASE_POOL_IDLE_TIMEOUT = GATEWAY_CONFIG_FILE_PREFIX + ".database.pool.idle.timeout.ms";
+  private static final String GATEWAY_DATABASE_POOL_MAX_LIFETIME = GATEWAY_CONFIG_FILE_PREFIX + ".database.pool.max.lifetime.ms";
+  private static final int DEFAULT_GATEWAY_DATABASE_POOL_MAX_SIZE = 10;
+  private static final long DEFAULT_GATEWAY_DATABASE_POOL_CONNECTION_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+  private static final long DEFAULT_GATEWAY_DATABASE_POOL_IDLE_TIMEOUT = TimeUnit.MINUTES.toMillis(10);
+  private static final long DEFAULT_GATEWAY_DATABASE_POOL_MAX_LIFETIME = TimeUnit.MINUTES.toMillis(30);
 
   // Concurrent session properties
   private static final String GATEWAY_SESSION_VERIFICATION_PREFIX = GATEWAY_CONFIG_FILE_PREFIX + ".session.verification";
@@ -1640,6 +1650,36 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   @Override
   public String getDatabaseH2EncryptionPassphraseAlias() {
     return get(GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS, DEFAULT_GATEWAY_DATABASE_H2_ENCRYPTION_PASSPHRASE_ALIAS);
+  }
+
+  @Override
+  public boolean isDatabaseConnectionPoolEnabled() {
+    return getBoolean(GATEWAY_DATABASE_POOL_ENABLED, true);
+  }
+
+  @Override
+  public int getDatabaseConnectionPoolMaxSize() {
+    return getInt(GATEWAY_DATABASE_POOL_MAX_SIZE, DEFAULT_GATEWAY_DATABASE_POOL_MAX_SIZE);
+  }
+
+  @Override
+  public int getDatabaseConnectionPoolMinIdle() {
+    return getInt(GATEWAY_DATABASE_POOL_MIN_IDLE, -1);
+  }
+
+  @Override
+  public long getDatabaseConnectionPoolConnectionTimeout() {
+    return getLong(GATEWAY_DATABASE_POOL_CONNECTION_TIMEOUT, DEFAULT_GATEWAY_DATABASE_POOL_CONNECTION_TIMEOUT);
+  }
+
+  @Override
+  public long getDatabaseConnectionPoolIdleTimeout() {
+    return getLong(GATEWAY_DATABASE_POOL_IDLE_TIMEOUT, DEFAULT_GATEWAY_DATABASE_POOL_IDLE_TIMEOUT);
+  }
+
+  @Override
+  public long getDatabaseConnectionPoolMaxLifetime() {
+    return getLong(GATEWAY_DATABASE_POOL_MAX_LIFETIME, DEFAULT_GATEWAY_DATABASE_POOL_MAX_LIFETIME);
   }
 
   @Override

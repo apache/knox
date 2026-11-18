@@ -1062,6 +1062,39 @@ public interface GatewayConfig {
    */
   String getDatabaseH2EncryptionPassphraseAlias();
 
+  /**
+   * Whether connections to the gateway database are pooled. Defaults to {@code true}. When enabled,
+   * services configured with the same database settings share one connection pool.
+   */
+  boolean isDatabaseConnectionPoolEnabled();
+
+  /**
+   * Maximum number of connections in the gateway database connection pool, including idle and in-use ones.
+   */
+  int getDatabaseConnectionPoolMaxSize();
+
+  /**
+   * Minimum number of idle connections kept in the gateway database connection pool. A negative
+   * value (the default) keeps the pool at its maximum size.
+   */
+  int getDatabaseConnectionPoolMinIdle();
+
+  /**
+   * Maximum time, in milliseconds, to wait for a connection from the gateway database connection pool.
+   */
+  long getDatabaseConnectionPoolConnectionTimeout();
+
+  /**
+   * Maximum time, in milliseconds, a connection may sit idle in the gateway database connection pool.
+   * Applies only to connections above the minimum idle count.
+   */
+  long getDatabaseConnectionPoolIdleTimeout();
+
+  /**
+   * Maximum lifetime, in milliseconds, of a connection in the gateway database connection pool.
+   */
+  long getDatabaseConnectionPoolMaxLifetime();
+
   int getJettyMaxFormContentSize();
 
   int getJettyMaxFormKeys();

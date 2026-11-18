@@ -18,26 +18,39 @@
 package org.apache.knox.gateway.database;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
+import com.zaxxer.hikari.HikariDataSource;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.easymock.EasyMock;
 import org.h2.jdbcx.JdbcDataSource;
+import org.junit.After;
 import org.junit.Test;
 import org.mariadb.jdbc.MariaDbDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.postgresql.ssl.NonValidatingFactory;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class DataSourceProviderTest {
+
+  @After
+  public void tearDown() {
+    DataSourceProvider.closeConnectionPools();
+  }
 
   @Test
   public void shouldReturnPostgresDataSource() throws Exception {
@@ -390,5 +403,110 @@ public class DataSourceProviderTest {
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn("user".toCharArray()).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn("password".toCharArray()).anyTimes();
     EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME)).andReturn("ts_password".toCharArray()).anyTimes();
+  }
+
+  @Test
+  public void pooledDataSourceShouldWrapVendorDataSourceWithConfiguredSettings() throws Exception {
+    final GatewayConfig gatewayConfig = createPooledH2Config("mem:pooledSettings;DB_CLOSE_DELAY=-1");
+    final AliasService aliasService = createAliasService("user", "password");
+
+    final DataSource dataSource = DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertTrue(dataSource instanceof HikariDataSource);
+    final HikariDataSource pool = (HikariDataSource) dataSource;
+    assertTrue(pool.getDataSource() instanceof JdbcDataSource);
+    assertEquals("jdbc:h2:mem:pooledSettings;DB_CLOSE_DELAY=-1", ((JdbcDataSource) pool.getDataSource()).getUrl());
+    assertEquals(4, pool.getMaximumPoolSize());
+    assertEquals(1, pool.getMinimumIdle());
+    assertEquals(5000L, pool.getConnectionTimeout());
+    assertEquals(20000L, pool.getIdleTimeout());
+    assertEquals(60000L, pool.getMaxLifetime());
+
+    try (Connection connection = pool.getConnection(); Statement statement = connection.createStatement();
+         ResultSet resultSet = statement.executeQuery("SELECT 1")) {
+      assertTrue(resultSet.next());
+      assertEquals(1, resultSet.getInt(1));
+    }
+  }
+
+  @Test
+  public void pooledDataSourceShouldBeSharedForIdenticalSettings() throws Exception {
+    final DataSource first = DataSourceProvider.getDataSource(createPooledH2Config("mem:sharedPool;DB_CLOSE_DELAY=-1"), createAliasService("user", "password"));
+    final DataSource second = DataSourceProvider.getDataSource(createPooledH2Config("mem:sharedPool;DB_CLOSE_DELAY=-1"), createAliasService("user", "password"));
+    assertSame(first, second);
+  }
+
+  @Test
+  public void pooledDataSourceShouldNotBeSharedForDifferentSettings() throws Exception {
+    final DataSource dataSource = DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("user", "password"));
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolB;DB_CLOSE_DELAY=-1"), createAliasService("user", "password")));
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("otherUser", "password")));
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("user", "otherPassword")));
+  }
+
+  @Test
+  public void closeConnectionPoolsShouldCloseAndForgetPools() throws Exception {
+    final GatewayConfig gatewayConfig = createPooledH2Config("mem:closedPool;DB_CLOSE_DELAY=-1");
+    final AliasService aliasService = createAliasService("user", "password");
+    final HikariDataSource pool = (HikariDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+
+    DataSourceProvider.closeConnectionPools();
+    assertTrue(pool.isClosed());
+
+    final HikariDataSource newPool = (HikariDataSource) DataSourceProvider.getDataSource(gatewayConfig, aliasService);
+    assertNotSame(pool, newPool);
+    assertFalse(newPool.isClosed());
+  }
+
+  @Test
+  public void pooledDataSourceShouldNotConnectUntilFirstUse() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.POSTGRESQL.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn("jdbc:postgresql://localhost:1/unreachable").anyTimes();
+    expectPoolSettings(gatewayConfig);
+    EasyMock.replay(gatewayConfig);
+
+    final DataSource dataSource = DataSourceProvider.getDataSource(gatewayConfig, createAliasService("user", "password"));
+    assertTrue(dataSource instanceof HikariDataSource);
+    assertTrue(((HikariDataSource) dataSource).getDataSource() instanceof PGSimpleDataSource);
+  }
+
+  @Test
+  public void poolingCanBeDisabled() throws Exception {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn("mem:unpooled;DB_CLOSE_DELAY=-1").anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseConnectionPoolEnabled()).andReturn(false).anyTimes();
+    EasyMock.replay(gatewayConfig);
+
+    final DataSource dataSource = DataSourceProvider.getDataSource(gatewayConfig, createAliasService("user", "password"));
+    assertTrue(dataSource instanceof JdbcDataSource);
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(gatewayConfig, createAliasService("user", "password")));
+  }
+
+  private GatewayConfig createPooledH2Config(String databaseName) {
+    final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+    EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.H2.type()).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseName()).andReturn(databaseName).anyTimes();
+    EasyMock.expect(gatewayConfig.isDatabaseH2EncryptionEnabled()).andReturn(false).anyTimes();
+    expectPoolSettings(gatewayConfig);
+    EasyMock.replay(gatewayConfig);
+    return gatewayConfig;
+  }
+
+  private void expectPoolSettings(GatewayConfig gatewayConfig) {
+    EasyMock.expect(gatewayConfig.isDatabaseConnectionPoolEnabled()).andReturn(true).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionPoolMaxSize()).andReturn(4).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionPoolMinIdle()).andReturn(1).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionPoolConnectionTimeout()).andReturn(5000L).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionPoolIdleTimeout()).andReturn(20000L).anyTimes();
+    EasyMock.expect(gatewayConfig.getDatabaseConnectionPoolMaxLifetime()).andReturn(60000L).anyTimes();
+  }
+
+  private AliasService createAliasService(String user, String password) throws AliasServiceException {
+    final AliasService aliasService = EasyMock.createNiceMock(AliasService.class);
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_USER_ALIAS_NAME)).andReturn(user.toCharArray()).anyTimes();
+    EasyMock.expect(aliasService.getPasswordFromAliasForGateway(AbstractDataSourceFactory.DATABASE_PASSWORD_ALIAS_NAME)).andReturn(password.toCharArray()).anyTimes();
+    EasyMock.replay(aliasService);
+    return aliasService;
   }
 }

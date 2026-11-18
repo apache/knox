@@ -834,6 +834,12 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.DEBUG, text = "Strict-Transport-Security header enabled with \"{0}\" option" )
   void strictTransportHeaderEnabled(String option);
 
+  @Message(level = MessageLevel.INFO, text = "Created database connection pool {0} for {1} with at most {2} connections")
+  void createdDatabaseConnectionPool(String poolName, String databaseType, int maxPoolSize);
+
+  @Message(level = MessageLevel.INFO, text = "Closed database connection pool {0}")
+  void closedDatabaseConnectionPool(String poolName);
+
   // LDAP Service messages
   @Message(level = MessageLevel.INFO, text = "LDAP service is enabled and will be started on port {0}")
   void ldapServiceEnabled(int port);

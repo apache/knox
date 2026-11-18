@@ -934,4 +934,32 @@ public class GatewayConfigImplTest {
     config.set(GatewayConfigImpl.LDAP_INTERCEPTOR_NAMES, "interceptor1, interceptor2");
     assertEquals(Arrays.asList("interceptor1", "interceptor2"), config.getLDAPInterceptorNames());
   }
+
+  @Test
+  public void testDatabaseConnectionPoolDefaults() {
+    final GatewayConfigImpl config = new GatewayConfigImpl();
+    assertTrue(config.isDatabaseConnectionPoolEnabled());
+    assertEquals(10, config.getDatabaseConnectionPoolMaxSize());
+    assertEquals(-1, config.getDatabaseConnectionPoolMinIdle());
+    assertEquals(30000L, config.getDatabaseConnectionPoolConnectionTimeout());
+    assertEquals(600000L, config.getDatabaseConnectionPoolIdleTimeout());
+    assertEquals(1800000L, config.getDatabaseConnectionPoolMaxLifetime());
+  }
+
+  @Test
+  public void testDatabaseConnectionPoolSettings() {
+    final GatewayConfigImpl config = new GatewayConfigImpl();
+    config.set("gateway.database.pool.enabled", "false");
+    config.set("gateway.database.pool.max.size", "25");
+    config.set("gateway.database.pool.min.idle", "5");
+    config.set("gateway.database.pool.connection.timeout.ms", "1000");
+    config.set("gateway.database.pool.idle.timeout.ms", "120000");
+    config.set("gateway.database.pool.max.lifetime.ms", "900000");
+    assertFalse(config.isDatabaseConnectionPoolEnabled());
+    assertEquals(25, config.getDatabaseConnectionPoolMaxSize());
+    assertEquals(5, config.getDatabaseConnectionPoolMinIdle());
+    assertEquals(1000L, config.getDatabaseConnectionPoolConnectionTimeout());
+    assertEquals(120000L, config.getDatabaseConnectionPoolIdleTimeout());
+    assertEquals(900000L, config.getDatabaseConnectionPoolMaxLifetime());
+  }
 }
