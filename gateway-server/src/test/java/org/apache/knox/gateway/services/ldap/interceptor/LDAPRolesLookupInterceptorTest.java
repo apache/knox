@@ -892,6 +892,370 @@ public class LDAPRolesLookupInterceptorTest {
         assertThrows(LdapException.class, () -> testContext.interceptor.search(testContext.ctx));
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // List strategy: when the result set is larger than the number of roles, handleSearch lists all
+    // roles once (listRoles + one lookupRoleAssignees per role) and resolves every entry from the
+    // resulting user->roles / group->roles maps, instead of one lookupRoles per entry.
+    // numRoles is lowered below the entry count to force populateRolesThroughList.
+    // ---------------------------------------------------------------------------------------------
+
+    @Test
+    public void testListPathResolvesUserRolesFromDirectAndGroupAssignments() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewerRole", "adminRole"));
+        // alice is assigned viewerRole directly, and adminRole via the engineering group.
+        expect(mockRolesService.lookupRoleAssignees("viewerRole"))
+                .andReturn(new RoleAssignees(List.of("alice"), List.of()));
+        expect(mockRolesService.lookupRoleAssignees("adminRole"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry userEntry = createUserEntry("alice", "cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(),
+                    "cn=viewerRole,ou=groups,dc=proxy,dc=com",
+                    "cn=adminRole,ou=groups,dc=proxy,dc=com");
+            assertFalse(entries.next());
+        }
+        // The lookup-per-entry API must not be used on the list path.
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathWipesMemberOfForUserWithNoAssignedRoles() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewerRole"));
+        // viewerRole is assigned to bob only; alice ends up with no roles.
+        expect(mockRolesService.lookupRoleAssignees("viewerRole"))
+                .andReturn(new RoleAssignees(List.of("bob"), List.of()));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry userEntry = createUserEntry("alice", "cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            assertNull("memberOf must be wiped when the list path finds no roles for the user",
+                    entries.get().get("memberOf"));
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathTranslatesGroupEntryViaAssignments() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
+        expect(mockRolesService.lookupRoleAssignees("viewer"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry groupEntry = createGroupEntry("cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(groupEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            final Entry roleEntry = entries.get();
+            assertEquals("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org", roleEntry.getDn().getName());
+            assertEquals("viewer", roleEntry.get("cn").getString());
+            assertTrue(roleEntry.get("member").contains("uid=alice,ou=people,dc=hadoop,dc=apache,dc=org"));
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathDropsGroupEntryWithNoRoleMapping() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
+        // viewer maps to a different group, so the unmapped group has no entry in the assignment map.
+        expect(mockRolesService.lookupRoleAssignees("viewer"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry unmappedGroup = createGroupEntry("cn=unmapped,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(unmappedGroup));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertFalse("A group with no role mapping should be dropped on the list path", entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathTranslatesUserAndGroupEntriesTogether() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("roleA", "viewer"));
+        expect(mockRolesService.lookupRoleAssignees("roleA"))
+                .andReturn(new RoleAssignees(List.of("alice"), List.of("group1")));
+        expect(mockRolesService.lookupRoleAssignees("viewer"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry userEntry = createUserEntry("alice", "cn=group1,ou=groups,dc=hadoop,dc=apache,dc=org");
+        final Entry mappedGroupEntry = createGroupEntry("cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
+        final Entry unmappedGroupEntry = createGroupEntry("cn=unmapped,ou=groups,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(userEntry, mappedGroupEntry, unmappedGroupEntry));
+
+        final List<Entry> results = new ArrayList<>();
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            while (entries.next()) {
+                results.add(entries.get());
+            }
+        }
+
+        assertEquals("Unmapped group should be dropped, leaving the user entry and one role entry",
+                2, results.size());
+
+        Entry resultUserEntry = null;
+        Entry resultRoleEntry = null;
+        for (final Entry entry : results) {
+            if (entry.get("uid") != null) {
+                resultUserEntry = entry;
+            } else {
+                resultRoleEntry = entry;
+            }
+        }
+        // alice has roleA both directly and via group1; it should appear once as a direct assignment
+        // plus once from the group membership resolution (both resolve to the same role DN).
+        assertTrue(resultUserEntry.get("memberOf").contains("cn=roleA,ou=groups,dc=proxy,dc=com"));
+        assertEquals("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org", resultRoleEntry.getDn().getName());
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathDeduplicatesGroupsMappingToSameRole() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
+        expect(mockRolesService.lookupRoleAssignees("viewer"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering", "support")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry engineeringGroup = createGroupEntry("cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org",
+                "uid=carol,ou=people,dc=hadoop,dc=apache,dc=org");
+        final Entry supportGroup = createGroupEntry("cn=support,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org",
+                "uid=bob,ou=people,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(engineeringGroup, supportGroup));
+
+        final List<Entry> results = new ArrayList<>();
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            while (entries.next()) {
+                results.add(entries.get());
+            }
+        }
+
+        assertEquals("Groups mapping to the same role should be combined into a single entry",
+                1, results.size());
+        final Attribute member = results.get(0).get("member");
+        assertEquals("Duplicate member (alice) should only appear once", 3, member.size());
+        assertTrue(member.contains("uid=alice,ou=people,dc=hadoop,dc=apache,dc=org"));
+        assertTrue(member.contains("uid=bob,ou=people,dc=hadoop,dc=apache,dc=org"));
+        assertTrue(member.contains("uid=carol,ou=people,dc=hadoop,dc=apache,dc=org"));
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathLowercasesUserIdWhenEnabled() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewerRole"));
+        // The roles backend keys the direct user assignment on the lowercased id.
+        expect(mockRolesService.lookupRoleAssignees("viewerRole"))
+                .andReturn(new RoleAssignees(List.of("admin"), List.of()));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(null, mockRolesService, true);
+        // The directory entry carries a mixed-case uid; the list path keys the user on its lowercased form.
+        final Entry userEntry = createUserEntry("Admin");
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(), "cn=viewerRole,ou=groups,dc=proxy,dc=com");
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathLowercasesMemberOfGroupNameWhenEnabled() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("adminRole"));
+        // adminRole is assigned via the group, keyed on its lowercased id in the backend.
+        expect(mockRolesService.lookupRoleAssignees("adminRole"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(null, mockRolesService, true);
+        // The directory group cn is mixed-case; the list branch must lowercase it (like the lookup
+        // branch) before matching the backend's assignment, otherwise the role is silently missed.
+        final Entry userEntry = createUserEntry("alice", "cn=Engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(), "cn=adminRole,ou=groups,dc=proxy,dc=com");
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathLowercasesGroupEntryNameWhenEnabled() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
+        expect(mockRolesService.lookupRoleAssignees("viewer"))
+                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(null, mockRolesService, true);
+        // A mixed-case group entry must be lowercased before matching the backend assignment.
+        final Entry groupEntry = createGroupEntry("cn=Engineering,ou=groups,dc=hadoop,dc=apache,dc=org",
+                "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org");
+        testContext.nextInterceptor.setEntries(List.of(groupEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            final Entry roleEntry = entries.get();
+            assertEquals("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org", roleEntry.getDn().getName());
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathContinuesWhenOneRoleAssigneeLookupFails() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("goodRole", "badRole"));
+        expect(mockRolesService.lookupRoleAssignees("goodRole"))
+                .andReturn(new RoleAssignees(List.of("alice"), List.of()));
+        // A per-role assignee lookup failure must be swallowed (logged) so the rest still resolve.
+        expect(mockRolesService.lookupRoleAssignees("badRole"))
+                .andThrow(new IllegalStateException("roles backend down for badRole"));
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        final Entry userEntry = createUserEntry("alice");
+        testContext.nextInterceptor.setEntries(List.of(userEntry));
+
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(), "cn=goodRole,ou=groups,dc=proxy,dc=com");
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListPathWrapsListRolesFailure() throws Exception {
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        final RuntimeException failure = new RuntimeException("roles backend down");
+        expect(mockRolesService.listRoles()).andThrow(failure);
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+        testContext.nextInterceptor.setEntries(List.of(createUserEntry("alice")));
+
+        final LdapException exception = assertThrows(LdapException.class,
+                () -> testContext.interceptor.search(testContext.ctx));
+        assertEquals("A listRoles failure should be wrapped, not propagated raw", failure, exception.getCause());
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testListRolesUpdatesThresholdSoSmallerSearchUsesLookupPath() throws Exception {
+        // First search (2 entries, numRoles seeded to 0) must take the list path and learn there are
+        // 3 roles. A later search of 2 entries (2 <= 3) must then fall back to the per-entry lookup path.
+        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of("r1", "r2", "r3"));
+        expect(mockRolesService.lookupRoleAssignees("r1")).andReturn(new RoleAssignees(List.of(), List.of()));
+        expect(mockRolesService.lookupRoleAssignees("r2")).andReturn(new RoleAssignees(List.of(), List.of()));
+        expect(mockRolesService.lookupRoleAssignees("r3")).andReturn(new RoleAssignees(List.of(), List.of()));
+        // Second phase: the per-entry lookup path. listRoles must not be called again.
+        expect(mockRolesService.lookupRoles(anyString(), anyObject()))
+                .andReturn(List.of("roleX")).times(2);
+        replay(mockRolesService);
+
+        final TestContext testContext = createListPathTestContext(mockRolesService);
+
+        // Phase 1: list path (no roles assigned, memberOf wiped), numRoles becomes 3.
+        testContext.nextInterceptor.setEntries(List.of(createUserEntry("alice"), createUserEntry("bob")));
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            while (entries.next()) {
+                assertNull(entries.get().get("memberOf"));
+            }
+        }
+
+        // Phase 2: 2 entries, numRoles is now 3, so the lookup path runs and roleX is applied per entry.
+        // A fresh context, as a real second search would carry.
+        final SearchOperationContext phase2Ctx =
+                newNeutralSearchContext(testContext.directoryService, null);
+        testContext.nextInterceptor.setEntries(List.of(createUserEntry("alice"), createUserEntry("bob")));
+        try (EntryFilteringCursor entries = testContext.interceptor.search(phase2Ctx)) {
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(), "cn=roleX,ou=groups,dc=proxy,dc=com");
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(), "cn=roleX,ou=groups,dc=proxy,dc=com");
+            assertFalse(entries.next());
+        }
+        verify(mockRolesService);
+    }
+
+    @Test
+    public void testTranslateGroupEntryFromAssignmentsMapWithRoles() throws Exception {
+        final Entry groupEntry = createGroupEntry("cn=engineering,ou=groups,dc=hadoop,dc=apache,dc=org");
+        final Map<String, List<String>> groupRoleAssignments =
+                Map.of("engineering", Arrays.asList("viewer", "editor"));
+
+        final List<Entry> translated = new LDAPRolesLookupInterceptor(createMockRolesService(), interceptorConfig)
+                .translateGroupEntry(groupEntry, groupRoleAssignments);
+
+        final Set<String> resultDns = new HashSet<>();
+        for (final Entry roleEntry : translated) {
+            resultDns.add(roleEntry.getDn().getName());
+        }
+        assertEquals(2, translated.size());
+        assertTrue(resultDns.contains("cn=viewer,ou=groups,dc=hadoop,dc=apache,dc=org"));
+        assertTrue(resultDns.contains("cn=editor,ou=groups,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testTranslateGroupEntryFromAssignmentsMapWithNoMappingReturnsEmpty() throws Exception {
+        final Entry groupEntry = createGroupEntry("cn=unmapped,ou=groups,dc=hadoop,dc=apache,dc=org");
+
+        final List<Entry> translated = new LDAPRolesLookupInterceptor(createMockRolesService(), interceptorConfig)
+                .translateGroupEntry(groupEntry, new HashMap<>());
+
+        assertTrue("A group absent from the assignment map should translate to no entries", translated.isEmpty());
+    }
+
+    /*
+     * A test context whose interceptor is primed to take the list strategy: numRoles starts at 0 so any
+     * non-empty result set satisfies entries.size() > numRoles and handleSearch lists all roles.
+     */
+    private TestContext createListPathTestContext(LDAPRolesLookupService rolesService) throws Exception {
+        return createListPathTestContext(null, rolesService, false);
+    }
+
+    private TestContext createListPathTestContext(RolesLookupBypassControl control, LDAPRolesLookupService rolesService,
+                                                  boolean lowercaseIds) throws Exception {
+        final TestContext testContext = createTestContext(control, rolesService, lowercaseIds);
+        testContext.interceptor.setNumRoles(0);
+        return testContext;
+    }
+
     private Map<String, Entry> collectByDn(final EntryFilteringCursor cursor) throws Exception {
         final Map<String, Entry> result = new HashMap<>();
         try (EntryFilteringCursor entries = cursor) {
@@ -926,6 +1290,10 @@ public class LDAPRolesLookupInterceptorTest {
         final Map<String, String> config = new HashMap<>(interceptorConfig);
         config.put(LDAPRolesLookupInterceptor.LOWERCASE_IDS, String.valueOf(lowercaseIds));
         LDAPRolesLookupInterceptor interceptor = new LDAPRolesLookupInterceptor(rolesService, config);
+        // Keep the default context on the per-entry lookup path: with numRoles larger than any entry
+        // count these tests use, handleSearch picks populateRolesThroughLookup. List-path tests lower
+        // numRoles explicitly (see setNumRoles) so handleSearch picks populateRolesThroughList instead.
+        interceptor.setNumRoles(Integer.MAX_VALUE);
         interceptor.init(directoryService);
         directoryService.addLast(interceptor);
 
@@ -934,17 +1302,25 @@ public class LDAPRolesLookupInterceptorTest {
         nextInterceptor.init(directoryService);
         directoryService.addLast(nextInterceptor);
 
-        SearchOperationContext ctx =
-                new SearchOperationContext(directoryService.getSession());
-        ctx.setInterceptors(List.of("NEXT"));
-        // A real search request always carries a filter; this one is neutral to the roles lookup.
-        ctx.setFilter(FilterParser.parse(schemaManager, "(uid=*)"));
+        SearchOperationContext ctx = newNeutralSearchContext(directoryService, control);
 
+        return new TestContext(interceptor, nextInterceptor, directoryService, ctx);
+    }
+
+    /*
+     * A fresh search context neutral to the roles lookup (filter uid=*). Each LDAP search carries its
+     * own context, so tests that run more than one search against the same interceptor build a new one
+     * per search rather than reusing (and mutating) a single context.
+     */
+    private SearchOperationContext newNeutralSearchContext(DirectoryService directoryService,
+                                                           RolesLookupBypassControl control) throws Exception {
+        SearchOperationContext ctx = new SearchOperationContext(directoryService.getSession());
+        ctx.setInterceptors(List.of("NEXT"));
+        ctx.setFilter(FilterParser.parse(schemaManager, "(uid=*)"));
         if (control != null) {
             ctx.addRequestControl(control);
         }
-
-        return new TestContext(interceptor, nextInterceptor, ctx);
+        return ctx;
     }
 
     private LDAPRolesLookupService createMockRolesService() throws Exception {
@@ -959,6 +1335,7 @@ public class LDAPRolesLookupInterceptorTest {
 
     private Entry createUserEntry(final String username, final String... memberOfDns) throws Exception {
         final Entry entry = new DefaultEntry(schemaManager);
+        entry.add("objectClass", "inetOrgPerson");
         entry.add("uid", username);
         for (final String dn : memberOfDns) {
             entry.add("memberOf", dn);
@@ -997,6 +1374,7 @@ public class LDAPRolesLookupInterceptorTest {
     private record TestContext(
             LDAPRolesLookupInterceptor interceptor,
             ConfigurableSearchTestInterceptor nextInterceptor,
+            DirectoryService directoryService,
             SearchOperationContext ctx) {
     }
 }

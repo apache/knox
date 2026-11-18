@@ -28,7 +28,9 @@ import org.apache.directory.api.ldap.model.filter.SimpleNode;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
+import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.RoleAssignees;
 
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import java.util.function.Function;
  * to individual DNs if the backend doesn't support memberOf.
  */
 public class ReverseRoleLookupMappingVisitor implements FilterVisitor {
+    private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
 
     private final SchemaManager schemaManager;
     private final LDAPRolesLookupService ldapRolesLookupService;
@@ -99,7 +102,12 @@ public class ReverseRoleLookupMappingVisitor implements FilterVisitor {
 
     private RoleAssignees getAssignees(String roleDn) throws Exception {
         String roleName = new Dn(roleDn).getRdn().getValue();
-        return ldapRolesLookupService.lookupRoleAssignees(roleName);
+        try {
+            return ldapRolesLookupService.lookupRoleAssignees(roleName);
+        } catch (Exception e) {
+            LOG.ldapRolesReverseLookupFailed(roleName, e);
+            throw e;
+        }
     }
 
     private Object handleBranchNode(BranchNode branchNode) {

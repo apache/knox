@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultAttribute;
@@ -45,6 +46,7 @@ import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.services.ldap.LDAPRolesLookupService;
 import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.LdapUtils;
+import org.apache.knox.gateway.services.ldap.RoleAssignees;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
 import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
@@ -86,6 +88,23 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private final LDAPRolesLookupService rolesLookupService;
     private final String proxyGroupSearchBase;
     private final boolean lowercaseIds;
+
+    /**
+     * Track the number of roles. This value is used to decide whether the list or lookup
+     * strategy will be used when populating users and groups with their roles.
+     */
+    @SuppressWarnings("PMD.AvoidUsingVolatile")
+    private volatile int numRoles;
+
+    /**
+     * Seeds the number of roles last seen so tests can pin which strategy {@link #handleSearch} picks
+     * between {@link #populateRolesThroughList} and {@link #populateRolesThroughLookup}. In production
+     * this is maintained from {@link LDAPRolesLookupService#listRoles()} inside the list path.
+     */
+    @VisibleForTesting
+    void setNumRoles(int numRoles) {
+        this.numRoles = numRoles;
+    }
 
     public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, Map<String, String> config) throws Exception{
         this.rolesLookupService = rolesLookupService;
@@ -258,7 +277,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 ctx.setFilter((ExprNode) updatedFilter);
             }
         } catch (Exception e) {
-            LOG.ldapRolesReverseLookupFailed(e);
+            LOG.ldapRolesReverseLookupFilterMappingFailed(filter.toString(), e);
             throw new LdapException("Failed to update search filter with reverse role lookup.", e);
         }
         final SchemaManager schemaManager = ctx.getSession().getDirectoryService().getSchemaManager();
@@ -277,9 +296,14 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             ctx.setReturningAttributes(withAttributes(originalReturningAttributes, augmentedAttributes));
         }
 
+        int numUserAndGroupEntries = 0;
         final List<Entry> entries = new ArrayList<>();
         try (EntryFilteringCursor cursor = next(ctx)) {
             while (cursor.next()) {
+                Entry entry = cursor.get();
+                if (LdapUtils.isUserEntry(entry) || LdapUtils.isGroupEntry(entry)) {
+                    numUserAndGroupEntries++;
+                }
                 entries.add(cursor.get());
             }
         } catch (Exception e) {
@@ -287,8 +311,110 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             throw new LdapException(e);
         }
 
+        // Populating the roles through lookup results in one lookup request per entry.
+        // It is more efficient to list all the roles when the number of entries is large.
+        final List<Entry> resultEntries = numUserAndGroupEntries > numRoles ?
+                populateRolesThroughList(entries, augmentedAttributes) :
+                populateRolesThroughLookup(entries, augmentedAttributes);
+
+        if (!augmentedAttributes.isEmpty()) {
+            ctx.setReturningAttributes(originalReturningAttributes == null ? new String[0] : originalReturningAttributes);
+        }
+
+        return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, schemaManager);
+    }
+
+    private List<Entry> populateRolesThroughList(List<Entry> entries, List<String> augmentedAttributes) throws LdapException {
+        // Map of user id to the assigned roles
+        final Map<String, List<String>> userRoleAssignments = new HashMap<>();
+        // Map of group id to the assigned roles
+        final Map<String, List<String>> groupRoleAssignments = new HashMap<>();
+        try {
+            Collection<String> rolesList = rolesLookupService.listRoles();
+            numRoles = rolesList.size();
+            for (String roleName : rolesList) {
+                try {
+                    RoleAssignees assignees = rolesLookupService.lookupRoleAssignees(roleName);
+                    if (assignees != null) {
+                        if (assignees.getUsers() != null && !assignees.getUsers().isEmpty()) {
+                            for (String userName : assignees.getUsers()) {
+                                if (!userRoleAssignments.containsKey(userName)) {
+                                    ArrayList<String> roles = new ArrayList<>();
+                                    roles.add(roleName);
+                                    userRoleAssignments.put(userName, roles);
+                                } else {
+                                    userRoleAssignments.get(userName).add(roleName);
+                                }
+
+                            }
+                        }
+                        if (assignees.getGroups() != null && !assignees.getGroups().isEmpty()) {
+                            for (String groupName : assignees.getGroups()) {
+                                if (!groupRoleAssignments.containsKey(groupName)) {
+                                    ArrayList<String> roles = new ArrayList<>();
+                                    roles.add(roleName);
+                                    groupRoleAssignments.put(groupName, roles);
+                                } else {
+                                    groupRoleAssignments.get(groupName).add(roleName);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.ldapRolesReverseLookupFailed(roleName, e);
+                }
+            }
+        } catch (Exception e) {
+            LOG.ldapRolesListFailed(e);
+            throw new LdapException(e);
+        }
+
         final List<Entry> roleEntries = new ArrayList<>();
         final List<Entry> resultEntries = new ArrayList<>(entries.size());
+
+        for (Entry entry : entries) {
+            try {
+                if (LdapUtils.isGroupEntry(entry)) {
+                    roleEntries.addAll(translateGroupEntry(entry, groupRoleAssignments));
+                } else {
+                    final String username = toRolesLookupId(LdapUtils.extractUsernameFromEntry(entry, "uid", "cn"));
+                    final List<String> roles = new ArrayList<>();
+                    if (userRoleAssignments.containsKey(username)) {
+                        roles.addAll(userRoleAssignments.get(username));
+                    }
+                    Attribute memberOfAttribute = entry.get("memberOf");
+                    if (memberOfAttribute != null) {
+                        for (Value groupDnValue : memberOfAttribute) {
+                            // Key on the same id the lookup branch sends to the backend (toRolesLookupId),
+                            // so a case-sensitive roles backend is matched consistently across both branches.
+                            String groupName = toRolesLookupId(LdapUtils.extractGroupName(new Dn(groupDnValue.getString())));
+                            if (groupRoleAssignments.containsKey(groupName)) {
+                                roles.addAll(groupRoleAssignments.get(groupName));
+                            }
+                        }
+                    }
+
+                    modifyEntry(entry, roles);
+                    for (String attribute : augmentedAttributes) {
+                        // These attributes were added only to resolve the lookup; remove them so the response
+                        // honors the client's original request.
+                        entry.removeAttributes(attribute);
+                    }
+                    resultEntries.add(entry);
+                }
+            } catch (Exception e) {
+                LOG.ldapRolesLookupFailed(entry.getDn().getName(), e);
+                throw new LdapException(e);
+            }
+        }
+        resultEntries.addAll(deduplicate(roleEntries));
+        return resultEntries;
+    }
+
+    private List<Entry> populateRolesThroughLookup(List<Entry> entries, List<String> augmentedAttributes) throws LdapException {
+        final List<Entry> roleEntries = new ArrayList<>();
+        final List<Entry> resultEntries = new ArrayList<>(entries.size());
+
         for (Entry entry : entries) {
             try {
                 if (LdapUtils.isGroupEntry(entry)) {
@@ -311,12 +437,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             }
         }
         resultEntries.addAll(deduplicate(roleEntries));
-
-        if (!augmentedAttributes.isEmpty()) {
-            ctx.setReturningAttributes(originalReturningAttributes == null ? new String[0] : originalReturningAttributes);
-        }
-
-        return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, schemaManager);
+        return resultEntries;
     }
 
     private String toRolesLookupId(String id) {
@@ -407,7 +528,24 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             return List.of();
         }
         final Collection<String> roles = rolesLookupService.lookupRoles(null, Set.of(toRolesLookupId(groupName)));
-        final List<Entry> translatedEntries = new ArrayList<>();
+        return createRoleEntries(entry, roles);
+
+    }
+
+    List<Entry> translateGroupEntry(Entry entry, Map<String, List<String>> groupRoleAssignments) throws Exception {
+        final String groupName = LdapUtils.extractGroupName(entry.getDn());
+        if (groupName == null) {
+            return List.of();
+        }
+        final List<String> roles = groupRoleAssignments.get(toRolesLookupId(groupName));
+        if (roles == null) {
+            return List.of();
+        }
+        return createRoleEntries(entry, roles);
+    }
+
+    private List<Entry> createRoleEntries(Entry entry, Collection<String> roles) throws Exception {
+        final List<Entry> translatedEntries = new ArrayList<>(roles.size());
         for (String role : roles) {
             final Dn roleDn = renameCnRdn(entry.getDn(), role);
             if (roleDn != null) {
