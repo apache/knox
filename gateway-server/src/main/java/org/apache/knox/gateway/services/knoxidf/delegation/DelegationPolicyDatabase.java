@@ -61,15 +61,12 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   private static final int ID_CHUNK_SIZE = 1000;
 
   /**
-   * Rows the driver is asked to fetch per round trip. Oracle's driver prefetches 10 rows by
-   * default, which would split a single-statement policy read into one round trip per 10 rows.
-   * PostgreSQL ignores a positive fetch size while autoCommit is on, and MySQL and H2 are
-   * unaffected, so this only changes behavior on Oracle.
+   * Rows the driver is asked to fetch per round trip. A policy read can return one row per user,
+   * group, resource and scope, and a driver that defaults to a small prefetch would split that
+   * over many round trips. This is a hint: each driver decides what to do with it, and some
+   * ignore it depending on the connection's autocommit and cursor settings.
    */
   private static final int READ_FETCH_SIZE = 1024;
-
-  /** Number of UNION ALL branches in the single-policy read; each one binds the predicate again. */
-  private static final int POLICY_BRANCHES = 5;
 
   private static final String INSERT_REGISTRATION_SQL =
       "INSERT INTO " + CORE_TABLE
@@ -103,18 +100,15 @@ class DelegationPolicyDatabase extends KnoxDatabase {
           + "p.created_by AS created_by, p.created_at AS created_at, "
           + "p.updated_at AS updated_at, p.allow_headless_exchange AS allow_headless_exchange";
 
-  // Value used for a child column that a given branch has nothing to put in. It has to be a real
-  // column: Oracle rejects a bare NULL in a union column position (ORA-01790), and MySQL's CAST
-  // offers no VARCHAR target, so neither "NULL" nor "CAST(NULL AS VARCHAR(n))" is portable across
-  // the supported databases. The assembler ignores these positions for the row kinds that do not
-  // use them.
-  private static final String CHILD_FILLER = "p.registration_id";
-
   private static final String SELECT_BY_ID_SQL =
       buildSelectPolicySql("p.registration_id = ?");
 
+  private static final int SELECT_BY_ID_PARAMETERS = countPlaceholders(SELECT_BY_ID_SQL);
+
   private static final String SELECT_BY_ACTOR_SQL =
       buildSelectPolicySql("p.actor_authority = ? AND p.actor_id = ?");
+
+  private static final int SELECT_BY_ACTOR_PARAMETERS = countPlaceholders(SELECT_BY_ACTOR_SQL);
 
   private static final String SELECT_ALL_BASE_SQL =
       "SELECT registration_id, actor_authority, actor_id, name, status, token_ttl_sec, "
@@ -171,6 +165,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
   DelegationPolicyDatabase(DataSource dataSource, String dbType, int listMaxTotal,
       int listMaxPerAuthority, int idChunkSize) throws Exception {
     super(dataSource);
+    if (idChunkSize < 1) {
+      throw new IllegalArgumentException("idChunkSize must be at least 1 but was " + idChunkSize);
+    }
     this.listMaxTotal = listMaxTotal;
     this.listMaxPerAuthority = listMaxPerAuthority;
     this.idChunkSize = idChunkSize;
@@ -187,18 +184,23 @@ class DelegationPolicyDatabase extends KnoxDatabase {
    * Each branch seeks the core row through the primary key or the actor unique constraint and
    * reads its child rows through the leading column of that child table's primary key, so the
    * predicate is bound once per branch.
+   * <p>
+   * A branch with nothing to put in child_a or child_b selects NULL. Every value these two
+   * positions ever carry -- username, group_name, resource_uri, scope -- is a character column,
+   * so the union resolves both to a character type whichever branch it takes them from. The
+   * assembler ignores these positions for the row kinds that do not use them.
    */
   private static String buildSelectPolicySql(String predicate) {
     return "SELECT " + CORE_COLUMNS + ", 'C' AS row_kind, "
-        + CHILD_FILLER + " AS child_a, " + CHILD_FILLER + " AS child_b"
+        + "NULL AS child_a, NULL AS child_b"
         + " FROM " + CORE_TABLE + " p WHERE " + predicate
-        + " UNION ALL SELECT " + CORE_COLUMNS + ", 'U', u.username, " + CHILD_FILLER
+        + " UNION ALL SELECT " + CORE_COLUMNS + ", 'U', u.username, NULL"
         + " FROM " + CORE_TABLE + " p JOIN DELEGATION_POLICY_USERS u"
         + " ON u.registration_id = p.registration_id WHERE " + predicate
-        + " UNION ALL SELECT " + CORE_COLUMNS + ", 'G', g.group_name, " + CHILD_FILLER
+        + " UNION ALL SELECT " + CORE_COLUMNS + ", 'G', g.group_name, NULL"
         + " FROM " + CORE_TABLE + " p JOIN DELEGATION_POLICY_GROUPS g"
         + " ON g.registration_id = p.registration_id WHERE " + predicate
-        + " UNION ALL SELECT " + CORE_COLUMNS + ", 'R', r.resource_uri, " + CHILD_FILLER
+        + " UNION ALL SELECT " + CORE_COLUMNS + ", 'R', r.resource_uri, NULL"
         + " FROM " + CORE_TABLE + " p JOIN DELEGATION_POLICY_RESOURCES r"
         + " ON r.registration_id = p.registration_id WHERE " + predicate
         + " UNION ALL SELECT " + CORE_COLUMNS + ", 'S', s.resource_uri, s.scope"
@@ -228,7 +230,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement ps = connection.prepareStatement(SELECT_BY_ID_SQL)) {
       ps.setFetchSize(READ_FETCH_SIZE);
-      bindOncePerBranch(ps, registrationId);
+      bindRepeating(ps, SELECT_BY_ID_PARAMETERS, registrationId);
       try (ResultSet rs = ps.executeQuery()) {
         return assemblePolicy(rs);
       }
@@ -239,7 +241,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     try (Connection connection = dataSource.getConnection();
          PreparedStatement ps = connection.prepareStatement(SELECT_BY_ACTOR_SQL)) {
       ps.setFetchSize(READ_FETCH_SIZE);
-      bindOncePerBranch(ps, actorAuthority, actorId);
+      bindRepeating(ps, SELECT_BY_ACTOR_PARAMETERS, actorAuthority, actorId);
       try (ResultSet rs = ps.executeQuery()) {
         return assemblePolicy(rs);
       }
@@ -251,6 +253,12 @@ class DelegationPolicyDatabase extends KnoxDatabase {
    * visible without a second COUNT query, and then the children of exactly that page, batched by
    * registration id. The statement count is 1 + 4 per batch of ids, independent of how many
    * resources the policies carry.
+   * <p>
+   * The phases are separate statements and not one transaction, so this read is not a snapshot.
+   * A policy deleted after its core row was read is returned with empty users, groups and
+   * resources, which is indistinguishable from a policy that genuinely has none; a policy
+   * registered while the read is in progress is simply absent. {@link #selectById(String)} and
+   * {@link #selectByActor(String, String)} each read in a single statement and have no such gap.
    */
   DelegationPolicyList selectAll(String actorAuthorityFilter) throws SQLException {
     final int limit = (actorAuthorityFilter != null) ? listMaxPerAuthority : listMaxTotal;
@@ -258,8 +266,9 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     try (Connection connection = dataSource.getConnection()) {
       final List<CoreRow> cores = new ArrayList<>();
       try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        // setMaxRows rather than FETCH FIRST or LIMIT: neither of those is accepted by every
-        // supported database, and the driver pushes this down the same way.
+        // The cap is applied through JDBC rather than in the SQL because no row-limiting clause
+        // is accepted by every supported database: FETCH FIRST is not available on all of them,
+        // and LIMIT is not either. How a given driver enforces it is up to the driver.
         ps.setMaxRows(limit + 1);
         // The fetch size must not exceed the row cap -- H2 rejects a larger one outright.
         ps.setFetchSize(Math.min(READ_FETCH_SIZE, limit + 1));
@@ -422,13 +431,28 @@ class DelegationPolicyDatabase extends KnoxDatabase {
     }
   }
 
-  /** Binds the read predicate once for each UNION ALL branch, in branch order. */
-  private static void bindOncePerBranch(PreparedStatement ps, String... values) throws SQLException {
-    int index = 1;
-    for (int branch = 0; branch < POLICY_BRANCHES; branch++) {
-      for (String value : values) {
-        ps.setString(index++, value);
+  /**
+   * Counts the bind placeholders in a statement this class assembled. None of the SQL here puts a
+   * literal question mark inside a quoted string, so every one it finds is a parameter.
+   */
+  private static int countPlaceholders(String sql) {
+    int count = 0;
+    for (int i = 0; i < sql.length(); i++) {
+      if (sql.charAt(i) == '?') {
+        count++;
       }
+    }
+    return count;
+  }
+
+  /**
+   * Binds the read predicate's values, repeating them until every placeholder is filled. Each
+   * UNION ALL branch restates the predicate, so the values recur in the same order per branch;
+   * taking the count from the statement itself means adding a branch cannot desynchronize it.
+   */
+  private static void bindRepeating(PreparedStatement ps, int parameters, String... values) throws SQLException {
+    for (int index = 1; index <= parameters; index++) {
+      ps.setString(index, values[(index - 1) % values.length]);
     }
   }
 
@@ -451,7 +475,11 @@ class DelegationPolicyDatabase extends KnoxDatabase {
       if (core == null) {
         core = readCoreRow(rs);
       }
-      switch (rs.getString("row_kind")) {
+      final String rowKind = rs.getString("row_kind");
+      switch (rowKind) {
+        case "C":
+          // Contributes the core values only, which were taken above.
+          break;
         case "U":
           users.add(rs.getString("child_a"));
           break;
@@ -468,7 +496,7 @@ class DelegationPolicyDatabase extends KnoxDatabase {
               .add(rs.getString("child_b"));
           break;
         default:
-          break;
+          throw new IllegalStateException("Unrecognized delegation policy row kind: " + rowKind);
       }
     }
     return core == null ? Optional.empty()

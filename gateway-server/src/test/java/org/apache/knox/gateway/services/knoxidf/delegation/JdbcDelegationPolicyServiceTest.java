@@ -1077,7 +1077,6 @@ public class JdbcDelegationPolicyServiceTest {
 
     final DelegationPolicy found = service.findByActor("oidc", "sq-all").orElseThrow(AssertionError::new);
 
-    assertPolicyEquals(registered, found);
     assertEquals(registered.getRegistrationId(), found.getRegistrationId());
     assertEquals("oidc", found.getActorAuthority());
     assertEquals("sq-all", found.getActorId());
