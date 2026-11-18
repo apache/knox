@@ -225,7 +225,9 @@ public class JdbcDelegationPolicyService implements DelegationPolicyService {
 
   @Override
   public PolicyDecision evaluate(PolicyCheckRequest request) {
-    // Step 1: look up registration
+    // Step 1: look up registration.
+    // Reads the delegation policy for the token exchange. Ensure that only one,
+    // fast database query is made to load the policy.
     final Optional<DelegationPolicy> policyOpt = findByActor(request.getActorAuthority(), request.getActorId());
     if (!policyOpt.isPresent()) {
       return deny("actor_not_registered");
