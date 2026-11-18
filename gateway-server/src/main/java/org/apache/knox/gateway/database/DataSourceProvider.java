@@ -19,6 +19,7 @@ package org.apache.knox.gateway.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.knox.gateway.GatewayMessages;
 import org.apache.knox.gateway.config.GatewayConfig;
@@ -41,7 +42,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * When {@link GatewayConfig#isDatabaseConnectionPoolEnabled()} is {@code true} (the default), the
  * database-specific {@link DataSource} is wrapped in a HikariCP connection pool. Callers with the same
  * database settings get the same pooled {@link DataSource}, so all services of a gateway share one pool.
- * Pools are closed by {@link #closeConnectionPools()} when the gateway stops.
+ * A pool connects once when it is created, so an unreachable database fails fast with an
+ * {@link SQLException}, as it did without pooling. Pools are closed by {@link #closeConnectionPools()}
+ * when the gateway stops.
  */
 public class DataSourceProvider {
     private static final GatewayMessages LOG = MessagesFactory.get(GatewayMessages.class);
@@ -95,7 +98,7 @@ public class DataSourceProvider {
         return dsFactory.createDataSource(gatewayConfig, aliasService);
     }
 
-    static HikariDataSource createConnectionPool(GatewayConfig gatewayConfig, DataSource dataSource, String poolName) {
+    static HikariDataSource createConnectionPool(GatewayConfig gatewayConfig, DataSource dataSource, String poolName) throws SQLException {
         final HikariConfig poolConfig = new HikariConfig();
         poolConfig.setPoolName(poolName);
         poolConfig.setDataSource(dataSource);
@@ -106,11 +109,20 @@ public class DataSourceProvider {
         poolConfig.setConnectionTimeout(gatewayConfig.getDatabaseConnectionPoolConnectionTimeout());
         poolConfig.setIdleTimeout(gatewayConfig.getDatabaseConnectionPoolIdleTimeout());
         poolConfig.setMaxLifetime(gatewayConfig.getDatabaseConnectionPoolMaxLifetime());
-        // Do not connect while building the pool: as without pooling, an unreachable database
-        // surfaces as an SQLException on first use instead of failing service initialization.
-        poolConfig.setInitializationFailTimeout(-1);
+        // Connect once while building the pool and fail if that fails. Otherwise the pool keeps retrying
+        // in the background and every caller blocks for the connection timeout, e.g. a knoxcli command
+        // run while the gateway holds the embedded H2 database file. A failed pool is not cached.
+        poolConfig.setInitializationFailTimeout(1);
 
-        final HikariDataSource pool = new HikariDataSource(poolConfig);
+        final HikariDataSource pool;
+        try {
+            pool = new HikariDataSource(poolConfig);
+        } catch (HikariPool.PoolInitializationException e) {
+            if (e.getCause() instanceof SQLException) {
+                throw (SQLException) e.getCause();
+            }
+            throw new SQLException("Cannot create database connection pool " + poolName + ": " + e.getMessage(), e);
+        }
         LOG.createdDatabaseConnectionPool(poolName, gatewayConfig.getDatabaseType(), pool.getMaximumPoolSize());
         return pool;
     }

@@ -36,6 +36,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -437,10 +438,16 @@ public class DataSourceProviderTest {
 
   @Test
   public void pooledDataSourceShouldNotBeSharedForDifferentSettings() throws Exception {
-    final DataSource dataSource = DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("user", "password"));
-    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolB;DB_CLOSE_DELAY=-1"), createAliasService("user", "password")));
-    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("otherUser", "password")));
-    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("user", "otherPassword")));
+    final DataSource dataSource = DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("alice", "password"));
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolB;DB_CLOSE_DELAY=-1"), createAliasService("alice", "password")));
+
+    // Pools connect when created, so the other credentials must be valid for the database.
+    try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+      statement.execute("CREATE USER bob PASSWORD 'password' ADMIN");
+      statement.execute("ALTER USER alice SET PASSWORD 'otherPassword'");
+    }
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("bob", "password")));
+    assertNotSame(dataSource, DataSourceProvider.getDataSource(createPooledH2Config("mem:poolA;DB_CLOSE_DELAY=-1"), createAliasService("alice", "otherPassword")));
   }
 
   @Test
@@ -458,16 +465,21 @@ public class DataSourceProviderTest {
   }
 
   @Test
-  public void pooledDataSourceShouldNotConnectUntilFirstUse() throws Exception {
+  public void pooledDataSourceShouldFailFastWhenDatabaseIsUnreachable() throws Exception {
     final GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
     EasyMock.expect(gatewayConfig.getDatabaseType()).andReturn(DatabaseType.POSTGRESQL.type()).anyTimes();
     EasyMock.expect(gatewayConfig.getDatabaseConnectionUrl()).andReturn("jdbc:postgresql://localhost:1/unreachable").anyTimes();
     expectPoolSettings(gatewayConfig);
     EasyMock.replay(gatewayConfig);
+    final AliasService aliasService = createAliasService("user", "password");
 
-    final DataSource dataSource = DataSourceProvider.getDataSource(gatewayConfig, createAliasService("user", "password"));
-    assertTrue(dataSource instanceof HikariDataSource);
-    assertTrue(((HikariDataSource) dataSource).getDataSource() instanceof PGSimpleDataSource);
+    // Fails well before the 5 s connection timeout instead of waiting it out.
+    final long start = System.nanoTime();
+    assertThrows(SQLException.class, () -> DataSourceProvider.getDataSource(gatewayConfig, aliasService));
+    assertTrue(System.nanoTime() - start < TimeUnit.MILLISECONDS.toNanos(5000L));
+
+    // The failed pool is not cached: the next caller tries to connect again.
+    assertThrows(SQLException.class, () -> DataSourceProvider.getDataSource(gatewayConfig, aliasService));
   }
 
   @Test
