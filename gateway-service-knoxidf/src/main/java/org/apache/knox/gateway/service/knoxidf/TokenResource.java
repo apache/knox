@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -43,6 +44,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.TokenMAC;
 import org.apache.knox.gateway.util.ServletRequestUtils;
 import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
+import org.glassfish.hk2.api.ProxyCtl;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
@@ -86,6 +88,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 @Path(TokenResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class TokenResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/token";
 
@@ -703,9 +706,17 @@ public class TokenResource extends PasscodeTokenResourceBase {
     private String getRequestParam(String paramName) {
         String requestParamValue = request.getParameter(paramName);
         if (requestParamValue == null) {
-            requestParamValue = ServletRequestUtils.unwrapHttpServletRequest(request).getParameter(paramName);
+            requestParamValue = ServletRequestUtils.unwrapHttpServletRequest(getCurrentRequest()).getParameter(paramName);
         }
         return requestParamValue;
+    }
+
+    // Form body parameters are only readable on the unwrapped request: the GatewayFilter wraps form
+    // requests in UrlEncodedFormRequest, which only exposes the query string. This resource is a
+    // singleton, so the @Context request is an HK2 proxy, not a ServletRequestWrapper, and can't be
+    // unwrapped itself. Resolve it to the current request first.
+    private HttpServletRequest getCurrentRequest() {
+        return request instanceof ProxyCtl ? (HttpServletRequest) ((ProxyCtl) request).__make() : request;
     }
 
     private static class AuthTokenValidationError extends Exception {

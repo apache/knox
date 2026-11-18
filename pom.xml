@@ -239,6 +239,7 @@
         <jboss-logging.version>3.4.1.Final</jboss-logging.version>
         <jericho-html.version>3.4</jericho-html.version>
         <jersey.version>3.1.12</jersey.version>
+        <hk2.version>3.0.6</hk2.version>
         <jetty.version>12.0.38</jetty.version>
         <jline.version>3.30.17</jline.version>
         <jna.version>5.18.1</jna.version>
@@ -1474,6 +1475,11 @@
                 <groupId>org.glassfish.jersey.inject</groupId>
                 <artifactId>jersey-hk2</artifactId>
                 <version>${jersey.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.hk2</groupId>
+                <artifactId>hk2-api</artifactId>
+                <version>${hk2.version}</version>
             </dependency>
 
             <dependency>

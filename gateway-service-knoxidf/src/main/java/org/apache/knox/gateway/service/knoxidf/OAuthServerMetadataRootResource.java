@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -34,5 +35,6 @@ import jakarta.ws.rs.core.MediaType;
  */
 @Path(".well-known/oauth-authorization-server")
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class OAuthServerMetadataRootResource extends OAuthServerMetadataResource {
 }

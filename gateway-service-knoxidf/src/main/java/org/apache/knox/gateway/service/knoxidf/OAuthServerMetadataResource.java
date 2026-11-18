@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import jakarta.inject.Singleton;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 
@@ -41,6 +42,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURC
  */
 @Path(BASE_RESOURCE_PATH + "/.well-known/oauth-authorization-server")
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class OAuthServerMetadataResource {
     private DiscoveryEndpointResolver endpointResolver = DiscoveryEndpointResolver.NONE;
 
