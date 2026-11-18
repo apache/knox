@@ -59,6 +59,20 @@ public class RemoteSchemaMappingVisitorTest {
     }
 
     @Test
+    public void testVisitRewritesMappedProxyAttributeToRemoteName() throws Exception {
+        // A filter on the proxy-facing modifyTimestamp must be forwarded to the remote server using
+        // the name it knows, whenChanged.
+        final RemoteSchemaMappingVisitor visitor =
+                new RemoteSchemaMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER,
+                        AttributeNameMapper.fromConfig("whenChanged:modifyTimestamp"));
+        final ExprNode node = FilterParser.parse(schemaManager, "(modifyTimestamp>=20230101000000.0Z)");
+
+        final Object result = node.accept(visitor);
+
+        assertEquals("(whenChanged>=20230101000000.0Z)", result.toString());
+    }
+
+    @Test
     public void testVisitDoesNotRemapUidWhenIdentifierIsAlreadyUid() throws Exception {
         final RemoteSchemaMappingVisitor visitor =
                 new RemoteSchemaMappingVisitor("uid", "person", "posixGroup", schemaManager, IDENTITY_DN_CONVERTER);

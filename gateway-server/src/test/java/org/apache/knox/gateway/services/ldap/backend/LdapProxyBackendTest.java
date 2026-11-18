@@ -21,10 +21,12 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -971,6 +973,30 @@ public class LdapProxyBackendTest {
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
 
         ldapProxyBackend.loadRemoteSchema(SchemaManagerFactory.createSchemaManager());
+    }
+
+    @Test
+    public void testMapRequestedAttributesToRemoteTranslatesMappedNames() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("attributeMappings", "whenChanged:modifyTimestamp");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // A client request for the proxy-facing modifyTimestamp is forwarded as the remote name
+        // whenChanged; unmapped names and "*" are left alone.
+        String[] remote = ldapProxyBackend.mapRequestedAttributesToRemote(
+                new String[] {"cn", "modifyTimestamp", "*"});
+
+        assertArrayEquals(new String[] {"cn", "whenChanged", "*"}, remote);
+    }
+
+    @Test
+    public void testMapRequestedAttributesToRemoteIsNoOpWithoutMapping() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        // With no attributeMappings configured the array is returned unchanged (same instance),
+        // so the common path allocates nothing.
+        String[] requested = new String[] {"cn", "modifyTimestamp"};
+        assertSame(requested, ldapProxyBackend.mapRequestedAttributesToRemote(requested));
     }
 
     @Test

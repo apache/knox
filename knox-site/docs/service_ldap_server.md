@@ -275,6 +275,7 @@ The proxy backend delegates lookups to a remote LDAP or Active Directory server.
 | `gateway.ldap.interceptor.<name>.maxFilterLength` | `0` | Maximum length of a search filter sent to the remote server. A longer filter (for example one expanded from a `memberOf` condition on a large group) is split into several searches whose results are combined. 0 means unlimited. |
 | `gateway.ldap.interceptor.<name>.maxResultSetSize` | `0` | Maximum number of results to return from a search, regardless of paging. 0 means unlimited. |
 | `gateway.ldap.interceptor.<name>.extraAttributes` | N/A | Comma-separated list of additional attribute names (or OIDs) to import from the remote server's schema at start-up, so the proxy can recognise and request them (e.g. operational attributes). Only the listed attributes are imported — the remote schema is never trusted wholesale. See [Importing remote attributes](#importing-remote-attributes-extraattributes). |
+| `gateway.ldap.interceptor.<name>.attributeMappings` | N/A | Comma-separated list of `remoteName:proxyName` pairs renaming a remote attribute to a different name on the proxy entry (e.g. `whenChanged:modifyTimestamp`). The rename is applied end to end: on returned entries, in the client's requested-attribute list, and in search filters. See [Renaming remote attributes](#renaming-remote-attributes-attributemappings). |
 
 NOTE: If this value is undefined and the interceptor was created by the KnoxLDAPServerManager, the KnoxLDAPServerManager will set the `gateway.ldap.interceptor.<name>.maxResultSetSize` value to be 1 greater than the proxy's `gateway.ldap.max.size.limit` configuration. This will ensure that the proxy returns a "Size limit exceeded" result if the backend has more results than the proxy's limit.
 
@@ -298,6 +299,32 @@ Behaviour and safeguards:
 - **Operational attributes are requested explicitly.** Operational attributes (such as `whenChanged`) are returned by the directory only when the client requests them **by name**; they are not included in a bare `*` (all user attributes) request.
 - **Secrets are never surfaced.** Credential-bearing attributes (for example `userPassword`, `unicodePwd`) are always stripped from proxy entries regardless of what is imported or requested, so importing an attribute never exposes password or key material.
 - **No configuration, no schema read.** If `extraAttributes` is empty, Knox does not read the remote schema at all.
+
+##### Renaming remote attributes (`attributeMappings`)
+
+Where [`extraAttributes`](#importing-remote-attributes-extraattributes) lets an attribute pass through under its own name, `attributeMappings` surfaces a remote attribute under a *different* name on the proxy entry. The common case is exposing a vendor-specific attribute under its RFC-standard equivalent — for example presenting Active Directory's `whenChanged` as the standard `modifyTimestamp` so clients can read a last-modified timestamp without knowing it is an AD server behind the proxy.
+
+Configure it as a comma-separated list of `remoteName:proxyName` pairs:
+
+```xml
+<property>
+    <name>gateway.ldap.interceptor.adexample.attributeMappings</name>
+    <value>whenChanged:modifyTimestamp</value>
+</property>
+```
+
+The rename is bidirectional and applied in all three places so the proxy name works end to end:
+
+- **On returned entries**, the remote attribute (`whenChanged`) is copied into the proxy entry under the proxy name (`modifyTimestamp`); the remote name does not appear on the proxy entry.
+- **In the requested-attribute list**, a client request for the proxy name (`modifyTimestamp`) is forwarded to the remote server as the remote name (`whenChanged`), which is the only name the remote server knows.
+- **In search filters**, a condition on the proxy name (e.g. `(modifyTimestamp>=20230101000000.0Z)`) is rewritten to the remote name before the search is sent.
+
+Behaviour and safeguards:
+
+- **Values are copied verbatim.** The attribute value is not reformatted, so only map attributes whose values share a compatible syntax (`whenChanged` and `modifyTimestamp` are both GeneralizedTime). The target name must be resolvable in the schema — `modifyTimestamp` is a standard operational attribute Knox already knows; a non-standard target may also need [`extraAttributes`](#importing-remote-attributes-extraattributes).
+- **Operational attributes still require an explicit request.** `modifyTimestamp` (like `whenChanged`) is operational, so a client must request it **by name**; it is not returned by a bare `*` request. Because the remote attribute is operational on AD, the proxy only asks the remote server for it when the proxy name is explicitly requested.
+- **Lookups are case-insensitive**, and malformed pairs (missing colon or an empty side) are ignored rather than failing the backend.
+- **Secrets are never surfaced.** Credential-bearing attributes (for example `userPassword`, `unicodePwd`) are always stripped from proxy entries, so a mapping can never be used to expose password or key material under a different name.
 
 ##### Credential store aliases for backend passwords
 
@@ -582,6 +609,10 @@ To configure Knox to act as an LDAP proxy for a local file and an Active Directo
 <property>
     <name>gateway.ldap.interceptor.adexample.extraAttributes</name>
     <value>whenCreated,uSNCreated,uSNChanged</value>
+</property>
+<property>
+    <name>gateway.ldap.interceptor.adexample.attributeMappings</name>
+    <value>whenChanged:modifyTimestamp</value>
 </property>
 
 <!--

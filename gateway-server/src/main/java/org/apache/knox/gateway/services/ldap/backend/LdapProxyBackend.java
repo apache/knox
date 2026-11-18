@@ -108,6 +108,9 @@ public class LdapProxyBackend implements LdapBackend {
     private String host;
 
     private final RemoteSchemaConverter remoteSchemaConverter;
+    // Operator-configured remote<->proxy attribute name mapping (e.g. whenChanged<->modifyTimestamp).
+    // Applied when converting remote entries, forwarding requested attributes, and rewriting filters.
+    private final AttributeNameMapper attributeNameMapper;
 
     // Proxy configuration
     private final String proxyBaseDn;  // Base DN for proxy entries (e.g., dc=proxy,dc=com)
@@ -209,6 +212,10 @@ public class LdapProxyBackend implements LdapBackend {
         remoteUserObjectClass = config.getOrDefault("userObjectClass", "inetOrgPerson");
         remoteGroupObjectClass = config.getOrDefault("groupObjectClass", "groupOfNames");
 
+        // Parse the operator-configured attribute name mapping (remoteName:proxyName pairs) before
+        // building the converter so it can rename attributes on remote entries and in filters.
+        attributeNameMapper = AttributeNameMapper.fromConfig(config.get("attributeMappings"));
+
         remoteSchemaConverter = new RemoteSchemaConverter(proxyBaseDn,
                 proxyUserSearchBase,
                 proxyGroupSearchBase,
@@ -218,7 +225,8 @@ public class LdapProxyBackend implements LdapBackend {
                 remoteUserIdentifierAttribute,
                 remoteUserObjectClass,
                 remoteGroupObjectClass,
-                dnMappingEnabled);
+                dnMappingEnabled,
+                attributeNameMapper);
 
         // Configure group lookup
         useMemberOf = Boolean.parseBoolean(config.getOrDefault("useMemberOf", "false"));
@@ -811,7 +819,28 @@ public class LdapProxyBackend implements LdapBackend {
             remote.add(remoteUserIdentifierAttribute);
         }
 
-        return remote.toArray(new String[0]);
+        return mapRequestedAttributesToRemote(remote.toArray(new String[0]));
+    }
+
+    /**
+     * Translates operator-mapped proxy attribute names in a requested-attribute list to the remote
+     * server's names, so the remote search asks for the name the server actually knows (e.g. a
+     * client request for {@code modifyTimestamp} is forwarded as {@code whenChanged}). Unmapped
+     * names (including {@code "*"}) pass through unchanged, and the array is only copied when a
+     * mapping is actually configured.
+     *
+     * @param attributes the requested attributes, in proxy-facing names
+     * @return the attributes translated to remote names
+     */
+    String[] mapRequestedAttributesToRemote(String[] attributes) {
+        if (attributeNameMapper.isEmpty() || attributes == null) {
+            return attributes;
+        }
+        final String[] remoteAttributes = new String[attributes.length];
+        for (int i = 0; i < attributes.length; i++) {
+            remoteAttributes[i] = attributeNameMapper.toRemoteName(attributes[i]);
+        }
+        return remoteAttributes;
     }
 
     /**

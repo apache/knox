@@ -41,13 +41,19 @@ public class RemoteSchemaMappingVisitor implements FilterVisitor {
     private final String groupObjectClass;
     private final SchemaManager schemaManager;
     private final Function<String, String> dnConverter;
+    private final AttributeNameMapper attributeNameMapper;
 
     public RemoteSchemaMappingVisitor(String userIdentifierAttribute, String userObjectClass, String groupObjectClass, SchemaManager schemaManager, Function<String, String> dnConverter) {
+        this(userIdentifierAttribute, userObjectClass, groupObjectClass, schemaManager, dnConverter, AttributeNameMapper.fromConfig(null));
+    }
+
+    public RemoteSchemaMappingVisitor(String userIdentifierAttribute, String userObjectClass, String groupObjectClass, SchemaManager schemaManager, Function<String, String> dnConverter, AttributeNameMapper attributeNameMapper) {
         this.userIdentifierAttribute = userIdentifierAttribute;
         this.userObjectClass = userObjectClass;
         this.groupObjectClass = groupObjectClass;
         this.schemaManager = schemaManager;
         this.dnConverter = dnConverter;
+        this.attributeNameMapper = attributeNameMapper;
     }
 
     @Override
@@ -65,6 +71,18 @@ public class RemoteSchemaMappingVisitor implements FilterVisitor {
 
     private Object handleLeafNode(LeafNode leafNode) {
         String currentAttribute = leafNode.getAttribute();
+
+        // Rewrite an operator-mapped proxy attribute to its remote name (e.g. a filter on the
+        // standard modifyTimestamp is sent to the remote server as whenChanged) so the remote
+        // server, which only knows its own name, can evaluate the condition.
+        if (currentAttribute != null) {
+            final String remoteAttribute = attributeNameMapper.toRemoteName(currentAttribute);
+            if (!remoteAttribute.equals(currentAttribute)) {
+                leafNode.setAttribute(remoteAttribute);
+                leafNode.setAttributeType(schemaManager.getAttributeType(remoteAttribute));
+                currentAttribute = remoteAttribute;
+            }
+        }
 
         // Map the uid attribute search to the configured user identifier (e.g., sAMAccountName)
         if ("uid".equalsIgnoreCase(currentAttribute) && !"uid".equalsIgnoreCase(userIdentifierAttribute)) {
