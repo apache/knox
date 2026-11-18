@@ -128,6 +128,7 @@ public class LDAPRolesLookupInterceptorTest {
     public void testSearchWithNoBypassControlPresent() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
         final Collection<String> roles = List.of("roleA");
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(anyString(), anyObject()))
                 .andReturn(roles)
                 .atLeastOnce();
@@ -164,6 +165,7 @@ public class LDAPRolesLookupInterceptorTest {
     public void testSearchWrapsRolesLookupFailure() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
         RuntimeException expectedException = new RuntimeException("roles lookup failed");
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(anyString(), anyObject()))
                 .andThrow(expectedException);
         replay(mockRolesService);
@@ -182,6 +184,7 @@ public class LDAPRolesLookupInterceptorTest {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
         // A strict (non-nice) mock: an unexpected call, e.g. with the malformed DN's raw
         // value treated as a group name, would fail this test immediately.
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles("alice", Set.of("group1")))
                 .andReturn(List.of("roleA"));
         replay(mockRolesService);
@@ -206,6 +209,7 @@ public class LDAPRolesLookupInterceptorTest {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 
         final Collection<String> roles = Arrays.asList("roleA", "roleG");
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(anyString(), anyObject()))
                 .andReturn(roles)
                 .atLeastOnce();
@@ -250,6 +254,7 @@ public class LDAPRolesLookupInterceptorTest {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 
         final Capture<String> usernameCapture = EasyMock.newCapture();
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(EasyMock.capture(usernameCapture), anyObject()))
                 .andReturn(Arrays.asList("roleA"))
                 .atLeastOnce();
@@ -284,6 +289,7 @@ public class LDAPRolesLookupInterceptorTest {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
 
         final Capture<String> usernameCapture = EasyMock.newCapture();
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(EasyMock.capture(usernameCapture), anyObject()))
                 .andReturn(Arrays.asList("roleA"))
                 .atLeastOnce();
@@ -312,6 +318,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testRolesLookupRetainsUidWhenAllUserAttributesRequested() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(anyString(), anyObject()))
                 .andReturn(Arrays.asList("roleA"))
                 .atLeastOnce();
@@ -389,6 +396,8 @@ public class LDAPRolesLookupInterceptorTest {
      */
     private LDAPRolesLookupService createUserLookupRolesService(final String userId, final String groupName) throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        // init() best-effort seeds numRoles via listRoles(); an empty result leaves numRoles untouched.
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(userId, Set.of(groupName))).andReturn(List.of("roleA"));
         replay(mockRolesService);
         return mockRolesService;
@@ -471,6 +480,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testSearchTranslatesUserAndGroupEntries() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles("alice", Set.of("group1")))
                 .andReturn(List.of("roleA"));
         expect(mockRolesService.lookupRoles(null, Set.of("engineering")))
@@ -514,6 +524,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testSearchDeduplicatesGroupsMappingToSameRole() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(null, Set.of("engineering")))
                 .andReturn(List.of("viewer"));
         expect(mockRolesService.lookupRoles(null, Set.of("support")))
@@ -552,6 +563,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testSearchDeduplicatesGroupsWhenOnlyOneHasMembers() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(null, Set.of("engineering")))
                 .andReturn(List.of("viewer"));
         expect(mockRolesService.lookupRoles(null, Set.of("support")))
@@ -583,6 +595,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testSearchMergesUniqueMemberAttributeIntoDeduplicatedEntry() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(mockRolesService.lookupRoles(null, Set.of("engineering")))
                 .andReturn(List.of("viewer"));
         expect(mockRolesService.lookupRoles(null, Set.of("support")))
@@ -626,7 +639,7 @@ public class LDAPRolesLookupInterceptorTest {
                 "(|(cn=viewer)(cn=*))")) {
 
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-            expect(rolesService.listRoles()).andReturn(List.of("platform:admin", "viewer"));
+            expect(rolesService.listRoles()).andReturn(List.of("platform:admin", "viewer")).anyTimes();
             replay(rolesService);
 
             final TestContext testContext = createTestContext(false, rolesService);
@@ -648,7 +661,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testAllGroupsSearchFromGroupsBaseIsCaseInsensitive() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(rolesService.listRoles()).andReturn(List.of("viewer"));
+        expect(rolesService.listRoles()).andReturn(List.of("viewer")).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -674,7 +687,7 @@ public class LDAPRolesLookupInterceptorTest {
                 "(|(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))(objectClass=referral))",
                 "(|(|(objectClass=groupOfUniqueNames)(objectClass=groupOfNames))(objectClass=referral))")) {
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-            expect(rolesService.listRoles()).andReturn(List.of("viewer"));
+            expect(rolesService.listRoles()).andReturn(List.of("viewer")).anyTimes();
             replay(rolesService);
 
             final TestContext testContext = createTestContext(false, rolesService);
@@ -704,8 +717,10 @@ public class LDAPRolesLookupInterceptorTest {
                 "(|(uid=alice)(objectClass=groupOfNames))",
                 "(&(objectClass=groupOfNames)(!(cn=viewer)))",
                 "(&(objectClass=inetOrgPerson)(!(cn=viewer)))")) {
-            // strict mock: listRoles() must not be called
+            // listRoles() here is only the best-effort numRoles seed from init(); this filter must not
+            // be treated as an all-groups search, which is asserted via the empty result below.
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
             replay(rolesService);
 
             final TestContext testContext = createTestContext(false, rolesService);
@@ -727,8 +742,10 @@ public class LDAPRolesLookupInterceptorTest {
                 "(&(objectClass=groupOfNames)(sn=smith))",
                 "(&(uid=alice)(sn=smith))",
                 "(|(uid=alice)(sn=smith))")) {
-            // strict mock: listRoles() must not be called
+            // listRoles() here is only the best-effort numRoles seed from init(); this filter must not
+            // be treated as an all-groups search, which is asserted via the empty result below.
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
             replay(rolesService);
 
             final TestContext testContext = createTestContext(false, rolesService);
@@ -745,6 +762,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testObjectScopeSearchOnGroupsBaseIsNotAllGroupsSearch() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -760,6 +778,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testDeepSearchWithGroupFilterIsNotAllGroupsSearch() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -776,7 +795,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testAllGroupsSearchWithNoRolesReturnsNoEntries() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(rolesService.listRoles()).andReturn(List.of());
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -791,7 +810,7 @@ public class LDAPRolesLookupInterceptorTest {
     public void testAllGroupsSearchWrapsListRolesFailure() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
         final RuntimeException failure = new RuntimeException("roles backend down");
-        expect(rolesService.listRoles()).andThrow(failure);
+        expect(rolesService.listRoles()).andThrow(failure).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -807,6 +826,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testAllGroupsSearchIsSkippedWhenRolesLookupBypassed() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(true, rolesService);
@@ -824,6 +844,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testMemberOfRoleFilterIsReplacedWithAssignees() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(rolesService.lookupRoleAssignees("platform:admin"))
                 .andReturn(new RoleAssignees(List.of("alice"), List.of("engineering")));
         replay(rolesService);
@@ -847,6 +868,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testMemberOfFilterForRoleWithoutAssigneesIsLeftUntouched() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(rolesService.lookupRoleAssignees("viewer")).andReturn(new RoleAssignees(List.of(), List.of()));
         replay(rolesService);
 
@@ -863,8 +885,9 @@ public class LDAPRolesLookupInterceptorTest {
 
     @Test
     public void testFilterWithoutMemberOfDoesNotCallReverseLookup() throws Exception {
-        // strict mock: lookupRoleAssignees() must not be called
+        // lookupRoleAssignees() must not be called; listRoles() is only the best-effort numRoles seed from init().
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -881,6 +904,7 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testMemberOfReverseLookupFailureIsReported() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
         expect(rolesService.lookupRoleAssignees("viewer")).andThrow(new IllegalStateException("backend down"));
         replay(rolesService);
 
@@ -893,21 +917,20 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     // ---------------------------------------------------------------------------------------------
-    // List strategy: when the result set is larger than the number of roles, handleSearch lists all
-    // roles once (listRoles + one lookupRoleAssignees per role) and resolves every entry from the
-    // resulting user->roles / group->roles maps, instead of one lookupRoles per entry.
+    // List strategy: when the result set is larger than the number of roles, handleSearch fetches all
+    // role assignments once (getAllRoleAssignees) and resolves every entry from the resulting
+    // user->roles / group->roles maps, instead of one lookupRoles per entry.
     // numRoles is lowered below the entry count to force populateRolesThroughList.
     // ---------------------------------------------------------------------------------------------
 
     @Test
     public void testListPathResolvesUserRolesFromDirectAndGroupAssignments() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewerRole", "adminRole"));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         // alice is assigned viewerRole directly, and adminRole via the engineering group.
-        expect(mockRolesService.lookupRoleAssignees("viewerRole"))
-                .andReturn(new RoleAssignees(List.of("alice"), List.of()));
-        expect(mockRolesService.lookupRoleAssignees("adminRole"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewerRole", new RoleAssignees(List.of("alice"), List.of()),
+                "adminRole", new RoleAssignees(List.of(), List.of("engineering"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
@@ -928,10 +951,10 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathWipesMemberOfForUserWithNoAssignedRoles() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewerRole"));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         // viewerRole is assigned to bob only; alice ends up with no roles.
-        expect(mockRolesService.lookupRoleAssignees("viewerRole"))
-                .andReturn(new RoleAssignees(List.of("bob"), List.of()));
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewerRole", new RoleAssignees(List.of("bob"), List.of())));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
@@ -950,9 +973,9 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathTranslatesGroupEntryViaAssignments() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
-        expect(mockRolesService.lookupRoleAssignees("viewer"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
@@ -974,10 +997,10 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathDropsGroupEntryWithNoRoleMapping() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         // viewer maps to a different group, so the unmapped group has no entry in the assignment map.
-        expect(mockRolesService.lookupRoleAssignees("viewer"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
@@ -994,11 +1017,10 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathTranslatesUserAndGroupEntriesTogether() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("roleA", "viewer"));
-        expect(mockRolesService.lookupRoleAssignees("roleA"))
-                .andReturn(new RoleAssignees(List.of("alice"), List.of("group1")));
-        expect(mockRolesService.lookupRoleAssignees("viewer"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "roleA", new RoleAssignees(List.of("alice"), List.of("group1")),
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
@@ -1036,9 +1058,9 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathDeduplicatesGroupsMappingToSameRole() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
-        expect(mockRolesService.lookupRoleAssignees("viewer"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering", "support")));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering", "support"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
@@ -1070,10 +1092,10 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathLowercasesUserIdWhenEnabled() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewerRole"));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         // The roles backend keys the direct user assignment on the lowercased id.
-        expect(mockRolesService.lookupRoleAssignees("viewerRole"))
-                .andReturn(new RoleAssignees(List.of("admin"), List.of()));
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewerRole", new RoleAssignees(List.of("admin"), List.of())));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(null, mockRolesService, true);
@@ -1092,10 +1114,10 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathLowercasesMemberOfGroupNameWhenEnabled() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("adminRole"));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         // adminRole is assigned via the group, keyed on its lowercased id in the backend.
-        expect(mockRolesService.lookupRoleAssignees("adminRole"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "adminRole", new RoleAssignees(List.of(), List.of("engineering"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(null, mockRolesService, true);
@@ -1115,9 +1137,9 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testListPathLowercasesGroupEntryNameWhenEnabled() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("viewer"));
-        expect(mockRolesService.lookupRoleAssignees("viewer"))
-                .andReturn(new RoleAssignees(List.of(), List.of("engineering")));
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(null, mockRolesService, true);
@@ -1136,41 +1158,25 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     @Test
-    public void testListPathContinuesWhenOneRoleAssigneeLookupFails() throws Exception {
+    public void testListPathFallsBackToLookupWhenGetAllRoleAssigneesFails() throws Exception {
+        // When the list path's single getAllRoleAssignees call fails, handleSearch must fall back to the
+        // per-entry lookup path rather than failing the whole search.
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("goodRole", "badRole"));
-        expect(mockRolesService.lookupRoleAssignees("goodRole"))
-                .andReturn(new RoleAssignees(List.of("alice"), List.of()));
-        // A per-role assignee lookup failure must be swallowed (logged) so the rest still resolve.
-        expect(mockRolesService.lookupRoleAssignees("badRole"))
-                .andThrow(new IllegalStateException("roles backend down for badRole"));
-        replay(mockRolesService);
-
-        final TestContext testContext = createListPathTestContext(mockRolesService);
-        final Entry userEntry = createUserEntry("alice");
-        testContext.nextInterceptor.setEntries(List.of(userEntry));
-
-        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
-            assertTrue(entries.next());
-            assertMemberOf(entries.get(), "cn=goodRole,ou=groups,dc=proxy,dc=com");
-            assertFalse(entries.next());
-        }
-        verify(mockRolesService);
-    }
-
-    @Test
-    public void testListPathWrapsListRolesFailure() throws Exception {
-        final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        final RuntimeException failure = new RuntimeException("roles backend down");
-        expect(mockRolesService.listRoles()).andThrow(failure);
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(mockRolesService.getAllRoleAssignees())
+                .andThrow(new RuntimeException("roles backend down"));
+        // Fallback path: roles are resolved per entry through lookupRoles.
+        expect(mockRolesService.lookupRoles(anyString(), anyObject())).andReturn(List.of("viewer"));
         replay(mockRolesService);
 
         final TestContext testContext = createListPathTestContext(mockRolesService);
         testContext.nextInterceptor.setEntries(List.of(createUserEntry("alice")));
 
-        final LdapException exception = assertThrows(LdapException.class,
-                () -> testContext.interceptor.search(testContext.ctx));
-        assertEquals("A listRoles failure should be wrapped, not propagated raw", failure, exception.getCause());
+        try (EntryFilteringCursor entries = testContext.interceptor.search(testContext.ctx)) {
+            assertTrue(entries.next());
+            assertMemberOf(entries.get(), "cn=viewer,ou=groups,dc=proxy,dc=com");
+            assertFalse(entries.next());
+        }
         verify(mockRolesService);
     }
 
@@ -1179,11 +1185,12 @@ public class LDAPRolesLookupInterceptorTest {
         // First search (2 entries, numRoles seeded to 0) must take the list path and learn there are
         // 3 roles. A later search of 2 entries (2 <= 3) must then fall back to the per-entry lookup path.
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(mockRolesService.listRoles()).andReturn(List.of("r1", "r2", "r3"));
-        expect(mockRolesService.lookupRoleAssignees("r1")).andReturn(new RoleAssignees(List.of(), List.of()));
-        expect(mockRolesService.lookupRoleAssignees("r2")).andReturn(new RoleAssignees(List.of(), List.of()));
-        expect(mockRolesService.lookupRoleAssignees("r3")).andReturn(new RoleAssignees(List.of(), List.of()));
-        // Second phase: the per-entry lookup path. listRoles must not be called again.
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(mockRolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "r1", new RoleAssignees(List.of(), List.of()),
+                "r2", new RoleAssignees(List.of(), List.of()),
+                "r3", new RoleAssignees(List.of(), List.of())));
+        // Second phase: the per-entry lookup path. getAllRoleAssignees must not be called again.
         expect(mockRolesService.lookupRoles(anyString(), anyObject()))
                 .andReturn(List.of("roleX")).times(2);
         replay(mockRolesService);
@@ -1325,6 +1332,8 @@ public class LDAPRolesLookupInterceptorTest {
 
     private LDAPRolesLookupService createMockRolesService() throws Exception {
         final LDAPRolesLookupService mockRolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        // init() best-effort seeds numRoles via listRoles(); an empty result leaves numRoles untouched.
+        expect(mockRolesService.listRoles()).andReturn(List.of()).anyTimes();
         replay(mockRolesService);
         return mockRolesService;
     }

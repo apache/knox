@@ -237,6 +237,9 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR, text = "Failed to list roles: {0}")
     void ldapRolesListFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
 
+    @Message(level = MessageLevel.ERROR, text = "Failed to get all role assignments: {0}")
+    void ldapRolesGetAllRoleAssignmentsFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
     @Message(level = MessageLevel.ERROR, text = "Failed to lookup users and groups for role {0}: {1}")
     void ldapRolesReverseLookupFailed(String roleName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 

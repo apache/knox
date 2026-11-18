@@ -20,6 +20,7 @@ package org.apache.knox.gateway.services.ldap.roles;
 import org.apache.knox.gateway.services.ldap.RoleAssignees;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Interface for listing roles and looking up roles for a user.
@@ -41,4 +42,12 @@ public interface LdapRolesReverseLookup {
      * @throws RoleException if an error occurs during reverse lookup
      */
     RoleAssignees lookupRoleAssignees(String role) throws RoleException;
+
+    /**
+     * Look up role assignees (users and groups) for all roles
+     *
+     * @return map of role name to the role assignees
+     * @throws RoleException if an error occurs retrieval of all role assignments
+     */
+    Map<String, RoleAssignees> getAllRoleAssignees() throws RoleException;
 }
