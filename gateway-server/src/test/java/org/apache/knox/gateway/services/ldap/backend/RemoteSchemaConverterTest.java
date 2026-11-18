@@ -177,6 +177,19 @@ public class RemoteSchemaConverterTest {
     }
 
     @Test
+    public void testCopyAttributeSkipsMalformedDnValue() throws Exception {
+        final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", false);
+        final Entry source = new DefaultEntry();
+        source.add("memberOf", "this is not a valid dn", "cn=engineering," + REMOTE_GROUP_SEARCH_BASE);
+        final Entry target = new DefaultEntry(schemaManager, "uid=alice," + REMOTE_USER_SEARCH_BASE);
+
+        converter.copyAttribute(source, target, "memberOf", schemaManager);
+
+        assertEquals(1, target.get("memberOf").size());
+        assertEquals("cn=engineering," + REMOTE_GROUP_SEARCH_BASE, target.get("memberOf").getString());
+    }
+
+    @Test
     public void testConvertProxyDnToRemoteDnWithNull() {
         final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", true);
         assertNull(converter.convertProxyDnToRemoteDn(null));

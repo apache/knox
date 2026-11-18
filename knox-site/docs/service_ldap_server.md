@@ -129,7 +129,7 @@ user will be updated when the gateway is reloaded.
 
 | Property | Default Value | Description |
 | :--- | :--- | :--- |
-| `gateway.ldap.interceptor.<name>.interceptorType` | N/A | The type of interceptor to use (`backend`, `duplicateuserfilter`, `disableduserfilter`, or `rolesLookup`). |
+| `gateway.ldap.interceptor.<name>.interceptorType` | N/A | The type of interceptor to use (`backend`, `duplicateuserfilter`, `disableduserfilter`, `attributenormalizer`, or `rolesLookup`). |
 
 #### User Search Interceptor (`backend`)
 
@@ -146,6 +146,12 @@ The disabled user filter interceptor will recognize and filter disabled users. I
 | Property | Default Value | Description |
 | :--- | :--- | :--- |
 | `gateway.ldap.interceptor.<name>.removeDisabledUsers` | `false` | Whether to remove disabled users from the results. |
+
+#### Attribute Normalization Interceptor (`attributenormalizer`)
+
+The attribute normalization interceptor lowercases attribute values in the entries returned by searches and lookups, so clients see one canonical form regardless of how the backing directory cased them (for example, Active Directory returning `sAMAccountName` as `JSmith`). The values lowercased are those of attributes whose equality matching rule in the LDAP schema ignores case (e.g. `caseIgnoreMatch`), DN-valued attributes such as `member` and `memberOf`, `uniqueMember` (any `#'<bits>'B` UID suffix is preserved), and `objectClass`. The entry DN is lowercased as well. The interceptor has no additional properties.
+
+The interceptor normalizes the results of the interceptors listed before it in `gateway.ldap.interceptor.names`, so list it after the interceptors whose output it should normalize. This matters because other interceptors compare `objectClass` values and parse group names from `memberOf` DNs, and need to see the backend's original values.
 
 #### Roles Lookup Interceptor (`rolesLookup`)
 

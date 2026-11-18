@@ -86,6 +86,8 @@ class TestKnoxLdapProxySearchWithRoleLookup(  # pylint: disable=too-many-public-
     """Verify general search requests are proxied to the demo LDAP backend
     with role lookup configured."""
 
+    is_attribute_normalization_interceptor_configured = False
+
     def test_search_all_groups_by_objectclass(self) -> None:
         """All groupOfNames entries under ou=groups come back mapped to roles."""
         groups = self.rdn_values(self.search(GROUPS_BASE, "(objectClass=groupOfNames)"))
