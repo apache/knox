@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import jakarta.inject.Singleton;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 
@@ -35,6 +36,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURC
 
 @Path(BASE_RESOURCE_PATH + "/.well-known/openid-configuration")
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class DiscoveryResource {
     private DiscoveryEndpointResolver endpointResolver = DiscoveryEndpointResolver.NONE;
 

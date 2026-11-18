@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.service.knoxidf;
 
 import com.nimbusds.jose.KeyLengthException;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -86,6 +87,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 @Path(TokenResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class TokenResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/token";
 

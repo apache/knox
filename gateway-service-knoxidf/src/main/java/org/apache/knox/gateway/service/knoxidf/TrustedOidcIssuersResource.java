@@ -17,6 +17,7 @@
 package org.apache.knox.gateway.service.knoxidf;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Singleton;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.AuditServiceFactory;
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
 
 @Path(TrustedOidcIssuersResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class TrustedOidcIssuersResource {
 
   static final String RESOURCE_PATH = "knoxidf/admin/v1/trusted-oidc-issuers";

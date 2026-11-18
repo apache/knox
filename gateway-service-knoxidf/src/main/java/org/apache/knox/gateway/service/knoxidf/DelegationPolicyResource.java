@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
@@ -62,6 +63,7 @@ import java.util.stream.Collectors;
 
 @Path(DelegationPolicyResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class DelegationPolicyResource {
 
   static final String RESOURCE_PATH = "knoxidf/admin/v1/delegation-policies";

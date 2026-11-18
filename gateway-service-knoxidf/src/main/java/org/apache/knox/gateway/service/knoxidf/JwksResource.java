@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.service.knoxidf;
 
+import jakarta.inject.Singleton;
 import org.apache.knox.gateway.service.knoxtoken.JWKSResource;
 
 import jakarta.ws.rs.GET;
@@ -28,6 +29,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURC
 
 @Path(JwksResource.RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Singleton
 public class JwksResource extends JWKSResource {
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/jwks";
 

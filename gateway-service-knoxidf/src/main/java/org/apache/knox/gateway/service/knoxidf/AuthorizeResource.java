@@ -23,6 +23,7 @@ import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.JOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.NameValuePair;
@@ -119,6 +120,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 
 
 @Path(AuthorizeResource.RESOURCE_PATH)
+@Singleton
 public class AuthorizeResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/authorize";
     // RFC 4122 "URL" namespace UUID. Used as the fixed namespace for deriving a STABLE Knox
