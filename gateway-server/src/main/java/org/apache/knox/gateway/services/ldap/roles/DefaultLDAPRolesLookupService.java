@@ -80,7 +80,7 @@ public class DefaultLDAPRolesLookupService implements LDAPRolesLookupService, Ga
 
     @Override
     public Map<String, RoleAssignees> getAllRoleAssignees() throws Exception {
-        return enabled() ? ldapRolesReverseLookup.getAllRoleAssignees() : null;
+        return enabled() ? ldapRolesReverseLookup.getAllRoleAssignees() : Map.of();
     }
 
     @Override

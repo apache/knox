@@ -67,8 +67,10 @@ public class FileBasedLdapRolesReverseLookup implements LdapRolesReverseLookup {
         final Set<String> roles = new HashSet<>();
 
         for (RoleMappingEntry entry : entries) {
-            for (RoleAssignment roleAssignment : entry.getRoles()) {
-                roles.add(roleAssignment.getDisplayValue());
+            if (entry.getRoles() != null) {
+                for (RoleAssignment roleAssignment : entry.getRoles()) {
+                    roles.add(roleAssignment.getDisplayValue());
+                }
             }
         }
 
