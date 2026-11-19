@@ -143,7 +143,7 @@ public class Pac4jProviderTest {
 
         requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
-        assertTrue(cookieValueIsNull(requestedUrlSetCookie.get()));
+        assertTrue(cookieValueIsEmpty(requestedUrlSetCookie.get()));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
@@ -156,7 +156,7 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
 
-        assertEquals(1, countCookiesWithNullValueByName(response, Cookies.USER_PROFILES));
+        assertEquals(1, countCookiesWithEmptyValueByName(response, Cookies.USER_PROFILES));
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
@@ -242,7 +242,7 @@ public class Pac4jProviderTest {
 
         requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
-        assertTrue(cookieValueIsNull(requestedUrlSetCookie.get()));
+        assertTrue(cookieValueIsEmpty(requestedUrlSetCookie.get()));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
@@ -255,7 +255,7 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
 
-        assertEquals(1, countCookiesWithNullValueByName(response, Cookies.USER_PROFILES));
+        assertEquals(1, countCookiesWithEmptyValueByName(response, Cookies.USER_PROFILES));
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
@@ -341,7 +341,7 @@ public class Pac4jProviderTest {
 
         requestedUrlSetCookie = findFirstCookieByName(response, Cookies.REQUESTED_URL);
         assertTrue(requestedUrlSetCookie.isPresent());
-        assertTrue(cookieValueIsNull(requestedUrlSetCookie.get()));
+        assertTrue(cookieValueIsEmpty(requestedUrlSetCookie.get()));
 
         // step 3: turn pac4j identity into KnoxSSO identity
         request = new MockHttpServletRequest();
@@ -354,7 +354,7 @@ public class Pac4jProviderTest {
         assertEquals(0, response.getStatus());
         adapter.doFilter(request, response, filterChain);
 
-        assertEquals(1, countCookiesWithNullValueByName(response, Cookies.USER_PROFILES));
+        assertEquals(1, countCookiesWithEmptyValueByName(response, Cookies.USER_PROFILES));
         assertEquals(USERNAME, adapter.getTestIdentifier());
     }
 
@@ -444,14 +444,14 @@ public class Pac4jProviderTest {
         .count();
     }
 
-    private static long countCookiesWithNullValueByName(MockHttpServletResponse response, String name) {
+    private static long countCookiesWithEmptyValueByName(MockHttpServletResponse response, String name) {
         return response.getHeaders().get("Set-Cookie").stream()
-        .filter(c -> c.startsWith(name+"=null;"))
+        .filter(c -> c.startsWith(name+"=;"))
         .count();
     }
 
-    private static boolean cookieValueIsNull(String setCookieHeader) {
-        return setCookieParser(setCookieHeader).getValue().equals("null");
+    private static boolean cookieValueIsEmpty(String setCookieHeader) {
+        return setCookieParser(setCookieHeader).getValue().isEmpty();
     }
 
     private static class Cookies {

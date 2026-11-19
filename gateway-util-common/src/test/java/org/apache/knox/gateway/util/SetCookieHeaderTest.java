@@ -33,7 +33,7 @@ public class SetCookieHeaderTest {
     @Test
     public void testEmptyValueSetCookie() {
         SetCookieHeader setCookieHeader = new SetCookieHeader("name", null);
-        assertEquals("name=null", setCookieHeader.toString());
+        assertEquals("name=", setCookieHeader.toString());
     }
 
     @Test

@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_COOKIE_MAX_AGE;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_CUSTOM_ATTRIBUTES;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS;
 import static org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter.PAC4J_SESSION_STORE_EXCLUDE_GROUPS_DEFAULT;
@@ -236,6 +237,57 @@ public class KnoxSessionStoreTest {
 
     final KnoxSessionStore sessionStore = new KnoxSessionStore(cryptoService, CLUSTER_NAME, null, sessionStoreConfigs);
     Assert.assertTrue(sessionStore.get(mockContext, keyWithNullValue).isEmpty());
+  }
+
+  @Test
+  public void testSetNullValueWritesEmptyCookie() {
+    final String header = captureSetCookieHeader(new HashMap<>(), "keyWithNullValue", null);
+    assertEmptyCookie(header, "keyWithNullValue");
+    Assert.assertFalse(header, header.contains("Max-Age"));
+  }
+
+  @Test
+  public void testSetNullValueKeepsConfiguredMaxAge() {
+    final Map<String, String> sessionStoreConfigs = new HashMap<>();
+    sessionStoreConfigs.put(PAC4J_COOKIE_MAX_AGE, "3600");
+    final String header = captureSetCookieHeader(sessionStoreConfigs, "keyWithNullValue", null);
+    assertEmptyCookie(header, "keyWithNullValue");
+    Assert.assertTrue(header, header.contains("Max-Age=3600"));
+  }
+
+  @Test
+  public void testSetEmptyMapWritesEmptyCookie() {
+    final String header = captureSetCookieHeader(new HashMap<>(), "keyWithEmptyMap", new HashMap<>());
+    assertEmptyCookie(header, "keyWithEmptyMap");
+    Assert.assertFalse(header, header.contains("Max-Age"));
+  }
+
+  private String captureSetCookieHeader(Map<String, String> sessionStoreConfigs, String key, Object value) {
+    final CryptoService cryptoService = EasyMock.createNiceMock(CryptoService.class);
+    EasyMock.replay(cryptoService);
+
+    final Capture<String> capturedHeader = EasyMock.newCapture();
+    final HttpServletResponse mockResponse = EasyMock.createNiceMock(HttpServletResponse.class);
+    mockResponse.addHeader(EasyMock.eq("Set-Cookie"), EasyMock.capture(capturedHeader));
+    EasyMock.replay(mockResponse);
+
+    final JEEContext mockContext = EasyMock.createNiceMock(JEEContext.class);
+    EasyMock.expect(mockContext.getNativeResponse()).andReturn(mockResponse).anyTimes();
+    EasyMock.expect(mockContext.getFullRequestURL()).andReturn("https://local.com/gateway/knoxsso/").anyTimes();
+    EasyMock.expect(mockContext.getServerName()).andReturn("local.com").anyTimes();
+    EasyMock.expect(mockContext.getScheme()).andReturn("https").anyTimes();
+    EasyMock.expect(mockContext.isSecure()).andReturn(true).anyTimes();
+    EasyMock.replay(mockContext);
+
+    final KnoxSessionStore sessionStore = new KnoxSessionStore(cryptoService, CLUSTER_NAME, null, sessionStoreConfigs);
+    sessionStore.set(mockContext, key, value);
+    return capturedHeader.getValue();
+  }
+
+  private void assertEmptyCookie(String header, String key) {
+    Assert.assertTrue(header, header.startsWith(PAC4J_SESSION_PREFIX + key + "=;"));
+    Assert.assertTrue(header, header.contains("Domain=local.com"));
+    Assert.assertFalse(header, header.contains("null"));
   }
 
 }
