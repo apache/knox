@@ -87,4 +87,31 @@ public class AttributeNameMapperTest {
     public void testConfigWithOnlyMalformedPairsIsEmpty() {
         assertTrue(AttributeNameMapper.fromConfig("noColon, :x, y:").isEmpty());
     }
+
+    @Test
+    public void testPairWithSecondColonIsSkipped() {
+        // An attribute name cannot contain a colon, so "a:b:c" is malformed rather than a mapping
+        // of "a" to "b:c".
+        final AttributeNameMapper mapper = AttributeNameMapper.fromConfig("a:b:c, whenChanged:modifyTimestamp");
+        assertEquals("a", mapper.toProxyName("a"));
+        assertEquals("modifyTimestamp", mapper.toProxyName("whenChanged"));
+    }
+
+    @Test
+    public void testSensitiveAttributesAreRejectedOnBothSides() {
+        // A credential-bearing attribute must never take part in a rename, in either direction, so a
+        // mapping cannot surface secret material under another name or build a filter oracle on it.
+        for (String sensitive : RemoteSchemaConverter.SENSITIVE_ATTRIBUTES) {
+            assertTrue(AttributeNameMapper.fromConfig(sensitive + ":pwd").isEmpty());
+            assertTrue(AttributeNameMapper.fromConfig("description:" + sensitive).isEmpty());
+            // case-insensitively too
+            assertTrue(AttributeNameMapper.fromConfig(sensitive.toUpperCase(java.util.Locale.ROOT) + ":pwd").isEmpty());
+        }
+        // A valid pair alongside a rejected one still registers.
+        final AttributeNameMapper mapper =
+                AttributeNameMapper.fromConfig("userPassword:pwd, whenChanged:modifyTimestamp");
+        assertEquals("modifyTimestamp", mapper.toProxyName("whenChanged"));
+        assertEquals("pwd", mapper.toRemoteName("pwd"));
+        assertEquals("userPassword", mapper.toRemoteName("userPassword"));
+    }
 }

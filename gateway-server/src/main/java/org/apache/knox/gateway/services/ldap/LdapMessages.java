@@ -305,4 +305,10 @@ public interface LdapMessages {
 
     @Message(level = MessageLevel.WARN, text = "Failed to register remote attribute type {1} with oid {2} from backend {0}: {3}")
     void ldapRemoteAttributeTypeError(String backendName, String attributeName, String oid, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.WARN, text = "Skipping malformed attributeMappings entry ''{0}''; expected a single remoteName:proxyName pair with a non-empty name on each side")
+    void ldapAttributeMappingSkipped(String pair);
+
+    @Message(level = MessageLevel.WARN, text = "Skipping attributeMappings entry ''{0}''; credential-bearing attributes cannot be renamed")
+    void ldapAttributeMappingSensitiveSkipped(String pair);
 }

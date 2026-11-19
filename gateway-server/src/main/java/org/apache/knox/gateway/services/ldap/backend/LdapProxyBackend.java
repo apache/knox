@@ -804,8 +804,12 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     private String[] toRemoteAttributes(String[] attributes, boolean addMemberOf) {
+        // Translate the client-supplied (proxy-facing) names to their remote names first, so the
+        // proxy's own required remote attributes appended below are never themselves remapped. A
+        // mapping whose proxy name happened to collide with e.g. memberOf would otherwise rewrite
+        // the attribute the proxy adds for its own use and break group resolution.
         final Set<String> remote = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        remote.addAll(Arrays.asList(attributes));
+        remote.addAll(Arrays.asList(mapRequestedAttributesToRemote(attributes)));
 
         // The LDAP proxy treats memberOf as a user attribute. MemberOf is an operational attribute on some LDAP servers.
         // Explicitly add memberOf to the attribute list for remote searches if it is a requested attribute.
@@ -819,7 +823,7 @@ public class LdapProxyBackend implements LdapBackend {
             remote.add(remoteUserIdentifierAttribute);
         }
 
-        return mapRequestedAttributesToRemote(remote.toArray(new String[0]));
+        return remote.toArray(new String[0]);
     }
 
     /**
@@ -833,7 +837,7 @@ public class LdapProxyBackend implements LdapBackend {
      * @return the attributes translated to remote names
      */
     String[] mapRequestedAttributesToRemote(String[] attributes) {
-        if (attributeNameMapper.isEmpty() || attributes == null) {
+        if (attributes == null || attributeNameMapper.isEmpty()) {
             return attributes;
         }
         final String[] remoteAttributes = new String[attributes.length];

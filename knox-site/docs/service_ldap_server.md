@@ -322,9 +322,9 @@ The rename is bidirectional and applied in all three places so the proxy name wo
 Behaviour and safeguards:
 
 - **Values are copied verbatim.** The attribute value is not reformatted, so only map attributes whose values share a compatible syntax (`whenChanged` and `modifyTimestamp` are both GeneralizedTime). The target name must be resolvable in the schema — `modifyTimestamp` is a standard operational attribute Knox already knows; a non-standard target may also need [`extraAttributes`](#importing-remote-attributes-extraattributes).
-- **Operational attributes still require an explicit request.** `modifyTimestamp` (like `whenChanged`) is operational, so a client must request it **by name**; it is not returned by a bare `*` request. Because the remote attribute is operational on AD, the proxy only asks the remote server for it when the proxy name is explicitly requested.
-- **Lookups are case-insensitive**, and malformed pairs (missing colon or an empty side) are ignored rather than failing the backend.
-- **Secrets are never surfaced.** Credential-bearing attributes (for example `userPassword`, `unicodePwd`) are always stripped from proxy entries, so a mapping can never be used to expose password or key material under a different name.
+- **`modifyTimestamp` is an operational attribute.** Like the remote `whenChanged`, it is returned by a compliant directory only when a client requests it **by name**, not as part of a bare `*` (all attributes) request. The rename itself is unconditional, though: it is applied to whatever the remote server returns, so any `whenChanged` present in a remote result is surfaced as `modifyTimestamp` regardless of whether the client requested the proxy name by name.
+- **Lookups are case-insensitive**, and malformed pairs (missing colon, an empty side, or more than one colon) are skipped with a warning in the gateway log rather than failing the backend.
+- **Secrets are never surfaced.** Credential-bearing attributes (for example `userPassword`, `unicodePwd`) are always stripped from proxy entries, and any mapping that names one on either side is rejected with a warning. A mapping can therefore never expose password or key material under a different name, nor turn a filter on a credential attribute into a guessing oracle.
 
 ##### Credential store aliases for backend passwords
 

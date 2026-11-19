@@ -17,6 +17,10 @@
  */
 package org.apache.knox.gateway.services.ldap.backend;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.services.ldap.LdapMessages;
+
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -39,6 +43,8 @@ import java.util.TreeMap;
  */
 public final class AttributeNameMapper {
 
+    private static final LdapMessages LOG = MessagesFactory.get(LdapMessages.class);
+
     private static final AttributeNameMapper EMPTY =
             new AttributeNameMapper(new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 
@@ -60,8 +66,12 @@ public final class AttributeNameMapper {
 
     /**
      * Parses a comma-separated {@code remoteName:proxyName} configuration value. A null or blank
-     * value yields an empty mapper. A pair without a colon, or with an empty side, is skipped
-     * rather than failing the whole backend.
+     * value yields an empty mapper. A malformed pair (no colon, an empty side, or a stray second
+     * colon since an attribute name cannot contain one) is skipped with a warning rather than
+     * failing the whole backend, so one bad entry does not silently take the mapping down. A pair
+     * naming a credential-bearing attribute on either side is rejected: renaming one in would
+     * surface non-secret data under a credential name, and renaming one out would let a filter on
+     * the proxy name be rewritten against the remote credential attribute (a guessing oracle).
      */
     public static AttributeNameMapper fromConfig(String configValue) {
         if (configValue == null || configValue.trim().isEmpty()) {
@@ -70,21 +80,34 @@ public final class AttributeNameMapper {
         final Map<String, String> remoteToProxy = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (String pair : configValue.split(",")) {
             final String trimmed = pair.trim();
+            // A stray empty segment (e.g. a trailing comma) is benign; skip it silently.
             if (trimmed.isEmpty()) {
                 continue;
             }
             final int colon = trimmed.indexOf(':');
-            // Require a colon with a non-empty name on each side.
-            if (colon <= 0 || colon == trimmed.length() - 1) {
+            // Require exactly one colon with a non-empty name on each side.
+            if (colon <= 0 || colon == trimmed.length() - 1
+                    || trimmed.indexOf(':', colon + 1) != -1) {
+                LOG.ldapAttributeMappingSkipped(trimmed);
                 continue;
             }
             final String remote = trimmed.substring(0, colon).trim();
             final String proxy = trimmed.substring(colon + 1).trim();
-            if (!remote.isEmpty() && !proxy.isEmpty()) {
-                remoteToProxy.put(remote, proxy);
+            if (remote.isEmpty() || proxy.isEmpty()) {
+                LOG.ldapAttributeMappingSkipped(trimmed);
+                continue;
             }
+            if (isSensitive(remote) || isSensitive(proxy)) {
+                LOG.ldapAttributeMappingSensitiveSkipped(trimmed);
+                continue;
+            }
+            remoteToProxy.put(remote, proxy);
         }
         return remoteToProxy.isEmpty() ? EMPTY : new AttributeNameMapper(remoteToProxy);
+    }
+
+    private static boolean isSensitive(String name) {
+        return RemoteSchemaConverter.SENSITIVE_ATTRIBUTES.contains(name.toLowerCase(Locale.ROOT));
     }
 
     public boolean isEmpty() {
