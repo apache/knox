@@ -85,6 +85,11 @@ public interface KnoxIDFConstants {
     // registration must explicitly set this to true (see the sample knoxidf topologies).
     String CLIENT_REGISTRATION_ANONYMOUS_ALLOWED = "knoxidf.client.registration.anonymous.allowed";
 
+    // When true (the default), the dynamic client-registration endpoint refuses a caller whose subject is
+    // a registered client (a CLIENT_ID token id). Such a client would otherwise own the clients it
+    // registers, each with its own per-user token limit, and revoking it would leave them working.
+    String CLIENT_REGISTRATION_CLIENT_CALLERS_DENIED = "knoxidf.client.registration.client.callers.denied";
+
     // Comma-separated hostnames that, in addition to the hard-coded loopback set (localhost/127.0.0.1/::1),
     // are permitted to use a plain-HTTP redirect_uri during dynamic client registration. Intended for
     // dev setups where the callback host is not literally loopback but is equally trusted (e.g.

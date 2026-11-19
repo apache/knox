@@ -26,6 +26,7 @@ import org.apache.knox.gateway.service.knoxtoken.ClientCredentialsResource;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.glassfish.jersey.process.internal.RequestScoped;
 
 import jakarta.annotation.PostConstruct;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ALLOWED_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_CLIENT_CALLERS_DENIED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OIDC_STANDARD_SCOPES;
@@ -69,6 +71,7 @@ public class RegistrationResource extends ClientCredentialsResource {
     private List<String> redirectUris;
     private List<String> allowedScopes;
     boolean anonymousRegistrationAllowed;
+    boolean clientCallersDenied;
     Set<String> loopbackHosts;
     Set<String> registerableScopes;
 
@@ -87,6 +90,10 @@ public class RegistrationResource extends ClientCredentialsResource {
         // Secure by default: unless the deployment explicitly opts in, an anonymous caller cannot
         // register a client even when the topology wires this endpoint as 'anon'.
         this.anonymousRegistrationAllowed = Boolean.parseBoolean(servletContext.getInitParameter(CLIENT_REGISTRATION_ANONYMOUS_ALLOWED));
+        // Secure by default: unless the deployment explicitly opts out, a registered client cannot
+        // register further clients.
+        final String configuredClientCallersDenied = servletContext.getInitParameter(CLIENT_REGISTRATION_CLIENT_CALLERS_DENIED);
+        this.clientCallersDenied = StringUtils.isBlank(configuredClientCallersDenied) || Boolean.parseBoolean(configuredClientCallersDenied);
         this.loopbackHosts = parseLoopbackHosts(servletContext.getInitParameter(CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS));
         this.registerableScopes = parseRegisterableScopes(servletContext.getInitParameter(CLIENT_REGISTRATION_ALLOWED_SCOPES));
     }
@@ -154,6 +161,10 @@ public class RegistrationResource extends ClientCredentialsResource {
                 return error("access_denied", "Anonymous client registration is disabled. Set '"
                         + CLIENT_REGISTRATION_ANONYMOUS_ALLOWED + "' to true in the KNOXIDF service configuration to enable it.");
             }
+            if (clientCallerDenied()) {
+                detail = "reason=client_caller_denied";
+                return error("access_denied", "A registered client cannot register another client.");
+            }
             if (StringUtils.isBlank(redirectUris)) {
                 detail = "reason=missing_redirect_uris";
                 return error("invalid_request", "redirect_uris must be provided");
@@ -210,6 +221,30 @@ public class RegistrationResource extends ClientCredentialsResource {
 
     private boolean isAnonymousCaller() {
         return ANONYMOUS_PRINCIPAL.equalsIgnoreCase(SubjectUtils.getCurrentEffectivePrincipalName());
+    }
+
+    /**
+     * @return {@code true} when the request must be rejected because the caller is itself a registered
+     * client (its subject is the id of a CLIENT_ID token) while client callers have not been explicitly
+     * allowed. Such a client would own the clients it registers, each with its own per-user token limit.
+     */
+    boolean clientCallerDenied() {
+        return clientCallersDenied && isClientCaller();
+    }
+
+    private boolean isClientCaller() {
+        final String subjectName = SubjectUtils.getCurrentEffectivePrincipalName();
+        // Without token state there is no client id to look up.
+        if (tokenStateService == null || StringUtils.isBlank(subjectName)) {
+            return false;
+        }
+        try {
+            final TokenMetadata metadata = tokenStateService.getTokenMetadata(subjectName);
+            return metadata != null && metadata.isClientId();
+        } catch (UnknownTokenException e) {
+            // Not a token id: a user, not a client.
+            return false;
+        }
     }
 
     private Response verifyRedirectUris() {

@@ -134,6 +134,23 @@ The default is **`false`** (secure by default). When open registration is enable
 token-endpoint client authentication described above is what still prevents a
 registered-but-unauthenticated client from redeeming another client's authorization code.
 
+A caller that is itself a registered client (its subject is a client id, as with a
+`client_credentials` token, or one exchanged from it) is also refused. Each client it registered
+would be owned by the client rather than a user, so it would get its own
+`knoxidf.knox.token.limit.per.user` and could register more, and revoking the first client would
+leave them working. To allow it anyway, set:
+
+```xml
+<param>
+    <name>knoxidf.client.registration.client.callers.denied</name>
+    <value>false</value>
+</param>
+```
+
+The check uses the effective principal, after identity-assertion mapping. A client that has
+been revoked or deleted no longer has a token record, so a token it obtained earlier passes the
+check until that token expires.
+
 ### Registerable-scope whitelist
 
 A client cannot self-assign an arbitrary scope at registration. The server bounds the scopes a
