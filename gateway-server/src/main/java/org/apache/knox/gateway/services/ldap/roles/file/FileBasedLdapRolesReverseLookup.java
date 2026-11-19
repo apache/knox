@@ -126,7 +126,16 @@ public class FileBasedLdapRolesReverseLookup implements LdapRolesReverseLookup {
             }
         }
 
-        return Map.of();
+        Map<String, RoleAssignees> roleAssignees = new HashMap<>();
+        Set<String> roleNames = new HashSet<>();
+        roleNames.addAll(roleToUsers.keySet());
+        roleNames.addAll(roleToGroups.keySet());
+        for (String roleName : roleNames) {
+            Set<String> users = roleToUsers.getOrDefault(roleName, Set.of());
+            Set<String> groups = roleToGroups.getOrDefault(roleName, Set.of());
+            roleAssignees.put(roleName, new RoleAssignees(List.copyOf(users), List.copyOf(groups)));
+        }
+        return roleAssignees;
     }
 
     private List<RoleMappingEntry> readRoleMappingFile() throws RoleException {
