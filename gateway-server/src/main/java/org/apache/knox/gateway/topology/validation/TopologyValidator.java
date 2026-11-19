@@ -29,6 +29,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.apache.commons.xml.secure.SecureSchemaFactory;
 import org.apache.knox.gateway.topology.Topology;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -54,12 +55,10 @@ public class TopologyValidator {
   public boolean validateTopology() {
     errors = new LinkedList<>();
     try {
-      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+      SchemaFactory schemaFactory = SecureSchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
       URL schemaUrl = getClass().getResource( "/conf/topology-v1.xsd" );
       Schema s = schemaFactory.newSchema( schemaUrl );
       Validator validator = s.newValidator();
-      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-      validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
       final List<SAXParseException> exceptions = new LinkedList<>();
       validator.setErrorHandler(new ErrorHandler() {
         @Override

@@ -16,6 +16,7 @@
  */
 package org.apache.knox.gateway.topology.discovery.ambari;
 
+import org.apache.commons.xml.secure.SecureXPathFactory;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.util.XmlUtils;
 import org.w3c.dom.Document;
@@ -23,12 +24,10 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.xml.XMLConstants;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,13 +52,7 @@ class ServiceURLPropertyConfig {
     private static XPathExpression URL_PATTERN;
     private static XPathExpression PROPERTIES;
     static {
-        XPathFactory xpathFactory = XPathFactory.newInstance();
-        try {
-            xpathFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
-        } catch (javax.xml.xpath.XPathFactoryConfigurationException ex) {
-            // ignore
-        }
-        XPath xpath = xpathFactory.newXPath();
+        XPath xpath = SecureXPathFactory.newInstance().newXPath();
         try {
             SERVICE_URL_PATTERN_MAPPINGS = xpath.compile("/service-discovery-url-mappings/service");
             URL_PATTERN                  = xpath.compile("url-pattern/text()");
@@ -226,7 +219,7 @@ class ServiceURLPropertyConfig {
         static XPathExpression ELSE;
         static XPathExpression TEXT;
         static {
-            XPath xpath = XPathFactory.newInstance().newXPath();
+            XPath xpath = SecureXPathFactory.newInstance().newXPath();
             try {
                 HOSTNAME        = xpath.compile("hostname");
                 SERVICE_CONFIG  = xpath.compile("service-config");

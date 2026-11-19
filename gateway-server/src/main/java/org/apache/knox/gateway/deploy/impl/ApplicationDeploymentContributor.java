@@ -36,6 +36,7 @@ import org.apache.knox.gateway.service.definition.ServiceDefinition;
 import org.apache.knox.gateway.topology.Application;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Version;
+import org.apache.knox.gateway.util.XmlUtils;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -94,9 +95,7 @@ public class ApplicationDeploymentContributor extends ServiceDeploymentContribut
       definition.setRoutes( routes );
     } else {
       Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-      try(InputStream inputStream = Files.newInputStream(file.toPath()) ) {
-          definition = (ServiceDefinition) unmarshaller.unmarshal( inputStream );
-      }
+      definition = XmlUtils.unmarshal( unmarshaller, ServiceDefinition.class, file );
     }
     return definition;
   }
