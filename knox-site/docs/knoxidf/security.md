@@ -151,6 +151,21 @@ The check uses the effective principal, after identity-assertion mapping. A clie
 been revoked or deleted no longer has a token record, so a token it obtained earlier passes the
 check until that token expires.
 
+A caller whose token carries an RFC 8693 actor chain (an `act` claim, added by a token exchange
+with delegated auth enabled) is refused too: a delegated token lets its actor act for the user at
+one audience, not create a client the user owns. To allow it anyway, set:
+
+```xml
+<param>
+    <name>knoxidf.client.registration.delegated.callers.denied</name>
+    <value>false</value>
+</param>
+```
+
+Only the actor chain is checked. A token minted for an impersonated user without delegated auth
+carries no `act` claim, and a token presented as a passcode carries no actor chain, so neither is
+refused.
+
 ### Registerable-scope whitelist
 
 A client cannot self-assign an arbitrary scope at registration. The server bounds the scopes a

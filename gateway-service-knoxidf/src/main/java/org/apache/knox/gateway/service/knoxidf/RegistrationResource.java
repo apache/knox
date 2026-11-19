@@ -56,6 +56,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGIS
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_CLIENT_CALLERS_DENIED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_DELEGATED_CALLERS_DENIED;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.DEFAULT_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.OIDC_STANDARD_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
@@ -72,6 +73,7 @@ public class RegistrationResource extends ClientCredentialsResource {
     private List<String> allowedScopes;
     boolean anonymousRegistrationAllowed;
     boolean clientCallersDenied;
+    boolean delegatedCallersDenied;
     Set<String> loopbackHosts;
     Set<String> registerableScopes;
 
@@ -94,6 +96,9 @@ public class RegistrationResource extends ClientCredentialsResource {
         // register further clients.
         final String configuredClientCallersDenied = servletContext.getInitParameter(CLIENT_REGISTRATION_CLIENT_CALLERS_DENIED);
         this.clientCallersDenied = StringUtils.isBlank(configuredClientCallersDenied) || Boolean.parseBoolean(configuredClientCallersDenied);
+        // Secure by default: unless the deployment explicitly opts out, a delegated token cannot register a client.
+        final String configuredDelegatedCallersDenied = servletContext.getInitParameter(CLIENT_REGISTRATION_DELEGATED_CALLERS_DENIED);
+        this.delegatedCallersDenied = StringUtils.isBlank(configuredDelegatedCallersDenied) || Boolean.parseBoolean(configuredDelegatedCallersDenied);
         this.loopbackHosts = parseLoopbackHosts(servletContext.getInitParameter(CLIENT_REGISTRATION_CUSTOM_LOOPBACK_HOSTS));
         this.registerableScopes = parseRegisterableScopes(servletContext.getInitParameter(CLIENT_REGISTRATION_ALLOWED_SCOPES));
     }
@@ -165,6 +170,10 @@ public class RegistrationResource extends ClientCredentialsResource {
                 detail = "reason=client_caller_denied";
                 return error("access_denied", "A registered client cannot register another client.");
             }
+            if (delegatedCallerDenied()) {
+                detail = "reason=delegated_caller_denied";
+                return error("access_denied", "A delegated token cannot register a client.");
+            }
             if (StringUtils.isBlank(redirectUris)) {
                 detail = "reason=missing_redirect_uris";
                 return error("invalid_request", "redirect_uris must be provided");
@@ -230,6 +239,15 @@ public class RegistrationResource extends ClientCredentialsResource {
      */
     boolean clientCallerDenied() {
         return clientCallersDenied && isClientCaller();
+    }
+
+    /**
+     * @return {@code true} when the request must be rejected because the caller's token carries an RFC 8693
+     * actor chain while delegated callers have not been explicitly allowed. Only a token with an act claim
+     * has one: a delegated token minted without delegated auth, or presented as a passcode, does not.
+     */
+    boolean delegatedCallerDenied() {
+        return delegatedCallersDenied && SubjectUtils.getActorChainPrincipal(SubjectUtils.getCurrentSubject()) != null;
     }
 
     private boolean isClientCaller() {
