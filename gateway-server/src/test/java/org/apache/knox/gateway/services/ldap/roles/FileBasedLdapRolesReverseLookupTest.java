@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -97,6 +98,23 @@ public class FileBasedLdapRolesReverseLookupTest {
         RoleAssignees assignees = lookup().lookupRoleAssignees("nope");
         assertTrue(assignees.getUsers().isEmpty());
         assertTrue(assignees.getGroups().isEmpty());
+    }
+
+    @Test
+    public void testEntryWithoutRolesIsIgnored() throws Exception {
+        FileUtils.writeStringToFile(testFile, """
+                [
+                  { "id": "alice", "type": "user", "roles": [ {"name": "viewer"} ] },
+                  { "id": "carol", "type": "user" },
+                  { "id": "engineering", "type": "group" }
+                ]""", StandardCharsets.UTF_8);
+
+        assertEquals(Set.of("viewer"), new HashSet<>(lookup().listRoles()));
+        assertEquals(Set.of("alice"), new HashSet<>(lookup().lookupRoleAssignees("viewer").getUsers()));
+        Map<String, RoleAssignees> allAssignees = lookup().getAllRoleAssignees();
+        assertEquals(Set.of("viewer"), allAssignees.keySet());
+        assertEquals(Set.of("alice"), new HashSet<>(allAssignees.get("viewer").getUsers()));
+        assertTrue(allAssignees.get("viewer").getGroups().isEmpty());
     }
 
     @Test(expected = RoleException.class)

@@ -234,8 +234,17 @@ public interface LdapMessages {
     @Message(level = MessageLevel.ERROR, text = "Failed to lookup roles for user {0}: {1}")
     void ldapRolesLookupFailed(String user, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-    @Message(level = MessageLevel.ERROR, text = "Failed to lookup users and groups for roles: {0}")
-    void ldapRolesReverseLookupFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+    @Message(level = MessageLevel.ERROR, text = "Failed to list roles: {0}")
+    void ldapRolesListFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR, text = "Failed to get all role assignments: {0}")
+    void ldapRolesGetAllRoleAssignmentsFailed(@StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR, text = "Failed to lookup users and groups for role {0}: {1}")
+    void ldapRolesReverseLookupFailed(String roleName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+
+    @Message(level = MessageLevel.ERROR, text = "Mapping search filter '{0}' using reverse role lookup failed: {1}")
+    void ldapRolesReverseLookupFilterMappingFailed(String searchFilter, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
     @Message(level = MessageLevel.DEBUG, text = "Sending role lookup request to {0}: {1}")
     void restRolesLookupRequest(String endpoint, String requestBody);

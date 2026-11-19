@@ -81,6 +81,7 @@ public class DefaultLDAPRolesLookupServiceTest {
         assertTrue(service.lookupRoles("alice", List.of("engineering")).isEmpty());
         assertTrue(service.listRoles().isEmpty());
         assertNull(service.lookupRoleAssignees("platform:admin"));
+        assertTrue(service.getAllRoleAssignees().isEmpty());
     }
 
     @Test

@@ -29,8 +29,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -65,8 +67,10 @@ public class FileBasedLdapRolesReverseLookup implements LdapRolesReverseLookup {
         final Set<String> roles = new HashSet<>();
 
         for (RoleMappingEntry entry : entries) {
-            for (RoleAssignment roleAssignment : entry.getRoles()) {
-                roles.add(roleAssignment.getDisplayValue());
+            if (entry.getRoles() != null) {
+                for (RoleAssignment roleAssignment : entry.getRoles()) {
+                    roles.add(roleAssignment.getDisplayValue());
+                }
             }
         }
 
@@ -81,7 +85,7 @@ public class FileBasedLdapRolesReverseLookup implements LdapRolesReverseLookup {
         final Set<String> groups = new HashSet<>();
 
         for (RoleMappingEntry entry : entries) {
-            if (entry.getRoles().stream()
+            if (entry.getRoles() != null && entry.getRoles().stream()
                     .anyMatch(roleAssignment ->
                             role.equalsIgnoreCase(roleAssignment.getDisplayValue()))) {
                 if ("user".equalsIgnoreCase(entry.getType())) {
@@ -93,6 +97,47 @@ public class FileBasedLdapRolesReverseLookup implements LdapRolesReverseLookup {
         }
 
         return new RoleAssignees(List.copyOf(users), List.copyOf(groups));
+    }
+
+    @Override
+    public Map<String, RoleAssignees> getAllRoleAssignees() throws RoleException {
+        final List<RoleMappingEntry> entries = readRoleMappingFile();
+
+        Map<String, Set<String>> roleToUsers = new HashMap<>();
+        Map<String, Set<String>> roleToGroups = new HashMap<>();
+
+        for (RoleMappingEntry entry : entries) {
+            Map<String, Set<String>> roleMap;
+            if ("user".equalsIgnoreCase(entry.getType())) {
+                roleMap = roleToUsers;
+            }  else if ("group".equalsIgnoreCase(entry.getType())) {
+                roleMap = roleToGroups;
+            } else {
+                // unknown mapping type
+                continue;
+            }
+            if (entry.getRoles() != null) {
+                String entryId = entry.getId();
+                for (RoleAssignment roleAssignment : entry.getRoles()) {
+                    String roleName = roleAssignment.getDisplayValue();
+                    if (!roleMap.containsKey(roleName)) {
+                        roleMap.put(roleAssignment.getDisplayValue(), new HashSet<>());
+                    }
+                    roleMap.get(roleAssignment.getDisplayValue()).add(entryId);
+                }
+            }
+        }
+
+        Map<String, RoleAssignees> roleAssignees = new HashMap<>();
+        Set<String> roleNames = new HashSet<>();
+        roleNames.addAll(roleToUsers.keySet());
+        roleNames.addAll(roleToGroups.keySet());
+        for (String roleName : roleNames) {
+            Set<String> users = roleToUsers.getOrDefault(roleName, Set.of());
+            Set<String> groups = roleToGroups.getOrDefault(roleName, Set.of());
+            roleAssignees.put(roleName, new RoleAssignees(List.copyOf(users), List.copyOf(groups)));
+        }
+        return roleAssignees;
     }
 
     private List<RoleMappingEntry> readRoleMappingFile() throws RoleException {

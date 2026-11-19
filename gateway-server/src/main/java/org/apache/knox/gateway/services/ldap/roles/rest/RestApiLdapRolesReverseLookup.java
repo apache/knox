@@ -38,8 +38,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -76,11 +78,51 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
     }
 
     @Override
-    public RoleAssignees lookupRoleAssignees(String role) throws RoleException {
-        if (role != null) {
-            RoleAssignment roleAssignment = RoleAssignment.createFromDisplayValue(role);
+    public RoleAssignees lookupRoleAssignees(String roleName) throws RoleException {
+        if (roleName != null) {
+            RoleAssignment roleAssignment = RoleAssignment.createFromDisplayValue(roleName);
             List<Role> rolesList = listRoles(roleAssignment);
-            String roleId = findRoleId(roleAssignment, rolesList);
+            Role role = findRole(roleAssignment, rolesList);
+            if (role != null) {
+                String roleId = role.getId();
+                if (roleId != null) {
+                    List<String> users = new ArrayList<>();
+                    List<String> groups = new ArrayList<>();
+                    List<RoleMember> members = getMembers(roleId);
+                    if (members != null) {
+                        for (RoleMember member : members) {
+                            if ("user".equalsIgnoreCase(member.getMemberType())) {
+                                users.add(member.getMemberId());
+                            } else if ("group".equalsIgnoreCase(member.getMemberType())) {
+                                groups.add(member.getMemberId());
+                            } else {
+                                // unknown or empty member types
+                                LOG.restRolesAssigneeTypeUnknown(roleName, member.getMemberType());
+                            }
+                        }
+                    }
+                    return new RoleAssignees(users, groups);
+                }
+            }
+        }
+        return new RoleAssignees(List.of(), List.of());
+    }
+
+    @Override
+    public Map<String, RoleAssignees> getAllRoleAssignees() throws RoleException {
+        Map<String, RoleAssignees> result = new HashMap<>();
+        final List<Role> roles = listRoles(null);
+        for (Role role : roles) {
+            String roleName = new RoleAssignment(role.getScope(), role.getName()).getDisplayValue();
+            RoleAssignees roleAssignees = getRoleAssignees(role, roleName);
+            result.put(roleName, roleAssignees);
+        }
+        return result;
+    }
+
+    private RoleAssignees getRoleAssignees(Role role, String roleName) throws RoleException {
+        if (role != null) {
+            String roleId = role.getId();
             if (roleId != null) {
                 List<String> users = new ArrayList<>();
                 List<String> groups = new ArrayList<>();
@@ -93,7 +135,7 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
                             groups.add(member.getMemberId());
                         } else {
                             // unknown or empty member types
-                            LOG.restRolesAssigneeTypeUnknown(role, member.getMemberType());
+                            LOG.restRolesAssigneeTypeUnknown(roleName, member.getMemberType());
                         }
                     }
                 }
@@ -204,12 +246,12 @@ public class RestApiLdapRolesReverseLookup implements LdapRolesReverseLookup {
         }
     }
 
-    private String findRoleId(RoleAssignment roleAssignment, List<Role> roleList) {
+    private Role findRole(RoleAssignment roleAssignment, List<Role> roleList) {
         if (roleList != null) {
             for (Role r : roleList) {
                 if (StringUtils.equalsIgnoreCase(roleAssignment.getName(), r.getName()) &&
                     StringUtils.equalsIgnoreCase(roleAssignment.getScope(), r.getScope())) {
-                    return r.getId();
+                    return r;
                 }
             }
         }

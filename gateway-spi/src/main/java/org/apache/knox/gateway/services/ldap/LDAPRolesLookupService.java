@@ -20,6 +20,7 @@ import org.apache.knox.gateway.services.Service;
 import org.apache.knox.gateway.services.ServiceLifecycleException;
 
 import java.util.Collection;
+import java.util.Map;
 
 public interface LDAPRolesLookupService extends Service {
 
@@ -30,6 +31,8 @@ public interface LDAPRolesLookupService extends Service {
     Collection<String> listRoles() throws Exception;
 
     RoleAssignees lookupRoleAssignees(String roleAssignment) throws Exception;
+
+    Map<String, RoleAssignees> getAllRoleAssignees() throws Exception;
 
     @Override
     default void start() throws ServiceLifecycleException {};
