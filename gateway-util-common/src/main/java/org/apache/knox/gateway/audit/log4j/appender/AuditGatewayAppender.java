@@ -59,7 +59,7 @@ public class AuditGatewayAppender extends AbstractAppender {
   private static final long DROP_WARN_INTERVAL_MS = 60_000L;
   private static final long POLL_MS = 250L;
   private static final ContentType JSON = ContentType.create("application/json");
-  static final int MAX_WORKERS = 4;
+  static final int MAX_WORKERS = 16;
 
   private final URI uri;
   private final String sourceSystem;

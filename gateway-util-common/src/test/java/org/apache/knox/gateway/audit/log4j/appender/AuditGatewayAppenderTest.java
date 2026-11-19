@@ -266,8 +266,8 @@ public class AuditGatewayAppenderTest {
     assertEquals(1, AuditGatewayAppender.createAppender("w", null, "gw:1", EVENTS_PATH, "s", null, 10, 1000L, 1000L, 0)
         .getWorkerCount());
     assertEquals(AuditGatewayAppender.MAX_WORKERS, AuditGatewayAppender.createAppender("w", null, "gw:1", EVENTS_PATH, "s",
-        null, 10, 1000L, 1000L, 10).getWorkerCount());
-    assertEquals(3, AuditGatewayAppender.createAppender("w", null, "gw:1", EVENTS_PATH, "s", null, 10, 1000L, 1000L, 3)
+        null, 10, 1000L, 1000L, 25).getWorkerCount());
+    assertEquals(10, AuditGatewayAppender.createAppender("w", null, "gw:1", EVENTS_PATH, "s", null, 10, 1000L, 1000L, 10)
         .getWorkerCount());
   }
 
