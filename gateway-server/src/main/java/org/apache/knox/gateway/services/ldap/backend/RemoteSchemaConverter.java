@@ -168,13 +168,19 @@ public class RemoteSchemaConverter {
 
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
             for (Value value : attribute) {
-                String valueString = convertDn ? convertRemoteDnToProxyDn(value.toString()) : value.toString();
-                if (!target.contains(attributeName, valueString)) {
-                    try {
-                        target.add(attributeName, valueString);
-                    } catch (LdapException e) {
-                        LOG.ldapAttributeCopyError(e);
+                try {
+                    if (!value.isHumanReadable()) {
+                        if (!target.contains(attributeName, value.getBytes())) {
+                            target.add(attributeName, value.getBytes());
+                        }
+                    } else {
+                        String valueString = convertDn ? convertRemoteDnToProxyDn(value.getString()) : value.getString();
+                        if (!target.contains(attributeName, valueString)) {
+                            target.add(attributeName, valueString);
+                        }
                     }
+                } catch (LdapException e) {
+                    LOG.ldapAttributeCopyError(e);
                 }
             }
         }

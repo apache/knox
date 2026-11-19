@@ -111,4 +111,20 @@ public interface LdapBackend {
      * @return true if authentication is successful, false otherwise
      */
     boolean authenticate(Dn userDn, String password);
+
+    /**
+     * Merge attribute type definitions published by this backend into the given schema manager.
+     * <p>
+     * Backends that proxy a remote LDAP server may expose attributes (including operational
+     * attributes) that are not part of Knox's bundled schema. Reading the remote server's schema
+     * and registering its attribute types lets the proxy recognise and request those attributes.
+     * Implementations should degrade gracefully (log and return) when the remote schema cannot be
+     * read, so that a backend being unreachable does not prevent the service from starting.
+     * The default implementation is a no-op for backends that have no remote schema (e.g. file).
+     *
+     * @param schemaManager the shared schema manager to enrich
+     */
+    default void loadRemoteSchema(SchemaManager schemaManager) {
+        // No remote schema to load by default.
+    }
 }

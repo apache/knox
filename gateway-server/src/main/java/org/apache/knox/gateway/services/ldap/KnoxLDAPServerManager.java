@@ -316,6 +316,10 @@ public class KnoxLDAPServerManager {
 
         // Create SchemaManager
         SchemaManager schemaManager = SchemaManagerFactory.createSchemaManager();
+        // Enrich the schema with attribute types defined on the remote backends (e.g. operational
+        // attributes) so the proxy can recognise and request them. Done before the schema partition
+        // is built so the merged attribute types are in place for the lifetime of the service.
+        loadRemoteBackendSchemas(schemaManager);
         directoryService.setSchemaManager(schemaManager);
 
         // Initialize schema partition
@@ -411,6 +415,19 @@ public class KnoxLDAPServerManager {
                         baseDns.add(remoteBaseDn);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Asks every backend-backed interceptor to merge the attribute types defined on its remote
+     * server into the shared schema manager. Each backend degrades gracefully on failure, so an
+     * unreachable backend never prevents the service from starting.
+     */
+    private void loadRemoteBackendSchemas(SchemaManager schemaManager) {
+        for (Interceptor interceptor : interceptors) {
+            if (interceptor instanceof UserSearchInterceptor) {
+                ((UserSearchInterceptor) interceptor).getBackend().loadRemoteSchema(schemaManager);
             }
         }
     }

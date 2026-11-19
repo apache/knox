@@ -17,6 +17,7 @@
  */
 package org.apache.knox.gateway.services.ldap.backend;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -27,6 +28,7 @@ import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -136,6 +138,20 @@ public class RemoteSchemaConverterTest {
         converter.copyAttribute(source, target, "description", schemaManager);
 
         assertEquals(1, target.get("description").size());
+    }
+
+    @Test
+    public void testCopyAttributeNonHumanReadable() throws Exception {
+        byte[] byteValue = RandomUtils.insecure().randomBytes(16);
+        final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", false);
+        final Entry source = new DefaultEntry(schemaManager, "cn=engineering," + REMOTE_GROUP_SEARCH_BASE);
+        source.add("objectGUID", byteValue);
+        final Entry target = new DefaultEntry(schemaManager, "cn=engineering," + REMOTE_GROUP_SEARCH_BASE);
+
+        converter.copyAttribute(source, target, "objectGUID", schemaManager);
+
+        assertEquals(1, target.get("objectGUID").size());
+        assertArrayEquals(byteValue, target.get("objectGUID").getBytes());
     }
 
     @Test

@@ -42,7 +42,9 @@ import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchResultDone;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.api.ldap.model.schema.UsageEnum;
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
@@ -571,6 +573,20 @@ public class LdapProxyBackendTest {
     }
 
     @Test
+    public void testSearchUsersByUidWithRemoteUserIdentifierAttribute() throws Exception {
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // TestSam3 does not have an uid defined
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(sAMAccountName=TestSam3)", schemaManager, new String[]{"uid"});
+        assertEquals(1, entries.size());
+        Entry entry = entries.get(0);
+        assertTrue(entry.containsAttribute("uid", "sAMAccountName"));
+        assertEquals("TestSam3", entry.get("uid").getString());
+        assertEquals("TestSam3", entry.get("sAMAccountName").getString());
+    }
+
+    @Test
     public void testSearchByUidWildcard() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateSearch("ou=people,dc=proxy,dc=com", "(uid=*)", 4, Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));
@@ -777,7 +793,7 @@ public class LdapProxyBackendTest {
     }
 
     @Test
-    public void testSearchRequestsMemberOfAttributeWhenUseMemberOfEnabled() throws Exception {
+    public void testSearchRequestsMemberOfAttributeForAllAttributesWhenUseMemberOfEnabled() throws Exception {
         Map<String, String> config = new HashMap<>(ldapBackendConfig);
         config.put("useMemberOf", "true");
         ldapProxyBackend = new LdapProxyBackend("testbackend", config);
@@ -788,6 +804,173 @@ public class LdapProxyBackendTest {
         assertEquals("Expect exactly 1 matching request found", 1, requests.size());
         assertTrue("memberOf must be explicitly requested when useMemberOf is enabled",
                 requests.get(0).getAttributes().contains("memberOf"));
+    }
+
+    @Test
+    public void testSearchRequestsPassesAttributesToBackend() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+        String[] attributes = new String[]{"uid", "memberOf", "entryUUID"};
+
+        ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(uid=ldaptest1)", schemaManager, attributes);
+
+        List<SearchRequest> requests = findSearchRequests("ou=people,dc=hadoop,dc=apache,dc=org", "ldaptest1");
+        assertEquals("Expect exactly 1 matching request found", 1, requests.size());
+        for (String attribute : attributes) {
+            assertTrue(attribute + " must be passed to the backend", requests.get(0).getAttributes().contains(attribute));
+        }
+    }
+
+    @Test
+    public void testImportConfiguredAttributeTypesImportsOnlyConfiguredFromRemote() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("extraAttributes", "knoxTestRemoteAttr");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // The shared schema (bundled jar + the custom/AD attribute types layered on by
+        // SchemaManagerFactory) stands in for the proxy's schema manager.
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // A "remote" schema manager that defines an operational attribute the proxy does not know
+        // about, plus an unrelated one that is NOT configured and must therefore not be imported.
+        SchemaManager remote = SchemaManagerFactory.createSchemaManager();
+        final String remoteOnlyOid = "1.3.6.1.4.1.99999.1.1";
+        AttributeType remoteOnly = new AttributeType(remoteOnlyOid);
+        remoteOnly.setNames("knoxTestRemoteAttr");
+        remoteOnly.setSchemaName("other");
+        remoteOnly.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.15"); // DirectoryString
+        remoteOnly.setEqualityOid("caseIgnoreMatch");
+        remoteOnly.setUsage(UsageEnum.DIRECTORY_OPERATION);
+        remoteOnly.setSingleValued(true);
+        assertTrue("precondition: remote-only attribute added to the remote schema", remote.add(remoteOnly));
+
+        final String notConfiguredOid = "1.3.6.1.4.1.99999.1.2";
+        AttributeType notConfigured = new AttributeType(notConfiguredOid);
+        notConfigured.setNames("knoxTestNotConfiguredAttr");
+        notConfigured.setSchemaName("other");
+        notConfigured.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.15");
+        notConfigured.setEqualityOid("caseIgnoreMatch");
+        notConfigured.setSingleValued(true);
+        assertTrue(remote.add(notConfigured));
+
+        assertFalse("configured attribute should be unknown before the import",
+                target.getAttributeTypeRegistry().contains(remoteOnlyOid));
+
+        ldapProxyBackend.importConfiguredAttributeTypes(target, remote);
+
+        assertTrue("configured attribute should be imported into the target schema",
+                target.getAttributeTypeRegistry().contains(remoteOnlyOid));
+        AttributeType imported = target.getAttributeType("knoxTestRemoteAttr");
+        assertEquals(remoteOnlyOid, imported.getOid());
+        // The remote definition is authoritative, so its operational usage is preserved.
+        assertEquals(UsageEnum.DIRECTORY_OPERATION, imported.getUsage());
+        // A syntax the bundled schema knows (DirectoryString) is preserved, not replaced.
+        assertEquals("1.3.6.1.4.1.1466.115.121.1.15", imported.getSyntax().getOid());
+
+        // An attribute present in the remote schema but not configured must not be imported.
+        assertFalse("unconfigured attribute must not be imported",
+                target.getAttributeTypeRegistry().contains(notConfiguredOid));
+    }
+
+    @Test
+    public void testRegisterRemoteAttributeTypeHandlesAdSyntaxAndUsageQuirks() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // A definition mirroring how Active Directory publishes uSNCreated via its subschema (as the
+        // quirks-mode loader hands it to us): a LargeInteger syntax the bundled schema does not have,
+        // and USER-APPLICATIONS usage even though it is non-user-modifiable. A strict schema would
+        // reject both, so registerRemoteAttributeType must normalise them.
+        final String uSNCreatedOid = "1.2.840.113556.1.2.19";
+        AttributeType adType = new AttributeType(uSNCreatedOid);
+        adType.setNames("uSNCreated");
+        adType.setSyntaxOid("1.2.840.113556.1.4.906"); // AD LargeInteger, absent from the bundled schema
+        adType.setUsage(UsageEnum.USER_APPLICATIONS);
+        adType.setUserModifiable(false);
+        adType.setSingleValued(true);
+
+        assertTrue("AD attribute should register despite its non-standard syntax/usage",
+                ldapProxyBackend.registerRemoteAttributeType(target, adType));
+
+        AttributeType imported = target.getAttributeType("uSNCreated");
+        assertEquals(uSNCreatedOid, imported.getOid());
+        // Unknown syntax falls back to octet string (1.3.6.1.4.1.1466.115.121.1.40) so the value
+        // still passes through.
+        assertEquals("1.3.6.1.4.1.1466.115.121.1.40", imported.getSyntax().getOid());
+        // Non-user-modifiable forces operational usage so the strict schema accepts it.
+        assertFalse(imported.isUserModifiable());
+        assertEquals(UsageEnum.DIRECTORY_OPERATION, imported.getUsage());
+    }
+
+    @Test
+    public void testImportConfiguredAttributeTypesSkipsAttributeNotInRemoteSchema() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("extraAttributes", "knoxTestMissingAttr");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+        SchemaManager remote = SchemaManagerFactory.createSchemaManager();
+
+        // The configured attribute does not exist in the remote schema; the import logs an error
+        // (ldapConfiguredAttributeNotInRemoteSchema) and adds nothing.
+        assertNull("precondition: attribute absent from the remote schema",
+                remote.getAttributeType("knoxTestMissingAttr"));
+        assertNull("precondition: attribute absent from the target schema",
+                target.getAttributeType("knoxTestMissingAttr"));
+
+        ldapProxyBackend.importConfiguredAttributeTypes(target, remote);
+
+        assertNull("nothing should be imported for an attribute missing from the remote schema",
+                target.getAttributeType("knoxTestMissingAttr"));
+    }
+
+    @Test
+    public void testImportConfiguredAttributeTypesKeepsExistingDefinition() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("extraAttributes", "sAMAccountName");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+        SchemaManager remote = SchemaManagerFactory.createSchemaManager();
+
+        // sAMAccountName is defined by both; the import must skip it (by OID) rather than replace the
+        // hardcoded definition.
+        final String sAMAccountNameOid = "1.2.840.113556.1.4.221";
+        assertTrue("precondition: target already defines sAMAccountName",
+                target.getAttributeTypeRegistry().contains(sAMAccountNameOid));
+
+        ldapProxyBackend.importConfiguredAttributeTypes(target, remote);
+
+        // Still present and still resolvable by name; nothing was removed or broken by the import.
+        assertTrue(target.getAttributeTypeRegistry().contains(sAMAccountNameOid));
+        assertEquals(sAMAccountNameOid, target.getAttributeType("sAMAccountName").getOid());
+    }
+
+    @Test
+    public void testLoadRemoteSchemaIsGracefulWhenBackendUnreachable() throws Exception {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        // Point at a port with no LDAP server so the schema read fails.
+        config.put("url", "ldap://localhost:1");
+        config.put("extraAttributes", "whenChanged");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // Must not throw: an unreachable backend is logged and skipped.
+        ldapProxyBackend.loadRemoteSchema(target);
+    }
+
+    @Test
+    public void testLoadRemoteSchemaIsNoOpWhenNoExtraAttributesConfigured() throws Exception {
+        // No extraAttributes configured and an unreachable URL: loadRemoteSchema must return without
+        // contacting the backend at all, so this completes immediately and does not throw.
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("url", "ldap://localhost:1");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        ldapProxyBackend.loadRemoteSchema(SchemaManagerFactory.createSchemaManager());
     }
 
     @Test
