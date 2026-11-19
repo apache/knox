@@ -573,6 +573,20 @@ public class LdapProxyBackendTest {
     }
 
     @Test
+    public void testSearchUsersByUidWithRemoteUserIdentifierAttribute() throws Exception {
+        Map<String, String> config = createConfigWithUserAttr("sAMAccountName");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        // TestSam3 does not have an uid defined
+        List<Entry> entries = ldapProxyBackend.search("ou=people,dc=proxy,dc=com", SearchScope.SUBTREE, "(sAMAccountName=TestSam3)", schemaManager, new String[]{"uid"});
+        assertEquals(1, entries.size());
+        Entry entry = entries.get(0);
+        assertTrue(entry.containsAttribute("uid", "sAMAccountName"));
+        assertEquals("TestSam3", entry.get("uid").getString());
+        assertEquals("TestSam3", entry.get("sAMAccountName").getString());
+    }
+
+    @Test
     public void testSearchByUidWildcard() throws Exception {
         ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
         validateSearch("ou=people,dc=proxy,dc=com", "(uid=*)", 4, Set.of("ldaptest1", "ldaptest2", "ldapmemberof", "guest"));

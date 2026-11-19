@@ -288,12 +288,12 @@ public interface LdapMessages {
     @Message(level = MessageLevel.WARN, text = "Failed to read the remote schema for backend {0}; continuing with the bundled schema only: {1}")
     void ldapRemoteSchemaLoadFailed(String backendName, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 
-    @Message(level = MessageLevel.DEBUG, text = "Skipped remote attribute type {1} from backend {0}; it could not be resolved against the bundled schema: {2}")
-    void ldapRemoteAttributeTypeSkipped(String backendName, String oid, String errors);
+    @Message(level = MessageLevel.WARN, text = "Skipped remote attribute type {1} with oid {2} from backend {0}; it could not be resolved against the bundled schema: {3}")
+    void ldapRemoteAttributeTypeSkipped(String backendName, String attributeName, String oid, String errors);
 
-    @Message(level = MessageLevel.DEBUG, text = "Remote attribute {1} from backend {0} uses syntax {2}, which is not in the bundled schema; importing it with an octet string syntax")
+    @Message(level = MessageLevel.WARN, text = "Remote attribute {1} from backend {0} uses syntax {2}, which is not in the bundled schema; importing it with an octet string syntax")
     void ldapRemoteAttributeSyntaxFallback(String backendName, String attributeName, String syntaxOid);
 
-    @Message(level = MessageLevel.DEBUG, text = "Failed to register remote attribute type {1} from backend {0}")
-    void ldapRemoteAttributeTypeError(String backendName, String oid, @StackTrace(level = MessageLevel.DEBUG) Exception e);
+    @Message(level = MessageLevel.WARN, text = "Failed to register remote attribute type {1} with oid {2} from backend {0}: {3}")
+    void ldapRemoteAttributeTypeError(String backendName, String attributeName, String oid, @StackTrace(level = MessageLevel.DEBUG) Exception e);
 }

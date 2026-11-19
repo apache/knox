@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -90,6 +91,7 @@ public class LdapProxyBackend implements LdapBackend {
 
     private static final String[] ALL_ATTRIBUTES = new String[]{"*"};
     private static final String MEMBER_OF = "memberOf";
+    private static final String OBJECT_CLASS = "objectClass";
 
     // Generic syntax used when importing a remote attribute whose declared syntax is not in the
     // bundled schema. Octet string accepts any value, so the attribute's values still pass through.
@@ -559,12 +561,12 @@ public class LdapProxyBackend implements LdapBackend {
             if (!addedToManager) {
                 // add() records the reason (e.g. an unresolved syntax) in the manager's error list
                 // rather than throwing; surface it and move on so one bad definition is skipped.
-                LOG.ldapRemoteAttributeTypeSkipped(getName(), oid, String.valueOf(schemaManager.getErrors()));
+                LOG.ldapRemoteAttributeTypeSkipped(getName(), remoteType.getName(), oid, String.valueOf(schemaManager.getErrors()));
                 return false;
             }
             return true;
         } catch (LdapException e) {
-            LOG.ldapRemoteAttributeTypeError(getName(), oid, e);
+            LOG.ldapRemoteAttributeTypeError(getName(), remoteType.getName(), oid, e);
             return false;
         }
     }
@@ -751,6 +753,8 @@ public class LdapProxyBackend implements LdapBackend {
         if (attributes == null || attributes.length == 0) {
             attributes = ALL_ATTRIBUTES;
         }
+        boolean memberOfRequested = isAttributeRequested(attributes, MEMBER_OF, schemaManager);
+        String[] remoteAttributes = toRemoteAttributes(attributes, memberOfRequested && useMemberOf);
 
         // Filter likely has already been annotated by other interceptors.
         // Clean the filter by removing any modifications or annotations
@@ -769,8 +773,6 @@ public class LdapProxyBackend implements LdapBackend {
         try {
             connection = getConnection();
             List<Entry> results = new ArrayList<>();
-            boolean memberOfRequested = isAttributeRequested(attributes, MEMBER_OF, schemaManager);
-            String[] remoteAttributes = memberOfRequested && useMemberOf ? addMemberOfAttribute(attributes) : attributes;
             List<Entry> searchResults;
             try {
                 searchResults = performSplitSearch(connection, remoteSearchBase, splitFilter(remoteFilter.toString()), searchScope, sizeLimit, timeLimit, remoteAttributes);
@@ -793,20 +795,23 @@ public class LdapProxyBackend implements LdapBackend {
         }
     }
 
-    /**
-     * The LDAP proxy treats memberOf as a user attribute. MemberOf is an operational attribute on some LDAP servers.
-     * Explicitly add memberOf to the attribute list for remote searches if it is a requested attribute.
-     * @param attributes the requested attributes
-     * @return the requested attributes with memberOf added
-     */
-    private String[] addMemberOfAttribute(String[] attributes) {
+    private String[] toRemoteAttributes(String[] attributes, boolean addMemberOf) {
+        final Set<String> remote = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        remote.addAll(Arrays.asList(attributes));
 
-        List<String> remoteAttributes  = new ArrayList<>(Arrays.asList(attributes));
-        if (!remoteAttributes.contains(MEMBER_OF)) {
-            remoteAttributes.add(MEMBER_OF);
-            return remoteAttributes.toArray(new String[0]);
+        // The LDAP proxy treats memberOf as a user attribute. MemberOf is an operational attribute on some LDAP servers.
+        // Explicitly add memberOf to the attribute list for remote searches if it is a requested attribute.
+        if (addMemberOf) {
+            remote.add(MEMBER_OF);
         }
-        return attributes;
+
+        // Add required attributes used by the LDAP proxy for entity conversions
+        if (!remote.contains("*")) {
+            remote.add(OBJECT_CLASS);
+            remote.add(remoteUserIdentifierAttribute);
+        }
+
+        return remote.toArray(new String[0]);
     }
 
     /**
