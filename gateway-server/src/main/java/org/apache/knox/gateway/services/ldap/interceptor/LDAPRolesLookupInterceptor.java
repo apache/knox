@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.services.ldap.interceptor;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.directory.api.ldap.model.cursor.Cursor;
 import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultAttribute;
@@ -33,6 +34,8 @@ import org.apache.directory.api.ldap.model.filter.ObjectClassNode;
 import org.apache.directory.api.ldap.model.filter.OrNode;
 import org.apache.directory.api.ldap.model.filter.PresenceNode;
 import org.apache.directory.api.ldap.model.message.Control;
+import org.apache.directory.api.ldap.model.message.SearchRequest;
+import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.name.Rdn;
@@ -49,6 +52,7 @@ import org.apache.knox.gateway.services.ldap.LdapMessages;
 import org.apache.knox.gateway.services.ldap.LdapUtils;
 import org.apache.knox.gateway.services.ldap.RoleAssignees;
 import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControl;
+import org.apache.knox.gateway.services.ldap.control.RolesLookupBypassControlImpl;
 import org.apache.knox.gateway.services.ldap.model.constants.SchemaConstants;
 
 import java.util.ArrayList;
@@ -56,10 +60,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Interceptor that replaces group names in memberOf attributes with role names
@@ -87,7 +95,9 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     public static final String LOWERCASE_IDS = "lowercaseIds";
 
     private final LDAPRolesLookupService rolesLookupService;
+    private final String baseDn;
     private final String proxyGroupSearchBase;
+    private final String proxyUserSearchBase;
     private final boolean lowercaseIds;
 
     /**
@@ -100,7 +110,9 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
 
     public LDAPRolesLookupInterceptor(LDAPRolesLookupService rolesLookupService, Map<String, String> config) throws Exception{
         this.rolesLookupService = rolesLookupService;
-        this.proxyGroupSearchBase = "ou=groups," + config.get("baseDn");
+        this.baseDn = config.get("baseDn");
+        this.proxyGroupSearchBase = "ou=groups," + this.baseDn;
+        this.proxyUserSearchBase = "ou=people," + this.baseDn;
         this.lowercaseIds = Boolean.parseBoolean(config.get(LOWERCASE_IDS));
     }
 
@@ -261,16 +273,275 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     }
 
     private EntryFilteringCursor handleAllGroupsSearch(SearchOperationContext ctx) throws LdapException {
-        // short-circuit the LDAP search to return all roles
-        Collection<String> roles = listRoles();
         List<Entry> entries = new ArrayList<>();
-        for (String role : roles) {
-            Dn roleDn = new Dn(schemaManager, createGroupDnFromName(role));
-            Entry entry = createRoleEntry(roleDn);
-            entries.add(entry);
+
+        final AttributeType memberAttributeType = schemaManager.lookupAttributeTypeRegistry("member");
+        if (!ctx.contains(schemaManager, memberAttributeType)) {
+            // short-circuit the LDAP search to return all roles
+            Collection<String> roles = listRoles();
+            for (String role : roles) {
+                Dn roleDn = new Dn(schemaManager, createGroupDnFromName(role));
+                Entry entry = createRoleEntry(roleDn);
+                entries.add(entry);
+            }
+        } else {
+            Map<String, RoleAssignees> roleAssignees = getAllRoleAssignees();
+
+            // Collect each assigned group's member DNs (the LDAP proxy backend has already flattened
+            // nested groups into their members).
+            Set<String> groupsToResolve = roleAssignees.values().stream()
+                    .map(RoleAssignees::getGroups)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toSet());
+            Map<String, Set<Dn>> groupToMemberDns = collectGroupMemberDns(ctx, groupsToResolve);
+
+            // A single user-base search resolves the directly-assigned users (by uid) and, at the same
+            // time, re-resolves which group member DNs are users - one search in place of two.
+            Set<String> directUserIds = roleAssignees.values().stream()
+                    .map(RoleAssignees::getUsers)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toSet());
+            Set<Dn> candidateMemberDns = new LinkedHashSet<>();
+            groupToMemberDns.values().forEach(candidateMemberDns::addAll);
+            UserResolution users = resolveUsers(ctx, directUserIds, candidateMemberDns);
+
+            // Keep only the group members that resolved to a user entry.
+            Map<String, Set<Dn>> groupMembers = retainUserMembers(groupToMemberDns, users.userMemberNorms());
+
+            populateRoleMembers(entries, roleAssignees, groupMembers, users.directUserDns());
         }
 
         return new EntryFilteringCursorImpl(new ListCursor<>(entries), ctx, schemaManager);
+    }
+
+    /**
+     * Issues a sub-search against the backend as a separate LDAP operation that carries the
+     * {@link RolesLookupBypassControl}. Running it as its own request (rather than mutating and forwarding
+     * the incoming context) leaves the caller's search context untouched — so its returning-attribute
+     * selection is not disturbed — and the bypass control makes this interceptor pass the backend entries
+     * through unchanged on re-entry instead of re-mapping them to roles.
+     */
+    private List<Entry> searchBackend(SearchOperationContext ctx, String base, ExprNode filter, String... attributes) throws LdapException {
+        final SearchRequest searchRequest = new SearchRequestImpl();
+        searchRequest.setBase(new Dn(schemaManager, base));
+        searchRequest.setScope(SearchScope.SUBTREE);
+        searchRequest.setFilter(filter);
+        if (attributes != null && attributes.length > 0) {
+            searchRequest.addAttributes(attributes);
+        }
+        final RolesLookupBypassControl bypassControl = new RolesLookupBypassControlImpl();
+        bypassControl.setBypassRolesLookup(true);
+        searchRequest.addControl(bypassControl);
+
+        final List<Entry> results = new ArrayList<>();
+        try (Cursor<Entry> cursor = ctx.getSession().search(searchRequest)) {
+            while (cursor.next()) {
+                results.add(cursor.get());
+            }
+        } catch (LdapException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new LdapException(e.getMessage(), e);
+        }
+        return results;
+    }
+
+    /**
+     * Resolves, in one search of the proxy user base, the DNs of the directly-assigned users (matched by
+     * uid) and which of the candidate group-member DNs are user entries (matched by their leading RDN),
+     * all confirmed by objectClass. Returns the directly-assigned users keyed on their lowercased uid,
+     * and the normalized DNs of the member candidates that are users. Matching members by normalized DN
+     * avoids treating an entry that merely shares an RDN in another subtree as a member. Keying users on
+     * the lowercased uid lets the assignee lookup match even when the roles store holds a different case
+     * than the directory (uid matches case-insensitively).
+     */
+    private UserResolution resolveUsers(SearchOperationContext ctx, Set<String> directUserIds, Set<Dn> candidateMemberDns) throws LdapException {
+        if ((directUserIds == null || directUserIds.isEmpty()) && candidateMemberDns.isEmpty()) {
+            return new UserResolution(Map.of(), Set.of());
+        }
+        final OrNode idNode = new OrNode();
+        final AttributeType uidAttributeType = schemaManager.getAttributeType("uid");
+        if (directUserIds != null) {
+            for (String userId : directUserIds) {
+                EqualityNode uidEquality = new EqualityNode<>(uidAttributeType, new Value(userId));
+                idNode.addNode(uidEquality);
+            }
+        }
+        for (Dn candidate : candidateMemberDns) {
+            final Rdn rdn = candidate.getRdn();
+            final AttributeType rdnType = schemaManager.getAttributeType(rdn.getType());
+            if (rdnType != null) {
+                EqualityNode rdnEquality = new EqualityNode<>(rdnType, new Value(rdn.getValue()));
+                idNode.addNode(rdnEquality);
+            }
+        }
+        if (idNode.getChildren().isEmpty()) {
+            // No resolvable ids - e.g. only group assignees whose member RDN types are unknown to the
+            // schema. An empty OR would make the filter invalid, and there is nothing to resolve anyway.
+            return new UserResolution(Map.of(), Set.of());
+        }
+        final AndNode filter = new AndNode();
+        final AttributeType objectClassAttributeType = schemaManager.getAttributeType("objectClass");
+        EqualityNode userObjectClass = new EqualityNode<>(objectClassAttributeType, new Value("inetOrgPerson"));
+        filter.addNode(userObjectClass);
+        filter.addNode(idNode);
+
+        final Set<String> candidateNorms = new HashSet<>();
+        for (Dn candidate : candidateMemberDns) {
+            candidateNorms.add(normalizedName(candidate));
+        }
+        final Map<String, Dn> directUserDns = new HashMap<>();
+        final Set<String> userMemberNorms = new HashSet<>();
+        for (Entry entry : searchBackend(ctx, proxyUserSearchBase, filter, "uid", "objectClass")) {
+            if (!LdapUtils.isUserEntry(entry)) {
+                continue;
+            }
+            final Attribute uidAttr = entry.get("uid");
+            if (uidAttr != null) {
+                directUserDns.put(uidAttr.getString().toLowerCase(Locale.ROOT), entry.getDn());
+            }
+            final String norm = normalizedName(entry.getDn());
+            if (candidateNorms.contains(norm)) {
+                userMemberNorms.add(norm);
+            }
+        }
+        return new UserResolution(directUserDns, userMemberNorms);
+    }
+
+    /** The result of {@link #resolveUsers}: directly-assigned users by uid, and member DNs that are users. */
+    private record UserResolution(Map<String, Dn> directUserDns, Set<String> userMemberNorms) { }
+
+    /**
+     * Normalizes a DN by rebuilding it through the schema before taking its normalized form, so two DNs
+     * for the same entry compare equal regardless of whether the source DN was already schema-normalized.
+     * A member DN built here from a group's attribute value is schema-applied, but a user entry returned
+     * by the proxy backend may carry a DN that is not, so comparing their raw {@code getNormName()} forms
+     * would never match; routing both through this method normalizes them consistently.
+     */
+    private String normalizedName(Dn dn) {
+        try {
+            return new Dn(schemaManager, dn.getName()).getNormName();
+        } catch (LdapInvalidDnException e) {
+            return dn.getName().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    /**
+     * Collects each of the given groups' member DNs (member and uniqueMember values). The LDAP proxy
+     * backend expands nested groups, so a nested group's users surface here too; which of these members
+     * are users is decided later, by re-resolving them against the backend (see {@link #resolveUsers}).
+     * The group search matches both groupOfNames and groupOfUniqueNames and is forwarded past this
+     * interceptor so the backend groups are returned as-is, not translated to roles. Keyed on the
+     * lowercased group name so a mixed-case directory cn still matches the assignee.
+     */
+    private Map<String, Set<Dn>> collectGroupMemberDns(SearchOperationContext ctx, Set<String> groupsToResolve) throws LdapException {
+        if (groupsToResolve == null || groupsToResolve.isEmpty()) {
+            return Map.of();
+        }
+        final Map<String, Set<Dn>> groupToMemberDns = new LinkedHashMap<>();
+        for (Entry entry : searchBackend(ctx, proxyGroupSearchBase, groupSearchFilter(groupsToResolve), "objectClass", "member", "uniqueMember")) {
+            if (!LdapUtils.isGroupEntry(entry)) {
+                continue;
+            }
+            final String groupName = LdapUtils.extractGroupName(entry.getDn());
+            if (groupName == null) {
+                continue;
+            }
+            final Set<Dn> memberDns = groupToMemberDns.computeIfAbsent(groupName.toLowerCase(Locale.ROOT), k -> new LinkedHashSet<>());
+            for (String attributeName : new String[] {"member", "uniqueMember"}) {
+                final Attribute attribute = entry.get(attributeName);
+                if (attribute != null) {
+                    for (Value value : attribute) {
+                        try {
+                            memberDns.add(new Dn(schemaManager, value.getString()));
+                        } catch (LdapInvalidDnException ignore) {
+                            // skip values that are not valid DNs
+                        }
+                    }
+                }
+            }
+        }
+        return groupToMemberDns;
+    }
+
+    /** Filters each group's member DNs to those whose normalized DN resolved to a user entry. */
+    private Map<String, Set<Dn>> retainUserMembers(Map<String, Set<Dn>> groupToMemberDns, Set<String> userMemberNorms) {
+        final Map<String, Set<Dn>> groupMembers = new LinkedHashMap<>();
+        for (Map.Entry<String, Set<Dn>> group : groupToMemberDns.entrySet()) {
+            final Set<Dn> users = new LinkedHashSet<>();
+            for (Dn memberDn : group.getValue()) {
+                if (userMemberNorms.contains(normalizedName(memberDn))) {
+                    users.add(memberDn);
+                }
+            }
+            groupMembers.put(group.getKey(), users);
+        }
+        return groupMembers;
+    }
+
+    /** Builds a filter matching the given groups by cn, accepting either standard group object class. */
+    private ExprNode groupSearchFilter(Set<String> groupsToResolve) {
+        final AndNode filter = new AndNode();
+        final AttributeType objectClassAttributeType = schemaManager.getAttributeType("objectClass");
+        final OrNode objectClassNode = new OrNode();
+        for (String groupObjectClass : new String[] {"groupOfNames", "groupOfUniqueNames"}) {
+            EqualityNode objectClassEquality = new EqualityNode<>(objectClassAttributeType, new Value(groupObjectClass));
+            objectClassNode.addNode(objectClassEquality);
+        }
+        filter.addNode(objectClassNode);
+        final OrNode cnNode = new OrNode();
+        final AttributeType cnAttributeType = schemaManager.getAttributeType("cn");
+        for (String groupName : groupsToResolve) {
+            EqualityNode cnEquality = new EqualityNode<>(cnAttributeType, new Value(groupName));
+            cnNode.addNode(cnEquality);
+        }
+        filter.addNode(cnNode);
+        return filter;
+    }
+
+    /**
+     * Builds one role entry per role and sets its {@code member} attribute to the DNs of the role's
+     * members: the users directly assigned to the role plus the user members of the groups assigned to
+     * the role, each resolved to its directory DN. Roles with no resolvable members are still returned,
+     * without a member attribute. The created entries are appended to {@code entries}.
+     */
+    private void populateRoleMembers(List<Entry> entries, Map<String, RoleAssignees> roleAssignees,
+                                     Map<String, Set<Dn>> groupMembers, Map<String, Dn> userDns)
+            throws LdapException {
+        for (Map.Entry<String, RoleAssignees> roleEntry : roleAssignees.entrySet()) {
+            final String roleName = roleEntry.getKey();
+            final RoleAssignees assignees = roleEntry.getValue();
+            final Dn roleDn = new Dn(schemaManager, createGroupDnFromName(roleName));
+            final Entry entry = createRoleEntry(roleDn);
+
+            final Set<Dn> memberDns = new LinkedHashSet<>();
+            if (assignees != null) {
+                if (assignees.getUsers() != null) {
+                    for (String user : assignees.getUsers()) {
+                        addUserDn(memberDns, userDns, user);
+                    }
+                }
+                if (assignees.getGroups() != null) {
+                    for (String group : assignees.getGroups()) {
+                        memberDns.addAll(groupMembers.getOrDefault(group.toLowerCase(Locale.ROOT), Set.of()));
+                    }
+                }
+            }
+            for (Dn memberDn : memberDns) {
+                entry.add("member", memberDn.getName());
+            }
+            entries.add(entry);
+        }
+    }
+
+    /** Adds the DN of the user with the given id (matched case-insensitively) to the member set. */
+    private void addUserDn(Set<Dn> memberDns, Map<String, Dn> userDns, String userId) {
+        final Dn userDn = userId == null ? null : userDns.get(userId.toLowerCase(Locale.ROOT));
+        if (userDn != null) {
+            memberDns.add(userDn);
+        }
     }
 
     private Collection<String> listRoles() throws LdapException {
@@ -288,7 +559,12 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private Map<String, RoleAssignees> getAllRoleAssignees() throws LdapException {
         try {
             Map<String, RoleAssignees> roleAssignees = rolesLookupService.getAllRoleAssignees();
-            if (roleAssignees != null && !roleAssignees.isEmpty()) {
+            if (roleAssignees == null) {
+                // The service returns null when roles lookup is disabled (listRoles() returns an empty
+                // list in that case); normalize to an empty map so callers never dereference null.
+                return Map.of();
+            }
+            if (!roleAssignees.isEmpty()) {
                 numRoles = roleAssignees.size();
             }
             return roleAssignees;

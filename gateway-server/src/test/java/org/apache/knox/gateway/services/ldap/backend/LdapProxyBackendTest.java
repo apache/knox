@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.SearchCursor;
+import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -548,6 +549,99 @@ public class LdapProxyBackendTest {
                 "cn=level4Group,ou=groups,dc=proxy,dc=com",
                 "cn=cycleGroupA,ou=groups,dc=proxy,dc=com",
                 "cn=cycleGroupB,ou=groups,dc=proxy,dc=com"));
+    }
+
+    @Test
+    public void testSearchGroupExpandsNestedGroupMembers() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createRecursiveConfig(5));
+
+        // level3Group -> level2Group -> level1Group -> {recursiveUser, recursiveUser2}. Reading the
+        // group's member attribute flattens the nested groups into their (transitive) user members.
+        List<Entry> entries = ldapProxyBackend.search("ou=groups,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(cn=level3Group)", schemaManager, ALL_ATTRIBUTES);
+
+        assertEquals(1, entries.size());
+        Set<String> members = memberValues(entries.get(0));
+        assertTrue(members.contains("uid=recursiveUser,ou=people,dc=proxy,dc=com"));
+        assertTrue(members.contains("uid=recursiveUser2,ou=people,dc=proxy,dc=com"));
+    }
+
+    @Test
+    public void testSearchGroupExpandsNestedGroupMembersBoundedByDepth() throws Exception {
+        // Depth 1 expands only the directly-nested group (level2Group -> level1Group), not far enough to
+        // reach level1Group's users, so no user member is pulled into level3Group.
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createRecursiveConfig(1));
+
+        List<Entry> entries = ldapProxyBackend.search("ou=groups,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(cn=level3Group)", schemaManager, ALL_ATTRIBUTES);
+
+        assertEquals(1, entries.size());
+        Set<String> members = memberValues(entries.get(0));
+        assertFalse(members.contains("uid=recursiveUser,ou=people,dc=proxy,dc=com"));
+        assertTrue(members.contains("cn=level2Group,ou=groups,dc=proxy,dc=com"));
+    }
+
+    @Test
+    public void testSearchGroupExpandsNestedGroupMembersWithCycle() throws Exception {
+        // cycleGroupA <-> cycleGroupB reference each other; expansion must terminate and still collect the
+        // users reachable from the cycle.
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createRecursiveConfig(10));
+
+        List<Entry> entries = ldapProxyBackend.search("ou=groups,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(cn=cycleGroupA)", schemaManager, ALL_ATTRIBUTES);
+
+        assertEquals(1, entries.size());
+        Set<String> members = memberValues(entries.get(0));
+        assertTrue(members.contains("uid=recursiveUser,ou=people,dc=proxy,dc=com"));
+        assertTrue(members.contains("uid=recursiveUser2,ou=people,dc=proxy,dc=com"));
+    }
+
+    @Test
+    public void testSearchGroupExpandsNestedGroupMembersInSharedContainer() throws Exception {
+        // Users and groups live in one container, so every group DN is a descendant of the user search
+        // base. Classifying members by DN location would mistake the nested groups for users and stop
+        // recursing; authoritative object-class classification still expands them to the leaf user.
+        // DN mapping is disabled so the (otherwise ambiguous) shared base is asserted in remote form.
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createSharedContainerConfig(5));
+
+        List<Entry> entries = ldapProxyBackend.search("ou=recursiveShared,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE,
+                "(cn=sharedTop)", schemaManager, ALL_ATTRIBUTES);
+
+        assertEquals(1, entries.size());
+        Set<String> members = memberValues(entries.get(0));
+        assertTrue("Nested group must still be expanded in a shared container",
+                members.contains("cn=sharedLevel1,ou=recursiveShared,dc=hadoop,dc=apache,dc=org"));
+        assertTrue("Transitive user must be reached through the nested groups",
+                members.contains("uid=sharedUser,ou=recursiveShared,dc=hadoop,dc=apache,dc=org"));
+    }
+
+    @Test
+    public void testSearchGroupInSharedContainerClassifiesMembersUnderGroupFilter() throws Exception {
+        // Classification is authoritative but filtered: a member is only ever referenced inside a search
+        // restricted to the group object classes, so a user sharing the container is classified (and
+        // excluded by the server) rather than fetched as a user entry.
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createSharedContainerConfig(5));
+
+        ldapProxyBackend.search("ou=recursiveShared,dc=hadoop,dc=apache,dc=org", SearchScope.SUBTREE,
+                "(cn=sharedTop)", schemaManager, ALL_ATTRIBUTES);
+
+        List<SearchRequest> userRequests = findSearchRequests("ou=recursiveShared,dc=hadoop,dc=apache,dc=org", "uid=sharedUser");
+        assertFalse("Expected the leaf user to be classified by a batched search", userRequests.isEmpty());
+        for (SearchRequest request : userRequests) {
+            assertTrue("The user must only be referenced under a group object-class filter, never fetched as a user",
+                    request.getFilter().toString().toLowerCase(Locale.ROOT).contains("groupofnames"));
+        }
+    }
+
+    private Set<String> memberValues(Entry entry) throws Exception {
+        Set<String> values = new HashSet<>();
+        Attribute member = entry.get("member");
+        if (member != null) {
+            for (Value value : member) {
+                values.add(value.getString());
+            }
+        }
+        return values;
     }
 
     @Test
@@ -1379,6 +1473,18 @@ public class LdapProxyBackendTest {
         config.put("recursiveGroupResolutionMaxDepth", String.valueOf(depth));
         config.put("userSearchBase", "ou=recursivePeople,dc=hadoop,dc=apache,dc=org");
         config.put("groupSearchBase", "ou=recursiveGroups,dc=hadoop,dc=apache,dc=org");
+        return config;
+    }
+
+    private Map<String, String> createSharedContainerConfig(int depth) {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        config.put("recursiveGroupResolutionMaxDepth", String.valueOf(depth));
+        // Users and groups share a single container.
+        config.put("userSearchBase", "ou=recursiveShared,dc=hadoop,dc=apache,dc=org");
+        config.put("groupSearchBase", "ou=recursiveShared,dc=hadoop,dc=apache,dc=org");
+        // The shared base maps ambiguously, so keep DNs in remote form for deterministic assertions.
+        config.put("dnMappingEnabled", "false");
         return config;
     }
 
