@@ -53,6 +53,8 @@ public class RemoteSchemaConverter {
     private final String remoteUserObjectClass;
     private final String remoteGroupObjectClass;
     private final boolean dnMappingEnabled;
+    // Operator-configured remote<->proxy attribute name mapping (e.g. whenChanged<->modifyTimestamp).
+    private final AttributeNameMapper attributeNameMapper;
 
     public RemoteSchemaConverter(String proxyBaseDn,
                                  String proxyUserSearchBase,
@@ -64,6 +66,22 @@ public class RemoteSchemaConverter {
                                  String remoteUserObjectClass,
                                  String remoteGroupObjectClass,
                                  boolean dnMappingEnabled) {
+        this(proxyBaseDn, proxyUserSearchBase, proxyGroupSearchBase, remoteBaseDn, remoteUserSearchBase,
+                remoteGroupSearchBase, remoteUserIdentifierAttribute, remoteUserObjectClass,
+                remoteGroupObjectClass, dnMappingEnabled, AttributeNameMapper.fromConfig(null));
+    }
+
+    public RemoteSchemaConverter(String proxyBaseDn,
+                                 String proxyUserSearchBase,
+                                 String proxyGroupSearchBase,
+                                 String remoteBaseDn,
+                                 String remoteUserSearchBase,
+                                 String remoteGroupSearchBase,
+                                 String remoteUserIdentifierAttribute,
+                                 String remoteUserObjectClass,
+                                 String remoteGroupObjectClass,
+                                 boolean dnMappingEnabled,
+                                 AttributeNameMapper attributeNameMapper) {
         this.proxyBaseDn = proxyBaseDn;
         this.proxyUserSearchBase = proxyUserSearchBase;
         this.proxyGroupSearchBase = proxyGroupSearchBase;
@@ -74,6 +92,7 @@ public class RemoteSchemaConverter {
         this.remoteUserObjectClass = remoteUserObjectClass;
         this.remoteGroupObjectClass = remoteGroupObjectClass;
         this.dnMappingEnabled = dnMappingEnabled;
+        this.attributeNameMapper = attributeNameMapper;
     }
 
     /**
@@ -102,10 +121,13 @@ public class RemoteSchemaConverter {
         // OID rather than its name for schema-aware attributes, so the name must come from
         // getUpId() (the attribute name as originally supplied) for the name-based checks below.
         for (Attribute attribute : sourceEntry.getAttributes()) {
-            if (SENSITIVE_ATTRIBUTES.contains(attribute.getUpId().toLowerCase(Locale.ROOT))) {
+            final String remoteName = attribute.getUpId();
+            if (SENSITIVE_ATTRIBUTES.contains(remoteName.toLowerCase(Locale.ROOT))) {
                 continue;
             }
-            copyAttribute(sourceEntry, entry, attribute.getUpId(), schemaManager);
+            // Rename the attribute to its proxy-facing name if one is configured (e.g. the remote
+            // whenChanged is surfaced as the standard modifyTimestamp); otherwise the name is kept.
+            copyAttribute(sourceEntry, entry, remoteName, attributeNameMapper.toProxyName(remoteName), schemaManager);
         }
 
         // Map user entry identifier attribute to uid for consistency if needed
@@ -142,7 +164,7 @@ public class RemoteSchemaConverter {
      * @throws LdapException if the filter cannot be converted
      */
     public ExprNode convertProxyFilterToRemoteFilter(ExprNode filter, SchemaManager schemaManager) throws LdapException {
-        RemoteSchemaMappingVisitor remoteSchemaMappingVisitor = new RemoteSchemaMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager, this::convertProxyDnToRemoteDn);
+        RemoteSchemaMappingVisitor remoteSchemaMappingVisitor = new RemoteSchemaMappingVisitor(remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, schemaManager, this::convertProxyDnToRemoteDn, attributeNameMapper);
 
         Object result = filter.accept(remoteSchemaMappingVisitor);
         if (result instanceof ExprNode) {
@@ -160,23 +182,41 @@ public class RemoteSchemaConverter {
      * @param schemaManager the schema manager
      */
     public void copyAttribute(Entry source, Entry target, String attributeName, SchemaManager schemaManager) {
-        final Attribute attribute = source.get(attributeName);
+        copyAttribute(source, target, attributeName, attributeName, schemaManager);
+    }
+
+    /**
+     * Copy a remote attribute into the proxy entry under a (possibly different) target name. When
+     * {@code sourceName} and {@code targetName} differ the attribute is renamed (e.g. the remote
+     * {@code whenChanged} surfaced as the standard {@code modifyTimestamp}); the values are copied
+     * unchanged, which is safe because a renamed attribute is only configured when the two share a
+     * compatible value syntax. The DN-valued check uses the target name so the value conversion
+     * matches the schema the proxy entry is built against.
+     *
+     * @param source The remote entry
+     * @param target The proxy entry
+     * @param sourceName The attribute name on the remote entry
+     * @param targetName The attribute name to write on the proxy entry
+     * @param schemaManager the schema manager
+     */
+    public void copyAttribute(Entry source, Entry target, String sourceName, String targetName, SchemaManager schemaManager) {
+        final Attribute attribute = source.get(sourceName);
         if (attribute != null) {
             // Only rewrite DNs for DN-valued attributes; other values (e.g. mail, description)
             // are copied verbatim so they are not corrupted if they happen to contain a base DN.
-            final boolean convertDn = dnMappingEnabled && LdapUtils.isDnValued(attributeName, schemaManager);
+            final boolean convertDn = dnMappingEnabled && LdapUtils.isDnValued(targetName, schemaManager);
 
             // Copy all values of the attribute (important for multi-valued attributes like objectClass)
             for (Value value : attribute) {
                 try {
                     if (!value.isHumanReadable()) {
-                        if (!target.contains(attributeName, value.getBytes())) {
-                            target.add(attributeName, value.getBytes());
+                        if (!target.contains(targetName, value.getBytes())) {
+                            target.add(targetName, value.getBytes());
                         }
                     } else {
                         String valueString = convertDn ? convertRemoteDnToProxyDn(value.getString()) : value.getString();
-                        if (!target.contains(attributeName, valueString)) {
-                            target.add(attributeName, valueString);
+                        if (!target.contains(targetName, valueString)) {
+                            target.add(targetName, valueString);
                         }
                     }
                 } catch (LdapException e) {

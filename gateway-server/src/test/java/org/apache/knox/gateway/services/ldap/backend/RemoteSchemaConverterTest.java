@@ -31,6 +31,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -125,6 +126,50 @@ public class RemoteSchemaConverterTest {
         final Attribute objectClass = proxyEntry.get("objectclass");
         assertTrue(objectClass.contains("groupofnames"));
         assertFalse(objectClass.contains("posixGroup"));
+    }
+
+    @Test
+    public void testConvertRemoteEntryToProxyEntryRenamesMappedAttribute() throws Exception {
+        // whenChanged:modifyTimestamp — the remote operational attribute is surfaced under the
+        // standard proxy name, and the original remote name no longer appears on the proxy entry.
+        final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", false,
+                AttributeNameMapper.fromConfig("whenChanged:modifyTimestamp"));
+        final Entry source = new DefaultEntry(schemaManager, "uid=alice," + REMOTE_USER_SEARCH_BASE);
+        source.add("objectClass", "person");
+        source.add("uid", "alice");
+        source.add("whenChanged", "20231101120000.0Z");
+
+        final Entry proxyEntry = converter.convertRemoteEntryToProxyEntry(source, schemaManager);
+
+        assertNull("The remote attribute name must not survive the rename", proxyEntry.get("whenChanged"));
+        assertNotNull("The mapped proxy attribute must be present", proxyEntry.get("modifyTimestamp"));
+        assertEquals("The value is copied unchanged across the rename",
+                "20231101120000.0Z", proxyEntry.get("modifyTimestamp").getString());
+    }
+
+    @Test
+    public void testConvertRemoteEntryToProxyEntryLeavesUnmappedAttributesUnchanged() throws Exception {
+        final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", false,
+                AttributeNameMapper.fromConfig("whenChanged:modifyTimestamp"));
+        final Entry source = new DefaultEntry(schemaManager, "uid=alice," + REMOTE_USER_SEARCH_BASE);
+        source.add("objectClass", "person");
+        source.add("uid", "alice");
+
+        final Entry proxyEntry = converter.convertRemoteEntryToProxyEntry(source, schemaManager);
+
+        assertEquals("alice", proxyEntry.get("uid").getString());
+        assertNull(proxyEntry.get("modifyTimestamp"));
+    }
+
+    @Test
+    public void testConvertProxyFilterToRemoteFilterRewritesMappedAttribute() throws Exception {
+        final RemoteSchemaConverter converter = createConverter("uid", "person", "posixGroup", false,
+                AttributeNameMapper.fromConfig("whenChanged:modifyTimestamp"));
+
+        final ExprNode filter = FilterParser.parse(schemaManager, "(modifyTimestamp>=20230101000000.0Z)");
+        final String result = converter.convertProxyFilterToRemoteFilter(filter, schemaManager).toString();
+
+        assertEquals("(whenChanged>=20230101000000.0Z)", result);
     }
 
     @Test
@@ -239,5 +284,17 @@ public class RemoteSchemaConverterTest {
                 PROXY_BASE_DN, PROXY_USER_SEARCH_BASE, PROXY_GROUP_SEARCH_BASE,
                 REMOTE_BASE_DN, REMOTE_USER_SEARCH_BASE, REMOTE_GROUP_SEARCH_BASE,
                 remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass, dnMappingEnabled);
+    }
+
+    private RemoteSchemaConverter createConverter(String remoteUserIdentifierAttribute,
+                                                    String remoteUserObjectClass,
+                                                    String remoteGroupObjectClass,
+                                                    boolean dnMappingEnabled,
+                                                    AttributeNameMapper attributeNameMapper) {
+        return new RemoteSchemaConverter(
+                PROXY_BASE_DN, PROXY_USER_SEARCH_BASE, PROXY_GROUP_SEARCH_BASE,
+                REMOTE_BASE_DN, REMOTE_USER_SEARCH_BASE, REMOTE_GROUP_SEARCH_BASE,
+                remoteUserIdentifierAttribute, remoteUserObjectClass, remoteGroupObjectClass,
+                dnMappingEnabled, attributeNameMapper);
     }
 }
