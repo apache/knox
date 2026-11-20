@@ -37,6 +37,8 @@ import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.BindRequest;
 import org.apache.directory.api.ldap.model.message.LdapResult;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
@@ -904,6 +906,65 @@ public class LdapProxyBackendTest {
         // Non-user-modifiable forces operational usage so the strict schema accepts it.
         assertFalse(imported.isUserModifiable());
         assertEquals(UsageEnum.DIRECTORY_OPERATION, imported.getUsage());
+        // The AD definition declares no equality matching rule; rather than register the attribute with
+        // none (which a strict schema cannot evaluate an equality filter against), it falls back to
+        // octetStringMatch, consistent with the octet string syntax fallback.
+        assertNotNull("an imported attribute must carry an equality matching rule", imported.getEquality());
+        assertEquals("2.5.13.17", imported.getEquality().getOid());
+    }
+
+    @Test
+    public void testRegisterRemoteAttributeTypeSupportsRangeFiltersForAdDeltaSync() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // uSNChanged as AD publishes it: a LargeInteger syntax the bundled schema lacks and no ordering
+        // matching rule. An AD delta/incremental-sync client filters with (uSNChanged>=N); without an
+        // ordering rule the strict schema rejects that filter at parse time
+        // (ERR_13301_NO_ORDERING_MR_FOR_AT), so the import must supply one.
+        final String uSNChangedOid = "1.2.840.113556.1.2.120";
+        AttributeType adType = new AttributeType(uSNChangedOid);
+        adType.setNames("uSNChanged");
+        adType.setSyntaxOid("1.2.840.113556.1.4.906"); // AD LargeInteger, absent from the bundled schema
+        adType.setSingleValued(true);
+
+        assertTrue(ldapProxyBackend.registerRemoteAttributeType(target, adType));
+
+        AttributeType imported = target.getAttributeType("uSNChanged");
+        assertNotNull("an imported attribute must carry an ordering rule to support >= filters",
+                imported.getOrdering());
+        assertEquals("2.5.13.18", imported.getOrdering().getOid());
+
+        // The range filter that previously failed with ERR_13301 now parses against the augmented schema.
+        final ExprNode filter = FilterParser.parse(target, "(uSNChanged>=12345)");
+        assertNotNull(filter);
+    }
+
+    @Test
+    public void testRegisterRemoteAttributeTypeFallsBackToOctetStringMatchForUnresolvableEquality() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // A remote attribute whose declared equality matching rule OID is not in the bundled schema.
+        // The syntax is known (DirectoryString), so only the equality needs normalising: it must fall
+        // back to octetStringMatch rather than being dropped to null.
+        final String oid = "1.3.6.1.4.1.99999.2.1";
+        AttributeType remoteType = new AttributeType(oid);
+        remoteType.setNames("knoxTestUnresolvableEquality");
+        remoteType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.15"); // DirectoryString, in the bundled schema
+        remoteType.setEqualityOid("1.2.3.4.5.6.7.8.9"); // not a matching rule the bundled schema knows
+        remoteType.setSingleValued(true);
+
+        assertTrue("attribute with an unresolvable equality rule should still register",
+                ldapProxyBackend.registerRemoteAttributeType(target, remoteType));
+
+        AttributeType imported = target.getAttributeType("knoxTestUnresolvableEquality");
+        // The known syntax is preserved; only the unresolvable equality is replaced.
+        assertEquals("1.3.6.1.4.1.1466.115.121.1.15", imported.getSyntax().getOid());
+        assertNotNull("the unresolvable equality must fall back, not drop to null", imported.getEquality());
+        assertEquals("2.5.13.17", imported.getEquality().getOid());
     }
 
     @Test
