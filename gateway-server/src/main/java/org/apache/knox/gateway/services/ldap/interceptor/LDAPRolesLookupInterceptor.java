@@ -314,6 +314,8 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         }
         final SchemaManager schemaManager = ctx.getSession().getDirectoryService().getSchemaManager();
 
+        final boolean memberOfRequested = ctx.contains(schemaManager, "memberOf");
+
         // The role lookup must be keyed on the stable user id, which lives in the uid attribute
         // (for Active Directory the backend maps sAMAccountName onto uid). The DN's RDN is not a
         // reliable source: an AD DN is cn=<display name>,... rather than uid=... When the LDAP
@@ -328,13 +330,17 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             ctx.setReturningAttributes(withAttributes(originalReturningAttributes, augmentedAttributes));
         }
 
-        int numUserAndGroupEntries = 0;
+        int numUserEntries = 0;
+        int numGroupEntries = 0;
         final List<Entry> entries = new ArrayList<>();
         try (EntryFilteringCursor cursor = next(ctx)) {
             while (cursor.next()) {
                 Entry entry = cursor.get();
-                if (LdapUtils.isUserEntry(entry) || LdapUtils.isGroupEntry(entry)) {
-                    numUserAndGroupEntries++;
+                if (memberOfRequested && LdapUtils.isUserEntry(entry)) {
+                    numUserEntries++;
+                }
+                if (LdapUtils.isGroupEntry(entry)) {
+                    numGroupEntries++;
                 }
                 entries.add(cursor.get());
             }
@@ -346,15 +352,15 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         // Populating the roles through lookup results in one lookup request per entry.
         // It is more efficient to list all the roles when the number of entries is large.
         List<Entry> resultEntries;
-        if (preferListStrategy(numUserAndGroupEntries)) {
+        if (preferListStrategy(numUserEntries,  numGroupEntries, memberOfRequested)) {
             try {
-                resultEntries = populateRolesThroughList(entries, augmentedAttributes);
+                resultEntries = populateRolesThroughList(entries, augmentedAttributes, memberOfRequested);
             } catch (LdapException e) {
                 // if listing roles fails then fall back on populating roles through lookup
-                resultEntries = populateRolesThroughLookup(entries, augmentedAttributes);
+                resultEntries = populateRolesThroughLookup(entries, augmentedAttributes, memberOfRequested);
             }
         } else {
-            resultEntries = populateRolesThroughLookup(entries, augmentedAttributes);
+            resultEntries = populateRolesThroughLookup(entries, augmentedAttributes, memberOfRequested);
         }
 
         if (!augmentedAttributes.isEmpty()) {
@@ -364,13 +370,14 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         return new EntryFilteringCursorImpl(new ListCursor<>(resultEntries), ctx, schemaManager);
     }
 
-    private boolean preferListStrategy(int numUsersAndGroupEntries) {
+    private boolean preferListStrategy(int numUsers, int numGroups, boolean memberOfRequested) {
+        int numEntries = memberOfRequested ? numUsers + numGroups : numGroups;
         // numRoles < 0 indicates that list has not been run and the number of roles is unknown
         // If numRoles is known, then prefer the list strategy if
-        return numRoles >= 0 && numUsersAndGroupEntries > numRoles;
+        return numRoles >= 0 && numEntries > numRoles;
     }
 
-    private List<Entry> populateRolesThroughList(List<Entry> entries, List<String> augmentedAttributes) throws LdapException {
+    private List<Entry> populateRolesThroughList(List<Entry> entries, List<String> augmentedAttributes, boolean memberOfRequested) throws LdapException {
         // Map of user id to the assigned roles
         final Map<String, List<String>> userRoleAssignments = new HashMap<>();
         // Map of group id to the assigned roles
@@ -413,19 +420,21 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 if (LdapUtils.isGroupEntry(entry)) {
                     roleEntries.addAll(translateGroupEntry(entry, groupRoleAssignments));
                 } else {
-                    final String username = toRolesLookupId(LdapUtils.extractUsernameFromEntry(entry, "uid", "cn"));
-                    final List<String> roles = new ArrayList<>();
-                    if (userRoleAssignments.containsKey(username)) {
-                        roles.addAll(userRoleAssignments.get(username));
-                    }
-                    for (String groupName : fetchGroups(entry)) {
-                        final List<String> groupRoles = groupRoleAssignments.get(groupName);
-                        if (groupRoles != null) {
-                            roles.addAll(groupRoles);
+                    if (memberOfRequested) {
+                        final String username = toRolesLookupId(LdapUtils.extractUsernameFromEntry(entry, "uid", "cn"));
+                        final List<String> roles = new ArrayList<>();
+                        if (userRoleAssignments.containsKey(username)) {
+                            roles.addAll(userRoleAssignments.get(username));
                         }
-                    }
+                        for (String groupName : fetchGroups(entry)) {
+                            final List<String> groupRoles = groupRoleAssignments.get(groupName);
+                            if (groupRoles != null) {
+                                roles.addAll(groupRoles);
+                            }
+                        }
 
-                    modifyEntry(entry, roles);
+                        modifyEntry(entry, roles);
+                    }
                     for (String attribute : augmentedAttributes) {
                         // These attributes were added only to resolve the lookup; remove them so the response
                         // honors the client's original request.
@@ -442,7 +451,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         return resultEntries;
     }
 
-    private List<Entry> populateRolesThroughLookup(List<Entry> entries, List<String> augmentedAttributes) throws LdapException {
+    private List<Entry> populateRolesThroughLookup(List<Entry> entries, List<String> augmentedAttributes, boolean memberOfRequested) throws LdapException {
         final List<Entry> roleEntries = new ArrayList<>();
         final List<Entry> resultEntries = new ArrayList<>(entries.size());
 
@@ -451,10 +460,12 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                 if (LdapUtils.isGroupEntry(entry)) {
                     roleEntries.addAll(translateGroupEntry(entry));
                 } else {
-                    final String username = toRolesLookupId(LdapUtils.extractUsernameFromEntry(entry, "uid", "cn"));
-                    final Set<String> groups = fetchGroups(entry);
-                    final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
-                    modifyEntry(entry, roles);
+                    if (memberOfRequested) {
+                        final String username = toRolesLookupId(LdapUtils.extractUsernameFromEntry(entry, "uid", "cn"));
+                        final Set<String> groups = fetchGroups(entry);
+                        final Collection<String> roles = rolesLookupService.lookupRoles(username, groups);
+                        modifyEntry(entry, roles);
+                    }
                     for (String attribute : augmentedAttributes) {
                         // These attributes were added only to resolve the lookup; remove them so the response
                         // honors the client's original request.
