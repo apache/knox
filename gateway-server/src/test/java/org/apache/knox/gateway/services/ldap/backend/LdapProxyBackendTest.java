@@ -594,6 +594,31 @@ public class LdapProxyBackendTest {
         Set<String> members = memberValues(entries.get(0));
         assertTrue(members.contains("uid=recursiveUser,ou=people,dc=proxy,dc=com"));
         assertTrue(members.contains("uid=recursiveUser2,ou=people,dc=proxy,dc=com"));
+        assertTrue("The directly-nested group stays a member",
+                members.contains("cn=cycleGroupB,ou=groups,dc=proxy,dc=com"));
+        assertFalse("A group that a nested group points back to must not become a member of itself",
+                members.contains("cn=cycleGroupA,ou=groups,dc=proxy,dc=com"));
+    }
+
+    @Test
+    public void testSearchGroupExpandsNestedMembersIntoExistingUniqueMemberAttribute() throws Exception {
+        // uniqueParent is a groupOfUniqueNames (uniqueMember: uniqueChild); uniqueChild is a groupOfNames
+        // whose member is a user. The nested user must merge into the attribute the parent already uses -
+        // uniqueMember - rather than appearing under a stray member attribute.
+        ldapProxyBackend = new LdapProxyBackend("testbackend", createRecursiveUniqueConfig(5));
+
+        List<Entry> entries = ldapProxyBackend.search("ou=groups,dc=proxy,dc=com", SearchScope.SUBTREE,
+                "(cn=uniqueParent)", schemaManager, ALL_ATTRIBUTES);
+
+        assertEquals(1, entries.size());
+        final Entry entry = entries.get(0);
+        final Set<String> uniqueMembers = attributeValues(entry, "uniqueMember");
+        assertTrue("The directly-nested group stays a uniqueMember",
+                uniqueMembers.contains("cn=uniqueChild,ou=groups,dc=proxy,dc=com"));
+        assertTrue("The nested user merges into uniqueMember, the attribute the parent already uses",
+                uniqueMembers.contains("uid=uniqueUser,ou=people,dc=proxy,dc=com"));
+        assertTrue("No stray member attribute should be added to a groupOfUniqueNames",
+                memberValues(entry).isEmpty());
     }
 
     @Test
@@ -634,10 +659,14 @@ public class LdapProxyBackendTest {
     }
 
     private Set<String> memberValues(Entry entry) throws Exception {
+        return attributeValues(entry, "member");
+    }
+
+    private Set<String> attributeValues(Entry entry, String attributeName) throws Exception {
         Set<String> values = new HashSet<>();
-        Attribute member = entry.get("member");
-        if (member != null) {
-            for (Value value : member) {
+        Attribute attribute = entry.get(attributeName);
+        if (attribute != null) {
+            for (Value value : attribute) {
                 values.add(value.getString());
             }
         }
@@ -1473,6 +1502,15 @@ public class LdapProxyBackendTest {
         config.put("recursiveGroupResolutionMaxDepth", String.valueOf(depth));
         config.put("userSearchBase", "ou=recursivePeople,dc=hadoop,dc=apache,dc=org");
         config.put("groupSearchBase", "ou=recursiveGroups,dc=hadoop,dc=apache,dc=org");
+        return config;
+    }
+
+    private Map<String, String> createRecursiveUniqueConfig(int depth) {
+        Map<String, String> config = new HashMap<>(ldapBackendConfig);
+        config.put("recursiveGroupResolution", "true");
+        config.put("recursiveGroupResolutionMaxDepth", String.valueOf(depth));
+        config.put("userSearchBase", "ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org");
+        config.put("groupSearchBase", "ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org");
         return config;
     }
 

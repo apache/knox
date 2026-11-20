@@ -113,6 +113,41 @@ objectclass:groupOfNames
 cn: cycleGroupB
 member: cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
 
+# Isolated containers for the uniqueMember expansion test, kept separate from the groups and users
+# above so their member counts and group enumerations are unaffected.
+dn: ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: recursiveUniquePeople
+
+dn: ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: recursiveUniqueGroups
+
+dn: uid=uniqueUser,ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: UniqueUser
+sn: User
+uid: uniqueUser
+userPassword: password
+
+# groupOfUniqueNames parent whose nested group's members must merge into uniqueMember, not member
+dn: cn=uniqueParent,ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: uniqueParent
+uniqueMember: cn=uniqueChild,ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+
+dn: cn=uniqueChild,ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: uniqueChild
+member: uid=uniqueUser,ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org
+
 # entry for sample user memberOfUser using memberOf
 dn: uid=memberOfUser,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
 objectclass:top

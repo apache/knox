@@ -305,10 +305,13 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
                     .collect(Collectors.toSet());
             Set<Dn> candidateMemberDns = new LinkedHashSet<>();
             groupToMemberDns.values().forEach(candidateMemberDns::addAll);
-            UserResolution users = resolveUsers(ctx, directUserIds, candidateMemberDns);
+            // A DN's normalized form is reused across resolveUsers and retainUserMembers; memoize it so
+            // each distinct member DN is rebuilt through the schema only once per request.
+            final Map<Dn, String> normCache = new HashMap<>();
+            UserResolution users = resolveUsers(ctx, directUserIds, candidateMemberDns, normCache);
 
             // Keep only the group members that resolved to a user entry.
-            Map<String, Set<Dn>> groupMembers = retainUserMembers(groupToMemberDns, users.userMemberNorms());
+            Map<String, Set<Dn>> groupMembers = retainUserMembers(groupToMemberDns, users.userMemberNorms(), normCache);
 
             populateRoleMembers(entries, roleAssignees, groupMembers, users.directUserDns());
         }
@@ -357,7 +360,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
      * the lowercased uid lets the assignee lookup match even when the roles store holds a different case
      * than the directory (uid matches case-insensitively).
      */
-    private UserResolution resolveUsers(SearchOperationContext ctx, Set<String> directUserIds, Set<Dn> candidateMemberDns) throws LdapException {
+    private UserResolution resolveUsers(SearchOperationContext ctx, Set<String> directUserIds, Set<Dn> candidateMemberDns, Map<Dn, String> normCache) throws LdapException {
         if ((directUserIds == null || directUserIds.isEmpty()) && candidateMemberDns.isEmpty()) {
             return new UserResolution(Map.of(), Set.of());
         }
@@ -390,7 +393,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
 
         final Set<String> candidateNorms = new HashSet<>();
         for (Dn candidate : candidateMemberDns) {
-            candidateNorms.add(normalizedName(candidate));
+            candidateNorms.add(normalizedName(candidate, normCache));
         }
         final Map<String, Dn> directUserDns = new HashMap<>();
         final Set<String> userMemberNorms = new HashSet<>();
@@ -402,7 +405,7 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             if (uidAttr != null) {
                 directUserDns.put(uidAttr.getString().toLowerCase(Locale.ROOT), entry.getDn());
             }
-            final String norm = normalizedName(entry.getDn());
+            final String norm = normalizedName(entry.getDn(), normCache);
             if (candidateNorms.contains(norm)) {
                 userMemberNorms.add(norm);
             }
@@ -426,6 +429,11 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         } catch (LdapInvalidDnException e) {
             return dn.getName().toLowerCase(Locale.ROOT);
         }
+    }
+
+    /** {@link #normalizedName(Dn)} memoized per request, so each distinct DN is normalized only once. */
+    private String normalizedName(Dn dn, Map<Dn, String> cache) {
+        return cache.computeIfAbsent(dn, this::normalizedName);
     }
 
     /**
@@ -467,12 +475,12 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     }
 
     /** Filters each group's member DNs to those whose normalized DN resolved to a user entry. */
-    private Map<String, Set<Dn>> retainUserMembers(Map<String, Set<Dn>> groupToMemberDns, Set<String> userMemberNorms) {
+    private Map<String, Set<Dn>> retainUserMembers(Map<String, Set<Dn>> groupToMemberDns, Set<String> userMemberNorms, Map<Dn, String> normCache) {
         final Map<String, Set<Dn>> groupMembers = new LinkedHashMap<>();
         for (Map.Entry<String, Set<Dn>> group : groupToMemberDns.entrySet()) {
             final Set<Dn> users = new LinkedHashSet<>();
             for (Dn memberDn : group.getValue()) {
-                if (userMemberNorms.contains(normalizedName(memberDn))) {
+                if (userMemberNorms.contains(normalizedName(memberDn, normCache))) {
                     users.add(memberDn);
                 }
             }

@@ -972,8 +972,16 @@ public class LdapProxyBackend implements LdapBackend {
         if (directMembers.isEmpty()) {
             return;
         }
+        // Seed the cycle guards with the group's own DN so a nested group that references it back does not
+        // re-add it (which would make the group a member of itself) or cause a redundant re-expansion.
+        final String ownNormDn = normalizeDn(entry.getDn().getName(), schemaManager);
         final Set<String> knownMembers = new HashSet<>();
+        knownMembers.add(ownNormDn);
         final Set<String> visitedGroups = new HashSet<>();
+        visitedGroups.add(ownNormDn);
+        // Merge nested members into whichever membership attribute the entry already uses, so a
+        // groupOfUniqueNames keeps one uniqueMember list instead of also gaining a stray member attribute.
+        final String memberAttribute = entry.get("member") != null ? "member" : "uniqueMember";
         // Candidate member DNs whose type is not yet known; the batched group search below classifies them.
         List<String> currentCandidates = new ArrayList<>();
         for (String memberDn : directMembers) {
@@ -995,7 +1003,7 @@ public class LdapProxyBackend implements LdapBackend {
             for (List<String> members : expandGroups(connection, toExpand, schemaManager, nestedGroupMembersCache).values()) {
                 for (String memberDn : members) {
                     if (knownMembers.add(normalizeDn(memberDn, schemaManager))) {
-                        entry.add("member", memberDn);
+                        entry.add(memberAttribute, memberDn);
                         nextCandidates.add(memberDn);
                     }
                 }
