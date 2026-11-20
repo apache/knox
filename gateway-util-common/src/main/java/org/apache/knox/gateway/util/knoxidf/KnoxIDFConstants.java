@@ -90,9 +90,10 @@ public interface KnoxIDFConstants {
     // registers, each with its own per-user token limit, and revoking it would leave them working.
     String CLIENT_REGISTRATION_CLIENT_CALLERS_DENIED = "knoxidf.client.registration.client.callers.denied";
 
-    // When true (the default), the dynamic client-registration endpoint refuses a caller whose token carries
-    // an RFC 8693 actor chain (an act claim). A delegated token lets its actor act for the user at one
-    // audience; it must not mint a long-lived client owned by that user.
+    // When true (the default), the client endpoints refuse a caller whose token carries an RFC 8693 actor
+    // chain (an act claim): registration, and listing, revoking, enabling or disabling tokens. A delegated
+    // token lets its actor act for the user at one audience; it must not mint a long-lived client owned by
+    // that user, nor list, revoke, enable or disable that user's tokens.
     String CLIENT_REGISTRATION_DELEGATED_CALLERS_DENIED = "knoxidf.client.registration.delegated.callers.denied";
 
     // Comma-separated hostnames that, in addition to the hard-coded loopback set (localhost/127.0.0.1/::1),
