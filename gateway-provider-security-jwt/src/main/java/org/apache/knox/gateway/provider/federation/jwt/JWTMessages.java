@@ -80,6 +80,9 @@ public interface JWTMessages {
       + "cookie, enabling {1} permits falling back to the token''s own exp claim." )
   void unknownTokenStateRejected(String tokenId, String paramName);
 
+  @Message( level = MessageLevel.WARN, text = "Rejected client secret of {0} used as an access token" )
+  void clientSecretRejectedAsAccessToken(String tokenId);
+
   @Message( level = MessageLevel.WARN, text = "Unable to verify passcode token ({0}) due to missing or incorrect token state service configuration.")
   void unableToVerifyPasscodeToken(String tokenId);
 

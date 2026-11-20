@@ -60,6 +60,36 @@ In this deployment example the TTL is set to 74000 ms which is translated to sec
 Note that in both of the above responses that there is a client_id and the client_secret.
 The key_id may be used in management operations of the API Key lifecycle by those with appropriate permissions to do so.
 
+### Using the client secret
+
+A client secret is a long-lived credential for the OAuth 2.0 `client_credentials` grant: exchange it at a token endpoint
+for a short-lived access token, then present that access token to services. Either form of the grant is accepted:
+
+    $ curl -ik -X POST "https://localhost:8443/gateway/sandbox/oauth/v1/token" \
+        -d grant_type=client_credentials -d client_id=<client_id> -d client_secret=<client_secret>
+
+    $ curl -ik -X POST -u <client_id>:<client_secret> "https://localhost:8443/gateway/sandbox/oauth/v1/token" \
+        -d grant_type=client_credentials
+
+The `JWTProvider` rejects a client secret presented directly as an access token, as `Authorization: Bearer <client_secret>`
+or as HTTP Basic with the `Passcode` username, with `401 Unauthorized`. API keys issued by the [API Key](config_apikey.md)
+service are not affected. To accept client secrets as access tokens on a topology (the behavior before Knox 3.1.0), set
+`knox.token.allow.client.secret.as.access.token` on its `JWTProvider`:
+
+    <provider>
+        <role>federation</role>
+        <name>JWTProvider</name>
+        <enabled>true</enabled>
+        <param>
+            <name>knox.token.allow.client.secret.as.access.token</name>
+            <value>true</value>
+        </param>
+    </provider>
+
+Parameter | Description | Default
+----------|-------------|--------
+knox.token.allow.client.secret.as.access.token | Accept a CLIENTID client secret presented directly as an access token. | false
+
 ### Token limit per user
 
 Only client credentials are counted towards the per-user token limit (`clientid.knox.token.limit.per.user`); other tokens of the

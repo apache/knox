@@ -37,6 +37,7 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.ServletRequestUtils;
+import org.apache.knox.gateway.util.Tokens;
 import org.apache.knox.gateway.util.knoxidf.AllowedGrantTypes;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
@@ -145,6 +146,15 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   // form body is parsed, so do not set it on a topology that proxies form posts.
   public static final String ALLOWED_GRANT_TYPES = "jwt.allowed.grant.types";
 
+  // Topology provider param (default false). An OAuth client secret issued by the CLIENTID service is
+  // accepted only as a client_credentials grant credential, to be exchanged for an access token. While
+  // off (the fail-safe default), presenting it directly as an access token (Bearer, or Basic with the
+  // Passcode username) is rejected. Only an explicit "true" restores the old behavior of accepting it.
+  public static final String ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN = "knox.token.allow.client.secret.as.access.token";
+
+  public static final String CLIENT_SECRET_AS_ACCESS_TOKEN_ERROR =
+      "A client secret is not an access token; exchange it for one using the client_credentials grant";
+
   public enum TokenType {
     JWT, Passcode, TokenExchange, AuthCode;
   }
@@ -181,6 +191,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
   private boolean delegationEnforceRequestedAudienceMaxOne;
   private boolean tokenExchangeSameSubjectRequestedAudienceEnabled;
   private AllowedGrantTypes allowedGrantTypes = AllowedGrantTypes.ALL;
+  private boolean allowClientSecretAsAccessToken;
 
   // Handles RFC 8693 token exchange requests (see doFilter).
   private TokenExchangeHandler tokenExchangeHandler = new TokenExchangeHandler(this);
@@ -258,6 +269,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     tokenExchangeSameSubjectRequestedAudienceEnabled = Boolean.parseBoolean(filterConfig.getInitParameter(TOKEN_EXCHANGE_SAME_SUBJECT_REQUESTED_AUDIENCE_ENABLED));
 
     allowedGrantTypes = AllowedGrantTypes.parse(filterConfig.getInitParameter(ALLOWED_GRANT_TYPES));
+    allowClientSecretAsAccessToken = Boolean.parseBoolean(filterConfig.getInitParameter(ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN));
 
     // Discovers a RequestAudienceValidator by name (see RequestAudienceValidatorService's
     // REQUEST_AUDIENCE_VALIDATOR_PARAM) for this filter's own direct-bearer JWT path.
@@ -400,6 +412,13 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
               "Error while parsing the received passcode token");
         }
+        // Checked before validation: a client secret that is not accepted here is not worth verifying
+        if (isClientSecretPresentedAsAccessToken(wireToken, tokenId)) {
+          log.clientSecretRejectedAsAccessToken(Tokens.getTokenIDDisplayText(tokenId));
+          handleValidationError((HttpServletRequest) request, (HttpServletResponse) response, HttpServletResponse.SC_UNAUTHORIZED,
+              CLIENT_SECRET_AS_ACCESS_TOKEN_ERROR);
+          return;
+        }
         if (validateToken((HttpServletRequest) request, (HttpServletResponse) response, chain, tokenId, passcode)) {
           try {
             final Subject subject = createSubjectFromTokenIdentifier(tokenId);
@@ -414,6 +433,23 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       // no token provided in header
       log.missingTokenFromHeader(wireToken == null ? null : wireToken.asPair());
       ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+  }
+
+  /**
+   * A CLIENTID client secret is a long-lived grant credential: it may only be exchanged for an access
+   * token through the client_credentials grant, unless {@link #ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN} is set.
+   * API keys share the passcode encoding but are meant to be presented directly, so they are not affected.
+   */
+  private boolean isClientSecretPresentedAsAccessToken(final WireToken wireToken, final String tokenId) {
+    if (wireToken.isClientCredentialsGrant() || allowClientSecretAsAccessToken) {
+      return false;
+    }
+    try {
+      return isClientIdToken(tokenId);
+    } catch (UnknownTokenException e) {
+      // not a known token at all; validateToken rejects it with its usual error
+      return false;
     }
   }
 
@@ -464,11 +500,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
     private final TokenType type;
     private final String value;
     private final boolean callerCredential;
+    private final boolean clientCredentialsGrant;
 
-    private WireToken(final TokenType type, final String value, final boolean callerCredential) {
+    private WireToken(final TokenType type, final String value, final boolean callerCredential,
+        final boolean clientCredentialsGrant) {
       this.type = type;
       this.value = value;
       this.callerCredential = callerCredential;
+      this.clientCredentialsGrant = clientCredentialsGrant;
     }
 
     /**
@@ -477,7 +516,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
      * downstream.
      */
     static WireToken callerCredential(final TokenType type, final String value) {
-      return new WireToken(type, value, true);
+      return new WireToken(type, value, true, false);
     }
 
     /**
@@ -486,7 +525,17 @@ public class JWTFederationFilter extends AbstractJWTFilter {
      * token, not to authenticate this request, so it must never be echoed downstream.
      */
     static WireToken grantArtifact(final TokenType type, final String value) {
-      return new WireToken(type, value, false);
+      return new WireToken(type, value, false, false);
+    }
+
+    /**
+     * A client secret presented in a {@code client_credentials} grant, either as the
+     * {@code client_secret} body parameter or as the password of HTTP Basic {@code client_id:secret}.
+     * This is the only way a CLIENTID client secret may be used, unless
+     * {@link JWTFederationFilter#ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN} is set.
+     */
+    static WireToken clientSecret(final String value, final boolean callerCredential) {
+      return new WireToken(TokenType.Passcode, value, callerCredential, true);
     }
 
     TokenType getType() {
@@ -499,6 +548,10 @@ public class JWTFederationFilter extends AbstractJWTFilter {
 
     boolean isCallerCredential() {
       return callerCredential;
+    }
+
+    boolean isClientCredentialsGrant() {
+      return clientCredentialsGrant;
     }
 
     Pair<TokenType, String> asPair() {
@@ -544,18 +597,18 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           } else {
               // what follows the Basic designator should be the JWT token or the unique token ID being used
               // to request or as an access token
-              final Pair<TokenType, String> basic = parseFromHTTPBasicCredentials(header, request);
+              final WireToken basic = parseFromHTTPBasicCredentials(header, request);
               if (basic != null) {
-                return WireToken.callerCredential(basic.getLeft(), basic.getRight());
+                return basic;
               }
               // The header was credential-shaped but carried no token we recognize, so fall through.
               // Anything found below did NOT come from this header and is not the caller's credential.
           }
       }
 
-      final Pair<TokenType, String> grantFlow = parseFromGrantTypeFlow(request);
+      final WireToken grantFlow = parseFromGrantTypeFlow(request);
       if (grantFlow != null) {
-        return WireToken.grantArtifact(grantFlow.getLeft(), grantFlow.getRight());
+        return grantFlow;
       }
 
       final String queryParamToken = request.getParameter(this.paramName);
@@ -566,7 +619,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return null;
     }
 
-    private Pair<TokenType, String> parseFromGrantTypeFlow(ServletRequest request) throws IOException {
+    private WireToken parseFromGrantTypeFlow(ServletRequest request) throws IOException {
       /*
         POST /{tenant}/oauth2/v2.0/token HTTP/1.1
         Host: login.microsoftonline.com:443
@@ -596,7 +649,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       return getTokenFromRequestBody(request);
     }
 
-    private Pair<TokenType, String> getTokenFromRequestBody(ServletRequest request) {
+    private WireToken getTokenFromRequestBody(ServletRequest request) {
         // unwrap the servlet request so that we can get to the request body params since we are not passing this request
         // on to other services to handle like we do when proxying. The request wrapper is protecting the body from being
         // consumed before it gets to the proxied service that should handle it. We don't need that protection here.
@@ -606,7 +659,7 @@ public class JWTFederationFilter extends AbstractJWTFilter {
         if (AUTH_CODE.equals(grantType)) {
           // no client_secret parsed here; the KnoxIDF token endpoint authenticates the client
           // (see the TokenType.AuthCode handling in doFilter)
-          return Pair.of(TokenType.AuthCode, null);
+          return WireToken.grantArtifact(TokenType.AuthCode, null);
         } else if (CLIENT_CREDENTIALS.equals(grantType)) {
           if (CLIENT_ASSERTION_JWT_BEARER.equals(clientAssertionType)) {
             // short lived client assertion token expected
@@ -616,29 +669,28 @@ public class JWTFederationFilter extends AbstractJWTFilter {
           // the client_id will be in the token as the token_id
           final String clientSecret = unwrappedRequest.getParameter(CLIENT_SECRET);
           validateClientID((HttpServletRequest) unwrappedRequest, clientSecret);
-          return Pair.of(TokenType.Passcode, clientSecret);
+          return WireToken.clientSecret(clientSecret, false);
         } else if (REFRESH_TOKEN.equals(grantType)) {
           // refresh_token flow: the refresh_token parameter contains the actual token
           return getClientTokenFromParams(unwrappedRequest, REFRESH_TOKEN_PARAM);
         } else if (TOKEN_EXCHANGE.equals(grantType)) {
           // RFC 8693 token exchange: signal it via the token type. doFilter routes this to
           // TokenExchangeHandler, which reads subject_token/actor_token from the unwrapped request.
-          return Pair.of(TokenType.TokenExchange, null);
+          return WireToken.grantArtifact(TokenType.TokenExchange, null);
         }
       return null;
     }
 
-    private Pair<TokenType, String> getClientTokenFromParams(final ServletRequest request, final String requestParamName) {
+    private WireToken getClientTokenFromParams(final ServletRequest request, final String requestParamName) {
       final String refreshOrSubjectToken = request.getParameter(requestParamName);
       if (refreshOrSubjectToken != null) {
-        return isJWT(refreshOrSubjectToken) ? Pair.of(TokenType.JWT, refreshOrSubjectToken) : Pair.of(TokenType.Passcode,
-                refreshOrSubjectToken);
+        return WireToken.grantArtifact(isJWT(refreshOrSubjectToken) ? TokenType.JWT : TokenType.Passcode, refreshOrSubjectToken);
       }
       return null;
     }
 
-    private Pair<TokenType, String> parseFromHTTPBasicCredentials(final String header, final ServletRequest request) {
-      Pair<TokenType, String> parsed = null;
+    private WireToken parseFromHTTPBasicCredentials(final String header, final ServletRequest request) {
+      WireToken parsed = null;
       final String base64Credentials = header.substring(BASIC.length()).trim();
       final byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
       final String credentials = new String(credDecoded, UTF_8);
@@ -646,14 +698,14 @@ public class JWTFederationFilter extends AbstractJWTFilter {
       String username = values[0];
       String passcode = values[1].isEmpty() ? null : values[1];
       if (TOKEN.equalsIgnoreCase(username) || PASSCODE.equalsIgnoreCase(username)) {
-          parsed = Pair.of(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, passcode);
+          parsed = WireToken.callerCredential(TOKEN.equalsIgnoreCase(username) ? TokenType.JWT : TokenType.Passcode, passcode);
       } else if (request != null) {
           HttpServletRequest unwrappedRequest = ServletRequestUtils.unwrapHttpServletRequest(request);
           if (CLIENT_CREDENTIALS.equals(unwrappedRequest.getParameter(GRANT_TYPE))) {
             // Allow client_credentials flow where client_id/client_secret are provided via HTTP Basic
             if (passcode != null) {
               validateClientID(username, passcode);
-              parsed = Pair.of(TokenType.Passcode, passcode);
+              parsed = WireToken.clientSecret(passcode, true);
             }
             }
       }

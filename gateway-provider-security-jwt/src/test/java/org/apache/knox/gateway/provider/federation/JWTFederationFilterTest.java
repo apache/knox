@@ -186,7 +186,44 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     testVerifyPasscodeTokens(JWTFederationFilter.BEARER, false);
   }
 
+  /*
+   * KNOX-3601: a CLIENTID client secret is a grant credential, not an access token. Presented
+   * directly (Bearer, or Basic with the Passcode username) it is rejected unless the topology opts
+   * in with JWTFederationFilter.ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN. API keys share the passcode
+   * encoding and keep working (the tests above, whose metadata is not a client id).
+   */
+  @Test
+  public void testClientSecretRejectedAsBearerAccessToken() throws Exception {
+    testVerifyPasscodeTokens(JWTFederationFilter.BEARER, true, true, false, null);
+  }
+
+  @Test
+  public void testClientSecretRejectedAsBasicPasscodeAccessToken() throws Exception {
+    testVerifyPasscodeTokens(JWTFederationFilter.BASIC, true, true, false, null);
+  }
+
+  @Test
+  public void testClientSecretAsBearerRejectedDespiteClientCredentialsGrantParam() throws Exception {
+    // A grant_type parameter does not turn a Bearer credential into a client_credentials grant
+    testVerifyPasscodeTokens(JWTFederationFilter.BEARER, true, true, false, CLIENT_CREDENTIALS);
+  }
+
+  @Test
+  public void testClientSecretAcceptedAsBearerAccessTokenWhenAllowed() throws Exception {
+    testVerifyPasscodeTokens(JWTFederationFilter.BEARER, true, true, true, null);
+  }
+
+  @Test
+  public void testClientSecretAcceptedAsBasicPasscodeAccessTokenWhenAllowed() throws Exception {
+    testVerifyPasscodeTokens(JWTFederationFilter.BASIC, true, true, true, null);
+  }
+
   private void testVerifyPasscodeTokens(String authTokenType, boolean tssEnabled) throws Exception {
+    testVerifyPasscodeTokens(authTokenType, tssEnabled, false, false, null);
+  }
+
+  private void testVerifyPasscodeTokens(String authTokenType, boolean tssEnabled, boolean clientId,
+                                        boolean allowClientSecretAsAccessToken, String grantType) throws Exception {
     final String topologyName = "jwt-topology";
     final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650a";
     final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f95";
@@ -196,27 +233,44 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
       passcodeToken = passcodeBearerToken;
     }
 
+    final boolean rejectedAsClientSecret = tssEnabled && clientId && !allowClientSecretAsAccessToken;
     final TokenStateService tokenStateService = EasyMock.createNiceMock(TokenStateService.class);
-    EasyMock.expect(tokenStateService.getTokenExpiration(tokenId)).andReturn(Long.MAX_VALUE).anyTimes();
+    if (rejectedAsClientSecret) {
+      // The client secret is rejected before any validation work is done
+      EasyMock.expect(tokenStateService.getTokenExpiration(tokenId))
+          .andThrow(new AssertionError("A rejected client secret must not be validated")).anyTimes();
+    } else {
+      EasyMock.expect(tokenStateService.getTokenExpiration(tokenId)).andReturn(Long.MAX_VALUE).anyTimes();
+    }
 
     final TokenMetadata tokenMetadata = EasyMock.createNiceMock(TokenMetadata.class);
     EasyMock.expect(tokenMetadata.isEnabled()).andReturn(true).anyTimes();
     EasyMock.expect(tokenMetadata.getPasscode()).andReturn(passcodeToken).anyTimes();
+    EasyMock.expect(tokenMetadata.isClientId()).andReturn(clientId).anyTimes();
     EasyMock.expect(tokenStateService.getTokenMetadata(EasyMock.anyString())).andReturn(tokenMetadata).anyTimes();
 
     final Properties filterConfigProps = getProperties();
     filterConfigProps.put(TokenStateService.CONFIG_SERVER_MANAGED, Boolean.toString(tssEnabled));
     filterConfigProps.put(TestFilterConfig.TOPOLOGY_NAME_PROP, topologyName);
+    if (allowClientSecretAsAccessToken) {
+      filterConfigProps.put(JWTFederationFilter.ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN, "true");
+    }
     final FilterConfig filterConfig = new TestFilterConfig(filterConfigProps, tokenStateService);
     handler.init(filterConfig);
 
     final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
     EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
     EasyMock.expect(request.getHeader("Authorization")).andReturn(authTokenType + passcodeToken);
+    if (grantType != null) {
+      EasyMock.expect(request.getParameter(GRANT_TYPE)).andReturn(grantType).anyTimes();
+    }
 
     final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
     if (!tssEnabled) {
       response.sendError(HttpServletResponse.SC_UNAUTHORIZED, AbstractJWTFilter.TOKEN_STATE_SERVICE_DISABLED_ERROR);
+      EasyMock.expectLastCall().once();
+    } else if (rejectedAsClientSecret) {
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, JWTFederationFilter.CLIENT_SECRET_AS_ACCESS_TOKEN_ERROR);
       EasyMock.expectLastCall().once();
     }
     EasyMock.replay(tokenStateService, tokenMetadata, request, response);
@@ -227,7 +281,7 @@ public class JWTFederationFilterTest extends AbstractJWTFilterTest {
     handler.doFilter(request, response, chain);
 
     EasyMock.verify(response);
-    if (tssEnabled) {
+    if (tssEnabled && !rejectedAsClientSecret) {
       Assert.assertTrue(chain.doFilterCalled);
       Assert.assertNotNull(chain.subject);
       // There is no JWT behind a passcode token, so nothing must be captured for forwarding
