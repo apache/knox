@@ -234,6 +234,10 @@ limitations under the License.
         <name>gateway.ldap.interceptor.roleslookup.interceptorType</name>
         <value>rolesLookup</value>
     </property>
+    <property>
+        <name>gateway.ldap.interceptor.roleslookup.ignoreDeltaSyncTimestamps</name>
+        <value>true</value>
+    </property>
 
     <!-- Roles Lookup Configuration -->
     <property>

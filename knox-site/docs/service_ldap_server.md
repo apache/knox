@@ -210,6 +210,8 @@ The rolesLookup interceptor supports the following property:
 | Property | Default Value | Description |
 | :--- | :--- | :--- |
 | `gateway.ldap.interceptor.<name>.lowercaseIds` | `false` | If `true`, the user id and the group names are lowercased before the roles are looked up. The returned entries themselves are not changed. See [Case of the user id and group names](#case-of-the-user-id-and-group-names). |
+| `gateway.ldap.interceptor.<name>.ignoreDeltaSyncTimestamps` | `false` | If `true`, delta-sync clauses (clauses testing one of the `deltaSyncAttributes`, by default `modifyTimestamp` or its Active Directory equivalent `whenChanged`) are ignored when deciding whether a search is an all-groups search. A client performing an incremental/delta sync adds such a clause to request only the groups changed since its last sync, but the roles service cannot compute a delta, so the search falls back to returning all roles. Leave `false` (the default) to honor the clause as written. |
+| `gateway.ldap.interceptor.<name>.deltaSyncAttributes` | `modifyTimestamp,whenChanged` | Comma-separated list of attribute names (case-insensitive) whose clauses are removed from a groups search filter when `ignoreDeltaSyncTimestamps` is `true`. A configured list replaces the default. |
 
 ##### Case of the user id and group names
 
