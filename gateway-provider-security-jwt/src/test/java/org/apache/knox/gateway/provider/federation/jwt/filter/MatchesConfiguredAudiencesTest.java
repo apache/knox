@@ -78,4 +78,31 @@ public class MatchesConfiguredAudiencesTest {
     final List<String> configuredAudiences = Collections.singletonList("bar");
     assertFalse(AbstractJWTFilter.matchesConfiguredAudiences(jwtToken, configuredAudiences));
   }
+
+  @Test
+  public void testNoConfiguredAudiencesIsValidWhenTokenHasNoAudience() {
+    final JWT jwtToken = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwtToken.getAudienceClaims()).andReturn(null).anyTimes();
+    EasyMock.replay(jwtToken);
+
+    assertTrue(AbstractJWTFilter.matchesConfiguredAudiences(jwtToken, null));
+  }
+
+  @Test
+  public void testSingleTokenAudienceMatchingOnlyConfiguredAudienceIsValid() {
+    final JWT jwtToken = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwtToken.getAudienceClaims()).andReturn(new String[]{"A"}).anyTimes();
+    EasyMock.replay(jwtToken);
+
+    assertTrue(AbstractJWTFilter.matchesConfiguredAudiences(jwtToken, Collections.singletonList("A")));
+  }
+
+  @Test
+  public void testNoneConfiguredDoesNotAcceptANonMatchingTokenAudience() {
+    final JWT jwtToken = EasyMock.createNiceMock(JWT.class);
+    EasyMock.expect(jwtToken.getAudienceClaims()).andReturn(new String[]{"foo"}).anyTimes();
+    EasyMock.replay(jwtToken);
+
+    assertFalse(AbstractJWTFilter.matchesConfiguredAudiences(jwtToken, Collections.singletonList("NONE")));
+  }
 }
