@@ -33,11 +33,15 @@ import static org.junit.Assert.assertTrue;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.SearchCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
+import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
+import org.apache.directory.api.ldap.model.filter.EqualityNode;
+import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.BindRequest;
 import org.apache.directory.api.ldap.model.message.LdapResult;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
@@ -1027,6 +1031,129 @@ public class LdapProxyBackendTest {
         // Non-user-modifiable forces operational usage so the strict schema accepts it.
         assertFalse(imported.isUserModifiable());
         assertEquals(UsageEnum.DIRECTORY_OPERATION, imported.getUsage());
+        // The AD definition declares no equality matching rule; rather than register the attribute with
+        // none (which a strict schema cannot evaluate an equality filter against), it falls back to
+        // octetStringMatch, consistent with the octet string syntax fallback.
+        assertNotNull("an imported attribute must carry an equality matching rule", imported.getEquality());
+        assertEquals("2.5.13.17", imported.getEquality().getOid());
+    }
+
+    @Test
+    public void testRegisterRemoteAttributeTypeSupportsRangeFiltersForAdDeltaSync() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // uSNChanged as AD publishes it: a LargeInteger syntax the bundled schema lacks and no ordering
+        // matching rule. An AD delta/incremental-sync client filters with (uSNChanged>=N); without an
+        // ordering rule the strict schema rejects that filter at parse time
+        // (ERR_13301_NO_ORDERING_MR_FOR_AT), so the import must supply one.
+        final String uSNChangedOid = "1.2.840.113556.1.2.120";
+        AttributeType adType = new AttributeType(uSNChangedOid);
+        adType.setNames("uSNChanged");
+        adType.setSyntaxOid("1.2.840.113556.1.4.906"); // AD LargeInteger, absent from the bundled schema
+        adType.setSingleValued(true);
+
+        assertTrue(ldapProxyBackend.registerRemoteAttributeType(target, adType));
+
+        AttributeType imported = target.getAttributeType("uSNChanged");
+        assertNotNull("an imported attribute must carry an ordering rule to support >= filters",
+                imported.getOrdering());
+        assertEquals("2.5.13.18", imported.getOrdering().getOid());
+
+        // The range filter that previously failed with ERR_13301 now parses against the augmented schema.
+        final ExprNode filter = FilterParser.parse(target, "(uSNChanged>=12345)");
+        assertNotNull(filter);
+    }
+
+    @Test
+    public void testRegisterRemoteAttributeTypeFallsBackToCaseIgnoreMatchForUnresolvableEqualityOnStringSyntax() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        SchemaManager target = SchemaManagerFactory.createSchemaManager();
+
+        // A remote attribute whose declared equality matching rule OID is not in the bundled schema.
+        // The syntax is a known human-readable one (DirectoryString), so the equality falls back to a
+        // string rule, caseIgnoreMatch - NOT octetStringMatch, which would throw a ClassCastException
+        // when a String value is compared under it.
+        final String oid = "1.3.6.1.4.1.99999.2.1";
+        AttributeType remoteType = new AttributeType(oid);
+        remoteType.setNames("knoxTestUnresolvableEquality");
+        remoteType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.15"); // DirectoryString, in the bundled schema
+        remoteType.setEqualityOid("1.2.3.4.5.6.7.8.9"); // not a matching rule the bundled schema knows
+        remoteType.setSingleValued(true);
+
+        assertTrue("attribute with an unresolvable equality rule should still register",
+                ldapProxyBackend.registerRemoteAttributeType(target, remoteType));
+
+        AttributeType imported = target.getAttributeType("knoxTestUnresolvableEquality");
+        // The known human-readable syntax is preserved; only the unresolvable equality is replaced, and
+        // with a string rule compatible with that syntax.
+        assertEquals("1.3.6.1.4.1.1466.115.121.1.15", imported.getSyntax().getOid());
+        assertNotNull("the unresolvable equality must fall back, not drop to null", imported.getEquality());
+        assertEquals("2.5.13.2", imported.getEquality().getOid()); // caseIgnoreMatch
+    }
+
+    @Test
+    public void testCopyAttributeUnderFallbackEqualityPreservesValuesAndDeduplicates() throws Exception {
+        ldapProxyBackend = new LdapProxyBackend("testbackend", ldapBackendConfig);
+
+        final SchemaManager schema = SchemaManagerFactory.createSchemaManager();
+
+        // A multi-valued DirectoryString attribute whose declared equality the bundled schema cannot
+        // resolve, so it imports with the caseIgnoreMatch fallback (a string rule, because the syntax is
+        // human-readable). RemoteSchemaConverter.copyAttribute matches and deduplicates values through
+        // that rule (schema-aware Entry.contains/add), so this exercises the combination end to end:
+        // values must copy verbatim - including non-ASCII - and a value already on the target must not be
+        // duplicated. (Registering this attribute under octetStringMatch instead would throw a
+        // ClassCastException here, since that rule compares String values as byte arrays.)
+        final String oid = "1.3.6.1.4.1.99999.3.1";
+        final AttributeType remoteType = new AttributeType(oid);
+        remoteType.setNames("knoxTestFallbackEquality");
+        remoteType.setSyntaxOid("1.3.6.1.4.1.1466.115.121.1.15"); // DirectoryString (human-readable)
+        remoteType.setEqualityOid("1.2.3.4.5.6.7.8.9"); // unresolvable -> caseIgnoreMatch fallback
+        remoteType.setSingleValued(false);
+        assertTrue(ldapProxyBackend.registerRemoteAttributeType(schema, remoteType));
+        assertEquals("precondition: equality fell back to caseIgnoreMatch",
+                "2.5.13.2", schema.getAttributeType("knoxTestFallbackEquality").getEquality().getOid());
+
+        final RemoteSchemaConverter converter = new RemoteSchemaConverter(
+                "dc=proxy,dc=com", "ou=people,dc=proxy,dc=com", "ou=groups,dc=proxy,dc=com",
+                "dc=hadoop,dc=apache,dc=org", "ou=people,dc=hadoop,dc=apache,dc=org",
+                "ou=groups,dc=hadoop,dc=apache,dc=org", "uid", "person", "posixGroup", false);
+
+        final String ascii = "plainValue";
+        final String accented = "café";          // café
+        final String cjk = "日本語";       // 日本語
+
+        final Entry source = new DefaultEntry(schema, "uid=alice,ou=people,dc=hadoop,dc=apache,dc=org");
+        source.add("knoxTestFallbackEquality", ascii, accented, cjk);
+
+        final Entry target = new DefaultEntry(schema, "uid=alice,ou=people,dc=proxy,dc=com");
+        // Pre-seed one value so copyAttribute's contains() guard has to deduplicate against it.
+        target.add("knoxTestFallbackEquality", accented);
+
+        converter.copyAttribute(source, target, "knoxTestFallbackEquality", schema);
+
+        final Attribute copied = target.get("knoxTestFallbackEquality");
+        assertNotNull(copied);
+        final Set<String> values = new HashSet<>();
+        for (Value value : copied) {
+            values.add(value.getString());
+        }
+        assertEquals("the value already on the target must not be duplicated", 3, values.size());
+        assertTrue("ASCII value must be copied unchanged", values.contains(ascii));
+        assertTrue("accented value must be copied unchanged", values.contains(accented));
+        assertTrue("CJK value must be copied unchanged", values.contains(cjk));
+
+        // An equality assertion on the attribute must parse and serialise without altering its value,
+        // even for a non-ASCII assertion value, under the fallback rule.
+        final ExprNode parsed = FilterParser.parse(schema, "(knoxTestFallbackEquality=" + accented + ")");
+        assertTrue(parsed instanceof EqualityNode);
+        assertEquals(accented, ((EqualityNode<?>) parsed).getValue().getString());
+        final ExprNode reparsed = FilterParser.parse(schema, parsed.toString());
+        assertEquals("serialising and re-parsing must preserve the assertion value",
+                accented, ((EqualityNode<?>) reparsed).getValue().getString());
     }
 
     @Test
