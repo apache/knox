@@ -295,6 +295,64 @@ public class OAuthFlowsFederationFilterTest extends TokenIDAsHTTPBasicCredsFeder
         Assert.assertNotNull(chain.subject);
     }
 
+    /*
+     * KNOX-3601: exchanging a CLIENTID client secret through the client_credentials grant is the
+     * intended use, so it is accepted without JWTFederationFilter.ALLOW_CLIENT_SECRET_AS_ACCESS_TOKEN.
+     */
+    @Test
+    public void testVerifyClientCredentialsFlowWithClientIdSecret() throws Exception {
+        final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650a";
+        final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f95";
+        final String passcodeToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJoOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazE=";
+
+        final Pair<TokenStateService, TokenMetadata> tokenServices = createMockTokenStateService(tokenId, passcodeToken);
+        EasyMock.expect(tokenServices.getRight().isClientId()).andReturn(true).anyTimes();
+        final FilterConfig filterConfig = initFilter(tokenServices.getLeft());
+
+        final HttpServletRequest mockRequest = createMockRequestForClientCredentials(tokenId);
+        verifyClientIdSecretAccepted(tokenServices, filterConfig, mockRequest, tokenId, passcode);
+    }
+
+    @Test
+    public void testVerifyClientCredentialsFlowWithClientIdSecretAsBasicAuth() throws Exception {
+        final String tokenId = "4e0c548b-6568-4061-a3dc-62908087650a";
+        final String passcode = "0138aaed-ca2a-47f1-8ed8-e0c397596f95";
+        final String passcodeToken = "TkdVd1l6VTBPR0l0TmpVMk9DMDBNRFl4TFdFelpHTXROakk1TURnd09EYzJOVEJoOjpNREV6T0dGaFpXUXRZMkV5WVMwME4yWXhMVGhsWkRndFpUQmpNemszTlRrMlpqazE=";
+
+        final Pair<TokenStateService, TokenMetadata> tokenServices = createMockTokenStateService(tokenId, passcodeToken);
+        EasyMock.expect(tokenServices.getRight().isClientId()).andReturn(true).anyTimes();
+        final FilterConfig filterConfig = initFilter(tokenServices.getLeft());
+
+        final String basicCredentials = Base64.getEncoder()
+                .encodeToString((tokenId + ":" + passcodeToken).getBytes(StandardCharsets.UTF_8));
+        final HttpServletRequest mockRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+        EasyMock.expect(mockRequest.getRequestURL()).andReturn(new StringBuffer(SERVICE_URL)).anyTimes();
+        EasyMock.expect(mockRequest.getHeader("Authorization")).andReturn("Basic " + basicCredentials).anyTimes();
+        EasyMock.expect(mockRequest.getParameter(GRANT_TYPE)).andReturn(CLIENT_CREDENTIALS).anyTimes();
+        EasyMock.expect(mockRequest.getQueryString()).andReturn(null).anyTimes();
+        verifyClientIdSecretAccepted(tokenServices, filterConfig, mockRequest, tokenId, passcode);
+    }
+
+    private void verifyClientIdSecretAccepted(Pair<TokenStateService, TokenMetadata> tokenServices, FilterConfig filterConfig,
+                                              HttpServletRequest mockRequest, String tokenId, String passcode) throws Exception {
+        final HttpServletResponse response = EasyMock.createNiceMock(HttpServletResponse.class);
+        response.sendError(EasyMock.anyInt(), EasyMock.anyString());
+        EasyMock.expectLastCall().andThrow(new AssertionError("client_credentials grant must accept a client secret")).anyTimes();
+        EasyMock.replay(tokenServices.getLeft(), tokenServices.getRight(), mockRequest, response);
+
+        // Wrap the request to simulate real-world scenario where wrappers hide parameter access
+        final HttpServletRequest request = new TestServletRequestWrapper(mockRequest);
+
+        SignatureVerificationCache.getInstance("jwt-topology", filterConfig).recordSignatureVerification(passcodeVerificationCacheKey(tokenId, passcode));
+
+        final TestFilterChain chain = new TestFilterChain();
+        handler.doFilter(request, response, chain);
+
+        EasyMock.verify(response);
+        assertTrue(chain.doFilterCalled);
+        Assert.assertNotNull(chain.subject);
+    }
+
     @Test(expected = SecurityException.class)
     public void testFailedVerifyClientCredentialsFlow() throws Exception {
         final String topologyName = "jwt-topology";

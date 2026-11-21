@@ -69,6 +69,26 @@ ALL_ROLES = {
     "platform:level3",
 }
 
+# The members a list search populates on each role entry, as the RDN value (uid) of each member
+# DN. A role's members are the users directly assigned to it plus the user members of its assigned
+# groups. Direct users and group members are resolved to user entries against the backend, so:
+#  - platform:admin is assigned to user admin and group admin ({admin}), so admin appears once;
+#  - platform:deployer is assigned to the id recursiveuser, resolved by a uid search to the
+#    directory's recursiveUser (uid matching is case-insensitive);
+#  - platform:level1/level2/level3 all resolve to recursiveUser: level1 contains the user directly,
+#    and level2/level3 nest the level below, which the LDAP proxy backend expands to the nested
+#    users (gateway.ldap.recursive.group.resolution).
+EXPECTED_ROLE_MEMBERS = {
+    "platform:analyst": {"sam", "tom"},
+    "platform:scientist": {"sam"},
+    "platform:admin": {"admin"},
+    "platform:deployer": {"recursiveUser"},
+    "platform:viewer": {"guest"},
+    "platform:level1": {"recursiveUser"},
+    "platform:level2": {"recursiveUser"},
+    "platform:level3": {"recursiveUser"},
+}
+
 # (people base, group base) pairs: the proxy DNs and the backend DNs are both accepted.
 BASE_PAIRS = (
     (PROXY_PEOPLE_BASE, PROXY_GROUPS_BASE),
@@ -191,6 +211,54 @@ class TestKnoxLdapProxySearchWithRoleLookup(  # pylint: disable=too-many-public-
         self.assertTrue({"analyst", "scientist", "admin", "level1", "level2", "level3"} <= groups)
         self.assertFalse(any(group.startswith("platform:") for group in groups))
 
+    # ---- List searches populate each role entry's member attribute ----
+
+    def role_members_by_role(self, entries) -> dict[str, set[str]]:
+        """Map each role entry's cn (its RDN value) to the set of member uids, where each member
+        uid is the RDN value of a member DN. A role with no members maps to an empty set."""
+        members_by_role = {}
+        for entry in entries:
+            role = entry.entry_dn.split(",", 1)[0].split("=", 1)[1]
+            attributes = {name.lower(): values
+                          for name, values in entry.entry_attributes_as_dict.items()}
+            member_dns = attributes.get("member", []) or []
+            members_by_role[role] = {member_dn.split(",", 1)[0].split("=", 1)[1]
+                                     for member_dn in member_dns}
+        return members_by_role
+
+    def assert_all_roles_members(self, attributes) -> None:
+        """List all roles from the proxy ou=groups base and assert each role's resolved members."""
+        entries = self.search(
+            PROXY_GROUPS_BASE, "(objectClass=groupOfNames)", attributes=attributes)
+        self.assertEqual(EXPECTED_ROLE_MEMBERS, self.role_members_by_role(entries))
+
+    def test_list_roles_populates_members_for_all_attributes(self) -> None:
+        """A '*' list search carries each role's members: the users directly assigned to the role
+        plus the user members of the role's groups. Regression: the members used to be dropped when
+        all attributes ('*') were requested, while an explicit 'member' request worked."""
+        self.assert_all_roles_members(ldap3.ALL_ATTRIBUTES)
+
+    def test_list_roles_populates_members_for_member_attribute(self) -> None:
+        """A list search that requests only the member attribute carries each role's members."""
+        self.assert_all_roles_members(["member"])
+
+    def test_list_roles_omits_member_when_not_requested(self) -> None:
+        """When the member attribute is not requested the role entries do not carry it (and no
+        member-resolution search is made)."""
+        entries = self.search(PROXY_GROUPS_BASE, "(objectClass=groupOfNames)", attributes=["cn"])
+        self.assertEqual(ALL_ROLES, set(self.rdn_values(entries)))
+        for entry in entries:
+            self.assertNotIn("member", self.attribute_names(entry))
+
+    def test_list_roles_members_bypass_role_lookup_returns_backend_group_members(self) -> None:
+        """With role lookup bypassed the backend groups are listed with their own member DNs,
+        rather than roles with resolved members."""
+        entries = self.search(
+            PROXY_GROUPS_BASE, "(objectClass=groupOfNames)", [ROLE_LOOKUP_BYPASS_CONTROL])
+        members = self.role_members_by_role(entries)
+        self.assertEqual({"sam", "tom"}, members["analyst"])
+        self.assertNotIn("platform:analyst", members)
+
     # ---- User role lookup: a user's memberOf is replaced with the user's roles ----
 
     def search_user(self, uid_filter_value: str) -> tuple[str, set[str]]:
@@ -216,7 +284,8 @@ class TestKnoxLdapProxySearchWithRoleLookup(  # pylint: disable=too-many-public-
     def test_user_roles_from_groups(self) -> None:
         """A user gets the roles of its groups, including nested groups."""
         self.assertTrue({"platform:analyst", "platform:scientist"} <= self.user_roles("sam"))
-        self.assertIn("platform:level1", self.user_roles("recursiveUser"))
+        self.assertTrue({"platform:level1", "platform:level2", "platform:level3"} <=
+            self.user_roles("recursiveUser"))
 
     def test_user_role_lookup_keeps_user_id_case(self) -> None:
         """By default the user id is sent as the directory has it (recursiveUser), so a role

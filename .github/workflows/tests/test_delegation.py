@@ -34,7 +34,10 @@ Topologies exercised:
                                            'passthrough' audience validator (so the requested
                                            resource is minted as aud). The service TTL is 86400s
                                            so a shorter per-policy TTL is provably what caps the
-                                           minted token's lifetime.
+                                           minted token's lifetime. Its KNOXIDF /client
+                                           endpoints refuse delegated callers (the default).
+  - knoxidf-client-delegated-allowed    -- the same /client endpoints, opted out of
+                                           knoxidf.client.registration.delegated.callers.denied.
   - knoxidf-admin                       -- KNOXIDF_ADMIN delegation-policy REST API; writes to the
                                            gateway-wide embedded H2 policy store the exchange reads.
   - knoxauthtoken                       -- KNOX-AUTH-SERVICE with the k8s destination audience
@@ -67,13 +70,27 @@ is deferred until scope support lands:
   AC9 -- headless delegation succeeds when the policy allows it, fails (invalid_request) when not.
 
 KNOX-3568 -- audit of delegated token use: accepted, rejected and two-hop delegated tokens.
+
+KNOX-3600, KNOX-3603 -- a delegated token cannot register a client at the KnoxIDF /client
+endpoints, nor list, revoke, enable or disable the tokens of the user it acts for, unless the
+topology opts out.
 """
 
+import json
 import unittest
+import uuid
 
 from requests.auth import HTTPBasicAuth
 
-from common_utils import gateway_base_url, get_token_claim, get_token_id_display_text, knox_get
+from common_utils import (
+    gateway_base_url,
+    get_token_claim,
+    get_token_id_display_text,
+    knox_delete,
+    knox_get,
+    knox_post,
+    knox_put,
+)
 from delegated_audit_helpers import (
     DESTINATION_PATH,
     assert_token_not_in_audit_log,
@@ -124,6 +141,14 @@ OTHER_DESTINATION_SERVICE = "other-service.platform.svc.cluster.local"
 # per-policy TTL so the difference proves the policy value, not the service default, applied.
 SERVICE_TTL_SEC = 86400
 POLICY_TTL_SEC = 120
+
+# KnoxIDF /client endpoints (KNOX-3600, KNOX-3603): refused to delegated callers on the policy
+# topology (the default), reachable on the topology that opts out.
+CLIENT_PATH = "/gateway/{topology}/knoxidf/api/v1/client/"
+DELEGATED_CALLERS_DENIED_TOPOLOGY = "knoxidf-token-delegation-policy"
+DELEGATED_CALLERS_ALLOWED_TOPOLOGY = "knoxidf-client-delegated-allowed"
+CLIENT_REDIRECT_URI = "https://app.example.com/cb"
+CLIENT_METHODS = {"GET": knox_get, "PUT": knox_put, "DELETE": knox_delete}
 
 
 class TestDelegation(unittest.TestCase):  # pylint: disable=too-many-instance-attributes
@@ -444,6 +469,102 @@ class TestDelegation(unittest.TestCase):  # pylint: disable=too-many-instance-at
                          {"sub": SAM_USER, "act": {"sub": ACTOR_USER}})
 
         self._assert_accepted_at_destination(second_hop, f"{SAM_USER}<-{ACTOR_USER}")
+
+    def _delegate_tom(self):
+        """A token delegated to recursiveUser acting for tom (sub=tom, act.sub=recursiveUser)."""
+        self._actor_policy.register(
+            can_act_for_users=[TOM_USER], resource_policy={RESOURCE_A: []})
+        response = token_exchange(self.delegation_url, self._mint(self.tom_auth),
+                                  resources=[RESOURCE_A], actor_token=self._mint(self.actor_auth))
+        return self._assert_delegated_token(response, TOM_USER, ACTOR_USER, RESOURCE_A)
+
+    @staticmethod
+    def _register_client(topology, token):
+        """Register a client at ``topology`` as ``token``; returns the raw response."""
+        url = gateway_base_url() + CLIENT_PATH.format(topology=topology).lstrip("/") + "register"
+        return knox_post(url, headers={"Authorization": f"Bearer {token}"},
+                         data={"redirect_uris": CLIENT_REDIRECT_URI})
+
+    def _register_client_ok(self, topology, token):
+        """Register a client at ``topology`` as ``token``; assert 200 and return its client_id."""
+        response = self._register_client(topology, token)
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()["client_id"]
+
+    @staticmethod
+    def _client_token_calls(client_id, other_client_id):
+        """(verb, audit event, method, path, body) of each /client token endpoint, in safe order."""
+        batch = json.dumps([other_client_id])
+        return [
+            ("list", "client_token_listing", "GET", f"getUserTokens?userName={TOM_USER}", None),
+            ("disable", "client_disablement", "PUT", "disable", client_id),
+            ("enable", "client_enablement", "PUT", "enable", client_id),
+            ("disable", "client_disablement", "PUT", "disableTokens", batch),
+            ("enable", "client_enablement", "PUT", "enableTokens", batch),
+            ("revoke", "client_revocation", "DELETE", "revoke", client_id),
+            ("revoke", "client_revocation", "DELETE", "revokeTokens", batch),
+        ]
+
+    @staticmethod
+    def _call_client(topology, token, method, path, body):
+        """Call a /client token endpoint as ``token``; returns the response and request URI."""
+        separator = "&" if "?" in path else "?"
+        uri = (f"{CLIENT_PATH.format(topology=topology)}{path}"
+               f"{separator}audit_marker={uuid.uuid4()}")
+        headers = {"Authorization": f"Bearer {token}"}
+        if body is not None:
+            headers["Content-Type"] = "application/json"
+        response = CLIENT_METHODS[method](
+            gateway_base_url() + uri.lstrip("/"), headers=headers, data=body)
+        return response, uri
+
+    def _assert_refusal_audited(self, uri, event):
+        """Assert the request to ``uri`` left one authorization failure for the refusal."""
+        records = [record for record in audit_records_for(self, uri)
+                   if record.fields.get("event") == event]
+        self.assertEqual(len(records), 1, f"expected one {event} record: {records}")
+        record = records[0]
+        self.assertEqual(record.action, "authorization", record.line)
+        self.assertEqual(record.outcome, "failure", record.line)
+        self.assertEqual(record.user, TOM_USER, record.line)
+        self.assertEqual(record.fields.get("reason"), "delegated_caller_denied", record.line)
+
+    def test_delegated_token_refused_at_client_endpoints(self):
+        """KNOX-3600, KNOX-3603: a delegated token cannot register, nor touch the user's tokens."""
+        topology = DELEGATED_CALLERS_DENIED_TOPOLOGY
+        token = self._delegate_tom()
+        # tom's own token registers the clients the delegated token then tries to act on.
+        tom_token = self._mint(self.tom_auth)
+        client_id = self._register_client_ok(topology, tom_token)
+        other_client_id = self._register_client_ok(topology, tom_token)
+
+        assert_oauth_error(self, self._register_client(topology, token), 403, "access_denied",
+                           "A delegated token cannot register a client.")
+        calls = self._client_token_calls(client_id, other_client_id)
+        for verb, event, method, path, body in calls:
+            with self.subTest(path=path):
+                response, uri = self._call_client(topology, token, method, path, body)
+                assert_oauth_error(self, response, 403, "access_denied",
+                                   f"A delegated token cannot {verb} tokens.")
+                self._assert_refusal_audited(uri, event)
+
+        # tom's own token reaches every endpoint, so the 403s above came from the delegated check.
+        for _, _, method, path, body in calls:
+            with self.subTest(path=path, caller=TOM_USER):
+                response, _ = self._call_client(topology, tom_token, method, path, body)
+                self.assertEqual(response.status_code, 200, response.text)
+
+    def test_delegated_token_reaches_client_endpoints_when_allowed(self):
+        """KNOX-3600, KNOX-3603: a topology that opts out lets a delegated token use /client."""
+        topology = DELEGATED_CALLERS_ALLOWED_TOPOLOGY
+        token = self._delegate_tom()
+        client_id = self._register_client_ok(topology, token)
+        other_client_id = self._register_client_ok(topology, token)
+
+        for _, _, method, path, body in self._client_token_calls(client_id, other_client_id):
+            with self.subTest(path=path):
+                response, _ = self._call_client(topology, token, method, path, body)
+                self.assertEqual(response.status_code, 200, response.text)
 
 
 if __name__ == "__main__":

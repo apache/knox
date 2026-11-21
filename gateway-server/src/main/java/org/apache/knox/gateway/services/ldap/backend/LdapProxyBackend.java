@@ -32,6 +32,7 @@ import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.exception.LdapNoSuchObjectException;
 import org.apache.directory.api.ldap.model.exception.LdapOperationException;
 import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.FilterEncoder;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
 import org.apache.directory.api.ldap.model.message.LdapResult;
 import org.apache.directory.api.ldap.model.message.Response;
@@ -44,6 +45,7 @@ import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.message.controls.PagedResults;
 import org.apache.directory.api.ldap.model.message.controls.PagedResultsImpl;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.name.Rdn;
 import org.apache.directory.api.ldap.model.schema.AttributeType;
 import org.apache.directory.api.ldap.model.schema.LdapSyntax;
 import org.apache.directory.api.ldap.model.schema.MatchingRule;
@@ -72,9 +74,11 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -827,6 +831,8 @@ public class LdapProxyBackend implements LdapBackend {
         if (attributes == null || attributes.length == 0) {
             attributes = ALL_ATTRIBUTES;
         }
+        boolean memberRequested = isAttributeRequested(attributes, "member", schemaManager)
+                || isAttributeRequested(attributes, "uniqueMember", schemaManager);
         boolean memberOfRequested = isAttributeRequested(attributes, MEMBER_OF, schemaManager);
         String[] remoteAttributes = toRemoteAttributes(attributes, memberOfRequested && useMemberOf);
 
@@ -857,9 +863,13 @@ public class LdapProxyBackend implements LdapBackend {
                 }
                 throw e;
             }
+            Map<String, List<String>> nestedGroupMembersCache = new HashMap<>();
             for (Entry entry : searchResults) {
                 if (memberOfRequested) {
                     addGroupMemberships(entry, connection, entryCache, resolvedParentsCache);
+                }
+                if (memberRequested && recursiveGroupResolution) {
+                    addNestedGroupMembers(entry, connection, schemaManager, nestedGroupMembersCache);
                 }
                 results.add(remoteSchemaConverter.convertRemoteEntryToProxyEntry(entry, schemaManager));
             }
@@ -1002,6 +1012,193 @@ public class LdapProxyBackend implements LdapBackend {
             List<Entry> groups = getUserGroupsEntries(connection, entry, entryCache, resolvedParentsCache);
             for (Entry groupEntry : groups) {
                 entry.add(MEMBER_OF, groupEntry.getDn().getName());
+            }
+        }
+    }
+
+    /**
+     * When recursive group resolution is enabled, expands a group entry's member list to include the
+     * members of the nested groups it references, transitively. Unlike the memberOf path, retrieving a
+     * group returns its member attribute as the backend stores it (direct members only), so the nesting
+     * is resolved here: a member that is itself a group has its members merged in, up to
+     * {@code recursiveGroupResolutionMaxDepth} levels, guarding against cycles.
+     * <p>
+     * Which members are groups to recurse into is decided authoritatively by object class rather than by
+     * DN location: each level issues one batched search that matches the level's candidate DNs and
+     * restricts to the group object classes, so the server returns only those candidates that are
+     * actually groups. This stays correct when users and groups share a container (a group DN that is a
+     * descendant of the user search base would otherwise be mistaken for a user and not expanded) while
+     * only fetching the groups, not every member. The entry is still a raw remote entry, so its member
+     * values - and the DNs searched - are remote DNs that are rewritten to proxy DNs later during schema
+     * conversion. Entries without members (e.g. users) are unchanged.
+     */
+    private void addNestedGroupMembers(Entry entry, LdapConnection connection, SchemaManager schemaManager,
+                                       Map<String, List<String>> nestedGroupMembersCache) throws LdapException, CursorException, IOException {
+        final List<String> directMembers = collectGroupMemberDns(entry);
+        if (directMembers.isEmpty()) {
+            return;
+        }
+        // Seed the cycle guards with the group's own DN so a nested group that references it back does not
+        // re-add it (which would make the group a member of itself) or cause a redundant re-expansion.
+        final String ownNormDn = normalizeDn(entry.getDn().getName(), schemaManager);
+        final Set<String> knownMembers = new HashSet<>();
+        knownMembers.add(ownNormDn);
+        final Set<String> visitedGroups = new HashSet<>();
+        visitedGroups.add(ownNormDn);
+        // Merge nested members into whichever membership attribute the entry already uses, so a
+        // groupOfUniqueNames keeps one uniqueMember list instead of also gaining a stray member attribute.
+        final String memberAttribute = entry.get("member") != null ? "member" : "uniqueMember";
+        // Candidate member DNs whose type is not yet known; the batched group search below classifies them.
+        List<String> currentCandidates = new ArrayList<>();
+        for (String memberDn : directMembers) {
+            if (knownMembers.add(normalizeDn(memberDn, schemaManager))) {
+                currentCandidates.add(memberDn);
+            }
+        }
+        for (int depth = 0; !currentCandidates.isEmpty() && depth < recursiveGroupResolutionMaxDepth; depth++) {
+            final List<String> toExpand = new ArrayList<>();
+            for (String memberDn : currentCandidates) {
+                if (visitedGroups.add(normalizeDn(memberDn, schemaManager))) {
+                    toExpand.add(memberDn);
+                }
+            }
+            if (toExpand.isEmpty()) {
+                break;
+            }
+            final List<String> nextCandidates = new ArrayList<>();
+            for (List<String> members : expandGroups(connection, toExpand, schemaManager, nestedGroupMembersCache).values()) {
+                for (String memberDn : members) {
+                    if (knownMembers.add(normalizeDn(memberDn, schemaManager))) {
+                        entry.add(memberAttribute, memberDn);
+                        nextCandidates.add(memberDn);
+                    }
+                }
+            }
+            currentCandidates = nextCandidates;
+        }
+    }
+
+    /**
+     * Resolves the direct member/uniqueMember DNs of the given candidate DNs that are groups. A single
+     * batched search (split if needed to honor maxFilterLength) matches the candidates by RDN and
+     * restricts to the group object classes, so candidates that are not groups (e.g. users) are filtered
+     * out by the server and never fetched. Results are matched back to the requested DNs exactly to guard
+     * against an RDN collision elsewhere in the subtree, and cached per search (including an empty result
+     * for a candidate that is not a group) so a group reached by several paths is read only once.
+     *
+     * @return a map from each resolved group's normalized DN to its member DNs
+     */
+    private Map<String, List<String>> expandGroups(LdapConnection connection, List<String> candidateDns, SchemaManager schemaManager,
+                                                   Map<String, List<String>> cache) throws LdapException, CursorException, IOException {
+        final Map<String, List<String>> resolved = new LinkedHashMap<>();
+        final Map<String, String> toSearch = new LinkedHashMap<>(); // normalized DN -> original DN
+        for (String dn : candidateDns) {
+            final String norm = normalizeDn(dn, schemaManager);
+            final List<String> cached = cache.get(norm);
+            if (cached != null) {
+                resolved.put(norm, cached);
+            } else {
+                toSearch.putIfAbsent(norm, dn);
+            }
+        }
+        if (toSearch.isEmpty()) {
+            return resolved;
+        }
+        // Seed an empty result for every searched DN so a candidate that is not a group is not re-searched.
+        toSearch.keySet().forEach(norm -> cache.put(norm, List.of()));
+
+        final String filter = buildGroupByDnFilter(toSearch.values());
+        if (filter == null) {
+            return resolved;
+        }
+        final List<Entry> groups = performSplitSearch(connection, remoteGroupSearchBase, splitFilter(filter),
+                SearchScope.SUBTREE, "member", "uniqueMember");
+        for (Entry group : groups) {
+            final String norm = normalizeDn(group.getDn().getName(), schemaManager);
+            if (!toSearch.containsKey(norm)) {
+                continue; // an RDN match for an entry outside the requested set
+            }
+            final List<String> members = collectGroupMemberDns(group);
+            cache.put(norm, members);
+            resolved.put(norm, members);
+        }
+        return resolved;
+    }
+
+    /**
+     * Builds the filter that fetches the given candidate DNs that are groups, matching each candidate by
+     * its RDN and restricting to the group object classes so non-group candidates are excluded by the
+     * server. Returns {@code null} when none of the candidates yields a usable RDN clause.
+     */
+    private String buildGroupByDnFilter(Collection<String> candidateDns) {
+        final StringBuilder clauses = new StringBuilder();
+        for (String dn : candidateDns) {
+            final String clause = rdnClause(dn);
+            if (clause != null) {
+                clauses.append(clause);
+            }
+        }
+        if (clauses.length() == 0) {
+            return null;
+        }
+        return "(&" + groupObjectClassFilter() + "(|" + clauses + "))";
+    }
+
+    /** A filter clause matching an entry by its RDN, or {@code null} when the DN cannot be parsed. */
+    private String rdnClause(String dn) {
+        try {
+            // Parse without a schema manager: the value is a remote DN whose attributes the local schema may not know.
+            final Rdn rdn = new Dn(dn).getRdn();
+            return "(" + rdn.getType() + "=" + FilterEncoder.encodeFilterValue(rdn.getValue()) + ")";
+        } catch (LdapException e) {
+            return null;
+        }
+    }
+
+    /**
+     * An object-class filter matching group entries: the configured group object class plus the standard
+     * groupOfNames and groupOfUniqueNames, de-duplicated case-insensitively.
+     */
+    private String groupObjectClassFilter() {
+        final Set<String> seen = new LinkedHashSet<>();
+        final StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String objectClass : new String[] {remoteGroupObjectClass, "groupOfNames", "groupOfUniqueNames"}) {
+            if (objectClass != null && seen.add(objectClass.toLowerCase(ROOT))) {
+                sb.append("(objectClass=").append(objectClass).append(")");
+                count++;
+            }
+        }
+        return count == 1 ? sb.toString() : "(|" + sb + ")";
+    }
+
+    /** Collects an entry's member and uniqueMember values; empty for an entry that is not a group. */
+    private List<String> collectGroupMemberDns(Entry entry) {
+        final List<String> members = new ArrayList<>();
+        for (String attributeName : new String[] {"member", "uniqueMember"}) {
+            final Attribute attribute = entry.get(attributeName);
+            if (attribute != null) {
+                for (Value value : attribute) {
+                    members.add(value.getString());
+                }
+            }
+        }
+        return members;
+    }
+
+    /** A whitespace- and case-normalized key for a DN, for de-duplicating members and detecting cycles. */
+    private String normalizeDn(String dn, SchemaManager schemaManager) {
+        try {
+            return new Dn(schemaManager, dn).getNormName();
+        } catch (LdapException e) {
+            // The proxy schema may not know a remote RDN attribute (e.g. sAMAccountName in a DN). Fall
+            // back to a schema-less DN, which still normalizes structure (whitespace, RDN order, type
+            // case) so two spellings of the same DN compare equal; only if that also fails lowercase the
+            // raw string.
+            try {
+                return new Dn(dn).getNormName();
+            } catch (LdapException e2) {
+                return dn.toLowerCase(Locale.ROOT);
             }
         }
     }

@@ -33,13 +33,17 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -51,6 +55,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ALLOWED_SCOPES;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_REGISTRATION_ANONYMOUS_ALLOWED;
@@ -220,6 +226,83 @@ public class RegistrationResource extends ClientCredentialsResource {
         }
     }
 
+    // The inherited token endpoints authorize the user a delegated token acts for; refuse delegated callers.
+
+    @Override
+    @GET
+    @Path(GET_USER_TOKENS)
+    @Produces({ APPLICATION_JSON, APPLICATION_XML })
+    public Response getUserTokens(@Context UriInfo uriInfo) {
+        final Response denied = delegatedTokenAccessDenied("client_token_listing", "list");
+        return denied != null ? denied : super.getUserTokens(uriInfo);
+    }
+
+    @Override
+    @DELETE
+    @Path(REVOKE_PATH)
+    @Produces({ APPLICATION_JSON })
+    public Response revoke(String token) {
+        final Response denied = delegatedTokenAccessDenied("client_revocation", "revoke");
+        return denied != null ? denied : super.revoke(token);
+    }
+
+    @Override
+    @DELETE
+    @Path(BATCH_REVOKE_PATH)
+    @Produces({ APPLICATION_JSON })
+    public Response revokeTokens(String tokenIds) {
+        final Response denied = delegatedTokenAccessDenied("client_revocation", "revoke");
+        return denied != null ? denied : super.revokeTokens(tokenIds);
+    }
+
+    @Override
+    @PUT
+    @Path(ENABLE_PATH)
+    @Produces({ APPLICATION_JSON })
+    public Response enable(String tokenId) {
+        final Response denied = delegatedTokenAccessDenied("client_enablement", "enable");
+        return denied != null ? denied : super.enable(tokenId);
+    }
+
+    @Override
+    @PUT
+    @Path(BATCH_ENABLE_PATH)
+    @Consumes({ APPLICATION_JSON })
+    @Produces({ APPLICATION_JSON })
+    public Response enableTokens(String tokenIds) {
+        final Response denied = delegatedTokenAccessDenied("client_enablement", "enable");
+        return denied != null ? denied : super.enableTokens(tokenIds);
+    }
+
+    @Override
+    @PUT
+    @Path(DISABLE_PATH)
+    @Produces({ APPLICATION_JSON })
+    public Response disable(String tokenId) {
+        final Response denied = delegatedTokenAccessDenied("client_disablement", "disable");
+        return denied != null ? denied : super.disable(tokenId);
+    }
+
+    @Override
+    @PUT
+    @Path(BATCH_DISABLE_PATH)
+    @Consumes({ APPLICATION_JSON })
+    @Produces({ APPLICATION_JSON })
+    public Response disableTokens(String tokenIds) {
+        final Response denied = delegatedTokenAccessDenied("client_disablement", "disable");
+        return denied != null ? denied : super.disableTokens(tokenIds);
+    }
+
+    // Returns the access_denied response, audited, when a delegated caller must be refused; null otherwise.
+    private Response delegatedTokenAccessDenied(final String event, final String verb) {
+        if (!delegatedCallerDenied()) {
+            return null;
+        }
+        KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.subjectLabel(SubjectUtils.getCurrentEffectivePrincipalName()),
+                ResourceType.PRINCIPAL, ActionOutcome.FAILURE, "event=" + event + " reason=delegated_caller_denied");
+        return error("access_denied", "A delegated token cannot " + verb + " tokens.");
+    }
+
     /**
      * @return {@code true} when the request must be rejected because an anonymous caller is
      * attempting to register a client while open registration has not been explicitly enabled.
@@ -242,9 +325,10 @@ public class RegistrationResource extends ClientCredentialsResource {
     }
 
     /**
-     * @return {@code true} when the request must be rejected because the caller's token carries an RFC 8693
-     * actor chain while delegated callers have not been explicitly allowed. Only a token with an act claim
-     * has one: a delegated token minted without delegated auth, or presented as a passcode, does not.
+     * @return {@code true} when the request (client registration, or listing, revoking, enabling or disabling tokens)
+     * must be rejected because the caller's token carries an RFC 8693 actor chain while delegated callers have
+     * not been explicitly allowed. Only a token with an act claim has one: a delegated token minted without
+     * delegated auth, or presented as a passcode, does not.
      */
     boolean delegatedCallerDenied() {
         return delegatedCallersDenied && SubjectUtils.getActorChainPrincipal(SubjectUtils.getCurrentSubject()) != null;

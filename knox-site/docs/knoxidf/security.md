@@ -153,7 +153,10 @@ check until that token expires.
 
 A caller whose token carries an RFC 8693 actor chain (an `act` claim, added by a token exchange
 with delegated auth enabled) is refused too: a delegated token lets its actor act for the user at
-one audience, not create a client the user owns. To allow it anyway, set:
+one audience, not create a client the user owns. The same caller is refused at the other `/client`
+token endpoints (`getUserTokens`, `revoke`, `revokeTokens`, `enable`, `enableTokens`, `disable`,
+`disableTokens`), which would otherwise let it list, revoke, re-enable or disable the user's tokens
+and clients. To allow it anyway, set:
 
 ```xml
 <param>

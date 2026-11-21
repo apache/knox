@@ -40,6 +40,13 @@ objectClass: top
 objectClass: organizationalUnit
 ou: recursiveMemberOfGroups
 
+# shared container holding both users and groups, so a group DN is a descendant of the user
+# search base; classifying members by DN location would mistake nested groups for users
+dn: ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: recursiveShared
+
 # entry for the end user
 dn: uid=recursiveUser,ou=recursivePeople,dc=hadoop,dc=apache,dc=org
 objectclass:top
@@ -105,6 +112,41 @@ objectclass:top
 objectclass:groupOfNames
 cn: cycleGroupB
 member: cn=cycleGroupA,ou=recursiveGroups,dc=hadoop,dc=apache,dc=org
+
+# Isolated containers for the uniqueMember expansion test, kept separate from the groups and users
+# above so their member counts and group enumerations are unaffected.
+dn: ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: recursiveUniquePeople
+
+dn: ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: recursiveUniqueGroups
+
+dn: uid=uniqueUser,ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: UniqueUser
+sn: User
+uid: uniqueUser
+userPassword: password
+
+# groupOfUniqueNames parent whose nested group's members must merge into uniqueMember, not member
+dn: cn=uniqueParent,ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: uniqueParent
+uniqueMember: cn=uniqueChild,ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+
+dn: cn=uniqueChild,ou=recursiveUniqueGroups,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: uniqueChild
+member: uid=uniqueUser,ou=recursiveUniquePeople,dc=hadoop,dc=apache,dc=org
 
 # entry for sample user memberOfUser using memberOf
 dn: uid=memberOfUser,ou=recursiveMemberOfPeople,dc=hadoop,dc=apache,dc=org
@@ -179,3 +221,33 @@ objectclass: groupofnames
 cn: memberOfCycleB
 memberOf: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
 member: cn=memberOfCycleA,ou=recursiveMemberOfGroups,dc=hadoop,dc=apache,dc=org
+
+# a user living in the shared container alongside the groups below
+dn: uid=sharedUser,ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: SharedUser
+sn: User
+uid: sharedUser
+userPassword: password
+
+# shared-container nesting: sharedTop -> sharedLevel2 -> sharedLevel1 -> sharedUser
+dn: cn=sharedLevel1,ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: sharedLevel1
+member: uid=sharedUser,ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+
+dn: cn=sharedLevel2,ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: sharedLevel2
+member: cn=sharedLevel1,ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+
+dn: cn=sharedTop,ou=recursiveShared,dc=hadoop,dc=apache,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: sharedTop
+member: cn=sharedLevel2,ou=recursiveShared,dc=hadoop,dc=apache,dc=org

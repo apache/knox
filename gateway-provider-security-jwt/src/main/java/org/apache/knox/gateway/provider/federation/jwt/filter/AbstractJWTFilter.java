@@ -332,6 +332,16 @@ public abstract class AbstractJWTFilter implements Filter {
   }
 
   /**
+   * @return true when the server-managed metadata of the given token marks it as OAuth client
+   *     credentials issued by the CLIENTID service; false when it is any other token (e.g. an API key)
+   *     or there is no server-managed state for it
+   */
+  protected boolean isClientIdToken(final String tokenId) throws UnknownTokenException {
+    final TokenMetadata metadata = getTokenMetadata(tokenId);
+    return metadata != null && metadata.isClientId();
+  }
+
+  /**
    * @param stateAbsentTolerated true only when the expiration lookup for this same token already
    *     established that <em>no</em> server-managed record exists and the opt-in excused it. The
    *     metadata record lives in its own
