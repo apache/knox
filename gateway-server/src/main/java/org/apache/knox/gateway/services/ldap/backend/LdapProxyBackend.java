@@ -105,6 +105,11 @@ public class LdapProxyBackend implements LdapBackend {
     // attribute at parse time (ERR_13301_NO_ORDERING_MR_FOR_AT), which blocks AD delta-sync clients that
     // filter with e.g. (uSNChanged>=N). The real comparison runs on the remote server's own schema.
     private static final String OCTET_STRING_ORDERING_MATCH_OID = "2.5.13.18";
+    // Generic equality matching rule used as the fallback for a human-readable attribute that declares no
+    // resolvable equality. A string attribute must keep a string matching rule: octetStringMatch compares
+    // raw bytes and throws a ClassCastException when applied to a String value (e.g. during the
+    // deduplication contains() check in RemoteSchemaConverter.copyAttribute).
+    private static final String CASE_IGNORE_MATCH_OID = "2.5.13.2";
 
     private static final String DEFAULT_MAX_FILTER_LENGTH = "0"; // unlimited
 
@@ -615,9 +620,15 @@ public class LdapProxyBackend implements LdapBackend {
         attributeType.setCollective(remoteType.isCollective());
         attributeType.setUserModifiable(remoteType.isUserModifiable());
         attributeType.setUsage(normalizedUsage(remoteType));
-        attributeType.setSyntaxOid(resolvedSyntaxOid(schemaManager, remoteType));
-        attributeType.setEqualityOid(resolvedEqualityOid(schemaManager, remoteType));
-        attributeType.setOrderingOid(resolvedOrderingOid(schemaManager, remoteType));
+        final String syntaxOid = resolvedSyntaxOid(schemaManager, remoteType);
+        // The matching-rule fallbacks must match the value representation of the resolved syntax: a
+        // binary (octet string) syntax takes the octet-string rules (byte comparison), a human-readable
+        // syntax takes a string rule. Pairing an octet-string rule with a human-readable value throws a
+        // ClassCastException when the value is compared (see CASE_IGNORE_MATCH_OID).
+        final boolean octetStringSyntax = OCTET_STRING_SYNTAX_OID.equals(syntaxOid);
+        attributeType.setSyntaxOid(syntaxOid);
+        attributeType.setEqualityOid(resolvedEqualityOid(schemaManager, remoteType, octetStringSyntax));
+        attributeType.setOrderingOid(resolvedOrderingOid(schemaManager, remoteType, octetStringSyntax));
         attributeType.setSubstringOid(resolvedMatchingRuleOid(schemaManager, remoteType.getSubstring(), remoteType.getSubstringOid()));
         return attributeType;
     }
@@ -658,43 +669,49 @@ public class LdapProxyBackend implements LdapBackend {
     }
 
     /**
-     * Returns the remote attribute's equality matching rule OID when the bundled schema can resolve it.
-     * When the remote type declares no equality, or one the bundled schema does not know, this falls
-     * back to octetStringMatch rather than leaving the attribute without an equality rule: a strict
-     * schema cannot evaluate an equality filter against an attribute that has none, so without the
-     * fallback the imported attribute would register but be unusable in equality assertions. This
-     * mirrors the octet string syntax fallback, and matches the convention used for the bundled
-     * octet-string attribute types (e.g. objectGUID).
+     * Returns the equality matching rule OID to register for the attribute. For a binary (octet string)
+     * syntax the octet-string rule is forced: the values are opaque bytes, and a string rule — including
+     * any rule the remote declared for the attribute's original, now-dropped syntax — would compare them
+     * incorrectly (or throw). For a human-readable syntax the remote's declared rule is kept when the
+     * bundled schema resolves it, otherwise it falls back to caseIgnoreMatch rather than leaving the
+     * attribute without an equality rule, so the imported attribute remains usable in equality
+     * assertions. (A strict schema cannot evaluate an equality filter against an attribute that has
+     * none.) The fallback is never an octet-string rule on a human-readable value, which would throw a
+     * ClassCastException when the value is compared.
      */
-    private String resolvedEqualityOid(SchemaManager schemaManager, AttributeType remoteType) {
+    private String resolvedEqualityOid(SchemaManager schemaManager, AttributeType remoteType, boolean octetStringSyntax) {
+        if (octetStringSyntax) {
+            return OCTET_STRING_MATCH_OID;
+        }
         final String resolved = resolvedMatchingRuleOid(schemaManager, remoteType.getEquality(), remoteType.getEqualityOid());
         if (resolved != null) {
             return resolved;
         }
         LOG.ldapRemoteAttributeEqualityFallback(getName(), remoteType.getName(), String.valueOf(remoteType.getEqualityOid()));
-        return OCTET_STRING_MATCH_OID;
+        return CASE_IGNORE_MATCH_OID;
     }
 
     /**
-     * Returns the remote attribute's ordering matching rule OID when the bundled schema can resolve it,
-     * otherwise octetStringOrderingMatch so the imported attribute still supports range (>=, <=)
-     * assertions. Active Directory delta/incremental-sync clients issue range filters such as
-     * {@code (uSNChanged>=N)}; without an ordering rule a strict schema rejects the filter at parse time
-     * with ERR_13301_NO_ORDERING_MR_FOR_AT. The octet string ordering rule compares raw bytes, matching
-     * the octet string syntax fallback; the backend forwards the real comparison to the remote server,
-     * which applies its own schema. Falls back only when the bundled schema actually defines the rule,
-     * so an environment without it keeps the previous (drop-to-null) behaviour rather than failing.
+     * Returns the ordering matching rule OID to register for the attribute. For a binary (octet string)
+     * syntax it supplies octetStringOrderingMatch so the attribute still supports range (>=, <=)
+     * assertions: Active Directory delta/incremental-sync clients issue range filters such as
+     * {@code (uSNChanged>=N)}, and without an ordering rule a strict schema rejects the filter at parse
+     * time with ERR_13301_NO_ORDERING_MR_FOR_AT. The octet-string rule compares raw bytes, matching the
+     * octet string syntax; the backend forwards the real comparison to the remote server, which applies
+     * its own schema. For a human-readable syntax the remote's declared ordering rule is kept when the
+     * bundled schema resolves it, otherwise none is invented (a string ordering rule is not synthesised
+     * here). The octet-string fallback is used only when the bundled schema actually defines the rule, so
+     * an environment without it keeps the drop-to-null behaviour rather than failing.
      */
-    private String resolvedOrderingOid(SchemaManager schemaManager, AttributeType remoteType) {
-        final String resolved = resolvedMatchingRuleOid(schemaManager, remoteType.getOrdering(), remoteType.getOrderingOid());
-        if (resolved != null) {
-            return resolved;
+    private String resolvedOrderingOid(SchemaManager schemaManager, AttributeType remoteType, boolean octetStringSyntax) {
+        if (octetStringSyntax) {
+            if (!schemaManager.getMatchingRuleRegistry().contains(OCTET_STRING_ORDERING_MATCH_OID)) {
+                return null;
+            }
+            LOG.ldapRemoteAttributeOrderingFallback(getName(), remoteType.getName(), String.valueOf(remoteType.getOrderingOid()));
+            return OCTET_STRING_ORDERING_MATCH_OID;
         }
-        if (!schemaManager.getMatchingRuleRegistry().contains(OCTET_STRING_ORDERING_MATCH_OID)) {
-            return null;
-        }
-        LOG.ldapRemoteAttributeOrderingFallback(getName(), remoteType.getName(), String.valueOf(remoteType.getOrderingOid()));
-        return OCTET_STRING_ORDERING_MATCH_OID;
+        return resolvedMatchingRuleOid(schemaManager, remoteType.getOrdering(), remoteType.getOrderingOid());
     }
 
     /**

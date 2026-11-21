@@ -303,7 +303,7 @@ public interface LdapMessages {
     @Message(level = MessageLevel.WARN, text = "Remote attribute {1} from backend {0} uses syntax {2}, which is not in the bundled schema; importing it with an octet string syntax")
     void ldapRemoteAttributeSyntaxFallback(String backendName, String attributeName, String syntaxOid);
 
-    @Message(level = MessageLevel.WARN, text = "Remote attribute {1} from backend {0} declares no equality matching rule the bundled schema can resolve (declared {2}); importing it with octetStringMatch so it remains usable in equality assertions")
+    @Message(level = MessageLevel.WARN, text = "Remote attribute {1} from backend {0} declares no equality matching rule the bundled schema can resolve (declared {2}); importing it with caseIgnoreMatch so it remains usable in equality assertions")
     void ldapRemoteAttributeEqualityFallback(String backendName, String attributeName, String equalityOid);
 
     @Message(level = MessageLevel.WARN, text = "Remote attribute {1} from backend {0} declares no ordering matching rule the bundled schema can resolve (declared {2}); importing it with octetStringOrderingMatch so range (>=, <=) filters on it can be parsed")
