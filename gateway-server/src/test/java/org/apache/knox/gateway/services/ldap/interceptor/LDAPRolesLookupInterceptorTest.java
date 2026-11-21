@@ -17,14 +17,17 @@
  */
 package org.apache.knox.gateway.services.ldap.interceptor;
 
+import org.apache.directory.api.ldap.model.cursor.ListCursor;
 import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.filter.FilterParser;
+import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.filtering.EntryFilteringCursor;
 import org.apache.directory.server.core.api.interceptor.context.SearchOperationContext;
@@ -56,6 +59,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -639,7 +643,10 @@ public class LDAPRolesLookupInterceptorTest {
                 "(|(cn=viewer)(cn=*))")) {
 
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-            expect(rolesService.listRoles()).andReturn(List.of("platform:admin", "viewer")).anyTimes();
+            expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+            expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                    "platform:admin", new RoleAssignees(List.of(), List.of()),
+                    "viewer", new RoleAssignees(List.of(), List.of()))).anyTimes();
             replay(rolesService);
 
             final TestContext testContext = createTestContext(false, rolesService);
@@ -661,7 +668,9 @@ public class LDAPRolesLookupInterceptorTest {
     @Test
     public void testAllGroupsSearchFromGroupsBaseIsCaseInsensitive() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-        expect(rolesService.listRoles()).andReturn(List.of("viewer")).anyTimes();
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of()))).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -687,7 +696,9 @@ public class LDAPRolesLookupInterceptorTest {
                 "(|(&(objectClass=groupOfNames)(|(cn=viewer)(cn=*)))(objectClass=referral))",
                 "(|(|(objectClass=groupOfUniqueNames)(objectClass=groupOfNames))(objectClass=referral))")) {
             final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
-            expect(rolesService.listRoles()).andReturn(List.of("viewer")).anyTimes();
+            expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+            expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                    "viewer", new RoleAssignees(List.of(), List.of()))).anyTimes();
             replay(rolesService);
 
             final TestContext testContext = createTestContext(false, rolesService);
@@ -796,6 +807,7 @@ public class LDAPRolesLookupInterceptorTest {
     public void testAllGroupsSearchWithNoRolesReturnsNoEntries() throws Exception {
         final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
         expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of()).anyTimes();
         replay(rolesService);
 
         final TestContext testContext = createTestContext(false, rolesService);
@@ -817,6 +829,10 @@ public class LDAPRolesLookupInterceptorTest {
         testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
         testContext.ctx.setScope(SearchScope.ONELEVEL);
         testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+        // Request a non-member attribute so the role listing takes the short-circuit listRoles() path
+        // (member population, which instead calls getAllRoleAssignees(), is not exercised here).
+        testContext.ctx.setAllUserAttributes(false);
+        testContext.ctx.setReturningAttributes("cn");
 
         final LdapException exception = assertThrows(LdapException.class,
                 () -> testContext.interceptor.search(testContext.ctx));
@@ -838,6 +854,221 @@ public class LDAPRolesLookupInterceptorTest {
 
         final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
         assertEquals(Set.of("cn=g1,ou=groups,dc=hadoop,dc=apache,dc=org"), byDn.keySet());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchPopulatesMembersFromDirectUsersAndGroups() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of("alice"), List.of("engineering"))));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        // The member-resolution searches return the directly-assigned user (alice), the assigned group
+        // (engineering), and the group's member user (bob) so it can be confirmed a user by objectClass.
+        final Entry aliceUser = createUserDirEntry("uid=alice,ou=people,dc=proxy,dc=com", "alice");
+        final Entry bobUser = createUserDirEntry("uid=bob,ou=people,dc=proxy,dc=com", "bob");
+        final Entry engineeringGroup = createGroupEntry("cn=engineering,ou=groups,dc=proxy,dc=com",
+                "uid=bob,ou=people,dc=proxy,dc=com");
+        stubBackendSearches(testContext.ctx, List.of(aliceUser, bobUser, engineeringGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Entry viewer = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com");
+        final Attribute member = viewer.get("member");
+        assertEquals(2, member.size());
+        assertTrue(member.contains("uid=alice,ou=people,dc=proxy,dc=com"));
+        assertTrue(member.contains("uid=bob,ou=people,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchResolvesGroupMembersWithUnnormalizedBackendDns() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        // The proxy backend returns user entries whose DN is not schema-normalized (it sets the entry DN
+        // from a plain string), while the group's member DN is built schema-applied. Member resolution
+        // must normalize both consistently or bob is dropped and the role ends up with no members.
+        final Entry bobUser = createUnnormalizedUserDirEntry("uid=bob,ou=people,dc=proxy,dc=com", "bob");
+        final Entry engineeringGroup = createGroupEntry("cn=engineering,ou=groups,dc=proxy,dc=com",
+                "uid=bob,ou=people,dc=proxy,dc=com");
+        stubBackendSearches(testContext.ctx, List.of(bobUser, engineeringGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Attribute member = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com").get("member");
+        assertNotNull("The group's user member must resolve despite the backend's un-normalized DN", member);
+        assertEquals(1, member.size());
+        assertTrue(member.contains("uid=bob,ou=people,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchDeduplicatesMembersAcrossUsersAndGroups() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of("alice"), List.of("engineering"))));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        // alice is both directly assigned and a member of the assigned group: she must appear once.
+        final Entry aliceUser = createUserDirEntry("uid=alice,ou=people,dc=proxy,dc=com", "alice");
+        final Entry engineeringGroup = createGroupEntry("cn=engineering,ou=groups,dc=proxy,dc=com",
+                "uid=alice,ou=people,dc=proxy,dc=com");
+        stubBackendSearches(testContext.ctx, List.of(aliceUser, engineeringGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Attribute member = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com").get("member");
+        assertEquals(1, member.size());
+        assertTrue(member.contains("uid=alice,ou=people,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchExcludesNestedGroupMembersFromRole() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        // engineering has a user member (bob) and a nested-group member (devs). The interceptor reads the
+        // group's member attribute as-is: bob (a uid member) becomes a role member, while the nested group
+        // DN is skipped. Flattening nested groups into their users is the backend's responsibility.
+        final Entry bobUser = createUserDirEntry("uid=bob,ou=people,dc=proxy,dc=com", "bob");
+        final Entry engineeringGroup = createGroupEntry("cn=engineering,ou=groups,dc=proxy,dc=com",
+                "uid=bob,ou=people,dc=proxy,dc=com",
+                "cn=devs,ou=groups,dc=proxy,dc=com");
+        final Entry devsGroup = createGroupEntry("cn=devs,ou=groups,dc=proxy,dc=com",
+                "uid=carol,ou=people,dc=proxy,dc=com");
+        stubBackendSearches(testContext.ctx, List.of(bobUser, engineeringGroup, devsGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Attribute member = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com").get("member");
+        assertEquals("The nested group DN and its members must not become role members", 1, member.size());
+        assertTrue(member.contains("uid=bob,ou=people,dc=proxy,dc=com"));
+        assertFalse(member.contains("cn=devs,ou=groups,dc=proxy,dc=com"));
+        assertFalse(member.contains("uid=carol,ou=people,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchResolvesGroupOfUniqueNamesMembers() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        // The assigned group is a groupOfUniqueNames; its uniqueMember must still resolve to a role member.
+        final Entry bobUser = createUserDirEntry("uid=bob,ou=people,dc=proxy,dc=com", "bob");
+        final Entry engineeringGroup = createUniqueMemberGroupEntry("cn=engineering,ou=groups,dc=proxy,dc=com",
+                "uid=bob,ou=people,dc=proxy,dc=com");
+        stubBackendSearches(testContext.ctx, List.of(bobUser, engineeringGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Attribute member = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com").get("member");
+        assertEquals(1, member.size());
+        assertTrue(member.contains("uid=bob,ou=people,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchResolvesCnBasedGroupMember() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of("engineering"))));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        // The group member has a cn-based DN (as an Active Directory user would). Re-resolving the member
+        // against the backend by objectClass keeps it, where the old uid-RDN-only rule would have dropped it.
+        final Entry aliceUser = createUserDirEntry("cn=Alice,ou=people,dc=proxy,dc=com", "alice");
+        final Entry engineeringGroup = createGroupEntry("cn=engineering,ou=groups,dc=proxy,dc=com",
+                "cn=Alice,ou=people,dc=proxy,dc=com");
+        stubBackendSearches(testContext.ctx, List.of(aliceUser, engineeringGroup));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Attribute member = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com").get("member");
+        assertEquals(1, member.size());
+        assertTrue(member.contains("cn=Alice,ou=people,dc=proxy,dc=com"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchAddsNoMemberWhenRoleHasNoAssignees() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of())));
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        final Map<String, Entry> byDn = collectByDn(testContext.interceptor.search(testContext.ctx));
+
+        final Entry viewer = byDn.get("cn=viewer,ou=groups,dc=proxy,dc=com");
+        assertNull("A role with no assignees should have no member attribute", viewer.get("member"));
+        verify(rolesService);
+    }
+
+    @Test
+    public void testAllGroupsSearchToleratesNullRoleAssignees() throws Exception {
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        // A disabled roles service returns null from getAllRoleAssignees (listRoles returns an empty
+        // list); the member branch must treat it as no roles rather than throwing a NullPointerException.
+        expect(rolesService.getAllRoleAssignees()).andReturn(null);
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.ONELEVEL);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager, "(objectClass=groupOfNames)"));
+
+        assertTrue(collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
         verify(rolesService);
     }
 
@@ -1349,6 +1580,44 @@ public class LDAPRolesLookupInterceptorTest {
         for (final String dn : memberOfDns) {
             entry.add("memberOf", dn);
         }
+        return entry;
+    }
+
+    /*
+     * Serves the member-resolution sub-searches, which run as separate operations via
+     * CoreSession.search rather than through the NEXT interceptor. The stub returns a fresh cursor over
+     * the given entries for every sub-search; the production code filters them by objectClass/uid/cn.
+     */
+    private void stubBackendSearches(final SearchOperationContext ctx, final List<Entry> entries) throws Exception {
+        final CoreSession session = EasyMock.createNiceMock(CoreSession.class);
+        expect(session.search(anyObject(SearchRequest.class)))
+                .andAnswer(() -> new ListCursor<>(entries)).anyTimes();
+        replay(session);
+        ctx.setSession(session);
+    }
+
+    /*
+     * A directory user entry with a concrete DN (ou=people), as the backend would return it, so the
+     * member-resolution searches can classify it as a user by objectClass.
+     */
+    private Entry createUserDirEntry(final String dn, final String uid) throws Exception {
+        final Entry entry = new DefaultEntry(schemaManager, dn);
+        entry.add("objectClass", "inetOrgPerson");
+        entry.add("uid", uid);
+        return entry;
+    }
+
+    /*
+     * A directory user entry whose DN is set from a plain string on a schema-aware entry - exactly how the
+     * LDAP proxy backend builds its entries (new DefaultEntry(schemaManager) then setDn(String)). Its DN is
+     * not schema-normalized the way a DN built via new Dn(schemaManager, ...) is, which is what the member
+     * resolution must tolerate.
+     */
+    private Entry createUnnormalizedUserDirEntry(final String dn, final String uid) throws Exception {
+        final Entry entry = new DefaultEntry(schemaManager);
+        entry.setDn(dn);
+        entry.add("objectClass", "inetOrgPerson");
+        entry.add("uid", uid);
         return entry;
     }
 
