@@ -59,6 +59,8 @@ ADD .github/workflows/build/conf/topologies/knoxidf-sso.xml /knox-runtime/conf/t
 ADD .github/workflows/build/conf/topologies/knoxauthtoken.xml /knox-runtime/conf/topologies/knoxauthtoken.xml
 ADD .github/workflows/build/conf/topologies/knoxauthtokenlimit.xml /knox-runtime/conf/topologies/knoxauthtokenlimit.xml
 ADD .github/workflows/build/conf/topologies/knoxauthtokencollide.xml /knox-runtime/conf/topologies/knoxauthtokencollide.xml
+ADD .github/workflows/build/conf/topologies/pathacls-encoding.xml /knox-runtime/conf/topologies/pathacls-encoding.xml
+ADD .github/workflows/build/conf/topologies/pathacls-order.xml /knox-runtime/conf/topologies/pathacls-order.xml
 
 RUN chown -R gateway /knox-runtime/
 
