@@ -22,6 +22,8 @@ import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.provider.federation.jwt.JWTMessages;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateServiceException;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateStore;
 import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
@@ -31,9 +33,8 @@ import org.apache.knox.gateway.util.AuthFilterUtils;
 import org.apache.knox.gateway.util.CertificateUtils;
 import org.apache.knox.gateway.util.CookieUtils;
 import org.apache.knox.gateway.util.Urls;
-import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
-import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpLoginOption;
 import org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils;
 import org.eclipse.jetty.http.MimeTypes;
 
@@ -53,6 +54,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -111,8 +113,6 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
   private boolean shouldUseOriginalUrlFromHeader = DEFAULT_SHOULD_USE_ORIGINAL_URL_FROM_HEADER;
   private boolean verifyOriginalUrlFromHeaderDomain = DEFAULT_VERIFY_ORIGINAL_URL_FROM_HEADER_DOMAIN;
   private final List<String> verifyOriginalUrlFromHeaderDomainWhitelist = new ArrayList<>();
-  private final AuthorizeRequestMetadataStore authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(120000L);
-  private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
   private String originalUrlHeaderName;
 
   @Override
@@ -354,26 +354,37 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       delimiter = "&";
     }
 
-    final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request);
+    // Federated login completes an authorize request only; other paths must not write flow state.
+    final Set<FederatedOpConfiguration> enabledFederatedOpConfigs = KnoxIDFUtils.isAuthorizeRequest(request)
+            ? KnoxIDFUtils.fetchEnabledFederatedOpConfigs(request)
+            : Collections.emptySet();
     if (!enabledFederatedOpConfigs.isEmpty()) {
       // A fresh random id per authorization flow. This value becomes the OIDC 'state' sent to the
-      // external OP and the key for the in-flight authorize/OP-config/nonce stores, so it must NOT be
+      // external OP and the key for the in-flight authorization flow state, so it must NOT be
       // the HTTP session id: reusing JSESSIONID would (a) collide across concurrent flows in the same
-      // browser session (last-writer-wins on the shared stores) and (b) leak the session id to the OP
+      // browser session (last-writer-wins on the shared state) and (b) leak the session id to the OP
       // via the state parameter (OP logs, URL bar, Referer). A per-flow UUID is unpredictable and
       // unique, which is what 'state' is meant to be.
       final String loginSessionId = UUID.randomUUID().toString();
-      authorizeRequestMetadataStore.put(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
-      federatedOpConfigurationStore.put(loginSessionId, enabledFederatedOpConfigs);
-      final List<String> opNames = enabledFederatedOpConfigs.stream()
+      // No secrets are stored; the OP callback resolves the full configuration from this topology by name.
+      final List<FederatedOpLoginOption> loginOptions = enabledFederatedOpConfigs.stream()
               .sorted(Comparator.comparing(FederatedOpConfiguration::getName))
-              .map(FederatedOpConfiguration::getName)
+              .map(FederatedOpLoginOption::of)
               .collect(Collectors.toList());
-      providerURL += delimiter
-              + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)
-              + "&federatedOpNames=" + URLEncoder.encode(String.join(",", opNames), StandardCharsets.UTF_8);
+      try {
+        final AuthzFlowStateStore authzFlowStateStore = AuthzFlowStateStore.get(request.getServletContext());
+        authzFlowStateStore.putAuthorizeRequest(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
+        authzFlowStateStore.putFederatedOpOptions(loginSessionId, loginOptions);
+        final List<String> opNames = loginOptions.stream().map(FederatedOpLoginOption::getName).collect(Collectors.toList());
+        providerURL += delimiter
+                + "federatedOpLoginSession=" + URLEncoder.encode(loginSessionId, StandardCharsets.UTF_8)
+                + "&federatedOpNames=" + URLEncoder.encode(String.join(",", opNames), StandardCharsets.UTF_8);
 
-      delimiter = "&";
+        delimiter = "&";
+      } catch (AuthzFlowStateServiceException e) {
+        // Without the stored state the OP callback could not complete; offer the local login only.
+        LOGGER.unableToStoreFederatedLoginState(e.getMessage());
+      }
     }
 
     if(shouldUseOriginalUrlFromHeader && (request.getHeader(originalUrlHeaderName) != null) && !request.getHeader(originalUrlHeaderName).trim().isEmpty()) {

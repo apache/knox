@@ -329,6 +329,21 @@ from `ext/` and optionally delete the stale `tokens/` folder.
 | `gateway.trusted.oidc.issuer.registry.cache.ttl.secs` | `60` | Upper bound on how long an instance serves its in-memory copy of the trusted issuer registry before re-reading the database, i.e. how long a registration or removal made on another instance can take to apply here. The registry is re-read in the background once half the TTL has elapsed; each instance shortens the TTL by up to 10% so instances do not reload in lockstep. See [High availability](operations.md#high-availability). |
 | `gateway.trusted.oidc.issuer.max.issuers` | `10000` | Upper bound on the number of registered trusted issuers. Registration returns `409 issuer_limit_reached` once reached. |
 
+### Authorization flow state
+
+In-flight state of the interactive Authorization Code flows (pending consent, federated login). See
+[High availability → In-flight authorization flow state](operations.md#in-flight-authorization-flow-state).
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `gateway.service.knoxidfauthzflowstate.impl` | *(unset)* | `org.apache.knox.gateway.services.knoxidf.flowstate.JdbcAuthzFlowStateService` keeps the state in the external database so any instance can continue a flow; `...InMemoryAuthzFlowStateService` keeps it in the instance and needs load balancer session affinity. Unset selects JDBC when `gateway.database.type` names an external database, in-memory otherwise. |
+| `gateway.knoxidf.authz.flow.state.ttl.secs` | `300` | How long a pending authorize request, consent state or federated login state stays valid, i.e. how long a user may take on the consent and login pages. |
+| `gateway.knoxidf.authz.flow.state.cleanup.interval.secs` | `60` | How often expired state is deleted. `0` or less disables the background cleanup of the JDBC implementation; expired state is still ignored on read. |
+
+The JDBC implementation uses the gateway's shared database connection pool
+(`gateway.database.pool.*`); see
+[Database load and connection pool sizing](operations.md#database-load-and-connection-pool-sizing).
+
 ### Delegation policy service
 
 Gateway-wide settings for the [delegation policy service](token_exchange.md#delegation-policies)

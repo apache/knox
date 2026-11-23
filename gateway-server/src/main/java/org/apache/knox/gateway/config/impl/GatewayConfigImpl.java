@@ -2066,6 +2066,16 @@ public class GatewayConfigImpl extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getKnoxIDFAuthzFlowStateTtlSecs() {
+    return getInt(KNOXIDF_AUTHZ_FLOW_STATE_TTL_SECS, KNOXIDF_AUTHZ_FLOW_STATE_TTL_SECS_DEFAULT);
+  }
+
+  @Override
+  public int getKnoxIDFAuthzFlowStateCleanupIntervalSecs() {
+    return getInt(KNOXIDF_AUTHZ_FLOW_STATE_CLEANUP_INTERVAL_SECS, KNOXIDF_AUTHZ_FLOW_STATE_CLEANUP_INTERVAL_SECS_DEFAULT);
+  }
+
+  @Override
   public int getDelegationServiceTokenTtlSec() {
     return getInt(DELEGATION_SERVICE_TOKEN_TTL_SEC, DELEGATION_SERVICE_TOKEN_TTL_SEC_DEFAULT);
   }

@@ -47,6 +47,9 @@ import org.apache.knox.gateway.services.ServiceType;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentity;
 import org.apache.knox.gateway.services.knoxidf.federation.FederatedIdentityService;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateServiceException;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateStore;
+import org.apache.knox.gateway.services.knoxidf.flowstate.FederatedOpSelection;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
 import org.apache.knox.gateway.services.security.KeystoreService;
@@ -59,10 +62,8 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.util.JsonUtils;
 import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadata;
-import org.apache.knox.gateway.util.knoxidf.AuthorizeRequestMetadataStore;
-import org.apache.knox.gateway.util.knoxidf.FederatedNonceStore;
 import org.apache.knox.gateway.util.knoxidf.FederatedOpConfiguration;
-import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationStore;
+import org.apache.knox.gateway.util.knoxidf.FederatedOpConfigurationFactory;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
@@ -101,7 +102,7 @@ import java.util.stream.Collectors;
 import static org.apache.knox.gateway.security.CommonTokenConstants.CLIENT_SECRET;
 import static org.apache.knox.gateway.security.CommonTokenConstants.GRANT_TYPE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.ALLOWED_SCOPES;
-import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.BASE_RESOURCE_PATH;
+import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.AUTHORIZE_RESOURCE_PATH;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CLIENT_ID;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE;
 import static org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants.CODE_CHALLENGE;
@@ -122,7 +123,7 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 @Path(AuthorizeResource.RESOURCE_PATH)
 @Singleton
 public class AuthorizeResource extends PasscodeTokenResourceBase {
-    static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/authorize";
+    static final String RESOURCE_PATH = AUTHORIZE_RESOURCE_PATH;
     // RFC 4122 "URL" namespace UUID. Used as the fixed namespace for deriving a STABLE Knox
     // subject (UUIDv5) from a federated identity's issuer+subject (see deriveKnoxSubject), so the
     // same upstream user always maps to the same Knox 'sub' across logins and gateway restarts.
@@ -134,9 +135,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             "given_name", "family_name", "name", "locale");
 
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
-    private AuthorizeRequestMetadataStore authorizeRequestMetadataStore;
-    private final FederatedOpConfigurationStore federatedOpConfigurationStore = FederatedOpConfigurationStore.getInstance(120000L);
-    private final FederatedNonceStore federatedNonceStore = FederatedNonceStore.getInstance(120000L);
+    private AuthzFlowStateStore authzFlowStateStore;
 
     @Context
     private HttpServletRequest request;
@@ -156,7 +155,7 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
     @Override
     public void init() throws ServletException, AliasServiceException, ServiceLifecycleException, KeyLengthException {
         super.init();
-        this.authorizeRequestMetadataStore = AuthorizeRequestMetadataStore.getInstance(tokenTTL);
+        this.authzFlowStateStore = AuthzFlowStateStore.get(servletContext);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
         // Skipping user consent is a server-side deployment decision, never a client-supplied
@@ -210,7 +209,11 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 markConsentAccepted(authorizeRequestMetadata);
             } else {
                 final String consentAuthState = UUID.randomUUID().toString();
-                authorizeRequestMetadataStore.put(consentAuthState, authorizeRequestMetadata);
+                try {
+                    authzFlowStateStore.putAuthorizeRequest(consentAuthState, authorizeRequestMetadata);
+                } catch (AuthzFlowStateServiceException e) {
+                    return error("server_error", "Could not store the authorization request");
+                }
                 final String baseUri = servletContext.getContextPath() + "/authConsent";
                 // Every value placed into the consent redirect's query string must be percent-encoded;
                 // a client_id containing '&', '=' or '#' would otherwise split or corrupt the URL.
@@ -333,26 +336,24 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 detail = "reason=missing_state_or_code";
                 return error("invalid_request", "Missing state or code");
             }
-            final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
+            // Single-use across all gateway instances, so a replayed callback is rejected. The state is
+            // the login-session id, under which the selected OP and its nonce are stored too.
+            final AuthorizeRequestMetadata authorizeRequestMetadata = authzFlowStateStore.consumeAuthorizeRequest(state).orElse(null);
             if (authorizeRequestMetadata == null) {
                 detail = "reason=unknown_state";
                 return error("invalid_request", "Unknown or expired state");
             }
-            final Set<FederatedOpConfiguration> opConfigs = federatedOpConfigurationStore.get(state);
-            final FederatedOpConfiguration federatedOpConfiguration = opConfigs == null ? null : opConfigs.stream().findFirst().orElse(null);
+            final FederatedOpSelection federatedOpSelection = authzFlowStateStore.consumeFederatedOpSelection(state).orElse(null);
+            authzFlowStateStore.removeFederatedOpOptions(state);
+            // The flow state holds no secrets; the OP configuration comes from this topology.
+            final FederatedOpConfiguration federatedOpConfiguration = federatedOpSelection == null ? null
+                    : FederatedOpConfigurationFactory.createFederatedOpConfiguration(servletContext).get(federatedOpSelection.opName());
             if (federatedOpConfiguration == null) {
                 detail = "reason=no_op_configuration";
                 return error("invalid_request", "No federated OP configuration available for the request");
             }
             opName = federatedOpConfiguration.getName();
-            // The federated callback state is single-use: invalidate it in both stores now that it has
-            // been validated and captured, so a replayed callback with the same state is rejected. The
-            // nonce Knox sent to the OP was stashed under the same key (the login-session id == state);
-            // retrieve and invalidate it too so it cannot be reused.
-            authorizeRequestMetadataStore.remove(state);
-            federatedOpConfigurationStore.remove(state);
-            final String expectedNonce = federatedNonceStore.get(state);
-            federatedNonceStore.remove(state);
+            final String expectedNonce = federatedOpSelection.nonce();
             final Pair<String, String> federatedTokens;
             try {
                 federatedTokens = exchangeFederatedAuthCodeToTokens(federatedAuthCode, federatedOpConfiguration);
@@ -415,7 +416,8 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                     ActionOutcome.FAILURE, "event=consent reason=missing_state");
             return error("invalid_request", "Missing state");
         }
-        final AuthorizeRequestMetadata authorizeRequestMetadata = authorizeRequestMetadataStore.get(state);
+        // Single-use across all gateway instances, so the consent POST cannot be replayed.
+        final AuthorizeRequestMetadata authorizeRequestMetadata = authzFlowStateStore.consumeAuthorizeRequest(state).orElse(null);
         if (authorizeRequestMetadata == null) {
             KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.UNKNOWN, ResourceType.PRINCIPAL,
                     ActionOutcome.FAILURE, "event=consent reason=invalid_or_expired_state");
@@ -425,18 +427,15 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
         // Bind consent to the subject that initiated the authorization request. Without this, user B
         // (authenticated) could replay user A's consent-state URL and have consent recorded for A while
         // an auth code is minted for B and sent to A's redirect_uri (cross-user consent / mis-routed
-        // code). The consent state is single-use, so consume it before rejecting a mismatch too.
+        // code). The consent state was already consumed above, so a mismatch invalidates it too.
         final String currentSubject = SubjectUtils.getCurrentEffectivePrincipalName();
         if (currentSubject == null || !currentSubject.equals(authorizeRequestMetadata.getSubject())) {
-            authorizeRequestMetadataStore.remove(state);
             KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.mask(authorizeRequestMetadata.getClientId()),
                     ResourceType.PRINCIPAL, ActionOutcome.FAILURE, "event=consent subject="
                             + KnoxIDFAudit.subjectLabel(currentSubject) + " reason=subject_mismatch");
             return error("access_denied", "Consent subject mismatch");
         }
 
-        // Single-use consent state: invalidate it so the accepted-consent redirect cannot be replayed.
-        authorizeRequestMetadataStore.remove(state);
         markConsentAccepted(authorizeRequestMetadata);
         // Consent was granted by the subject for this client; the ensuing authorize() call audits the
         // resulting code issuance separately.

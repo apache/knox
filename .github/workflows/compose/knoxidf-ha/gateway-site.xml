@@ -109,6 +109,10 @@ limitations under the License.
         <name>gateway.service.tokenstate.impl</name>
         <value>org.apache.knox.gateway.services.token.impl.JDBCTokenStateService</value>
     </property>
+    <property>
+        <name>gateway.service.knoxidfauthzflowstate.impl</name>
+        <value>org.apache.knox.gateway.services.knoxidf.flowstate.JdbcAuthzFlowStateService</value>
+    </property>
     <!-- Short registry snapshot TTL so test_knoxidf_ha.py sees changes made on the other node
          within seconds rather than the default minute. -->
     <property>

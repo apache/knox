@@ -22,6 +22,7 @@ import java.util.Set;
 
 public interface KnoxIDFConstants {
     String BASE_RESOURCE_PATH = "knoxidf/api/v1";
+    String AUTHORIZE_RESOURCE_PATH = BASE_RESOURCE_PATH + "/authorize";
     String AUTH_CODE = "authorization_code";
     String CLIENT_ID = "client_id";
     String REDIRECT_URI = "redirect_uri";

@@ -26,7 +26,8 @@ public enum DatabaseType {
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
-            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL
+            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL,
+            AbstractDataSourceFactory.KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL
     ),
     MYSQL("mysql",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
@@ -36,7 +37,8 @@ public enum DatabaseType {
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
-            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL
+            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL,
+            AbstractDataSourceFactory.KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL
     ),
     MARIADB("mariadb",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
@@ -46,7 +48,8 @@ public enum DatabaseType {
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
-            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL
+            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL,
+            AbstractDataSourceFactory.KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL
     ),
     H2("h2",
             AbstractDataSourceFactory.TOKENS_TABLE_CREATE_SQL_FILE_NAME,
@@ -56,7 +59,8 @@ public enum DatabaseType {
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
-            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL
+            AbstractDataSourceFactory.KNOXIDF_DELEGATION_POLICY_TABLES_SQL,
+            AbstractDataSourceFactory.KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL
     ),
     ORACLE("oracle",
             AbstractDataSourceFactory.ORACLE_TOKENS_TABLE_CREATE_SQL_FILE_NAME,
@@ -66,7 +70,8 @@ public enum DatabaseType {
             AbstractDataSourceFactory.ORACLE_KNOXIDF_FED_IDENTITY_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.ORACLE_KNOXIDF_FED_IDENTITY_ATTR_TABLE_CREATE_SQL_FILE_NAME,
             AbstractDataSourceFactory.ORACLE_KNOXIDF_TRUSTED_OIDC_ISSUERS_TABLE_SQL,
-            AbstractDataSourceFactory.ORACLE_KNOXIDF_DELEGATION_POLICY_TABLES_SQL
+            AbstractDataSourceFactory.ORACLE_KNOXIDF_DELEGATION_POLICY_TABLES_SQL,
+            AbstractDataSourceFactory.ORACLE_KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL
     );
 
     private final String type;
@@ -78,10 +83,11 @@ public enum DatabaseType {
     private final String federatedIdentityAttrTableSql;
     private final String trustedOidcIssuersTableSql;
     private final String delegationPolicyTablesSql;
+    private final String authzFlowStateTableSql;
 
     DatabaseType(String type, String tokensTableSql, String metadataTableSql, String providersTableSql,
         String descriptorsTableSql, String federatedIdentityTableSql, String federatedIdentityAttrTableSql,
-        String trustedOidcIssuersTableSql, String delegationPolicyTablesSql) {
+        String trustedOidcIssuersTableSql, String delegationPolicyTablesSql, String authzFlowStateTableSql) {
         this.type = type;
         this.tokensTableSql = tokensTableSql;
         this.metadataTableSql = metadataTableSql;
@@ -91,6 +97,7 @@ public enum DatabaseType {
         this.federatedIdentityAttrTableSql = federatedIdentityAttrTableSql;
         this.trustedOidcIssuersTableSql = trustedOidcIssuersTableSql;
         this.delegationPolicyTablesSql = delegationPolicyTablesSql;
+        this.authzFlowStateTableSql = authzFlowStateTableSql;
     }
 
     public String type() {
@@ -127,6 +134,10 @@ public enum DatabaseType {
 
     public String delegationPolicyTablesSql() {
         return delegationPolicyTablesSql;
+    }
+
+    public String authzFlowStateTableSql() {
+        return authzFlowStateTableSql;
     }
 
     public static DatabaseType fromString(String dbType) {

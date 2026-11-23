@@ -40,3 +40,4 @@ org.apache.knox.gateway.services.factory.LDAPRolesLookupServiceFactory
 org.apache.knox.gateway.services.factory.TokenServiceFactory
 org.apache.knox.gateway.services.factory.TrustedOidcIssuerServiceFactory
 org.apache.knox.gateway.services.factory.DelegationPolicyServiceFactory
+org.apache.knox.gateway.services.factory.AuthzFlowStateServiceFactory

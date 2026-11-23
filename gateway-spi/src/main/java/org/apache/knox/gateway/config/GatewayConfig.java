@@ -202,6 +202,13 @@ public interface GatewayConfig {
   String KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS = KNOXIDF_FEDERATED_OP_PREFIX + "read.timeout.ms";
   int KNOXIDF_FEDERATED_OP_READ_TIMEOUT_MS_DEFAULT = 10000;
 
+  // KnoxIDF in-flight authorization flow state (pending consent / federated login requests).
+  String KNOXIDF_AUTHZ_FLOW_STATE_PREFIX = "gateway.knoxidf.authz.flow.state.";
+  String KNOXIDF_AUTHZ_FLOW_STATE_TTL_SECS = KNOXIDF_AUTHZ_FLOW_STATE_PREFIX + "ttl.secs";
+  int KNOXIDF_AUTHZ_FLOW_STATE_TTL_SECS_DEFAULT = 300;
+  String KNOXIDF_AUTHZ_FLOW_STATE_CLEANUP_INTERVAL_SECS = KNOXIDF_AUTHZ_FLOW_STATE_PREFIX + "cleanup.interval.secs";
+  int KNOXIDF_AUTHZ_FLOW_STATE_CLEANUP_INTERVAL_SECS_DEFAULT = 60;
+
   /**
    * The location of the gateway configuration.
    * Subdirectories will be: topologies
@@ -1387,6 +1394,17 @@ public interface GatewayConfig {
   int getKnoxIDFFederatedOpConnectTimeoutMs();
 
   int getKnoxIDFFederatedOpReadTimeoutMs();
+
+  /**
+   * @return how long, in seconds, an in-flight KnoxIDF authorization flow state (a pending consent
+   *     or federated login request) stays valid before it must be consumed
+   */
+  int getKnoxIDFAuthzFlowStateTtlSecs();
+
+  /**
+   * @return how often, in seconds, expired KnoxIDF authorization flow state is removed
+   */
+  int getKnoxIDFAuthzFlowStateCleanupIntervalSecs();
 
   int getDelegationServiceTokenTtlSec();
 
