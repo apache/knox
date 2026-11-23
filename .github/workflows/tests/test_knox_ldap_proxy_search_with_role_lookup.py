@@ -297,6 +297,11 @@ class TestKnoxLdapProxySearchWithRoleLookup(  # pylint: disable=too-many-public-
         users = self.rdn_values(self.search(PROXY_BASE_DN, "(uid=sam)"))
         self.assertEqual(["sam"], users)
 
+    def test_search_user_without_memberof_attribute(self) -> None:
+        """A user does not get roles if memberOf attribute is not requested."""
+        entry = self.search_one(PEOPLE_BASE, "(uid=sam)", ["uid"])
+        self.assertNotIn('memberOf', entry)
+
     # ---- Reverse role lookup: (memberOf=<role DN>) finds the users that hold the role ----
 
     def assert_role_members(self, role: str, expected_users: set[str]) -> None:
