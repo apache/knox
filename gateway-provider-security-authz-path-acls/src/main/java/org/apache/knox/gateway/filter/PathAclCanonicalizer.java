@@ -22,9 +22,12 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 final class PathAclCanonicalizer {
   private static final String SCHEME_SEPARATOR = "://";
+  private static final char REPLACEMENT_CHARACTER = '\uFFFD';
+  private static final Pattern DOT_SEGMENT_WITH_PARAMETER = Pattern.compile("(^|/)\\.{1,2};");
 
   private PathAclCanonicalizer() {
   }
@@ -41,6 +44,9 @@ final class PathAclCanonicalizer {
     try {
       final String path = url.substring(pathStart).replaceAll(";[^/]*", "").replace("+", "%2B");
       final String decoded = URLDecoder.decode(path, StandardCharsets.UTF_8).replace('\\', '/');
+      if (decoded.indexOf(REPLACEMENT_CHARACTER) >= 0 || DOT_SEGMENT_WITH_PARAMETER.matcher(decoded).find()) {
+        return null;
+      }
       final String normalized = new URI(null, null, decoded, null).normalize().getRawPath();
       if (Arrays.asList(normalized.split("/")).contains("..")) {
         return null;

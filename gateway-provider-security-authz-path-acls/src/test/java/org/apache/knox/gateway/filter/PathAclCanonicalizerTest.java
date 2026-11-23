@@ -96,6 +96,27 @@ public class PathAclCanonicalizerTest {
   }
 
   @Test
+  public void testInvalidUtf8IsRejected() {
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/%C3/op"));
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/%C0%AFadmin/op"));
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/%FF/op"));
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/%ED%A0%80/op"));
+  }
+
+  @Test
+  public void testDotSegmentWithEncodedParameterIsRejected() {
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/x/%2e%2e%3b/admin/op"));
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/x/..%3Bx=1/admin/op"));
+    assertNull(PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/x/.%3b/admin/op"));
+  }
+
+  @Test
+  public void testEncodedSemicolonInNameIsKept() {
+    assertEquals(BASE + "/gateway/z/svc/a;b/op", PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/a%3Bb/op"));
+    assertEquals(BASE + "/gateway/z/svc/..a;b/op", PathAclCanonicalizer.canonicalize(BASE + "/gateway/z/svc/..a%3Bb/op"));
+  }
+
+  @Test
   public void testUrlWithoutPath() {
     assertEquals(BASE, PathAclCanonicalizer.canonicalize(BASE));
     assertNull(PathAclCanonicalizer.canonicalize(null));

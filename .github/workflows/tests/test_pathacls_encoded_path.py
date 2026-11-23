@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""PathAclsAuthz must not be bypassed by a disguised form of a restricted path.
+"""PathAclsAuthz evaluates equivalent encodings of a path consistently.
 
-Requests are sent with the path exactly as written: requests would otherwise
-decode percent-encoded unreserved characters such as %67 before sending.
+Requests are sent with the path exactly as written, without client-side normalization.
 """
 
 import unittest
@@ -29,7 +28,7 @@ from common_utils import KNOX_REQUEST_TIMEOUT, gateway_base_url
 GUEST = ("guest", "guest-password")
 ADMIN = ("admin", "admin-password")
 
-DISGUISED_STATUS_PATHS = {
+EQUIVALENT_STATUS_PATHS = {
     "v1/%67ateway-status": 404,
     "v1/%67%61%74%65%77%61%79-status": 404,
     "v1/gateway%2Dstatus": 404,
@@ -53,7 +52,7 @@ def raw_get(url, credentials):
 
 
 class TestPathAclsEncodedPath(unittest.TestCase):
-    """A broad allow rule must not admit a disguised form of a restricted path."""
+    """Equivalent forms of a restricted path get the same decision as the path itself."""
 
     def setUp(self):
         self.topology_url = gateway_base_url() + "gateway/pathacls-encoding/"
@@ -73,25 +72,32 @@ class TestPathAclsEncodedPath(unittest.TestCase):
         response = raw_get(self.topology_url + "v1/gateway-status", GUEST)
         self.assertEqual(response.status_code, 403, msg=response.text)
 
-    def test_disguised_restricted_path_is_denied_for_guest(self):
-        """Guest is denied on every disguised form of the restricted path."""
-        for path in DISGUISED_STATUS_PATHS:
+    def test_rule_with_name_in_the_middle_of_the_path(self):
+        """A rule naming a segment in the middle of the path applies on a live gateway."""
+        for path in ("v1/restricted/x", "v1/restricted/x/y"):
+            with self.subTest(path=path):
+                self.assertEqual(raw_get(self.topology_url + path, GUEST).status_code, 403)
+                self.assertEqual(raw_get(self.topology_url + path, ADMIN).status_code, 404)
+
+    def test_equivalent_restricted_path_is_denied_for_guest(self):
+        """Guest is denied on every equivalent form of the restricted path."""
+        for path in EQUIVALENT_STATUS_PATHS:
             with self.subTest(path=path):
                 response = raw_get(self.topology_url + path, GUEST)
                 self.assertEqual(
                     response.status_code,
                     403,
-                    msg=f"guest must not get past PathAclsAuthz on {path!r}; got "
+                    msg=f"guest should be denied on {path!r}; got "
                     f"{response.status_code}: {response.text}",
                 )
 
-    def test_disguised_restricted_path_is_not_denied_for_admin(self):
-        """Admin passes PathAclsAuthz on a disguised form; the HEALTH service then decides.
+    def test_equivalent_restricted_path_is_not_denied_for_admin(self):
+        """Admin passes PathAclsAuthz on every equivalent form; the HEALTH service then decides.
 
         Matrix-parameter forms reach gateway-status (200); percent-encoded and
         dot-segment forms have no HEALTH route (404). Neither is a 403.
         """
-        for path, expected_status in DISGUISED_STATUS_PATHS.items():
+        for path, expected_status in EQUIVALENT_STATUS_PATHS.items():
             with self.subTest(path=path):
                 response = raw_get(self.topology_url + path, ADMIN)
                 self.assertEqual(response.status_code, expected_status, msg=response.text)

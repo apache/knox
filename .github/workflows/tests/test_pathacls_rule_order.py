@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""PathAclsAuthz must apply every overlapping rule, whatever order they are held in.
+"""PathAclsAuthz applies every matching rule, whatever order the rules are held in.
 
-The pathacls-order topology pairs one broad allow-everyone rule with 31 restrictive
-rules. If the provider applied only the first matching rule, each restricted path
-would be open whenever the broad rule happened to come first, so at least one of
-them would almost always be reachable by guest.
+The pathacls-order topology pairs one broad allow-everyone rule with 31 overlapping
+restrictive rules.
 """
 
 import unittest
@@ -60,8 +58,7 @@ class TestPathAclsRuleOrder(unittest.TestCase):
         self.assertEqual(
             reachable,
             [],
-            msg="guest got past PathAclsAuthz on restricted paths (broad rule applied "
-            "instead of the restrictive one): " + ", ".join(reachable),
+            msg="guest should be denied on restricted paths: " + ", ".join(reachable),
         )
 
 

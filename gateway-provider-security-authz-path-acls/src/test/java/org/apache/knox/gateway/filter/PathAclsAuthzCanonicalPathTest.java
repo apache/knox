@@ -63,7 +63,7 @@ public class PathAclsAuthzCanonicalPathTest {
   public void testRestrictedPathVariantsAreDeniedInAndModeRegardlessOfRuleOrder() throws Exception {
     for (Map<String, String> rules : bothOrders(BROAD_RULE, "*://*:*/**;*;*;*", ADMIN_RULE, "*://*:*/**/admin/**;sam;*;*")) {
       for (String variant : ADMIN_PATH_VARIANTS) {
-        assertFalse("guest must not reach " + variant + " with rules " + rules.keySet(),
+        assertFalse("guest should be denied on " + variant + " with rules " + rules.keySet(),
             isGranted("TESTSVC", "AND", rules, SVC + variant, "guest"));
       }
       assertTrue(isGranted("TESTSVC", "AND", rules, SVC + "admin/op", "sam"));
@@ -77,7 +77,7 @@ public class PathAclsAuthzCanonicalPathTest {
   public void testRestrictedPathVariantsAreDeniedInOrModeRegardlessOfRuleOrder() throws Exception {
     for (Map<String, String> rules : bothOrders(BROAD_RULE, "*://*:*/**;*;users;*", ADMIN_RULE, "*://*:*/**/admin/**;sam;*;*")) {
       for (String variant : ADMIN_PATH_VARIANTS) {
-        assertFalse("guest must not reach " + variant + " with rules " + rules.keySet(),
+        assertFalse("guest should be denied on " + variant + " with rules " + rules.keySet(),
             isGranted("TESTSVC", "OR", rules, SVC + variant, "guest", "users"));
       }
       assertTrue(isGranted("TESTSVC", "OR", rules, SVC + "admin/op", "sam", "users"));

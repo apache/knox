@@ -63,6 +63,10 @@ limitations under the License.
                 <name>HEALTH.status.path.acl</name>
                 <value>*://*:*/**/v1/gateway-status;admin;*;*</value>
             </param>
+            <param>
+                <name>HEALTH.midpath.path.acl</name>
+                <value>*://*:*/**/v1/restricted/**;admin;*;*</value>
+            </param>
         </provider>
     </gateway>
     <service>

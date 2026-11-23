@@ -387,14 +387,17 @@ Once a service has at least one rule:
 
 * A request that matches **no** rule is denied with `403`. Rules work as an allow list: only paths covered by a
   rule are reachable.
-* A request that matches **one or more** rules is allowed only if **every** matching rule grants access.
-  When rules overlap, the most restrictive one always decides, regardless of the order the rules are declared in.
+* A request that matches **one or more** rules is allowed only if **every** matching rule grants access,
+  regardless of the order the rules are declared in. A narrower rule therefore cannot grant more access than a
+  broader rule that also matches: with `**;admin;*;*` and `**/public/**;*;*;*`, `/public` is reachable only by
+  `admin`. To open a sub-path to more users, write rules that do not overlap.
+* To grant several users or groups on the same path, list them comma-separated in one rule. Two rules on the
+  same path with different users deny both.
 * Each rule is matched against the request URL as received and against its canonical form. The canonical form
   percent-decodes the path once, drops `;` matrix parameters, treats encoded `/` and `\` as separators and resolves
-  `.` and `..` segments. A disguised request such as `/svc/%61dmin/op` is therefore judged by the rules that apply
-  to `/svc/admin/op`.
-* A request whose path cannot be canonicalized (an invalid `%` escape, invalid UTF-8, or `..` segments that climb
-  above the root) is denied.
+  `.` and `..` segments.
+* A request whose path cannot be canonicalized is denied: an invalid `%` escape, invalid UTF-8, a `.` or `..`
+  segment carrying an encoded `;`, or `..` segments that climb above the root.
 
 Path patterns use the same syntax as rewrite rules:
 
