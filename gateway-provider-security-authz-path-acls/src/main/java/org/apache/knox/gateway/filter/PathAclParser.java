@@ -25,14 +25,14 @@ import org.apache.knox.gateway.util.urltemplate.Template;
 
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PathAclParser {
   private static PathAclsAuthorizationMessages log = MessagesFactory.get(
       PathAclsAuthorizationMessages.class);
   /* A Map of path to ACLs (users, groups, ips) to match */
-  public Map<Matcher, AclParser> rulesMap = new HashMap<>();
+  public Map<Matcher, AclParser> rulesMap = new LinkedHashMap<>();
   public PathAclParser() {
     super();
   }

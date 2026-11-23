@@ -46,7 +46,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -63,7 +63,7 @@ public class PathAclsAuthorizationFilter implements Filter {
   private PathAclParser pathAclParser = new PathAclParser();
   private List<String> adminGroups = new ArrayList<>();
   private List<String> adminUsers = new ArrayList<>();
-  private Map<String, String> rawRules = new HashMap<>();
+  private Map<String, String> rawRules = new LinkedHashMap<>();
 
   @Override
   public void init(FilterConfig filterConfig) {
@@ -162,40 +162,34 @@ public class PathAclsAuthorizationFilter implements Filter {
       return true;
     }
     try {
-      String requestURL = ((HttpServletRequest) request).getRequestURL().toString();
-      if (((HttpServletRequest) request).getQueryString() != null
-          && StringUtils.isNotBlank(
-          ((HttpServletRequest) request).getQueryString())) {
-        requestURL = requestURL + "?"
-            + (((HttpServletRequest) request).getQueryString());
+      final HttpServletRequest httpRequest = (HttpServletRequest) request;
+      final String requestURL = httpRequest.getRequestURL().toString();
+      final String canonicalURL = PathAclCanonicalizer.canonicalize(requestURL);
+      if (canonicalURL == null) {
+        log.nonCanonicalRequestPath(requestURL);
+        return false;
       }
 
-      final Template requestUrlTemplate = Parser.parseLiteral(requestURL);
+      final String queryString = httpRequest.getQueryString();
+      final String querySuffix = StringUtils.isNotBlank(queryString) ? "?" + queryString : "";
+      final Template rawUrlTemplate = Parser.parseLiteral(requestURL + querySuffix);
+      final Template canonicalUrlTemplate = Parser.parseLiteral(canonicalURL + querySuffix);
       final Map<Matcher, AclParser> rulesMap = pathAclParser.getRulesMap();
 
-      /**
-       *
-       * TODO NOTE: Important thing here is that we have the ability to capture the path or
-       * query parameters of incoming request. This gives us an ability to rewrite
-       * them based on rules or simply inspect them conditionally based on their values.
-       * I don't have a use case in mind but it would be a nice feature if we have a
-       * use case in the future.
-       */
-      /* See if we have any path match */
+      boolean anyRuleMatched = false;
       for (final Map.Entry<Matcher, AclParser> e : rulesMap.entrySet()) {
-        final Matcher<String>.Match match = e.getKey()
-            .match(requestUrlTemplate);
-        if (match != null) {
-          /* we have a path match, now check ACLs */
-          return checkACLs(e.getValue(), request);
+        if (e.getKey().match(rawUrlTemplate) != null || e.getKey().match(canonicalUrlTemplate) != null) {
+          anyRuleMatched = true;
+          if (!checkACLs(e.getValue(), request)) {
+            return false;
+          }
         }
       }
-
+      return anyRuleMatched;
     } catch (URISyntaxException e) {
       log.errorParsingUrl(e.toString());
       throw new IOException(e);
     }
-    return false;
   }
 
   /* This helper function check whether the user has proper permissions */

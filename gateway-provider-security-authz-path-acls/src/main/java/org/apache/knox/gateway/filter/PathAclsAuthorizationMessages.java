@@ -60,6 +60,9 @@ public interface PathAclsAuthorizationMessages {
   @Message( level = MessageLevel.DEBUG, text = "Path ACLs Remote IP Address has access: {0}" )
   void remoteIPAddressHasAccess(boolean remoteIpAccess);
 
+  @Message( level = MessageLevel.WARN, text = "Path ACLs denied request with a path that cannot be canonicalized: {0}" )
+  void nonCanonicalRequestPath(String requestUrl);
+
   @Message( level = MessageLevel.ERROR, text = "Path ACLs, error parsing URL: {0}" )
   void errorParsingUrl(String reason);
 
