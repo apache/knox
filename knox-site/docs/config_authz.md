@@ -361,11 +361,73 @@ The prefixes are removed and the expected param names are set on the actual prov
 Path based authorization (`PathAclsAuthz`) enforces Acls authorization on a configured path.  The semantics of Path based authorization are similar to Acls authz. Authorization is done based on path matching similar to rewrite rules. 
 
 Format is very similar to AclsAuthz provider with an addition of path argument. The format is
-`{path};{users};{groups}:{ips}`. For details on the format please see #[Service Level Authorization].
+`{path};{users};{groups};{ips}`. For details on the format please see #[Service Level Authorization].
 One important thing to note here is that the path is not plural, there has to be one and only one path defined.
 
 In case one wants multiple paths they can define multiple rules with rule name as a parameter e.g.
 `KNOXTOKEN.{rule_name}.path.acl`
+
+#### Which rules apply to a service ####
+The provider is configured once per topology, but it is evaluated separately for every service in it.
+A service picks up:
+
+* the topology-wide `path.acl` rule, if present,
+* every parameter whose name ends with `.path.acl` and contains the service role, compared case-insensitively
+  (for example `KNOXTOKEN.path.acl` or `knoxtoken.rule_1.path.acl` for the `KNOXTOKEN` service).
+
+A `.path.acl` parameter whose name does not contain the service role is ignored for that service without any warning,
+so a misspelled role silently removes the rule. Because the check is a substring match, a service also picks up
+rules written for any service whose role contains its own; for example the `KNOXIDF` service also applies
+`KNOXIDF_ADMIN.*.path.acl` rules.
+
+If a service ends up with no rules at all, every request to it is allowed.
+
+#### How a request is matched and authorized ####
+Once a service has at least one rule:
+
+* A request that matches **no** rule is denied with `403`. Rules work as an allow list: only paths covered by a
+  rule are reachable.
+* A request that matches **one or more** rules is allowed only if **every** matching rule grants access.
+  When rules overlap, the most restrictive one always decides, regardless of the order the rules are declared in.
+* Each rule is matched against the request URL as received and against its canonical form. The canonical form
+  percent-decodes the path once, drops `;` matrix parameters, treats encoded `/` and `\` as separators and resolves
+  `.` and `..` segments. A disguised request such as `/svc/%61dmin/op` is therefore judged by the rules that apply
+  to `/svc/admin/op`.
+* A request whose path cannot be canonicalized (an invalid `%` escape, invalid UTF-8, or `..` segments that climb
+  above the root) is denied.
+
+Path patterns use the same syntax as rewrite rules:
+
+* `**` as a whole segment matches any number of segments, e.g. `https://*:*/**/api/**`.
+* `*` or `**` inside a segment matches within that segment only. `/v1/issuers**` matches `/v1/issuers`,
+  `/v1/issuers/` and also sibling names such as `/v1/issuers-archive`, but not `/v1/issuers/abc`.
+* A trailing `/**` requires at least one more segment. `/v1/issuers/**` matches `/v1/issuers/abc` but not `/v1/issuers`.
+
+To cover both a collection and its sub-paths, define two rules, one exact (`.../v1/issuers`) and one with a
+trailing `/**` (`.../v1/issuers/**`).
+
+#### Processing mode ####
+Within a single rule, users, groups and IP addresses are combined according to the processing mode, set with
+`{service_name}.path.acl.mode` or, for all services, `path.acl.mode`. The value is `AND` (the default) or `OR`.
+
+* `AND`: the user, group and IP address checks must all pass. `*` means any.
+* `OR`: at least one of the checks must pass. To avoid granting everyone access by accident, a `*` field is treated
+  as not granting access. As a result, a `*;*;*` rule grants access to nobody in `OR` mode. Name a group or user to
+  open a path in `OR` mode.
+
+        <provider>
+            <role>authorization</role>
+            <name>PathAclsAuthz</name>
+            <enabled>true</enabled>
+            <param>
+                <name>KNOXTOKEN.path.acl.mode</name>
+                <value>OR</value>
+            </param>
+            <param>
+                <name>KNOXTOKEN.rule_1.path.acl</name>
+                <value>https://*:*/**/knoxtoken/api/**;admin;admins;*</value>
+            </param>
+        </provider>
 
 Following are special cases for rule names:
 #### This rule will be applied to ALL services defined in the topology ####
@@ -462,3 +524,21 @@ Following are concrete examples of the the above rules:
             </param>
         </provider>  
 
+##### Allow every authenticated user except on one sub-path #####
+The broad rule opens the whole `KNOXTOKEN` service. The second rule overlaps it on `/knoxtoken/api/v1/admin/**`.
+Both rules match there, and both must grant access, so only `admin` gets through. Everywhere else only the
+broad rule matches. This configuration relies on `AND` mode, the default, because `*;*;*` grants nobody in `OR` mode.
+
+        <provider>
+            <role>authorization</role>
+            <name>PathAclsAuthz</name>
+            <enabled>true</enabled>
+            <param>
+                <name>KNOXTOKEN.all.path.acl</name>
+                <value>https://*:*/**;*;*;*</value>
+            </param>
+            <param>
+                <name>KNOXTOKEN.admin.path.acl</name>
+                <value>https://*:*/**/knoxtoken/api/v1/admin/**;admin;*;*</value>
+            </param>
+        </provider>
