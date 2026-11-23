@@ -136,6 +136,16 @@ class TestKnoxLdapProxySearchWithRoleLookup(  # pylint: disable=too-many-public-
                          "platform:level2", "platform:level3"):
             self.assertIn(expected, groups)
 
+    def test_search_all_groups_by_objectclass_proxy_dn_ignores_delta_timestamp(self) -> None:
+        """All groupOfNames entries under ou=groups come back mapped to roles."""
+        groups = self.rdn_values(
+            self.search(PROXY_GROUPS_BASE,
+                "(&(objectClass=groupOfNames)(modifyTimestamp>=20261118163513.0Z))"))
+        for expected in ("platform:analyst", "platform:scientist",
+                         "platform:admin", "platform:level1",
+                         "platform:level2", "platform:level3"):
+            self.assertIn(expected, groups)
+
     def test_search_all_groups_by_objectclass_proxy_dn_bypass_role_lookup(self) -> None:
         """Role lookup can be bypassed, returning the unmapped group names."""
         groups = self.rdn_values(

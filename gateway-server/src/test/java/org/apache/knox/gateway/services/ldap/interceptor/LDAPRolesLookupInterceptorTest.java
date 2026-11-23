@@ -740,6 +740,152 @@ public class LDAPRolesLookupInterceptorTest {
     }
 
     @Test
+    public void testAllGroupsSearchIgnoresDeltaSyncTimestampClauses() throws Exception {
+        // With the delta-sync fallback enabled, an incremental/delta groups query carrying a
+        // modifyTimestamp or whenChanged clause is treated as a full all-groups search returning every
+        // role, because the roles service cannot compute a delta.
+        interceptorConfig = Map.of(
+                "baseDn", "dc=proxy,dc=com",
+                LDAPRolesLookupInterceptor.IGNORE_DELTA_SYNC_TIMESTAMPS, "true");
+        for (String filter : List.of(
+                "(&(objectClass=groupOfNames)(modifyTimestamp>=20240101000000Z))",
+                "(&(objectClass=groupOfNames)(whenChanged>=20240101000000Z))",
+                "(&(objectClass=groupOfNames)(cn=*)(modifyTimestamp>=20240101000000Z))",
+                "(&(modifyTimestamp>=20240101000000Z)(whenChanged>=20240101000000Z)(objectClass=groupOfNames))",
+                "(|(&(objectClass=groupOfNames)(modifyTimestamp>=20240101000000Z))(objectClass=referral))")) {
+            final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+            expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                    "viewer", new RoleAssignees(List.of(), List.of()))).anyTimes();
+            replay(rolesService);
+
+            final TestContext testContext = createTestContext(false, rolesService);
+            testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+            testContext.ctx.setScope(SearchScope.SUBTREE);
+            testContext.ctx.setFilter(FilterParser.parse(schemaManager, filter));
+
+            assertEquals("filter " + filter, 1, collectByDn(testContext.interceptor.search(testContext.ctx)).size());
+            verify(rolesService);
+        }
+    }
+
+    @Test
+    public void testTimestampOnlyFilterIsNotAllGroupsSearch() throws Exception {
+        // Even with the delta-sync fallback enabled, a filter that is nothing but a timestamp clause has
+        // no positive groups selector left once the clause is stripped, so it must not be treated as an
+        // all-groups search.
+        interceptorConfig = Map.of(
+                "baseDn", "dc=proxy,dc=com",
+                LDAPRolesLookupInterceptor.IGNORE_DELTA_SYNC_TIMESTAMPS, "true");
+        for (String filter : List.of(
+                "(modifyTimestamp>=20240101000000Z)",
+                "(whenChanged>=20240101000000Z)",
+                "(&(modifyTimestamp>=20240101000000Z)(whenChanged>=20240101000000Z))")) {
+            final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+            expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+            replay(rolesService);
+
+            final TestContext testContext = createTestContext(false, rolesService);
+            testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+            testContext.ctx.setScope(SearchScope.SUBTREE);
+            testContext.ctx.setFilter(FilterParser.parse(schemaManager, filter));
+            testContext.nextInterceptor.setEntries(List.of());
+
+            assertTrue("filter " + filter, collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+            verify(rolesService);
+        }
+    }
+
+    @Test
+    public void testDeltaSyncFallbackDisabledByDefault() throws Exception {
+        // The fallback is off unless ignoreDeltaSyncTimestamps is explicitly enabled, so by default the
+        // timestamp clause is honored as written and this delta filter no longer matches the all-groups
+        // shape (its modifyTimestamp child is not an all-groups filter).
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.SUBTREE);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager,
+                "(&(objectClass=groupOfNames)(modifyTimestamp>=20240101000000Z))"));
+        testContext.nextInterceptor.setEntries(List.of());
+
+        assertTrue(collectByDn(testContext.interceptor.search(testContext.ctx)).isEmpty());
+        verify(rolesService);
+    }
+
+    @Test
+    public void testDeltaSyncAttributesListOverridesDefaults() throws Exception {
+        // A configured deltaSyncAttributes list replaces the modifyTimestamp/whenChanged defaults: the
+        // configured attribute (createTimestamp) is stripped and the query returns all roles, while the
+        // now-unconfigured modifyTimestamp clause is honored and is not treated as an all-groups search.
+        interceptorConfig = Map.of(
+                "baseDn", "dc=proxy,dc=com",
+                LDAPRolesLookupInterceptor.IGNORE_DELTA_SYNC_TIMESTAMPS, "true",
+                LDAPRolesLookupInterceptor.DELTA_SYNC_ATTRIBUTES, "createTimestamp");
+
+        // The configured attribute is stripped -> treated as an all-groups search.
+        final LDAPRolesLookupService strippedService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(strippedService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(strippedService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of()))).anyTimes();
+        replay(strippedService);
+
+        final TestContext strippedContext = createTestContext(false, strippedService);
+        strippedContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        strippedContext.ctx.setScope(SearchScope.SUBTREE);
+        strippedContext.ctx.setFilter(FilterParser.parse(schemaManager,
+                "(&(objectClass=groupOfNames)(createTimestamp>=20240101000000Z))"));
+
+        assertEquals(1, collectByDn(strippedContext.interceptor.search(strippedContext.ctx)).size());
+        verify(strippedService);
+
+        // modifyTimestamp is no longer in the list, so it is honored -> not an all-groups search.
+        final LDAPRolesLookupService honoredService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(honoredService.listRoles()).andReturn(List.of()).anyTimes();
+        replay(honoredService);
+
+        final TestContext honoredContext = createTestContext(false, honoredService);
+        honoredContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        honoredContext.ctx.setScope(SearchScope.SUBTREE);
+        honoredContext.ctx.setFilter(FilterParser.parse(schemaManager,
+                "(&(objectClass=groupOfNames)(modifyTimestamp>=20240101000000Z))"));
+        honoredContext.nextInterceptor.setEntries(List.of());
+
+        assertTrue(collectByDn(honoredContext.interceptor.search(honoredContext.ctx)).isEmpty());
+        verify(honoredService);
+    }
+
+    @Test
+    public void testBlankDeltaSyncAttributesListFallsBackToDefaults() throws Exception {
+        // A deltaSyncAttributes value with no usable names (only commas/whitespace) falls back to the
+        // modifyTimestamp/whenChanged defaults rather than silently disabling stripping, so an enabled
+        // fallback is never a no-op: the modifyTimestamp clause is still stripped and the query returns
+        // all roles.
+        interceptorConfig = Map.of(
+                "baseDn", "dc=proxy,dc=com",
+                LDAPRolesLookupInterceptor.IGNORE_DELTA_SYNC_TIMESTAMPS, "true",
+                LDAPRolesLookupInterceptor.DELTA_SYNC_ATTRIBUTES, " , , ");
+
+        final LDAPRolesLookupService rolesService = EasyMock.createMock(LDAPRolesLookupService.class);
+        expect(rolesService.listRoles()).andReturn(List.of()).anyTimes();
+        expect(rolesService.getAllRoleAssignees()).andReturn(Map.of(
+                "viewer", new RoleAssignees(List.of(), List.of()))).anyTimes();
+        replay(rolesService);
+
+        final TestContext testContext = createTestContext(false, rolesService);
+        testContext.ctx.setDn(new Dn(schemaManager, "ou=groups,dc=proxy,dc=com"));
+        testContext.ctx.setScope(SearchScope.SUBTREE);
+        testContext.ctx.setFilter(FilterParser.parse(schemaManager,
+                "(&(objectClass=groupOfNames)(modifyTimestamp>=20240101000000Z))"));
+
+        assertEquals(1, collectByDn(testContext.interceptor.search(testContext.ctx)).size());
+        verify(rolesService);
+    }
+
+    @Test
     public void testRootSearchWithNonGroupFilterIsNotAllGroupsSearch() throws Exception {
         for (String filter : List.of(
                 "(cn=*)",

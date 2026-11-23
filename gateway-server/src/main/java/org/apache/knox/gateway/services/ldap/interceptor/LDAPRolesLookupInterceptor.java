@@ -28,8 +28,10 @@ import org.apache.directory.api.ldap.model.entry.Value;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.filter.AndNode;
+import org.apache.directory.api.ldap.model.filter.BranchNode;
 import org.apache.directory.api.ldap.model.filter.EqualityNode;
 import org.apache.directory.api.ldap.model.filter.ExprNode;
+import org.apache.directory.api.ldap.model.filter.LeafNode;
 import org.apache.directory.api.ldap.model.filter.ObjectClassNode;
 import org.apache.directory.api.ldap.model.filter.OrNode;
 import org.apache.directory.api.ldap.model.filter.PresenceNode;
@@ -88,17 +90,43 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
     private static final List<String> REQUIRED_ATTRIBUTES = Arrays.asList("uid", "objectClass");
 
     /**
+     * Default set of attribute names (compared case-insensitively) that identify an incremental/delta
+     * groups query: a client adds such a clause to ask for only the entries changed since a previous
+     * sync. {@code modifyTimestamp} is the standard LDAP form the proxy surfaces; {@code whenChanged} is
+     * the Active Directory equivalent a client may send. Used when {@link #DELTA_SYNC_ATTRIBUTES} is not
+     * configured. See {@link #stripDeltaSyncClauses}.
+     */
+    private static final Set<String> DEFAULT_DELTA_SYNC_ATTRIBUTES = new HashSet<>(Arrays.asList("modifytimestamp", "whenchanged"));
+
+    /**
      * If true, the user id and the group names are lowercased before they are sent to the roles lookup. This lets
      * a case-sensitive roles backend match users and groups whose directory names (e.g. AD sAMAccountName or group
      * cn) differ in case from the ids the roles were assigned to.
      */
     public static final String LOWERCASE_IDS = "lowercaseIds";
 
+    /**
+     * Controls whether delta-sync clauses (clauses testing one of the {@link #deltaSyncAttributes}) are
+     * stripped before a groups filter is classified, so a delta query falls back to a full all-groups
+     * search. Disabled by default; set to {@code true} to make a delta groups query return all roles
+     * (the roles service cannot compute a delta), otherwise the clause is honored as written.
+     */
+    public static final String IGNORE_DELTA_SYNC_TIMESTAMPS = "ignoreDeltaSyncTimestamps";
+
+    /**
+     * Comma-separated list of attribute names (compared case-insensitively) whose clauses are removed
+     * from a groups search filter when {@link #IGNORE_DELTA_SYNC_TIMESTAMPS} is enabled. Defaults to
+     * {@link #DEFAULT_DELTA_SYNC_ATTRIBUTES} ({@code modifyTimestamp,whenChanged}) when not configured.
+     */
+    public static final String DELTA_SYNC_ATTRIBUTES = "deltaSyncAttributes";
+
     private final LDAPRolesLookupService rolesLookupService;
     private final String baseDn;
     private final String proxyGroupSearchBase;
     private final String proxyUserSearchBase;
     private final boolean lowercaseIds;
+    private final boolean ignoreDeltaSyncTimestamps;
+    private final Set<String> deltaSyncAttributes;
 
     /**
      * Track the number of roles. This value is used to decide whether the list or lookup
@@ -114,6 +142,30 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         this.proxyGroupSearchBase = "ou=groups," + this.baseDn;
         this.proxyUserSearchBase = "ou=people," + this.baseDn;
         this.lowercaseIds = Boolean.parseBoolean(config.get(LOWERCASE_IDS));
+        // Defaults to false: the delta-sync fallback is opt-in and only an explicit "true" enables it.
+        this.ignoreDeltaSyncTimestamps = Boolean.parseBoolean(config.get(IGNORE_DELTA_SYNC_TIMESTAMPS));
+        this.deltaSyncAttributes = parseDeltaSyncAttributes(config.get(DELTA_SYNC_ATTRIBUTES));
+    }
+
+    /**
+     * Parses the comma-separated {@link #DELTA_SYNC_ATTRIBUTES} list into a case-insensitive set of
+     * attribute names. A null or blank value falls back to {@link #DEFAULT_DELTA_SYNC_ATTRIBUTES}; an
+     * explicitly configured list replaces the default. A value that contains no usable attribute names
+     * (e.g. only commas or whitespace) also falls back to the default rather than silently disabling
+     * stripping, so an enabled fallback is never a no-op from a malformed list.
+     */
+    private static Set<String> parseDeltaSyncAttributes(String configuredValue) {
+        if (configuredValue == null || configuredValue.trim().isEmpty()) {
+            return DEFAULT_DELTA_SYNC_ATTRIBUTES;
+        }
+        final Set<String> attributes = new HashSet<>();
+        for (String attribute : configuredValue.split(",")) {
+            final String trimmed = attribute.trim();
+            if (!trimmed.isEmpty()) {
+                attributes.add(trimmed.toLowerCase(Locale.ROOT));
+            }
+        }
+        return attributes.isEmpty() ? DEFAULT_DELTA_SYNC_ATTRIBUTES : attributes;
     }
 
     @Override
@@ -160,6 +212,9 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
         Dn searchDn = ctx.getDn();
         ExprNode rawSearchFilter = ctx.getFilter();
         ExprNode searchFilter = removeReferral(rawSearchFilter);
+        if (ignoreDeltaSyncTimestamps) {
+            searchFilter = stripDeltaSyncClauses(searchFilter);
+        }
 
         if (searchDn == null) {
             return false;
@@ -193,6 +248,41 @@ public class LDAPRolesLookupInterceptor extends BaseInterceptor {
             }
         }
         return rawSearchFilter;
+    }
+
+    /**
+     * Returns a copy of the filter with every delta-sync clause (a clause testing one of the configured
+     * {@link #deltaSyncAttributes}) removed, so a delta groups query is classified as the full
+     * all-groups search it must fall back to - the roles service cannot compute a delta. A branch node
+     * (AND/OR) is rebuilt from its surviving children rather than mutated, leaving the caller's filter
+     * untouched; a branch left with no survivors, or a leaf that is itself a delta-sync clause, yields
+     * {@code null} (meaning "nothing left to match"), which the all-groups classifiers treat as not an
+     * all-groups filter. A filter with no delta-sync clause is returned unchanged.
+     */
+    private ExprNode stripDeltaSyncClauses(ExprNode filter) {
+        if (filter instanceof AndNode || filter instanceof OrNode) {
+            final List<ExprNode> survivors = new ArrayList<>();
+            for (ExprNode child : ((BranchNode) filter).getChildren()) {
+                final ExprNode stripped = stripDeltaSyncClauses(child);
+                if (stripped != null) {
+                    survivors.add(stripped);
+                }
+            }
+            if (survivors.isEmpty()) {
+                return null;
+            }
+            return filter instanceof AndNode ? new AndNode(survivors) : new OrNode(survivors);
+        }
+        return isDeltaSyncClause(filter) ? null : filter;
+    }
+
+    /** True if the node is a leaf that tests one of the configured {@link #deltaSyncAttributes}. */
+    private boolean isDeltaSyncClause(ExprNode filter) {
+        if (filter instanceof LeafNode) {
+            final String attribute = ((LeafNode) filter).getAttribute();
+            return attribute != null && deltaSyncAttributes.contains(attribute.toLowerCase(Locale.ROOT));
+        }
+        return false;
     }
 
     private boolean isGroupObjectClassFilter(ExprNode filter) {

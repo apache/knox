@@ -151,6 +151,10 @@ limitations under the License.
         <name>gateway.ldap.interceptor.roleslookup.lowercaseIds</name>
         <value>true</value>
     </property>
+    <property>
+        <name>gateway.ldap.interceptor.roleslookup.ignoreDeltaSyncTimestamps</name>
+        <value>true</value>
+    </property>
 
     <!-- Roles Lookup Configuration: REST strategy against the roles-api mock -->
     <property>
