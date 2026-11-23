@@ -104,7 +104,7 @@ public class SetCookieHeader {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(name);
-        sb.append('=').append(value);
+        sb.append('=').append(value == null ? "" : value);
 
         if(path != null) {
             sb.append("; Path=").append(path);
