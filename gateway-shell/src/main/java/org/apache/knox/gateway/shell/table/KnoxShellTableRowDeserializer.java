@@ -18,13 +18,6 @@
 package org.apache.knox.gateway.shell.table;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,7 +31,6 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
  * <ul>
  * <li>Jackson is not capable of constructing instance of `java.lang.Comparable`
  * (which we have in the table cells)</li>
- * <li><code>callHistory</code> deserialization requires special handling
  * </ul>
  *
  */
@@ -59,82 +51,10 @@ public class KnoxShellTableRowDeserializer extends StdDeserializer<KnoxShellTabl
   @Override
   public KnoxShellTable deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
     final TreeNode jsonContent = parser.readValueAsTree();
-    if (jsonContent.get("callHistoryList") != null) {
-      return parseJsonWithCallHistory(jsonContent);
-    } else {
-      return parseJsonWithData(jsonContent);
+    if (!jsonContent.isObject() || jsonContent.get("callHistoryList") != null) {
+      throw new IOException("Importing a KnoxShellTable call history is not supported; only table data (title, headers and rows) can be imported");
     }
-  }
-
-  private KnoxShellTable parseJsonWithCallHistory(TreeNode jsonContent) throws IOException {
-    final List<KnoxShellTableCall> calls = parseCallHistoryListJSONNode(jsonContent.get("callHistoryList"));
-    long tempId = KnoxShellTable.getUniqueTableId();
-    KnoxShellTableCallHistory.getInstance().saveCalls(tempId, calls);
-    final KnoxShellTable tableFromJson = KnoxShellTableCallHistory.getInstance().replay(tempId, calls.size());
-    table.rows = tableFromJson.rows;
-    KnoxShellTableCallHistory.getInstance().removeCallsById(tempId);
-    KnoxShellTableCallHistory.getInstance().removeCallsById(tableFromJson.id);
-    return table;
-  }
-
-  private List<KnoxShellTableCall> parseCallHistoryListJSONNode(TreeNode callHistoryNode) throws IOException {
-    final List<KnoxShellTableCall> callHistoryList = new LinkedList<>();
-    TreeNode callNode;
-    Map<Object, Class<?>> params;
-    String invokerClass, method;
-    Boolean builderMethod;
-    for (int i = 0; i < callHistoryNode.size(); i++) {
-      callNode = callHistoryNode.get(i);
-      invokerClass = trimJSONQuotes(callNode.get("invokerClass").toString());
-      method = trimJSONQuotes(callNode.get("method").toString());
-      builderMethod = Boolean.valueOf(trimJSONQuotes(callNode.get("builderMethod").toString()));
-      params = fetchParameterMap(callNode.get("params"));
-      callHistoryList.add(new KnoxShellTableCall(invokerClass, method, builderMethod, params));
-    }
-    return callHistoryList;
-  }
-
-  private Map<Object, Class<?>> fetchParameterMap(TreeNode paramsNode) throws IOException {
-    try {
-      final Map<Object, Class<?>> parameterMap = new HashMap<>();
-      final Iterator<String> paramsFieldNamesIterator = paramsNode.fieldNames();
-      String parameterValueAsString;
-      Class<?> parameterType;
-      while (paramsFieldNamesIterator.hasNext()) {
-        parameterValueAsString = trimJSONQuotes(paramsFieldNamesIterator.next());
-        parameterType = Class.forName(trimJSONQuotes(paramsNode.get(parameterValueAsString).toString()));
-        parameterMap.put(cast(parameterValueAsString, parameterType), parameterType);
-      }
-      return parameterMap;
-    } catch (Exception e) {
-      throw new IOException("Error while fetching parameters " + paramsNode, e);
-    }
-  }
-
-  // This may be done in a different way or using a library; I did not find any (I
-  // did not do a deep search though)
-  private Object cast(String valueAsString, Class<?> type) throws ParseException {
-    if (String.class == type) {
-      return valueAsString;
-    } else if (Byte.class == type) {
-      return Byte.valueOf(valueAsString);
-    } else if (Short.class == type) {
-      return Short.valueOf(valueAsString);
-    } else if (Integer.class == type) {
-      return Integer.valueOf(valueAsString);
-    } else if (Long.class == type) {
-      return Long.valueOf(valueAsString);
-    } else if (Float.class == type) {
-      return Float.valueOf(valueAsString);
-    } else if (Double.class == type) {
-      return Double.valueOf(valueAsString);
-    } else if (Boolean.class == type) {
-      return Boolean.valueOf(valueAsString);
-    } else if (Date.class == type) {
-      return KnoxShellTableJSONSerializer.JSON_DATE_FORMAT.get().parse(valueAsString);
-    }
-
-    return type.cast(valueAsString); // may throw ClassCastException
+    return parseJsonWithData(jsonContent);
   }
 
   private KnoxShellTable parseJsonWithData(final TreeNode jsonContent) {
