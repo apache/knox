@@ -75,11 +75,6 @@
             originalUrl = "";
         }
         originalUrl = originalUrl.replaceAll("&", "%26");
-        String themeParam = request.getParameter("theme");
-        // Keep pattern in sync with KNOX_THEME_NAME_PATTERN in theme-config.js
-        if (themeParam != null && !themeParam.matches("^[a-zA-Z0-9_-]{1,64}$")) {
-            themeParam = null;
-        }
         Topology topology = (Topology)request.getSession().getServletContext().getAttribute("org.apache.knox.gateway.topology");
         String whitelist = null;
         String cookieName = null;
@@ -192,22 +187,12 @@
           <div class="signout-content l2-logo">
               <h1 class="signout-title">Session Termination</h1>
               <p class="signout-message">
-                Your session has timed out or you have logged out of an application that uses SSO.
-                Use <strong>Sign in again</strong> to open the login page and authenticate.
-                If your Knox SSO session is still valid, choose <strong>Return to application</strong>
-                to go back without entering credentials again.
+                Your session has timed out or you have attempted to logout of an application
+                that is participating in SSO. You may establish a new session by returning to
+                the application. If your previously established SSO session is still valid then
+                you will likely be automatically logged into your application. Otherwise, you
+                will be required to login again.
               </p>
-              <form action="login.html" method="get" accept-charset="utf-8">
-                <fieldset>
-                  <input type="hidden" name="originalUrl" value="<%= StringEscapeUtils.escapeHtml4(originalUrl) %>"/>
-                  <% if (themeParam != null) { %>
-                  <input type="hidden" name="theme" value="<%= StringEscapeUtils.escapeHtml4(themeParam) %>"/>
-                  <% } %>
-                  <button type="submit" class="btn btn-primary w-100" id="signOut" style="position: relative; text-align: center;">
-                    <span>Sign in again</span>
-                  </button>
-                </fieldset>
-              </form>
               <p class="signout-secondary">
                 <a href="?returnToApp=1&amp;originalUrl=<%= StringEscapeUtils.escapeHtml4(originalUrl) %>">Return to application</a>
               </p>
