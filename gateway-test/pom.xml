@@ -329,7 +329,6 @@
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-web</artifactId>
             <scope>test</scope>
-   <classifier>jakarta</classifier>
         </dependency>
 
         <dependency>

@@ -277,7 +277,7 @@
         <purejavacomm.version>0.0.11.1</purejavacomm.version>
         <pty4j.version>0.12.4</pty4j.version>
         <rest-assured.version>6.0.0</rest-assured.version>
-        <shiro.version>2.2.1</shiro.version>
+        <shiro.version>3.0.2</shiro.version>
         <shrinkwrap.version>1.2.6</shrinkwrap.version>
         <shrinkwrap.descriptors.version>2.0.0</shrinkwrap.descriptors.version>
         <slf4j.version>2.0.13</slf4j.version>
@@ -2490,13 +2490,11 @@
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-core</artifactId>
                 <version>${shiro.version}</version>
-                <classifier>jakarta</classifier>
             </dependency>
             <dependency>
                 <groupId>org.apache.shiro</groupId>
                 <artifactId>shiro-web</artifactId>
                 <version>${shiro.version}</version>
-                <classifier>jakarta</classifier>
             </dependency>
             <dependency>
                 <groupId>org.apache.shiro</groupId>
