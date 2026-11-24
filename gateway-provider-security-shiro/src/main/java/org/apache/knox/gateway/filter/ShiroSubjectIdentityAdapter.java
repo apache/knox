@@ -181,11 +181,11 @@ public class ShiroSubjectIdentityAdapter implements Filter {
               .getAttribute(SUBJECT_USER_GROUPS);
         } else { // KnoxLdapRealm case
           if (shiroSubject.getPrincipal() instanceof String) {
-            userGroups = new HashSet<>(shiroSubject.getPrincipals().asSet());
+            userGroups = new HashSet<>(shiroSubject.getPrincipals().byType(String.class));
             userGroups.remove(principal);
           } else { // KnoxPamRealm case
             Set<Principal> shiroPrincipals = new HashSet<>(
-                shiroSubject.getPrincipals().asSet());
+                shiroSubject.getPrincipals().byType(Principal.class));
             userGroups = new HashSet<>(); // Here we are creating a new UserGroup
             // so we don't need to remove a Principal
             // In the case of LDAP the userGroup may have already Principal

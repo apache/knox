@@ -38,6 +38,11 @@ public class ShiroConfig {
     params.putIfAbsent("main.invalidRequest.blockBackslash", "false");
     params.putIfAbsent("main.invalidRequest.blockNonAscii", "false");
     params.putIfAbsent("main.invalidRequest.blockEncodedForwardSlash", "false");
+    // Shiro 3 denies requests not matching any [urls] pattern by default (redirect to login.jsp);
+    // let them through so ShiroSubjectIdentityAdapter can reject them with a meaningful error.
+    // The bean is declared explicitly because non-web environments (e.g. KnoxCLI) do not predefine it.
+    params.putIfAbsent("main.filterChainResolver", "org.apache.shiro.web.config.IniFilterChainResolverFactory");
+    params.putIfAbsent("main.filterChainResolver.allowAccessByDefault", "true");
 
     for(Entry<String, String> entry : params.entrySet()) {
       int sectionDot = entry.getKey().indexOf('.');
