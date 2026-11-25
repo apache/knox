@@ -379,6 +379,15 @@ public interface GatewayMessages {
   @Message( level = MessageLevel.WARN, text = "Value not found for cluster:{0}, alias: {1}" )
   void aliasValueNotFound( String cluster, String alias );
 
+  @Message( level = MessageLevel.INFO, text = "Using the gateway HTTP client truststore for LDAPS connections" )
+  void usingHttpClientTruststoreForLdaps();
+
+  @Message( level = MessageLevel.WARN, text = "The JVM default truststore is disabled (javax.net.ssl.trustStore=NONE) and no gateway HTTP client truststore is configured, LDAPS connections will fail certificate validation" )
+  void noHttpClientTruststoreForLdaps();
+
+  @Message( level = MessageLevel.ERROR, text = "Failed to create the LDAPS socket factory from the gateway HTTP client truststore, LDAPS connections will use the JVM default truststore: {0}" )
+  void failedToCreateLdapsSocketFactory(String message, @StackTrace( level = MessageLevel.DEBUG ) Exception e);
+
   @Message( level = MessageLevel.INFO, text = "Computed userDn: {0} using dnTemplate for principal: {1}" )
   void computedUserDn(String userDn, String principal);
 
