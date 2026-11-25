@@ -42,9 +42,9 @@ The following builders aid in the creation of tables from various types of data 
 ```
 
     ports = KnoxShellTable.builder().jdbc().
-      connect("jdbc:hive2://knox-host:8443/;ssl=true;transportMode=http;httpPath=topology/cdp-proxy-api/hive").
+      connectTo("jdbc:hive2://knox-host:8443/;ssl=true;transportMode=http;httpPath=topology/cdp-proxy-api/hive").
       driver("org.apache.hive.jdbc.HiveDriver").
-      username("lmccay").pwd("xxxx").
+      username("lmccay").password("xxxx").
       sql("select * FROM ports");
 ```
 
@@ -73,7 +73,7 @@ Running the above within KnoxShell will import a join the two tables with a simp
 #### JSON
 ```
 tornados = KnoxShellTable.builder().json().
-  url("file:///home/lmccay/.knoxshell/.tables/tornados.json")
+  path("/home/lmccay/.knoxshell/.tables/tornados.json")
 ```
 Running the above within KnoxShell will rematerialize a table that was persisted as JSON and assign it to a local "tornados" variable.
 
@@ -91,7 +91,7 @@ In addition, we may want to be able to write it directly to Hive or another JDBC
 ```
 tornados.toJSON()
 ```
-The above will return and render a JSON representation of the tornados KnoxShellTable including: headers, rows, optionally title and optionally callHistory.
+The above will return and render a JSON representation of the tornados KnoxShellTable including: headers, rows and optionally title. This is the format that `KnoxShellTable.builder().json()` can import. `tornados.toJSON(false)` renders only the call history that built the table; it is meant for inspection and cannot be imported.
 ##### CSV
 
 ```
@@ -121,9 +121,9 @@ KnoxLine SQL Client requires a tabular representation of the data from a SQL/JDB
 
 ```
 ports = KnoxShellTable.builder().jdbc().
-  connect("jdbc:hive2://knox-host:8443/;ssl=true;transportMode=http;httpPath=topology/datalake-api/hive").
+  connectTo("jdbc:hive2://knox-host:8443/;ssl=true;transportMode=http;httpPath=topology/datalake-api/hive").
   driver("org.apache.hive.jdbc.HiveDriver").
-  username("lmccay").pwd("xxxx").
+  username("lmccay").password("xxxx").
   sql("select * FROM ports");
 ```
 

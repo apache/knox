@@ -138,6 +138,17 @@ public class KnoxShellTableCallHistoryTest {
     assertEquals("14", table.values(0).get(13)); // selected the first column (ZIP) where the last element - index 13 - is 14
   }
 
+  @Test
+  public void shouldNotReplayCallsOnNonTableClasses() {
+    final long id = KnoxShellTable.getUniqueTableId();
+    KnoxShellTableCallHistory.getInstance().saveCall(id,
+        new KnoxShellTableCall("java.lang.Runtime", "getRuntime", true, Collections.emptyMap()));
+
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("Replaying calls on java.lang.Runtime is not allowed");
+    KnoxShellTableCallHistory.getInstance().replay(id, 1);
+  }
+
   private void recordCallHistory(long id, int steps) {
     for (int i = 0; i < steps; i++) {
       KnoxShellTableCallHistory.getInstance().saveCall(id, CALL_LIST.get(i));
