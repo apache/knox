@@ -29,7 +29,6 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.AliasService;
 import org.apache.knox.gateway.services.security.AliasServiceException;
-import org.apache.knox.gateway.services.security.CryptoService;
 import org.apache.knox.gateway.services.security.KeystoreService;
 import org.apache.knox.gateway.services.security.KeystoreServiceException;
 import org.apache.knox.gateway.services.security.MasterService;
@@ -150,25 +149,23 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
   public void init( FilterConfig filterConfig ) throws ServletException {
     // JWT service
     final ServletContext context = filterConfig.getServletContext();
-    CryptoService cryptoService = null;
     String clusterName = null;
     if (context != null) {
       GatewayServices services = (GatewayServices) context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
       clusterName = (String) context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE);
       if (services != null) {
         keystoreService = services.getService(ServiceType.KEYSTORE_SERVICE);
-        cryptoService = services.getService(ServiceType.CRYPTO_SERVICE);
         aliasService = services.getService(ServiceType.ALIAS_SERVICE);
         masterService = services.getService(ServiceType.MASTER_SERVICE);
       }
     }
-    // crypto service, alias service and cluster name are mandatory
-    if (cryptoService == null || aliasService == null || clusterName == null) {
-      log.cryptoServiceAndAliasServiceAndClusterNameRequired();
-      throw new ServletException("The crypto service, alias service and cluster name are required.");
+    if (aliasService == null || clusterName == null) {
+      log.aliasServiceAndClusterNameRequired();
+      throw new ServletException("The alias service and cluster name are required.");
     }
+    final char[] sessionPassword;
     try {
-      aliasService.getPasswordFromAliasForCluster(clusterName, KnoxSessionStore.PAC4J_PASSWORD, true);
+      sessionPassword = aliasService.getPasswordFromAliasForCluster(clusterName, KnoxSessionStore.PAC4J_PASSWORD, true);
     } catch (AliasServiceException e) {
       log.unableToGenerateAPasswordForEncryption(e);
       throw new ServletException("Unable to generate a password for encryption.");
@@ -255,20 +252,26 @@ public class Pac4jDispatcherFilter implements Filter, SessionInvalidator {
     final String domainSuffix = filterConfig.getInitParameter(PAC4J_COOKIE_DOMAIN_SUFFIX_PARAM);
     final String sessionStoreVar = filterConfig.getInitParameter(PAC4J_SESSION_STORE);
 
+    GatewayConfig gatewayConfig = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
+
     SessionStore sessionStore;
 
     if(!StringUtils.isBlank(sessionStoreVar) && JEESessionStore.class.getName().contains(sessionStoreVar) ) {
       /* NOTE: this is a final variable, and will be used by all requests in Knox */
       sessionStore = new JEESessionStore();
     } else {
-      sessionStore = new KnoxSessionStore(cryptoService, clusterName, domainSuffix, sessionStoreConfigs);
+      try {
+        sessionStore = new KnoxSessionStore(sessionPassword, gatewayConfig, clusterName, domainSuffix, sessionStoreConfigs);
+      } catch (IllegalArgumentException e) {
+        log.unableToInitializeSessionStore(e.getMessage());
+        throw new ServletException("Unable to initialize the pac4j session store.", e);
+      }
     }
 
     config.setSessionStoreFactory((FrameworkParameters parameters) -> sessionStore);
 
     SessionInvalidators.KNOX_SSO_INVALIDATOR.registerSessionInvalidator(this);
 
-    GatewayConfig gatewayConfig = (GatewayConfig) context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE);
     SSL_ENABLED = gatewayConfig.isSSLEnabled();
   }
 
