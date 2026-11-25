@@ -56,6 +56,8 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
     static final String SOCKET_FACTORY_ENV = "java.naming.ldap.factory.socket";
     private static final String LDAPS_SCHEME = "ldaps://";
     private static final String SSL_SECURITY_PROTOCOL = "ssl";
+    private static final String JVM_TRUSTSTORE_PROPERTY = "javax.net.ssl.trustStore";
+    private static final String JVM_TRUSTSTORE_NONE = "NONE";
     private static final AtomicBoolean LDAPS_SOCKET_FACTORY_INITIALIZED = new AtomicBoolean();
     private String systemAuthenticationMechanism = "simple";
     private String clusterName = "";
@@ -76,7 +78,7 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     void configureLdapsSocketFactory(Hashtable env) {
-        if (env.containsKey(SOCKET_FACTORY_ENV) || !isFipsEnabled() || !isLdaps(env)) {
+        if (env.containsKey(SOCKET_FACTORY_ENV) || !isFipsEnabled() || !isJvmDefaultTruststoreDisabled() || !isLdaps(env)) {
             return;
         }
         initLdapsSocketFactory();
@@ -109,6 +111,10 @@ public class KnoxLdapContextFactory extends JndiLdapContextFactory {
             }
             LDAPS_SOCKET_FACTORY_INITIALIZED.set(true);
         }
+    }
+
+    protected boolean isJvmDefaultTruststoreDisabled() {
+        return JVM_TRUSTSTORE_NONE.equalsIgnoreCase(System.getProperty(JVM_TRUSTSTORE_PROPERTY, "").trim());
     }
 
     protected boolean isFipsEnabled() {

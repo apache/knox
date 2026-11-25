@@ -179,6 +179,17 @@ public class KnoxLdapContextFactoryTest {
     }
 
     @Test
+    public void testFipsWithJvmTruststoreConfiguredIsNotChanged() throws Exception {
+        final TruststoreTestContextFactory factory = new TruststoreTestContextFactory(true, false, emptyTruststore());
+        final Hashtable<String, Object> env = env("ldaps://ad.example.com");
+
+        factory.configureLdapsSocketFactory(env);
+
+        assertFalse(env.containsKey(KnoxLdapContextFactory.SOCKET_FACTORY_ENV));
+        assertEquals(0, factory.truststoreLookups);
+    }
+
+    @Test
     public void testPlainLdapIsNotChanged() throws Exception {
         final TruststoreTestContextFactory factory = new TruststoreTestContextFactory(true, emptyTruststore());
         final Hashtable<String, Object> env = env("ldap://ad.example.com:389");
@@ -240,17 +251,28 @@ public class KnoxLdapContextFactoryTest {
 
     private static class TruststoreTestContextFactory extends KnoxLdapContextFactory {
         private final boolean fips;
+        private final boolean jvmTruststoreDisabled;
         private final KeyStore truststore;
         private int truststoreLookups;
 
         TruststoreTestContextFactory(boolean fips, KeyStore truststore) {
+            this(fips, true, truststore);
+        }
+
+        TruststoreTestContextFactory(boolean fips, boolean jvmTruststoreDisabled, KeyStore truststore) {
             this.fips = fips;
+            this.jvmTruststoreDisabled = jvmTruststoreDisabled;
             this.truststore = truststore;
         }
 
         @Override
         protected boolean isFipsEnabled() {
             return fips;
+        }
+
+        @Override
+        protected boolean isJvmDefaultTruststoreDisabled() {
+            return jvmTruststoreDisabled;
         }
 
         @Override
