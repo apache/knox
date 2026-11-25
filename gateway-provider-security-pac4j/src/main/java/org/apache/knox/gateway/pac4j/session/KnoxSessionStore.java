@@ -45,6 +45,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -215,13 +216,14 @@ public class KnoxSessionStore implements SessionStore {
             try {
                 final Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey, SECURE_RANDOM);
-                cipher.updateAAD(cookieName.getBytes(StandardCharsets.UTF_8));
-                final byte[] encrypted = cipher.doFinal(bytes);
                 final byte[] nonce = cipher.getIV();
-                final int tagLength = cipher.getParameters().getParameterSpec(GCMParameterSpec.class).getTLen();
-                if (nonce == null || nonce.length != NONCE_LENGTH || tagLength != TAG_LENGTH_BITS) {
+                final AlgorithmParameters parameters = cipher.getParameters();
+                if (nonce == null || nonce.length != NONCE_LENGTH || parameters == null
+                    || parameters.getParameterSpec(GCMParameterSpec.class).getTLen() != TAG_LENGTH_BITS) {
                     throw new TechnicalException("Unexpected AES-GCM parameters from provider " + cipher.getProvider().getName());
                 }
+                cipher.updateAAD(cookieName.getBytes(StandardCharsets.UTF_8));
+                final byte[] encrypted = cipher.doFinal(bytes);
                 final byte[] out = ByteBuffer.allocate(nonce.length + encrypted.length).put(nonce).put(encrypted).array();
                 return Base64.getUrlEncoder().withoutPadding().encodeToString(out);
             } catch (final GeneralSecurityException e) {
