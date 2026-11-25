@@ -78,6 +78,7 @@ public class Pac4jProviderTest {
 
         final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
@@ -179,6 +180,7 @@ public class Pac4jProviderTest {
 
         final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
@@ -278,6 +280,7 @@ public class Pac4jProviderTest {
 
         final ServletContext context = EasyMock.createNiceMock(ServletContext.class);
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
@@ -376,6 +379,7 @@ public class Pac4jProviderTest {
 
         ServletContext context = EasyMock.createNiceMock(ServletContext.class);
         GatewayConfig gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
+        EasyMock.replay(gatewayConfig);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(services);
         EasyMock.expect(context.getAttribute(GatewayServices.GATEWAY_CLUSTER_ATTRIBUTE)).andReturn(CLUSTER_NAME);
         EasyMock.expect(context.getAttribute(GatewayConfig.GATEWAY_CONFIG_ATTRIBUTE)).andReturn(gatewayConfig);
