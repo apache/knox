@@ -35,11 +35,14 @@ public interface Pac4jMessages {
   @Message( level = MessageLevel.ERROR, text = "At least one pac4j client must be defined")
   void atLeastOnePac4jClientMustBeDefined();
 
-  @Message( level = MessageLevel.ERROR, text = "Crypto service, alias service and cluster name required")
-  void cryptoServiceAndAliasServiceAndClusterNameRequired();
+  @Message( level = MessageLevel.ERROR, text = "Alias service and cluster name required")
+  void aliasServiceAndClusterNameRequired();
 
   @Message( level = MessageLevel.ERROR, text = "Unable to generate a password for encryption")
   void unableToGenerateAPasswordForEncryption(Exception e);
+
+  @Message( level = MessageLevel.ERROR, text = "Unable to initialize the pac4j session store: {0}")
+  void unableToInitializeSessionStore(String message);
 
   @Message( level = MessageLevel.INFO, text =
       "No private key passphrase alias found. Defaulting to master secret. Exception encountered: {0}")
