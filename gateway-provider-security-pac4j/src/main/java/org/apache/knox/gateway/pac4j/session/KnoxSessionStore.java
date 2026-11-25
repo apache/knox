@@ -213,12 +213,15 @@ public class KnoxSessionStore implements SessionStore {
             }
 
             try {
-                final byte[] nonce = new byte[NONCE_LENGTH];
-                SECURE_RANDOM.nextBytes(nonce);
                 final Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-                cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BITS, nonce));
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey, SECURE_RANDOM);
                 cipher.updateAAD(cookieName.getBytes(StandardCharsets.UTF_8));
                 final byte[] encrypted = cipher.doFinal(bytes);
+                final byte[] nonce = cipher.getIV();
+                final int tagLength = cipher.getParameters().getParameterSpec(GCMParameterSpec.class).getTLen();
+                if (nonce == null || nonce.length != NONCE_LENGTH || tagLength != TAG_LENGTH_BITS) {
+                    throw new TechnicalException("Unexpected AES-GCM parameters from provider " + cipher.getProvider().getName());
+                }
                 final byte[] out = ByteBuffer.allocate(nonce.length + encrypted.length).put(nonce).put(encrypted).array();
                 return Base64.getUrlEncoder().withoutPadding().encodeToString(out);
             } catch (final GeneralSecurityException e) {

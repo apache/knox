@@ -228,6 +228,16 @@ public class KnoxSessionStoreTest {
   }
 
   @Test
+  public void testNonceIsUniquePerCookie() {
+    final KnoxSessionStore sessionStore = newStore(PASSWORD, null);
+    final String first = write(sessionStore, Pac4jConstants.USER_PROFILES, profiles("alice"));
+    final String second = write(sessionStore, Pac4jConstants.USER_PROFILES, profiles("alice"));
+    Assert.assertFalse(Arrays.equals(Arrays.copyOf(decode(first), 12), Arrays.copyOf(decode(second), 12)));
+    Assert.assertEquals("alice", readProfileId(sessionStore, USER_PROFILES_COOKIE, first));
+    Assert.assertEquals("alice", readProfileId(sessionStore, USER_PROFILES_COOKIE, second));
+  }
+
+  @Test
   public void testTamperedCookieIsIgnored() {
     final KnoxSessionStore sessionStore = newStore(PASSWORD, null);
     final String value = write(sessionStore, Pac4jConstants.USER_PROFILES, profiles("alice"));
