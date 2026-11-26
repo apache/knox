@@ -230,15 +230,19 @@ how long a user may take on the consent and login pages; expired entries are ign
 deleted every `gateway.knoxidf.authz.flow.state.cleanup.interval.secs` (default `60`). With the JDBC
 implementation, every instance runs that cleanup; it is a single `DELETE` of expired rows, which
 uses the `KNOXIDF_AUTHZ_FLOW_STATE_EXP` index on `expires_at`. The table and the index are created
-at startup if missing. If a write fails, the flow ends with `server_error` rather than continuing
-without its state.
+at startup if missing. If the state cannot be read or written, the flow ends with `server_error`
+rather than continuing without it; if storing the federated login state fails, the login page
+offers only the local login. A failed read on the OP callback deletes nothing, so the user can
+reload the callback page once the database is back.
 
 Federated login state is written only for requests to the authorize endpoint
 (`.../knoxidf/api/v1/authorize`). An unauthenticated request to any other path of the topology is
 redirected to the login page without the federated OP options and stores nothing.
 
 No OP client secrets are stored: the federated login state records only the OP names, client IDs
-and endpoints, and the callback resolves the OP's full configuration from the topology.
+and endpoints, and the callback resolves the OP's full configuration from the topology. As a
+consequence, removing or renaming a federated OP in the topology breaks logins already in progress
+with that OP: the callback fails with `invalid_request` and the user has to start the login again.
 
 The issued tokens themselves are verifiable on any instance, whichever implementation is used.
 

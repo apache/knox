@@ -36,6 +36,7 @@ public interface AuthzFlowStateService extends Service {
 
   /**
    * @return the payload stored under the kind and id, or empty if there is none or it expired
+   * @throws AuthzFlowStateServiceException if the state cannot be read
    */
   Optional<String> get(AuthzFlowStateKind kind, String id);
 
@@ -44,6 +45,7 @@ public interface AuthzFlowStateService extends Service {
    * one gets the payload.
    *
    * @return the payload, or empty if there is none, it expired or another caller consumed it
+   * @throws AuthzFlowStateServiceException if the state cannot be read
    */
   Optional<String> consume(AuthzFlowStateKind kind, String id);
 

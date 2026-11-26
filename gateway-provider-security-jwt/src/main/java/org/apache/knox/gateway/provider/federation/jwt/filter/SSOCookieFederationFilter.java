@@ -371,8 +371,8 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
               .sorted(Comparator.comparing(FederatedOpConfiguration::getName))
               .map(FederatedOpLoginOption::of)
               .collect(Collectors.toList());
+      final AuthzFlowStateStore authzFlowStateStore = AuthzFlowStateStore.get(request.getServletContext());
       try {
-        final AuthzFlowStateStore authzFlowStateStore = AuthzFlowStateStore.get(request.getServletContext());
         authzFlowStateStore.putAuthorizeRequest(loginSessionId, KnoxIDFUtils.buildAuthRequestMetadata(request));
         authzFlowStateStore.putFederatedOpOptions(loginSessionId, loginOptions);
         final List<String> opNames = loginOptions.stream().map(FederatedOpLoginOption::getName).collect(Collectors.toList());
@@ -384,6 +384,8 @@ public class SSOCookieFederationFilter extends AbstractJWTFilter {
       } catch (AuthzFlowStateServiceException e) {
         // Without the stored state the OP callback could not complete; offer the local login only.
         LOGGER.unableToStoreFederatedLoginState(e.getMessage());
+        // No URL carries this id, so a stored authorize request could never be used
+        authzFlowStateStore.removeAuthorizeRequest(loginSessionId);
       }
     }
 

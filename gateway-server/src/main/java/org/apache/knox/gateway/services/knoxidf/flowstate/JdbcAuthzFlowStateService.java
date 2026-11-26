@@ -112,7 +112,7 @@ public class JdbcAuthzFlowStateService implements AuthzFlowStateService {
       return database.select(kind.id(), id, clock.millis());
     } catch (SQLException e) {
       LOG.errorReadingAuthzFlowState(kind.id(), e.getMessage(), e);
-      return Optional.empty();
+      throw readFailure(e);
     }
   }
 
@@ -125,7 +125,7 @@ public class JdbcAuthzFlowStateService implements AuthzFlowStateService {
       return database.consume(kind.id(), id, clock.millis());
     } catch (SQLException e) {
       LOG.errorReadingAuthzFlowState(kind.id(), e.getMessage(), e);
-      return Optional.empty();
+      throw readFailure(e);
     }
   }
 
@@ -152,5 +152,10 @@ public class JdbcAuthzFlowStateService implements AuthzFlowStateService {
       LOG.errorRemovingExpiredAuthzFlowState(e.getMessage(), e);
       return 0;
     }
+  }
+
+  // Not reported as an absent entry: that would end the flow with a client error.
+  private static AuthzFlowStateServiceException readFailure(SQLException e) {
+    return new AuthzFlowStateServiceException("An error occurred while reading KnoxIDF authorization flow state from the database", e);
   }
 }

@@ -336,22 +336,37 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
                 detail = "reason=missing_state_or_code";
                 return error("invalid_request", "Missing state or code");
             }
-            // Single-use across all gateway instances, so a replayed callback is rejected. The state is
-            // the login-session id, under which the selected OP and its nonce are stored too.
-            final AuthorizeRequestMetadata authorizeRequestMetadata = authzFlowStateStore.consumeAuthorizeRequest(state).orElse(null);
+            // The state is the login-session id, under which the selected OP and its nonce are stored
+            // too. Consuming the authorize request is the only destructive step and comes after every
+            // other read, so if the database fails before it, reloading the callback still works.
+            final AuthorizeRequestMetadata authorizeRequestMetadata;
+            final FederatedOpSelection federatedOpSelection;
+            final FederatedOpConfiguration federatedOpConfiguration;
+            try {
+                federatedOpSelection = authzFlowStateStore.getFederatedOpSelection(state).orElse(null);
+                if (federatedOpSelection == null) {
+                    detail = "reason=unknown_state";
+                    return error("invalid_request", "Unknown or expired state");
+                }
+                // The flow state holds no secrets; the OP configuration comes from this topology.
+                federatedOpConfiguration = FederatedOpConfigurationFactory.createFederatedOpConfiguration(servletContext)
+                        .get(federatedOpSelection.opName());
+                if (federatedOpConfiguration == null) {
+                    detail = "reason=no_op_configuration";
+                    return error("invalid_request", "No federated OP configuration available for the request");
+                }
+                // Single-use across all gateway instances, so a replayed callback is rejected.
+                authorizeRequestMetadata = authzFlowStateStore.consumeAuthorizeRequest(state).orElse(null);
+            } catch (AuthzFlowStateServiceException e) {
+                detail = "reason=flow_state_unavailable";
+                return error("server_error", "Could not read the authorization request");
+            }
             if (authorizeRequestMetadata == null) {
                 detail = "reason=unknown_state";
                 return error("invalid_request", "Unknown or expired state");
             }
-            final FederatedOpSelection federatedOpSelection = authzFlowStateStore.consumeFederatedOpSelection(state).orElse(null);
+            authzFlowStateStore.removeFederatedOpSelection(state);
             authzFlowStateStore.removeFederatedOpOptions(state);
-            // The flow state holds no secrets; the OP configuration comes from this topology.
-            final FederatedOpConfiguration federatedOpConfiguration = federatedOpSelection == null ? null
-                    : FederatedOpConfigurationFactory.createFederatedOpConfiguration(servletContext).get(federatedOpSelection.opName());
-            if (federatedOpConfiguration == null) {
-                detail = "reason=no_op_configuration";
-                return error("invalid_request", "No federated OP configuration available for the request");
-            }
             opName = federatedOpConfiguration.getName();
             final String expectedNonce = federatedOpSelection.nonce();
             final Pair<String, String> federatedTokens;
@@ -417,7 +432,14 @@ public class AuthorizeResource extends PasscodeTokenResourceBase {
             return error("invalid_request", "Missing state");
         }
         // Single-use across all gateway instances, so the consent POST cannot be replayed.
-        final AuthorizeRequestMetadata authorizeRequestMetadata = authzFlowStateStore.consumeAuthorizeRequest(state).orElse(null);
+        final AuthorizeRequestMetadata authorizeRequestMetadata;
+        try {
+            authorizeRequestMetadata = authzFlowStateStore.consumeAuthorizeRequest(state).orElse(null);
+        } catch (AuthzFlowStateServiceException e) {
+            KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.UNKNOWN, ResourceType.PRINCIPAL,
+                    ActionOutcome.FAILURE, "event=consent reason=flow_state_unavailable");
+            return error("server_error", "Could not read the authorization request");
+        }
         if (authorizeRequestMetadata == null) {
             KnoxIDFAudit.audit(Action.AUTHORIZATION, KnoxIDFAudit.UNKNOWN, ResourceType.PRINCIPAL,
                     ActionOutcome.FAILURE, "event=consent reason=invalid_or_expired_state");

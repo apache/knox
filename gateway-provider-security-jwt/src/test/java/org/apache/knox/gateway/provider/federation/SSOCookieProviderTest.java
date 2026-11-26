@@ -26,6 +26,7 @@ import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateKind;
 import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateService;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
@@ -488,6 +489,26 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     Assert.assertTrue(loginURL, loginURL.contains("federatedOpLoginSession="));
     Assert.assertTrue(loginURL, loginURL.contains("federatedOpNames=keycloak"));
     EasyMock.verify(flowStateService);
+  }
+
+  @Test
+  public void testFailedFederatedLoginStateIsRemoved() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+    final AuthzFlowStateService flowStateService = EasyMock.createMock(AuthzFlowStateService.class);
+    final Capture<String> storedId = EasyMock.newCapture();
+    final Capture<String> removedId = EasyMock.newCapture();
+    flowStateService.put(EasyMock.eq(AuthzFlowStateKind.AUTHORIZE_REQUEST), EasyMock.capture(storedId), EasyMock.anyString());
+    flowStateService.put(EasyMock.eq(AuthzFlowStateKind.FEDERATED_OP_OPTIONS), EasyMock.anyString(), EasyMock.anyString());
+    EasyMock.expectLastCall().andThrow(new AuthzFlowStateServiceException("database down", null));
+    flowStateService.remove(EasyMock.eq(AuthzFlowStateKind.AUTHORIZE_REQUEST), EasyMock.capture(removedId));
+    EasyMock.replay(flowStateService);
+
+    final String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(
+        createFederatedLoginRequest("/gateway/knoxidf/knoxidf/api/v1/authorize", flowStateService));
+
+    Assert.assertFalse("only the local login is offered", loginURL.contains("federatedOpLoginSession="));
+    EasyMock.verify(flowStateService);
+    Assert.assertEquals(storedId.getValue(), removedId.getValue());
   }
 
   @Test

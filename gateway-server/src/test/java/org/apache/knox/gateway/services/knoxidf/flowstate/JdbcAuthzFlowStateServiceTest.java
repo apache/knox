@@ -219,15 +219,18 @@ public class JdbcAuthzFlowStateServiceTest {
   }
 
   @Test
-  public void testPutFailureThrows() throws Exception {
+  public void testDatabaseFailure() throws Exception {
     final String payload = "payload";
     try (Statement stmt = keepAlive.createStatement()) {
       stmt.execute("ALTER TABLE " + AuthzFlowStateDatabase.TABLE_NAME + " RENAME TO KNOXIDF_AUTHZ_FLOW_STATE_MOVED");
     }
     try {
       assertThrows(AuthzFlowStateServiceException.class, () -> service.put(AuthzFlowStateKind.AUTHORIZE_REQUEST, "id", payload));
-      assertFalse(service.get(AuthzFlowStateKind.AUTHORIZE_REQUEST, "id").isPresent());
-      assertFalse(service.consume(AuthzFlowStateKind.AUTHORIZE_REQUEST, "id").isPresent());
+      // A failed read must not look like an absent entry
+      assertThrows(AuthzFlowStateServiceException.class, () -> service.get(AuthzFlowStateKind.AUTHORIZE_REQUEST, "id"));
+      assertThrows(AuthzFlowStateServiceException.class, () -> service.consume(AuthzFlowStateKind.AUTHORIZE_REQUEST, "id"));
+      // Clean-up failures are only logged
+      service.remove(AuthzFlowStateKind.AUTHORIZE_REQUEST, "id");
       assertEquals(0, service.removeExpired());
     } finally {
       try (Statement stmt = keepAlive.createStatement()) {

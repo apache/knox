@@ -238,8 +238,13 @@ public class WebSSOResource {
     final String loginSessionId = request.getParameter("fedOpSid");
     final String opName = request.getParameter("fedOpName");
     final AuthzFlowStateStore authzFlowStateStore = AuthzFlowStateStore.get(context);
-    final Optional<FederatedOpLoginOption> federatedOpLoginOption = authzFlowStateStore.getFederatedOpOptions(loginSessionId)
-            .flatMap(options -> options.stream().filter(option -> option.getName().equals(opName)).findFirst());
+    final Optional<FederatedOpLoginOption> federatedOpLoginOption;
+    try {
+      federatedOpLoginOption = authzFlowStateStore.getFederatedOpOptions(loginSessionId)
+              .flatMap(options -> options.stream().filter(option -> option.getName().equals(opName)).findFirst());
+    } catch (AuthzFlowStateServiceException e) {
+      return KnoxIDFUtils.error("server_error", "Cannot load the federated login state");
+    }
     if (federatedOpLoginOption.isPresent()) {
       // Generate a per-request nonce, send it to the OP, and store it keyed by the login-session id
       // (== the state echoed back by the OP). AuthorizeResource.authCallback verifies the returned

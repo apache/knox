@@ -71,6 +71,7 @@ class AuthzFlowStateDatabase extends KnoxDatabase {
       "CREATE INDEX " + EXPIRES_AT_INDEX_NAME + " ON " + TABLE_NAME + " (expires_at)";
   private static final String INSERT_SQL =
       "INSERT INTO " + TABLE_NAME + " (id, kind, payload, expires_at) VALUES (?, ?, ?, ?)";
+  // No expiry check: put replaces the entry, including an expired row the sweep hasn't removed yet
   private static final String UPDATE_SQL =
       "UPDATE " + TABLE_NAME + " SET payload = ?, expires_at = ? WHERE id = ? AND kind = ?";
   private static final String SELECT_SQL =

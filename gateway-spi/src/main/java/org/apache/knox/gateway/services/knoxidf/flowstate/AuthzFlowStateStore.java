@@ -70,6 +70,10 @@ public class AuthzFlowStateStore {
     return service.consume(AuthzFlowStateKind.AUTHORIZE_REQUEST, id).flatMap(AuthzFlowStateStore::authorizeRequestFromJson);
   }
 
+  public void removeAuthorizeRequest(String id) {
+    service.remove(AuthzFlowStateKind.AUTHORIZE_REQUEST, id);
+  }
+
   public void putFederatedOpOptions(String id, List<FederatedOpLoginOption> options) {
     service.put(AuthzFlowStateKind.FEDERATED_OP_OPTIONS, id, toJson(options));
   }
@@ -86,8 +90,12 @@ public class AuthzFlowStateStore {
     service.put(AuthzFlowStateKind.FEDERATED_OP_SELECTION, id, toJson(selection));
   }
 
-  public Optional<FederatedOpSelection> consumeFederatedOpSelection(String id) {
-    return service.consume(AuthzFlowStateKind.FEDERATED_OP_SELECTION, id).flatMap(AuthzFlowStateStore::federatedOpSelectionFromJson);
+  public Optional<FederatedOpSelection> getFederatedOpSelection(String id) {
+    return service.get(AuthzFlowStateKind.FEDERATED_OP_SELECTION, id).flatMap(AuthzFlowStateStore::federatedOpSelectionFromJson);
+  }
+
+  public void removeFederatedOpSelection(String id) {
+    service.remove(AuthzFlowStateKind.FEDERATED_OP_SELECTION, id);
   }
 
   static String toJson(AuthorizeRequestMetadata metadata) {

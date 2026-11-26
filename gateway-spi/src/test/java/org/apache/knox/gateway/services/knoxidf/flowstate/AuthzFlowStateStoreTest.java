@@ -92,8 +92,19 @@ public class AuthzFlowStateStoreTest {
   public void testFederatedOpSelectionRoundTrip() {
     final AuthzFlowStateStore store = new AuthzFlowStateStore(new InMemoryAuthzFlowStateService());
     store.putFederatedOpSelection("id", new FederatedOpSelection("google", "nonce"));
-    assertEquals(new FederatedOpSelection("google", "nonce"), store.consumeFederatedOpSelection("id").orElseThrow());
-    assertFalse(store.consumeFederatedOpSelection("id").isPresent());
+    assertEquals(new FederatedOpSelection("google", "nonce"), store.getFederatedOpSelection("id").orElseThrow());
+    assertEquals(new FederatedOpSelection("google", "nonce"), store.getFederatedOpSelection("id").orElseThrow());
+    store.removeFederatedOpSelection("id");
+    assertFalse(store.getFederatedOpSelection("id").isPresent());
+  }
+
+  @Test
+  public void testRemoveAuthorizeRequest() {
+    final AuthzFlowStateStore store = new AuthzFlowStateStore(new InMemoryAuthzFlowStateService());
+    store.putAuthorizeRequest("id", new AuthorizeRequestMetadata("client", "alice", "code", "https://cb",
+        new LinkedHashSet<>(Collections.singletonList("openid")), "state", null));
+    store.removeAuthorizeRequest("id");
+    assertFalse(store.consumeAuthorizeRequest("id").isPresent());
   }
 
   @Test
@@ -105,7 +116,7 @@ public class AuthzFlowStateStoreTest {
     service.put(AuthzFlowStateKind.FEDERATED_OP_SELECTION, "id", "{\"nonce\":\"no op name\"}");
     assertFalse(store.consumeAuthorizeRequest("id").isPresent());
     assertFalse(store.getFederatedOpOptions("id").isPresent());
-    assertFalse(store.consumeFederatedOpSelection("id").isPresent());
+    assertFalse(store.getFederatedOpSelection("id").isPresent());
     assertEquals(Optional.empty(), AuthzFlowStateStore.authorizeRequestFromJson("[1, 2]"));
   }
 
