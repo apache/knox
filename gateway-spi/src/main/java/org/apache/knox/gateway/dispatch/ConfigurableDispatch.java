@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.dispatch;
 
 import org.apache.commons.collections.MapUtils;
+import org.apache.http.Header;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.config.Configure;
@@ -181,9 +182,20 @@ public class ConfigurableDispatch extends DefaultDispatch implements SyncDispatc
 
     /* If we need to add user and groups to outbound request */
     if(shouldIncludePrincipalAndGroups) {
+      removeActorHeaders(outboundRequest);
       Map<String, String> groups = addPrincipalAndGroups();
       if(MapUtils.isNotEmpty(groups)){
         groups.forEach(outboundRequest::addHeader);
+      }
+    }
+  }
+
+  private void removeActorHeaders(HttpUriRequest outboundRequest) {
+    outboundRequest.removeHeaders(actorIdHeaderName);
+    final String groupsHeaderPrefix = actorGroupsHeaderPrefix + "-";
+    for (Header header : outboundRequest.getAllHeaders()) {
+      if (StringUtils.startsWithIgnoreCase(header.getName(), groupsHeaderPrefix)) {
+        outboundRequest.removeHeader(header);
       }
     }
   }

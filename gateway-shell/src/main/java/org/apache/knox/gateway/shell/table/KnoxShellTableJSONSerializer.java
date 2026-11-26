@@ -81,7 +81,7 @@ class KnoxShellTableJSONSerializer {
         filterProvider.addFilter("knoxShellTableFilter", SimpleBeanPropertyFilter.filterOutAllExcept("headers", "rows", "title", "id"));
         jsonResult = JsonUtils.renderAsJsonString(table, filterProvider, JSON_DATE_FORMAT.get());
       } else {
-        jsonResult = JsonUtils.renderAsJsonString(KnoxShellTableCallHistory.getInstance().getCallHistory(table.id), null, JSON_DATE_FORMAT.get());
+        jsonResult = JsonUtils.renderAsJsonString(table.getCallHistoryList(), null, JSON_DATE_FORMAT.get());
       }
       KnoxShellTableFileUtils.persistToFile(filePath, jsonResult);
       return "Successfully saved into " + filePath;

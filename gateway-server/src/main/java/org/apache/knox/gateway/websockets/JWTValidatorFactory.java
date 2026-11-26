@@ -24,6 +24,7 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificat
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.TokenUtils;
 import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.topology.TopologyService;
@@ -52,8 +53,9 @@ public class JWTValidatorFactory {
         Map<String,String> params = getParams(gatewayServices);
         String cookieName = params.containsKey(KNOXSSO_COOKIE_NAME)? params.get(KNOXSSO_COOKIE_NAME):DEFAULT_SSO_COOKIE_NAME;
         // instantiate jwtValidator with required parameters
+        JWT token = extractToken(req, cookieName);
         JWTValidator jwtValidator = new JWTValidator(
-                extractToken(req, cookieName),
+                token,
                 gatewayServices.getService(ServiceType.TOKEN_SERVICE),
                 SignatureVerificationCache.getInstance(
                         "knoxsso", new WebSocketFilterConfig(params)));
@@ -75,7 +77,7 @@ public class JWTValidatorFactory {
         }
 
         if (isServerManagedTokenStateEnabled(gatewayConfig, params.get(TokenStateService.CONFIG_SERVER_MANAGED))
-        ) {
+                || isManagedToken(token)) {
             jwtValidator.setTokenStateService(gatewayServices.getService(ServiceType.TOKEN_STATE_SERVICE));
         }
 
@@ -112,6 +114,11 @@ public class JWTValidatorFactory {
         }
         jwtMessagesLog.missingBearerToken();
         throw new RuntimeException("No Valid JWT found");
+    }
+
+    private static boolean isManagedToken(JWT token) {
+        return Boolean.parseBoolean(token.getClaim(JWTToken.MANAGED_TOKEN_CLAIM))
+                && TokenUtils.getTokenId(token) != null;
     }
 
     // adapted from TokenUtils.isServerManagedTokenStateEnabled(FilterConfig)

@@ -63,7 +63,7 @@ class KnoxShellTableCall {
 
   @JsonIgnore
   boolean hasSensitiveData() {
-    return "username".equals(getMethod()) || "pwd".equals(getMethod());
+    return "username".equals(getMethod()) || "password".equals(getMethod()) || "pwd".equals(getMethod());
   }
 
   @JsonIgnore
