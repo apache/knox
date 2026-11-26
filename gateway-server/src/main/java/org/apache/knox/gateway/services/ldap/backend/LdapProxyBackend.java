@@ -1011,7 +1011,13 @@ public class LdapProxyBackend implements LdapBackend {
         if (recursiveGroupResolution || !useMemberOf) {
             List<Entry> groups = getUserGroupsEntries(connection, entry, entryCache, resolvedParentsCache);
             for (Entry groupEntry : groups) {
-                entry.add(MEMBER_OF, groupEntry.getDn().getName());
+                // The entry may already carry some of these values: the direct groups when useMemberOf
+                // is set, or the remote memberOf (e.g. AD returns it for "*") otherwise. Adding a value
+                // that already exists makes the Directory API log ERR_13207_VALUE_ALREADY_EXISTS.
+                final String groupDn = groupEntry.getDn().getName();
+                if (!entry.contains(MEMBER_OF, groupDn)) {
+                    entry.add(MEMBER_OF, groupDn);
+                }
             }
         }
     }

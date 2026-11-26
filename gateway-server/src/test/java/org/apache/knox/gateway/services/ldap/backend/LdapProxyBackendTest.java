@@ -68,6 +68,12 @@ import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.knox.gateway.security.ldap.SimpleDirectoryService;
 import org.apache.knox.gateway.services.ldap.SchemaManagerFactory;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -404,6 +410,45 @@ public class LdapProxyBackendTest {
         assertTrue(userGroups.contains("memberOflevel4"));
         assertTrue(userGroups.contains("memberOfCycleA"));
         assertTrue(userGroups.contains("memberOfCycleB"));
+    }
+
+    /**
+     * With useMemberOf and recursive resolution, the direct groups returned by the remote memberOf
+     * must not be re-added to the entry: the Directory API logs ERR_13207_VALUE_ALREADY_EXISTS at
+     * WARN for every such value, which floods gateway.log for every user entry served.
+     */
+    @Test
+    public void testGetUserUseMemberOfRecursiveDoesNotReAddExistingMemberOf() throws Exception {
+        Map<String, String> config = createRecursiveConfigForMemberOf(10);
+        config.put("useMemberOf", "true");
+        ldapProxyBackend = new LdapProxyBackend("testbackend", config);
+
+        final List<String> warnings = Collections.synchronizedList(new ArrayList<>());
+        final AbstractAppender appender = new AbstractAppender("duplicate-value-capture", null, null, true, Property.EMPTY_ARRAY) {
+            @Override
+            public void append(LogEvent event) {
+                if (event.getLevel() == Level.WARN) {
+                    warnings.add(event.getMessage().getFormattedMessage());
+                }
+            }
+        };
+        appender.start();
+        final Logger logger = (Logger) LogManager.getLogger("org.apache.directory.api.ldap.model.entry.DefaultAttribute");
+        final Level originalLevel = logger.getLevel();
+        logger.addAppender(appender);
+        logger.setLevel(Level.WARN);
+        try {
+            Entry user = ldapProxyBackend.getUser("memberOfUser", schemaManager);
+            assertNotNull(user);
+            assertNotNull(user.get("memberOf"));
+        } finally {
+            logger.removeAppender(appender);
+            logger.setLevel(originalLevel);
+            appender.stop();
+        }
+
+        assertTrue("Unexpected duplicate memberOf warnings: " + warnings,
+                warnings.stream().noneMatch(m -> m.contains("ERR_13207")));
     }
 
     @Test
