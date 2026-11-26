@@ -18,6 +18,7 @@
 package org.apache.knox.gateway.dispatch;
 
 import static org.apache.knox.gateway.dispatch.AbstractGatewayDispatch.REQUEST_ID_HEADER_NAME;
+import static org.apache.knox.gateway.dispatch.ConfigurableDispatch.DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX;
 import static org.apache.knox.gateway.dispatch.ConfigurableDispatch.DEFAULT_AUTH_ACTOR_ID_HEADER_NAME;
 import static org.apache.knox.gateway.dispatch.DefaultDispatch.SET_COOKIE;
 import static org.apache.knox.gateway.dispatch.DefaultDispatch.WWW_AUTHENTICATE;
@@ -32,6 +33,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -773,4 +775,147 @@ public class ConfigurableDispatchTest {
     assertThat(outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME)[0].getValue(), is("knoxui"));
   }
 
+  @Test
+  public void testInboundActorIdHeaderIsReplaced() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+
+    Map<String, String> headers = new LinkedHashMap<>();
+    headers.put(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, "admin");
+    headers.put(HttpHeaders.ACCEPT, "abc");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, headers, "alice", "users");
+
+    Header[] actorIdHeaders = outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
+    assertThat(actorIdHeaders.length, is(1));
+    assertThat(actorIdHeaders[0].getValue(), is("alice"));
+    assertThat(outboundRequest.getFirstHeader(HttpHeaders.ACCEPT).getValue(), is("abc"));
+  }
+
+  @Test
+  public void testInboundActorIdHeaderDifferentCaseIsReplaced() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+
+    Map<String, String> headers = new LinkedHashMap<>();
+    headers.put("x-knox-actor-id", "admin");
+    headers.put("x-knox-actor-groups-1", "administrators");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, headers, "alice", "users");
+
+    Header[] actorIdHeaders = outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
+    assertThat(actorIdHeaders.length, is(1));
+    assertThat(actorIdHeaders[0].getValue(), is("alice"));
+    Header[] groupHeaders = outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-1");
+    assertThat(groupHeaders.length, is(1));
+    assertThat(groupHeaders[0].getValue(), is("users"));
+  }
+
+  @Test
+  public void testInboundActorGroupHeadersAreReplaced() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+
+    Map<String, String> headers = new LinkedHashMap<>();
+    headers.put(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-1", "administrators");
+    headers.put(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-2", "admins");
+    headers.put(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-5", "superusers");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, headers, "alice", "users");
+
+    Header[] groupHeaders = outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-1");
+    assertThat(groupHeaders.length, is(1));
+    assertThat(groupHeaders[0].getValue(), is("users"));
+    assertThat(outboundRequest.containsHeader(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-2"), is(false));
+    assertThat(outboundRequest.containsHeader(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-5"), is(false));
+  }
+
+  @Test
+  public void testInboundActorGroupHeadersRemovedWhenUserHasNoGroups() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+
+    Map<String, String> headers = new LinkedHashMap<>();
+    headers.put(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-1", "administrators");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, headers, "alice");
+
+    assertThat(outboundRequest.containsHeader(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-1"), is(false));
+    assertThat(outboundRequest.getFirstHeader(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME).getValue(), is("alice"));
+  }
+
+  @Test
+  public void testInboundCustomActorHeadersAreReplaced() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+    dispatch.setActorIdHeaderName("x-actor-username");
+    dispatch.setActorGroupsHeaderPrefix("x-actor-groups");
+
+    Map<String, String> headers = new LinkedHashMap<>();
+    headers.put("X-Actor-Username", "admin");
+    headers.put("X-Actor-Groups-1", "administrators");
+    headers.put("X-Actor-Groups-3", "admins");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, headers, "alice", "users");
+
+    Header[] actorIdHeaders = outboundRequest.getHeaders("x-actor-username");
+    assertThat(actorIdHeaders.length, is(1));
+    assertThat(actorIdHeaders[0].getValue(), is("alice"));
+    Header[] groupHeaders = outboundRequest.getHeaders("x-actor-groups-1");
+    assertThat(groupHeaders.length, is(1));
+    assertThat(groupHeaders[0].getValue(), is("users"));
+    assertThat(outboundRequest.containsHeader("x-actor-groups-3"), is(false));
+    assertThat(outboundRequest.containsHeader(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME), is(false));
+  }
+
+  @Test
+  public void testAppendedActorIdHeaderIsReplaced() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+    dispatch.setShouldIncludePrincipalAndGroups(true);
+    dispatch.setRequestAppendHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME + ":admin");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, new LinkedHashMap<>(), "alice", "users");
+
+    Header[] actorIdHeaders = outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
+    assertThat(actorIdHeaders.length, is(1));
+    assertThat(actorIdHeaders[0].getValue(), is("alice"));
+  }
+
+  @Test
+  public void testActorHeadersPassThroughWhenPrincipalAndGroupsDisabled() throws PrivilegedActionException {
+    ConfigurableDispatch dispatch = new ConfigurableDispatch();
+
+    Map<String, String> headers = new LinkedHashMap<>();
+    headers.put(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME, "someone");
+
+    HttpUriRequest outboundRequest = dispatchAs(dispatch, headers, "alice", "users");
+
+    Header[] actorIdHeaders = outboundRequest.getHeaders(DEFAULT_AUTH_ACTOR_ID_HEADER_NAME);
+    assertThat(actorIdHeaders.length, is(1));
+    assertThat(actorIdHeaders[0].getValue(), is("someone"));
+    assertThat(outboundRequest.containsHeader(DEFAULT_AUTH_ACTOR_GROUPS_HEADER_PREFIX + "-1"), is(false));
+  }
+
+  private HttpUriRequest dispatchAs(ConfigurableDispatch dispatch, Map<String, String> headers,
+                                    String principal, String... groups) throws PrivilegedActionException {
+    Subject subject = new Subject();
+    subject.getPrincipals().add(new PrimaryPrincipal(principal));
+    for (String group : groups) {
+      subject.getPrincipals().add(new GroupPrincipal(group));
+    }
+
+    HttpServletRequest inboundRequest = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(inboundRequest.getHeaderNames()).andReturn(Collections.enumeration(headers.keySet())).anyTimes();
+    Capture<String> capturedArgument = Capture.newInstance();
+    EasyMock.expect(inboundRequest.getHeader(EasyMock.capture(capturedArgument)))
+            .andAnswer(() -> headers.get(capturedArgument.getValue())).anyTimes();
+    EasyMock.replay(inboundRequest);
+
+    HttpUriRequest outboundRequest = new HttpGet();
+    Subject.doAs(subject, (PrivilegedExceptionAction<Object>) () -> {
+      dispatch.copyRequestHeaderFields(outboundRequest, inboundRequest);
+      return null;
+    });
+    return outboundRequest;
+  }
 }

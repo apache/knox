@@ -44,6 +44,8 @@ ADD .github/workflows/build/conf/topologies/knoxldap.xml /knox-runtime/conf/topo
 ADD .github/workflows/build/conf/topologies/knoxldapcache.xml /knox-runtime/conf/topologies/knoxldapcache.xml
 ADD .github/workflows/build/conf/topologies/remoteauth.xml /knox-runtime/conf/topologies/remoteauth.xml
 ADD .github/workflows/build/conf/topologies/k8sauth.xml /knox-runtime/conf/topologies/k8sauth.xml
+ADD .github/workflows/build/conf/topologies/pathacls-encoding.xml /knox-runtime/conf/topologies/pathacls-encoding.xml
+ADD .github/workflows/build/conf/topologies/pathacls-order.xml /knox-runtime/conf/topologies/pathacls-order.xml
 
 RUN chown -R gateway /knox-runtime/
 

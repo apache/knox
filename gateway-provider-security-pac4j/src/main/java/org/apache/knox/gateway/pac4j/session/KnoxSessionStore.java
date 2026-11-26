@@ -17,12 +17,9 @@
  */
 package org.apache.knox.gateway.pac4j.session;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.knox.gateway.config.GatewayConfig;
 import org.apache.knox.gateway.pac4j.filter.Pac4jDispatcherFilter;
-import org.apache.knox.gateway.services.security.CryptoService;
-import org.apache.knox.gateway.services.security.EncryptionResult;
 import org.apache.knox.gateway.util.SetCookieHeader;
 import org.apache.knox.gateway.util.Urls;
 import org.apache.logging.log4j.LogManager;
@@ -37,10 +34,22 @@ import org.pac4j.core.util.serializer.JavaSerializer;
 import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.jee.context.JEEContext;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.AlgorithmParameters;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,69 +83,118 @@ public class KnoxSessionStore implements SessionStore {
 
     public static final String PAC4J_SESSION_PREFIX = "pac4j.session.";
 
+    private static final String KEY_SALT_PREFIX = "knox-pac4j-session:";
+
+    private static final String CIPHER_TRANSFORMATION = "AES/GCM/NoPadding";
+
+    private static final String DEFAULT_PBE_ALGORITHM = "PBKDF2WithHmacSHA256";
+
+    private static final int DEFAULT_ITERATION_COUNT = 65536;
+
+    private static final int DEFAULT_KEY_LENGTH = 256;
+
+    private static final int NONCE_LENGTH = 12;
+
+    private static final int TAG_LENGTH_BITS = 128;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final JavaSerializer javaSerializer;
 
-    private final CryptoService cryptoService;
-
-    private final String clusterName;
+    private final SecretKey secretKey;
 
     private final String domainSuffix;
 
     final Map<String, String> sessionStoreConfigs;
 
-    public KnoxSessionStore(final CryptoService cryptoService, final String clusterName, final String domainSuffix) {
-        this(cryptoService, clusterName, domainSuffix, new HashMap<>());
-    }
-
-    public KnoxSessionStore(final CryptoService cryptoService,
+    public KnoxSessionStore(final char[] password,
+        final GatewayConfig gatewayConfig,
         final String clusterName,
         final String domainSuffix,
         final Map<String, String> sessionStoreConfigs) {
         this.javaSerializer = new JavaSerializer();
-        this.cryptoService = cryptoService;
-        this.clusterName = clusterName;
+        this.secretKey = deriveKey(password, gatewayConfig, clusterName);
         this.domainSuffix = domainSuffix;
-        this.sessionStoreConfigs = sessionStoreConfigs;
+        this.sessionStoreConfigs = sessionStoreConfigs == null ? new HashMap<>() : sessionStoreConfigs;
     }
 
+    private static SecretKey deriveKey(final char[] password, final GatewayConfig gatewayConfig, final String clusterName) {
+        if (password == null || password.length == 0) {
+            throw new IllegalArgumentException("A pac4j session password is required");
+        }
+        if (clusterName == null) {
+            throw new IllegalArgumentException("A cluster name is required");
+        }
+        String pbeAlgorithm = DEFAULT_PBE_ALGORITHM;
+        int iterationCount = DEFAULT_ITERATION_COUNT;
+        int keyLength = DEFAULT_KEY_LENGTH;
+        if (gatewayConfig != null) {
+            if (StringUtils.isNotBlank(gatewayConfig.getPBEAlgorithm())) {
+                pbeAlgorithm = gatewayConfig.getPBEAlgorithm();
+            }
+            if (StringUtils.isNotBlank(gatewayConfig.getIterationCount())) {
+                iterationCount = Integer.parseInt(gatewayConfig.getIterationCount().trim());
+            }
+            if (StringUtils.isNotBlank(gatewayConfig.getKeyLength())) {
+                keyLength = Integer.parseInt(gatewayConfig.getKeyLength().trim());
+            }
+        }
+        if (keyLength != 128 && keyLength != 192 && keyLength != 256) {
+            throw new IllegalArgumentException("Unsupported AES key length for pac4j session cookies: " + keyLength);
+        }
+        if (iterationCount <= 0) {
+            throw new IllegalArgumentException("Invalid iteration count for pac4j session cookies: " + iterationCount);
+        }
+        final byte[] salt = (KEY_SALT_PREFIX + clusterName).getBytes(StandardCharsets.UTF_8);
+        final PBEKeySpec spec = new PBEKeySpec(password, salt, iterationCount, keyLength);
+        try {
+            final byte[] encoded = SecretKeyFactory.getInstance(pbeAlgorithm).generateSecret(spec).getEncoded();
+            return new SecretKeySpec(encoded, "AES");
+        } catch (GeneralSecurityException e) {
+            throw new IllegalArgumentException("Unable to derive the pac4j session cookie key", e);
+        } finally {
+            spec.clearPassword();
+        }
+    }
 
     @Override
     public Optional<String> getSessionId(WebContext context, boolean createSession) {
         return Optional.empty();
     }
 
-    private Object uncompressDecryptBase64(final String v) {
-        if (v != null && !v.isEmpty() && !"null".equals(v)) {
-            byte[] bytes = Base64.decodeBase64(v);
-            EncryptionResult result = EncryptionResult.fromByteArray(bytes);
-            byte[] clear = cryptoService.decryptForCluster(this.clusterName,
-                PAC4J_PASSWORD,
-                result.cipher,
-                result.iv,
-                result.salt);
-            if (clear != null) {
-                try {
-                    return javaSerializer.deserializeFromBytes(unCompress(clear));
-                } catch (IOException e) {
-                    throw new TechnicalException(e);
-                }
-            }
+    private Object uncompressDecryptBase64(final String cookieName, final String v) {
+        if (v == null || v.isEmpty()) {
+            return null;
         }
-        return null;
+        try {
+            final byte[] bytes = Base64.getUrlDecoder().decode(v);
+            if (bytes.length < NONCE_LENGTH + TAG_LENGTH_BITS / 8) {
+                return null;
+            }
+            final Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BITS, bytes, 0, NONCE_LENGTH));
+            cipher.updateAAD(cookieName.getBytes(StandardCharsets.UTF_8));
+            final byte[] clear = cipher.doFinal(bytes, NONCE_LENGTH, bytes.length - NONCE_LENGTH);
+            return javaSerializer.deserializeFromBytes(unCompress(clear));
+        } catch (Exception e) {
+            logger.debug("Ignoring invalid pac4j session cookie {}: {}", cookieName, e.getClass().getName());
+            return null;
+        }
     }
 
     @Override
     public Optional<Object> get(WebContext context, String key) {
-        final Cookie cookie = WebContextHelper.getCookie(context, PAC4J_SESSION_PREFIX + key);
+        final String cookieName = PAC4J_SESSION_PREFIX + key;
+        final Cookie cookie = WebContextHelper.getCookie(context, cookieName);
         Object value = null;
         if (cookie != null) {
-            value = uncompressDecryptBase64(cookie.getValue());
+            value = uncompressDecryptBase64(cookieName, cookie.getValue());
         }
         logger.debug("Get from session: {} = {}", key, value);
         return Optional.ofNullable(value);
     }
 
-    private String compressEncryptBase64(final Object o) {
+    private String compressEncryptBase64(final String cookieName, final Object o) {
         if (o == null || o.equals("")
             || (o instanceof Map<?,?> && ((Map<?,?>)o).isEmpty())) {
             return null;
@@ -155,8 +213,22 @@ public class KnoxSessionStore implements SessionStore {
                 throw new TechnicalException(e);
             }
 
-            EncryptionResult result = cryptoService.encryptForCluster(this.clusterName, PAC4J_PASSWORD, bytes);
-            return Base64.encodeBase64String(result.toByteAray());
+            try {
+                final Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey, SECURE_RANDOM);
+                final byte[] nonce = cipher.getIV();
+                final AlgorithmParameters parameters = cipher.getParameters();
+                if (nonce == null || nonce.length != NONCE_LENGTH || parameters == null
+                    || parameters.getParameterSpec(GCMParameterSpec.class).getTLen() != TAG_LENGTH_BITS) {
+                    throw new TechnicalException("Unexpected AES-GCM parameters from provider " + cipher.getProvider().getName());
+                }
+                cipher.updateAAD(cookieName.getBytes(StandardCharsets.UTF_8));
+                final byte[] encrypted = cipher.doFinal(bytes);
+                final byte[] out = ByteBuffer.allocate(nonce.length + encrypted.length).put(nonce).put(encrypted).array();
+                return Base64.getUrlEncoder().withoutPadding().encodeToString(out);
+            } catch (final GeneralSecurityException e) {
+                throw new TechnicalException(e);
+            }
         }
     }
 
@@ -173,7 +245,7 @@ public class KnoxSessionStore implements SessionStore {
                 profile = clearUserProfile(value);
             }
             logger.debug("Save in session: {} = {}", key, profile);
-            setCookieHeader = new SetCookieHeader(PAC4J_SESSION_PREFIX + key, compressEncryptBase64(profile));
+            setCookieHeader = new SetCookieHeader(PAC4J_SESSION_PREFIX + key, compressEncryptBase64(PAC4J_SESSION_PREFIX + key, profile));
         }
         try {
             String domain = Urls
@@ -244,7 +316,7 @@ public class KnoxSessionStore implements SessionStore {
     private static byte[] unCompress(final byte[] data) throws IOException {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
             GZIPInputStream gzip = new GZIPInputStream(inputStream)) {
-            return IOUtils.toByteArray(gzip);
+            return gzip.readAllBytes();
         }
     }
 

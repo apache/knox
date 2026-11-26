@@ -26,6 +26,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A wrapper class to maintain the chain of builder/filter call invocations
@@ -40,6 +43,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </ul>
  */
 class KnoxShellTableCallHistory {
+
+  private static final Map<String, Class<?>> REPLAYABLE_CLASSES = Stream.of(KnoxShellTable.class, KnoxShellTableBuilder.class,
+      CSVKnoxShellTableBuilder.class, JDBCKnoxShellTableBuilder.class, JSONKnoxShellTableBuilder.class, JoinKnoxShellTableBuilder.class,
+      KnoxShellTableFilter.class).collect(Collectors.toMap(Class::getName, Function.identity()));
 
   private static final KnoxShellTableCallHistory INSTANCE = new KnoxShellTableCallHistory();
   private final Map<Long, List<KnoxShellTableCall>> callHistory = new ConcurrentHashMap<>();
@@ -139,8 +146,11 @@ class KnoxShellTableCallHistory {
   }
 
   private Object invokeCall(Object callResult, KnoxShellTableCall call) {
+    final Class<?> invokerClass = REPLAYABLE_CLASSES.get(call.getInvokerClass());
+    if (invokerClass == null) {
+      throw new IllegalArgumentException("Replaying calls on " + call.getInvokerClass() + " is not allowed");
+    }
     try {
-      final Class<?> invokerClass = Class.forName(call.getInvokerClass());
       final Class<?>[] parameterTypes = call.getParameterTypes();
       final Method method = invokerClass.getMethod(call.getMethod(), parameterTypes);
       final Object[] params = new Object[call.getParams().size()];

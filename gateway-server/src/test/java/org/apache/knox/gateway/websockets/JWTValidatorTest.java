@@ -30,6 +30,10 @@ import org.apache.knox.gateway.provider.federation.jwt.filter.SignatureVerificat
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
+import org.apache.knox.gateway.services.security.token.TokenMetadata;
+import org.apache.knox.gateway.services.security.token.TokenStateService;
+import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.services.security.token.impl.JWTToken;
 import org.apache.knox.gateway.services.topology.TopologyService;
 import org.apache.knox.gateway.topology.Service;
 import org.apache.knox.gateway.topology.Topology;
@@ -151,7 +155,26 @@ public class JWTValidatorTest {
         return signedJWT;
     }
 
+    private static SignedJWT getManagedJWT(final String tokenId, final boolean managed) throws Exception {
+        JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
+        builder.issuer(JWT_TEST_ISSUER)
+                .subject("alice")
+                .expirationTime(new Date(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)))
+                .notBeforeTime(new Date(new Date().getTime() - TimeUnit.MINUTES.toMillis(1)))
+                .claim(JWTToken.KNOX_ID_CLAIM, tokenId);
+        if (managed) {
+            builder.claim(JWTToken.MANAGED_TOKEN_CLAIM, "true");
+        }
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).build(), builder.build());
+        signedJWT.sign(new RSASSASigner(privateKey));
+        return signedJWT;
+    }
+
     private void setUpParams(Map<String,String> params){
+        setUpParams(params, false, null);
+    }
+
+    private void setUpParams(Map<String,String> params, boolean gatewayServerManaged, TokenStateService tokenStateService){
         gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
         TopologyService ts = EasyMock.createNiceMock(TopologyService.class);
         // insert params into gatewayServices
@@ -176,9 +199,14 @@ public class JWTValidatorTest {
         EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_SERVICE))
                 .andReturn(authorityService).anyTimes();
 
+        if (tokenStateService != null) {
+            EasyMock.expect(gatewayServices.getService(ServiceType.TOKEN_STATE_SERVICE))
+                    .andReturn(tokenStateService).anyTimes();
+        }
+
         gatewayConfig = EasyMock.createNiceMock(GatewayConfig.class);
         EasyMock.expect(gatewayConfig.isServerManagedTokenStateEnabled())
-                .andReturn(false).anyTimes();
+                .andReturn(gatewayServerManaged).anyTimes();
 
         EasyMock.replay(gatewayConfig, gatewayServices, ts, topology, service);
     }
@@ -358,6 +386,71 @@ public class JWTValidatorTest {
         EasyMock.expect(authorityService.verifyToken(jwtValidator.getToken(), publicKey)).andReturn(false).anyTimes();
         EasyMock.replay(authorityService);
         Assert.assertFalse(jwtValidator.validate());
+    }
+
+    private Map<String, String> defaultSsoParams() {
+        Map<String, String> params = new HashMap<>();
+        params.put(SSO_VERIFICATION_PEM, pem);
+        params.put(JWT_EXPECTED_ISSUER, JWT_TEST_ISSUER);
+        params.put(JWT_EXPECTED_SIGALG, JWSAlgorithm.RS256.getName());
+        params.put(TokenStateService.CONFIG_SERVER_MANAGED, "false");
+        return params;
+    }
+
+    private JWTValidator createValidator(SignedJWT jwt, TokenStateService tokenStateService) throws Exception {
+        setUpParams(defaultSsoParams(), true, tokenStateService);
+        ServerUpgradeRequest request = EasyMock.createNiceMock(ServerUpgradeRequest.class);
+        setTokenOnRequest(request, jwt);
+        EasyMock.replay(request);
+        JWTValidator validator = JWTValidatorFactory.create(request, gatewayServices, gatewayConfig);
+        jwtValidator = validator;
+        EasyMock.expect(authorityService.verifyToken(validator.getToken(), publicKey)).andReturn(true).anyTimes();
+        EasyMock.replay(authorityService);
+        return validator;
+    }
+
+    @Test
+    public void testDisabledManagedTokenNotValid() throws Exception {
+        String tokenId = UUID.randomUUID().toString();
+        TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+        EasyMock.expect(tss.getTokenExpiration(tokenId))
+                .andReturn(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)).anyTimes();
+        EasyMock.expect(tss.getTokenMetadata(tokenId))
+                .andReturn(new TokenMetadata("alice", "", false)).anyTimes();
+        EasyMock.replay(tss);
+        Assert.assertFalse(createValidator(getManagedJWT(tokenId, true), tss).validate());
+    }
+
+    @Test
+    public void testEnabledManagedTokenValid() throws Exception {
+        String tokenId = UUID.randomUUID().toString();
+        TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+        EasyMock.expect(tss.getTokenExpiration(tokenId))
+                .andReturn(new Date().getTime() + TimeUnit.MINUTES.toMillis(10)).anyTimes();
+        EasyMock.expect(tss.getTokenMetadata(tokenId))
+                .andReturn(new TokenMetadata("alice", "", true)).anyTimes();
+        EasyMock.replay(tss);
+        Assert.assertTrue(createValidator(getManagedJWT(tokenId, true), tss).validate());
+    }
+
+    @Test
+    public void testUnknownManagedTokenNotValid() throws Exception {
+        String tokenId = UUID.randomUUID().toString();
+        TokenStateService tss = EasyMock.createNiceMock(TokenStateService.class);
+        EasyMock.expect(tss.getTokenExpiration(tokenId))
+                .andThrow(new UnknownTokenException(tokenId)).anyTimes();
+        EasyMock.expect(tss.getTokenMetadata(tokenId))
+                .andThrow(new UnknownTokenException(tokenId)).anyTimes();
+        EasyMock.replay(tss);
+        Assert.assertFalse(createValidator(getManagedJWT(tokenId, true), tss).validate());
+    }
+
+    @Test
+    public void testUnmanagedTokenSkipsStateLookup() throws Exception {
+        TokenStateService tss = EasyMock.createStrictMock(TokenStateService.class);
+        EasyMock.replay(tss);
+        Assert.assertTrue(createValidator(getManagedJWT(UUID.randomUUID().toString(), false), tss).validate());
+        EasyMock.verify(tss);
     }
 
 }

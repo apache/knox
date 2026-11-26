@@ -26,9 +26,11 @@ import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -271,15 +273,37 @@ public class KnoxShellTableTest {
   }
 
   @Test
-  public void testFromJSONUsingCallHistory() throws IOException {
+  public void testFromJSONRejectsCallHistory() throws IOException {
     final String jsonPath = KnoxShellTableCallHistoryTest.class.getClassLoader().getResource("knoxShellTableCallHistoryWithFiltering.json").getPath();
-    final String csvPath = "file://" + KnoxShellTableCallHistoryTest.class.getClassLoader().getResource("knoxShellTableLocationsWithZipLessThan14.csv").getPath();
-    String json = (FileUtils.readFileToString(new File(jsonPath), StandardCharsets.UTF_8));
-    json = json.replaceAll("CSV_FILE_PATH_PLACEHOLDER", csvPath);
-    // filtered table where ZIPs are greater than "5" (in CSV everything is String)
-    final KnoxShellTable table = KnoxShellTable.builder().json().fromJson(json);
-    assertNotNull(table);
-    assertEquals(4, table.rows.size()); // only 4 rows with ZIP of 6, 7, 8 and 9
+    final String json = FileUtils.readFileToString(new File(jsonPath), StandardCharsets.UTF_8);
+    final IOException fromJsonError = assertThrows(IOException.class, () -> KnoxShellTable.builder().json().fromJson(json));
+    assertTrue(fromJsonError.getMessage().contains("call history is not supported"));
+    assertThrows(IOException.class, () -> KnoxShellTable.builder().json().path(jsonPath));
+  }
+
+  @Test
+  public void testFromJSONDoesNotInvokeMethodsNamedInCallHistory() {
+    final String markerKey = "knox.shell.table.test.marker." + System.nanoTime();
+    final String markerValue = "invoked" + System.nanoTime();
+    final String json = "{\"callHistoryList\":[{\"invokerClass\":\"java.lang.System\",\"method\":\"setProperty\",\"builderMethod\":true,"
+        + "\"params\":{\"" + markerKey + "\":\"java.lang.String\",\"" + markerValue + "\":\"java.lang.String\"}}]}";
+    try {
+      assertThrows(IOException.class, () -> KnoxShellTable.builder().json().fromJson(json));
+      assertNull(System.getProperty(markerKey));
+      assertNull(System.getProperty(markerValue));
+    } finally {
+      System.clearProperty(markerKey);
+      System.clearProperty(markerValue);
+    }
+  }
+
+  @Test
+  public void testFromJSONRejectsExportedCallHistoryFile() throws IOException {
+    final KnoxShellTable table = new KnoxShellTable();
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.KnoxShellTableBuilder", "csv", false, Collections.emptyMap());
+    final Path historyPath = Paths.get(testFolder.newFolder().getAbsolutePath(), "history.json");
+    table.toJSON(false, historyPath.toString());
+    assertThrows(IOException.class, () -> KnoxShellTable.builder().json().path(historyPath.toString()));
   }
 
   @Test
@@ -552,6 +576,27 @@ public class KnoxShellTableTest {
       }
     });
     assertTrue(foundSensitiveData.get());
+  }
+
+  @Test
+  public void shouldNotExportJDBCCredentialsInCallHistory() throws Exception {
+    final KnoxShellTable table = new KnoxShellTable();
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.KnoxShellTableBuilder", "jdbc", false, Collections.emptyMap());
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "username", false, singletonMap("myUserName", String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "password", false, singletonMap("myP4ssW0rd", String.class));
+    saveCall(table.id, "org.apache.knox.gateway.shell.table.JDBCKnoxShellTableBuilder", "sql", true, singletonMap("SELECT 1 FROM DUAL", String.class));
+
+    final String exported = table.toJSON(false);
+    assertFalse(exported.contains("myUserName"));
+    assertFalse(exported.contains("myP4ssW0rd"));
+    assertTrue(exported.contains("SELECT 1 FROM DUAL"));
+
+    final Path historyPath = Paths.get(testFolder.newFolder().getAbsolutePath(), "history.json");
+    table.toJSON(false, historyPath.toString());
+    final String exportedFile = FileUtils.readFileToString(historyPath.toFile(), StandardCharsets.UTF_8);
+    assertFalse(exportedFile.contains("myUserName"));
+    assertFalse(exportedFile.contains("myP4ssW0rd"));
+    assertTrue(exportedFile.contains("SELECT 1 FROM DUAL"));
   }
 
   private void saveCall(long id, String invokerClass, String method, boolean builderMethod, Map<Object, Class<?>>params) {
