@@ -16,6 +16,8 @@
  */
 package org.apache.knox.gateway.service.knoxidf.userparams;
 
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
+import org.apache.knox.gateway.service.knoxidf.KnoxIDFMessages;
 import org.apache.knox.gateway.service.knoxidf.OIDCScope;
 import org.apache.knox.gateway.services.GatewayServices;
 import org.apache.knox.gateway.services.ServiceType;
@@ -44,6 +46,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class LdapUserParamsProvider implements UserParamsProvider {
+    private static final KnoxIDFMessages LOG = MessagesFactory.get(KnoxIDFMessages.class);
+
     private static final String PREFIX = "user.params.provider.ldap.";
     static final String LDAP_URL = PREFIX + "url";
     private static final String LDAP_BASE_DN = PREFIX + "baseDn";
@@ -93,6 +97,22 @@ public class LdapUserParamsProvider implements UserParamsProvider {
         // Required: there is no default alias (and no default password).
         this.ldapSystemPasswordAlias = servletContext.getInitParameter(LDAP_SYSTEM_PASSWORD_ALIAS);
         this.ldapSystemPassword = getSystemPassword(servletContext);
+        logConfigProblems();
+    }
+
+    /**
+     * Report static misconfiguration once, when the provider is created, rather than only on each lookup. The lookups
+     * still fail closed on the same problems (see {@link #checkSearchFilters} and {@link #createSystemContext}).
+     */
+    private void logConfigProblems() {
+        final String searchFilterProblem = searchFilterProblem();
+        if (searchFilterProblem != null) {
+            LOG.invalidUserParamsProviderConfig(searchFilterProblem);
+        }
+        final String systemPasswordProblem = systemPasswordProblem();
+        if (systemPasswordProblem != null) {
+            LOG.invalidUserParamsProviderConfig(systemPasswordProblem);
+        }
     }
 
     private String getInitParamOrDefault(ServletContext servletContext, String key, String defaultValue) {
@@ -270,25 +290,41 @@ public class LdapUserParamsProvider implements UserParamsProvider {
      * first, giving the user another user's claims, and a group search would match every group, giving every role.
      */
     private void checkSearchFilters() {
+        final String problem = searchFilterProblem();
+        if (problem != null) {
+            throw new IllegalStateException(problem);
+        }
+    }
+
+    private String searchFilterProblem() {
         if (ldapUserSearchBase != null && !ldapUserSearchFilter.contains(FILTER_ARGUMENT)) {
-            throw new IllegalStateException("LDAP user search filter '" + ldapUserSearchFilter + "' (set via '"
-                    + LDAP_USER_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the username");
+            return "LDAP user search filter '" + ldapUserSearchFilter + "' (set via '"
+                    + LDAP_USER_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the username";
         }
         if (!ldapGroupSearchFilter.contains(FILTER_ARGUMENT)) {
-            throw new IllegalStateException("LDAP group search filter '" + ldapGroupSearchFilter + "' (set via '"
-                    + LDAP_GROUP_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the user DN");
+            return "LDAP group search filter '" + ldapGroupSearchFilter + "' (set via '"
+                    + LDAP_GROUP_SEARCH_FILTER + "') must contain " + FILTER_ARGUMENT + ", which is replaced with the user DN";
         }
+        return null;
+    }
+
+    private String systemPasswordProblem() {
+        if (ldapSystemPasswordAlias == null) {
+            return "No LDAP system password alias configured: set '" + LDAP_SYSTEM_PASSWORD_ALIAS
+                    + "' to the name of the alias holding the password of " + ldapSystemUser;
+        }
+        if (ldapSystemPassword == null) {
+            return "LDAP system password alias '" + ldapSystemPasswordAlias
+                    + "' (set via '" + LDAP_SYSTEM_PASSWORD_ALIAS + "') is missing or cannot be resolved";
+        }
+        return null;
     }
 
     // Package-private so tests can supply a mock context.
     LdapContext createSystemContext() throws Exception {
-        if (ldapSystemPasswordAlias == null) {
-            throw new IllegalStateException("No LDAP system password alias configured: set '" + LDAP_SYSTEM_PASSWORD_ALIAS
-                    + "' to the name of the alias holding the password of " + ldapSystemUser);
-        }
-        if (ldapSystemPassword == null) {
-            throw new IllegalStateException("LDAP system password alias '" + ldapSystemPasswordAlias
-                    + "' (set via '" + LDAP_SYSTEM_PASSWORD_ALIAS + "') is missing or cannot be resolved");
+        final String problem = systemPasswordProblem();
+        if (problem != null) {
+            throw new IllegalStateException(problem);
         }
         Hashtable<String, Object> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");

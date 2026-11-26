@@ -19,8 +19,20 @@ package org.apache.knox.gateway.service.knoxidf.userparams;
 import jakarta.servlet.ServletContext;
 
 public class UserParamsProviderFactory {
+    // Whether the token endpoint adds user params (e.g. LDAP name/email/roles) to the access token.
+    // Disable it when clients read these claims from /userinfo, so token issuance never contacts LDAP.
+    static final String TOKEN_USER_PARAMS_ENABLED = "knoxidf.token.user.params.enabled";
+
     public static UserParamsProvider getUserParamsProvider(ServletContext servletContext) {
-        final String ldapUrl = servletContext.getInitParameter(LdapUserParamsProvider.LDAP_URL);
-        return ldapUrl == null ? new EmptyUserParamsProvider() : new LdapUserParamsProvider(servletContext);
+        final boolean enabled = !"false".equalsIgnoreCase(servletContext.getInitParameter(TOKEN_USER_PARAMS_ENABLED));
+        return getUserParamsProvider(servletContext, enabled);
+    }
+
+    public static UserParamsProvider getUserParamsProvider(ServletContext servletContext, boolean enabled) {
+        if (enabled) {
+            final String ldapUrl = servletContext.getInitParameter(LdapUserParamsProvider.LDAP_URL);
+            return ldapUrl == null ? new EmptyUserParamsProvider() : new LdapUserParamsProvider(servletContext);
+        }
+        return new EmptyUserParamsProvider();
     }
 }
