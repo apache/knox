@@ -61,6 +61,7 @@ is delivered to the token layer as `knox.token.ttl`. This lets you set any
 | `knoxidf.knox.token.limit.per.user.by.type.enabled` | `true` | When `true`, only JWTs, authorization codes and refresh tokens count towards the per-user limit and the user's client credentials and API keys are ignored; when `false`, all of the user's tokens count (passthrough to `knox.token.limit.per.user.by.type.enabled`). |
 | `knoxidf.knox.token.exp.server-managed` | `true` | When `false`, the token endpoint issues [unmanaged tokens](#unmanaged-tokens): they are not stored in token state and cannot be revoked. Do not use it with the `authorization_code` or `refresh_token` grants, or the authorize and registration endpoints, which need stored state (passthrough to `knox.token.exp.server-managed`). |
 | `refresh.token.ttl` | `86400000` (24 h) | Refresh-token lifetime in milliseconds. Refresh tokens are issued only when the `offline_access` scope is granted, and are rotated on each use. |
+| `knoxidf.token.user.params.enabled` | `true` | When `false`, the token endpoint does not add [user parameters](#ldap-user-parameter-provider) to access tokens, so issuing a token never contacts LDAP. UserInfo still returns them. |
 | `knoxidf.auto.consent.enabled` | `false` | When `true`, the [consent screen](security.md#consent) is skipped. This is a **server-side** decision and is never read from a client request parameter. |
 | `knoxidf.client.registration.anonymous.allowed` | `false` | When `true`, [dynamic client registration](security.md#dynamic-client-registration) accepts anonymous callers. Secure by default. |
 | `knoxidf.client.registration.client.callers.denied` | `true` | When `true`, [dynamic client registration](security.md#dynamic-client-registration) rejects a caller that is itself a registered client. Secure by default. |
@@ -149,6 +150,22 @@ local users, attributes resolved from a **user-parameter provider**.
 If `user.params.provider.ldap.url` is set, KnoxIDF looks up the authenticated user in LDAP and adds
 the resolved attributes to the token (and to the UserInfo response). If it is **absent**, an
 `EmptyUserParamsProvider` is used and no LDAP lookup occurs.
+
+The token endpoint (`authorization_code` and `refresh_token` grants) and UserInfo each do their own
+lookup. Set `knoxidf.token.user.params.enabled=false` to skip the lookup on the token endpoint when
+clients read these claims from UserInfo.
+
+A failed lookup (e.g. LDAP unreachable) is handled differently by the two endpoints:
+
+* The token endpoint logs a warning and issues the token **without** the user-parameter claims; the
+  grant's audit entry records `user_params=unavailable`. Services that authorize on a claim such as
+  `roles` in the access token see a token without it until the token expires.
+* UserInfo answers `503` with `temporarily_unavailable`; the audit entry records
+  `reason=user_params_unavailable`.
+
+Configuration problems that do not depend on the request (a missing or unresolvable
+`systemPasswordAlias`, a search filter without `{0}`) are also logged as errors when the KnoxIDF
+service starts.
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|

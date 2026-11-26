@@ -19,10 +19,12 @@ package org.apache.knox.gateway.service.knoxidf;
 import com.nimbusds.jose.KeyLengthException;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.ResourceType;
 import org.apache.knox.gateway.config.GatewayConfig;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
 import org.apache.knox.gateway.service.knoxtoken.PasscodeTokenResourceBase;
@@ -92,6 +94,8 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 public class TokenResource extends PasscodeTokenResourceBase {
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/token";
 
+    private static final KnoxIDFMessages LOG = MessagesFactory.get(KnoxIDFMessages.class);
+
     // Per-request stash for the auth-code TokenMetadata read during validation. The code is
     // atomically consumed (deleted) BEFORE token issuance to close the replay window, so the
     // issuance steps (buildUserContext/addArbitraryTokenMetadata/buildResponseMap) can no longer
@@ -106,7 +110,11 @@ public class TokenResource extends PasscodeTokenResourceBase {
     // federated claims survive an arbitrary number of refresh rotations.
     private static final String FEDERATED_IDENTITY_ID_ATTR = "knoxidf.federatedIdentityId";
 
-    private UserParamsProvider userParamsProvider;
+    // Per-request flag set when the user params lookup failed and the token was issued without them,
+    // so the grant's audit entry can record it.
+    private static final String USER_PARAMS_UNAVAILABLE_ATTR = "knoxidf.userParams.unavailable";
+
+    UserParamsProvider userParamsProvider;
 
     @Context
     HttpServletRequest request; // package-private for test injection; @Context injection is reflective
@@ -199,7 +207,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             try {
                 final TokenMetadata tokenMetadata = getAuthCodeMetadata();
                 final String scope = tokenMetadata.getMetadata(SCOPE);
-                final Map<String, Object> userParams = userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope);
+                final Map<String, Object> userParams = fetchUserParams(tokenMetadata.getUserName(), scope);
                 userParams.put(SCOPE, scope);
                 return new UserContext(tokenMetadata.getUserName(), null, userParams);
             } catch (UnknownTokenException e) {
@@ -208,6 +216,20 @@ public class TokenResource extends PasscodeTokenResourceBase {
             }
         }
         return super.buildUserContext(request);
+    }
+
+    /**
+     * User params are optional claims, so a failed lookup (e.g. LDAP unreachable) must not fail the
+     * grant: by now the auth code / refresh token has been consumed, and a 500 would burn it.
+     */
+    private Map<String, Object> fetchUserParams(String userName, String scope) {
+        try {
+            return userParamsProvider.getParamsFor(userName, scope);
+        } catch (RuntimeException e) {
+            LOG.failedToFetchUserParamsForToken(userName, ExceptionUtils.getRootCauseMessage(e), e);
+            request.setAttribute(USER_PARAMS_UNAVAILABLE_ATTR, Boolean.TRUE);
+            return new HashMap<>();
+        }
     }
 
     @Override
@@ -312,7 +334,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             // Valid, freshly-consumed refresh token -> issue new access token and new refresh token (rotation)
             final String userName = refreshTokenMetadata.getUserName();
             final String scope = refreshTokenMetadata.getMetadata(SCOPE);
-            final Map<String, Object> userParams = userParamsProvider.getParamsFor(userName, scope);
+            final Map<String, Object> userParams = fetchUserParams(userName, scope);
             userParams.put(SCOPE, scope);
 
             // Restore the federated identity id (if any) so id_token generation keeps the federated
@@ -326,7 +348,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             final UserContext userContext = new UserContext(userName, null, userParams);
             final TokenResponseContext resp = getTokenResponse(userContext);
             outcome = ActionOutcome.SUCCESS;
-            detail = "reason=rotated";
+            detail = "reason=rotated" + userParamsAuditDetail();
             return resp.build();
         } catch (ParseException e) {
             detail = "reason=malformed_refresh_token";
@@ -342,6 +364,10 @@ public class TokenResource extends PasscodeTokenResourceBase {
                     outcome, "event=token_grant grant_type=refresh_token refresh_token_id="
                             + maskedRefreshTokenId + " " + detail);
         }
+    }
+
+    private String userParamsAuditDetail() {
+        return request.getAttribute(USER_PARAMS_UNAVAILABLE_ATTR) == null ? "" : " user_params=unavailable";
     }
 
     // Package-private for testability (client-authentication on the refresh grant is exercised by
@@ -422,7 +448,7 @@ public class TokenResource extends PasscodeTokenResourceBase {
             request.setAttribute(AUTH_CODE_METADATA_ATTR, authCodeMetadata);
             final Response response = getAuthenticationToken();
             outcome = ActionOutcome.SUCCESS;
-            detail = "reason=tokens_issued";
+            detail = "reason=tokens_issued" + userParamsAuditDetail();
             return response;
         } finally {
             KnoxIDFAudit.audit(Action.AUTHENTICATION, KnoxIDFAudit.mask(clientId), ResourceType.PRINCIPAL,

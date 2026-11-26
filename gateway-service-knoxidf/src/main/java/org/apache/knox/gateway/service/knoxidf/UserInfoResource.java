@@ -19,9 +19,11 @@ package org.apache.knox.gateway.service.knoxidf;
 
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.knox.gateway.audit.api.Action;
 import org.apache.knox.gateway.audit.api.ActionOutcome;
 import org.apache.knox.gateway.audit.api.ResourceType;
+import org.apache.knox.gateway.i18n.messages.MessagesFactory;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProvider;
 import org.apache.knox.gateway.service.knoxidf.userparams.UserParamsProviderFactory;
 import org.apache.knox.gateway.services.GatewayServices;
@@ -58,7 +60,9 @@ import static org.apache.knox.gateway.util.knoxidf.KnoxIDFUtils.error;
 public class UserInfoResource {
 
     static final String RESOURCE_PATH = BASE_RESOURCE_PATH + "/userinfo";
-    private UserParamsProvider userParamsProvider;
+    private static final KnoxIDFMessages LOG = MessagesFactory.get(KnoxIDFMessages.class);
+
+    UserParamsProvider userParamsProvider;
 
     @Context
     private ServletContext servletContext;
@@ -70,7 +74,7 @@ public class UserInfoResource {
 
     @PostConstruct
     public void init() {
-        this.userParamsProvider = UserParamsProviderFactory.getUserParamsProvider(servletContext);
+        this.userParamsProvider = UserParamsProviderFactory.getUserParamsProvider(servletContext, true);
         final GatewayServices services = (GatewayServices) servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE);
         federatedIdentityService = services.getService(ServiceType.KNOXIDF_FEDERATED_IDENTITY_SERVICE);
     }
@@ -143,8 +147,15 @@ public class UserInfoResource {
 
                 userInfo.putAll(claims);
             } else {
-                // Local Knox user
-                userInfo.putAll(userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope));
+                // Local Knox user. Unlike token issuance, a failed lookup is an error here: these claims are
+                // what /userinfo is for, and an empty profile would tell the client the user has none.
+                try {
+                    userInfo.putAll(userParamsProvider.getParamsFor(tokenMetadata.getUserName(), scope));
+                } catch (RuntimeException e) {
+                    LOG.failedToFetchUserParamsForUserInfo(tokenMetadata.getUserName(), ExceptionUtils.getRootCauseMessage(e), e);
+                    detail = "reason=user_params_unavailable";
+                    return error("temporarily_unavailable", "User information is temporarily unavailable");
+                }
             }
 
             outcome = ActionOutcome.SUCCESS;
