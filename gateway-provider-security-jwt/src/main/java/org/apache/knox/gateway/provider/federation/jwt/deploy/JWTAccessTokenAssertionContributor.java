@@ -29,6 +29,7 @@ import org.apache.knox.gateway.topology.Service;
 
 import static org.apache.knox.gateway.services.security.AliasService.NO_CLUSTER_NAME;
 
+@Deprecated
 public class JWTAccessTokenAssertionContributor extends
     ProviderDeploymentContributorBase {
   private static final String ENCRYPT_ACCESS_TOKENS = "encrypt_access_tokens";
