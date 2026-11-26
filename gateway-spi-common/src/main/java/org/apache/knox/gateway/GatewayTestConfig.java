@@ -1481,6 +1481,16 @@ public class GatewayTestConfig extends Configuration implements GatewayConfig {
   }
 
   @Override
+  public int getKnoxIDFAuthzFlowStateTtlSecs() {
+    return KNOXIDF_AUTHZ_FLOW_STATE_TTL_SECS_DEFAULT;
+  }
+
+  @Override
+  public int getKnoxIDFAuthzFlowStateCleanupIntervalSecs() {
+    return KNOXIDF_AUTHZ_FLOW_STATE_CLEANUP_INTERVAL_SECS_DEFAULT;
+  }
+
+  @Override
   public int getDelegationServiceTokenTtlSec() {
     return DELEGATION_SERVICE_TOKEN_TTL_SEC_DEFAULT;
   }

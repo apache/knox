@@ -92,6 +92,8 @@ public class DefaultGatewayServices extends AbstractGatewayServices {
     addService(ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, gatewayServiceFactory.create(this, ServiceType.TRUSTED_OIDC_ISSUER_SERVICE, config, options));
 
     addService(ServiceType.DELEGATION_POLICY_SERVICE, gatewayServiceFactory.create(this, ServiceType.DELEGATION_POLICY_SERVICE, config, options));
+
+    addService(ServiceType.KNOXIDF_AUTHZ_FLOW_STATE_SERVICE, gatewayServiceFactory.create(this, ServiceType.KNOXIDF_AUTHZ_FLOW_STATE_SERVICE, config, options));
   }
 
   @Override

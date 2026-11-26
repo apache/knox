@@ -14,22 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.util.knoxidf;
+package org.apache.knox.gateway.services.knoxidf.flowstate;
 
-import java.util.Set;
-
-public class FederatedOpConfigurationStore extends KnoxIDFArtifactStore<Set<FederatedOpConfiguration>> {
-
-    private static FederatedOpConfigurationStore instance;
-
-    private FederatedOpConfigurationStore(long ttl) {
-        super(ttl);
-    }
-
-    public static synchronized FederatedOpConfigurationStore getInstance(long ttl) {
-        if (instance == null) {
-            instance = new FederatedOpConfigurationStore(ttl);
-        }
-        return instance;
-    }
+/**
+ * The federated OP a user picked on the KnoxSSO login page and the nonce sent to that OP.
+ */
+public record FederatedOpSelection(String opName, String nonce) {
 }

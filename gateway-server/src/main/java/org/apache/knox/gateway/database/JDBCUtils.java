@@ -46,6 +46,26 @@ public class JDBCUtils {
     }
 
     /**
+     * Returns whether {@code tableName} has an index named {@code indexName}. Both names are
+     * unquoted identifiers and are normalised the same way as in {@link #tableExists}.
+     */
+    public static boolean indexExists(String tableName, String indexName, DataSource dataSource) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            final DatabaseMetaData dbMetadata = connection.getMetaData();
+            final String tableNameToCheck = normalizeIdentifier(tableName, dbMetadata);
+            final String indexNameToCheck = normalizeIdentifier(indexName, dbMetadata);
+            try (ResultSet indexes = dbMetadata.getIndexInfo(connection.getCatalog(), null, tableNameToCheck, false, true)) {
+                while (indexes.next()) {
+                    if (indexNameToCheck.equalsIgnoreCase(indexes.getString("INDEX_NAME"))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Normalises an unquoted identifier to the case the driver actually stores it in, so it can be
      * matched against {@link DatabaseMetaData#getTables}. Derby (and other uppercase-storing
      * engines) store an unquoted {@code federated_identity} as {@code FEDERATED_IDENTITY}; passing

@@ -28,6 +28,10 @@ node that made it.
     show up on node B within that TTL; the checks poll node B for a few TTLs.
   - Delegation policies are read from the database on every exchange, so a policy
     change made on node A applies to the very next exchange on node B, without polling.
+  - In-flight authorization flow state (JdbcAuthzFlowStateService): an authorize request
+    started on node A waits for consent in the shared database, so the consent can be
+    accepted on node B, and only once across both nodes. This runs on the knoxidf-consent
+    topology, which leaves the consent screen enabled.
 
 The suite is skipped unless KNOX_GATEWAY_URL_2 names the second gateway.
 """
@@ -35,6 +39,8 @@ The suite is skipped unless KNOX_GATEWAY_URL_2 names the second gateway.
 import os
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import parse_qs, urlparse
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -75,6 +81,12 @@ ADMIN_ISSUERS_PATH = "gateway/knoxidf-admin/knoxidf/admin/v1/trusted-oidc-issuer
 ADMIN_POLICIES_PATH = "gateway/knoxidf-admin/knoxidf/admin/v1/delegation-policies"
 TOKEN_PATH = "gateway/knoxidf-token/knoxidf/api/v1/token"
 DELEGATION_TOKEN_PATH = "gateway/knoxidf-token-delegation-policy/knoxidf/api/v1/token"
+CONSENT_API_PATH = "gateway/knoxidf-consent/knoxidf/api/v1/"
+
+# Demo LDAP user that runs the authorization code flow on the knoxidf-consent topology.
+FLOW_USER = "guest"
+FLOW_PASSWORD = "guest-password"
+REDIRECT_URI = "http://localhost/callback"
 
 
 def _node_url(env_name):
@@ -290,6 +302,91 @@ class TestKnoxIdfHa(unittest.TestCase):
             can_act_for_users=[IMPERSONATED_USER], resource_policy={DELEGATED_RESOURCE: []})
         assert_oauth_error(self, self._headless_exchange_on_b(), 400, "invalid_request",
                            "rejected by policy")
+
+
+class TestKnoxIdfHaAuthorizeFlowState(unittest.TestCase):
+    """An authorize request started on one gateway can be completed on the other one."""
+
+    node_a = None
+    node_b = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.node_a = _node_url("KNOX_GATEWAY_URL")
+        cls.node_b = _node_url("KNOX_GATEWAY_URL_2")
+        if not cls.node_a or not cls.node_b:
+            raise unittest.SkipTest(
+                "KNOX_GATEWAY_URL_2 is not set; the HA suite needs two gateways")
+        for base_url in (cls.node_a, cls.node_b):
+            _wait_until_ready(base_url)
+
+    def setUp(self):
+        self.client_id = self._register_client_on_a()
+
+    @staticmethod
+    def _flow_auth():
+        return HTTPBasicAuth(FLOW_USER, FLOW_PASSWORD)
+
+    def _register_client_on_a(self):
+        """Register a confidential client through node A; return its client_id."""
+        response = knox_post(
+            self.node_a + CONSENT_API_PATH + "client/register",
+            data={"redirect_uris": REDIRECT_URI, "allowed_scopes": "openid,profile"},
+            auth=self._flow_auth())
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()["client_id"]
+
+    def _start_authorize_on_a(self, client_state):
+        """Run /authorize on node A; return the consent state from the consent page redirect."""
+        response = knox_get(
+            self.node_a + CONSENT_API_PATH + "authorize",
+            params={"response_type": "code", "client_id": self.client_id,
+                    "redirect_uri": REDIRECT_URI, "scope": "openid", "state": client_state},
+            auth=self._flow_auth(), allow_redirects=False)
+        self.assertEqual(response.status_code, 303, response.text)
+        location = urlparse(response.headers["Location"])
+        self.assertTrue(location.path.endswith("/authConsent"), response.headers["Location"])
+        return parse_qs(location.query)["state"][0]
+
+    def _accept_consent(self, base_url, consent_state):
+        """POST the consent page's accept form to the given node."""
+        return knox_post(
+            base_url + CONSENT_API_PATH + "authorize/consentAccepted",
+            data={"state": consent_state}, auth=self._flow_auth(), allow_redirects=False)
+
+    def _assert_code_issued(self, response, client_state):
+        self.assertEqual(response.status_code, 303, response.text)
+        location = response.headers["Location"]
+        self.assertTrue(location.startswith(REDIRECT_URI), location)
+        query = parse_qs(urlparse(location).query)
+        self.assertIn("code", query, location)
+        self.assertEqual([client_state], query.get("state"), location)
+
+    def test_consent_accepted_on_the_other_node(self):
+        """Consent for a request started on node A is accepted on node B, and only once."""
+        consent_state = self._start_authorize_on_a("ha-consent")
+
+        self._assert_code_issued(self._accept_consent(self.node_b, consent_state), "ha-consent")
+
+        # The consent state is single-use across both nodes.
+        for base_url in (self.node_a, self.node_b):
+            replay = self._accept_consent(base_url, consent_state)
+            assert_oauth_error(self, replay, 400, "invalid_request", "Invalid state")
+
+    def test_concurrent_consent_on_both_nodes_succeeds_once(self):
+        """Accepting the same consent on both nodes at once issues exactly one code."""
+        for attempt in range(5):
+            client_state = f"ha-race-{attempt}"
+            # A fresh client each round: once consent is recorded, authorize skips the consent page.
+            self.client_id = self._register_client_on_a()
+            consent_state = self._start_authorize_on_a(client_state)
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                responses = list(executor.map(
+                    lambda base_url, state=consent_state: self._accept_consent(base_url, state),
+                    (self.node_a, self.node_b)))
+            issued = [r for r in responses if r.status_code == 303]
+            self.assertEqual(1, len(issued), [(r.status_code, r.text) for r in responses])
+            self._assert_code_issued(issued[0], client_state)
 
 
 if __name__ == "__main__":

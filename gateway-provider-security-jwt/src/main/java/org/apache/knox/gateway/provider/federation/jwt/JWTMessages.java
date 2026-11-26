@@ -175,4 +175,7 @@ public interface JWTMessages {
 
   @Message(level = MessageLevel.ERROR, text = "Malformed original url passed: {0}")
   void malformedOriginalUrlDomain(String originalMainDomain);
+
+  @Message(level = MessageLevel.ERROR, text = "Could not store the KnoxIDF federated login state; federated login options are not offered: {0}")
+  void unableToStoreFederatedLoginState(String errorMessage);
 }

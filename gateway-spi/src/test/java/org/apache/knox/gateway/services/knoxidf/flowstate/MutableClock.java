@@ -14,20 +14,43 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.knox.gateway.util.knoxidf;
+package org.apache.knox.gateway.services.knoxidf.flowstate;
 
-public class AuthorizeRequestMetadataStore extends KnoxIDFArtifactStore<AuthorizeRequestMetadata>{
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.concurrent.atomic.AtomicLong;
 
-    private static AuthorizeRequestMetadataStore instance;
+/** A clock the tests move forward by hand. */
+class MutableClock extends Clock {
+  private final AtomicLong millis;
 
-    private AuthorizeRequestMetadataStore(long ttl) {
-        super(ttl);
-    }
+  MutableClock(long millis) {
+    this.millis = new AtomicLong(millis);
+  }
 
-    public static synchronized AuthorizeRequestMetadataStore getInstance(long ttl) {
-        if (instance == null) {
-            instance = new AuthorizeRequestMetadataStore(ttl);
-        }
-        return instance;
-    }
+  void advanceMillis(long delta) {
+    millis.addAndGet(delta);
+  }
+
+  @Override
+  public ZoneId getZone() {
+    return ZoneOffset.UTC;
+  }
+
+  @Override
+  public Clock withZone(ZoneId zone) {
+    return this;
+  }
+
+  @Override
+  public long millis() {
+    return millis.get();
+  }
+
+  @Override
+  public Instant instant() {
+    return Instant.ofEpochMilli(millis());
+  }
 }

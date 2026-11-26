@@ -22,10 +22,16 @@ import com.nimbusds.jwt.SignedJWT;
 import org.apache.knox.gateway.provider.federation.jwt.filter.AbstractJWTFilter;
 import org.apache.knox.gateway.provider.federation.jwt.filter.SSOCookieFederationFilter;
 import org.apache.knox.gateway.security.PrimaryPrincipal;
+import org.apache.knox.gateway.services.GatewayServices;
+import org.apache.knox.gateway.services.ServiceType;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateKind;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateService;
+import org.apache.knox.gateway.services.knoxidf.flowstate.AuthzFlowStateServiceException;
 import org.apache.knox.gateway.services.security.token.JWTokenAuthority;
 import org.apache.knox.gateway.services.security.token.TokenMetadata;
 import org.apache.knox.gateway.services.security.token.TokenStateService;
 import org.apache.knox.gateway.services.security.token.UnknownTokenException;
+import org.apache.knox.gateway.util.knoxidf.KnoxIDFConstants;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -34,6 +40,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -466,6 +473,80 @@ public class SSOCookieProviderTest extends AbstractJWTFilterTest {
     final String errorResponse = new String(reponseOutputStream.getData(), StandardCharsets.UTF_8);
     Assert.assertTrue(errorResponse.startsWith(SSOCookieFederationFilter.TOKEN_PREFIX));
     Assert.assertTrue(errorResponse.endsWith(SSOCookieFederationFilter.IDLE_TIMEOUT_POSTFIX));
+  }
+
+  @Test
+  public void testFederatedLoginStateIsStoredForAuthorizeRequest() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+    final AuthzFlowStateService flowStateService = EasyMock.createMock(AuthzFlowStateService.class);
+    flowStateService.put(EasyMock.eq(AuthzFlowStateKind.AUTHORIZE_REQUEST), EasyMock.anyString(), EasyMock.anyString());
+    flowStateService.put(EasyMock.eq(AuthzFlowStateKind.FEDERATED_OP_OPTIONS), EasyMock.anyString(), EasyMock.anyString());
+    EasyMock.replay(flowStateService);
+
+    final String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(
+        createFederatedLoginRequest("/gateway/knoxidf/knoxidf/api/v1/authorize", flowStateService));
+
+    Assert.assertTrue(loginURL, loginURL.contains("federatedOpLoginSession="));
+    Assert.assertTrue(loginURL, loginURL.contains("federatedOpNames=keycloak"));
+    EasyMock.verify(flowStateService);
+  }
+
+  @Test
+  public void testFailedFederatedLoginStateIsRemoved() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+    final AuthzFlowStateService flowStateService = EasyMock.createMock(AuthzFlowStateService.class);
+    final Capture<String> storedId = EasyMock.newCapture();
+    final Capture<String> removedId = EasyMock.newCapture();
+    flowStateService.put(EasyMock.eq(AuthzFlowStateKind.AUTHORIZE_REQUEST), EasyMock.capture(storedId), EasyMock.anyString());
+    flowStateService.put(EasyMock.eq(AuthzFlowStateKind.FEDERATED_OP_OPTIONS), EasyMock.anyString(), EasyMock.anyString());
+    EasyMock.expectLastCall().andThrow(new AuthzFlowStateServiceException("database down", null));
+    flowStateService.remove(EasyMock.eq(AuthzFlowStateKind.AUTHORIZE_REQUEST), EasyMock.capture(removedId));
+    EasyMock.replay(flowStateService);
+
+    final String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(
+        createFederatedLoginRequest("/gateway/knoxidf/knoxidf/api/v1/authorize", flowStateService));
+
+    Assert.assertFalse("only the local login is offered", loginURL.contains("federatedOpLoginSession="));
+    EasyMock.verify(flowStateService);
+    Assert.assertEquals(storedId.getValue(), removedId.getValue());
+  }
+
+  @Test
+  public void testFederatedLoginStateIsNotStoredForOtherPaths() throws Exception {
+    handler.init(new TestFilterConfig(getProperties()));
+    final String[] paths = {
+        "/gateway/knoxidf/knoxidf/api/v1/authorize/consentAccepted",
+        "/gateway/knoxidf/knoxidf/api/v1/token",
+        "/gateway/knoxidf/some/app/authorize-like"
+    };
+    for (String path : paths) {
+      // A strict mock without expectations fails on any write
+      final AuthzFlowStateService flowStateService = EasyMock.createMock(AuthzFlowStateService.class);
+      EasyMock.replay(flowStateService);
+
+      final String loginURL = ((TestSSOCookieFederationProvider) handler).constructLoginURL(
+          createFederatedLoginRequest(path, flowStateService));
+
+      Assert.assertFalse(loginURL, loginURL.contains("federatedOpLoginSession="));
+      EasyMock.verify(flowStateService);
+    }
+  }
+
+  private HttpServletRequest createFederatedLoginRequest(String path, AuthzFlowStateService flowStateService) {
+    final GatewayServices gatewayServices = EasyMock.createNiceMock(GatewayServices.class);
+    EasyMock.expect(gatewayServices.getService(ServiceType.KNOXIDF_AUTHZ_FLOW_STATE_SERVICE)).andReturn(flowStateService).anyTimes();
+    final ServletContext servletContext = EasyMock.createNiceMock(ServletContext.class);
+    EasyMock.expect(servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_NAMES)).andReturn("keycloak").anyTimes();
+    EasyMock.expect(servletContext.getInitParameter(KnoxIDFConstants.FEDERATED_OP_CONFIG_PREFIX + "keycloak.enabled"))
+        .andReturn("true").anyTimes();
+    EasyMock.expect(servletContext.getAttribute(GatewayServices.GATEWAY_SERVICES_ATTRIBUTE)).andReturn(gatewayServices).anyTimes();
+    final HttpServletRequest request = EasyMock.createNiceMock(HttpServletRequest.class);
+    EasyMock.expect(request.getServletContext()).andReturn(servletContext).anyTimes();
+    EasyMock.expect(request.getRequestURI()).andReturn(path).anyTimes();
+    EasyMock.expect(request.getRequestURL()).andReturn(new StringBuffer("https://localhost:8443").append(path)).anyTimes();
+    EasyMock.expect(request.getParameter(KnoxIDFConstants.CLIENT_ID)).andReturn("client").anyTimes();
+    EasyMock.replay(gatewayServices, servletContext, request);
+    return request;
   }
 
   /**

@@ -50,6 +50,9 @@ public abstract class AbstractDataSourceFactory {
     public static final String KNOXIDF_DELEGATION_POLICY_TABLES_SQL = "createKnoxIDFDelegationPolicyTables.sql";
     public static final String ORACLE_KNOXIDF_DELEGATION_POLICY_TABLES_SQL = "createKnoxIDFDelegationPolicyTablesOracle.sql";
 
+    public static final String KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL = "createKnoxIDFAuthzFlowStateTable.sql";
+    public static final String ORACLE_KNOXIDF_AUTHZ_FLOW_STATE_TABLE_SQL = "createKnoxIDFAuthzFlowStateTableOracle.sql";
+
     public static final String DATABASE_USER_ALIAS_NAME = "gateway_database_user";
     public static final String DATABASE_PASSWORD_ALIAS_NAME = "gateway_database_password";
     public static final String DATABASE_TRUSTSTORE_PASSWORD_ALIAS_NAME = "gateway_database_ssl_truststore_password";

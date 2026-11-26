@@ -184,9 +184,102 @@ KnoxIDF-specific requirements:
   `gateway.signing.key.alias` / `gateway.signing.key.aliases.additional` configuration, so a token
   issued by one instance verifies against the JWKS served by any instance.
 
-Sticky sessions are recommended for the interactive Authorization Code / federation flow so that
-the browser stays on the instance holding the in-flight authorize/consent state, though the issued
-tokens themselves are verifiable on any instance.
+### In-flight authorization flow state
+
+An interactive Authorization Code flow spans several browser requests, and the state between them
+must be visible to whichever instance serves the next request:
+
+- **Consent:** `/authorize` keeps the pending request until the user accepts it on the consent page
+  (`POST .../authorize/consentAccepted`).
+- **Federated login:** `/authorize` keeps the pending request and the federated OPs offered for the
+  login session; the KnoxSSO login page records the OP the user picked and the nonce sent to it;
+  `/authorize/callback` reads all of it when the OP redirects back.
+
+This state lives for minutes and is held by the `KnoxIDFAuthzFlowStateService`
+(`gateway.service.knoxidfauthzflowstate.impl`), which has two implementations in the
+`org.apache.knox.gateway.services.knoxidf.flowstate` package:
+
+| Implementation | Notes |
+|----------------|-------|
+| `InMemoryAuthzFlowStateService` | State is local to the instance. Load balancer session affinity is **required** for the interactive flows: a request that reaches another instance fails with `invalid_request` (`Invalid state` / `Unknown or expired state`). |
+| `JdbcAuthzFlowStateService` | State is kept in the `KNOXIDF_AUTHZ_FLOW_STATE` table of the external database, so any instance can continue any flow and no session affinity is needed. Each consent and callback state is consumed atomically, so it can be used only once across all instances. |
+
+When the property is unset, the JDBC implementation is used if `gateway.database.type` names an
+external database (`postgresql`, `mysql`, `mariadb`, `oracle`), and the in-memory one otherwise. The
+embedded H2 database is never used for this state: it is local to one instance, so it would add
+nothing over memory.
+
+For HA, set the property to the JDBC implementation, together with the other KnoxIDF services and
+token state (see [Backend selection](#backend-selection)):
+
+```xml
+<property>
+    <name>gateway.service.knoxidfauthzflowstate.impl</name>
+    <value>org.apache.knox.gateway.services.knoxidf.flowstate.JdbcAuthzFlowStateService</value>
+</property>
+```
+
+Setting it explicitly matters because an embedded H2 service rewrites `gateway.database.type` to
+`h2` as it starts, which would silently select the in-memory implementation. If the explicitly
+configured JDBC implementation cannot connect, gateway startup fails. When the implementation was
+selected automatically, the gateway logs an `ERROR` and falls back to in-memory state instead
+(logger `org.apache.knox.gateway.knoxidf.authz.flow.state.service`).
+
+Entries expire after `gateway.knoxidf.authz.flow.state.ttl.secs` (default `300` seconds), which bounds
+how long a user may take on the consent and login pages; expired entries are ignored on read and
+deleted every `gateway.knoxidf.authz.flow.state.cleanup.interval.secs` (default `60`). With the JDBC
+implementation, every instance runs that cleanup; it is a single `DELETE` of expired rows, which
+uses the `KNOXIDF_AUTHZ_FLOW_STATE_EXP` index on `expires_at`. The table and the index are created
+at startup if missing. If the state cannot be read or written, the flow ends with `server_error`
+rather than continuing without it; if storing the federated login state fails, the login page
+offers only the local login. A failed read on the OP callback deletes nothing, so the user can
+reload the callback page once the database is back.
+
+Federated login state is written only for requests to the authorize endpoint
+(`.../knoxidf/api/v1/authorize`). An unauthenticated request to any other path of the topology is
+redirected to the login page without the federated OP options and stores nothing.
+
+No OP client secrets are stored: the federated login state records only the OP names, client IDs
+and endpoints, and the callback resolves the OP's full configuration from the topology. As a
+consequence, removing or renaming a federated OP in the topology breaks logins already in progress
+with that OP: the callback fails with `invalid_request` and the user has to start the login again.
+
+The issued tokens themselves are verifiable on any instance, whichever implementation is used.
+
+### Database load and connection pool sizing
+
+With the JDBC implementation, the interactive flows add these statements to the external database:
+
+| Flow | Statements |
+|------|------------|
+| Consent | `/authorize`: 1 `INSERT`. `consentAccepted` / `consentDenied`: 1 atomic consume. |
+| Federated login | `/authorize`: 2 `INSERT`s. KnoxSSO login page, after the user picks an OP: 1 `SELECT` and 1 `INSERT`. `/authorize/callback`: 2 atomic consumes and 1 `DELETE`. |
+
+An atomic consume is a single `DELETE ... RETURNING` on PostgreSQL and MariaDB, and a `SELECT`
+followed by a `DELETE` on the same connection on MySQL and Oracle. Each statement takes one
+connection from the pool and returns it right away; no connection is held while the user is on a
+page.
+
+All gateway services that use `gateway.database.*` share **one connection pool per instance**:
+token state, federated identities, delegation policies, the trusted issuer registry and this flow
+state. Token exchanges that are evaluated against delegation policies therefore compete for the same
+connections as `/authorize` traffic. Size the pool for the combined peak:
+
+| Property | Default | Notes |
+|----------|---------|-------|
+| `gateway.database.pool.max.size` | `10` | Connections per instance. A request that finds every connection busy waits for one. |
+| `gateway.database.pool.connection.timeout.ms` | `30000` | How long a request waits for a connection before failing. |
+
+The database must accept `gateway.database.pool.max.size` connections from **every** instance, plus
+whatever other clients it has; for example, keep PostgreSQL's `max_connections` above
+`instances x pool.max.size`. A short database round trip matters more than a large pool: at about
+1 ms per statement, one connection serves roughly a thousand statements a second.
+
+`/authorize` and the KnoxSSO login page are reachable without authentication, and every
+`/authorize` request that shows the consent or login page writes a row that lives for
+`gateway.knoxidf.authz.flow.state.ttl.secs`. Rate-limit these endpoints (see
+[Rate limiting](#rate-limiting)) so a flood of them cannot fill the table or starve the pool for the
+token endpoints.
 
 ### Trusted OIDC issuer registry consistency
 
@@ -259,6 +352,10 @@ parameter set (`delayMs`, `maxWaitMs`, `throttledRequests`, `insertHeaders`, `ip
     `gateway.servlet.async.supported=true` in `gateway-site.xml` (it is `false` by default).
 
 You may still add rate limiting at the edge (load balancer / reverse proxy) as defense in depth.
+The edge is the better place for the unauthenticated `/authorize` and KnoxSSO login endpoints: it
+can limit per client IP across all instances, and a rejected request never reaches the gateway
+(with the JDBC flow state, each accepted `/authorize` request writes a database row, see
+[Database load and connection pool sizing](#database-load-and-connection-pool-sizing)).
 Anonymous client registration in particular should either be left disabled (the default) or, when
 enabled, fronted by the rate-limiting filter above.
 
@@ -266,6 +363,8 @@ enabled, fronted by the rate-limiting filter above.
 
 - [ ] TLS enabled on every topology that exposes KnoxIDF endpoints.
 - [ ] External database configured for any multi-instance / HA deployment.
+- [ ] Multi-instance: `gateway.service.knoxidfauthzflowstate.impl` set to `JdbcAuthzFlowStateService`, or load balancer session affinity configured for the interactive authorize flows.
+- [ ] Multi-instance: `gateway.database.pool.max.size` sized for token exchange plus `/authorize` traffic, and the database accepts that many connections from every instance.
 - [ ] Signing keystore and `gateway.signing.key.alias*` identical across all instances.
 - [ ] `knoxidf.client.registration.anonymous.allowed` reviewed (default `false`).
 - [ ] `knoxidf.auto.consent.enabled` reviewed (default `false`).
