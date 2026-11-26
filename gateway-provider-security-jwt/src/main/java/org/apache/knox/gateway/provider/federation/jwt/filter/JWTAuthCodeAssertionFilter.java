@@ -41,6 +41,7 @@ import org.apache.knox.gateway.services.security.token.impl.JWT;
 import org.apache.knox.gateway.util.JsonUtils;
 
 public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter {
+  public static final String ISSUER = "knox.token.issuer";
   private JWTokenAuthority authority;
 
   private ServiceRegistry sr;
@@ -59,9 +60,9 @@ public class JWTAuthCodeAssertionFilter extends AbstractIdentityAssertionFilter 
     authority = services.getService(ServiceType.TOKEN_SERVICE);
     sr = services.getService(ServiceType.SERVICE_REGISTRY_SERVICE);
 
-    this.tokenIssuer = StringUtils.isBlank(filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER))
+    this.tokenIssuer = StringUtils.isBlank(filterConfig.getInitParameter(ISSUER))
             ? JWTokenAttributes.DEFAULT_ISSUER
-            : filterConfig.getInitParameter(JWTAccessTokenAssertionFilter.ISSUER);
+            : filterConfig.getInitParameter(ISSUER);
   }
 
   @Override
